@@ -1,0 +1,49 @@
+import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../features/home/presentation/screens/main_shell.dart';
+import '../../../features/auth/presentation/screens/login_screen.dart';
+import '../../../features/auth/presentation/screens/register_screen.dart';
+import '../../../features/jobs/presentation/screens/post_job_screen.dart';
+import '../../../features/tokens/presentation/screens/token_screen.dart';
+import '../providers/navigation_provider.dart';
+
+final routerProvider = Provider<GoRouter>((ref) {
+  return GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) {
+          // '/?tab=0' veya sadece '/' geldiğinde Keşfet (index 0) sekmesini aç
+          final tabParam = state.uri.queryParameters['tab'];
+          if (tabParam != null) {
+            final tabIndex = int.tryParse(tabParam) ?? 0;
+            Future.microtask(() =>
+              ref.read(selectedTabProvider.notifier).state = tabIndex);
+          }
+          return const MainShell();
+        },
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final returnTo = extra?['returnTo'] as String?;
+          return LoginScreen(returnTo: returnTo);
+        },
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/post-job',
+        builder: (context, state) => const PostJobScreen(),
+      ),
+      GoRoute(
+        path: '/tokens',
+        builder: (context, state) => const TokenScreen(),
+      ),
+    ],
+  );
+});

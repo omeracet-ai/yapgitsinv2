@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Flutter (Web)",
+            "request": "launch",
+            "type": "dart",
+            "cwd": "hizmet_app",
+            "args": ["-d", "chrome", "--web-port", "5000"]
+        },
+        {
+            "name": "NestJS Backend",
+            "request": "launch",
+            "type": "node",
+            "cwd": "${workspaceFolder}/nestjs-backend",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "start:dev"],
+            "console": "integratedTerminal",
+            "restart": true
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Full App (Backend + Flutter)",
+            "configurations": ["NestJS Backend", "Flutter (Web)"]
+        }
+    ]
+}

@@ -1,0 +1,124 @@
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
+function getToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('admin_token');
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken();
+  const res = await fetch(`${BASE}${path}`, {
+    cache: 'no-store',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    ...init,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`API ${res.status}: ${text}`);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
+export const api = {
+  // Auth
+  adminLogin: (username: string, password: string) =>
+    request<{ access_token: string; user: AdminUser }>('/auth/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+
+  // Dashboard
+  stats: () =>
+    request<{ totalJobs: number; totalUsers: number; totalProviders: number; verifiedProviders: number }>('/admin/stats'),
+
+  // Son İlanlar
+  recentJobs: (limit = 20) => request<Job[]>(`/admin/jobs?limit=${limit}`),
+
+  // Kullanıcılar
+  users: () => request<User[]>('/admin/users'),
+
+  // Kategoriler
+  categories:     ()                             => request<Category[]>('/categories'),
+  createCategory: (data: Partial<Category>)      => request<Category>('/categories',      { method: 'POST',  body: JSON.stringify(data) }),
+  updateCategory: (id: string, data: Partial<Category>) => request<Category>(`/categories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteCategory: (id: string)                   => request<void>(`/categories/${id}`,    { method: 'DELETE' }),
+
+  // Sağlayıcılar & Mavi Tik
+  providers:       ()                                    => request<Provider[]>('/admin/providers'),
+  setVerification: (id: string, isVerified: boolean)     =>
+    request<Provider>(`/admin/providers/${id}/verify`, { method: 'PATCH', body: JSON.stringify({ isVerified }) }),
+
+  // Öne Çıkan İlanlar
+  setFeaturedOrder: (id: string, featuredOrder: number | null) =>
+    request<void>(`/admin/jobs/${id}/featured`, { method: 'PATCH', body: JSON.stringify({ featuredOrder }) }),
+
+  // Öne Çıkan Ustalar
+  setProviderFeatured: (id: string, featuredOrder: number | null) =>
+    request<void>(`/admin/providers/${id}/featured`, { method: 'PATCH', body: JSON.stringify({ featuredOrder }) }),
+};
+
+// ── Tip tanımları ────────────────────────────────────────────────────────────
+
+export interface AdminUser {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+}
+
+export interface Job {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  location: string;
+  budgetMin: number;
+  budgetMax: number;
+  status: 'open' | 'in_progress' | 'completed' | 'cancelled';
+  customerId: string;
+  customer?: { id: string; fullName: string; email: string } | null;
+  featuredOrder: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Provider {
+  id: string;
+  userId: string;
+  businessName: string;
+  bio: string;
+  averageRating: number;
+  totalReviews: number;
+  isVerified: boolean;
+  hasCertificate: boolean;
+  featuredOrder: number | null;
+  documents: Record<string, string> | null;
+  user?: { id: string; fullName: string; email: string; role: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface User {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  isPhoneVerified: boolean;
+  role: string;
+  createdAt: string;
+}
