@@ -11,10 +11,10 @@ import { User } from '../users/user.entity';
 import { Category } from '../categories/category.entity';
 
 export enum JobStatus {
-  OPEN        = 'open',
+  OPEN = 'open',
   IN_PROGRESS = 'in_progress',
-  COMPLETED   = 'completed',
-  CANCELLED   = 'cancelled',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
 }
 
 @Entity('jobs')
@@ -36,7 +36,11 @@ export class Job {
   @Column({ type: 'varchar', nullable: true })
   categoryId: string | null;
 
-  @ManyToOne(() => Category, { eager: false, nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => Category, {
+    eager: false,
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'categoryId' })
   categoryRef: Category;
 

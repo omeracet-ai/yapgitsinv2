@@ -7,31 +7,37 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',')
+      : '*',
   },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
+  private readonly logger = new Logger(ChatGateway.name);
+
   handleConnection(client: Socket) {
-    console.log(`Client connected: ${client.id}`);
+    this.logger.log(`Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`Client disconnected: ${client.id}`);
+    this.logger.log(`Client disconnected: ${client.id}`);
   }
 
   @SubscribeMessage('sendMessage')
   handleMessage(
     @MessageBody() data: { to: string; message: string; from: string },
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() _client: Socket,
   ) {
-    console.log(`Message from ${data.from} to ${data.to}: ${data.message}`);
+    // Mesaj içeriğini loglama — hassas veri gizliliği
+    this.logger.debug(`Message event: from=${data.from} to=${data.to}`);
     // In a real app, save to DB here
     this.server.emit('receiveMessage', data);
   }
@@ -41,7 +47,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() roomId: string,
     @ConnectedSocket() client: Socket,
   ) {
-    client.join(roomId);
-    console.log(`Client ${client.id} joined room ${roomId}`);
+    void client.join(roomId);
+    this.logger.log(`Client ${client.id} joined room ${roomId}`);
   }
 }

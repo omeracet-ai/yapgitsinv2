@@ -11,9 +11,9 @@ import { Job } from '../jobs/job.entity';
 import { User } from '../users/user.entity';
 
 export enum OfferStatus {
-  PENDING   = 'pending',
-  ACCEPTED  = 'accepted',
-  REJECTED  = 'rejected',
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  REJECTED = 'rejected',
   WITHDRAWN = 'withdrawn',
   COUNTERED = 'countered',
 }
@@ -44,7 +44,11 @@ export class Offer {
   @Column({ type: 'text', nullable: true })
   message: string;
 
-  @Column({ type: 'simple-enum', enum: OfferStatus, default: OfferStatus.PENDING })
+  @Column({
+    type: 'simple-enum',
+    enum: OfferStatus,
+    default: OfferStatus.PENDING,
+  })
   status: OfferStatus;
 
   @Column({ type: 'float', nullable: true, default: null })

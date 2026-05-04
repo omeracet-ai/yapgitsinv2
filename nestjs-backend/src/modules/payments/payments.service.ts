@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports */
 import { Injectable } from '@nestjs/common';
 const Iyzipay = require('iyzipay');
 
@@ -71,7 +72,7 @@ export class PaymentsService {
 
     return new Promise((resolve, reject) => {
       this.iyzipay.checkoutFormInitialize.create(request, (err, result) => {
-        if (err) reject(err);
+        if (err) reject(err instanceof Error ? err : new Error(String(err)));
         else resolve(result);
       });
     });
@@ -79,10 +80,13 @@ export class PaymentsService {
 
   async retrieveCheckoutResult(token: string) {
     return new Promise((resolve, reject) => {
-      this.iyzipay.checkoutForm.retrieve({ locale: 'tr', token }, (err, result) => {
-        if (err) reject(err);
-        else resolve(result);
-      });
+      this.iyzipay.checkoutForm.retrieve(
+        { locale: 'tr', token },
+        (err, result) => {
+          if (err) reject(err instanceof Error ? err : new Error(String(err)));
+          else resolve(result);
+        },
+      );
     });
   }
 }

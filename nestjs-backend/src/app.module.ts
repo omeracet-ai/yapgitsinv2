@@ -35,9 +35,25 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const dbType = configService.get<string>('DB_TYPE') || 'postgres';
-        const entities = [User, Job, Offer, Review, Category, TokenTransaction, ServiceRequest, ServiceRequestApplication, Booking, Notification];
+        const entities = [
+          User,
+          Job,
+          Offer,
+          Review,
+          Category,
+          TokenTransaction,
+          ServiceRequest,
+          ServiceRequestApplication,
+          Booking,
+          Notification,
+        ];
         if (dbType === 'sqlite') {
-          return { type: 'sqlite' as const, database: 'hizmet_db.sqlite', entities, synchronize: true };
+          return {
+            type: 'sqlite' as const,
+            database: 'hizmet_db.sqlite',
+            entities,
+            synchronize: true,
+          };
         }
         return {
           type: 'postgres' as const,

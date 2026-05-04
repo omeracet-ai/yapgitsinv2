@@ -58,11 +58,11 @@ export class OffersService {
     );
     await this.usersService.bumpStat(data.userId, 'asWorkerTotal');
     const offer = this.offersRepository.create({
-      jobId:   data.jobId,
-      userId:  data.userId,
-      price:   data.price,
+      jobId: data.jobId,
+      userId: data.userId,
+      price: data.price,
       message: data.message,
-      status:  OfferStatus.PENDING,
+      status: OfferStatus.PENDING,
     });
     return this.offersRepository.save(offer);
   }
@@ -83,22 +83,28 @@ export class OffersService {
     return saved;
   }
 
-  async counter(offerId: string, counterPrice: number, counterMessage: string): Promise<Offer> {
+  async counter(
+    offerId: string,
+    counterPrice: number,
+    counterMessage: string,
+  ): Promise<Offer> {
     const offer = await this._getOffer(offerId);
-    offer.status         = OfferStatus.COUNTERED;
-    offer.counterPrice   = counterPrice;
+    offer.status = OfferStatus.COUNTERED;
+    offer.counterPrice = counterPrice;
     offer.counterMessage = counterMessage;
     return this.offersRepository.save(offer);
   }
 
   async updateStatus(id: string, status: OfferStatus): Promise<Offer> {
     const offer = await this._getOffer(id);
-    const prev  = offer.status;
+    const prev = offer.status;
     offer.status = status;
     const saved = await this.offersRepository.save(offer);
     if (prev !== status) {
-      if (status === OfferStatus.ACCEPTED) await this.usersService.bumpStat(offer.userId, 'asWorkerSuccess');
-      if (status === OfferStatus.REJECTED)  await this.usersService.bumpStat(offer.userId, 'asWorkerFail');
+      if (status === OfferStatus.ACCEPTED)
+        await this.usersService.bumpStat(offer.userId, 'asWorkerSuccess');
+      if (status === OfferStatus.REJECTED)
+        await this.usersService.bumpStat(offer.userId, 'asWorkerFail');
     }
     return saved;
   }

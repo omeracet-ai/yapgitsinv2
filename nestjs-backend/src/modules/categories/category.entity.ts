@@ -1,18 +1,25 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 /**
  * Kategori grup sabitleri (Airtasker / HiPages ilham alınarak)
  * Her kategori bir üst gruba bağlıdır.
  */
 export const CATEGORY_GROUPS = {
-  EV_YASAM:    'Ev & Yaşam',
-  YAPI:        'Yapı & Tesisat',
-  DIJITAL:     'Dijital & Teknik',
-  ETKINLIK:    'Etkinlik & Yaşam',
-  ARAC:        'Araç & Taşıt',
+  EV_YASAM: 'Ev & Yaşam',
+  YAPI: 'Yapı & Tesisat',
+  DIJITAL: 'Dijital & Teknik',
+  ETKINLIK: 'Etkinlik & Yaşam',
+  ARAC: 'Araç & Taşıt',
 } as const;
 
-export type CategoryGroup = typeof CATEGORY_GROUPS[keyof typeof CATEGORY_GROUPS];
+export type CategoryGroup =
+  (typeof CATEGORY_GROUPS)[keyof typeof CATEGORY_GROUPS];
 
 @Entity('categories')
 export class Category {

@@ -4,8 +4,12 @@ import { Repository } from 'typeorm';
 import { User } from './user.entity';
 
 export type StatField =
-  | 'asCustomerTotal' | 'asCustomerSuccess' | 'asCustomerFail'
-  | 'asWorkerTotal'   | 'asWorkerSuccess'   | 'asWorkerFail';
+  | 'asCustomerTotal'
+  | 'asCustomerSuccess'
+  | 'asCustomerFail'
+  | 'asWorkerTotal'
+  | 'asWorkerSuccess'
+  | 'asWorkerFail';
 
 @Injectable()
 export class UsersService {
@@ -51,14 +55,16 @@ export class UsersService {
   async recalcRating(userId: string, newRating: number): Promise<void> {
     const user = await this.repo.findOne({ where: { id: userId } });
     if (!user) return;
-    const total   = user.totalReviews + 1;
-    const average = ((user.averageRating * user.totalReviews) + newRating) / total;
+    const total = user.totalReviews + 1;
+    const average =
+      (user.averageRating * user.totalReviews + newRating) / total;
     // reputationScore: puan ortalaması × 20 + başarılı iş sayısı × 5
-    const reputation = Math.round(average * 20)
-      + (user.asCustomerSuccess + user.asWorkerSuccess) * 5;
+    const reputation =
+      Math.round(average * 20) +
+      (user.asCustomerSuccess + user.asWorkerSuccess) * 5;
     await this.repo.update(userId, {
-      totalReviews:    total,
-      averageRating:   Math.round(average * 100) / 100,
+      totalReviews: total,
+      averageRating: Math.round(average * 100) / 100,
       reputationScore: reputation,
     });
   }
@@ -67,8 +73,9 @@ export class UsersService {
   async recalcReputation(userId: string): Promise<void> {
     const user = await this.repo.findOne({ where: { id: userId } });
     if (!user) return;
-    const reputation = Math.round(user.averageRating * 20)
-      + (user.asCustomerSuccess + user.asWorkerSuccess) * 5;
+    const reputation =
+      Math.round(user.averageRating * 20) +
+      (user.asCustomerSuccess + user.asWorkerSuccess) * 5;
     await this.repo.update(userId, { reputationScore: reputation });
   }
 }

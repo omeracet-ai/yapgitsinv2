@@ -1,16 +1,20 @@
 import {
-  Entity, Column, PrimaryGeneratedColumn,
-  CreateDateColumn, UpdateDateColumn,
-  ManyToOne, JoinColumn,
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 
 export enum BookingStatus {
-  PENDING    = 'pending',    // Müşteri oluşturdu, usta onaylamadı
-  CONFIRMED  = 'confirmed',  // Usta kabul etti
-  IN_PROGRESS= 'in_progress',// İş başladı
-  COMPLETED  = 'completed',  // İş tamamlandı
-  CANCELLED  = 'cancelled',  // İptal
+  PENDING = 'pending', // Müşteri oluşturdu, usta onaylamadı
+  CONFIRMED = 'confirmed', // Usta kabul etti
+  IN_PROGRESS = 'in_progress', // İş başladı
+  COMPLETED = 'completed', // İş tamamlandı
+  CANCELLED = 'cancelled', // İptal
 }
 
 @Entity('bookings')
@@ -55,7 +59,11 @@ export class Booking {
   scheduledTime: string | null; // HH:MM
 
   // Durum
-  @Column({ type: 'simple-enum', enum: BookingStatus, default: BookingStatus.PENDING })
+  @Column({
+    type: 'simple-enum',
+    enum: BookingStatus,
+    default: BookingStatus.PENDING,
+  })
   status: BookingStatus;
 
   // Fiyat (usta tarafından veya anlaşma ile belirlenir)
@@ -63,7 +71,7 @@ export class Booking {
   agreedPrice: number | null;
 
   @Column({ type: 'text', nullable: true })
-  workerNote: string | null;  // Ustanın notu
+  workerNote: string | null; // Ustanın notu
 
   @Column({ type: 'text', nullable: true })
   customerNote: string | null;

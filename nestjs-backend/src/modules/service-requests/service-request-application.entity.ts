@@ -11,7 +11,7 @@ import { ServiceRequest } from './service-request.entity';
 import { User } from '../users/user.entity';
 
 export enum ApplicationStatus {
-  PENDING  = 'pending',
+  PENDING = 'pending',
   ACCEPTED = 'accepted',
   REJECTED = 'rejected',
 }

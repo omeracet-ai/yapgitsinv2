@@ -25,7 +25,10 @@ export class AdminController {
     @Param('id') id: string,
     @Body() body: { featuredOrder: number | null },
   ) {
-    return this.adminService.setJobFeaturedOrder(id, body.featuredOrder ?? null);
+    return this.adminService.setJobFeaturedOrder(
+      id,
+      body.featuredOrder ?? null,
+    );
   }
 
   @Get('users')
@@ -51,7 +54,10 @@ export class AdminController {
     @Param('id') id: string,
     @Body() body: { featuredOrder: number | null },
   ) {
-    return this.adminService.setServiceRequestFeaturedOrder(id, body.featuredOrder ?? null);
+    return this.adminService.setServiceRequestFeaturedOrder(
+      id,
+      body.featuredOrder ?? null,
+    );
   }
 
   @Get('categories')

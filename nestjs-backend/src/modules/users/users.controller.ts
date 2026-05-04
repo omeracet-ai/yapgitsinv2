@@ -1,5 +1,12 @@
 import {
-  Controller, Get, Patch, Param, Body, Query, UseGuards, Request,
+  Controller,
+  Get,
+  Patch,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,30 +15,34 @@ import { UsersService } from './users.service';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
 import { Offer, OfferStatus } from '../jobs/offer.entity';
+import { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @Controller('users')
 export class UsersController {
   constructor(
     private readonly svc: UsersService,
-    @InjectRepository(Job)    private jobsRepo:    Repository<Job>,
+    @InjectRepository(Job) private jobsRepo: Repository<Job>,
     @InjectRepository(Review) private reviewsRepo: Repository<Review>,
-    @InjectRepository(Offer)  private offersRepo:  Repository<Offer>,
+    @InjectRepository(Offer) private offersRepo: Repository<Offer>,
   ) {}
 
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
-  async getMe(@Request() req: any) {
+  async getMe(@Request() req: AuthenticatedRequest) {
     const user = await this.svc.findById(req.user.id);
     if (!user) return null;
-    const { passwordHash, ...safe } = user as any;
+    const { passwordHash: _ph, ...safe } = user as {
+      passwordHash?: string;
+    } & typeof user;
     return safe;
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Patch('me')
   async updateMe(
-    @Request() req: any,
-    @Body() body: {
+    @Request() req: AuthenticatedRequest,
+    @Body()
+    body: {
       fullName?: string;
       email?: string;
       phoneNumber?: string;
@@ -46,7 +57,9 @@ export class UsersController {
   ) {
     const updated = await this.svc.update(req.user.id, body);
     if (!updated) return null;
-    const { passwordHash, ...safe } = updated as any;
+    const { passwordHash: _ph, ...safe } = updated as {
+      passwordHash?: string;
+    } & typeof updated;
     return safe;
   }
 
@@ -54,17 +67,20 @@ export class UsersController {
   @Get('workers')
   async getWorkers(
     @Query('category') category?: string,
-    @Query('city')     city?: string,
+    @Query('city') city?: string,
   ) {
     const all = await this.svc.findAll();
-    const workers = all.filter(u =>
-      u.isAvailable &&
-      u.workerCategories?.length &&
-      (category ? u.workerCategories.includes(category) : true) &&
-      (city     ? u.city?.toLowerCase().includes(city.toLowerCase()) : true)
+    const workers = all.filter(
+      (u) =>
+        u.isAvailable &&
+        u.workerCategories?.length &&
+        (category ? u.workerCategories.includes(category) : true) &&
+        (city ? u.city?.toLowerCase().includes(city.toLowerCase()) : true),
     );
-    return workers.map(u => {
-      const { passwordHash, ...safe } = u as any;
+    return workers.map((u) => {
+      const { passwordHash: _ph, ...safe } = u as {
+        passwordHash?: string;
+      } & typeof u;
       return safe;
     });
   }
@@ -77,30 +93,30 @@ export class UsersController {
 
     // ── Son 10 değerlendirme ──────────────────────────────────────────────
     const reviews = await this.reviewsRepo.find({
-      where:     { revieweeId: id },
+      where: { revieweeId: id },
       relations: ['reviewer'],
-      order:     { createdAt: 'DESC' },
-      take:      10,
+      order: { createdAt: 'DESC' },
+      take: 10,
     });
 
     // ── Geçmiş fotoğraflar (4 adet) ──────────────────────────────────────
     // 1) Müşteri olarak verdiği tamamlanmış ilanlardan
     const customerJobs = await this.jobsRepo.find({
-      where:  { customerId: id, status: JobStatus.COMPLETED },
-      order:  { updatedAt: 'DESC' },
-      take:   20,
+      where: { customerId: id, status: JobStatus.COMPLETED },
+      order: { updatedAt: 'DESC' },
+      take: 20,
     });
 
     // 2) Usta olarak kabul edilip tamamlanmış işlerden (offer → job)
     const acceptedOffers = await this.offersRepo.find({
-      where:     { userId: id, status: OfferStatus.ACCEPTED },
+      where: { userId: id, status: OfferStatus.ACCEPTED },
       relations: ['job'],
-      order:     { updatedAt: 'DESC' },
-      take:      20,
+      order: { updatedAt: 'DESC' },
+      take: 20,
     });
     const workerJobs = acceptedOffers
-      .map(o => o.job)
-      .filter(j => j && j.status === JobStatus.COMPLETED);
+      .map((o) => o.job)
+      .filter((j) => j && j.status === JobStatus.COMPLETED);
 
     const allPhotoJobs = [...customerJobs, ...workerJobs];
     const pastPhotos: string[] = [];
@@ -113,26 +129,31 @@ export class UsersController {
 
     // ── Gerçek zamanlı avg (DB'dekini de güncelle) ────────────────────────
     const avgRating = reviews.length
-      ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10
+      ? Math.round(
+          (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10,
+        ) / 10
       : 0;
 
-    const reputation = Math.round(avgRating * 20)
-      + (user.asCustomerSuccess + user.asWorkerSuccess) * 5;
+    const reputation =
+      Math.round(avgRating * 20) +
+      (user.asCustomerSuccess + user.asWorkerSuccess) * 5;
 
-    const { passwordHash, ...safe } = user as any;
+    const { passwordHash: _ph, ...safe } = user as {
+      passwordHash?: string;
+    } & typeof user;
     return {
       ...safe,
-      averageRating:   avgRating,
-      totalReviews:    reviews.length,
+      averageRating: avgRating,
+      totalReviews: reviews.length,
       reputationScore: reputation,
-      reviews: reviews.map(r => ({
-        id:        r.id,
-        rating:    r.rating,
-        comment:   r.comment,
+      reviews: reviews.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        comment: r.comment,
         createdAt: r.createdAt,
         reviewer: {
-          id:              r.reviewer?.id,
-          fullName:        r.reviewer?.fullName,
+          id: r.reviewer?.id,
+          fullName: r.reviewer?.fullName,
           profileImageUrl: r.reviewer?.profileImageUrl,
         },
       })),

@@ -1,11 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job, JobStatus } from './job.entity';
 import { Offer, OfferStatus } from './offer.entity';
 import { UsersService } from '../users/users.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
-import { StatField } from '../users/users.service';
 
 // Geçerli UUID — SQLite ve PostgreSQL uyumlu sabit seed kimliği
 const SEED_USER_ID = '00000000-0000-0000-0000-000000000001';
@@ -48,7 +51,8 @@ export class JobsService {
         },
         {
           title: 'Mutfak Musluk Tamiri',
-          description: 'Musluk su kaçırıyor, conta değişimi veya yenileme gerek.',
+          description:
+            'Musluk su kaçırıyor, conta değişimi veya yenileme gerek.',
           category: 'Tesisat',
           location: 'Beşiktaş, İstanbul',
           budgetMin: 100,
@@ -70,22 +74,34 @@ export class JobsService {
     }
   }
 
-  async findAll(filters?: { category?: string; status?: JobStatus; limit?: number; customerId?: string }): Promise<Job[]> {
+  async findAll(filters?: {
+    category?: string;
+    status?: JobStatus;
+    limit?: number;
+    customerId?: string;
+  }): Promise<Job[]> {
     const query = this.jobsRepository.createQueryBuilder('job');
 
     if (filters?.category) {
-      query.andWhere('job.category = :category', { category: filters.category });
+      query.andWhere('job.category = :category', {
+        category: filters.category,
+      });
     }
     if (filters?.status) {
       query.andWhere('job.status = :status', { status: filters.status });
     }
     if (filters?.customerId) {
-      query.andWhere('job.customerId = :customerId', { customerId: filters.customerId });
+      query.andWhere('job.customerId = :customerId', {
+        customerId: filters.customerId,
+      });
     }
 
     // Öne çıkan ilanlar (featuredOrder 1-3) en üstte, sonra tarihe göre
     query
-      .orderBy('CASE WHEN job.featuredOrder IS NOT NULL THEN 0 ELSE 1 END', 'ASC')
+      .orderBy(
+        'CASE WHEN job.featuredOrder IS NOT NULL THEN 0 ELSE 1 END',
+        'ASC',
+      )
       .addOrderBy('job.featuredOrder', 'ASC')
       .addOrderBy('job.createdAt', 'DESC');
 
@@ -96,31 +112,36 @@ export class JobsService {
     return query.getMany();
   }
 
-  async setFeaturedOrder(id: string, featuredOrder: number | null): Promise<Job> {
-    const job = await this.findOne(id);
+  async setFeaturedOrder(
+    id: string,
+    featuredOrder: number | null,
+  ): Promise<Job> {
+    const job = await this.jobsRepository.findOne({ where: { id } });
+    if (!job) throw new NotFoundException(`İlan bulunamadı: #${id}`);
     job.featuredOrder = featuredOrder;
     return this.jobsRepository.save(job);
   }
 
-  async findOne(id: string): Promise<any> {
+  async findOne(id: string): Promise<Job & { customer?: object }> {
     const job = await this.jobsRepository.findOne({ where: { id } });
     if (!job) throw new NotFoundException(`İlan bulunamadı: #${id}`);
 
-    // İlanı yayınlayan kullanıcı bilgisini ekle
     const customer = await this.usersService.findById(job.customerId);
     if (customer) {
-      const { passwordHash, ...safe } = customer as any;
+      const { passwordHash: _ph, ...safe } = customer as {
+        passwordHash?: string;
+      } & typeof customer;
       return {
         ...job,
         customer: {
-          id:              safe.id,
-          fullName:        safe.fullName,
+          id: safe.id,
+          fullName: safe.fullName,
           profileImageUrl: safe.profileImageUrl,
-          averageRating:   safe.averageRating   ?? 0,
-          totalReviews:    safe.totalReviews    ?? 0,
+          averageRating: safe.averageRating ?? 0,
+          totalReviews: safe.totalReviews ?? 0,
           reputationScore: safe.reputationScore ?? 0,
-          city:            safe.city            ?? '',
-          createdAt:       safe.createdAt,
+          city: safe.city ?? '',
+          createdAt: safe.createdAt,
         },
       };
     }
@@ -128,27 +149,50 @@ export class JobsService {
   }
 
   async create(createJobDto: CreateJobDto, customerId: string): Promise<Job> {
-    const job = this.jobsRepository.create({ ...createJobDto, customerId, status: JobStatus.OPEN });
+    const job = this.jobsRepository.create({
+      ...createJobDto,
+      customerId,
+      status: JobStatus.OPEN,
+    });
     return this.jobsRepository.save(job);
   }
 
-  async update(id: string, updateJobDto: UpdateJobDto): Promise<Job> {
-    const job = await this.findOne(id);
+  async update(
+    id: string,
+    updateJobDto: UpdateJobDto,
+    requesterId?: string,
+  ): Promise<Job> {
+    const job = await this.jobsRepository.findOne({ where: { id } });
+    if (!job) throw new NotFoundException(`İlan bulunamadı: #${id}`);
+    if (requesterId && job.customerId !== requesterId) {
+      throw new ForbiddenException('Bu ilanı düzenleme yetkiniz yok.');
+    }
     const prevStatus = job.status;
     Object.assign(job, updateJobDto);
     const saved = await this.jobsRepository.save(job);
 
     if (updateJobDto.status && updateJobDto.status !== prevStatus) {
-      await this._trackStatusChange(saved.id, saved.customerId, prevStatus, saved.status);
+      await this._trackStatusChange(
+        saved.id,
+        saved.customerId,
+        prevStatus,
+        saved.status,
+      );
     }
 
     return saved;
   }
 
-  private async _trackStatusChange(jobId: string, customerId: string, prev: JobStatus, next: JobStatus) {
+  private async _trackStatusChange(
+    jobId: string,
+    customerId: string,
+    prev: JobStatus,
+    next: JobStatus,
+  ) {
     if (next === JobStatus.COMPLETED) {
-      if (prev !== JobStatus.COMPLETED) await this.usersService.bumpStat(customerId, 'asCustomerTotal' as StatField);
-      await this.usersService.bumpStat(customerId, 'asCustomerSuccess' as StatField);
+      if (prev !== JobStatus.COMPLETED)
+        await this.usersService.bumpStat(customerId, 'asCustomerTotal');
+      await this.usersService.bumpStat(customerId, 'asCustomerSuccess');
       await this.usersService.recalcReputation(customerId);
 
       // Find accepted offer and bump worker stats
@@ -156,12 +200,16 @@ export class JobsService {
         where: { jobId, status: OfferStatus.ACCEPTED },
       });
       if (acceptedOffer) {
-        await this.usersService.bumpStat(acceptedOffer.userId, 'asWorkerSuccess' as StatField);
+        await this.usersService.bumpStat(
+          acceptedOffer.userId,
+          'asWorkerSuccess',
+        );
         await this.usersService.recalcReputation(acceptedOffer.userId);
       }
     } else if (next === JobStatus.CANCELLED) {
-      if (prev !== JobStatus.CANCELLED) await this.usersService.bumpStat(customerId, 'asCustomerTotal' as StatField);
-      await this.usersService.bumpStat(customerId, 'asCustomerFail' as StatField);
+      if (prev !== JobStatus.CANCELLED)
+        await this.usersService.bumpStat(customerId, 'asCustomerTotal');
+      await this.usersService.bumpStat(customerId, 'asCustomerFail');
       await this.usersService.recalcReputation(customerId);
 
       // Find accepted offer and bump worker fail stats
@@ -169,14 +217,18 @@ export class JobsService {
         where: { jobId, status: OfferStatus.ACCEPTED },
       });
       if (acceptedOffer) {
-        await this.usersService.bumpStat(acceptedOffer.userId, 'asWorkerFail' as StatField);
+        await this.usersService.bumpStat(acceptedOffer.userId, 'asWorkerFail');
         await this.usersService.recalcReputation(acceptedOffer.userId);
       }
     }
   }
 
-  async remove(id: string): Promise<void> {
-    const job = await this.findOne(id);
+  async remove(id: string, requesterId?: string): Promise<void> {
+    const job = await this.jobsRepository.findOne({ where: { id } });
+    if (!job) throw new NotFoundException(`İlan bulunamadı: #${id}`);
+    if (requesterId && job.customerId !== requesterId) {
+      throw new ForbiddenException('Bu ilanı silme yetkiniz yok.');
+    }
     await this.jobsRepository.remove(job);
   }
 }

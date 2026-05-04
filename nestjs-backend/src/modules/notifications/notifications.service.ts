@@ -19,10 +19,10 @@ export class NotificationsService {
   }): Promise<Notification> {
     const n = this.repo.create({
       userId: data.userId,
-      type:   data.type,
-      title:  data.title,
-      body:   data.body,
-      refId:  data.refId ?? null,
+      type: data.type,
+      title: data.title,
+      body: data.body,
+      refId: data.refId ?? null,
       isRead: false,
     });
     return this.repo.save(n);

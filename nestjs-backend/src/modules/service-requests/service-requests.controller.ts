@@ -1,9 +1,18 @@
 import {
-  Controller, Get, Post, Patch, Delete,
-  Body, Param, Query, UseGuards, Request,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ServiceRequestsService } from './service-requests.service';
+import { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @Controller('service-requests')
 export class ServiceRequestsController {
@@ -18,7 +27,7 @@ export class ServiceRequestsController {
   /** GET /service-requests/my  — giriş gerekli */
   @UseGuards(AuthGuard('jwt'))
   @Get('my')
-  findMine(@Request() req: any) {
+  findMine(@Request() req: AuthenticatedRequest) {
     return this.svc.findByUser(req.user.id);
   }
 
@@ -31,30 +40,47 @@ export class ServiceRequestsController {
   /** POST /service-requests  — giriş gerekli */
   @UseGuards(AuthGuard('jwt'))
   @Post()
-  create(@Request() req: any, @Body() body: any) {
+  create(
+    @Request() req: AuthenticatedRequest,
+    @Body()
+    body: {
+      title?: string;
+      description?: string;
+      category?: string;
+      categoryId?: string;
+      location?: string;
+      address?: string;
+      imageUrl?: string;
+      price?: number;
+    },
+  ) {
     return this.svc.create(req.user.id, {
-      title:       body.title,
+      title: body.title,
       description: body.description,
-      category:    body.category,
-      categoryId:  body.categoryId,
-      location:    body.location,
-      address:     body.address,
-      imageUrl:    body.imageUrl,
-      price:       body.price,
+      category: body.category,
+      categoryId: body.categoryId,
+      location: body.location,
+      address: body.address,
+      imageUrl: body.imageUrl,
+      price: body.price,
     });
   }
 
   /** PATCH /service-requests/:id */
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
-  update(@Param('id') id: string, @Request() req: any, @Body() body: any) {
+  update(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+    @Body() body: Record<string, unknown>,
+  ) {
     return this.svc.update(id, req.user.id, body);
   }
 
   /** DELETE /service-requests/:id */
   @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
-  remove(@Param('id') id: string, @Request() req: any) {
+  remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.svc.remove(id, req.user.id);
   }
 
@@ -63,7 +89,7 @@ export class ServiceRequestsController {
   /** GET /service-requests/applications/my — işçinin kendi başvuruları */
   @UseGuards(AuthGuard('jwt'))
   @Get('applications/my')
-  getMyApplications(@Request() req: any) {
+  getMyApplications(@Request() req: AuthenticatedRequest) {
     return this.svc.getMyApplications(req.user.id);
   }
 
@@ -72,7 +98,7 @@ export class ServiceRequestsController {
   @Post(':id/apply')
   apply(
     @Param('id') id: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Body() body: { message?: string; price?: number },
   ) {
     return this.svc.createApplication(id, req.user.id, body);
@@ -90,9 +116,9 @@ export class ServiceRequestsController {
   @Patch('applications/:appId/status')
   updateAppStatus(
     @Param('appId') appId: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Body() body: { status: 'accepted' | 'rejected' },
   ) {
-    return this.svc.updateApplicationStatus(appId, req.user.id, body.status as any);
+    return this.svc.updateApplicationStatus(appId, req.user.id, body.status);
   }
 }

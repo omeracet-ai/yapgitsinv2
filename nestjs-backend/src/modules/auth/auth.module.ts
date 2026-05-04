@@ -11,11 +11,11 @@ import { JwtStrategy } from './jwt.strategy';
     UsersModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'super_secret_key',
+      secret: process.env.JWT_SECRET,
     }),
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
   exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}

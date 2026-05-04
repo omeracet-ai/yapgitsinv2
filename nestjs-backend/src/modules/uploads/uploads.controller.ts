@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-return */
 import {
   Controller,
   Post,
@@ -13,39 +14,46 @@ import { AuthGuard } from '@nestjs/passport';
 import { memoryStorage } from 'multer';
 import { join } from 'path';
 import * as fs from 'fs';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+
 const sharp = require('sharp');
 
 function sanitizeName(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9À-ž\-]/g, '')
-    .substring(0, 60) || 'user';
+  return (
+    name
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9À-ž-]/g, '')
+      .substring(0, 60) || 'user'
+  );
 }
 
 const imageFilter = (req: any, file: any, cb: any) => {
   if (!file.mimetype.match(/^image\/(jpeg|jpg|png|webp)$/)) {
-    return cb(new BadRequestException('Sadece resim dosyaları yüklenebilir'), false);
+    return cb(
+      new BadRequestException('Sadece resim dosyaları yüklenebilir'),
+      false,
+    );
   }
   cb(null, true);
 };
 
 @Controller('uploads')
 export class UploadsController {
-
-  /** POST /uploads/job-photos  — iş ilanı fotoğrafları (max 3) */
+  /** POST /uploads/job-photos  — iş ilanı fotoğrafları (sınırsız) */
   @UseGuards(AuthGuard('jwt'))
   @Post('job-photos')
   @UseInterceptors(
-    FilesInterceptor('photos', 3, {
+    FilesInterceptor('photos', 20, {
       storage: memoryStorage(),
       fileFilter: imageFilter,
       limits: { fileSize: 8 * 1024 * 1024 },
     }),
   )
-  async uploadJobPhotos(@UploadedFiles() files: any[], @Req() req: any): Promise<string[]> {
+  async uploadJobPhotos(
+    @UploadedFiles() files: any[],
+    @Req() req: any,
+  ): Promise<string[]> {
     if (!files || files.length === 0) {
       throw new BadRequestException('En az 1 fotoğraf yüklenmelidir');
     }
@@ -60,7 +68,9 @@ export class UploadsController {
         .resize({ width: 1024, withoutEnlargement: true })
         .jpeg({ quality: 75 })
         .toFile(dest);
-      urls.push(`${req.protocol}://${req.get('host')}/uploads/jobs/${filename}`);
+      urls.push(
+        `${req.protocol}://${req.get('host')}/uploads/jobs/${filename}`,
+      );
     }
     return urls;
   }
@@ -75,10 +85,13 @@ export class UploadsController {
       limits: { fileSize: 10 * 1024 * 1024 },
     }),
   )
-  async uploadIdentityPhoto(@UploadedFile() file: any, @Req() req: any): Promise<{ url: string }> {
+  async uploadIdentityPhoto(
+    @UploadedFile() file: any,
+    @Req() req: any,
+  ): Promise<{ url: string }> {
     if (!file) throw new BadRequestException('Kimlik fotoğrafı zorunludur');
 
-    const fullName = req.user?.fullName || 'user';
+    const fullName: string = String(req.user?.fullName || 'user');
     const folder = sanitizeName(fullName);
     const dir = join(process.cwd(), 'uploads', 'identity', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -104,10 +117,13 @@ export class UploadsController {
       limits: { fileSize: 10 * 1024 * 1024 },
     }),
   )
-  async uploadDocument(@UploadedFile() file: any, @Req() req: any): Promise<{ url: string }> {
+  async uploadDocument(
+    @UploadedFile() file: any,
+    @Req() req: any,
+  ): Promise<{ url: string }> {
     if (!file) throw new BadRequestException('Belge fotoğrafı seçilmedi');
 
-    const fullName = req.user?.fullName || 'user';
+    const fullName: string = String(req.user?.fullName || 'user');
     const folder = sanitizeName(fullName);
     const dir = join(process.cwd(), 'uploads', 'identity', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });

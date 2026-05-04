@@ -14,7 +14,7 @@ export class ReviewsService {
 
   async create(data: Partial<Review>): Promise<Review> {
     const review = this.reviewsRepository.create(data);
-    const saved  = await this.reviewsRepository.save(review);
+    const saved = await this.reviewsRepository.save(review);
     // Değerlendirilen kullanıcının puanını otomatik güncelle
     if (saved.revieweeId && typeof saved.rating === 'number') {
       await this.usersService.recalcRating(saved.revieweeId, saved.rating);
@@ -24,17 +24,17 @@ export class ReviewsService {
 
   async findByReviewee(revieweeId: string): Promise<Review[]> {
     return this.reviewsRepository.find({
-      where:     { revieweeId },
+      where: { revieweeId },
       relations: ['reviewer'],
-      order:     { createdAt: 'DESC' },
+      order: { createdAt: 'DESC' },
     });
   }
 
   async findByJob(jobId: string): Promise<Review[]> {
     return this.reviewsRepository.find({
-      where:     { jobId },
+      where: { jobId },
       relations: ['reviewer', 'reviewee'],
-      order:     { createdAt: 'DESC' },
+      order: { createdAt: 'DESC' },
     });
   }
 }

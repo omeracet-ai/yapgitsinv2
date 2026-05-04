@@ -8,18 +8,20 @@ import { ServiceRequest } from '../service-requests/service-request.entity';
 @Injectable()
 export class AdminService {
   constructor(
-    @InjectRepository(Job)            private jobsRepo: Repository<Job>,
-    @InjectRepository(User)           private usersRepo: Repository<User>,
-    @InjectRepository(ServiceRequest) private srRepo: Repository<ServiceRequest>,
+    @InjectRepository(Job) private jobsRepo: Repository<Job>,
+    @InjectRepository(User) private usersRepo: Repository<User>,
+    @InjectRepository(ServiceRequest)
+    private srRepo: Repository<ServiceRequest>,
   ) {}
 
   async getDashboardStats() {
-    const [totalJobs, totalUsers, totalServiceRequests, openServiceRequests] = await Promise.all([
-      this.jobsRepo.count(),
-      this.usersRepo.count(),
-      this.srRepo.count(),
-      this.srRepo.count({ where: { status: 'open' } }),
-    ]);
+    const [totalJobs, totalUsers, totalServiceRequests, openServiceRequests] =
+      await Promise.all([
+        this.jobsRepo.count(),
+        this.usersRepo.count(),
+        this.srRepo.count(),
+        this.srRepo.count({ where: { status: 'open' } }),
+      ]);
     return { totalJobs, totalUsers, totalServiceRequests, openServiceRequests };
   }
 
@@ -34,7 +36,16 @@ export class AdminService {
   async getAllUsers() {
     return this.usersRepo.find({
       order: { createdAt: 'DESC' },
-      select: ['id', 'fullName', 'email', 'phoneNumber', 'isPhoneVerified', 'identityVerified', 'city', 'createdAt'],
+      select: [
+        'id',
+        'fullName',
+        'email',
+        'phoneNumber',
+        'isPhoneVerified',
+        'identityVerified',
+        'city',
+        'createdAt',
+      ],
     });
   }
 
@@ -46,7 +57,10 @@ export class AdminService {
     });
   }
 
-  async setServiceRequestFeaturedOrder(id: string, featuredOrder: number | null) {
+  async setServiceRequestFeaturedOrder(
+    id: string,
+    featuredOrder: number | null,
+  ) {
     return this.srRepo.update(id, { featuredOrder });
   }
 

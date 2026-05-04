@@ -1,6 +1,15 @@
-import { Controller, Post, Get, Body, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ReviewsService } from './reviews.service';
+import { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @Controller('reviews')
 export class ReviewsController {
@@ -8,7 +17,10 @@ export class ReviewsController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post()
-  async create(@Body() data: any, @Request() req: any) {
+  async create(
+    @Body() data: Record<string, unknown>,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.reviewsService.create({ ...data, reviewerId: req.user.id });
   }
 

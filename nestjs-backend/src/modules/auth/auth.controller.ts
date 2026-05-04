@@ -21,7 +21,20 @@ export class AuthController {
 
   /** Yeni kullanıcı / işçi kaydı */
   @Post('register')
-  register(@Body() body: any) {
+  register(
+    @Body()
+    body: {
+      email?: string;
+      phoneNumber: string;
+      password: string;
+      fullName?: string;
+      birthDate?: string;
+      gender?: string;
+      city?: string;
+      district?: string;
+      address?: string;
+    },
+  ) {
     return this.authService.register(body);
   }
 }
