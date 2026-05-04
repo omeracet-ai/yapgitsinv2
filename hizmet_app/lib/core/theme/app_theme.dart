@@ -8,8 +8,7 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         primary: AppColors.primary,
-        surface: AppColors.surface,
-        background: AppColors.background,
+        surface: AppColors.background, // background artık surface üzerinden belirtiliyor
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.background,

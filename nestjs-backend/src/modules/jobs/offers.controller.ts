@@ -11,7 +11,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { OffersService } from './offers.service';
 import { OfferStatus } from './offer.entity';
-import { AuthenticatedRequest } from '../../common/types/auth.types';
+import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 /** GET /offers/my — işçinin kendi teklifleri, iş detaylarıyla */
 @Controller('offers')

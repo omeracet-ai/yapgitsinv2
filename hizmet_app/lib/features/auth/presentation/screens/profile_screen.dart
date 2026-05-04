@@ -306,6 +306,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  // ignore: unused_element — token banner feature reserved for future use
   Widget _buildTokenBanner(BuildContext context, WidgetRef ref) {
     final balanceAsync = ref.watch(tokenBalanceProvider);
     return GestureDetector(

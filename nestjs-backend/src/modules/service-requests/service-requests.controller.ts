@@ -12,7 +12,8 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ServiceRequestsService } from './service-requests.service';
-import { AuthenticatedRequest } from '../../common/types/auth.types';
+import { ApplicationStatus } from './service-request-application.entity';
+import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @Controller('service-requests')
 export class ServiceRequestsController {
@@ -117,7 +118,7 @@ export class ServiceRequestsController {
   updateAppStatus(
     @Param('appId') appId: string,
     @Request() req: AuthenticatedRequest,
-    @Body() body: { status: 'accepted' | 'rejected' },
+    @Body() body: { status: ApplicationStatus },
   ) {
     return this.svc.updateApplicationStatus(appId, req.user.id, body.status);
   }

@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/job_repository.dart';
 
 class JobStatus {
+  // ignore: constant_identifier_names
   static const String OPEN      = 'open';
+  // ignore: constant_identifier_names
   static const String CLOSED    = 'closed';
+  // ignore: constant_identifier_names
   static const String COMPLETED = 'completed';
+  // ignore: constant_identifier_names
   static const String CANCELLED = 'cancelled';
 }
 

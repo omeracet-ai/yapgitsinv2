@@ -10,6 +10,7 @@ import '../providers/job_provider.dart';
 import '../../../categories/data/category_repository.dart';
 import '../../../photos/data/photo_repository.dart';
 import '../../../photos/presentation/widgets/job_photo_picker.dart';
+import '../../../ai/data/ai_repository.dart';
 
 class PostJobScreen extends ConsumerStatefulWidget {
   const PostJobScreen({super.key});
@@ -34,8 +35,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   List<File> _selectedPhotos = [];
   List<String> _uploadedPhotoUrls = [];
   bool _uploading = false;
+  bool _aiLoading = false;
 
-  static const int _requiredPhotoCount = 3;
 
   @override
   void dispose() {
@@ -155,16 +156,13 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       if (!(_formKey.currentState?.validate() ?? false)) return;
       setState(() => _currentStep++);
     } else if (_currentStep == 2) {
-      // Fotoğraf adımı: 3 fotoğraf zorunlu
-      if (_selectedPhotos.length < _requiredPhotoCount) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(
-              '$_requiredPhotoCount fotoğraf eklemelisiniz (${_selectedPhotos.length}/$_requiredPhotoCount)'),
-          backgroundColor: Colors.orange,
-        ));
+      // Fotoğraf adımı: en az 1 fotoğraf zorunlu
+      if (_selectedPhotos.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('En az 1 fotoğraf eklemelisiniz')),
+        );
         return;
       }
-      // Yükle
       setState(() => _uploading = true);
       try {
         final urls = await ref
@@ -233,32 +231,94 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
   Widget _buildDetailsStep() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TextFormField(
           controller: _titleController,
           decoration: const InputDecoration(
               labelText: 'İş Başlığı',
               hintText: 'Örn: 3+1 Daire Boyatma'),
-          validator: (v) =>
-              v?.isEmpty ?? true ? 'Boş bırakılamaz' : null,
+          validator: (v) => v?.isEmpty ?? true ? 'Boş bırakılamaz' : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _descController,
           maxLines: 3,
-          decoration:
-              const InputDecoration(labelText: 'Açıklama'),
-          validator: (v) =>
-              v?.isEmpty ?? true ? 'Boş bırakılamaz' : null,
+          decoration: const InputDecoration(labelText: 'Açıklama'),
+          validator: (v) => v?.isEmpty ?? true ? 'Boş bırakılamaz' : null,
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: _aiLoading ? null : _fillWithAI,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            side: const BorderSide(color: AppColors.primary),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          icon: _aiLoading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                )
+              : const Icon(Icons.auto_awesome, size: 18),
+          label: Text(_aiLoading ? 'AI hazırlıyor…' : 'AI ile Otomatik Doldur'),
         ),
       ],
     );
   }
 
+  Future<void> _fillWithAI() async {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Önce bir iş başlığı girin')),
+      );
+      return;
+    }
+    setState(() => _aiLoading = true);
+    try {
+      final result = await ref.read(aiRepositoryProvider).jobAssistant(
+            title: title,
+            category: _selectedCategory,
+            location: _locationController.text.isEmpty ? null : _locationController.text,
+          );
+      if (!mounted) return;
+      setState(() {
+        if (_descController.text.isEmpty) {
+          _descController.text = result.description;
+        }
+        if (_budgetController.text.isEmpty && result.suggestedBudgetMin > 0) {
+          _budgetController.text = result.suggestedBudgetMin.toString();
+        }
+      });
+      if (result.tips.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('💡 ${result.tips}'),
+            duration: const Duration(seconds: 5),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _aiLoading = false);
+    }
+  }
+
   Widget _buildPhotosStep() {
     return JobPhotoPicker(
       initialFiles: _selectedPhotos,
-      requiredCount: _requiredPhotoCount,
       onChanged: (files) => setState(() => _selectedPhotos = files),
     );
   }

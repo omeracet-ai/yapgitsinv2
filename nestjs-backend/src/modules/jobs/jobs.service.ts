@@ -122,7 +122,7 @@ export class JobsService {
     return this.jobsRepository.save(job);
   }
 
-  async findOne(id: string): Promise<Job & { customer?: object }> {
+  async findOne(id: string): Promise<Job> {
     const job = await this.jobsRepository.findOne({ where: { id } });
     if (!job) throw new NotFoundException(`İlan bulunamadı: #${id}`);
 
@@ -131,19 +131,16 @@ export class JobsService {
       const { passwordHash: _ph, ...safe } = customer as {
         passwordHash?: string;
       } & typeof customer;
-      return {
-        ...job,
-        customer: {
-          id: safe.id,
-          fullName: safe.fullName,
-          profileImageUrl: safe.profileImageUrl,
-          averageRating: safe.averageRating ?? 0,
-          totalReviews: safe.totalReviews ?? 0,
-          reputationScore: safe.reputationScore ?? 0,
-          city: safe.city ?? '',
-          createdAt: safe.createdAt,
-        },
-      };
+      job.customer = {
+        id: safe.id,
+        fullName: safe.fullName,
+        profileImageUrl: safe.profileImageUrl,
+        averageRating: safe.averageRating ?? 0,
+        totalReviews: safe.totalReviews ?? 0,
+        reputationScore: safe.reputationScore ?? 0,
+        city: safe.city ?? '',
+        createdAt: safe.createdAt,
+      } as unknown as typeof job.customer;
     }
     return job;
   }

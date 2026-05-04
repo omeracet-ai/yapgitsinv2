@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// ignore: library_prefixes
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../../core/constants/api_constants.dart';
 
@@ -15,8 +17,8 @@ class ChatService {
         .build()
     );
 
-    socket.onConnect((_) => print('Connected to socket.io'));
-    socket.onDisconnect((_) => print('Disconnected from socket.io'));
+    socket.onConnect((_) => debugPrint('Connected to socket.io'));
+    socket.onDisconnect((_) => debugPrint('Disconnected from socket.io'));
   }
 
   void sendMessage(String to, String from, String message) {

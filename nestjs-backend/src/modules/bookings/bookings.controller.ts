@@ -11,7 +11,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { BookingsService } from './bookings.service';
 import { BookingStatus } from './booking.entity';
-import { AuthenticatedRequest } from '../../common/types/auth.types';
+import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('bookings')
@@ -35,12 +35,12 @@ export class BookingsController {
     },
   ) {
     return this.svc.create(req.user.id, {
-      workerId: body.workerId,
-      category: body.category,
+      workerId: body.workerId ?? '',
+      category: body.category ?? '',
       subCategory: body.subCategory,
-      description: body.description,
-      address: body.address,
-      scheduledDate: body.scheduledDate,
+      description: body.description ?? '',
+      address: body.address ?? '',
+      scheduledDate: body.scheduledDate ?? '',
       scheduledTime: body.scheduledTime,
       customerNote: body.customerNote,
     });

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 
@@ -134,14 +135,11 @@ class _HelpScreenState extends State<HelpScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _contactCard(
-                icon: Icons.chat_bubble_outline_rounded,
-                label: 'Canlı Destek',
-                sub: 'Pazartesi – Cuma  09:00 – 18:00',
+                icon: Icons.smart_toy_outlined,
+                label: 'AI Destek Asistanı',
+                sub: '7/24 anında yanıt',
                 color: AppColors.primary,
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Canlı destek yakında aktif olacak.')));
-                },
+                onTap: () => context.push('/support'),
                 full: true,
               ),
             ),

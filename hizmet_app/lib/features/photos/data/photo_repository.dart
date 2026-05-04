@@ -19,16 +19,17 @@ class PhotoRepository {
           receiveTimeout: const Duration(seconds: 30),
         ));
 
-  /// Maksimum 3 fotoğraf yükler, URL listesi döner
   Future<List<String>> uploadJobPhotos(List<File> files) async {
     try {
       final token = await _authRepository.getToken();
       final formData = FormData();
       for (final file in files) {
-        final name = file.path.split(Platform.pathSeparator).last;
+        final bytes = await file.readAsBytes();
+        final ext = file.path.contains('.') ? file.path.split('.').last.toLowerCase() : 'jpg';
+        final filename = 'photo_${DateTime.now().millisecondsSinceEpoch}.${ext.length <= 4 ? ext : 'jpg'}';
         formData.files.add(MapEntry(
           'photos',
-          await MultipartFile.fromFile(file.path, filename: name),
+          MultipartFile.fromBytes(bytes, filename: filename),
         ));
       }
       final response = await _dio.post(

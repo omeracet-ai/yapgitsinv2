@@ -16,7 +16,7 @@ import { OffersService } from './offers.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
 import { JobStatus } from './job.entity';
 import { OfferStatus } from './offer.entity';
-import { AuthenticatedRequest } from '../../common/types/auth.types';
+import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @Controller('jobs')
 export class JobsController {

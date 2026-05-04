@@ -74,8 +74,6 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
   bool   _loading  = false;
   String? _error;
 
-  String? _registeredToken; // kayıt sonrası token
-
   @override
   void dispose() {
     _nameCtrl.dispose(); _emailCtrl.dispose(); _phoneCtrl.dispose();

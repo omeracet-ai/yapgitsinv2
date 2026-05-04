@@ -9,7 +9,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { TokensService } from './tokens.service';
 import { PaymentMethod } from './token-transaction.entity';
-import { AuthenticatedRequest } from '../../common/types/auth.types';
+import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @Controller('tokens')
 @UseGuards(AuthGuard('jwt'))

@@ -1,7 +1,7 @@
 import { Body, Controller, Post, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AiService } from './ai.service';
-import { AuthenticatedRequest } from '../../common/types/auth.types';
+import type { AuthenticatedRequest } from '../../common/types/auth.types';
 import {
   AiChatDto,
   GenerateJobDescriptionDto,

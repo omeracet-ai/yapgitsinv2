@@ -154,8 +154,9 @@ class ServiceRequestRepository {
   Future<String> uploadJobPhoto(File file) async {
     try {
       final token = await _token();
+      final bytes = await file.readAsBytes();
       final formData = FormData.fromMap({
-        'photos': await MultipartFile.fromFile(file.path, filename: 'photo.jpg'),
+        'photos': MultipartFile.fromBytes(bytes, filename: 'photo.jpg'),
       });
       final response = await _dio.post(
         '/uploads/job-photos',
@@ -172,8 +173,9 @@ class ServiceRequestRepository {
   Future<String> uploadIdentityPhoto(File file) async {
     try {
       final token = await _token();
+      final bytes = await file.readAsBytes();
       final formData = FormData.fromMap({
-        'photo': await MultipartFile.fromFile(file.path, filename: 'kimlik.jpg'),
+        'photo': MultipartFile.fromBytes(bytes, filename: 'kimlik.jpg'),
       });
       final response = await _dio.post(
         '/uploads/identity-photo',
@@ -189,8 +191,9 @@ class ServiceRequestRepository {
   Future<String> uploadDocument(File file) async {
     try {
       final token = await _token();
+      final bytes = await file.readAsBytes();
       final formData = FormData.fromMap({
-        'photo': await MultipartFile.fromFile(file.path, filename: 'belge.jpg'),
+        'photo': MultipartFile.fromBytes(bytes, filename: 'belge.jpg'),
       });
       final response = await _dio.post(
         '/uploads/document',
