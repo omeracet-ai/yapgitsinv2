@@ -222,10 +222,11 @@ export class JobsService {
     radiusKm: number = 20,
     category?: string,
   ): Promise<(Job & { distanceKm: number })[]> {
+    // SQLite positional params — dataSource.query() uses ? placeholders
     const haversine = `(6371 * acos(
-      cos(radians(:lat)) * cos(radians(j.latitude)) *
-      cos(radians(j.longitude) - radians(:lng)) +
-      sin(radians(:lat)) * sin(radians(j.latitude))
+      cos(radians(?)) * cos(radians(j.latitude)) *
+      cos(radians(j.longitude) - radians(?)) +
+      sin(radians(?)) * sin(radians(j.latitude))
     ))`;
 
     let sql = `
@@ -234,14 +235,15 @@ export class JobsService {
       WHERE j.latitude IS NOT NULL
         AND j.longitude IS NOT NULL
         AND j.status = 'open'
-        AND ${haversine} <= :radiusKm
+        AND ${haversine} <= ?
     `;
 
-    const params: Record<string, unknown> = { lat, lng, radiusKm };
+    // lat, lng appear twice (distance calc + WHERE), radiusKm at end
+    const params: unknown[] = [lat, lng, lat, lat, lng, lat, radiusKm];
 
     if (category) {
-      sql += ` AND LOWER(j.category) = LOWER(:category)`;
-      params.category = category;
+      sql += ` AND LOWER(j.category) = LOWER(?)`;
+      params.push(category);
     }
 
     sql += ` ORDER BY distanceKm ASC LIMIT 50`;

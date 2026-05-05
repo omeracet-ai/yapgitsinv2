@@ -57,7 +57,7 @@ export class JobsController {
   async getNotifications(@Request() req: AuthenticatedRequest) {
     const userId: string = req.user.id;
     // Kullanıcının kendi verdiği tekliflerin durum değişimleri
-    const myOffers = await this.offersService.findByUser(userId);
+    const { data: myOffers } = await this.offersService.findByUser(userId);
     const offerNotifs = myOffers
       .filter((o) => o.status !== OfferStatus.PENDING)
       .map((o) => ({

@@ -34,7 +34,7 @@ export class OffersService {
   }
 
   async findByProvider(userId: string): Promise<Offer[]> {
-    return this.findByUser(userId);
+    return (await this.findByUser(userId)).data;
   }
 
   async findOffersByCustomer(customerId: string): Promise<Offer[]> {
