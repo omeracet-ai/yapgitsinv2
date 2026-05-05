@@ -10,8 +10,12 @@ import { JwtStrategy } from './jwt.strategy';
   imports: [
     UsersModule,
     PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
+    JwtModule.registerAsync({
+      useFactory: () => {
+        const secret = process.env.JWT_SECRET;
+        if (!secret) throw new Error('JWT_SECRET ortam değişkeni tanımlanmamış');
+        return { secret };
+      },
     }),
   ],
   providers: [AuthService, JwtStrategy],

@@ -6,10 +6,12 @@ import { JwtPayload, AuthUser } from '../../common/types/auth.types';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error('JWT_SECRET ortam değişkeni tanımlanmamış');
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: true,
-      secretOrKey: process.env.JWT_SECRET || 'super_secret_key',
+      ignoreExpiration: false,
+      secretOrKey: secret,
     });
   }
 
