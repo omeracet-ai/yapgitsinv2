@@ -6,15 +6,22 @@ import '../../data/offer_repository.dart';
 import '../providers/job_provider.dart';
 import 'job_detail_screen.dart';
 
+/// AppBar'sız versiyon — TabBarView içinde kullanılır
+class JobOpportunitiesBody extends JobOpportunitiesScreen {
+  const JobOpportunitiesBody({super.key}) : super(showAppBar: false);
+}
+
 /// Usta için açık ilanlar (bid verebileceği işler)
 class JobOpportunitiesScreen extends ConsumerStatefulWidget {
-  const JobOpportunitiesScreen({super.key});
+  final bool showAppBar;
+  const JobOpportunitiesScreen({super.key, this.showAppBar = true});
 
   @override
   ConsumerState<JobOpportunitiesScreen> createState() => _JobOpportunitiesScreenState();
 }
 
 class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen> {
+  bool get _showAppBar => widget.showAppBar;
   String? _selectedCategory;
 
   @override
@@ -31,18 +38,20 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('İş Fırsatları'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.read(jobsProvider.notifier).fetchJobs(),
-          ),
-        ],
-      ),
+      appBar: _showAppBar
+          ? AppBar(
+              title: const Text('İş Fırsatları'),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => ref.read(jobsProvider.notifier).fetchJobs(),
+                ),
+              ],
+            )
+          : null,
       body: Column(
         children: [
           // ── Kategori filtresi ────────────────────────────────────────────

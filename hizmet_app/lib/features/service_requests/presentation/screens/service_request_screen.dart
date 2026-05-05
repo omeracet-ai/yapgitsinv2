@@ -11,6 +11,28 @@ final serviceRequestsProvider =
   return ref.watch(serviceRequestRepositoryProvider).getAll();
 });
 
+/// AppBar'sız versiyon — TabBarView içinde kullanılır
+class ServiceRequestBody extends ConsumerWidget {
+  const ServiceRequestBody({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final requestsAsync = ref.watch(serviceRequestsProvider);
+    final isLoggedIn = ref.watch(authStateProvider) is AuthAuthenticated;
+    return _ServiceRequestScaffold(
+      requestsAsync: requestsAsync,
+      isLoggedIn: isLoggedIn,
+      showAppBar: false,
+      onRefresh: () async => ref.invalidate(serviceRequestsProvider),
+      onAddTap: () async {
+        await Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const PostServiceRequestScreen()));
+        ref.invalidate(serviceRequestsProvider);
+      },
+    );
+  }
+}
+
 class ServiceRequestScreen extends ConsumerWidget {
   const ServiceRequestScreen({super.key});
 
@@ -20,37 +42,55 @@ class ServiceRequestScreen extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
     final isLoggedIn = authState is AuthAuthenticated;
 
+    return _ServiceRequestScaffold(
+      requestsAsync: requestsAsync,
+      isLoggedIn: isLoggedIn,
+      showAppBar: true,
+      onRefresh: () async => ref.invalidate(serviceRequestsProvider),
+      onAddTap: () async {
+        await Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const PostServiceRequestScreen()));
+        ref.invalidate(serviceRequestsProvider);
+      },
+    );
+  }
+}
+
+class _ServiceRequestScaffold extends StatelessWidget {
+  final AsyncValue<List<Map<String, dynamic>>> requestsAsync;
+  final bool isLoggedIn;
+  final bool showAppBar;
+  final Future<void> Function() onRefresh;
+  final VoidCallback onAddTap;
+
+  const _ServiceRequestScaffold({
+    required this.requestsAsync,
+    required this.isLoggedIn,
+    required this.showAppBar,
+    required this.onRefresh,
+    required this.onAddTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Hizmet Al',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          if (isLoggedIn)
-            IconButton(
-              icon: const Icon(Icons.filter_list),
-              onPressed: () {},
-            ),
-        ],
-      ),
+      appBar: showAppBar
+          ? AppBar(
+              title: const Text('Hizmet Al',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+            )
+          : null,
       floatingActionButton: isLoggedIn
           ? FloatingActionButton.extended(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const PostServiceRequestScreen()),
-                );
-                ref.invalidate(serviceRequestsProvider);
-              },
+              onPressed: onAddTap,
               backgroundColor: AppColors.primary,
               icon: const Icon(Icons.add, color: Colors.white),
               label: const Text('İlan Ver',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             )
           : null,
       body: requestsAsync.when(
@@ -62,12 +102,10 @@ class ServiceRequestScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.handshake_outlined,
-                      size: 72, color: Colors.grey.shade300),
+                  Icon(Icons.handshake_outlined, size: 72, color: Colors.grey.shade300),
                   const SizedBox(height: 16),
                   const Text('Henüz hizmet ilanı yok',
-                      style: TextStyle(
-                          fontSize: 16, color: AppColors.textSecondary)),
+                      style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
                   const SizedBox(height: 8),
                   const Text('İlk ilanı siz verin!',
                       style: TextStyle(color: AppColors.textHint)),
@@ -75,18 +113,14 @@ class ServiceRequestScreen extends ConsumerWidget {
               ),
             );
           }
-
-          // Öne çıkanları ayır
           final featured = requests
               .where((r) => r['featuredOrder'] != null)
               .toList()
-            ..sort((a, b) => (a['featuredOrder'] as int)
-                .compareTo(b['featuredOrder'] as int));
-          final regular =
-              requests.where((r) => r['featuredOrder'] == null).toList();
+            ..sort((a, b) => (a['featuredOrder'] as int).compareTo(b['featuredOrder'] as int));
+          final regular = requests.where((r) => r['featuredOrder'] == null).toList();
 
           return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(serviceRequestsProvider),
+            onRefresh: onRefresh,
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [

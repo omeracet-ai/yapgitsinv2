@@ -3,15 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/providers/navigation_provider.dart';
-import '../../../jobs/presentation/screens/my_jobs_screen.dart';
 import '../../../auth/presentation/screens/profile_screen.dart';
 import '../../../notifications/presentation/screens/notification_screen.dart';
-import '../../../jobs/presentation/screens/job_detail_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../jobs/presentation/providers/job_provider.dart';
 import '../../../categories/data/category_repository.dart';
-import '../../../service_requests/presentation/screens/service_request_screen.dart';
+import 'hizmet_al_screen.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -24,7 +21,8 @@ class _MainShellState extends ConsumerState<MainShell> {
   void _onItemTapped(int index) {
     final authState = ref.read(authStateProvider);
     final isLoggedIn = authState is AuthAuthenticated;
-    if ((index == 2 || index == 3) && !isLoggedIn) {
+    // Bildirimler (index 2) giriş gerektiriyor
+    if (index == 2 && !isLoggedIn) {
       context.push('/login', extra: {'returnTo': '/'});
       return;
     }
@@ -44,8 +42,7 @@ class _MainShellState extends ConsumerState<MainShell> {
 
     final List<Widget> pages = [
       _HomeTab(onSeeAllRequests: () => _onItemTapped(1)),
-      const ServiceRequestScreen(),
-      const MyJobsScreen(),
+      const HizmetAlScreen(),
       const NotificationScreen(),
       const ProfileScreen(),
     ];
@@ -65,11 +62,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           const BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Keşfet'),
           const BottomNavigationBarItem(
-              icon: Icon(Icons.handshake_outlined), activeIcon: Icon(Icons.handshake), label: 'Hizmet Al'),
-          BottomNavigationBarItem(
-              icon: isLoggedIn ? const Icon(Icons.assignment_outlined) : const Icon(Icons.lock_outline),
-              activeIcon: const Icon(Icons.assignment),
-              label: 'İşlerim'),
+              icon: Icon(Icons.construction_outlined), activeIcon: Icon(Icons.construction), label: 'Yapgitsin'),
           BottomNavigationBarItem(
               icon: isLoggedIn ? const Icon(Icons.notifications_outlined) : const Icon(Icons.lock_outline),
               activeIcon: const Icon(Icons.notifications),
@@ -102,7 +95,6 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
     final authState = ref.watch(authStateProvider);
     final userName = authState is AuthAuthenticated ? authState.displayName : null;
     final isLoggedIn = authState is AuthAuthenticated;
-    final jobsAsync = ref.watch(jobsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -132,7 +124,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.read(jobsProvider.notifier).fetchJobs(),
+        onRefresh: () async {},
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
@@ -230,150 +222,104 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
 
               const SizedBox(height: 24),
 
-              // Öne Çıkan Hizmet İlanları
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Öne Çıkan İlanlar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    TextButton(
-                      onPressed: widget.onSeeAllRequests,
-                      child: const Text('Tümünü Gör', style: TextStyle(color: AppColors.primary)),
-                    ),
-                  ],
-                ),
-              ),
-              ref.watch(serviceRequestsProvider).when(
-                data: (requests) {
-                  final featured = requests.where((r) => r['featuredOrder'] != null).toList()
-                    ..sort((a, b) => (a['featuredOrder'] as int).compareTo(b['featuredOrder'] as int));
-                  if (featured.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: GestureDetector(
-                        onTap: widget.onSeeAllRequests,
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade200),
-                          ),
-                          child: Row(children: [
-                            Icon(Icons.handshake_outlined, color: Colors.grey.shade400, size: 20),
-                            const SizedBox(width: 8),
-                            Text('Tüm hizmet ilanlarını gör', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
-                            const Spacer(),
-                            Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 18),
-                          ]),
-                        ),
-                      ),
-                    );
-                  }
-                  return SizedBox(
-                    height: 148,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: featured.length,
-                      itemBuilder: (_, i) {
-                        final item = featured[i];
-                        final title    = item['title']?.toString() ?? '';
-                        final location = item['location']?.toString() ?? '';
-                        final initials = title.isNotEmpty
-                            ? title.split(' ').take(2).map((w) => w.isNotEmpty ? w[0] : '').join().toUpperCase()
-                            : '?';
-                        return GestureDetector(
-                          onTap: widget.onSeeAllRequests,
-                          child: Container(
-                            width: 110,
-                            margin: const EdgeInsets.only(right: 12),
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.amber.shade200, width: 1.5),
-                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                CircleAvatar(
-                                  radius: 24,
-                                  backgroundColor: AppColors.primaryLight,
-                                  child: Text(initials, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primary)),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(title, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                                const SizedBox(height: 3),
-                                Text(location, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
-                                Container(
-                                  margin: const EdgeInsets.only(top: 4),
-                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                  decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(6)),
-                                  child: Text('⭐ Öne Çıkan', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.amber.shade700)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ).animate().fade().scale(delay: (i * 80).ms);
-                      },
-                    ),
-                  );
-                },
-                loading: () => const SizedBox(height: 130, child: Center(child: CircularProgressIndicator())),
-                error: (_, __) => const SizedBox.shrink(),
-              ),
+              // TODO: Öne Çıkan İlanlar — gerektiğinde aşağıdaki bloğu geri aç
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(horizontal: 16),
+              //   child: Row(
+              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //     children: [
+              //       const Text('Öne Çıkan İlanlar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              //       TextButton(
+              //         onPressed: widget.onSeeAllRequests,
+              //         child: const Text('Tümünü Gör', style: TextStyle(color: AppColors.primary)),
+              //       ),
+              //     ],
+              //   ),
+              // ),
+              // ref.watch(serviceRequestsProvider).when(
+              //   data: (requests) {
+              //     final featured = requests.where((r) => r['featuredOrder'] != null).toList()
+              //       ..sort((a, b) => (a['featuredOrder'] as int).compareTo(b['featuredOrder'] as int));
+              //     if (featured.isEmpty) {
+              //       return Padding(
+              //         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              //         child: GestureDetector(
+              //           onTap: widget.onSeeAllRequests,
+              //           child: Container(
+              //             padding: const EdgeInsets.all(14),
+              //             decoration: BoxDecoration(
+              //               color: Colors.grey.shade50,
+              //               borderRadius: BorderRadius.circular(12),
+              //               border: Border.all(color: Colors.grey.shade200),
+              //             ),
+              //             child: Row(children: [
+              //               Icon(Icons.handshake_outlined, color: Colors.grey.shade400, size: 20),
+              //               const SizedBox(width: 8),
+              //               Text('Tüm hizmet ilanlarını gör', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+              //               const Spacer(),
+              //               Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 18),
+              //             ]),
+              //           ),
+              //         ),
+              //       );
+              //     }
+              //     return SizedBox(
+              //       height: 148,
+              //       child: ListView.builder(
+              //         scrollDirection: Axis.horizontal,
+              //         padding: const EdgeInsets.symmetric(horizontal: 16),
+              //         itemCount: featured.length,
+              //         itemBuilder: (_, i) {
+              //           final item = featured[i];
+              //           final title    = item['title']?.toString() ?? '';
+              //           final location = item['location']?.toString() ?? '';
+              //           final initials = title.isNotEmpty
+              //               ? title.split(' ').take(2).map((w) => w.isNotEmpty ? w[0] : '').join().toUpperCase()
+              //               : '?';
+              //           return GestureDetector(
+              //             onTap: widget.onSeeAllRequests,
+              //             child: Container(
+              //               width: 110,
+              //               margin: const EdgeInsets.only(right: 12),
+              //               padding: const EdgeInsets.all(10),
+              //               decoration: BoxDecoration(
+              //                 color: Colors.white,
+              //                 borderRadius: BorderRadius.circular(14),
+              //                 border: Border.all(color: Colors.amber.shade200, width: 1.5),
+              //                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
+              //               ),
+              //               child: Column(
+              //                 mainAxisAlignment: MainAxisAlignment.center,
+              //                 children: [
+              //                   CircleAvatar(
+              //                     radius: 24,
+              //                     backgroundColor: AppColors.primaryLight,
+              //                     child: Text(initials, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primary)),
+              //                   ),
+              //                   const SizedBox(height: 6),
+              //                   Text(title, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+              //                       style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              //                   const SizedBox(height: 3),
+              //                   Text(location, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
+              //                       style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+              //                   Container(
+              //                     margin: const EdgeInsets.only(top: 4),
+              //                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              //                     decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(6)),
+              //                     child: Text('⭐ Öne Çıkan', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.amber.shade700)),
+              //                   ),
+              //                 ],
+              //               ),
+              //             ),
+              //           ).animate().fade().scale(delay: (i * 80).ms);
+              //         },
+              //       ),
+              //     );
+              //   },
+              //   loading: () => const SizedBox(height: 130, child: Center(child: CircularProgressIndicator())),
+              //   error: (_, __) => const SizedBox.shrink(),
+              // ),
 
-              const SizedBox(height: 24),
-
-              // Son İş İlanları
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _selectedCategory != null ? '$_selectedCategory İlanları' : 'Son İş İlanları',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    TextButton(
-                      onPressed: () => context.push('/post-job'),
-                      child: const Text('+ İlan Ver', style: TextStyle(color: AppColors.primary)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              jobsAsync.when(
-                data: (jobs) {
-                  final filtered = _selectedCategory != null
-                      ? jobs.where((j) => j.category == _selectedCategory).toList()
-                      : jobs;
-                  if (filtered.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          _selectedCategory != null ? '$_selectedCategory kategorisinde ilan yok.' : 'Henüz ilan yok.',
-                          style: const TextStyle(color: AppColors.textHint, fontSize: 13),
-                        ),
-                      ),
-                    );
-                  }
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filtered.length > 8 ? 8 : filtered.length,
-                    itemBuilder: (_, i) => _RecentJobCard(job: filtered[i]),
-                  );
-                },
-                loading: () => const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
-                error: (e, _) => Center(child: Text('Hata: $e')),
-              ),
               const SizedBox(height: 32),
             ],
           ),
@@ -403,7 +349,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                   boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5))],
                 ),
                 child: TextField(
-                  onChanged: (v) => ref.read(jobsProvider.notifier).filterJobs(v),
+                  onChanged: (_) {},
                   onSubmitted: (_) {},
                   decoration: const InputDecoration(
                     hintText: 'Hangi hizmete ihtiyacınız var?',
@@ -549,47 +495,3 @@ class _CategoryItem extends StatelessWidget {
   }
 }
 
-class _RecentJobCard extends StatelessWidget {
-  final Job job;
-  const _RecentJobCard({required this.job});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(
-          builder: (_) => JobDetailScreen(
-              id: job.id, title: job.title, description: job.desc,
-              location: job.location, budget: job.budget, category: job.category,
-              postedAt: job.time, icon: job.icon, color: job.color,
-              isFeatured: job.isFeatured, customerId: job.customerId,
-              photos: job.photos ?? []))),
-      child: Container(
-        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-            color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: job.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-              child: Icon(job.icon, color: job.color, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(job.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  const SizedBox(height: 4),
-                  Text(job.location, style: const TextStyle(color: AppColors.textHint, fontSize: 12)),
-                ],
-              ),
-            ),
-            Text(job.budget, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
-}

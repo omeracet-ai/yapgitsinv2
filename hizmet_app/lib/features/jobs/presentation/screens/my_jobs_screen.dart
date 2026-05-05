@@ -22,8 +22,14 @@ final myOffersProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
+/// AppBar'sız versiyon — TabBarView içinde kullanılır
+class MyJobsBody extends MyJobsScreen {
+  const MyJobsBody({super.key}) : super(showAppBar: false);
+}
+
 class MyJobsScreen extends ConsumerWidget {
-  const MyJobsScreen({super.key});
+  final bool showAppBar;
+  const MyJobsScreen({super.key, this.showAppBar = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,34 +43,31 @@ class MyJobsScreen extends ConsumerWidget {
     final userId = user['id'] as String;
     final asWorkerTotal = (user['asWorkerTotal'] as num?)?.toInt() ?? 0;
 
-    // Show worker tab if user has any worker activity
     if (asWorkerTotal > 0) {
-      return _DualRoleView(userId: userId);
+      return _DualRoleView(userId: userId, showAppBar: showAppBar);
     }
-
-    // Otherwise check if user has any offers (async check via the offers provider)
-    return _DualRoleCheckView(userId: userId);
+    return _DualRoleCheckView(userId: userId, showAppBar: showAppBar);
   }
 }
 
 /// Checks if user has any offers, then decides single vs dual view
 class _DualRoleCheckView extends ConsumerWidget {
   final String userId;
-  const _DualRoleCheckView({required this.userId});
+  final bool showAppBar;
+  const _DualRoleCheckView({required this.userId, this.showAppBar = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final offersAsync = ref.watch(myOffersProvider);
 
     return offersAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (_, __) => _CustomerJobsView(userId: userId),
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (_, __) => _CustomerJobsView(userId: userId, showAppBar: showAppBar),
       data: (offers) {
         if (offers.isNotEmpty) {
-          return _DualRoleView(userId: userId);
+          return _DualRoleView(userId: userId, showAppBar: showAppBar);
         }
-        return _CustomerJobsView(userId: userId);
+        return _CustomerJobsView(userId: userId, showAppBar: showAppBar);
       },
     );
   }
@@ -74,7 +77,8 @@ class _DualRoleCheckView extends ConsumerWidget {
 
 class _DualRoleView extends ConsumerWidget {
   final String userId;
-  const _DualRoleView({required this.userId});
+  final bool showAppBar;
+  const _DualRoleView({required this.userId, this.showAppBar = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -82,26 +86,28 @@ class _DualRoleView extends ConsumerWidget {
       length: 3,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text('İşlerim'),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          bottom: const TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.person_outline), text: 'İlanlarım'),
-              Tab(icon: Icon(Icons.handyman_outlined), text: 'Tekliflerim'),
-              Tab(icon: Icon(Icons.work_outline), text: 'Fırsatlar'),
-            ],
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-          ),
-        ),
+        appBar: showAppBar
+            ? AppBar(
+                title: const Text('İşlerim'),
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                bottom: const TabBar(
+                  tabs: [
+                    Tab(icon: Icon(Icons.person_outline), text: 'İlanlarım'),
+                    Tab(icon: Icon(Icons.handyman_outlined), text: 'Tekliflerim'),
+                    Tab(icon: Icon(Icons.work_outline), text: 'Fırsatlar'),
+                  ],
+                  indicatorColor: Colors.white,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white70,
+                ),
+              )
+            : null,
         body: const TabBarView(
           children: [
             _CustomerTabContentWrapper(),
             _WorkerTabContent(),
-            JobOpportunitiesScreen(),
+            JobOpportunitiesBody(),
           ],
         ),
       ),
@@ -271,7 +277,8 @@ class _WorkerTabContent extends ConsumerWidget {
 
 class _CustomerJobsView extends ConsumerWidget {
   final String userId;
-  const _CustomerJobsView({required this.userId});
+  final bool showAppBar;
+  const _CustomerJobsView({required this.userId, this.showAppBar = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -281,21 +288,23 @@ class _CustomerJobsView extends ConsumerWidget {
       length: 3,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text('İlanlarım'),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Aktif'),
-              Tab(text: 'Tamamlanan'),
-              Tab(text: 'İptal Edilen'),
-            ],
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-          ),
-        ),
+        appBar: showAppBar
+            ? AppBar(
+                title: const Text('İlanlarım'),
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                bottom: const TabBar(
+                  tabs: [
+                    Tab(text: 'Aktif'),
+                    Tab(text: 'Tamamlanan'),
+                    Tab(text: 'İptal Edilen'),
+                  ],
+                  indicatorColor: Colors.white,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white70,
+                ),
+              )
+            : null,
         body: jobsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Hata: $e')),

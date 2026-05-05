@@ -8,14 +8,21 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/job_provider.dart';
 import 'job_detail_screen.dart';
 
+/// AppBar'sız versiyon — TabBarView içinde kullanılır
+class JobListBody extends JobListScreen {
+  const JobListBody({super.key}) : super(showAppBar: false);
+}
+
 class JobListScreen extends ConsumerStatefulWidget {
-  const JobListScreen({super.key});
+  final bool showAppBar;
+  const JobListScreen({super.key, this.showAppBar = true});
 
   @override
   ConsumerState<JobListScreen> createState() => _JobListScreenState();
 }
 
 class _JobListScreenState extends ConsumerState<JobListScreen> {
+  bool get _showAppBar => widget.showAppBar;
   String? _activeCategory; // null = Tümü
 
   void _selectCategory(String? category) {
@@ -30,11 +37,13 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('İş İlanları'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-      ),
+      appBar: _showAppBar
+          ? AppBar(
+              title: const Text('İş İlanları'),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            )
+          : null,
       body: Column(
         children: [
           _buildSearchAndFilter(categoriesAsync),
