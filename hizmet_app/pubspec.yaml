@@ -32,6 +32,7 @@ dependencies:
   # Harita
   flutter_map: ^7.0.2
   latlong2: ^0.9.0
+  geolocator: ^13.0.0
 
   # UI/UX
   google_fonts: ^6.1.0

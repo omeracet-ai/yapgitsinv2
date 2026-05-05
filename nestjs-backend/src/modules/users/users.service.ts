@@ -89,6 +89,14 @@ export class UsersService {
     });
   }
 
+  async updateLocation(id: string, latitude: number, longitude: number): Promise<void> {
+    await this.repo.update(id, {
+      latitude,
+      longitude,
+      lastLocationAt: new Date().toISOString(),
+    });
+  }
+
   /** Stats güncellendikten sonra reputationScore'u yeniden hesapla */
   async recalcReputation(userId: string): Promise<void> {
     const user = await this.repo.findOne({ where: { id: userId } });

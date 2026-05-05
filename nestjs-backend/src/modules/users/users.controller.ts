@@ -38,6 +38,16 @@ export class UsersController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Patch('me/location')
+  async updateLocation(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { latitude: number; longitude: number },
+  ) {
+    await this.svc.updateLocation(req.user.id, body.latitude, body.longitude);
+    return { ok: true };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Patch('me')
   async updateMe(
     @Request() req: AuthenticatedRequest,

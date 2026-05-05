@@ -9,6 +9,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../categories/data/category_repository.dart';
 import 'hizmet_al_screen.dart';
+import '../../../map/presentation/screens/map_screen.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -21,8 +22,8 @@ class _MainShellState extends ConsumerState<MainShell> {
   void _onItemTapped(int index) {
     final authState = ref.read(authStateProvider);
     final isLoggedIn = authState is AuthAuthenticated;
-    // Bildirimler (index 2) giriş gerektiriyor
-    if (index == 2 && !isLoggedIn) {
+    // Bildirimler (index 3) giriş gerektiriyor
+    if (index == 3 && !isLoggedIn) {
       context.push('/login', extra: {'returnTo': '/'});
       return;
     }
@@ -43,6 +44,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     final List<Widget> pages = [
       _HomeTab(onSeeAllRequests: () => _onItemTapped(1)),
       const HizmetAlScreen(),
+      const MapScreen(),
       const NotificationScreen(),
       const ProfileScreen(),
     ];
@@ -63,6 +65,8 @@ class _MainShellState extends ConsumerState<MainShell> {
               icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Keşfet'),
           const BottomNavigationBarItem(
               icon: Icon(Icons.construction_outlined), activeIcon: Icon(Icons.construction), label: 'Yapgitsin'),
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.map_outlined), activeIcon: Icon(Icons.map), label: 'Harita'),
           BottomNavigationBarItem(
               icon: isLoggedIn ? const Icon(Icons.notifications_outlined) : const Icon(Icons.lock_outline),
               activeIcon: const Icon(Icons.notifications),

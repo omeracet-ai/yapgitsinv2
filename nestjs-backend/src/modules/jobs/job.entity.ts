@@ -69,6 +69,12 @@ export class Job {
   @Column({ type: 'simple-json', nullable: true, default: null })
   photos: string[] | null;
 
+  @Column({ type: 'float', nullable: true })
+  latitude: number | null;
+
+  @Column({ type: 'float', nullable: true })
+  longitude: number | null;
+
   /** 1-3 → öne çıkan ilan sırası, null = normal */
   @Column({ type: 'integer', nullable: true, default: null })
   featuredOrder: number | null;

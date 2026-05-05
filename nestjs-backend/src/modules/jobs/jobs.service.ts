@@ -4,7 +4,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Job, JobStatus } from './job.entity';
 import { Offer, OfferStatus } from './offer.entity';
 import { UsersService } from '../users/users.service';
@@ -21,6 +21,7 @@ export class JobsService {
     @InjectRepository(Offer)
     private offersRepository: Repository<Offer>,
     private usersService: UsersService,
+    private dataSource: DataSource,
   ) {}
 
   async onModuleInit() {
@@ -213,6 +214,40 @@ export class JobsService {
         await this.usersService.recalcReputation(acceptedOffer.userId);
       }
     }
+  }
+
+  async findNearby(
+    lat: number,
+    lng: number,
+    radiusKm: number = 20,
+    category?: string,
+  ): Promise<(Job & { distanceKm: number })[]> {
+    const haversine = `(6371 * acos(
+      cos(radians(:lat)) * cos(radians(j.latitude)) *
+      cos(radians(j.longitude) - radians(:lng)) +
+      sin(radians(:lat)) * sin(radians(j.latitude))
+    ))`;
+
+    let sql = `
+      SELECT j.*, ${haversine} AS distanceKm
+      FROM jobs j
+      WHERE j.latitude IS NOT NULL
+        AND j.longitude IS NOT NULL
+        AND j.status = 'open'
+        AND ${haversine} <= :radiusKm
+    `;
+
+    const params: Record<string, unknown> = { lat, lng, radiusKm };
+
+    if (category) {
+      sql += ` AND LOWER(j.category) = LOWER(:category)`;
+      params.category = category;
+    }
+
+    sql += ` ORDER BY distanceKm ASC LIMIT 50`;
+
+    const rows = await this.dataSource.query(sql, params);
+    return rows as (Job & { distanceKm: number })[];
   }
 
   async remove(id: string, requesterId?: string): Promise<void> {

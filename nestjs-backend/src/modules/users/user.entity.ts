@@ -125,6 +125,15 @@ export class User {
   @Column({ type: 'boolean', default: false })
   isAvailable: boolean;
 
+  @Column({ type: 'float', nullable: true })
+  latitude: number | null;
+
+  @Column({ type: 'float', nullable: true })
+  longitude: number | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  lastLocationAt: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

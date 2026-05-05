@@ -124,6 +124,21 @@ export class JobsController {
     );
   }
 
+  @Get('nearby')
+  findNearby(
+    @Query('lat') lat: string,
+    @Query('lng') lng: string,
+    @Query('radiusKm') radiusKm?: string,
+    @Query('category') category?: string,
+  ) {
+    return this.jobsService.findNearby(
+      parseFloat(lat),
+      parseFloat(lng),
+      radiusKm ? parseFloat(radiusKm) : 20,
+      category,
+    );
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.jobsService.findOne(id);
