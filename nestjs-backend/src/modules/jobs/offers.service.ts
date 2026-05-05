@@ -22,12 +22,15 @@ export class OffersService {
     });
   }
 
-  async findByUser(userId: string): Promise<Offer[]> {
-    return this.offersRepository.find({
+  async findByUser(userId: string, page = 1, limit = 20) {
+    const [data, total] = await this.offersRepository.findAndCount({
       where: { userId },
       relations: ['job'],
       order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   async findByProvider(userId: string): Promise<Offer[]> {

@@ -78,38 +78,33 @@ export class JobsService {
     category?: string;
     status?: JobStatus;
     limit?: number;
+    page?: number;
     customerId?: string;
-  }): Promise<Job[]> {
+  }) {
+    const limit = filters?.limit ?? 20;
+    const page = filters?.page ?? 1;
+
     const query = this.jobsRepository.createQueryBuilder('job');
 
     if (filters?.category) {
-      query.andWhere('job.category = :category', {
-        category: filters.category,
-      });
+      query.andWhere('job.category = :category', { category: filters.category });
     }
     if (filters?.status) {
       query.andWhere('job.status = :status', { status: filters.status });
     }
     if (filters?.customerId) {
-      query.andWhere('job.customerId = :customerId', {
-        customerId: filters.customerId,
-      });
+      query.andWhere('job.customerId = :customerId', { customerId: filters.customerId });
     }
 
-    // Öne çıkan ilanlar (featuredOrder 1-3) en üstte, sonra tarihe göre
     query
-      .orderBy(
-        'CASE WHEN job.featuredOrder IS NOT NULL THEN 0 ELSE 1 END',
-        'ASC',
-      )
+      .orderBy('CASE WHEN job.featuredOrder IS NOT NULL THEN 0 ELSE 1 END', 'ASC')
       .addOrderBy('job.featuredOrder', 'ASC')
-      .addOrderBy('job.createdAt', 'DESC');
+      .addOrderBy('job.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
 
-    if (filters?.limit) {
-      query.take(filters.limit);
-    }
-
-    return query.getMany();
+    const [data, total] = await query.getManyAndCount();
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   async setFeaturedOrder(

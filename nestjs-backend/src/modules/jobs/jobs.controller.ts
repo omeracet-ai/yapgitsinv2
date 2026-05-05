@@ -30,20 +30,26 @@ export class JobsController {
     @Query('category') category?: string,
     @Query('status') status?: JobStatus,
     @Query('limit') limit?: string,
+    @Query('page') page?: string,
     @Query('customerId') customerId?: string,
   ) {
     return this.jobsService.findAll({
       category,
       status,
       limit: limit ? Number(limit) : undefined,
+      page: page ? Number(page) : undefined,
       customerId,
     });
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('my-offers')
-  getMyOffers(@Request() req: AuthenticatedRequest) {
-    return this.offersService.findByUser(req.user.id);
+  getMyOffers(
+    @Request() req: AuthenticatedRequest,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.offersService.findByUser(req.user.id, Number(page) || 1, Number(limit) || 20);
   }
 
   @UseGuards(AuthGuard('jwt'))

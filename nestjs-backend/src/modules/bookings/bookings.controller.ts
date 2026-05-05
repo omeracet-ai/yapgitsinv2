@@ -5,6 +5,7 @@ import {
   Patch,
   Param,
   Body,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -46,16 +47,24 @@ export class BookingsController {
     });
   }
 
-  /** GET /bookings/my-as-customer */
+  /** GET /bookings/my-as-customer?page=1&limit=20 */
   @Get('my-as-customer')
-  myAsCustomer(@Request() req: AuthenticatedRequest) {
-    return this.svc.findByCustomer(req.user.id);
+  myAsCustomer(
+    @Request() req: AuthenticatedRequest,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.svc.findByCustomer(req.user.id, Number(page) || 1, Number(limit) || 20);
   }
 
-  /** GET /bookings/my-as-worker */
+  /** GET /bookings/my-as-worker?page=1&limit=20 */
   @Get('my-as-worker')
-  myAsWorker(@Request() req: AuthenticatedRequest) {
-    return this.svc.findByWorker(req.user.id);
+  myAsWorker(
+    @Request() req: AuthenticatedRequest,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.svc.findByWorker(req.user.id, Number(page) || 1, Number(limit) || 20);
   }
 
   /** GET /bookings/:id */

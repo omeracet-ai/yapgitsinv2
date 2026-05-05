@@ -114,21 +114,27 @@ export class BookingsService {
   }
 
   /** Müşterinin randevuları */
-  findByCustomer(customerId: string): Promise<Booking[]> {
-    return this.repo.find({
+  async findByCustomer(customerId: string, page = 1, limit = 20) {
+    const [data, total] = await this.repo.findAndCount({
       where: { customerId },
       relations: ['worker'],
       order: { scheduledDate: 'DESC', createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   /** Ustanın randevuları */
-  findByWorker(workerId: string): Promise<Booking[]> {
-    return this.repo.find({
+  async findByWorker(workerId: string, page = 1, limit = 20) {
+    const [data, total] = await this.repo.findAndCount({
       where: { workerId },
       relations: ['customer'],
       order: { scheduledDate: 'ASC', createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   /** Tek randevu detayı */
