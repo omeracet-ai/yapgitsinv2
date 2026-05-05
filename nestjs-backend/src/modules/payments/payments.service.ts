@@ -7,11 +7,13 @@ export class PaymentsService {
   private iyzipay: any;
 
   constructor() {
-    this.iyzipay = new Iyzipay({
-      apiKey: 'sandbox-V7zY2W6K9V1Z8p4X8Z3Z3Z3Z3Z3Z3Z3Z', // Sandbox Key
-      secretKey: 'sandbox-X7zY2W6K9V1Z8p4X8Z3Z3Z3Z3Z3Z3Z3Z', // Sandbox Secret
-      uri: 'https://sandbox-api.iyzipay.com',
-    });
+    const apiKey = process.env.IYZIPAY_API_KEY;
+    const secretKey = process.env.IYZIPAY_SECRET_KEY;
+    const uri = process.env.IYZIPAY_URI;
+    if (!apiKey || !secretKey || !uri) {
+      throw new Error('IYZIPAY_API_KEY, IYZIPAY_SECRET_KEY ve IYZIPAY_URI ortam değişkenleri tanımlanmamış');
+    }
+    this.iyzipay = new Iyzipay({ apiKey, secretKey, uri });
   }
 
   async createCheckoutForm(data: {
