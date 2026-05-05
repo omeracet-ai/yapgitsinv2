@@ -69,14 +69,7 @@ export class UsersController {
     @Query('category') category?: string,
     @Query('city') city?: string,
   ) {
-    const all = await this.svc.findAll();
-    const workers = all.filter(
-      (u) =>
-        u.isAvailable &&
-        u.workerCategories?.length &&
-        (category ? u.workerCategories.includes(category) : true) &&
-        (city ? u.city?.toLowerCase().includes(city.toLowerCase()) : true),
-    );
+    const workers = await this.svc.findWorkers(category, city);
     return workers.map((u) => {
       const { passwordHash: _ph, ...safe } = u as {
         passwordHash?: string;

@@ -34,6 +34,26 @@ export class UsersService {
     return this.repo.find({ order: { createdAt: 'DESC' } });
   }
 
+  findWorkers(category?: string, city?: string): Promise<User[]> {
+    const qb = this.repo
+      .createQueryBuilder('u')
+      .where('u.isAvailable = :available', { available: true })
+      .andWhere("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'");
+
+    if (category) {
+      qb.andWhere('u.workerCategories LIKE :category', {
+        category: `%"${category}"%`,
+      });
+    }
+    if (city) {
+      qb.andWhere('LOWER(u.city) LIKE :city', {
+        city: `%${city.toLowerCase()}%`,
+      });
+    }
+
+    return qb.orderBy('u.reputationScore', 'DESC').getMany();
+  }
+
   create(userData: Partial<User>): Promise<User> {
     return this.repo.save(this.repo.create(userData));
   }
