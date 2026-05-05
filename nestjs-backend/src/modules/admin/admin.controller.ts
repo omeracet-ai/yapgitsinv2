@@ -1,6 +1,7 @@
 import { Controller, Get, Patch, Body, Param, Query } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CategoriesService } from '../categories/categories.service';
+import { ProvidersService } from '../providers/providers.service';
 import { Category } from '../categories/category.entity';
 
 @Controller('admin')
@@ -8,6 +9,7 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly categoriesService: CategoriesService,
+    private readonly providersService: ProvidersService,
   ) {}
 
   @Get('stats')
@@ -68,5 +70,26 @@ export class AdminController {
   @Patch('categories/:id')
   updateCategory(@Param('id') id: string, @Body() body: Partial<Category>) {
     return this.categoriesService.update(id, body);
+  }
+
+  @Get('providers')
+  getProviders() {
+    return this.providersService.findAll();
+  }
+
+  @Patch('providers/:id/verify')
+  verifyProvider(
+    @Param('id') id: string,
+    @Body() body: { isVerified: boolean },
+  ) {
+    return this.providersService.setVerified(id, body.isVerified);
+  }
+
+  @Patch('providers/:id/featured')
+  setProviderFeatured(
+    @Param('id') id: string,
+    @Body() body: { featuredOrder: number | null },
+  ) {
+    return this.providersService.setFeaturedOrder(id, body.featuredOrder ?? null);
   }
 }

@@ -8,7 +8,10 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Server, Socket } from 'socket.io';
+import { ChatMessage } from './chat-message.entity';
 
 @WebSocketGateway({
   cors: {
@@ -23,6 +26,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(ChatGateway.name);
 
+  constructor(
+    @InjectRepository(ChatMessage)
+    private messagesRepo: Repository<ChatMessage>,
+  ) {}
+
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
   }
@@ -32,13 +40,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('sendMessage')
-  handleMessage(
+  async handleMessage(
     @MessageBody() data: { to: string; message: string; from: string },
     @ConnectedSocket() _client: Socket,
   ) {
-    // Mesaj içeriğini loglama — hassas veri gizliliği
     this.logger.debug(`Message event: from=${data.from} to=${data.to}`);
-    // In a real app, save to DB here
+    await this.messagesRepo.save({
+      from: data.from,
+      to: data.to,
+      message: data.message,
+    });
     this.server.emit('receiveMessage', data);
   }
 
@@ -49,5 +60,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     void client.join(roomId);
     this.logger.log(`Client ${client.id} joined room ${roomId}`);
+  }
+
+  @SubscribeMessage('getHistory')
+  async handleGetHistory(
+    @MessageBody() data: { userId: string; peerId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const messages = await this.messagesRepo
+      .createQueryBuilder('m')
+      .where(
+        '(m.from = :userId AND m.to = :peerId) OR (m.from = :peerId AND m.to = :userId)',
+        { userId: data.userId, peerId: data.peerId },
+      )
+      .orderBy('m.createdAt', 'ASC')
+      .take(100)
+      .getMany();
+    client.emit('chatHistory', messages);
   }
 }

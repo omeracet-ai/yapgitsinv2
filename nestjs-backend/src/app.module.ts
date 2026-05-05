@@ -27,6 +27,8 @@ import { Booking } from './modules/bookings/booking.entity';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { Notification } from './modules/notifications/notification.entity';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { Provider } from './modules/providers/provider.entity';
+import { ChatMessage } from './modules/chat/chat-message.entity';
 
 @Module({
   imports: [
@@ -46,6 +48,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
           ServiceRequestApplication,
           Booking,
           Notification,
+          Provider,
+          ChatMessage,
         ];
         if (dbType === 'sqlite') {
           return {
