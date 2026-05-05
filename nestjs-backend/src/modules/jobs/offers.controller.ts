@@ -5,6 +5,7 @@ import {
   Patch,
   Body,
   Param,
+  Query,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -20,8 +21,12 @@ export class OffersRootController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('my')
-  getMyOffers(@Request() req: AuthenticatedRequest) {
-    return this.offersService.findByUser(req.user.id);
+  getMyOffers(
+    @Request() req: AuthenticatedRequest,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.offersService.findByUser(req.user.id, Number(page) || 1, Number(limit) || 20);
   }
 }
 

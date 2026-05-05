@@ -132,7 +132,7 @@ class OfferRepository {
         '/offers/my',
         options: await _authOpts(),
       );
-      return List<Map<String, dynamic>>.from(res.data as List);
+      return List<Map<String, dynamic>>.from(res.data['data'] as List);
     } on DioException catch (e) {
       final statusCode = e.response?.statusCode;
       final msg = e.response?.data?['message'];

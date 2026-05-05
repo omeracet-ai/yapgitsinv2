@@ -29,7 +29,7 @@ class JobRepository {
       final response = await _dio.get('/jobs', queryParameters: {
         if (category != null) 'category': category,
       });
-      return List<Map<String, dynamic>>.from(response.data);
+      return List<Map<String, dynamic>>.from(response.data['data'] as List);
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'İlanlar yüklenemedi'));
     }
@@ -71,7 +71,7 @@ class JobRepository {
             ? Options(headers: {'Authorization': 'Bearer $token'})
             : null,
       );
-      return List<Map<String, dynamic>>.from(response.data);
+      return List<Map<String, dynamic>>.from(response.data['data'] as List);
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'İlanlar yüklenemedi'));
     }
