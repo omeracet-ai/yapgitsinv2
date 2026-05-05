@@ -84,34 +84,35 @@ export class UsersController {
     const user = await this.svc.findById(id);
     if (!user) return null;
 
-    // ── Son 10 değerlendirme ──────────────────────────────────────────────
-    const reviews = await this.reviewsRepo.find({
-      where: { revieweeId: id },
-      relations: ['reviewer'],
-      order: { createdAt: 'DESC' },
-      take: 10,
-    });
+    // 3 bağımsız sorgu paralelde çalışır
+    const [reviews, customerJobs, workerJobs] = await Promise.all([
+      // Son 10 değerlendirme
+      this.reviewsRepo.find({
+        where: { revieweeId: id },
+        relations: ['reviewer'],
+        order: { createdAt: 'DESC' },
+        take: 10,
+      }),
+      // Müşteri olarak tamamlanmış ilanlar
+      this.jobsRepo.find({
+        where: { customerId: id, status: JobStatus.COMPLETED },
+        order: { updatedAt: 'DESC' },
+        take: 20,
+      }),
+      // Usta olarak tamamlanmış işler — DB'de filtrele
+      this.offersRepo
+        .createQueryBuilder('offer')
+        .innerJoinAndSelect('offer.job', 'job')
+        .where('offer.userId = :id', { id })
+        .andWhere('offer.status = :offerStatus', { offerStatus: OfferStatus.ACCEPTED })
+        .andWhere('job.status = :jobStatus', { jobStatus: JobStatus.COMPLETED })
+        .orderBy('offer.updatedAt', 'DESC')
+        .take(20)
+        .getMany()
+        .then((offers) => offers.map((o) => o.job)),
+    ]);
 
-    // ── Geçmiş fotoğraflar (4 adet) ──────────────────────────────────────
-    // 1) Müşteri olarak verdiği tamamlanmış ilanlardan
-    const customerJobs = await this.jobsRepo.find({
-      where: { customerId: id, status: JobStatus.COMPLETED },
-      order: { updatedAt: 'DESC' },
-      take: 20,
-    });
-
-    // 2) Usta olarak kabul edilip tamamlanmış işlerden (offer → job)
-    const acceptedOffers = await this.offersRepo.find({
-      where: { userId: id, status: OfferStatus.ACCEPTED },
-      relations: ['job'],
-      order: { updatedAt: 'DESC' },
-      take: 20,
-    });
-    const workerJobs = acceptedOffers
-      .map((o) => o.job)
-      .filter((j) => j && j.status === JobStatus.COMPLETED);
-
-    const allPhotoJobs = [...customerJobs, ...workerJobs];
+    const allPhotoJobs = [...customerJobs, ...(workerJobs as typeof customerJobs)];
     const pastPhotos: string[] = [];
     for (const job of allPhotoJobs) {
       if (pastPhotos.length >= 4) break;
