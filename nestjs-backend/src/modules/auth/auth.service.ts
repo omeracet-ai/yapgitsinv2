@@ -34,8 +34,10 @@ export class AuthService implements OnModuleInit {
     }
   }
 
-  async validateUser(email: string, pass: string): Promise<AuthUser | null> {
-    const user = await this.usersService.findByEmail(email);
+  async validateUser(emailOrPhone: string, pass: string): Promise<AuthUser | null> {
+    const user =
+      (await this.usersService.findByEmail(emailOrPhone)) ??
+      (await this.usersService.findByPhone(emailOrPhone));
     if (
       user &&
       user.passwordHash &&
@@ -50,7 +52,7 @@ export class AuthService implements OnModuleInit {
   login(user: AuthUser) {
     const payload = { email: user.email, sub: user.id, role: user.role };
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
       user,
     };
   }
@@ -120,7 +122,7 @@ export class AuthService implements OnModuleInit {
     const { passwordHash: _hash2, ...result } = newUser;
     const payload = { email: result.email, sub: result.id, role: result.role };
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
       user: result,
     };
   }
