@@ -5,6 +5,15 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { AdminUser } from "@/lib/api";
 
+function isTokenValid(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return typeof payload.exp === "number" && payload.exp * 1000 > Date.now();
+  } catch {
+    return false;
+  }
+}
+
 const NAV = [
   { href: "/dashboard",  label: "Dashboard",     icon: "📊" },
   { href: "/jobs",       label: "Son İlanlar",    icon: "📋" },
@@ -23,7 +32,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
-    if (!token) {
+    if (!token || !isTokenValid(token)) {
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_user");
       router.replace("/login");
       return;
     }
