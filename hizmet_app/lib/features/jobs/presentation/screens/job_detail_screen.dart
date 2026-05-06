@@ -180,22 +180,24 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       body: Column(
         children: [
           // İlan üst bilgileri (her iki sekmede de görünür)
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildHeader(budgetMin: budgetMin, budgetMax: budgetMax, createdAt: createdAt),
-                if (customer != null) ...[
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildHeader(budgetMin: budgetMin, budgetMax: budgetMax, createdAt: createdAt),
+                  if (customer != null) ...[
+                    const SizedBox(height: 8),
+                    _buildCustomerCard(customer),
+                  ],
                   const SizedBox(height: 8),
-                  _buildCustomerCard(customer),
-                ],
-                const SizedBox(height: 8),
-                _buildDescription(description),
-                if (photos.isNotEmpty) ...[
+                  _buildDescription(description),
+                  if (photos.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _buildPhotosSection(photos),
+                  ],
                   const SizedBox(height: 8),
-                  _buildPhotosSection(photos),
                 ],
-                const SizedBox(height: 8),
-              ],
+              ),
             ),
           ),
           // Sekme içerikleri
