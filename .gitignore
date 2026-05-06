@@ -10,3 +10,5 @@ build/
 .claude/
 CLAUDE.md
 nestjs-backend/uploads/
+.superpowers/
+docs/
