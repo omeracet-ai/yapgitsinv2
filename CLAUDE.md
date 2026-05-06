@@ -117,6 +117,31 @@ Müşterinin açtığı iş ilanı. Ustalar teklif verir.
 | `videos` | simple-json | Video URL dizisi, max 5 |
 | `featuredOrder` | integer nullable | 1-3 öne çıkan sırası |
 
+### JobQuestion (job_questions tablosu)
+İş ilanına sorulan herkese açık sorular (Airtasker tarzı Q&A).
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `id` | uuid | |
+| `jobId` | FK → jobs | |
+| `userId` | FK → users | soruyu soran usta |
+| `text` | text | soru metni |
+| `photoUrl` | varchar nullable | opsiyonel fotoğraf |
+| `createdAt` | timestamp | |
+
+**Erişim kuralı:** Soru sormak için o ilana teklif verilmiş olması gerekir (Karar B — teklif ödemesi Questions erişimini de açar). Sorular herkese görünür.
+
+### JobQuestionReply (job_question_replies tablosu)
+Sorulara verilen yanıtlar.
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `id` | uuid | |
+| `questionId` | FK → job_questions | |
+| `userId` | FK → users | ilan sahibi veya soruyu soran |
+| `text` | text | |
+| `createdAt` | timestamp | |
+
 ### Offer (offers tablosu)
 İş ilanına gelen teklif.
 
@@ -242,6 +267,9 @@ Türler: `booking_request`, `booking_confirmed`, `booking_cancelled`, `booking_c
 | DELETE | `/jobs/:id` | JWT | İlan sil (owner) |
 | GET | `/jobs/my-offers` | JWT | Kullanıcının verdiği teklifler |
 | GET | `/jobs/notifications` | JWT | Teklif bildirimleri (DB'siz) |
+| GET | `/jobs/:jobId/questions` | — | Herkese açık soru listesi (yanıtlar dahil) |
+| POST | `/jobs/:jobId/questions` | JWT | Soru gönder (o ilana teklif vermiş olmalı) |
+| POST | `/jobs/:jobId/questions/:questionId/replies` | JWT | Yanıt gönder (ilan sahibi veya soruyu soran) |
 
 ### Offers (`/jobs/:jobId/offers` ve `/offers`)
 | Method | Path | Guard | Açıklama |
@@ -569,6 +597,7 @@ node nestjs-backend/seed-v2.js
 ## Oturum Özeti (Mayıs 2026)
 
 ### Yeni Özellikler
+- **Public Q&A / Questions sekmesi** (`a0394c98`): Airtasker tarzı herkese açık soru-cevap. `JobDetailScreen`'e Offers|Questions tab bar eklendi. Soru sormak için o ilana teklif verilmiş olması gerekir (Karar B). `job_questions` + `job_question_replies` tabloları. Flutter `JobQuestionsTab` widget'ı
 - **Video desteği** (`68afc4c2`): `POST /uploads/job-video` (max 5, 50MB). `Job` entity'e `videos` alanı. Flutter `PostJobScreen`'e `JobVideoPicker` widget'ı eklendi
 - **Swagger/OpenAPI** (`68afc4c2`): `/api/docs` adresinde Swagger UI. Tüm modüller etiketli, JWT Bearer auth destekli
 - **Rate limiting** (`68afc4c2`): ThrottlerModule — IP başına dakikada 60 istek (global guard)
@@ -608,6 +637,7 @@ IYZIPAY_URI=https://sandbox-api.iyzipay.com
 
 | Hash | Açıklama |
 |------|----------|
+| `a0394c98` | feat: public Q&A (Questions tab) — Airtasker tarzı soru-cevap sistemi |
 | `68afc4c2` | feat: video support, Swagger docs, rate limiting, expanded admin stats, SR map picker |
 | `bdfac836` | fix: resolve TypeScript errors — positional params for Haversine, paginated findByUser return type |
 | `68a8858a` | feat: map integration — nearby jobs endpoint, GPS, drop pins, mini card, 5-tab nav |
