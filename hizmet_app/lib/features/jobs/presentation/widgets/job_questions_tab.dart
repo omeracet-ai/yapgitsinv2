@@ -9,6 +9,7 @@ final jobQuestionsProvider =
   (ref, jobId) => ref.read(jobRepositoryProvider).getJobQuestions(jobId),
 );
 
+class JobQuestionsTab extends ConsumerStatefulWidget {
   final String jobId;
   final String? currentUserId;
   final bool isOwner;

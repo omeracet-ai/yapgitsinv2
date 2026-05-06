@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/payment_repository.dart';
+import '../../wallet/data/payment_repository.dart';
 
 class EarningsScreen extends ConsumerWidget {
   const EarningsScreen({super.key});
@@ -79,9 +79,9 @@ class EarningsScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [color, color.withOpacity(0.8)]),
+        gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.8)]),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))],
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,9 +100,9 @@ class EarningsScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

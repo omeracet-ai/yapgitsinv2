@@ -41,6 +41,12 @@ const denetimMesajlari = [
   { icon: '🚀', text: 'Hızlanalım arkadaşlar!' }
 ];
 
+const pencereMesajlari = [
+  { icon: '🤔', text: 'Bugün hava çok güzel...' },
+  { icon: '🏙️', text: 'Şehir manzarası ilham veriyor.' },
+  { icon: '☁️', text: 'Bulutlara bakıp algoritma düşünüyorum.' }
+];
+
 const yorgunMesajlari = [
   { icon: '😫', text: 'Çok yorgunum ama limit doldu!' },
   { icon: '💤', text: 'Enerji %10, mola izni yok...' },
@@ -144,6 +150,56 @@ function EkipAgent({ name, color, delay, isWorkHours }: { name: string, color: s
   );
 }
 
+/* ===== GELİŞTİRİCİ AGENT BİLEŞENİ (ANTIGRAVITY) ===== */
+function DeveloperAgent({ isWorkHours }: { isWorkHours: boolean }) {
+  const [isTyping, setIsTyping] = useState(true);
+  const [popupVisible, setPopupVisible] = useState(false);
+  const devMesajlari = [
+    "Kodu build ediyorum...",
+    "Backend hatasını düzelttim 🛠️",
+    "Müdür, her şey kontrol altında!",
+    "Deployment'a hazırız 🚀",
+    "Kod kalitesini artırıyorum.",
+    "Burası bende müdürüm!"
+  ];
+  const [mesaj, setMesaj] = useState(devMesajlari[0]);
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      if (isWorkHours) {
+        setIsTyping(Math.random() > 0.1);
+        if (Math.random() > 0.6) {
+          setMesaj(devMesajlari[Math.floor(Math.random() * devMesajlari.length)]);
+          setPopupVisible(true);
+          setTimeout(() => setPopupVisible(false), 3000);
+        }
+      }
+    }, 4000 + Math.random() * 3000);
+    return () => clearInterval(iv);
+  }, [isWorkHours]);
+
+  return (
+    <div className="dev-agent-container">
+      <div className={`sub-popup dev-popup ${popupVisible ? 'visible' : ''}`}>{mesaj}</div>
+      <div className="sub-agent-desk dev-desk">
+        <div className="sub-agent-monitor">
+          <div className="sub-monitor-glow" style={{ backgroundColor: '#00e5a0' }}></div>
+        </div>
+      </div>
+      <div className={`sub-character dev-char ${isTyping ? 'typing' : ''}`}>
+        <div className="sub-char-head dev-head">
+          <div className="sub-char-hair dev-hair"></div>
+        </div>
+        <div className="sub-char-body dev-body" style={{ background: '#00e5a0' }}>
+          <div className="sub-char-arm left"></div>
+          <div className="sub-char-arm right"></div>
+        </div>
+      </div>
+      <div className="sub-agent-label dev-label">ANTIGRAVITY</div>
+    </div>
+  );
+}
+
 const ekipler = [
   { id: 1, name: 'Frontend Ekibi', status: 'Aktif', count: 3, color: '#3498db', tasks: ['UI Optimizasyonu'] },
   { id: 2, name: 'Backend Ekibi', status: 'Meşgul', count: 4, color: '#2ecc71', tasks: ['API Refactor'] },
@@ -211,15 +267,11 @@ function Pencere() {
   );
 }
 
-const API_URL = 'http://localhost:3001';
-
 /* ===== ANA UYGULAMA ===== */
 function App() {
   const [mesaj, setMesaj] = useState(agentMesajlari[0]);
   const [popupGorunur, setPopupGorunur] = useState(true);
   const [konsol, setKonsol] = useState<KonsolSatiri[]>([]);
-  const [gorevler, setGorevler] = useState<Gorev[]>([]);
-  const [tamamlanan, setTamamlanan] = useState(0);
   const [saat, setSaat] = useState(simdiSaat());
   const [charState, setCharState] = useState<CharState>('typing');
   const [charX, setCharX] = useState(0); 
@@ -231,9 +283,6 @@ function App() {
 
   // Gerçek Görevleri Çekmek Yerine Simülasyon (Bağımsız Agent Teams)
   const gorevleriCek = useCallback(() => {
-    // Kendi yol haritasındaki görevleri kullan
-    setGorevler(baslangicGorevleri);
-    setTamamlanan(baslangicGorevleri.filter(g => g.status === 'done').length);
     setPlanUsage(Math.min(100, (baslangicGorevleri.length / 50) * 100));
   }, []);
 
@@ -436,6 +485,7 @@ function App() {
               </div>
             </div>
           ))}
+          <div className="stat-row" style={{marginTop: '10px'}}><span className="stat-label">İş Ortağı</span><span className="stat-value active">ANTIGRAVITY</span></div>
         </div>
       </div>
 
@@ -469,6 +519,10 @@ function App() {
 
             <div className="wall-frame"><span className="wall-frame-text">YAPGITSIN HQ</span></div>
             <Pencere/>
+            
+            <div className="office-staff">
+              <DeveloperAgent isWorkHours={isWorkHours} />
+            </div>
             
             <div className="desk"><div className="desk-leg left"/><div className="desk-leg right"/></div>
             <div className="monitor"><MonitorEkrani/></div>

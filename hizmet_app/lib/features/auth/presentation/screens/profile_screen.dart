@@ -10,8 +10,8 @@ import 'addresses_screen.dart';
 import 'help_screen.dart';
 import '../../../../core/constants/api_constants.dart';
 import 'package:dio/dio.dart';
-import '../../calendar/presentation/calendar_screen.dart';
-import '../../calendar/presentation/earnings_screen.dart';
+import '../../../calendar/presentation/calendar_screen.dart';
+import '../../../calendar/presentation/earnings_screen.dart';
 
 // ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
 final myPublicProfileProvider =
