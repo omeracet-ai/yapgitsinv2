@@ -145,7 +145,19 @@ const baslangicGorevleri: Gorev[] = [
   { name: 'Bildirim Servisi', status: 'done', time: '25dk önce' },
 ];
 
-type CharState = 'typing' | 'walking-to-coffee' | 'drinking' | 'walking-to-window' | 'looking' | 'walking-back' | 'break' | 'walking-to-teams' | 'inspecting';
+const gorevBitirmeMesajlari = [
+  { msg: '⚡ [MÜDÜR] DB Optimizasyonu tamamlanıyor... Sorgu süresi %65 düştü!', level: 'info' as const },
+  { msg: '✅ [MÜDÜR] DB Optimizasyonu — TAMAMLANDI ✅', level: 'info' as const },
+  { msg: '⚡ [MÜDÜR] API Test Suite çalıştırılıyor... 58/58 test...', level: 'info' as const },
+  { msg: '✅ [MÜDÜR] API Test Suite — 58/58 BAŞARILI ✅', level: 'info' as const },
+  { msg: '⚡ [MÜDÜR] Cache Yenileme başlatıldı... Redis flush & rebuild', level: 'info' as const },
+  { msg: '✅ [MÜDÜR] Cache Yenileme — Miss oranı %2 ✅', level: 'info' as const },
+  { msg: '⚡ [MÜDÜR] Log Analizi çalışıyor... 48,000 satır taranıyor...', level: 'debug' as const },
+  { msg: '✅ [MÜDÜR] Log Analizi — 0 kritik hata, 2 uyarı ✅', level: 'info' as const },
+  { msg: '🎉 [MÜDÜR] TÜM GÖREVLER TAMAMLANDI! Bugünlük işler bitti patron! 🏆', level: 'info' as const },
+];
+
+type CharState = 'typing' | 'walking-to-coffee' | 'drinking' | 'walking-to-window' | 'looking' | 'walking-back' | 'break' | 'walking-to-teams' | 'inspecting' | 'celebrating';
 
 function simdiSaat(): string {
   const d = new Date();
@@ -390,134 +402,133 @@ function Pencere() {
 
 /* ===== ANA UYGULAMA ===== */
 function App() {
-  const [mesaj, setMesaj] = useState(agentMesajlari[0]);
+  const [mesaj, setMesaj] = useState({ icon: '🫡', text: 'Selam Patron! Son görevleri bitiriyorum!' });
   const [popupGorunur, setPopupGorunur] = useState(true);
-  const [konsol, setKonsol] = useState<KonsolSatiri[]>([]);
+  const [konsol, setKonsol] = useState<KonsolSatiri[]>([{ ts: simdiSaat(), level: 'info', msg: '🫡 [MÜDÜR] Selam Patron! Son kalan görevleri bitiriyorum — hemen hallediyorum!' }]);
   const [saat, setSaat] = useState(simdiSaat());
   const [charState, setCharState] = useState<CharState>('typing');
   const [charX, setCharX] = useState(0);
   const [charY, setCharY] = useState(0);
-  const [planUsage, setPlanUsage] = useState(0);
-  const [energy, setEnergy] = useState(100);
+  const [planUsage, setPlanUsage] = useState(72);
+  const [energy, setEnergy] = useState(85);
   const [isWorkHours, setIsWorkHours] = useState(true);
+  const [gorevler, setGorevler] = useState<Gorev[]>(baslangicGorevleri);
+  const [tumGorevlerBitti, setTumGorevlerBitti] = useState(false);
+  const [completionPhase, setCompletionPhase] = useState(0); // 0=starting, 1=completing tasks, 2=celebration
   const konsolRef = useRef<HTMLDivElement>(null);
 
-  const gorevleriCek = useCallback(() => {
-    setPlanUsage(Math.min(100, (baslangicGorevleri.length / 50) * 100));
-  }, []);
-
-  useEffect(() => { gorevleriCek(); }, [gorevleriCek]);
-
+  // Görev tamamlama animasyonu — her 2 saniyede bir görev bitirir
   useEffect(() => {
-    const iv = setInterval(() => {
-      if (isWorkHours) {
-        if (charState === 'typing') {
-          setEnergy(e => Math.max(0, e - 0.8));
-          setPlanUsage(p => Math.min(100, p + 0.3));
-        } else if (charState === 'drinking') {
-          setEnergy(e => Math.min(100, e + 5));
+    if (tumGorevlerBitti) return;
+    let step = 0;
+    const kalanGorevIndexleri = baslangicGorevleri
+      .map((g, i) => ({ ...g, i }))
+      .filter(g => g.status !== 'done')
+      .map(g => g.i);
+
+    if (kalanGorevIndexleri.length === 0) {
+      setTumGorevlerBitti(true);
+      return;
+    }
+
+    // İlk 2 saniye: selam mesajı göster
+    const initialDelay = setTimeout(() => {
+      setCompletionPhase(1);
+      setMesaj({ icon: '⚡', text: 'Son görevleri hızlıca bitiriyorum!' });
+      setPopupGorunur(true);
+
+      // Her 2.5 saniyede bir görev tamamla
+      const iv = setInterval(() => {
+        if (step < kalanGorevIndexleri.length) {
+          const gorevIdx = kalanGorevIndexleri[step];
+          // Önce running yap
+          setGorevler(prev => prev.map((g, i) => 
+            i === gorevIdx ? { ...g, status: 'running' as const, time: 'şimdi...' } : g
+          ));
+          // Konsol mesajı ekle
+          const logIdx = step * 2;
+          if (gorevBitirmeMesajlari[logIdx]) {
+            setKonsol(p => [...p, { ts: simdiSaat(), level: gorevBitirmeMesajlari[logIdx].level, msg: gorevBitirmeMesajlari[logIdx].msg }]);
+          }
+          setMesaj({ icon: '⚡', text: `${baslangicGorevleri[gorevIdx].name} üzerinde çalışıyorum...` });
+          setPlanUsage(p => Math.min(98, p + 5));
+
+          // 1.5 saniye sonra done yap
+          setTimeout(() => {
+            setGorevler(prev => prev.map((g, i) => 
+              i === gorevIdx ? { ...g, status: 'done' as const, time: 'az önce ✅' } : g
+            ));
+            const doneLogIdx = step * 2 + 1;
+            if (gorevBitirmeMesajlari[doneLogIdx]) {
+              setKonsol(p => [...p, { ts: simdiSaat(), level: gorevBitirmeMesajlari[doneLogIdx].level, msg: gorevBitirmeMesajlari[doneLogIdx].msg }]);
+            }
+            setMesaj({ icon: '✅', text: `${baslangicGorevleri[gorevIdx].name} — Bitti!` });
+            setEnergy(e => Math.max(20, e - 8));
+          }, 1500);
+
+          step++;
+        } else {
+          clearInterval(iv);
+          // Tüm görevler bitti — kutlama!
+          setTimeout(() => {
+            setTumGorevlerBitti(true);
+            setCompletionPhase(2);
+            setCharState('celebrating');
+            setPlanUsage(100);
+            setMesaj({ icon: '🏆', text: 'TÜM GÖREVLER TAMAMLANDI! Bugünlük bu kadar patron! 🎉' });
+            setPopupGorunur(true);
+            setIsWorkHours(false);
+            // Son zafer konsol logu
+            const finalLog = gorevBitirmeMesajlari[gorevBitirmeMesajlari.length - 1];
+            setKonsol(p => [...p, { ts: simdiSaat(), level: finalLog.level, msg: finalLog.msg }]);
+          }, 2000);
         }
+      }, 2500);
+
+      return () => clearInterval(iv);
+    }, 2000);
+
+    return () => clearTimeout(initialDelay);
+  }, [tumGorevlerBitti]);
+
+  // Enerji ve plan kullanımı takibi
+  useEffect(() => {
+    if (tumGorevlerBitti) return;
+    const iv = setInterval(() => {
+      if (isWorkHours && charState === 'typing') {
+        setEnergy(e => Math.max(0, e - 0.3));
       }
-      if (planUsage >= 100) setIsWorkHours(false);
     }, 1000);
     return () => clearInterval(iv);
-  }, [charState, isWorkHours, planUsage]);
+  }, [charState, isWorkHours, tumGorevlerBitti]);
 
   useEffect(() => {
     const iv = setInterval(() => setSaat(simdiSaat()), 1000);
     return () => clearInterval(iv);
   }, []);
 
+  // Kutlama sonrası mesaj döngüsü
   useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout>;
-    const dongu = () => {
-      if (!isWorkHours) {
-        setCharState('break');
-        setMesaj({ icon: '🎉', text: 'Mesai bitti mola!' });
-        setPopupGorunur(true);
-        return;
-      }
-      setCharState('typing');
-      setCharX(0);
-      setCharY(0);
-      const yazmaSuresi = 8000 + Math.random() * 8000;
-      timeout = setTimeout(() => {
-        if (energy < 25) {
-          if (planUsage > 85) {
-            setMesaj(yorgunMesajlari[Math.floor(Math.random() * yorgunMesajlari.length)]);
-            setPopupGorunur(true);
-            setTimeout(() => { setPopupGorunur(false); dongu(); }, 4000);
-            return;
-          }
-          setCharState('walking-to-coffee');
-          setCharX(-180);
-          setPopupGorunur(false);
-          timeout = setTimeout(() => {
-            setCharState('drinking');
-            setMesaj(kahveMesajlari[Math.floor(Math.random()*kahveMesajlari.length)]);
-            setPopupGorunur(true);
-            timeout = setTimeout(() => {
-              setPopupGorunur(false);
-              setCharState('walking-back');
-              setCharX(0);
-              timeout = setTimeout(dongu, 1500);
-            }, 5000);
-          }, 1500);
-          return;
-        }
-        const aksiyon = Math.random();
-        if (aksiyon < 0.3 && planUsage < 85) {
-          setCharState('walking-to-window');
-          setCharX(-50);
-          setPopupGorunur(false);
-          timeout = setTimeout(() => {
-            setCharState('looking');
-            setMesaj(pencereMesajlari[Math.floor(Math.random()*pencereMesajlari.length)]);
-            setPopupGorunur(true);
-            timeout = setTimeout(() => {
-              setPopupGorunur(false);
-              setCharState('walking-back');
-              setCharX(0);
-              timeout = setTimeout(dongu, 1500);
-            }, 4000);
-          }, 1200);
-        } else if (aksiyon < 0.6) {
-          setCharState('walking-to-teams');
-          setCharY(-150);
-          setCharX(Math.random() * 200 - 100);
-          setPopupGorunur(false);
-          timeout = setTimeout(() => {
-            setCharState('inspecting');
-            setMesaj(denetimMesajlari[Math.floor(Math.random()*denetimMesajlari.length)]);
-            setPopupGorunur(true);
-            timeout = setTimeout(() => {
-              setPopupGorunur(false);
-              setCharState('walking-back');
-              setCharX(0);
-              setCharY(0);
-              timeout = setTimeout(dongu, 1500);
-            }, 5000);
-          }, 2000);
-        } else {
-          dongu();
-        }
-      }, yazmaSuresi);
-    };
-    dongu();
-    return () => clearTimeout(timeout);
-  }, [isWorkHours, energy, planUsage]);
-
-  useEffect(() => {
-    if (charState !== 'typing' || !isWorkHours) return;
+    if (!tumGorevlerBitti) return;
+    const kutlamaMesajlari = [
+      { icon: '🏆', text: 'Tüm görevler bitti! Harika iş çıkardık!' },
+      { icon: '🎉', text: 'Ekipler süper çalıştı bugün!' },
+      { icon: '☕', text: 'Artık bir kahve hak ettik...' },
+      { icon: '💪', text: 'Yarın daha güçlü döneceğiz!' },
+      { icon: '📊', text: '7/7 görev tamamlandı — %100 başarı!' },
+      { icon: '🫡', text: 'Patron, görev tamam! İyi akşamlar!' },
+    ];
+    let idx = 0;
     const iv = setInterval(() => {
       setPopupGorunur(false);
       setTimeout(() => {
-        setMesaj(agentMesajlari[Math.floor(Math.random()*agentMesajlari.length)]);
+        setMesaj(kutlamaMesajlari[idx % kutlamaMesajlari.length]);
         setPopupGorunur(true);
+        idx++;
       }, 500);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(iv);
-  }, [charState, isWorkHours]);
+  }, [tumGorevlerBitti]);
 
   const konsolEkle = useCallback(() => {
     const m = konsolMesajlari[Math.floor(Math.random()*konsolMesajlari.length)];
@@ -541,6 +552,7 @@ function App() {
 
   const isWalking = charState.startsWith('walking');
   const isTyping = charState === 'typing';
+  const isCelebrating = charState === 'celebrating';
 
   return (
     <div className="app-root">
@@ -576,9 +588,53 @@ function App() {
           </div>
         </div>
 
+        {/* GÖREV LİSTESİ */}
+        <div className="team-section">
+          <div className="task-list-title">📋 GÖREVLER ({gorevler.filter(g => g.status === 'done').length}/{gorevler.length})</div>
+          {gorevler.map((g, i) => (
+            <div key={i} className="team-card" style={{ 
+              borderColor: g.status === 'done' ? '#2ecc7144' : g.status === 'running' ? '#f39c1244' : '#374151',
+              opacity: g.status === 'done' ? 0.7 : 1
+            }}>
+              <div className="team-header">
+                <span className="team-name" style={{ 
+                  color: g.status === 'done' ? '#2ecc71' : g.status === 'running' ? '#f39c12' : '#6b7280',
+                  textDecoration: g.status === 'done' ? 'line-through' : 'none'
+                }}>
+                  {g.status === 'done' ? '✅' : g.status === 'running' ? '⚡' : '⏳'} {g.name}
+                </span>
+                <span className="team-status" style={{
+                  color: g.status === 'done' ? '#2ecc71' : g.status === 'running' ? '#f39c12' : '#6b7280'
+                }}>
+                  {g.status === 'done' ? 'Bitti' : g.status === 'running' ? 'Çalışıyor...' : 'Sırada'}
+                </span>
+              </div>
+              <div className="team-meta" style={{ color: '#6b728088', fontSize: '10px', marginTop: '2px' }}>
+                {g.time}
+              </div>
+            </div>
+          ))}
+          {tumGorevlerBitti && (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '8px', 
+              background: 'linear-gradient(135deg, #2ecc7115, #f39c1215)', 
+              borderRadius: '8px', 
+              marginTop: '8px',
+              fontSize: '11px',
+              color: '#2ecc71',
+              fontWeight: 'bold',
+              animation: 'pulse-glow 2s ease-in-out infinite'
+            }}>
+              🏆 TÜM GÖREVLER TAMAMLANDI!
+            </div>
+          )}
+        </div>
+
         <div className="sidebar-stats">
-          <div className="stat-row"><span className="stat-label">Durum</span><span className="stat-value active">{isWorkHours ? '● Mesai Devam' : '○ Mesai Bitti'}</span></div>
-          <div className="stat-row"><span className="stat-label">Mod</span><span className="stat-value">{charState.toUpperCase()}</span></div>
+          <div className="stat-row"><span className="stat-label">Durum</span><span className="stat-value active">{tumGorevlerBitti ? '🏆 Görevler Tamam!' : isWorkHours ? '● Mesai Devam' : '○ Mesai Bitti'}</span></div>
+          <div className="stat-row"><span className="stat-label">Mod</span><span className="stat-value">{isCelebrating ? '🎉 KUTLAMA' : charState.toUpperCase()}</span></div>
+          <div className="stat-row"><span className="stat-label">İlerleme</span><span className="stat-value">{gorevler.filter(g => g.status === 'done').length}/{gorevler.length} görev</span></div>
         </div>
 
         <div className="team-section">
@@ -613,7 +669,7 @@ function App() {
           <div className="top-bar-left">
             <span className="top-bar-title">OPERASYON MERKEZİ</span>
             <span className="top-bar-badge"><span className="live-dot"/>CANLI</span>
-            <span className="top-bar-badge muduriye-badge">🏛 MÜDÜRİYE AKTİF</span>
+            <span className="top-bar-badge muduriye-badge">{tumGorevlerBitti ? '🏆 GÖREVLER TAMAM' : '🏛 MÜDÜRİYE AKTİF'}</span>
           </div>
           <div className="top-bar-right">
             <span>Müdür-Agent</span><span>|</span><span>{saat}</span>
@@ -657,7 +713,7 @@ function App() {
             <Klavye aktif={isTyping && isWorkHours}/>
 
             <div
-              className={`character ${isWalking ? 'walking' : ''} ${isTyping ? 'typing' : ''} ${!isWorkHours ? 'resting' : ''}`}
+              className={`character ${isWalking ? 'walking' : ''} ${isTyping ? 'typing' : ''} ${isCelebrating ? 'celebrating' : ''} ${!isWorkHours && !isCelebrating ? 'resting' : ''}`}
               style={{
                 transform: `translate(calc(-50% + ${charX}px), ${charY}px) translateX(5px)`,
                 transition: isWalking ? 'transform 2s ease-in-out' : 'transform 1.2s ease-out',
