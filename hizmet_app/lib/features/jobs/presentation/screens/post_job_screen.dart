@@ -10,6 +10,7 @@ import '../providers/job_provider.dart';
 import '../../../categories/data/category_repository.dart';
 import '../../../photos/data/photo_repository.dart';
 import '../../../photos/presentation/widgets/job_photo_picker.dart';
+import '../../../photos/presentation/widgets/job_video_picker.dart';
 import '../../../ai/data/ai_repository.dart';
 
 class PostJobScreen extends ConsumerStatefulWidget {
@@ -31,9 +32,11 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   double? _lat;
   double? _lng;
 
-  // Fotoğraf adımı için
+  // Fotoğraf & Video adımı için
   List<File> _selectedPhotos = [];
+  List<File> _selectedVideos = [];
   List<String> _uploadedPhotoUrls = [];
+  List<String> _uploadedVideoUrls = [];
   bool _uploading = false;
   bool _aiLoading = false;
 
@@ -156,7 +159,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       if (!(_formKey.currentState?.validate() ?? false)) return;
       setState(() => _currentStep++);
     } else if (_currentStep == 2) {
-      // Fotoğraf adımı: en az 1 fotoğraf zorunlu
+      // Fotoğraf & Video adımı: en az 1 fotoğraf zorunlu
       if (_selectedPhotos.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('En az 1 fotoğraf eklemelisiniz')),
@@ -165,10 +168,20 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       }
       setState(() => _uploading = true);
       try {
-        final urls = await ref
+        // Fotoğrafları yükle
+        final photoUrls = await ref
             .read(photoRepositoryProvider)
             .uploadJobPhotos(_selectedPhotos);
-        _uploadedPhotoUrls = urls;
+        _uploadedPhotoUrls = photoUrls;
+
+        // Videoları yükle (varsa)
+        if (_selectedVideos.isNotEmpty) {
+          final videoUrls = await ref
+              .read(photoRepositoryProvider)
+              .uploadJobVideos(_selectedVideos);
+          _uploadedVideoUrls = videoUrls;
+        }
+
         if (mounted) setState(() => _currentStep++);
       } catch (e) {
         if (mounted) {
@@ -317,9 +330,18 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   }
 
   Widget _buildPhotosStep() {
-    return JobPhotoPicker(
-      initialFiles: _selectedPhotos,
-      onChanged: (files) => setState(() => _selectedPhotos = files),
+    return Column(
+      children: [
+        JobPhotoPicker(
+          initialFiles: _selectedPhotos,
+          onChanged: (files) => setState(() => _selectedPhotos = files),
+        ),
+        const SizedBox(height: 24),
+        JobVideoPicker(
+          initialFiles: _selectedVideos,
+          onChanged: (files) => setState(() => _selectedVideos = files),
+        ),
+      ],
     );
   }
 
@@ -440,6 +462,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       if (_lat != null) 'latitude': _lat,
       if (_lng != null) 'longitude': _lng,
       if (_uploadedPhotoUrls.isNotEmpty) 'photos': _uploadedPhotoUrls,
+      if (_uploadedVideoUrls.isNotEmpty) 'videos': _uploadedVideoUrls,
     };
 
     await ref.read(jobsProvider.notifier).addJob(jobData);

@@ -117,6 +117,7 @@ export class AuthService implements OnModuleInit {
       district: userData.district,
       address: userData.address,
       role: UserRole.USER,
+      isPhoneVerified: true,
     });
 
     const { passwordHash: _hash2, ...result } = newUser;

@@ -56,6 +56,8 @@ class ServiceRequestRepository {
     required String location,
     String? address,
     String? imageUrl,
+    double? latitude,
+    double? longitude,
   }) async {
     try {
       final opts = await _authOptions();
@@ -67,6 +69,8 @@ class ServiceRequestRepository {
         'location': location,
         if (address != null && address.isNotEmpty) 'address': address,
         if (imageUrl != null) 'imageUrl': imageUrl,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
       }, options: opts);
       return Map<String, dynamic>.from(response.data as Map);
     } on DioException catch (e) {

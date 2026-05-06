@@ -38,6 +38,16 @@ const imageFilter = (req: any, file: any, cb: any) => {
   cb(null, true);
 };
 
+const videoFilter = (req: any, file: any, cb: any) => {
+  if (!file.mimetype.match(/^video\/(mp4|quicktime|x-msvideo|mpeg)$/)) {
+    return cb(
+      new BadRequestException('Sadece video dosyaları yüklenebilir (mp4, mov, avi, mpeg)'),
+      false,
+    );
+  }
+  cb(null, true);
+};
+
 @Controller('uploads')
 export class UploadsController {
   /** POST /uploads/job-photos  — iş ilanı fotoğrafları (sınırsız) */
@@ -68,6 +78,39 @@ export class UploadsController {
         .resize({ width: 1024, withoutEnlargement: true })
         .jpeg({ quality: 75 })
         .toFile(dest);
+      urls.push(
+        `${req.protocol}://${req.get('host')}/uploads/jobs/${filename}`,
+      );
+    }
+    return urls;
+  }
+
+  /** POST /uploads/job-video  — iş ilanı videoları (sınırsız) */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('job-video')
+  @UseInterceptors(
+    FilesInterceptor('videos', 5, {
+      storage: memoryStorage(),
+      fileFilter: videoFilter,
+      limits: { fileSize: 50 * 1024 * 1024 }, // Max 50MB
+    }),
+  )
+  async uploadJobVideos(
+    @UploadedFiles() files: any[],
+    @Req() req: any,
+  ): Promise<string[]> {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('En az 1 video yüklenmelidir');
+    }
+    const dir = join(process.cwd(), 'uploads', 'jobs');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    const urls: string[] = [];
+    for (const file of files) {
+      const ext = file.originalname.split('.').pop() || 'mp4';
+      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const dest = join(dir, filename);
+      fs.writeFileSync(dest, file.buffer);
       urls.push(
         `${req.protocol}://${req.get('host')}/uploads/jobs/${filename}`,
       );

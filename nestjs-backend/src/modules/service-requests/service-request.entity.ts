@@ -42,6 +42,12 @@ export class ServiceRequest {
   @Column({ type: 'varchar', nullable: true })
   imageUrl: string;
 
+  @Column({ type: 'float', nullable: true })
+  latitude: number | null;
+
+  @Column({ type: 'float', nullable: true })
+  longitude: number | null;
+
   // Fiyat DB'de tutulur, UI'da gösterilmez
   @Column({ type: 'float', nullable: true })
   price: number;

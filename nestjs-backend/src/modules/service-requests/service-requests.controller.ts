@@ -53,6 +53,8 @@ export class ServiceRequestsController {
       address?: string;
       imageUrl?: string;
       price?: number;
+      latitude?: number;
+      longitude?: number;
     },
   ) {
     return this.svc.create(req.user.id, {
@@ -64,6 +66,8 @@ export class ServiceRequestsController {
       address: body.address,
       imageUrl: body.imageUrl,
       price: body.price,
+      latitude: body.latitude ?? null,
+      longitude: body.longitude ?? null,
     });
   }
 

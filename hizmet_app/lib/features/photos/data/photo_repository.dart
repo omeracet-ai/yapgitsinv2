@@ -24,12 +24,9 @@ class PhotoRepository {
       final token = await _authRepository.getToken();
       final formData = FormData();
       for (final file in files) {
-        final bytes = await file.readAsBytes();
-        final ext = file.path.contains('.') ? file.path.split('.').last.toLowerCase() : 'jpg';
-        final filename = 'photo_${DateTime.now().millisecondsSinceEpoch}.${ext.length <= 4 ? ext : 'jpg'}';
         formData.files.add(MapEntry(
           'photos',
-          MultipartFile.fromBytes(bytes, filename: filename),
+          await MultipartFile.fromFile(file.path),
         ));
       }
       final response = await _dio.post(
@@ -40,6 +37,27 @@ class PhotoRepository {
       return List<String>.from(response.data as List);
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? 'Fotoğraflar yüklenemedi');
+    }
+  }
+
+  Future<List<String>> uploadJobVideos(List<File> files) async {
+    try {
+      final token = await _authRepository.getToken();
+      final formData = FormData();
+      for (final file in files) {
+        formData.files.add(MapEntry(
+          'videos',
+          await MultipartFile.fromFile(file.path),
+        ));
+      }
+      final response = await _dio.post(
+        '/uploads/job-video',
+        data: formData,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return List<String>.from(response.data as List);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Videolar yüklenemedi');
     }
   }
 }

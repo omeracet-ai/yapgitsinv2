@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/location_picker.dart';
 import '../../../categories/data/category_repository.dart';
 import '../../data/service_request_repository.dart';
 
@@ -26,6 +27,8 @@ class _PostServiceRequestScreenState
   File? _image;
   bool _loading = false;
   String? _error;
+  double? _lat;
+  double? _lng;
 
   @override
   void dispose() {
@@ -34,6 +37,24 @@ class _PostServiceRequestScreenState
     _locationCtrl.dispose();
     _addressCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _openLocationPicker() async {
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LocationPickerScreen(
+          initialAddress: _locationCtrl.text,
+        ),
+      ),
+    );
+    if (result != null) {
+      setState(() {
+        _locationCtrl.text = result['address'] as String;
+        _lat = result['lat'] as double;
+        _lng = result['lng'] as double;
+      });
+    }
   }
 
   Future<void> _pickImage() async {
@@ -80,6 +101,8 @@ class _PostServiceRequestScreenState
         location: location,
         address: _addressCtrl.text.trim(),
         imageUrl: imageUrl,
+        latitude: _lat,
+        longitude: _lng,
       );
 
       if (mounted) Navigator.pop(context);
@@ -166,16 +189,55 @@ class _PostServiceRequestScreenState
               ),
               const SizedBox(height: 14),
 
-              // Konum
-              TextField(
-                controller: _locationCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Konum / Şehir *',
-                  prefixIcon: Icon(Icons.location_on_outlined),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
+              // Konum — harita picker
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _locationCtrl,
+                      readOnly: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Konum *',
+                        prefixIcon: Icon(Icons.location_on_outlined),
+                        hintText: 'Haritadan seçin',
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: ElevatedButton(
+                      onPressed: _openLocationPicker,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(48, 52),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Icon(Icons.map_outlined, size: 22),
+                    ),
+                  ),
+                ],
               ),
+              if (_lat != null && _lng != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 4),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.green, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Koordinat: ${_lat!.toStringAsFixed(4)}, ${_lng!.toStringAsFixed(4)}',
+                        style: const TextStyle(fontSize: 11, color: Colors.green),
+                      ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 14),
 
               // Adres
@@ -184,7 +246,7 @@ class _PostServiceRequestScreenState
                 maxLines: 2,
                 decoration: const InputDecoration(
                   labelText: 'Detaylı Adres (opsiyonel)',
-                  prefixIcon: Icon(Icons.map_outlined),
+                  prefixIcon: Icon(Icons.home_outlined),
                   alignLabelWithHint: true,
                   filled: true,
                   fillColor: Colors.white,

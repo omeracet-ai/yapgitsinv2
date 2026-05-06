@@ -69,6 +69,10 @@ export class Job {
   @Column({ type: 'simple-json', nullable: true, default: null })
   photos: string[] | null;
 
+  /** İlan videoları (URL dizisi) */
+  @Column({ type: 'simple-json', nullable: true, default: null })
+  videos: string[] | null;
+
   @Column({ type: 'float', nullable: true })
   latitude: number | null;
 

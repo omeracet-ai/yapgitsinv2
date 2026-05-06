@@ -40,6 +40,11 @@ export class CreateJobDto {
   @IsArray()
   @IsString({ each: true })
   photos?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  videos?: string[];
 }
 
 export class UpdateJobDto {
@@ -58,4 +63,14 @@ export class UpdateJobDto {
   @IsOptional()
   @IsEnum(JobStatus)
   status?: JobStatus;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  photos?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  videos?: string[];
 }

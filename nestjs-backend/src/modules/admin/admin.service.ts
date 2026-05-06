@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Job } from '../jobs/job.entity';
+import { Repository, Not, IsNull } from 'typeorm';
+import { Job, JobStatus } from '../jobs/job.entity';
 import { User } from '../users/user.entity';
 import { ServiceRequest } from '../service-requests/service-request.entity';
+import { Offer } from '../jobs/offer.entity';
+import { Booking } from '../bookings/booking.entity';
+import { Review } from '../reviews/review.entity';
 
 @Injectable()
 export class AdminService {
@@ -12,17 +15,60 @@ export class AdminService {
     @InjectRepository(User) private usersRepo: Repository<User>,
     @InjectRepository(ServiceRequest)
     private srRepo: Repository<ServiceRequest>,
+    @InjectRepository(Offer) private offersRepo: Repository<Offer>,
+    @InjectRepository(Booking) private bookingsRepo: Repository<Booking>,
+    @InjectRepository(Review) private reviewsRepo: Repository<Review>,
   ) {}
 
   async getDashboardStats() {
-    const [totalJobs, totalUsers, totalServiceRequests, openServiceRequests] =
-      await Promise.all([
-        this.jobsRepo.count(),
-        this.usersRepo.count(),
-        this.srRepo.count(),
-        this.srRepo.count({ where: { status: 'open' } }),
-      ]);
-    return { totalJobs, totalUsers, totalServiceRequests, openServiceRequests };
+    const [
+      totalJobs,
+      totalUsers,
+      totalServiceRequests,
+      openServiceRequests,
+      totalWorkers,
+      verifiedWorkers,
+      totalOffers,
+      totalBookings,
+      totalReviews,
+      openJobs,
+      completedJobs,
+    ] = await Promise.all([
+      this.jobsRepo.count(),
+      this.usersRepo.count(),
+      this.srRepo.count(),
+      this.srRepo.count({ where: { status: 'open' } }),
+      this.usersRepo
+        .createQueryBuilder('u')
+        .where('u.workerCategories IS NOT NULL')
+        .andWhere("u.workerCategories != '[]'")
+        .andWhere("u.workerCategories != ''")
+        .getCount(),
+      this.usersRepo
+        .createQueryBuilder('u')
+        .where('u.identityVerified = :v', { v: true })
+        .andWhere('u.workerCategories IS NOT NULL')
+        .andWhere("u.workerCategories != '[]'")
+        .getCount(),
+      this.offersRepo.count(),
+      this.bookingsRepo.count(),
+      this.reviewsRepo.count(),
+      this.jobsRepo.count({ where: { status: JobStatus.OPEN } }),
+      this.jobsRepo.count({ where: { status: JobStatus.COMPLETED } }),
+    ]);
+    return {
+      totalJobs,
+      openJobs,
+      completedJobs,
+      totalUsers,
+      totalWorkers,
+      verifiedWorkers,
+      totalServiceRequests,
+      openServiceRequests,
+      totalOffers,
+      totalBookings,
+      totalReviews,
+    };
   }
 
   async getRecentJobs(limit = 20) {
