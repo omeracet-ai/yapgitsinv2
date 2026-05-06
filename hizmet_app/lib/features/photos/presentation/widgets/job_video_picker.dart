@@ -119,7 +119,7 @@ class _VideoSlotTile extends StatelessWidget {
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: file != null ? AppColors.primaryLight.withOpacity(0.3) : AppColors.background,
+            color: file != null ? AppColors.primaryLight.withValues(alpha: 0.3) : AppColors.background,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: file != null ? AppColors.primary : AppColors.border,

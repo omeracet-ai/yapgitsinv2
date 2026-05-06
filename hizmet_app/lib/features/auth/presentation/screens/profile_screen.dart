@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../wallet/presentation/screens/wallet_screen.dart';
 import '../../../tokens/data/token_repository.dart';
-import '../../../tokens/presentation/screens/token_screen.dart';
 import '../providers/auth_provider.dart';
 import 'personal_info_screen.dart';
 import 'addresses_screen.dart';
@@ -50,8 +49,7 @@ class ProfileScreen extends ConsumerWidget {
           child: Column(
             children: [
               _buildProfileHeader(user),
-              // TOKEN_HIDDEN — yeniden göstermek için aşağıdaki satırı aç:
-              // _buildTokenBanner(context, ref),
+              _buildTokenBanner(context, ref),
               _buildIdentityStatus(user),
               _buildStatsSection(ref),
               _buildPastPhotos(ref),
@@ -306,12 +304,10 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // ignore: unused_element — token banner feature reserved for future use
   Widget _buildTokenBanner(BuildContext context, WidgetRef ref) {
     final balanceAsync = ref.watch(tokenBalanceProvider);
     return GestureDetector(
-      onTap: () => Navigator.push(
-          context, MaterialPageRoute(builder: (_) => const TokenScreen())),
+      onTap: () => context.push('/tokens'),
       child: Container(
         margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),

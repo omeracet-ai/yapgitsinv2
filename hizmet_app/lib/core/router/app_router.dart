@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../features/home/presentation/screens/main_shell.dart';
 import '../../../features/auth/presentation/screens/login_screen.dart';
 import '../../../features/auth/presentation/screens/register_screen.dart';
@@ -7,13 +8,27 @@ import '../../../features/jobs/presentation/screens/post_job_screen.dart';
 import '../../../features/tokens/presentation/screens/token_screen.dart';
 import '../../../features/ai/presentation/screens/support_agent_screen.dart';
 import '../../../features/auth/presentation/screens/public_profile_screen.dart';
+import '../../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../providers/navigation_provider.dart';
 import '../widgets/success_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
+    redirect: (context, state) async {
+      if (state.matchedLocation == '/') {
+        final prefs = await SharedPreferences.getInstance();
+        if (prefs.getBool('onboarding_done') != true) {
+          return '/onboarding';
+        }
+      }
+      return null;
+    },
     routes: [
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
       GoRoute(
         path: '/',
         builder: (context, state) {
