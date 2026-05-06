@@ -208,7 +208,11 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   IconButton(
                     icon: const Icon(Icons.edit_outlined, color: Colors.white),
-                    onPressed: () {},
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const PersonalInfoScreen()),
+                    ),
                   ),
                 ],
               ),
@@ -697,7 +701,11 @@ class ProfileScreen extends ConsumerWidget {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const AddressesScreen()));
           }),
-          _menuItem(Icons.payment_outlined, 'Ödeme Yöntemleri', () {}),
+          _menuItem(Icons.payment_outlined, 'Ödeme Yöntemleri', () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Ödeme yönetimi yakında eklenecek.')),
+            );
+          }),
           _menuItem(Icons.help_outline, 'Yardım & Destek', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const HelpScreen()));

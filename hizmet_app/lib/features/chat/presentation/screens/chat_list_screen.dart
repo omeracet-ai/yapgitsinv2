@@ -18,11 +18,24 @@ class ChatListScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.search_rounded, color: Colors.white),
-            onPressed: () {},
+            tooltip: 'Yakında',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Konuşma arama yakında eklenecek.')),
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.edit_square, color: Colors.white),
-            onPressed: () {},
+            tooltip: 'Yeni mesaj',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content:
+                        Text('Yeni mesaj için bir ilan veya teklife gidin.')),
+              );
+            },
           ),
         ],
       ),
@@ -87,7 +100,12 @@ class ChatListScreen extends StatelessWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Yeni mesaj için bir ilan veya teklife gidin.')),
+          );
+        },
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.edit_rounded, color: Colors.white),
       ),
