@@ -1,0 +1,626 @@
+# HizmetApp — CLAUDE.md
+
+Türkiye pazarı için iki taraflı hizmet marketplace platformu. Müşteri ile usta (hizmet sağlayıcı) arasında köprü kurar.
+
+---
+
+## Proje Yapısı
+
+```
+Yapgitsinv2/
+├── nestjs-backend/   # NestJS API — port 3001 (SQLite)
+├── admin-panel/      # Next.js 16 admin paneli — port 3000
+├── hizmet_app/       # Flutter 3.x mobil uygulama
+└── backend/          # Eski Express backend — KULLANILMIYOR, dokunma
+```
+
+---
+
+## Servis Başlatma
+
+```bash
+# NestJS backend
+cd nestjs-backend && npm run start:dev
+
+# Admin panel
+cd admin-panel && npm run dev
+
+# Flutter (Android emülatör)
+cd hizmet_app && flutter run
+# veya ngrok ile gerçek cihaz:
+flutter run --dart-define=API_URL=https://xxxx.ngrok-free.app
+```
+
+---
+
+## Veritabanı
+
+- **SQLite** — `nestjs-backend/hizmet_db.sqlite` (otomatik oluşur)
+- `.env` → `DB_TYPE=sqlite`
+- TypeORM `synchronize: true` — entity değişince şema otomatik güncellenir
+- PostgreSQL'e geçmek için `.env` → `DB_TYPE=postgres` + host/port/user/pass ekle
+- Yeni field eklerken `simple-json` veya `simple-enum` kullan (SQLite uyumlu)
+- `decimal` yerine `float` kullan (SQLite decimal'i string döner)
+
+---
+
+## Port Çakışması
+
+```bash
+# Port 3001 EADDRINUSE = zombie Node process
+netstat -ano | grep 3001      # PID bul
+taskkill /PID <pid> /F        # öldür
+```
+
+---
+
+## Ortam Değişkenleri (nestjs-backend/.env)
+
+```
+PORT=3001
+DB_TYPE=sqlite
+JWT_SECRET=change_me_in_production_use_a_long_random_secret_here
+ADMIN_INITIAL_PASSWORD=change_me_in_production
+ANTHROPIC_API_KEY=<claude için gerekli, ai özellikler için>
+ALLOWED_ORIGINS=<production'da virgülle ayır>
+```
+
+---
+
+## Entities & Veri Modeli
+
+### User (users tablosu)
+Hem müşteri hem usta aynı entity. `workerCategories` doluysa usta.
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `id` | uuid | PK |
+| `fullName` | varchar(100) | |
+| `phoneNumber` | varchar(20) unique | |
+| `email` | varchar(255) unique nullable | |
+| `passwordHash` | varchar nullable | bcrypt |
+| `profileImageUrl` | varchar nullable | |
+| `identityPhotoUrl` | varchar nullable | zorunlu doğrulama fotoğrafı |
+| `documentPhotoUrl` | varchar nullable | opsiyonel belge |
+| `identityVerified` | boolean default false | admin onaylı |
+| `birthDate` | varchar(10) | YYYY-MM-DD |
+| `gender` | varchar(10) | male/female/other |
+| `city`, `district`, `address` | varchar/text | |
+| `role` | enum(user, admin) | |
+| `tokenBalance` | float default 100 | başlangıç 100 token |
+| `asCustomerTotal/Success/Fail` | integer | müşteri istatistikleri |
+| `asWorkerTotal/Success/Fail` | integer | usta istatistikleri |
+| `averageRating` | float | review'dan hesaplanır |
+| `totalReviews` | integer | |
+| `reputationScore` | integer | `rating×20 + (customerSuccess+workerSuccess)×5` |
+| `workerCategories` | simple-json | `["Temizlik","Elektrikçi"]` |
+| `workerBio` | text nullable | |
+| `hourlyRateMin/Max` | float nullable | |
+| `serviceRadiusKm` | integer default 20 | |
+| `isAvailable` | boolean default false | usta aktif mi |
+
+### Job (jobs tablosu)
+Müşterinin açtığı iş ilanı. Ustalar teklif verir.
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `id` | uuid | |
+| `title` | varchar(200) | |
+| `description` | text | |
+| `category` | varchar(100) | denormalize ad |
+| `categoryId` | varchar nullable | FK → categories |
+| `location` | varchar(200) | |
+| `budgetMin/Max` | float nullable | |
+| `status` | enum(open,in_progress,completed,cancelled) | |
+| `customerId` | varchar | FK → users |
+| `photos` | simple-json | URL dizisi, max 3 |
+| `videos` | simple-json | Video URL dizisi, max 5 |
+| `featuredOrder` | integer nullable | 1-3 öne çıkan sırası |
+
+### Offer (offers tablosu)
+İş ilanına gelen teklif.
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `jobId` | FK → jobs | |
+| `userId` | FK → users | teklif veren usta |
+| `price` | float | |
+| `message` | text nullable | |
+| `status` | enum(pending,accepted,rejected,withdrawn,countered) | |
+| `counterPrice` | float nullable | pazarlık fiyatı |
+| `counterMessage` | text nullable | |
+
+### ServiceRequest (service_requests tablosu)
+Hizmet isteği (müşteri ilanı, ustalar başvurur). Job'dan farklı akış.
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `userId` | FK → users | ilanı açan müşteri |
+| `category`, `categoryId` | | |
+| `title`, `description` | | |
+| `location`, `address` | | |
+| `imageUrl` | varchar nullable | tek fotoğraf |
+| `latitude` | float nullable | harita koordinatı |
+| `longitude` | float nullable | harita koordinatı |
+| `price` | float nullable | DB'de tutulur, UI'da gösterilmez |
+| `status` | enum(open,closed) | |
+| `featuredOrder` | integer nullable | |
+
+### ServiceRequestApplication (service_request_applications)
+ServiceRequest'e başvuru.
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `serviceRequestId` | FK | |
+| `userId` | FK → users | başvuran usta |
+| `message` | text nullable | |
+| `price` | float nullable | |
+| `status` | enum(pending,accepted,rejected) | |
+
+### Booking (bookings tablosu)
+Direkt randevu — müşteri ustaya randevu ister.
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `customerId`, `workerId` | FK → users | |
+| `category`, `subCategory` | | |
+| `description`, `address` | | |
+| `scheduledDate` | varchar(20) YYYY-MM-DD | |
+| `scheduledTime` | varchar(10) nullable HH:MM | |
+| `status` | enum(pending,confirmed,in_progress,completed,cancelled) | |
+| `agreedPrice` | float nullable | |
+| `workerNote`, `customerNote` | text nullable | |
+
+### Review (reviews tablosu)
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `jobId` | FK nullable | hangi iş için |
+| `reviewerId` | FK → users | yazan |
+| `revieweeId` | FK → users | değerlendirilen |
+| `rating` | int | 1-5 |
+| `comment` | text nullable | |
+
+### Category (categories tablosu)
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `name` | varchar unique | |
+| `icon` | varchar(10) | emoji |
+| `description` | text | |
+| `group` | varchar(60) nullable | üst grup adı |
+| `subServices` | simple-json | alt hizmet listesi |
+| `avgPriceMin/Max` | integer nullable | |
+| `isActive` | boolean default true | |
+| `sortOrder` | int | sıralama |
+
+**5 Grup, 29 Kategori (seed):**
+- Ev & Yaşam: Temizlik, Boya & Badana, Bahçe & Peyzaj, Nakliyat, Mobilya Montaj, Haşere Kontrolü, Havuz & Spa, Çilingir & Kilit
+- Yapı & Tesisat: Elektrikçi, Tesisat, Klima & Isıtma, Zemin & Parke, Çatı & Yalıtım, Marangoz & Ahşap, Cam & Doğrama, Alçıpan & Asma Tavan, Güvenlik Sistemleri
+- Dijital & Teknik: Bilgisayar & IT, Grafik & Tasarım, Web & Yazılım, Fotoğraf & Video
+- Etkinlik & Yaşam: Düğün & Organizasyon, Özel Ders & Eğitim, Sağlık & Güzellik, Evcil Hayvan
+- Araç & Taşıt: Araç & Oto Bakım
+
+### TokenTransaction (token_transactions tablosu)
+
+- `type`: purchase / spend / refund
+- `paymentMethod`: bank / crypto / system
+- `status`: pending / completed / failed
+- Teklif başına maliyet: **5 token** (`OFFER_TOKEN_COST = 5`)
+- Kullanıcı başlangıç bakiyesi: **100 token**
+
+### Notification (notifications tablosu)
+
+Türler: `booking_request`, `booking_confirmed`, `booking_cancelled`, `booking_completed`, `new_offer`, `offer_accepted`, `offer_rejected`, `new_review`, `system`
+
+---
+
+## Backend API Endpointleri
+
+### Auth (`/auth`)
+| Method | Path | Guard | Açıklama |
+|--------|------|-------|----------|
+| POST | `/auth/login` | — | Email + şifre girişi |
+| POST | `/auth/register` | — | Yeni kullanıcı kaydı |
+| POST | `/auth/admin/login` | — | Admin girişi (username: "admin") |
+
+### Users (`/users`)
+| Method | Path | Guard | Açıklama |
+|--------|------|-------|----------|
+| GET | `/users/me` | JWT | Kendi profili |
+| PATCH | `/users/me` | JWT | Profil güncelle |
+| GET | `/users/workers` | — | Usta dizini (?category=&city=) |
+| GET | `/users/:id/profile` | — | Public profil (stats + reviews + pastPhotos) |
+
+### Jobs (`/jobs`)
+| Method | Path | Guard | Açıklama |
+|--------|------|-------|----------|
+| GET | `/jobs` | — | Tüm ilanlar (?category=&status=&limit=&customerId=) |
+| GET | `/jobs/:id` | — | Tek ilan (customer bilgisi dahil) |
+| POST | `/jobs` | JWT | İlan oluştur |
+| PATCH | `/jobs/:id` | JWT | İlan güncelle (owner) |
+| DELETE | `/jobs/:id` | JWT | İlan sil (owner) |
+| GET | `/jobs/my-offers` | JWT | Kullanıcının verdiği teklifler |
+| GET | `/jobs/notifications` | JWT | Teklif bildirimleri (DB'siz) |
+
+### Offers (`/jobs/:jobId/offers` ve `/offers`)
+| Method | Path | Guard | Açıklama |
+|--------|------|-------|----------|
+| GET | `/jobs/:jobId/offers` | JWT | İlandaki teklifler |
+| POST | `/jobs/:jobId/offers` | JWT | Teklif ver (5 token keser) |
+| PATCH | `/jobs/:jobId/offers/:id/accept` | JWT | Teklif kabul |
+| PATCH | `/jobs/:jobId/offers/:id/reject` | JWT | Teklif red |
+| PATCH | `/jobs/:jobId/offers/:id/counter` | JWT | Pazarlık teklifi |
+| PATCH | `/jobs/:jobId/offers/:id/status` | JWT | Durum güncelle |
+| GET | `/offers/my` | JWT | Ustanın kendi teklifleri |
+
+### Service Requests (`/service-requests`)
+| Method | Path | Guard | Açıklama |
+|--------|------|-------|----------|
+| GET | `/service-requests` | — | Tüm ilanlar (?category=) |
+| GET | `/service-requests/my` | JWT | Kendi ilanlarım |
+| GET | `/service-requests/:id` | — | Tek ilan |
+| POST | `/service-requests` | JWT | İlan oluştur |
+| PATCH | `/service-requests/:id` | JWT | Güncelle (owner) |
+| DELETE | `/service-requests/:id` | JWT | Sil (owner) |
+| POST | `/service-requests/:id/apply` | JWT | İlana başvur |
+| GET | `/service-requests/:id/applications` | JWT | Başvuruları gör |
+| GET | `/service-requests/applications/my` | JWT | Kendi başvurularım |
+| PATCH | `/service-requests/applications/:appId/status` | JWT | Başvuru kabul/red |
+
+### Bookings (`/bookings`)
+| Method | Path | Guard | Açıklama |
+|--------|------|-------|----------|
+| POST | `/bookings` | JWT | Randevu oluştur |
+| GET | `/bookings/my-as-customer` | JWT | Müşteri randevularım |
+| GET | `/bookings/my-as-worker` | JWT | Usta randevularım |
+| GET | `/bookings/:id` | JWT | Tek randevu |
+| PATCH | `/bookings/:id/status` | JWT | Durum güncelle |
+
+### Reviews (`/reviews`)
+| Method | Path | Guard | Açıklama |
+|--------|------|-------|----------|
+| POST | `/reviews` | JWT | Yorum yaz |
+| GET | `/reviews/user/:id` | — | Kullanıcı yorumları |
+| GET | `/reviews/job/:jobId` | — | İş yorumları |
+
+### Categories (`/categories`)
+| Method | Path | Guard | Açıklama |
+|--------|------|-------|----------|
+| GET | `/categories` | — | Tüm aktif kategoriler |
+| GET | `/categories/:id` | — | Tek kategori |
+| POST | `/categories` | — | Oluştur |
+| PATCH | `/categories/:id` | — | Güncelle |
+| DELETE | `/categories/:id` | — | Sil |
+
+### Tokens (`/tokens`)
+| Method | Path | Guard | Açıklama |
+|--------|------|-------|----------|
+| GET | `/tokens/balance` | JWT | Bakiye |
+| GET | `/tokens/history` | JWT | İşlem geçmişi |
+| POST | `/tokens/purchase` | JWT | Token satın al {amount, paymentMethod: bank/crypto} |
+
+### Notifications (`/notifications`)
+| Method | Path | Guard | Açıklama |
+|--------|------|-------|----------|
+| GET | `/notifications` | JWT | Tüm bildirimler |
+| GET | `/notifications/unread-count` | JWT | Okunmamış sayısı |
+| PATCH | `/notifications/read-all` | JWT | Tümünü okundu |
+| PATCH | `/notifications/:id/read` | JWT | Tek okundu |
+
+### Uploads (`/uploads`)
+| Method | Path | Guard | Açıklama |
+|--------|------|-------|----------|
+| POST | `/uploads/job-photos` | JWT | İş fotoğrafları (max 3, 8MB, sharp resize 1024px) |
+| POST | `/uploads/job-video` | JWT | İş videoları (max 5, 50MB, mp4/mov/avi/mpeg) |
+| POST | `/uploads/identity-photo` | JWT | Kimlik fotoğrafı (10MB, 1200px) |
+| POST | `/uploads/document` | JWT | Belge fotoğrafı (10MB, 1200px) |
+
+Dosyalar `nestjs-backend/uploads/` klasörüne kaydedilir. `/uploads/*` static route ile sunulur.
+
+### AI (`/ai`)
+| Method | Path | Açıklama |
+|--------|------|----------|
+| POST | `/ai/generate-description` | İlan açıklaması üret |
+| POST | `/ai/chat` | Genel sohbet |
+| POST | `/ai/summarize-reviews` | Yorumları özetle |
+
+AI: **claude-opus-4-7** model, adaptive thinking, prompt caching (`cache_control: ephemeral`).
+`ANTHROPIC_API_KEY` .env'de gerekli.
+
+### Admin (`/admin`)
+| Method | Path | Açıklama |
+|--------|------|----------|
+| GET | `/admin/stats` | {totalJobs, openJobs, completedJobs, totalUsers, totalWorkers, verifiedWorkers, totalServiceRequests, openServiceRequests, totalOffers, totalBookings, totalReviews} |
+| GET | `/admin/jobs` | Son ilanlar (?limit=20) |
+| PATCH | `/admin/jobs/:id/featured` | {featuredOrder: 1\|2\|3\|null} |
+| GET | `/admin/users` | Tüm kullanıcılar |
+| PATCH | `/admin/users/:id/verify` | {identityVerified: boolean} |
+| GET | `/admin/service-requests` | Tüm hizmet ilanları |
+| PATCH | `/admin/service-requests/:id/featured` | {featuredOrder} |
+| GET | `/admin/categories` | Kategoriler |
+| PATCH | `/admin/categories/:id` | Kategori güncelle |
+
+
+---
+
+## Auth & Güvenlik
+
+- **JWT**: `AuthGuard('jwt')` — `JwtStrategy` `Authorization: Bearer <token>` başlığını doğrular
+- **Admin**: `admin@hizmet.app` email, `ADMIN_INITIAL_PASSWORD` env şifre — `onModuleInit`'te otomatik oluşur
+- **Flutter**: JWT `SharedPreferences`'da `jwt_token` key'iyle saklanır
+- **Admin Panel**: JWT `localStorage`'da `admin_token` key'iyle saklanır
+- `passwordHash`: bcrypt (10 rounds)
+- JWT `expiresIn`: user `30d`, admin `8h` — `ignoreExpiration: false`
+- **Rate limiting**: ThrottlerModule — IP başına dakikada 60 istek (global guard)
+
+---
+
+## Token Sistemi
+
+```
+Kullanıcı kayıt → 100 token başlangıç bakiyesi
+Teklif ver → 5 token kesilir (OFFER_TOKEN_COST)
+Token satın al → /tokens/purchase {amount, paymentMethod: "bank"|"crypto"}
+```
+
+---
+
+## Puan & İstatistik Sistemi
+
+```
+reputationScore = round(averageRating × 20) + (asCustomerSuccess + asWorkerSuccess) × 5
+
+// İş tamamlanınca
+JobsService._trackStatusChange(COMPLETED):
+  → bumpStat(customerId, asCustomerSuccess)
+  → bumpStat(workerId, asWorkerSuccess)  // accepted offer'ın sahibi
+  → recalcReputation(customerId + workerId)
+
+// Review eklenince
+ReviewsService.create():
+  → recalcRating(revieweeId, rating)  // averageRating + totalReviews günceller
+```
+
+---
+
+## Real-Time Chat (WebSocket)
+
+- Socket.io: `ChatGateway` — `@WebSocketGateway`
+- Olaylar: `sendMessage` → `receiveMessage` (broadcast), `joinRoom`, `getHistory`
+- **Mesajlar DB'ye kaydediliyor** — `ChatMessage` entity, `chat_messages` tablosu. `getHistory` event'i ile son 100 mesaj alınabilir
+- Flutter: `socket_io_client ^2.0.3`, `ChatService` sınıfı
+- `app.useWebSocketAdapter(new IoAdapter(app.getHttpServer()))` main.ts'de gerekli
+
+---
+
+## Dosya Yüklemeleri
+
+- Multer `memoryStorage` + sharp işleme
+- `uploads/jobs/` — iş fotoğrafları (1024px, quality 75) ve videoları (max 5, 50MB, işlenmeden kaydedilir)
+- `uploads/identity/<sanitizedName>/kimlik.jpg` — kimlik (1200px, quality 80)
+- `uploads/identity/<sanitizedName>/belge.jpg` — belge
+- Fotoğraf formatları: JPEG, JPG, PNG, WEBP
+- Video formatları: mp4, mov, avi, mpeg
+
+---
+
+## Ödeme
+
+- **İyzipay sandbox** (payments.service.ts) — key'ler `IYZIPAY_API_KEY`, `IYZIPAY_SECRET_KEY`, `IYZIPAY_URI` env'den okunur
+- Flutter: `iyzico_payment_screen.dart` (WebView ile form)
+- Production için gerçek key gerekir
+
+---
+
+## Flutter Uygulama
+
+### Bağımlılıklar (pubspec.yaml)
+| Paket | Kullanım |
+|-------|----------|
+| `flutter_riverpod ^2.4.9` | State management |
+| `go_router ^13.1.0` | Navigasyon |
+| `dio ^5.4.0` | HTTP istemci |
+| `shared_preferences ^2.2.2` | Token saklama |
+| `socket_io_client ^2.0.3` | WebSocket chat |
+| `image_picker ^1.1.2` | Fotoğraf & video seçme |
+| `flutter_map ^7.0.2` | Harita |
+| `flutter_animate ^4.2.0` | Animasyonlar |
+| `shimmer ^3.0.0` | Yükleme efekti |
+| `cached_network_image ^3.3.0` | Fotoğraf cache |
+| `webview_flutter ^4.4.2` | İyzipay ödeme |
+
+### Navigasyon (GoRouter)
+```
+/ → MainShell (tab kontrolü /?tab=0)
+/login → LoginScreen
+/register → RegisterScreen
+/post-job → PostJobScreen
+/tokens → TokenScreen
+```
+
+### MainShell Sekmeleri
+| Index | Tab | Guard |
+|-------|-----|-------|
+| 0 | Keşfet (\_HomeTab) | — |
+| 1 | Hizmet Al (ServiceRequestScreen) | — |
+| 2 | İşlerim (MyJobsScreen) | giriş gerekli |
+| 3 | Bildirimler (NotificationScreen) | giriş gerekli |
+| 4 | Profil (ProfileScreen) | — |
+
+### State Yönetimi (Riverpod)
+| Provider | Tip | Açıklama |
+|----------|-----|----------|
+| `authStateProvider` | StateNotifier | AuthInitial/Loading/Authenticated/Unauthenticated/Error |
+| `jobsProvider` | StateNotifier | İlanlar listesi + filterJobs() |
+| `jobDetailProvider` | FutureProvider.family | Tek ilan detayı |
+| `jobOffersProvider` | FutureProvider.family | İlandaki teklifler |
+| `categoriesProvider` | FutureProvider | Tüm kategoriler |
+| `serviceRequestRepositoryProvider` | Provider | SR repository |
+| `serviceRequestsProvider` | (main_shell'de kullanılıyor) | Hizmet ilanları |
+| `tokenBalanceProvider` | FutureProvider | Token bakiyesi |
+| `myPublicProfileProvider` | FutureProvider.autoDispose | Profil ekranı |
+| `chatServiceProvider` | Provider | Socket.io servisi |
+
+### API Bağlantısı
+```dart
+// Android emülatör → http://10.0.2.2:3001
+// Web/iOS → http://localhost:3001
+// --dart-define=API_URL=https://xxx.ngrok-free.app ile override
+ApiConstants.baseUrl
+```
+
+### Tema (AppColors)
+```dart
+primary:       #007DFE (mavi)
+primaryDark:   #0056B3
+primaryLight:  #E5F2FF
+secondary:     #2D3E50 (koyu lacivert)
+accent:        #FFA000 (turuncu)
+background:    #F8F9FA
+success:       #00C9A7
+error:         #DE4437
+```
+
+---
+
+## Admin Panel (Next.js 16)
+
+### Yapı
+```
+admin-panel/src/
+├── app/
+│   ├── (admin)/              # Admin shell (sidebar + auth guard)
+│   │   ├── layout.tsx        # Sidebar, auth kontrolü localStorage
+│   │   ├── dashboard/        # Stats + son ilanlar
+│   │   ├── jobs/             # İlanlar + featured yönetimi
+│   │   ├── categories/       # Kategori CRUD
+│   │   ├── providers/        # Usta doğrulama (verify + featured)
+│   │   └── users/            # Kullanıcı listesi
+│   └── login/                # Admin giriş
+└── lib/api.ts                # Backend API istemci
+```
+
+### Auth Akışı
+1. `POST /auth/admin/login` → `access_token` + `user`
+2. `localStorage` → `admin_token`, `admin_user`
+3. Her istekte `Authorization: Bearer <token>`
+4. Sayfa geçişinde `localStorage.getItem('admin_token')` kontrol
+
+### Öne Çıkan Sistem
+- Jobs: `PATCH /admin/jobs/:id/featured { featuredOrder: 1|2|3|null }`
+- ServiceRequests: `PATCH /admin/service-requests/:id/featured { featuredOrder }`
+- Provider featured: `PATCH /admin/providers/:id/featured`
+
+---
+
+## Seed Veriler
+
+### Seed Kullanıcılar (şifre: Test1234)
+| Email | Rol |
+|-------|-----|
+| fatma@test.com | Müşteri |
+| mehmet@test.com | Müşteri |
+| hasan@test.com | Usta |
+| zeynep@test.com | Usta |
+| admin / admin | Admin (username / şifre) |
+
+### v2 Test Kullanıcıları (şifre: Test1234)
+| Email | Rol | Notlar |
+|-------|-----|--------|
+| ayse@v2.test | Müşteri | %100 başarı, 4.5★, rep:100 |
+| can@v2.test | Müşteri | %50 başarı, 4.0★, rep:85 |
+| neslihan@v2.test | Müşteri | açık ilan var |
+| emre@v2.test | Usta | %67 başarı, 5.0★, rep:110 |
+| selin@v2.test | Usta | %50 başarı, 4.0★, rep:85 |
+
+```bash
+# v2 seed'i çalıştır
+node nestjs-backend/seed-v2.js
+```
+
+### Job Seed
+`JobsService.onModuleInit()` — DB boşsa 3 örnek ilan ekler (Salon Badana, Musluk Tamiri, Ev Temizliği).
+
+### Admin Seed
+`AuthService.onModuleInit()` — `admin@hizmet.app` yoksa `ADMIN_INITIAL_PASSWORD` ile oluşturur.
+
+### Kategori Seed
+`CategoriesService.onModuleInit()` — categories tablosu boşsa 29 kategori ekler.
+
+---
+
+## Bilinen Sorunlar / Eksikler
+
+1. ~~**`/admin/providers` endpoint yok**~~ — ✅ **Düzeltildi** (`e0847cca`): `GET /admin/providers`, `PATCH /admin/providers/:id/verify`, `PATCH /admin/providers/:id/featured` eklendi. `ProvidersService` dolduruldu, `AdminModule`'e bağlandı.
+
+2. ~~**Chat mesajları kalıcı değil**~~ — ✅ **Düzeltildi** (`e0847cca`): `ChatMessage` entity oluşturuldu (`chat_messages` tablosu). `handleMessage` artık DB'ye kaydediyor. `getHistory` event'i ile son 100 mesaj çekilebilir.
+
+3. ~~**Admin panel guard zayıf**~~ — ✅ **Düzeltildi** (`5dcbf701`): JWT payload decode edilerek `exp` alanı kontrol ediliyor; süresi dolmuş token'lar login'e yönlendiriyor.
+
+4. ~~**JWT expiresIn eksik**~~ — ✅ **Düzeltildi** (`97d2f797`): User token'ları `30d`, admin token'ları `8h`. `jwt.strategy.ts`'de `ignoreExpiration: false` ve hardcoded fallback kaldırıldı (`292fc2c5`).
+
+5. ~~**İyzipay sandbox key'leri hardcoded**~~ — ✅ **Düzeltildi** (`9f71fee6`): `IYZIPAY_API_KEY`, `IYZIPAY_SECRET_KEY`, `IYZIPAY_URI` env değişkenlerine taşındı.
+
+6. ~~**Providers sayfası çalışmıyor**~~ — ✅ **Düzeltildi** (`e0847cca`): Backend endpoint'leri eklendi, admin panel `/providers` sayfası artık çalışıyor.
+
+---
+
+## Oturum Özeti (Mayıs 2026)
+
+### Yeni Özellikler
+- **Video desteği** (`68afc4c2`): `POST /uploads/job-video` (max 5, 50MB). `Job` entity'e `videos` alanı. Flutter `PostJobScreen`'e `JobVideoPicker` widget'ı eklendi
+- **Swagger/OpenAPI** (`68afc4c2`): `/api/docs` adresinde Swagger UI. Tüm modüller etiketli, JWT Bearer auth destekli
+- **Rate limiting** (`68afc4c2`): ThrottlerModule — IP başına dakikada 60 istek (global guard)
+- **Admin stats genişletildi** (`68afc4c2`): 4 → 11 istatistik. Yeni: `openJobs`, `completedJobs`, `totalWorkers`, `verifiedWorkers`, `totalOffers`, `totalBookings`, `totalReviews`
+- **ServiceRequest harita koordinatı** (`68afc4c2`): `latitude`/`longitude` entity'e eklendi. Flutter `PostServiceRequestScreen` harita picker'a bağlandı
+- **Harita entegrasyonu** (`68a8858a`): Yakındaki işler endpoint'i, GPS, pin, mini kart, 5 sekme nav
+- **Yapgitsin sekmesi** (`af4faef1`): İlanlar + fırsatlar + işlerim tek ekranda
+
+### Güvenlik
+- **JWT expiresIn** (`97d2f797`): User `30d`, admin `8h`. `ignoreExpiration: false`
+- **JWT hardcoded secret** (`292fc2c5`): Fallback kaldırıldı; `JWT_SECRET` env yoksa uygulama başlamıyor
+- **İyzipay key'leri** (`9f71fee6`): `IYZIPAY_API_KEY`, `IYZIPAY_SECRET_KEY`, `IYZIPAY_URI` env'e taşındı
+- **Admin panel guard** (`5dcbf701`): JWT `exp` alanı decode edilerek süresi dolmuş token'lar login'e yönlendiriliyor
+
+### Performans
+- **`getWorkers()`** (`9b83d139`): JS filtreleme → DB-level `WHERE + ORDER BY reputationScore DESC`
+- **Pagination** (`ea2d4bbc` + `63c6f5b3`): `/jobs`, `/bookings/*`, `/offers/my` → `{ data, total, page, limit, pages }`
+- **`getPublicProfile()` N+1** (`983fe713`): Sıralı sorgular → `Promise.all`
+
+### Açık Sorunların Kapatılması
+- **`/admin/providers` endpoint** (`e0847cca`): `GET`, `PATCH verify`, `PATCH featured` eklendi
+- **Chat kalıcılığı** (`e0847cca`): `ChatMessage` entity, `getHistory` event'i
+
+### Git Temizliği
+- `nestjs-backend/dist/`, `hizmet_db.sqlite`, `.claude/`, `CLAUDE.md` gitignore'a eklendi
+
+### Ortam Değişkenleri (`.env`'e eklenenler)
+```
+IYZIPAY_API_KEY=sandbox-...
+IYZIPAY_SECRET_KEY=sandbox-...
+IYZIPAY_URI=https://sandbox-api.iyzipay.com
+```
+
+---
+
+## Commit Geçmişi
+
+| Hash | Açıklama |
+|------|----------|
+| `68afc4c2` | feat: video support, Swagger docs, rate limiting, expanded admin stats, SR map picker |
+| `bdfac836` | fix: resolve TypeScript errors — positional params for Haversine, paginated findByUser return type |
+| `68a8858a` | feat: map integration — nearby jobs endpoint, GPS, drop pins, mini card, 5-tab nav |
+| `af4faef1` | feat: Yapgitsin sekmesi — ilanları, fırsatları ve işlerimi tek ekranda topla |
+| `e0847cca` | fix: resolve all remaining known issues — providers endpoint, chat persistence |
+| `983fe713` | perf: parallelize getPublicProfile queries and push offer filter to DB |
+| `63c6f5b3` | fix: update Flutter repositories and offers controller to handle paginated responses |
+| `ea2d4bbc` | perf: add page/limit pagination to jobs, bookings and offers endpoints |
+| `9b83d139` | perf: push getWorkers filtering to DB instead of in-memory scan |
+| `5dcbf701` | fix: validate JWT expiry in admin panel guard instead of token existence check |
+| `9f71fee6` | fix: move iyzipay keys from hardcoded to environment variables |
+| `292fc2c5` | fix: remove hardcoded JWT secret fallback and enforce expiration |
+| `97d2f797` | fix: add 30d expiry to user JWT tokens (login and register) |
+| `aed8e57c` | fix: resolve all TypeScript compiler errors and Flutter deprecations |
+| `eb1974e0` | fix: resolve all ESLint TypeScript errors in NestJS backend (690 → 0) |
+| `c6b4918d` | feat: initial commit |
