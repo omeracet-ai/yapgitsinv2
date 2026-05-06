@@ -355,3 +355,217 @@
   border-top-color: #00e5a0 !important;
 }
 
+/* ===== MÜDÜRİYE DEPARTMANI ===== */
+.muduriye-department {
+  position: absolute;
+  top: 155px;
+  right: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 6;
+  background: rgba(243,156,18,0.05);
+  border: 2px solid rgba(243,156,18,0.25);
+  border-radius: 6px;
+  padding: 6px 10px 4px;
+  box-shadow: 0 0 20px rgba(243,156,18,0.1);
+}
+
+.muduriye-sign {
+  font-size: 9px;
+  font-weight: 900;
+  color: #f39c12;
+  font-family: var(--font-mono);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(243,156,18,0.5);
+  margin-bottom: 4px;
+}
+
+.muduriye-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(243,156,18,0.3);
+  margin-bottom: 6px;
+}
+
+.muduriye-agent-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.muduriye-popup {
+  position: absolute;
+  top: -32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(5px);
+  background: rgba(10, 10, 20, 0.95);
+  font-size: 8px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.35s ease;
+  border: 1px solid rgba(243,156,18,0.4);
+  color: #f39c12;
+  z-index: 20;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(243,156,18,0.2);
+  max-width: 220px;
+  text-align: center;
+  line-height: 1.5;
+}
+.muduriye-popup.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.muduriye-popup::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid rgba(243,156,18,0.4);
+}
+
+.muduriye-phase-badge {
+  position: absolute;
+  top: -44px;
+  right: -8px;
+  font-size: 7px;
+  font-weight: 900;
+  padding: 2px 5px;
+  border-radius: 3px;
+  color: #000;
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+  opacity: 0.9;
+  z-index: 21;
+}
+
+.muduriye-desk {
+  width: 64px;
+  height: 12px;
+  background: #4a3010;
+  position: relative;
+  margin-top: 40px;
+  border-bottom: 4px solid #2a1a08;
+  border-left: 2px solid #6a4820;
+  border-right: 2px solid #2a1a08;
+}
+
+.muduriye-char {}
+.muduriye-head { background: #f4c596 !important; }
+.muduriye-hair {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  height: 8px;
+  background: #1a0a00;
+  border: 2px solid #000;
+}
+.muduriye-body {
+  border: 2px solid #000;
+  border-bottom: none;
+}
+.muduriye-label {
+  background: #f39c12 !important;
+  color: #000 !important;
+  border-color: #000 !important;
+  box-shadow: 2px 2px 0 #000;
+}
+
+/* Müdüriye boş/kapalı durumu */
+.muduriye-department--closed {
+  opacity: 0.6;
+  filter: grayscale(0.4);
+  border-color: rgba(100,100,100,0.2) !important;
+  box-shadow: none !important;
+}
+.muduriye-closed-badge {
+  font-size: 7px;
+  background: #e74c3c;
+  color: #fff;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.muduriye-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  min-width: 90px;
+}
+.muduriye-empty-icon {
+  font-size: 20px;
+  opacity: 0.5;
+}
+.muduriye-empty-text {
+  font-size: 9px;
+  font-weight: 700;
+  color: #6b7280;
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+}
+.muduriye-empty-sub {
+  font-size: 8px;
+  color: #4b5563;
+  font-family: var(--font-mono);
+  font-style: italic;
+}
+.muduriye-empty-desks {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.muduriye-empty-desk {
+  width: 24px;
+  height: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px dashed rgba(255,255,255,0.1);
+  border-radius: 2px;
+}
+
+/* ===== MÜDÜRİYE LEGEND (SIDEBAR) ===== */
+.muduriye-legend {
+  padding: 10px 14px;
+  border-top: 1px solid rgba(243,156,18,0.15);
+  background: rgba(243,156,18,0.03);
+}
+.legend-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #f39c12;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+}
+.legend-item {
+  font-size: 10px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  margin-bottom: 3px;
+  font-family: var(--font-mono);
+}
+.legend-item.test   { color: #f39c12; background: rgba(243,156,18,0.08); }
+.legend-item.commit { color: #3498db; background: rgba(52,152,219,0.08); }
+.legend-item.push   { color: #9b59b6; background: rgba(155,89,182,0.08); }
+.legend-item.report { color: #00e5a0; background: rgba(0,229,160,0.08); }
+
+/* ===== TOP BAR MÜDÜRİYE BADGE ===== */
+.muduriye-badge {
+  background: rgba(243,156,18,0.15) !important;
+  color: #f39c12 !important;
+  border: 1px solid rgba(243,156,18,0.3);
+}
+

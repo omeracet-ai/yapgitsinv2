@@ -17,16 +17,32 @@ const agentMesajlari = [
   { icon: '📝', text: 'Kullanıcı geri bildirimleri işleniyor...' },
 ];
 
-const subAgentMesajlari = [
-  "Kodlar inceleniyor...",
-  "Testler geçiyor ✅",
-  "Refactor zamanı!",
-  "CSS yine bozuldu 😅",
-  "Merge conflict var!",
-  "Dokümantasyon yazıyorum.",
-  "Deployment hazır.",
-  "Bug avındayım 🐞"
-];
+const subAgentMesajlariDetay: Record<string, string[]> = {
+  'Frontend Team': [
+    '🎨 UI bileşenleri yeniden render ediliyor...',
+    '⚛️ React state güncellemesi: 14 bileşen',
+    '🧪 Jest testleri koşuluyor: 38/42 ✅',
+    '📱 Responsive breakpoint kontrol ediliyor',
+    '🔧 CSS Modules yeniden derleniyor...',
+    '✅ npm run build: başarılı (42 test geçti)',
+  ],
+  'Backend Team': [
+    '🗄️ MySQL bağlantısı test ediliyor: OK',
+    '🔌 REST API /jobs endpoint yanıt: 47ms',
+    '🔐 JWT token doğrulaması çalışıyor',
+    '📦 npm audit: 0 kritik açık bulundu',
+    '🚀 NestJS build: dist/ klasörü güncellendi',
+    '✅ Tüm endpoint testleri geçti: 18/18',
+  ],
+  'AI Team': [
+    '🤖 Model eğitimi: epoch 24/50',
+    '📈 Accuracy: %94.7 — loss: 0.032',
+    '🧮 Token kullanımı: 12.4k/128k',
+    '🔬 Prompt caching hit rate: %78',
+    '💾 Model checkpoint kaydedildi',
+    '✅ Eval suite tamamlandı: A+ skoru',
+  ],
+};
 
 const kahveMesajlari = [
   { icon: '☕', text: 'Bir kahve molası...' },
@@ -53,6 +69,8 @@ const yorgunMesajlari = [
   { icon: '🧱', text: 'Plan limiti mola vermemi engelliyor.' }
 ];
 
+/* MÜDÜRİYE mesajları — ileriki atamalar için hazır */
+
 const kodSatirlari = [
   'const server = express();',
   'app.use(cors());',
@@ -69,20 +87,22 @@ const kodSatirlari = [
 interface KonsolSatiri { ts: string; level: 'info'|'warn'|'error'|'debug'; msg: string }
 
 const konsolMesajlari: Array<{level: KonsolSatiri['level']; msg: string}> = [
-  { level: 'info', msg: 'Agent başlatıldı, görevler yükleniyor...' },
-  { level: 'debug', msg: 'WebSocket bağlantısı kuruldu' },
-  { level: 'info', msg: 'Veritabanı havuzu aktif: 10 bağlantı' },
-  { level: 'warn', msg: 'Cache miss oranı yüksek: %23' },
-  { level: 'info', msg: 'Yeni görev alındı: #4821' },
-  { level: 'debug', msg: 'Worker thread başlatıldı (PID: 8842)' },
-  { level: 'info', msg: 'API yanıt süresi: 42ms' },
-  { level: 'error', msg: 'Timeout: /api/analytics - retry 1/3' },
-  { level: 'info', msg: 'Retry başarılı, işlem tamamlandı' },
-  { level: 'info', msg: 'Model eğitimi: accuracy %94.2' },
-  { level: 'warn', msg: 'Bellek kullanımı: %78 - GC tetikleniyor' },
-  { level: 'debug', msg: 'GC tamamlandı, serbest: 2.4GB' },
-  { level: 'info', msg: 'Yedekleme tamamlandı: 847MB' },
-  { level: 'info', msg: 'Deploy başarılı: v2.14.7' },
+  { level: 'info', msg: '[MÜDÜRİYE] Test döngüsü başlatıldı — 3 ekip izleniyor' },
+  { level: 'debug', msg: 'WebSocket bağlantısı kuruldu (port 3001)' },
+  { level: 'info', msg: 'MySQL havuzu aktif: 10 bağlantı / pyapgiXu_ypgtsn' },
+  { level: 'info', msg: '[CACHE] Redis bağlantısı kuruldu — localhost:6379' },
+  { level: 'info', msg: '[CACHE] Cache miss oranı düştü: %23 → %4 ✅' },
+  { level: 'info', msg: '[FRONTEND] Jest test suite çalıştırıldı: 42/42 geçti ✅' },
+  { level: 'debug', msg: '[MÜDÜRİYE] git add -A → 12 dosya staged' },
+  { level: 'info', msg: 'API yanıt süresi: 42ms (target: <200ms) ✅' },
+  { level: 'error', msg: 'Timeout: /api/analytics — retry 1/3 başlatılıyor...' },
+  { level: 'info', msg: 'Retry başarılı — /api/analytics 187ms' },
+  { level: 'info', msg: '[AI] Model eval: accuracy=%94.7, loss=0.032' },
+  { level: 'warn', msg: 'Bellek kullanımı: %78 — GC tetikleniyor' },
+  { level: 'debug', msg: 'GC tamamlandı — serbest: 2.4GB' },
+  { level: 'info', msg: '[MÜDÜRİYE] git push origin master → başarılı ✅' },
+  { level: 'info', msg: '[MÜDÜRİYE] Müdür raporu gönderildi: 3/3 ekip TAMAM' },
+  { level: 'info', msg: '[BACKEND] 18/18 unit test geçti — deploy hazır' },
 ];
 
 interface Gorev { name: string; status: 'running'|'queued'|'done'; time: string }
@@ -107,26 +127,27 @@ function simdiSaat(): string {
 /* ===== EKİP AGENT BİLEŞENİ ===== */
 function EkipAgent({ name, color, delay, isWorkHours }: { name: string, color: string, delay: number, isWorkHours: boolean }) {
   const [isTyping, setIsTyping] = useState(true);
-  const [mesaj, setMesaj] = useState(subAgentMesajlari[0]);
+  const [mesaj, setMesaj] = useState(subAgentMesajlariDetay[name]?.[0] ?? 'Hazır...');
   const [popupVisible, setPopupVisible] = useState(false);
-  
+  const detaylar = subAgentMesajlariDetay[name] ?? ['Çalışıyor...'];
+
   useEffect(() => {
     const iv = setInterval(() => {
       if (isWorkHours) {
         setIsTyping(Math.random() > 0.2);
-        if (Math.random() > 0.7) {
-          setMesaj(subAgentMesajlari[Math.floor(Math.random() * subAgentMesajlari.length)]);
+        if (Math.random() > 0.6) {
+          setMesaj(detaylar[Math.floor(Math.random() * detaylar.length)]);
           setPopupVisible(true);
-          setTimeout(() => setPopupVisible(false), 3000);
+          setTimeout(() => setPopupVisible(false), 3500);
         }
       } else {
         setIsTyping(false);
-        setMesaj("Mesai bitti mola!");
+        setMesaj('Mesai bitti, mola! ☕');
         setPopupVisible(true);
       }
     }, 3000 + Math.random() * 4000);
     return () => clearInterval(iv);
-  }, [isWorkHours]);
+  }, [isWorkHours, detaylar]);
 
   return (
     <div className="sub-agent-container" style={{ animationDelay: `${delay}s` }}>
@@ -150,17 +171,17 @@ function EkipAgent({ name, color, delay, isWorkHours }: { name: string, color: s
   );
 }
 
-/* ===== GELİŞTİRİCİ AGENT BİLEŞENİ (ANTIGRAVITY) ===== */
+/* ===== GELİŞTİRİCİ AGENT BİLEŞENİ (VOLDEMORT) ===== */
 function DeveloperAgent({ isWorkHours }: { isWorkHours: boolean }) {
   const [isTyping, setIsTyping] = useState(true);
   const [popupVisible, setPopupVisible] = useState(false);
   const devMesajlari = [
-    "Kodu build ediyorum...",
-    "Backend hatasını düzelttim 🛠️",
-    "Müdür, her şey kontrol altında!",
-    "Deployment'a hazırız 🚀",
-    "Kod kalitesini artırıyorum.",
-    "Burası bende müdürüm!"
+    '🛠️ Backend hatasını düzelttim — auth.ts:47',
+    '🔧 TypeScript derleme: 0 hata, 0 uyarı',
+    '📦 npm install tamamlandı: 142 paket',
+    '🚀 Deployment hazır — dist/ güncellendi',
+    '✅ Müdür, build başarılı: v2.14.8',
+    '🔗 API entegrasyonu test edildi: OK',
   ];
   const [mesaj, setMesaj] = useState(devMesajlari[0]);
 
@@ -195,7 +216,24 @@ function DeveloperAgent({ isWorkHours }: { isWorkHours: boolean }) {
           <div className="sub-char-arm right"></div>
         </div>
       </div>
-      <div className="sub-agent-label dev-label">ANTIGRAVITY</div>
+      <div className="sub-agent-label dev-label">VOLDEMORT</div>
+    </div>
+  );
+}
+
+/* ===== MÜDÜRİYE DEPARTMANI — BOŞ (Agent atama bekleniyor) ===== */
+function MuduriyeManager() {
+  return (
+    <div className="muduriye-empty">
+      <div className="muduriye-empty-icon">🔒</div>
+      <div className="muduriye-empty-text">Agent Atanmadı</div>
+      <div className="muduriye-empty-sub">Yeni atama bekleniyor...</div>
+      {/* Boş masalar */}
+      <div className="muduriye-empty-desks">
+        <div className="muduriye-empty-desk" />
+        <div className="muduriye-empty-desk" />
+        <div className="muduriye-empty-desk" />
+      </div>
     </div>
   );
 }
@@ -204,6 +242,7 @@ const ekipler = [
   { id: 1, name: 'Frontend Ekibi', status: 'Aktif', count: 3, color: '#3498db', tasks: ['UI Optimizasyonu'] },
   { id: 2, name: 'Backend Ekibi', status: 'Meşgul', count: 4, color: '#2ecc71', tasks: ['API Refactor'] },
   { id: 3, name: 'AI/ML Takımı', status: 'Eğitimde', count: 2, color: '#9b59b6', tasks: ['Model Training'] },
+  { id: 4, name: 'Müdüriye', status: 'Denetimde', count: 1, color: '#f39c12', tasks: ['Test → Commit → Push → Rapor'] },
 ];
 
 /* ===== MONİTÖR ===== */
@@ -274,27 +313,22 @@ function App() {
   const [konsol, setKonsol] = useState<KonsolSatiri[]>([]);
   const [saat, setSaat] = useState(simdiSaat());
   const [charState, setCharState] = useState<CharState>('typing');
-  const [charX, setCharX] = useState(0); 
-  const [charY, setCharY] = useState(0); 
+  const [charX, setCharX] = useState(0);
+  const [charY, setCharY] = useState(0);
   const [planUsage, setPlanUsage] = useState(0);
   const [energy, setEnergy] = useState(100);
   const [isWorkHours, setIsWorkHours] = useState(true);
   const konsolRef = useRef<HTMLDivElement>(null);
 
-  // Gerçek Görevleri Çekmek Yerine Simülasyon (Bağımsız Agent Teams)
   const gorevleriCek = useCallback(() => {
     setPlanUsage(Math.min(100, (baslangicGorevleri.length / 50) * 100));
   }, []);
 
-  useEffect(() => {
-    gorevleriCek();
-  }, [gorevleriCek]);
+  useEffect(() => { gorevleriCek(); }, [gorevleriCek]);
 
-  // Enerji ve Plan Usage Döngüsü
   useEffect(() => {
     const iv = setInterval(() => {
       if (isWorkHours) {
-        // Çalışırken enerji düşer, plan usage artar
         if (charState === 'typing') {
           setEnergy(e => Math.max(0, e - 0.8));
           setPlanUsage(p => Math.min(100, p + 0.3));
@@ -302,21 +336,16 @@ function App() {
           setEnergy(e => Math.min(100, e + 5));
         }
       }
-      
-      if (planUsage >= 100) {
-        setIsWorkHours(false);
-      }
+      if (planUsage >= 100) setIsWorkHours(false);
     }, 1000);
     return () => clearInterval(iv);
   }, [charState, isWorkHours, planUsage]);
 
-  // Saat
   useEffect(() => {
     const iv = setInterval(() => setSaat(simdiSaat()), 1000);
     return () => clearInterval(iv);
   }, []);
 
-  // Karakter hareket döngüsü
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
     const dongu = () => {
@@ -326,23 +355,18 @@ function App() {
         setPopupGorunur(true);
         return;
       }
-
       setCharState('typing');
       setCharX(0);
       setCharY(0);
-      
       const yazmaSuresi = 8000 + Math.random() * 8000;
       timeout = setTimeout(() => {
-        // KARAR MANTIĞI: Enerji düşükse kahve, aksi halde rastgele mola veya denetim
         if (energy < 25) {
-          // Kahve içmek istiyor ama limit kontrolü
           if (planUsage > 85) {
             setMesaj(yorgunMesajlari[Math.floor(Math.random() * yorgunMesajlari.length)]);
             setPopupGorunur(true);
             setTimeout(() => { setPopupGorunur(false); dongu(); }, 4000);
             return;
           }
-          
           setCharState('walking-to-coffee');
           setCharX(-180);
           setPopupGorunur(false);
@@ -355,14 +379,12 @@ function App() {
               setCharState('walking-back');
               setCharX(0);
               timeout = setTimeout(dongu, 1500);
-            }, 5000); // kahve içme süresi
+            }, 5000);
           }, 1500);
           return;
         }
-
         const aksiyon = Math.random();
         if (aksiyon < 0.3 && planUsage < 85) {
-          // Pencereye bak
           setCharState('walking-to-window');
           setCharX(-50);
           setPopupGorunur(false);
@@ -378,10 +400,9 @@ function App() {
             }, 4000);
           }, 1200);
         } else if (aksiyon < 0.6) {
-          // Ekipleri denetle (Y ekseni hareketi)
           setCharState('walking-to-teams');
           setCharY(-150);
-          setCharX(Math.random() * 200 - 100); // rastgele bir ekibin önüne git
+          setCharX(Math.random() * 200 - 100);
           setPopupGorunur(false);
           timeout = setTimeout(() => {
             setCharState('inspecting');
@@ -396,7 +417,6 @@ function App() {
             }, 5000);
           }, 2000);
         } else {
-          // Yazmaya devam
           dongu();
         }
       }, yazmaSuresi);
@@ -405,7 +425,6 @@ function App() {
     return () => clearTimeout(timeout);
   }, [isWorkHours, energy, planUsage]);
 
-  // Yazarken popup mesaj döngüsü
   useEffect(() => {
     if (charState !== 'typing' || !isWorkHours) return;
     const iv = setInterval(() => {
@@ -431,6 +450,13 @@ function App() {
     return () => clearInterval(iv);
   }, [konsolEkle]);
 
+  // Konsol otomatik scroll
+  useEffect(() => {
+    if (konsolRef.current) {
+      konsolRef.current.scrollTop = konsolRef.current.scrollHeight;
+    }
+  }, [konsol]);
+
   const isWalking = charState.startsWith('walking');
   const isTyping = charState === 'typing';
 
@@ -441,30 +467,28 @@ function App() {
           <h1>⚡ AGENT-TEAMS</h1>
           <div className="subtitle">Yapgitsin AI İş Gücü Monitörü</div>
         </div>
-        
-        {/* ENERGY BAR */}
+
         <div className="usage-section energy-section">
           <div className="usage-header">
             <span>MÜDÜR ENERJİ</span>
             <span>{Math.round(energy)}%</span>
           </div>
           <div className="usage-bar-container">
-            <div 
-              className={`usage-bar energy-bar ${energy < 25 ? 'critical' : energy < 50 ? 'warning' : ''}`} 
+            <div
+              className={`usage-bar energy-bar ${energy < 25 ? 'critical' : energy < 50 ? 'warning' : ''}`}
               style={{ width: `${energy}%`, background: energy < 25 ? '#e74c3c' : '#f1c40f' }}
             ></div>
           </div>
         </div>
 
-        {/* PLAN USAGE LIMIT */}
         <div className="usage-section">
           <div className="usage-header">
             <span>PLAN USAGE LIMIT</span>
             <span>{Math.round(planUsage)}%</span>
           </div>
           <div className="usage-bar-container">
-            <div 
-              className={`usage-bar ${planUsage > 90 ? 'critical' : planUsage > 75 ? 'warning' : ''}`} 
+            <div
+              className={`usage-bar ${planUsage > 90 ? 'critical' : planUsage > 75 ? 'warning' : ''}`}
               style={{ width: `${planUsage}%` }}
             ></div>
           </div>
@@ -478,14 +502,26 @@ function App() {
         <div className="team-section">
           <div className="task-list-title">👥 EKİPLER</div>
           {ekipler.map(ekip => (
-            <div key={ekip.id} className="team-card">
+            <div key={ekip.id} className="team-card" style={{ borderColor: `${ekip.color}22` }}>
               <div className="team-header">
                 <span className="team-name" style={{ color: ekip.color }}>{ekip.name}</span>
                 <span className="team-status">{isWorkHours ? ekip.status : 'Molada'}</span>
               </div>
+              <div className="team-meta" style={{ color: ekip.color + '88', fontSize: '10px', marginTop: '3px' }}>
+                {ekip.tasks[0]}
+              </div>
             </div>
           ))}
-          <div className="stat-row" style={{marginTop: '10px'}}><span className="stat-label">İş Ortağı</span><span className="stat-value active">ANTIGRAVITY</span></div>
+          <div className="stat-row" style={{marginTop: '10px'}}><span className="stat-label">İş Ortağı</span><span className="stat-value active">VOLDEMORT</span></div>
+        </div>
+
+        {/* MÜDÜRİYE GÖREV DÖNGÜSÜ açıklaması */}
+        <div className="muduriye-legend">
+          <div className="legend-title">🏛 MÜDÜRİYE DÖNGÜSÜ</div>
+          <div className="legend-item test">🔬 TEST — Tüm ekip testlerini koştur</div>
+          <div className="legend-item commit">💾 COMMIT — Sonuçları kaydet</div>
+          <div className="legend-item push">🚀 PUSH — Sunucuya gönder</div>
+          <div className="legend-item report">📊 RAPOR — Müdüre bildir</div>
         </div>
       </div>
 
@@ -494,6 +530,7 @@ function App() {
           <div className="top-bar-left">
             <span className="top-bar-title">OPERASYON MERKEZİ</span>
             <span className="top-bar-badge"><span className="live-dot"/>CANLI</span>
+            <span className="top-bar-badge muduriye-badge">🏛 MÜDÜRİYE AKTİF</span>
           </div>
           <div className="top-bar-right">
             <span>Müdür-Agent</span><span>|</span><span>{saat}</span>
@@ -511,19 +548,27 @@ function App() {
               {Array.from({length:10},(_,i) => <div key={i} className="floor-tile" style={{left:`${i*10}%`,width:'10%'}}/>)}
             </div>
 
+            {/* Alt Ekip Agentları */}
             <div className="sub-agents-row">
               <EkipAgent name="Frontend Team" color="#3498db" delay={0} isWorkHours={isWorkHours} />
               <EkipAgent name="Backend Team" color="#2ecc71" delay={0.5} isWorkHours={isWorkHours} />
               <EkipAgent name="AI Team" color="#9b59b6" delay={1} isWorkHours={isWorkHours} />
             </div>
 
+            {/* MÜDÜRİYE DEPARTMANI — boş, atama bekleniyor */}
+            <div className="muduriye-department muduriye-department--closed">
+              <div className="muduriye-sign">🏛 MÜDÜRİYE <span className="muduriye-closed-badge">KAPALI</span></div>
+              <div className="muduriye-divider" />
+              <MuduriyeManager />
+            </div>
+
             <div className="wall-frame"><span className="wall-frame-text">YAPGITSIN HQ</span></div>
             <Pencere/>
-            
+
             <div className="office-staff">
               <DeveloperAgent isWorkHours={isWorkHours} />
             </div>
-            
+
             <div className="desk"><div className="desk-leg left"/><div className="desk-leg right"/></div>
             <div className="monitor"><MonitorEkrani/></div>
             <Klavye aktif={isTyping && isWorkHours}/>
