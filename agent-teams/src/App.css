@@ -57,7 +57,7 @@
 .grid-v{height:100%;width:1px}
 
 /* ===== OFFICE ROOM ===== */
-.office-room{position:relative;width:700px;height:420px;background:linear-gradient(180deg,#1a2332 0%,#151d2b 60%,#121925 100%);border-radius:16px;border:1px solid rgba(0,229,160,0.08);box-shadow:0 0 60px rgba(0,229,160,0.05),0 20px 60px rgba(0,0,0,0.5);overflow:hidden;transform:perspective(1200px) rotateX(40deg);transform-style:preserve-3d;transform-origin:center center;}
+.office-room{position:relative;width:700px;height:420px;background:url('./assets/m1mHGv.png') center/cover no-repeat;border-radius:16px;border:1px solid rgba(0,229,160,0.08);box-shadow:0 0 60px rgba(0,229,160,0.05),0 20px 60px rgba(0,0,0,0.5);overflow:hidden;transform:perspective(1200px) rotateX(40deg);transform-style:preserve-3d;transform-origin:center center;}
 
 /* ===== SUB AGENTS ROW ===== */
 .sub-agents-row{position:absolute;top:60px;width:100%;display:flex;justify-content:space-around;padding:0 40px;z-index:2}
