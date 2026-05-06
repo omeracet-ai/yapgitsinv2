@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, IsNull } from 'typeorm';
+import { Repository, Not, IsNull, Between, MoreThan } from 'typeorm';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { User } from '../users/user.entity';
 import { ServiceRequest } from '../service-requests/service-request.entity';
@@ -56,6 +56,9 @@ export class AdminService {
       this.jobsRepo.count({ where: { status: JobStatus.OPEN } }),
       this.jobsRepo.count({ where: { status: JobStatus.COMPLETED } }),
     ]);
+
+    const chartData = await this.getChartData();
+
     return {
       totalJobs,
       openJobs,
@@ -68,7 +71,41 @@ export class AdminService {
       totalOffers,
       totalBookings,
       totalReviews,
+      chartData,
     };
+  }
+
+  async getChartData() {
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      d.setHours(0, 0, 0, 0);
+      return d;
+    });
+
+    const jobsPerDay = await Promise.all(
+      last7Days.map(async (date) => {
+        const nextDay = new Date(date);
+        nextDay.setDate(nextDay.getDate() + 1);
+        const count = await this.jobsRepo.count({
+          where: { createdAt: Between(date, nextDay) },
+        });
+        return { date: date.toLocaleDateString('tr-TR'), count };
+      }),
+    );
+
+    const usersPerDay = await Promise.all(
+      last7Days.map(async (date) => {
+        const nextDay = new Date(date);
+        nextDay.setDate(nextDay.getDate() + 1);
+        const count = await this.usersRepo.count({
+          where: { createdAt: Between(date, nextDay) },
+        });
+        return { date: date.toLocaleDateString('tr-TR'), count };
+      }),
+    );
+
+    return { jobsPerDay, usersPerDay };
   }
 
   async getRecentJobs(limit = 20) {

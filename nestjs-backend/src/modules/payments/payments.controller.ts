@@ -1,10 +1,18 @@
-import { Controller, Post, Body, Res } from '@nestjs/common';
+import { Controller, Post, Body, Res, Get, UseGuards, Req } from '@nestjs/common';
 import type { Response } from 'express';
 import { PaymentsService } from './payments.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
+
+  @Get('earnings')
+  @UseGuards(JwtAuthGuard)
+  async getEarnings(@Req() req: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+    return this.paymentsService.getEarnings(req.user.id);
+  }
 
   @Post('create-session')
   async createSession(@Body() body: any) {

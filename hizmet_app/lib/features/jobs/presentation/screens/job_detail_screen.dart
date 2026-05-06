@@ -94,7 +94,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final currentUserId =
         authState is AuthAuthenticated ? authState.user['id'] as String? : null;
     final isOwner = widget.customerId != null && widget.customerId == currentUserId;
-    final canMakeOffer = authState is AuthAuthenticated && !isOwner;
 
     final offersAsync = widget.id != null
         ? ref.watch(jobOffersProvider(widget.id!))
@@ -111,6 +110,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final budgetMin   = (detail['budgetMin']  as num?)?.toDouble();
     final budgetMax   = (detail['budgetMax']  as num?)?.toDouble();
     final jobStatus   = detail['status']      as String?  ?? 'open';
+    final canMakeOffer = authState is AuthAuthenticated && !isOwner && jobStatus == 'open';
+    final isWorker = offersAsync.valueOrNull?.any((o) => o['status'] == 'accepted' && o['user']?['id'] == currentUserId) ?? false;
     final customer    = detail['customer']    as Map<String, dynamic>?;
     final rawPhotos   = detail['photos']      as List?;
     final photos      = rawPhotos != null
@@ -232,6 +233,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                         jobId: widget.id!,
                         currentUserId: currentUserId,
                         isOwner: isOwner,
+                        jobStatus: jobStatus,
                       )
                     : const Center(child: Text('İlan ID bulunamadı.')),
               ],
@@ -239,7 +241,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomBar(isOwner: isOwner, canMakeOffer: canMakeOffer),
+      bottomNavigationBar: _buildBottomBar(
+        isOwner: isOwner,
+        canMakeOffer: canMakeOffer,
+        jobStatus: jobStatus,
+        isWorker: isWorker,
+        detail: detail,
+      ),
     );
   }
 
@@ -1086,7 +1094,61 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   }
 
   // ── Bottom Bar ────────────────────────────────────────────────────────────
-  Widget _buildBottomBar({required bool isOwner, required bool canMakeOffer}) {
+  Widget _buildBottomBar({
+    required bool isOwner,
+    required bool canMakeOffer,
+    required String jobStatus,
+    required bool isWorker,
+    required Map<String, dynamic> detail,
+  }) {
+    if (jobStatus == 'in_progress') {
+      if (isOwner) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+          ),
+          child: ElevatedButton.icon(
+            onPressed: () {
+              _showSnack('QR kod oluşturuluyor...');
+              // Backend generate-qr çağrısı buraya eklenecek
+            },
+            icon: const Icon(Icons.qr_code, color: Colors.white),
+            label: const Text('İş Tamamlama QR Kodunu Göster',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              minimumSize: const Size(double.infinity, 52),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        );
+      } else if (isWorker) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+          ),
+          child: ElevatedButton.icon(
+            onPressed: () {
+              _showSnack('Kamera açılıyor...');
+              // Backend verify-qr ve complete çağrısı buraya eklenecek
+            },
+            icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
+            label: const Text('İşi Tamamla (QR Okut & Medya Ekle)',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              minimumSize: const Size(double.infinity, 52),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        );
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(

@@ -1,12 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports */
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Between } from 'typeorm';
+import { Booking, BookingStatus } from '../bookings/booking.entity';
 const Iyzipay = require('iyzipay');
 
 @Injectable()
 export class PaymentsService {
   private iyzipay: any;
 
-  constructor() {
+  constructor(
+    @InjectRepository(Booking)
+    private bookingRepository: Repository<Booking>,
+  ) {
     const apiKey = process.env.IYZIPAY_API_KEY;
     const secretKey = process.env.IYZIPAY_SECRET_KEY;
     const uri = process.env.IYZIPAY_URI;
@@ -14,6 +20,43 @@ export class PaymentsService {
       throw new Error('IYZIPAY_API_KEY, IYZIPAY_SECRET_KEY ve IYZIPAY_URI ortam değişkenleri tanımlanmamış');
     }
     this.iyzipay = new Iyzipay({ apiKey, secretKey, uri });
+  }
+
+  async getEarnings(workerId: string) {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const completedBookings = await this.bookingRepository.find({
+      where: {
+        workerId,
+        status: BookingStatus.COMPLETED,
+      },
+      order: { updatedAt: 'DESC' },
+    });
+
+    const total = completedBookings.reduce((sum, b) => sum + (b.agreedPrice || 0), 0);
+    
+    const monthly = completedBookings
+      .filter(b => new Date(b.updatedAt) >= thirtyDaysAgo)
+      .reduce((sum, b) => sum + (b.agreedPrice || 0), 0);
+
+    const weekly = completedBookings
+      .filter(b => new Date(b.updatedAt) >= sevenDaysAgo)
+      .reduce((sum, b) => sum + (b.agreedPrice || 0), 0);
+
+    return {
+      totalEarnings: total,
+      monthlyEarnings: monthly,
+      weeklyEarnings: weekly,
+      completedCount: completedBookings.length,
+      lastTransactions: completedBookings.slice(0, 5).map(b => ({
+        id: b.id,
+        amount: b.agreedPrice,
+        date: b.updatedAt,
+        category: b.category,
+      })),
+    };
   }
 
   async createCheckoutForm(data: {

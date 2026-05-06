@@ -47,7 +47,16 @@ export const api = {
 
   // Dashboard
   stats: () =>
-    request<{ totalJobs: number; totalUsers: number; totalProviders: number; verifiedProviders: number }>('/admin/stats'),
+    request<{
+      totalJobs: number;
+      totalUsers: number;
+      totalProviders: number;
+      verifiedProviders: number;
+      chartData?: {
+        jobsPerDay: Array<{ date: string; count: number }>;
+        usersPerDay: Array<{ date: string; count: number }>;
+      };
+    }>('/admin/stats'),
 
   // Son İlanlar
   recentJobs: (limit = 20) => request<Job[]>(`/admin/jobs?limit=${limit}`),

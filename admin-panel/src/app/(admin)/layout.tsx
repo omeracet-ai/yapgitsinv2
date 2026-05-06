@@ -16,11 +16,12 @@ function isTokenValid(token: string): boolean {
 
 const NAV = [
   { href: "/dashboard",  label: "Dashboard",     icon: "📊" },
+  { href: "/workforce",  label: "Canlı İş Gücü",  icon: "⚡" },
   { href: "/jobs",       label: "Son İlanlar",    icon: "📋" },
   { href: "/categories", label: "Kategoriler",    icon: "🏷️" },
   { href: "/providers",  label: "Sağlayıcılar",   icon: "👷" },
   { href: "/users",      label: "Kullanıcılar",   icon: "👥" },
-  { href: "/onboarding", label: "Onboarding",     icon: "🎯" },
+  { href: "/onboarding-mgmt", label: "Onboarding",     icon: "🎯" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

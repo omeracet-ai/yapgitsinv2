@@ -9,16 +9,17 @@ final jobQuestionsProvider =
   (ref, jobId) => ref.read(jobRepositoryProvider).getJobQuestions(jobId),
 );
 
-class JobQuestionsTab extends ConsumerStatefulWidget {
   final String jobId;
   final String? currentUserId;
   final bool isOwner;
+  final String jobStatus;
 
   const JobQuestionsTab({
     super.key,
     required this.jobId,
     required this.currentUserId,
     required this.isOwner,
+    required this.jobStatus,
   });
 
   @override
@@ -101,7 +102,7 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
         ),
 
         // Soru formu
-        if (isLoggedIn && !widget.isOwner)
+        if (isLoggedIn && !widget.isOwner && widget.jobStatus == 'open')
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             color: Colors.white,
@@ -160,7 +161,7 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
             ),
           ),
 
-        if (isLoggedIn && !widget.isOwner)
+        if (isLoggedIn && !widget.isOwner && widget.jobStatus == 'open')
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
@@ -204,6 +205,7 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
                       jobId: widget.jobId,
                       currentUserId: widget.currentUserId,
                       isOwner: widget.isOwner,
+                      jobStatus: widget.jobStatus,
                       onReplySent: () =>
                           ref.invalidate(jobQuestionsProvider(widget.jobId)),
                     ),
@@ -225,6 +227,7 @@ class _QuestionCard extends ConsumerStatefulWidget {
   final String jobId;
   final String? currentUserId;
   final bool isOwner;
+  final String jobStatus;
   final VoidCallback onReplySent;
 
   const _QuestionCard({
@@ -232,6 +235,7 @@ class _QuestionCard extends ConsumerStatefulWidget {
     required this.jobId,
     required this.currentUserId,
     required this.isOwner,
+    required this.jobStatus,
     required this.onReplySent,
   });
 
@@ -290,7 +294,7 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
 
     final isQuestionOwner = widget.currentUserId != null &&
         widget.currentUserId == (user?['id'] as String?);
-    final canReply = widget.isOwner || isQuestionOwner;
+    final canReply = (widget.isOwner || isQuestionOwner) && widget.jobStatus == 'open';
 
     return Container(
       decoration: BoxDecoration(

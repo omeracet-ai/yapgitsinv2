@@ -83,6 +83,22 @@ export class Job {
   @Column({ type: 'varchar', length: 10, nullable: true, default: null })
   dueDate: string | null;
 
+  /** İşi tamamlamak için QR kod */
+  @Column({ type: 'varchar', nullable: true, default: null })
+  qrCode: string | null;
+
+  /** QR kod tarandı mı? */
+  @Column({ type: 'boolean', default: false })
+  isQrVerified: boolean;
+
+  /** İş bitimi kanıt fotoğrafları */
+  @Column({ type: 'simple-json', nullable: true, default: null })
+  endJobPhotos: string[] | null;
+
+  /** İş bitimi kanıt videoları */
+  @Column({ type: 'simple-json', nullable: true, default: null })
+  endJobVideos: string[] | null;
+
   /** 1-3 → öne çıkan ilan sırası, null = normal */
   @Column({ type: 'integer', nullable: true, default: null })
   featuredOrder: number | null;

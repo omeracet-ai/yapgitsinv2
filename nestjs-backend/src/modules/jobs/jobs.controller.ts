@@ -168,4 +168,28 @@ export class JobsController {
   remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.jobsService.remove(id, req.user.id);
   }
+
+  // ─── İş Tamamlama ve QR Entegrasyonu ──────────────────────────────────────
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':id/generate-qr')
+  generateQr(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    return this.jobsService.generateQr(id, req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':id/verify-qr')
+  verifyQr(
+    @Param('id') id: string,
+    @Body('qrCode') qrCode: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.jobsService.verifyQr(id, qrCode, req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':id/complete')
+  completeJob(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    return this.jobsService.completeJobWithPayment(id, req.user.id);
+  }
 }

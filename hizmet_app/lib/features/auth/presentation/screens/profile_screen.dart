@@ -10,6 +10,8 @@ import 'addresses_screen.dart';
 import 'help_screen.dart';
 import '../../../../core/constants/api_constants.dart';
 import 'package:dio/dio.dart';
+import '../../calendar/presentation/calendar_screen.dart';
+import '../../calendar/presentation/earnings_screen.dart';
 
 // ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
 final myPublicProfileProvider =
@@ -696,6 +698,14 @@ class ProfileScreen extends ConsumerWidget {
           _menuItem(Icons.account_balance_wallet_outlined, 'Cüzdanım', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const WalletScreen()));
+          }),
+          _menuItem(Icons.calendar_month_outlined, 'İş Takvimi', () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const CalendarScreen()));
+          }),
+          _menuItem(Icons.payments_outlined, 'Kazançlarım', () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const EarningsScreen()));
           }),
           _menuItem(Icons.location_on_outlined, 'Adreslerim', () {
             Navigator.push(context,

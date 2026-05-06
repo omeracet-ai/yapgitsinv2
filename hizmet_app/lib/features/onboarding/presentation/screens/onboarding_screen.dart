@@ -90,21 +90,47 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _fetchSlides() async {
     try {
+      debugPrint('Onboarding: Veriler çekiliyor... URL: ${ApiConstants.baseUrl}/onboarding-slides');
       final dio = Dio(BaseOptions(
         baseUrl: ApiConstants.baseUrl,
-        connectTimeout: const Duration(seconds: 5),
-        receiveTimeout: const Duration(seconds: 5),
+        connectTimeout: const Duration(seconds: 8),
+        receiveTimeout: const Duration(seconds: 8),
       ));
-      final res = await dio.get<List>('/onboarding-slides');
-      final data = res.data ?? [];
-      final slides = data
-          .map((e) => _Slide.fromJson(e as Map<String, dynamic>))
-          .where((s) => s.title.isNotEmpty)
-          .toList();
-      if (slides.isNotEmpty && mounted) {
-        setState(() => _slides = slides);
+      final res = await dio.get('/onboarding-slides');
+      
+      // Veri direkt liste mi yoksa 'data' alanı içinde mi?
+      final List rawList;
+      if (res.data is List) {
+        rawList = res.data as List;
+      } else if (res.data is Map && res.data['data'] is List) {
+        rawList = res.data['data'] as List;
+      } else {
+        throw Exception('Geçersiz veri formatı: ${res.data.runtimeType}');
       }
-    } catch (_) {
+
+      final slides = rawList.map((e) {
+        final j = e as Map<String, dynamic>;
+        // Emülatör erişimi için localhost -> 10.0.2.2 dönüşümü (Android ise)
+        String? img = j['imageUrl'] as String?;
+        if (img != null && !kIsWeb && Platform.isAndroid) {
+          img = img.replaceFirst('localhost', '10.0.2.2');
+        }
+        
+        return _Slide.fromJson({
+          ...j,
+          'imageUrl': img,
+        });
+      }).where((s) => s.title.isNotEmpty).toList();
+
+      if (slides.isNotEmpty && mounted) {
+        debugPrint('Onboarding: ${slides.length} slide başarıyla yüklendi.');
+        setState(() => _slides = slides);
+      } else {
+        debugPrint('Onboarding: Backendden boş liste geldi, fallback kullanılıyor.');
+      }
+    } catch (e, stack) {
+      debugPrint('Onboarding Error: $e');
+      debugPrint('Stack: $stack');
       // fallback kullan
     } finally {
       if (mounted) setState(() => _loadingSlides = false);

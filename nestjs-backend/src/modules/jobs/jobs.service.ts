@@ -2,9 +2,11 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import * as crypto from 'crypto';
 import { Job, JobStatus } from './job.entity';
 import { Offer, OfferStatus } from './offer.entity';
 import { UsersService } from '../users/users.service';
@@ -262,5 +264,91 @@ export class JobsService {
       throw new ForbiddenException('Bu ilanı silme yetkiniz yok.');
     }
     await this.jobsRepository.remove(job);
+  }
+
+  // ─── İş Tamamlama ve QR Entegrasyonu ──────────────────────────────────────
+
+  async generateQr(id: string, requesterId: string): Promise<{ qrCode: string }> {
+    const job = await this.jobsRepository.findOne({ where: { id } });
+    if (!job) throw new NotFoundException('İlan bulunamadı');
+    
+    // Yalnızca ilan sahibi QR oluşturabilir
+    if (job.customerId !== requesterId) {
+      throw new ForbiddenException('Yalnızca müşteri QR kod oluşturabilir.');
+    }
+
+    if (job.status !== JobStatus.IN_PROGRESS) {
+      throw new BadRequestException('QR kod sadece devam eden işler için oluşturulabilir.');
+    }
+
+    const qrCode = crypto.randomUUID();
+    job.qrCode = qrCode;
+    await this.jobsRepository.save(job);
+
+    return { qrCode };
+  }
+
+  async verifyQr(id: string, qrCode: string, requesterId: string): Promise<{ success: boolean }> {
+    const job = await this.jobsRepository.findOne({ where: { id } });
+    if (!job) throw new NotFoundException('İlan bulunamadı');
+
+    // Müşteri kendi QR'ını tarayamaz, usta taramalı.
+    if (job.customerId === requesterId) {
+      throw new ForbiddenException('QR kodu usta taramalıdır.');
+    }
+
+    if (!job.qrCode || job.qrCode !== qrCode) {
+      throw new BadRequestException('Geçersiz QR kod.');
+    }
+
+    job.isQrVerified = true;
+    await this.jobsRepository.save(job);
+    return { success: true };
+  }
+
+  async completeJobWithPayment(id: string, requesterId: string): Promise<Job> {
+    const job = await this.jobsRepository.findOne({ where: { id } });
+    if (!job) throw new NotFoundException('İlan bulunamadı');
+
+    // Usta veya müşteri tamamlayabilir, genelde usta tetikler.
+    if (!job.isQrVerified) {
+      throw new BadRequestException('İşi tamamlamadan önce müşterinin QR kodunu taramalısınız.');
+    }
+
+    const hasPhotos = job.endJobPhotos && job.endJobPhotos.length > 0;
+    const hasVideos = job.endJobVideos && job.endJobVideos.length > 0;
+
+    if (!hasPhotos && !hasVideos) {
+      throw new BadRequestException('İşi tamamlamak için en az bir adet iş sonu görseli veya videosu eklemelisiniz.');
+    }
+
+    // Kabul edilen teklifi bul (fiyat ve usta ID'si için)
+    const acceptedOffer = await this.offersRepository.findOne({
+      where: { jobId: id, status: OfferStatus.ACCEPTED },
+    });
+
+    if (!acceptedOffer) {
+      throw new BadRequestException('Bu işe ait kabul edilmiş bir teklif bulunamadı.');
+    }
+
+    // -- Banka Aracılığıyla Komisyon Kesintisi Simülasyonu --
+    const jobPrice = acceptedOffer.counterPrice || acceptedOffer.price;
+    const platformCommissionRate = 0.10; // %10 Komisyon
+    const commissionAmount = jobPrice * platformCommissionRate;
+    const workerAmount = jobPrice - commissionAmount;
+
+    console.log(`[BANKA İŞLEMİ] İlan: ${job.id}`);
+    console.log(`- Müşteriden Çekilen Tutar: ${jobPrice} ₺`);
+    console.log(`- Platform Komisyonu (%10): ${commissionAmount.toFixed(2)} ₺`);
+    console.log(`- Ustaya Aktarılacak Tutar: ${workerAmount.toFixed(2)} ₺`);
+    // -------------------------------------------------------
+
+    const prevStatus = job.status;
+    job.status = JobStatus.COMPLETED;
+    const saved = await this.jobsRepository.save(job);
+
+    await this._trackStatusChange(saved.id, saved.customerId, prevStatus, saved.status);
+
+    return saved;
   }
 }
