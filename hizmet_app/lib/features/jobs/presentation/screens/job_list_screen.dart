@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/job_shimmer.dart';
 import '../../../../features/categories/data/category_repository.dart';
@@ -345,6 +346,33 @@ class _JobCard extends StatelessWidget {
                     color: AppColors.textSecondary,
                     fontSize: 13,
                     height: 1.45)),
+            if (job.photos != null && job.photos!.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 72,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: job.photos!.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  itemBuilder: (_, i) => ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: CachedNetworkImage(
+                      imageUrl: job.photos![i],
+                      width: 90,
+                      height: 72,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(
+                          width: 90, color: AppColors.primaryLight),
+                      errorWidget: (_, __, ___) => Container(
+                          width: 90,
+                          color: AppColors.primaryLight,
+                          child: const Icon(Icons.broken_image_outlined,
+                              color: AppColors.textHint, size: 20)),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

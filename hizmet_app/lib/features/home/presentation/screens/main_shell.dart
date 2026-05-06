@@ -8,6 +8,8 @@ import '../../../notifications/presentation/screens/notification_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../categories/data/category_repository.dart';
+import '../../../jobs/presentation/providers/job_provider.dart';
+import '../../../jobs/presentation/screens/job_list_screen.dart';
 import 'hizmet_al_screen.dart';
 import '../../../map/presentation/screens/map_screen.dart';
 
@@ -118,6 +120,23 @@ class _HomeTab extends ConsumerStatefulWidget {
 class _HomeTabState extends ConsumerState<_HomeTab> {
   String? _selectedCategory;
   String? _selectedGroup;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearch(String query) {
+    if (query.trim().isEmpty) return;
+    ref.read(jobsProvider.notifier).filterJobs(query.trim());
+    _searchController.clear();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const JobListScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -249,106 +268,6 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                 error: (_, __) => const SizedBox.shrink(),
               ),
 
-              const SizedBox(height: 24),
-
-              // TODO: Öne Çıkan İlanlar — gerektiğinde aşağıdaki bloğu geri aç
-              // Padding(
-              //   padding: const EdgeInsets.symmetric(horizontal: 16),
-              //   child: Row(
-              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //     children: [
-              //       const Text('Öne Çıkan İlanlar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              //       TextButton(
-              //         onPressed: widget.onSeeAllRequests,
-              //         child: const Text('Tümünü Gör', style: TextStyle(color: AppColors.primary)),
-              //       ),
-              //     ],
-              //   ),
-              // ),
-              // ref.watch(serviceRequestsProvider).when(
-              //   data: (requests) {
-              //     final featured = requests.where((r) => r['featuredOrder'] != null).toList()
-              //       ..sort((a, b) => (a['featuredOrder'] as int).compareTo(b['featuredOrder'] as int));
-              //     if (featured.isEmpty) {
-              //       return Padding(
-              //         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              //         child: GestureDetector(
-              //           onTap: widget.onSeeAllRequests,
-              //           child: Container(
-              //             padding: const EdgeInsets.all(14),
-              //             decoration: BoxDecoration(
-              //               color: Colors.grey.shade50,
-              //               borderRadius: BorderRadius.circular(12),
-              //               border: Border.all(color: Colors.grey.shade200),
-              //             ),
-              //             child: Row(children: [
-              //               Icon(Icons.handshake_outlined, color: Colors.grey.shade400, size: 20),
-              //               const SizedBox(width: 8),
-              //               Text('Tüm hizmet ilanlarını gör', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
-              //               const Spacer(),
-              //               Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 18),
-              //             ]),
-              //           ),
-              //         ),
-              //       );
-              //     }
-              //     return SizedBox(
-              //       height: 148,
-              //       child: ListView.builder(
-              //         scrollDirection: Axis.horizontal,
-              //         padding: const EdgeInsets.symmetric(horizontal: 16),
-              //         itemCount: featured.length,
-              //         itemBuilder: (_, i) {
-              //           final item = featured[i];
-              //           final title    = item['title']?.toString() ?? '';
-              //           final location = item['location']?.toString() ?? '';
-              //           final initials = title.isNotEmpty
-              //               ? title.split(' ').take(2).map((w) => w.isNotEmpty ? w[0] : '').join().toUpperCase()
-              //               : '?';
-              //           return GestureDetector(
-              //             onTap: widget.onSeeAllRequests,
-              //             child: Container(
-              //               width: 110,
-              //               margin: const EdgeInsets.only(right: 12),
-              //               padding: const EdgeInsets.all(10),
-              //               decoration: BoxDecoration(
-              //                 color: Colors.white,
-              //                 borderRadius: BorderRadius.circular(14),
-              //                 border: Border.all(color: Colors.amber.shade200, width: 1.5),
-              //                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
-              //               ),
-              //               child: Column(
-              //                 mainAxisAlignment: MainAxisAlignment.center,
-              //                 children: [
-              //                   CircleAvatar(
-              //                     radius: 24,
-              //                     backgroundColor: AppColors.primaryLight,
-              //                     child: Text(initials, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primary)),
-              //                   ),
-              //                   const SizedBox(height: 6),
-              //                   Text(title, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
-              //                       style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-              //                   const SizedBox(height: 3),
-              //                   Text(location, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
-              //                       style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
-              //                   Container(
-              //                     margin: const EdgeInsets.only(top: 4),
-              //                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              //                     decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(6)),
-              //                     child: Text('⭐ Öne Çıkan', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.amber.shade700)),
-              //                   ),
-              //                 ],
-              //               ),
-              //             ),
-              //           ).animate().fade().scale(delay: (i * 80).ms);
-              //         },
-              //       ),
-              //     );
-              //   },
-              //   loading: () => const SizedBox(height: 130, child: Center(child: CircularProgressIndicator())),
-              //   error: (_, __) => const SizedBox.shrink(),
-              // ),
-
               const SizedBox(height: 32),
             ],
           ),
@@ -378,13 +297,19 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                   boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5))],
                 ),
                 child: TextField(
-                  onChanged: (_) {},
-                  onSubmitted: (_) {},
-                  decoration: const InputDecoration(
+                  controller: _searchController,
+                  onSubmitted: _onSearch,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
                     hintText: 'Hangi hizmete ihtiyacınız var?',
-                    prefixIcon: Icon(Icons.search, color: AppColors.primary),
+                    prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.arrow_forward_rounded,
+                          color: AppColors.primary),
+                      onPressed: () => _onSearch(_searchController.text),
+                    ),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 16),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),
               ),
