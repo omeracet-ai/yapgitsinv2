@@ -9,3 +9,4 @@ build/
 *.sqlite
 .claude/
 CLAUDE.md
+nestjs-backend/uploads/
