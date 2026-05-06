@@ -9,6 +9,7 @@ import '../providers/job_provider.dart';
 import '../../../reviews/presentation/screens/write_review_screen.dart';
 import '../../../photos/presentation/widgets/job_photo_picker.dart';
 import '../widgets/job_questions_tab.dart';
+import '../widgets/job_video_player.dart';
 
 class JobDetailScreen extends ConsumerStatefulWidget {
   final String? id;
@@ -23,6 +24,7 @@ class JobDetailScreen extends ConsumerStatefulWidget {
   final bool isFeatured;
   final String? customerId;
   final List<String> photos;
+  final List<String> videos;
 
   const JobDetailScreen({
     super.key,
@@ -38,6 +40,7 @@ class JobDetailScreen extends ConsumerStatefulWidget {
     this.isFeatured = false,
     this.customerId,
     this.photos = const [],
+    this.videos = const [],
   });
 
   @override
@@ -115,6 +118,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         : widget.photos;
     final createdAt   = detail['createdAt']   as String?;
     final dueDate     = detail['dueDate']     as String?;
+    final rawVideos   = detail['videos']      as List?;
+    final videos      = rawVideos != null
+        ? rawVideos.cast<String>()
+        : widget.videos;
 
     final statusMeta = _statusMeta(jobStatus);
 
@@ -195,6 +202,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   if (photos.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     _buildPhotosSection(photos),
+                  ],
+                  if (videos.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _buildVideosSection(videos),
                   ],
                   const SizedBox(height: 8),
                 ],
@@ -652,6 +663,38 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           ),
           const SizedBox(height: 12),
           PhotoGalleryView(photoUrls: photos, height: 200),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVideosSection(List<String> videos) {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Text('Videolar',
+                style:
+                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 250,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              scrollDirection: Axis.horizontal,
+              itemCount: videos.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                return JobVideoPlayer(videoUrl: videos[index]);
+              },
+            ),
+          ),
         ],
       ),
     );

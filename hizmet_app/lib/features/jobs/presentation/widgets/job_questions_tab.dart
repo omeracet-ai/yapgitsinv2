@@ -87,7 +87,8 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
           color: Colors.blue.shade50,
           child: Row(
             children: [
-              Icon(Icons.visibility_outlined, size: 16, color: Colors.blue.shade600),
+              Icon(Icons.visibility_outlined,
+                  size: 16, color: Colors.blue.shade600),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -107,10 +108,10 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 18,
                   backgroundColor: AppColors.primaryLight,
-                  child: const Icon(Icons.person, color: AppColors.primary, size: 18),
+                  child: Icon(Icons.person, color: AppColors.primary, size: 18),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -130,7 +131,8 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(color: Colors.grey.shade200),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                     ),
                   ),
                 ),
@@ -145,10 +147,13 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
                     ),
                     child: _sending
                         ? const SizedBox(
-                            width: 18, height: 18,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2),
                           )
-                        : const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                        : const Icon(Icons.send_rounded,
+                            color: Colors.white, size: 18),
                   ),
                 ),
               ],
@@ -180,7 +185,8 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey.shade300),
+                        Icon(Icons.chat_bubble_outline,
+                            size: 48, color: Colors.grey.shade300),
                         const SizedBox(height: 12),
                         Text(
                           'Henüz soru sorulmamış.',
@@ -198,7 +204,8 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
                       jobId: widget.jobId,
                       currentUserId: widget.currentUserId,
                       isOwner: widget.isOwner,
-                      onReplySent: () => ref.invalidate(jobQuestionsProvider(widget.jobId)),
+                      onReplySent: () =>
+                          ref.invalidate(jobQuestionsProvider(widget.jobId)),
                     ),
                   ),
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -277,9 +284,9 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
     final imgUrl = user?['profileImageUrl'] as String?;
     final text = widget.question['text'] as String? ?? '';
     final createdAt = widget.question['createdAt'] as String?;
-    final replies = (widget.question['replies'] as List?)
-            ?.cast<Map<String, dynamic>>() ??
-        [];
+    final replies =
+        (widget.question['replies'] as List?)?.cast<Map<String, dynamic>>() ??
+            [];
 
     final isQuestionOwner = widget.currentUserId != null &&
         widget.currentUserId == (user?['id'] as String?);
@@ -291,7 +298,10 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 2)),
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: Column(
@@ -309,7 +319,9 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                   backgroundImage: imgUrl != null ? NetworkImage(imgUrl) : null,
                   child: imgUrl == null
                       ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
-                          style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold))
+                          style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold))
                       : null,
                 ),
                 const SizedBox(width: 10),
@@ -320,15 +332,18 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                       Row(
                         children: [
                           Text(name,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 13)),
                           const Spacer(),
                           if (createdAt != null)
                             Text(_timeAgo(createdAt),
-                                style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey.shade500)),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text(text, style: const TextStyle(fontSize: 14, height: 1.4)),
+                      Text(text,
+                          style: const TextStyle(fontSize: 14, height: 1.4)),
                     ],
                   ),
                 ),
@@ -368,7 +383,8 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 8),
                         ),
                       ),
                     ),
@@ -382,9 +398,13 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                           borderRadius: BorderRadius.circular(9),
                         ),
                         child: _sending
-                            ? const SizedBox(width: 16, height: 16,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                            : const Icon(Icons.send_rounded, color: Colors.white, size: 16),
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2))
+                            : const Icon(Icons.send_rounded,
+                                color: Colors.white, size: 16),
                       ),
                     ),
                   ],
@@ -393,13 +413,18 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
             else
               TextButton.icon(
                 onPressed: () => setState(() => _showReplyBox = true),
-                icon: Icon(Icons.reply_rounded, size: 15, color: AppColors.primary),
+                icon: const Icon(Icons.reply_rounded,
+                    size: 15, color: AppColors.primary),
                 label: Text(
-                  replies.isEmpty ? 'Yanıtla' : 'Yanıtları gör (${replies.length})',
-                  style: const TextStyle(fontSize: 12, color: AppColors.primary),
+                  replies.isEmpty
+                      ? 'Yanıtla'
+                      : 'Yanıtları gör (${replies.length})',
+                  style:
+                      const TextStyle(fontSize: 12, color: AppColors.primary),
                 ),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 ),
               ),
           ] else if (replies.isNotEmpty)
@@ -448,7 +473,8 @@ class _ReplyTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(width: 20),
-          const Icon(Icons.subdirectory_arrow_right_rounded, size: 14, color: AppColors.primary),
+          const Icon(Icons.subdirectory_arrow_right_rounded,
+              size: 14, color: AppColors.primary),
           const SizedBox(width: 6),
           CircleAvatar(
             radius: 14,
@@ -456,7 +482,10 @@ class _ReplyTile extends StatelessWidget {
             backgroundImage: imgUrl != null ? NetworkImage(imgUrl) : null,
             child: imgUrl == null
                 ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: const TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold))
+                    style: const TextStyle(
+                        fontSize: 10,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold))
                 : null,
           ),
           const SizedBox(width: 8),
@@ -465,11 +494,14 @@ class _ReplyTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
-                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  Text(name,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 12)),
                   const Spacer(),
                   if (createdAt != null)
                     Text(_timeAgo(createdAt),
-                        style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+                        style: TextStyle(
+                            fontSize: 10, color: Colors.grey.shade500)),
                 ]),
                 const SizedBox(height: 2),
                 Text(text, style: const TextStyle(fontSize: 13, height: 1.4)),
