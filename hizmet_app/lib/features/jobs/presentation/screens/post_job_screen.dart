@@ -31,6 +31,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   int _currentStep = 0;
   double? _lat;
   double? _lng;
+  DateTime? _dueDate;
 
   // Fotoğraf & Video adımı için
   List<File> _selectedPhotos = [];
@@ -242,10 +243,108 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         );
   }
 
+  Future<void> _pickDueDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dueDate ?? now.add(const Duration(days: 7)),
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+      helpText: 'İşin ne zaman bitmesini istiyorsunuz?',
+      confirmText: 'Seç',
+      cancelText: 'Vazgeç',
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(primary: AppColors.primary),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) setState(() => _dueDate = picked);
+  }
+
   Widget _buildDetailsStep() {
+    final dueDateLabel = _dueDate == null
+        ? 'Esnek (tarih önemli değil)'
+        : '${_dueDate!.day.toString().padLeft(2, '0')}/'
+            '${_dueDate!.month.toString().padLeft(2, '0')}/'
+            '${_dueDate!.year}';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Teslim tarihi — ilk seçenek (Airtasker tarzı)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Ne zaman yapılmasını istiyorsunuz?',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary)),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _pickDueDate,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: _dueDate != null ? AppColors.primaryLight : Colors.white,
+                        border: Border.all(
+                          color: _dueDate != null ? AppColors.primary : Colors.grey.shade300,
+                          width: _dueDate != null ? 1.5 : 1,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_today_outlined,
+                              size: 18,
+                              color: _dueDate != null ? AppColors.primary : Colors.grey.shade500),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(dueDateLabel,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: _dueDate != null ? AppColors.primary : Colors.grey.shade600,
+                                  fontWeight: _dueDate != null ? FontWeight.w600 : FontWeight.normal,
+                                )),
+                          ),
+                          if (_dueDate != null)
+                            GestureDetector(
+                              onTap: () => setState(() => _dueDate = null),
+                              child: Icon(Icons.close, size: 16, color: Colors.grey.shade500),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            GestureDetector(
+              onTap: () => setState(() => _dueDate = null),
+              child: Row(
+                children: [
+                  Icon(
+                    _dueDate == null ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                    size: 16,
+                    color: _dueDate == null ? AppColors.primary : Colors.grey.shade400,
+                  ),
+                  const SizedBox(width: 6),
+                  Text('Esnek — tarih önemli değil',
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: _dueDate == null ? AppColors.primary : Colors.grey.shade500)),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 16),
         TextFormField(
           controller: _titleController,
           decoration: const InputDecoration(
@@ -463,6 +562,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       if (_lng != null) 'longitude': _lng,
       if (_uploadedPhotoUrls.isNotEmpty) 'photos': _uploadedPhotoUrls,
       if (_uploadedVideoUrls.isNotEmpty) 'videos': _uploadedVideoUrls,
+      if (_dueDate != null)
+        'dueDate':
+            '${_dueDate!.year}-${_dueDate!.month.toString().padLeft(2, '0')}-${_dueDate!.day.toString().padLeft(2, '0')}',
     };
 
     await ref.read(jobsProvider.notifier).addJob(jobData);

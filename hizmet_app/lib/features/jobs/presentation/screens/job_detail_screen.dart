@@ -114,6 +114,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         ? rawPhotos.cast<String>()
         : widget.photos;
     final createdAt   = detail['createdAt']   as String?;
+    final dueDate     = detail['dueDate']     as String?;
 
     final statusMeta = _statusMeta(jobStatus);
 
@@ -184,7 +185,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  _buildHeader(budgetMin: budgetMin, budgetMax: budgetMax, createdAt: createdAt),
+                  _buildHeader(budgetMin: budgetMin, budgetMax: budgetMax, createdAt: createdAt, dueDate: dueDate),
                   if (customer != null) ...[
                     const SizedBox(height: 8),
                     _buildCustomerCard(customer),
@@ -262,6 +263,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     double? budgetMin,
     double? budgetMax,
     String? createdAt,
+    String? dueDate,
   }) {
     // Bütçe gösterimi
     String budgetStr;
@@ -341,12 +343,24 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           const Divider(height: 1),
           const SizedBox(height: 14),
 
-          // Bilgi satırı: konum + zaman
+          // Bilgi satırı: konum + zaman + teslim tarihi
           Row(children: [
             Flexible(child: _infoChip(Icons.location_on_outlined, widget.location, Colors.red.shade400)),
             const SizedBox(width: 20),
             Flexible(child: _infoChip(Icons.access_time_rounded, postedStr, Colors.grey.shade500)),
           ]),
+          if (dueDate != null) ...[
+            const SizedBox(height: 8),
+            Row(children: [
+              Flexible(
+                child: _infoChip(
+                  Icons.event_outlined,
+                  'Teslim: ${_formatDueDate(dueDate)}',
+                  Colors.orange.shade600,
+                ),
+              ),
+            ]),
+          ],
 
           const SizedBox(height: 14),
 
@@ -468,6 +482,19 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         ],
       ),
     );
+  }
+
+  static String _formatDueDate(String yyyyMmDd) {
+    try {
+      final parts = yyyyMmDd.split('-');
+      if (parts.length != 3) return yyyyMmDd;
+      final months = ['', 'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
+                      'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+      final m = int.parse(parts[1]);
+      return '${parts[2]} ${months[m]} ${parts[0]}';
+    } catch (_) {
+      return yyyyMmDd;
+    }
   }
 
   static String _memberSince(String iso) {

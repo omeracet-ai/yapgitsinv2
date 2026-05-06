@@ -79,6 +79,10 @@ export class Job {
   @Column({ type: 'float', nullable: true })
   longitude: number | null;
 
+  /** Teslim/bitiş tarihi — YYYY-MM-DD formatında */
+  @Column({ type: 'varchar', length: 10, nullable: true, default: null })
+  dueDate: string | null;
+
   /** 1-3 → öne çıkan ilan sırası, null = normal */
   @Column({ type: 'integer', nullable: true, default: null })
   featuredOrder: number | null;

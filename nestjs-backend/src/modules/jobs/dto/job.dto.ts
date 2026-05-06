@@ -37,6 +37,10 @@ export class CreateJobDto {
   budgetMax?: number;
 
   @IsOptional()
+  @IsString()
+  dueDate?: string;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   photos?: string[];
@@ -63,6 +67,10 @@ export class UpdateJobDto {
   @IsOptional()
   @IsEnum(JobStatus)
   status?: JobStatus;
+
+  @IsOptional()
+  @IsString()
+  dueDate?: string;
 
   @IsOptional()
   @IsArray()
