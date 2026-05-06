@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/success_screen.dart';
 import '../../../../core/widgets/location_picker.dart';
-import '../../../../core/providers/navigation_provider.dart';
 import '../providers/job_provider.dart';
 import '../../../categories/data/category_repository.dart';
 import '../../../photos/data/photo_repository.dart';
@@ -570,21 +568,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     await ref.read(jobsProvider.notifier).addJob(jobData);
 
     if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => SuccessScreen(
-            title: 'İlanınız Yayında!',
-            message:
-                'İlanınız başarıyla yayınlandı. Şimdi ustalardan teklif bekleyebilirsiniz.',
-            btnText: 'Keşfet\'e Dön',
-            onBtnPressed: () {
-              ref.read(selectedTabProvider.notifier).state = 0;
-              context.go('/');
-            },
-          ),
-        ),
-      );
+      context.pushReplacement('/job-success');
     }
   }
 }

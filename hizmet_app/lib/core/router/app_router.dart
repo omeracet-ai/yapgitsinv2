@@ -8,6 +8,7 @@ import '../../../features/tokens/presentation/screens/token_screen.dart';
 import '../../../features/ai/presentation/screens/support_agent_screen.dart';
 import '../../../features/auth/presentation/screens/public_profile_screen.dart';
 import '../providers/navigation_provider.dart';
+import '../widgets/success_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -54,6 +55,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/profile/:id',
         builder: (context, state) =>
             PublicProfileScreen(userId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/job-success',
+        builder: (context, state) => const SuccessScreen(
+          title: 'İlanınız Yayında!',
+          message: 'İlanınız başarıyla yayınlandı. Şimdi ustalardan teklif bekleyebilirsiniz.',
+          btnText: "Keşfet'e Dön",
+          targetRoute: '/',
+          targetTab: 0,
+        ),
       ),
     ],
   );
