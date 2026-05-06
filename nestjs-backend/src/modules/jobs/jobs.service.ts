@@ -136,6 +136,9 @@ export class JobsService {
         reputationScore: safe.reputationScore ?? 0,
         city: safe.city ?? '',
         createdAt: safe.createdAt,
+        identityVerified: safe.identityVerified ?? false,
+        asCustomerTotal: safe.asCustomerTotal ?? 0,
+        asCustomerSuccess: safe.asCustomerSuccess ?? 0,
       } as unknown as typeof job.customer;
     }
     return job;

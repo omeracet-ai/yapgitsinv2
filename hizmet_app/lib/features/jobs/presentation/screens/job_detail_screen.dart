@@ -402,84 +402,195 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
 
   // ── İlanı Yayınlayan ──────────────────────────────────────────────────────
   Widget _buildCustomerCard(Map<String, dynamic> customer) {
-    final name    = customer['fullName']        as String? ?? 'Kullanıcı';
-    final imgUrl  = customer['profileImageUrl'] as String?;
-    final rating  = (customer['averageRating']  as num?)?.toDouble() ?? 0.0;
-    final reviews = (customer['totalReviews']   as num?)?.toInt()    ?? 0;
-    final city    = customer['city']            as String? ?? '';
-    final since   = customer['createdAt']       as String?;
-    final sinceStr = since != null ? _memberSince(since) : '';
+    final name             = customer['fullName']        as String? ?? 'Kullanıcı';
+    final imgUrl           = customer['profileImageUrl'] as String?;
+    final rating           = (customer['averageRating']  as num?)?.toDouble() ?? 0.0;
+    final reviews          = (customer['totalReviews']   as num?)?.toInt()    ?? 0;
+    final city             = customer['city']            as String? ?? '';
+    final since            = customer['createdAt']       as String?;
+    final sinceStr         = since != null ? _memberSince(since) : '';
+    final verified         = customer['identityVerified'] == true;
+    final totalJobs        = (customer['asCustomerTotal']   as num?)?.toInt() ?? 0;
+    final successJobs      = (customer['asCustomerSuccess'] as num?)?.toInt() ?? 0;
+    final successRate      = totalJobs > 0 ? (successJobs / totalJobs * 100).round() : null;
+    final customerId       = customer['id'] as String?;
 
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('İlanı Yayınlayan',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary)),
-          const SizedBox(height: 12),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary, letterSpacing: 0.3)),
+          const SizedBox(height: 14),
+
+          // Profil satırı
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Avatar
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: AppColors.primaryLight,
-                backgroundImage: imgUrl != null ? NetworkImage(imgUrl) : null,
-                child: imgUrl == null
-                    ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
-                        style: const TextStyle(fontSize: 20,
-                            color: AppColors.primary, fontWeight: FontWeight.bold))
-                    : null,
+              // Avatar + doğrulama rozeti
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  CircleAvatar(
+                    radius: 32,
+                    backgroundColor: AppColors.primaryLight,
+                    backgroundImage: imgUrl != null ? NetworkImage(imgUrl) : null,
+                    child: imgUrl == null
+                        ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
+                            style: const TextStyle(fontSize: 24,
+                                color: AppColors.primary, fontWeight: FontWeight.bold))
+                        : null,
+                  ),
+                  if (verified)
+                    Positioned(
+                      bottom: -2,
+                      right: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.verified_rounded,
+                            color: AppColors.primary, size: 18),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(width: 14),
+
+              // İsim + meta
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name,
-                        style: const TextStyle(fontSize: 15,
-                            fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                    const SizedBox(height: 3),
                     Row(
                       children: [
-                        if (city.isNotEmpty) ...[
-                          Icon(Icons.location_on_outlined,
-                              size: 12, color: Colors.grey.shade500),
-                          const SizedBox(width: 2),
-                          Text(city,
-                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                          const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(name,
+                              style: const TextStyle(fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary),
+                              overflow: TextOverflow.ellipsis),
+                        ),
+                        if (verified) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryLight,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text('Doğrulandı',
+                                style: TextStyle(fontSize: 10,
+                                    color: AppColors.primary, fontWeight: FontWeight.w600)),
+                          ),
                         ],
-                        if (sinceStr.isNotEmpty)
-                          Text('Üye: $sinceStr',
-                              style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                       ],
                     ),
+                    const SizedBox(height: 4),
+                    if (city.isNotEmpty || sinceStr.isNotEmpty)
+                      Row(
+                        children: [
+                          if (city.isNotEmpty) ...[
+                            Icon(Icons.location_on_outlined, size: 12, color: Colors.grey.shade500),
+                            const SizedBox(width: 2),
+                            Text(city, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                          ],
+                          if (city.isNotEmpty && sinceStr.isNotEmpty)
+                            Text('  ·  ', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+                          if (sinceStr.isNotEmpty)
+                            Text('Üye: $sinceStr',
+                                style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                        ],
+                      ),
                   ],
                 ),
               ),
-              // Rating
-              if (rating > 0)
-                Column(
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
-                        const SizedBox(width: 3),
-                        Text(rating.toStringAsFixed(1),
-                            style: const TextStyle(fontWeight: FontWeight.bold,
-                                fontSize: 14, color: AppColors.textPrimary)),
-                      ],
-                    ),
-                    Text('($reviews yorum)',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
-                  ],
-                ),
             ],
           ),
+
+          const SizedBox(height: 16),
+
+          // İstatistik satırı
+          Row(
+            children: [
+              _statChip(
+                icon: Icons.star_rounded,
+                iconColor: Colors.amber,
+                label: rating > 0 ? rating.toStringAsFixed(1) : '—',
+                sublabel: '$reviews yorum',
+              ),
+              const SizedBox(width: 12),
+              _statChip(
+                icon: Icons.work_outline_rounded,
+                iconColor: AppColors.primary,
+                label: '$totalJobs',
+                sublabel: 'İş ilanı',
+              ),
+              if (successRate != null) ...[
+                const SizedBox(width: 12),
+                _statChip(
+                  icon: Icons.check_circle_outline_rounded,
+                  iconColor: AppColors.success,
+                  label: '%$successRate',
+                  sublabel: 'Tamamlama',
+                ),
+              ],
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          // Profili Gör butonu
+          if (customerId != null)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/profile/$customerId'),
+                icon: const Icon(Icons.person_outline_rounded, size: 16),
+                label: const Text('Profili Gör'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+
+  Widget _statChip({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String sublabel,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: iconColor, size: 18),
+            const SizedBox(height: 4),
+            Text(label,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary)),
+            Text(sublabel,
+                style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+          ],
+        ),
       ),
     );
   }

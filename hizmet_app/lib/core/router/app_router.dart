@@ -6,6 +6,7 @@ import '../../../features/auth/presentation/screens/register_screen.dart';
 import '../../../features/jobs/presentation/screens/post_job_screen.dart';
 import '../../../features/tokens/presentation/screens/token_screen.dart';
 import '../../../features/ai/presentation/screens/support_agent_screen.dart';
+import '../../../features/auth/presentation/screens/public_profile_screen.dart';
 import '../providers/navigation_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -48,6 +49,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/support',
         builder: (context, state) => const SupportAgentScreen(),
+      ),
+      GoRoute(
+        path: '/profile/:id',
+        builder: (context, state) =>
+            PublicProfileScreen(userId: state.pathParameters['id']!),
       ),
     ],
   );
