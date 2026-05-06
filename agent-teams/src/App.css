@@ -56,8 +56,9 @@
 .grid-h{width:100%;height:1px}
 .grid-v{height:100%;width:1px}
 
-/* ===== OFFICE ROOM ===== */
-.office-room{position:relative;width:700px;height:420px;background:url('./assets/m1mHGv.png') center/cover no-repeat;border-radius:16px;border:1px solid rgba(0,229,160,0.08);box-shadow:0 0 60px rgba(0,229,160,0.05),0 20px 60px rgba(0,0,0,0.5);overflow:hidden;transform:perspective(1200px) rotateX(40deg);transform-style:preserve-3d;transform-origin:center center;}
+/* ===== OFFICE ROOM (PIXEL ART STYLE) ===== */
+.office-room{position:relative;width:700px;height:420px;background:#1a1c23;border-radius:0;border:4px solid #33394b;box-shadow:8px 8px 0 rgba(0,0,0,0.5);overflow:hidden;transform:perspective(1200px) rotateX(40deg);transform-style:preserve-3d;transform-origin:center center;image-rendering:pixelated}
+.office-room::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(to right, transparent, transparent 38px, rgba(255,255,255,0.03) 38px, rgba(255,255,255,0.03) 40px), repeating-linear-gradient(to bottom, transparent, transparent 38px, rgba(255,255,255,0.03) 38px, rgba(255,255,255,0.03) 40px);pointer-events:none}
 
 /* ===== SUB AGENTS ROW ===== */
 .sub-agents-row{position:absolute;top:60px;width:100%;display:flex;justify-content:space-around;padding:0 40px;z-index:2}
@@ -68,36 +69,36 @@
 .sub-popup.visible{opacity:1;transform:translateX(-50%) translateY(0)}
 .sub-popup::after{content:'';position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);border-left:4px solid transparent;border-right:4px solid transparent;border-top:4px solid rgba(0,0,0,0.85)}
 
-.sub-agent-desk{width:60px;height:4px;background:#3d2e1e;border-radius:2px;position:relative;margin-top:40px}
-.sub-agent-monitor{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:24px;height:18px;background:#111;border:1px solid #333;border-radius:2px}
-.sub-monitor-glow{width:100%;height:100%;opacity:0.3;animation:pulse 2s infinite}
+.sub-agent-desk{width:64px;height:12px;background:#5e3a21;position:relative;margin-top:40px;border-bottom:4px solid #362010;border-left:2px solid #825432;border-right:2px solid #362010}
+.sub-agent-monitor{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:28px;height:22px;background:#1a1c23;border:2px solid #4a5462;border-bottom:4px solid #2f3640}
+.sub-monitor-glow{width:100%;height:100%;opacity:0.4;animation:pixel-pulse 2s steps(2) infinite}
+@keyframes pixel-pulse{0%{opacity:0.2}50%{opacity:0.6}100%{opacity:0.2}}
 
-.sub-character{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);z-index:3}
-.sub-char-head{width:14px;height:14px;background:#f4c596;border-radius:50%;margin:0 auto;position:relative}
-.sub-char-hair{position:absolute;top:-1px;left:0;right:0;height:7px;background:#2c1810;border-radius:7px 7px 0 0}
-.sub-char-body{width:16px;height:14px;border-radius:3px 3px 0 0;position:relative}
-.sub-char-arm{position:absolute;width:4px;height:10px;background:inherit;border-radius:2px;top:2px}
-.sub-char-arm.left{left:-3px}
-.sub-char-arm.right{right:-3px}
-.sub-character.typing .sub-char-arm{animation:sub-type 0.3s infinite alternate}
-@keyframes sub-type{from{transform:translateY(0)}to{transform:translateY(1px)}}
+.sub-character{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);z-index:3;image-rendering:pixelated}
+.sub-char-head{width:16px;height:16px;background:#f4c596;margin:0 auto;position:relative;border:2px solid #000;border-bottom:none}
+.sub-char-hair{position:absolute;top:-2px;left:-2px;right:-2px;height:8px;background:#2c1810;border:2px solid #000}
+.sub-char-body{width:20px;height:16px;position:relative;border:2px solid #000;border-bottom:none}
+.sub-char-arm{position:absolute;width:6px;height:12px;background:inherit;top:2px;border:2px solid #000}
+.sub-char-arm.left{left:-6px}
+.sub-char-arm.right{right:-6px}
+.sub-character.typing .sub-char-arm{animation:sub-type 0.4s steps(2) infinite alternate}
+@keyframes sub-type{from{transform:translateY(0)}to{transform:translateY(2px)}}
 
 .sub-agent-label{
-  margin-top:12px;
+  margin-top:16px;
   font-size:10px;
-  font-weight:700;
+  font-weight:bold;
   color: #fff;
   font-family:var(--font-mono);
-  background:rgba(0,0,0,0.8);
-  padding:3px 10px;
-  border-radius:4px;
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  background:#1a1c23;
+  padding:4px 8px;
+  border:2px solid #4a5462;
+  box-shadow:2px 2px 0 #000;
   z-index: 10;
   pointer-events: none;
+  text-transform:uppercase;
+  letter-spacing:1px;
 }
-.floor::before{content:'';position:absolute;top:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,160,0.15),transparent)}
-.floor-tile{position:absolute;bottom:0;height:120px;border-right:1px solid rgba(255,255,255,0.02)}
 
 /* Wall decorations */
 .wall-clock{position:absolute;top:30px;right:40px;width:50px;height:50px;border-radius:50%;border:2px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3)}
