@@ -605,6 +605,10 @@ node nestjs-backend/seed-v2.js
 - **ServiceRequest harita koordinatı** (`68afc4c2`): `latitude`/`longitude` entity'e eklendi. Flutter `PostServiceRequestScreen` harita picker'a bağlandı
 - **Harita entegrasyonu** (`68a8858a`): Yakındaki işler endpoint'i, GPS, pin, mini kart, 5 sekme nav
 - **Yapgitsin sekmesi** (`af4faef1`): İlanlar + fırsatlar + işlerim tek ekranda
+- **Teslim tarihi (dueDate)** (`0f9aa3f5`): Airtasker stili tarih seçici `PostJobScreen`'e ilk seçenek olarak eklendi. "Esnek" seçeneği ile tarih silinebilir. `Job` entity + DTO güncellendi. `JobDetailScreen` başlık alanında gösteriliyor
+- **Grafik UI overhaul** (`8e27fa92`): Chat ekranları (mesaj balonları, AppBar avatar, online göstergesi), nav ikonları (rounded), iş kartları yeniden tasarlandı, kategori şeritleri eklendi
+- **Airtasker ilan sahibi profil kartı** (`608c3622`): `JobDetailScreen` müşteri kartı tamamen yeniden tasarlandı — büyük avatar + doğrulama rozeti, 3 istatistik chip (yıldız, iş sayısı, tamamlama oranı), "Profili Gör" butonu. `jobs.service.ts`'den `identityVerified`, `asCustomerTotal`, `asCustomerSuccess` alanları eklendi
+- **PublicProfileScreen** (`608c3622`): `/profile/:id` route'u. Hero header (gradient + avatar + verified rozet), stats satırı, kategori chip'leri, geçmiş iş fotoğrafları, yorumlar listesi
 
 ### Güvenlik
 - **JWT expiresIn** (`97d2f797`): User `30d`, admin `8h`. `ignoreExpiration: false`
@@ -620,6 +624,7 @@ node nestjs-backend/seed-v2.js
 ### Açık Sorunların Kapatılması
 - **`/admin/providers` endpoint** (`e0847cca`): `GET`, `PATCH verify`, `PATCH featured` eklendi
 - **Chat kalıcılığı** (`e0847cca`): `ChatMessage` entity, `getHistory` event'i
+- **Post-job success butonu** (`9a34f5ef`): `SuccessScreen` `StatelessWidget` → `ConsumerWidget`. `Navigator.pushReplacement` → GoRouter `/job-success` route. Buton artık kendi context'inden `context.go('/')` çağırıyor
 
 ### Git Temizliği
 - `nestjs-backend/dist/`, `hizmet_db.sqlite`, `.claude/`, `CLAUDE.md` gitignore'a eklendi
@@ -637,6 +642,10 @@ IYZIPAY_URI=https://sandbox-api.iyzipay.com
 
 | Hash | Açıklama |
 |------|----------|
+| `9a34f5ef` | fix: post-job success screen — use GoRouter context for navigation |
+| `608c3622` | feat: Airtasker-style poster profile card + PublicProfileScreen |
+| `8e27fa92` | feat: grafik UI overhaul — chat bubbles, nav icons, job cards, category strips |
+| `0f9aa3f5` | feat: teslim tarihi (dueDate) — Airtasker style date picker in PostJobScreen |
 | `a0394c98` | feat: public Q&A (Questions tab) — Airtasker tarzı soru-cevap sistemi |
 | `68afc4c2` | feat: video support, Swagger docs, rate limiting, expanded admin stats, SR map picker |
 | `bdfac836` | fix: resolve TypeScript errors — positional params for Haversine, paginated findByUser return type |
