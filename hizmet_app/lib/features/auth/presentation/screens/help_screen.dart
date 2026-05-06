@@ -139,7 +139,7 @@ class _HelpScreenState extends State<HelpScreen> {
                 label: 'AI Destek Asistanı',
                 sub: '7/24 anında yanıt',
                 color: AppColors.primary,
-                onTap: () => context.push('/support'),
+                onTap: () => context.push('/destek'),
                 full: true,
               ),
             ),

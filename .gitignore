@@ -12,3 +12,9 @@ CLAUDE.md
 nestjs-backend/uploads/
 .superpowers/
 docs/
+deploy_final.zip
+deploy_final_v2.zip
+z.zip
+*.zip
+deploy_stage/admin/dev/
+filezilla-yapgitsin.xml

@@ -245,7 +245,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       const Text('Zaten hesabın var mı?  ',
                           style: TextStyle(color: Colors.white70, fontSize: 13)),
                       GestureDetector(
-                        onTap: () => context.push('/login'),
+                        onTap: () => context.push('/giris-yap'),
                         child: const Text('Giriş Yap',
                             style: TextStyle(
                                 color: Colors.white,

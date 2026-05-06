@@ -1067,7 +1067,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   onPressed: () {
                     final auth = ref.read(authStateProvider);
                     if (auth is! AuthAuthenticated) {
-                      context.push('/login');
+                      context.push('/giris-yap');
                       return;
                     }
                     final revieweeUserId = userMap?['id'] as String?;

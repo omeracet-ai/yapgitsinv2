@@ -433,7 +433,7 @@ class _ProviderContent extends ConsumerWidget {
       Map<String, dynamic> provider) {
     final auth = ref.read(authStateProvider);
     if (auth is! AuthAuthenticated) {
-      context.push('/login');
+      context.push('/giris-yap');
       return;
     }
     final userId = provider['userId'] as String? ?? '';

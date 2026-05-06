@@ -163,7 +163,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 24),
               Center(
                 child: TextButton(
-                  onPressed: isLoading ? null : () => context.push('/register'),
+                  onPressed: isLoading ? null : () => context.push('/kayit-ol'),
                   child: const Text('Hesabınız yok mu? Kayıt Olun'),
                 ),
               ).animate().fade(delay: 600.ms),

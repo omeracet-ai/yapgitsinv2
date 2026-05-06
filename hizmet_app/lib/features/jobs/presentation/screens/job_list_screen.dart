@@ -72,7 +72,7 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           final isLoggedIn = ref.read(authStateProvider) is AuthAuthenticated;
-          context.push(isLoggedIn ? '/post-job' : '/login');
+          context.push(isLoggedIn ? '/ilan-ver' : '/giris-yap');
         },
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,

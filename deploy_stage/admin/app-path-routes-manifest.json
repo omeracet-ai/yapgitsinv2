@@ -1,0 +1,14 @@
+{
+  "/(admin)/categories/page": "/categories",
+  "/(admin)/dashboard/page": "/dashboard",
+  "/(admin)/jobs/page": "/jobs",
+  "/(admin)/onboarding-mgmt/page": "/onboarding-mgmt",
+  "/(admin)/providers/page": "/providers",
+  "/(admin)/users/page": "/users",
+  "/(admin)/workforce/page": "/workforce",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/favicon.ico/route": "/favicon.ico",
+  "/login/page": "/login",
+  "/page": "/"
+}

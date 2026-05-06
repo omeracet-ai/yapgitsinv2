@@ -26,7 +26,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     final isLoggedIn = authState is AuthAuthenticated;
     // Bildirimler (index 3) giriş gerektiriyor
     if (index == 3 && !isLoggedIn) {
-      context.push('/login', extra: {'returnTo': '/'});
+      context.push('/giris-yap', extra: {'returnTo': '/'});
       return;
     }
     ref.read(selectedTabProvider.notifier).state = index;
@@ -164,7 +164,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         actions: [
           if (!isLoggedIn)
             TextButton.icon(
-              onPressed: () => context.push('/login'),
+              onPressed: () => context.push('/giris-yap'),
               icon: const Icon(Icons.login, color: Colors.white, size: 18),
               label: const Text('Giriş Yap', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
@@ -321,8 +321,8 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: ElevatedButton.icon(
             onPressed: () {
-              if (isLoggedIn) { context.push('/post-job'); }
-              else { context.push('/login', extra: {'returnTo': '/post-job'}); }
+              if (isLoggedIn) { context.push('/ilan-ver'); }
+              else { context.push('/giris-yap', extra: {'returnTo': '/ilan-ver'}); }
             },
             icon: const Icon(Icons.add, color: Colors.white),
             label: const Text('Hizmet İlanı Ver', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -353,7 +353,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           const Expanded(child: Text('İlan vermek için giriş yapın.', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w500))),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: () => context.push('/login'),
+            onTap: () => context.push('/giris-yap'),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(8)),

@@ -70,13 +70,25 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
             synchronize: true,
           };
         }
+        if (dbType === 'mysql') {
+          return {
+            type: 'mysql' as const,
+            host: configService.get<string>('DB_HOST'),
+            port: configService.get<number>('DB_PORT') || 3306,
+            username: configService.get<string>('DB_USERNAME'),
+            password: configService.get<string>('DB_PASSWORD'),
+            database: configService.get<string>('DB_NAME') || configService.get<string>('DB_DATABASE'),
+            entities,
+            synchronize: true,
+          };
+        }
         return {
           type: 'postgres' as const,
           host: configService.get<string>('DB_HOST'),
-          port: configService.get<number>('DB_PORT'),
+          port: configService.get<number>('DB_PORT') || 5432,
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
-          database: configService.get<string>('DB_DATABASE'),
+          database: configService.get<string>('DB_DATABASE') || configService.get<string>('DB_NAME'),
           entities,
           synchronize: true,
         };

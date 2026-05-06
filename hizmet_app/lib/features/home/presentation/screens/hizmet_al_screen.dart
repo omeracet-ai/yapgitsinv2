@@ -46,7 +46,7 @@ class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
       final isLoggedIn = ref.read(authStateProvider) is AuthAuthenticated;
       if (!isLoggedIn) {
         _tabController.animateTo(_tabController.previousIndex);
-        context.push('/login');
+        context.push('/giris-yap');
       }
     }
   }

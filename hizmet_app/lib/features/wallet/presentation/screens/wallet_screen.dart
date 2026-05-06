@@ -111,7 +111,7 @@ class WalletScreen extends ConsumerWidget {
             icon: Icons.add_card,
             label: 'Token Yükle',
             color: Colors.blue,
-            onTap: () => context.push('/tokens'),
+            onTap: () => context.push('/jetonlar'),
           ),
         ),
         const SizedBox(width: 16),

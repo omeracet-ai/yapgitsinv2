@@ -19,14 +19,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (state.matchedLocation == '/') {
         final prefs = await SharedPreferences.getInstance();
         if (prefs.getBool('onboarding_done') != true) {
-          return '/onboarding';
+          return '/hos-geldiniz';
         }
       }
       return null;
     },
     routes: [
       GoRoute(
-        path: '/onboarding',
+        path: '/hos-geldiniz',
         builder: (context, state) => const OnboardingScreen(),
       ),
       GoRoute(
@@ -43,7 +43,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/login',
+        path: '/giris-yap',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           final returnTo = extra?['returnTo'] as String?;
@@ -51,28 +51,28 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/register',
+        path: '/kayit-ol',
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
-        path: '/post-job',
+        path: '/ilan-ver',
         builder: (context, state) => const PostJobScreen(),
       ),
       GoRoute(
-        path: '/tokens',
+        path: '/jetonlar',
         builder: (context, state) => const TokenScreen(),
       ),
       GoRoute(
-        path: '/support',
+        path: '/destek',
         builder: (context, state) => const SupportAgentScreen(),
       ),
       GoRoute(
-        path: '/profile/:id',
+        path: '/profil/:id',
         builder: (context, state) =>
             PublicProfileScreen(userId: state.pathParameters['id']!),
       ),
       GoRoute(
-        path: '/job-success',
+        path: '/ilan-basarili',
         builder: (context, state) => const SuccessScreen(
           title: 'İlanınız Yayında!',
           message: 'İlanınız başarıyla yayınlandı. Şimdi ustalardan teklif bekleyebilirsiniz.',

@@ -1,0 +1,14 @@
+{
+  "/(admin)/categories/page": "app/(admin)/categories/page.js",
+  "/(admin)/dashboard/page": "app/(admin)/dashboard/page.js",
+  "/(admin)/jobs/page": "app/(admin)/jobs/page.js",
+  "/(admin)/onboarding-mgmt/page": "app/(admin)/onboarding-mgmt/page.js",
+  "/(admin)/providers/page": "app/(admin)/providers/page.js",
+  "/(admin)/users/page": "app/(admin)/users/page.js",
+  "/(admin)/workforce/page": "app/(admin)/workforce/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js"
+}

@@ -1,0 +1,103 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UsersService = void 0;
+const common_1 = require("@nestjs/common");
+const typeorm_1 = require("@nestjs/typeorm");
+const typeorm_2 = require("typeorm");
+const user_entity_1 = require("./user.entity");
+let UsersService = class UsersService {
+    repo;
+    constructor(repo) {
+        this.repo = repo;
+    }
+    findByEmail(email) {
+        return this.repo.findOne({ where: { email } });
+    }
+    findByPhone(phoneNumber) {
+        return this.repo.findOne({ where: { phoneNumber } });
+    }
+    findById(id) {
+        return this.repo.findOne({ where: { id } });
+    }
+    findAll() {
+        return this.repo.find({ order: { createdAt: 'DESC' } });
+    }
+    findWorkers(category, city) {
+        const qb = this.repo
+            .createQueryBuilder('u')
+            .where('u.isAvailable = :available', { available: true })
+            .andWhere("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'");
+        if (category) {
+            qb.andWhere('u.workerCategories LIKE :category', {
+                category: `%"${category}"%`,
+            });
+        }
+        if (city) {
+            qb.andWhere('LOWER(u.city) LIKE :city', {
+                city: `%${city.toLowerCase()}%`,
+            });
+        }
+        return qb.orderBy('u.reputationScore', 'DESC').getMany();
+    }
+    create(userData) {
+        return this.repo.save(this.repo.create(userData));
+    }
+    async update(id, data) {
+        await this.repo.update(id, data);
+        return this.repo.findOne({ where: { id } });
+    }
+    async deleteById(id) {
+        await this.repo.delete(id);
+    }
+    async bumpStat(userId, field) {
+        await this.repo.increment({ id: userId }, field, 1);
+    }
+    async recalcRating(userId, newRating) {
+        const user = await this.repo.findOne({ where: { id: userId } });
+        if (!user)
+            return;
+        const total = user.totalReviews + 1;
+        const average = (user.averageRating * user.totalReviews + newRating) / total;
+        const reputation = Math.round(average * 20) +
+            (user.asCustomerSuccess + user.asWorkerSuccess) * 5;
+        await this.repo.update(userId, {
+            totalReviews: total,
+            averageRating: Math.round(average * 100) / 100,
+            reputationScore: reputation,
+        });
+    }
+    async updateLocation(id, latitude, longitude) {
+        await this.repo.update(id, {
+            latitude,
+            longitude,
+            lastLocationAt: new Date().toISOString(),
+        });
+    }
+    async recalcReputation(userId) {
+        const user = await this.repo.findOne({ where: { id: userId } });
+        if (!user)
+            return;
+        const reputation = Math.round(user.averageRating * 20) +
+            (user.asCustomerSuccess + user.asWorkerSuccess) * 5;
+        await this.repo.update(userId, { reputationScore: reputation });
+    }
+};
+exports.UsersService = UsersService;
+exports.UsersService = UsersService = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __metadata("design:paramtypes", [typeorm_2.Repository])
+], UsersService);
+//# sourceMappingURL=users.service.js.map

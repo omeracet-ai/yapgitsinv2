@@ -86,7 +86,7 @@ class ProfileScreen extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => context.push('/login'),
+                  onPressed: () => context.push('/giris-yap'),
                   child: const Text('Giriş Yap'),
                 ),
               ),
@@ -313,7 +313,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildTokenBanner(BuildContext context, WidgetRef ref) {
     final balanceAsync = ref.watch(tokenBalanceProvider);
     return GestureDetector(
-      onTap: () => context.push('/tokens'),
+      onTap: () => context.push('/jetonlar'),
       child: Container(
         margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),

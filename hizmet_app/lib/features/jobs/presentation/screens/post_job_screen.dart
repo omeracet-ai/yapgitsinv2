@@ -568,7 +568,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     await ref.read(jobsProvider.notifier).addJob(jobData);
 
     if (mounted) {
-      context.pushReplacement('/job-success');
+      context.pushReplacement('/ilan-basarili');
     }
   }
 }
