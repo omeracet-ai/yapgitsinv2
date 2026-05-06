@@ -205,12 +205,22 @@ class _WorkerTabContent extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.handyman_outlined,
-                    size: 64, color: Colors.grey.shade300),
-                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: const BoxDecoration(
+                    color: AppColors.primaryLight,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.handyman_rounded,
+                      size: 44, color: AppColors.primary),
+                ),
+                const SizedBox(height: 18),
                 const Text('Henüz teklif vermediniz.',
-                    style: TextStyle(color: AppColors.textHint, fontSize: 15)),
-                const SizedBox(height: 8),
+                    style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
                 const Text('İş ilanlarını keşfedin ve teklif verin.',
                     style: TextStyle(
                         color: AppColors.textSecondary, fontSize: 13)),
@@ -342,8 +352,26 @@ class _JobList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (jobs.isEmpty) {
       return Center(
-        child: Text(emptyMsg,
-            style: const TextStyle(color: AppColors.textHint, fontSize: 14)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: AppColors.primaryLight,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.work_outline_rounded,
+                  size: 40, color: AppColors.primary),
+            ),
+            const SizedBox(height: 14),
+            Text(emptyMsg,
+                style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500)),
+          ],
+        ),
       );
     }
     return ListView.separated(
@@ -364,8 +392,26 @@ class _OfferList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (offers.isEmpty) {
       return Center(
-        child: Text(emptyMsg,
-            style: const TextStyle(color: AppColors.textHint, fontSize: 14)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: AppColors.primaryLight,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.local_offer_outlined,
+                  size: 40, color: AppColors.primary),
+            ),
+            const SizedBox(height: 14),
+            Text(emptyMsg,
+                style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500)),
+          ],
+        ),
       );
     }
     return ListView.separated(
@@ -432,8 +478,14 @@ class _CustomerJobCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 3)),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -443,16 +495,30 @@ class _CustomerJobCard extends StatelessWidget {
               children: [
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
+                    color: statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: statusColor.withValues(alpha: 0.3), width: 1),
                   ),
-                  child: Text(statusLabel,
-                      style: TextStyle(
-                          color: statusColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        margin: const EdgeInsets.only(right: 5),
+                        decoration: BoxDecoration(
+                            color: statusColor, shape: BoxShape.circle),
+                      ),
+                      Text(statusLabel,
+                          style: TextStyle(
+                              color: statusColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                 ),
                 Text(dateStr,
                     style: const TextStyle(
@@ -461,8 +527,10 @@ class _CustomerJobCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(title,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: AppColors.textPrimary)),
             const SizedBox(height: 4),
             Text(category,
                 style: const TextStyle(
@@ -556,8 +624,14 @@ class _WorkerOfferCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 3)),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -567,16 +641,30 @@ class _WorkerOfferCard extends StatelessWidget {
             children: [
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: statusColor.withValues(alpha: 0.3), width: 1),
                 ),
-                child: Text(statusLabel,
-                    style: TextStyle(
-                        color: statusColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      margin: const EdgeInsets.only(right: 5),
+                      decoration: BoxDecoration(
+                          color: statusColor, shape: BoxShape.circle),
+                    ),
+                    Text(statusLabel,
+                        style: TextStyle(
+                            color: statusColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ),
               Text(dateStr,
                   style:

@@ -51,29 +51,54 @@ class _MainShellState extends ConsumerState<MainShell> {
 
     return Scaffold(
       body: IndexedStack(index: selectedIndex, children: pages),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textHint,
-        showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        elevation: 8,
-        items: [
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Keşfet'),
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.construction_outlined), activeIcon: Icon(Icons.construction), label: 'Yapgitsin'),
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.map_outlined), activeIcon: Icon(Icons.map), label: 'Harita'),
-          BottomNavigationBarItem(
-              icon: isLoggedIn ? const Icon(Icons.notifications_outlined) : const Icon(Icons.lock_outline),
-              activeIcon: const Icon(Icons.notifications),
-              label: 'Bildirimler'),
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profil'),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: selectedIndex,
+          onTap: _onItemTapped,
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: AppColors.textHint,
+          showUnselectedLabels: true,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          selectedLabelStyle: const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w600),
+          unselectedLabelStyle: const TextStyle(fontSize: 11),
+          items: [
+            const BottomNavigationBarItem(
+                icon: Icon(Icons.explore_outlined),
+                activeIcon: Icon(Icons.explore_rounded),
+                label: 'Keşfet'),
+            const BottomNavigationBarItem(
+                icon: Icon(Icons.handyman_outlined),
+                activeIcon: Icon(Icons.handyman_rounded),
+                label: 'Yapgitsin'),
+            const BottomNavigationBarItem(
+                icon: Icon(Icons.map_outlined),
+                activeIcon: Icon(Icons.map_rounded),
+                label: 'Harita'),
+            BottomNavigationBarItem(
+                icon: isLoggedIn
+                    ? const Icon(Icons.notifications_outlined)
+                    : const Icon(Icons.lock_outline_rounded),
+                activeIcon: const Icon(Icons.notifications_rounded),
+                label: 'Bildirimler'),
+            const BottomNavigationBarItem(
+                icon: Icon(Icons.person_outline_rounded),
+                activeIcon: Icon(Icons.person_rounded),
+                label: 'Profil'),
+          ],
+        ),
       ),
     );
   }
@@ -200,7 +225,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                       const SizedBox(height: 10),
                       // Kategori kartları
                       SizedBox(
-                        height: 110,
+                        height: 120,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -465,32 +490,69 @@ class _CategoryItem extends StatelessWidget {
   final VoidCallback onTap;
   final bool isActive;
 
-  const _CategoryItem({required this.emoji, required this.label, required this.onTap, this.isActive = false});
+  const _CategoryItem(
+      {required this.emoji,
+      required this.label,
+      required this.onTap,
+      this.isActive = false});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 80,
-        margin: const EdgeInsets.only(right: 12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: 82,
+        margin: const EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isActive
+                ? AppColors.primary
+                : AppColors.border,
+            width: isActive ? 2 : 1,
+          ),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3)),
+                ]
+              : [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2)),
+                ],
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(11),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isActive ? AppColors.primary : AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(18),
-                border: isActive ? Border.all(color: AppColors.primary, width: 2) : null,
+                color: isActive
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Text(emoji, style: const TextStyle(fontSize: 22)),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 6),
             Flexible(
               child: Text(label,
-                  style: TextStyle(fontSize: 11, fontWeight: isActive ? FontWeight.bold : FontWeight.w500, color: isActive ? AppColors.primary : null),
-                  textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight:
+                          isActive ? FontWeight.bold : FontWeight.w500,
+                      color: isActive ? Colors.white : AppColors.textPrimary,
+                      height: 1.2),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis),
             ),
           ],
         ),

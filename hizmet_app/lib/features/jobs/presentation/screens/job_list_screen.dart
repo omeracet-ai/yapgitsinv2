@@ -141,20 +141,29 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
       padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
         onTap: () => _selectCategory(category),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.white24,
+            color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.35),
+              width: 1,
+            ),
+            boxShadow: isSelected
+                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 6, offset: const Offset(0, 2))]
+                : [],
           ),
           child: Text(
             label,
             style: TextStyle(
               color: isSelected ? AppColors.primary : Colors.white,
               fontWeight:
-                  isSelected ? FontWeight.bold : FontWeight.normal,
+                  isSelected ? FontWeight.bold : FontWeight.w500,
               fontSize: 13,
+              letterSpacing: 0.1,
             ),
           ),
         ),
@@ -167,12 +176,25 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off,
-              size: 64,
-              color: AppColors.textHint.withValues(alpha: 0.5)),
-          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: AppColors.primaryLight,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.work_off_rounded,
+                size: 48,
+                color: AppColors.primary.withValues(alpha: 0.6)),
+          ),
+          const SizedBox(height: 20),
           const Text('Henüz ilan bulunamadı.',
-              style: TextStyle(color: AppColors.textSecondary)),
+              style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500)),
+          const SizedBox(height: 6),
+          const Text('Farklı bir kategori seçmeyi deneyin.',
+              style: TextStyle(color: AppColors.textHint, fontSize: 13)),
         ],
       ),
     );
@@ -208,77 +230,111 @@ class _JobCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
               color: job.isFeatured
-                  ? Colors.amber.shade400
+                  ? const Color(0xFFFFC107)
                   : AppColors.border,
-              width: job.isFeatured ? 2 : 1),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2))
-          ],
+              width: job.isFeatured ? 1.5 : 1),
+          boxShadow: job.isFeatured
+              ? [
+                  BoxShadow(
+                      color: const Color(0xFFFFC107).withValues(alpha: 0.18),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4)),
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1)),
+                ]
+              : [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 12,
+                      offset: const Offset(0, 3)),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (job.isFeatured)
               Container(
-                margin: const EdgeInsets.only(bottom: 8),
+                margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
+                    horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade100,
-                  borderRadius: BorderRadius.circular(6),
+                  gradient: LinearGradient(
+                    colors: [Colors.amber.shade400, Colors.amber.shade600],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.star,
-                        color: Colors.amber.shade700, size: 12),
-                    const SizedBox(width: 4),
+                    Icon(Icons.workspace_premium_rounded,
+                        color: Colors.white, size: 13),
+                    SizedBox(width: 4),
                     Text('Öne Çıkan',
                         style: TextStyle(
                             fontSize: 11,
-                            color: Colors.amber.shade800,
-                            fontWeight: FontWeight.bold)),
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.3)),
                   ],
                 ),
               ),
             Row(
               children: [
                 Container(
-                  height: 48,
-                  width: 48,
+                  height: 52,
+                  width: 52,
                   decoration: BoxDecoration(
-                      color: job.color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Icon(job.icon, color: job.color, size: 24),
+                      color: job.color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14)),
+                  child: Icon(job.icon, color: job.color, size: 26),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(job.title,
                           style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15)),
-                      const SizedBox(height: 2),
-                      Text(job.location,
-                          style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textHint)),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: AppColors.textPrimary)),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_rounded,
+                              size: 12, color: AppColors.textHint),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(job.location,
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textHint),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                Text(job.budget,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: AppColors.primary)),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(job.budget,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: AppColors.primary)),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -286,7 +342,9 @@ class _JobCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                    color: AppColors.textSecondary, fontSize: 14)),
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    height: 1.45)),
           ],
         ),
       ),
