@@ -33,6 +33,8 @@ import { Provider } from './modules/providers/provider.entity';
 import { ChatMessage } from './modules/chat/chat-message.entity';
 import { JobQuestion } from './modules/jobs/job-question.entity';
 import { JobQuestionReply } from './modules/jobs/job-question-reply.entity';
+import { OnboardingSlide } from './modules/onboarding/onboarding-slide.entity';
+import { OnboardingModule } from './modules/onboarding/onboarding.module';
 
 @Module({
   imports: [
@@ -58,6 +60,7 @@ import { JobQuestionReply } from './modules/jobs/job-question-reply.entity';
           ChatMessage,
           JobQuestion,
           JobQuestionReply,
+          OnboardingSlide,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -94,6 +97,7 @@ import { JobQuestionReply } from './modules/jobs/job-question-reply.entity';
     ServiceRequestsModule,
     BookingsModule,
     NotificationsModule,
+    OnboardingModule,
   ],
   controllers: [AppController],
   providers: [

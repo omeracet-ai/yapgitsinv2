@@ -150,6 +150,34 @@ export class UploadsController {
     };
   }
 
+  /** POST /uploads/onboarding-image  — onboarding slide görseli (admin) */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('onboarding-image')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: memoryStorage(),
+      fileFilter: imageFilter,
+      limits: { fileSize: 10 * 1024 * 1024 },
+    }),
+  )
+  async uploadOnboardingImage(
+    @UploadedFile() file: any,
+    @Req() req: any,
+  ): Promise<{ url: string }> {
+    if (!file) throw new BadRequestException('Görsel seçilmedi');
+    const dir = join(process.cwd(), 'uploads', 'onboarding');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+    const dest = join(dir, filename);
+    await sharp(file.buffer)
+      .resize({ width: 1200, withoutEnlargement: true })
+      .jpeg({ quality: 82 })
+      .toFile(dest);
+    return {
+      url: `${req.protocol}://${req.get('host')}/uploads/onboarding/${filename}`,
+    };
+  }
+
   /** POST /uploads/document  — belge fotoğrafı (opsiyonel) */
   @UseGuards(AuthGuard('jwt'))
   @Post('document')

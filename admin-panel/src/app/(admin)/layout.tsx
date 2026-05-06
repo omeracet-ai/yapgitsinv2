@@ -20,6 +20,7 @@ const NAV = [
   { href: "/categories", label: "Kategoriler",    icon: "🏷️" },
   { href: "/providers",  label: "Sağlayıcılar",   icon: "👷" },
   { href: "/users",      label: "Kullanıcılar",   icon: "👥" },
+  { href: "/onboarding", label: "Onboarding",     icon: "🎯" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

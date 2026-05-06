@@ -23,6 +23,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function uploadFile<T>(path: string, formData: FormData): Promise<T> {
+  const token = getToken();
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`Upload ${res.status}: ${text}`);
+  }
+  return res.json() as Promise<T>;
+}
+
 export const api = {
   // Auth
   adminLogin: (username: string, password: string) =>
@@ -59,6 +73,18 @@ export const api = {
   // Öne Çıkan Ustalar
   setProviderFeatured: (id: string, featuredOrder: number | null) =>
     request<void>(`/admin/providers/${id}/featured`, { method: 'PATCH', body: JSON.stringify({ featuredOrder }) }),
+
+  // Onboarding slides
+  onboardingSlides:       ()                                          => request<OnboardingSlide[]>('/onboarding-slides/all'),
+  createOnboardingSlide:  (data: Partial<OnboardingSlide>)           => request<OnboardingSlide>('/onboarding-slides',         { method: 'POST',   body: JSON.stringify(data) }),
+  updateOnboardingSlide:  (id: string, data: Partial<OnboardingSlide>) => request<OnboardingSlide>(`/onboarding-slides/${id}`, { method: 'PATCH',  body: JSON.stringify(data) }),
+  deleteOnboardingSlide:  (id: string)                               => request<void>(`/onboarding-slides/${id}`,              { method: 'DELETE' }),
+  reorderOnboardingSlides:(ids: string[])                            => request<void>('/onboarding-slides/reorder',            { method: 'PATCH',  body: JSON.stringify({ ids }) }),
+  uploadOnboardingImage:  (file: File)                               => {
+    const fd = new FormData();
+    fd.append('image', file);
+    return uploadFile<{ url: string }>('/uploads/onboarding-image', fd);
+  },
 };
 
 // ── Tip tanımları ────────────────────────────────────────────────────────────
@@ -109,6 +135,20 @@ export interface Provider {
   featuredOrder: number | null;
   documents: Record<string, string> | null;
   user?: { id: string; fullName: string; email: string; role: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OnboardingSlide {
+  id: string;
+  title: string;
+  body: string;
+  emoji: string | null;
+  imageUrl: string | null;
+  gradientStart: string;
+  gradientEnd: string;
+  sortOrder: number;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
