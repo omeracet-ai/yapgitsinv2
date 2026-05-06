@@ -358,8 +358,8 @@
 /* ===== MÜDÜRİYE DEPARTMANI ===== */
 .muduriye-department {
   position: absolute;
-  top: 155px;
-  right: 30px;
+  top: 8px;
+  right: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -367,8 +367,9 @@
   background: rgba(243,156,18,0.05);
   border: 2px solid rgba(243,156,18,0.25);
   border-radius: 6px;
-  padding: 6px 10px 4px;
+  padding: 5px 8px 4px;
   box-shadow: 0 0 20px rgba(243,156,18,0.1);
+  max-width: 180px;
 }
 
 .muduriye-sign {
@@ -515,9 +516,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  min-width: 160px;
+  gap: 4px;
+  padding: 2px 4px;
+  min-width: 150px;
+  max-width: 170px;
 }
 
 /* Faz göstergesi */
@@ -555,19 +557,19 @@
 /* Faz mesaj kutusu */
 .muduriye-faz-msg {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 7.5px;
   background: rgba(0,0,0,0.35);
   border: 1px solid rgba(243,156,18,0.3);
   border-radius: 5px;
-  padding: 5px 8px;
+  padding: 4px 6px;
   width: 100%;
   text-align: center;
   transition: opacity 0.3s ease;
   opacity: 0;
-  min-height: 38px;
+  min-height: 30px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 .muduriye-faz-msg.visible { opacity: 1; }
 .muduriye-faz-label {
@@ -583,21 +585,38 @@
   word-break: break-all;
 }
 
-/* Agent sırası */
+/* Agent sırası — kompakt mini gösterim */
 .muduriye-agents-row {
   display: flex;
-  gap: 14px;
+  gap: 16px;
   justify-content: center;
-  margin-top: 4px;
+  margin-top: 2px;
 }
-.muduriye-agent-slot {
+.muduriye-mini-agent {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
 }
-.muduriye-agent-desk {
-  transform: scale(0.85);
+.muduriye-mini-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: background-color 0.4s, box-shadow 0.4s;
+}
+.muduriye-mini-screen {
+  width: 24px;
+  height: 14px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid #374151;
+  border-radius: 2px;
+  transition: border-color 0.4s;
+}
+.muduriye-mini-label {
+  font-size: 7px;
+  color: #6b7280;
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
 }
 
 /* ===== MÜDÜRİYE LEGEND (SIDEBAR) ===== */

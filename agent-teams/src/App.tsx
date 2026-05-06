@@ -305,36 +305,15 @@ function MuduriyeManager() {
       </div>
 
       <div className="muduriye-agents-row">
-        <div className="muduriye-agent-slot">
-          <div className="sub-agent-desk muduriye-agent-desk">
-            <div className="sub-agent-monitor">
-              <div className="sub-monitor-glow" style={{ backgroundColor: faz.color }}></div>
-            </div>
-          </div>
-          <div className="sub-character typing">
-            <div className="sub-char-head"><div className="sub-char-hair"></div></div>
-            <div className="sub-char-body" style={{ background: `linear-gradient(180deg, ${faz.color}, #1d4ed8)` }}>
-              <div className="sub-char-arm left"></div>
-              <div className="sub-char-arm right"></div>
-            </div>
-          </div>
-          <div className="sub-agent-label">Görev Ajanı</div>
+        <div className="muduriye-mini-agent">
+          <div className="muduriye-mini-dot" style={{ backgroundColor: faz.color, boxShadow: `0 0 6px ${faz.color}` }} />
+          <div className="muduriye-mini-screen" style={{ borderColor: faz.color }} />
+          <div className="muduriye-mini-label">Görev Ajanı</div>
         </div>
-
-        <div className="muduriye-agent-slot">
-          <div className="sub-agent-desk muduriye-agent-desk">
-            <div className="sub-agent-monitor">
-              <div className="sub-monitor-glow" style={{ backgroundColor: fazIndex === 6 ? '#e74c3c' : '#555' }}></div>
-            </div>
-          </div>
-          <div className={`sub-character ${fazIndex === 6 ? 'typing' : ''}`}>
-            <div className="sub-char-head"><div className="sub-char-hair"></div></div>
-            <div className="sub-char-body" style={{ background: 'linear-gradient(180deg, #e74c3c, #8e44ad)' }}>
-              <div className="sub-char-arm left"></div>
-              <div className="sub-char-arm right"></div>
-            </div>
-          </div>
-          <div className="sub-agent-label">Rapor Ajanı</div>
+        <div className="muduriye-mini-agent">
+          <div className="muduriye-mini-dot" style={{ backgroundColor: fazIndex === 6 ? '#e74c3c' : '#374151', boxShadow: fazIndex === 6 ? '0 0 6px #e74c3c' : 'none' }} />
+          <div className="muduriye-mini-screen" style={{ borderColor: fazIndex === 6 ? '#e74c3c' : '#374151' }} />
+          <div className="muduriye-mini-label">Rapor Ajanı</div>
         </div>
       </div>
     </div>
