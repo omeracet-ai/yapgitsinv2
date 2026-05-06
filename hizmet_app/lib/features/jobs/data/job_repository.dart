@@ -77,6 +77,41 @@ class JobRepository {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getJobQuestions(String jobId) async {
+    try {
+      final response = await _dio.get('/jobs/$jobId/questions');
+      return List<Map<String, dynamic>>.from(response.data as List);
+    } on DioException catch (e) {
+      throw Exception(_dioMsg(e, 'Sorular yüklenemedi'));
+    }
+  }
+
+  Future<void> postJobQuestion(String jobId, String text, {String? photoUrl}) async {
+    try {
+      final token = await _authRepository.getToken();
+      await _dio.post(
+        '/jobs/$jobId/questions',
+        data: {'text': text, if (photoUrl != null) 'photoUrl': photoUrl},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+    } on DioException catch (e) {
+      throw Exception(_dioMsg(e, 'Soru gönderilemedi'));
+    }
+  }
+
+  Future<void> postQuestionReply(String jobId, String questionId, String text) async {
+    try {
+      final token = await _authRepository.getToken();
+      await _dio.post(
+        '/jobs/$jobId/questions/$questionId/replies',
+        data: {'text': text},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+    } on DioException catch (e) {
+      throw Exception(_dioMsg(e, 'Yanıt gönderilemedi'));
+    }
+  }
+
   /// Ortak DioException mesaj yardımcısı
   String _dioMsg(DioException e, String fallback) {
     final statusCode = e.response?.statusCode;

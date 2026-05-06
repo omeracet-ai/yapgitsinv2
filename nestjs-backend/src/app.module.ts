@@ -31,6 +31,8 @@ import { Notification } from './modules/notifications/notification.entity';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { Provider } from './modules/providers/provider.entity';
 import { ChatMessage } from './modules/chat/chat-message.entity';
+import { JobQuestion } from './modules/jobs/job-question.entity';
+import { JobQuestionReply } from './modules/jobs/job-question-reply.entity';
 
 @Module({
   imports: [
@@ -54,6 +56,8 @@ import { ChatMessage } from './modules/chat/chat-message.entity';
           Notification,
           Provider,
           ChatMessage,
+          JobQuestion,
+          JobQuestionReply,
         ];
         if (dbType === 'sqlite') {
           return {

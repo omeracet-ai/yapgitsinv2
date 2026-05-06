@@ -8,6 +8,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/job_provider.dart';
 import '../../../reviews/presentation/screens/write_review_screen.dart';
 import '../../../photos/presentation/widgets/job_photo_picker.dart';
+import '../widgets/job_questions_tab.dart';
 
 class JobDetailScreen extends ConsumerStatefulWidget {
   final String? id;
@@ -43,8 +44,22 @@ class JobDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<JobDetailScreen> createState() => _JobDetailScreenState();
 }
 
-class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
+class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
+    with SingleTickerProviderStateMixin {
   bool _actionLoading = false;
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   Future<void> _doAction(Future<void> Function() action) async {
     setState(() => _actionLoading = true);
@@ -128,31 +143,87 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             ),
           ),
         ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(
-              budgetMin: budgetMin,
-              budgetMax: budgetMax,
-              createdAt: createdAt,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          tabs: [
+            Tab(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.local_offer_outlined, size: 16),
+                  const SizedBox(width: 6),
+                  offersAsync.when(
+                    data: (o) => Text('Teklifler (${o.length})'),
+                    loading: () => const Text('Teklifler'),
+                    error: (_, __) => const Text('Teklifler'),
+                  ),
+                ],
+              ),
             ),
-            if (customer != null) ...[
-              const SizedBox(height: 8),
-              _buildCustomerCard(customer),
-            ],
-            const SizedBox(height: 8),
-            _buildDescription(description),
-            if (photos.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              _buildPhotosSection(photos),
-            ],
-            const SizedBox(height: 8),
-            _buildOffersSection(offersAsync, canMakeOffer, currentUserId),
-            const SizedBox(height: 100),
+            const Tab(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.chat_bubble_outline, size: 16),
+                  SizedBox(width: 6),
+                  Text('Sorular'),
+                ],
+              ),
+            ),
           ],
         ),
+      ),
+      body: Column(
+        children: [
+          // İlan üst bilgileri (her iki sekmede de görünür)
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildHeader(budgetMin: budgetMin, budgetMax: budgetMax, createdAt: createdAt),
+                if (customer != null) ...[
+                  const SizedBox(height: 8),
+                  _buildCustomerCard(customer),
+                ],
+                const SizedBox(height: 8),
+                _buildDescription(description),
+                if (photos.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _buildPhotosSection(photos),
+                ],
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+          // Sekme içerikleri
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // Tab 0: Teklifler
+                SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _buildOffersSection(offersAsync, canMakeOffer, currentUserId),
+                      const SizedBox(height: 100),
+                    ],
+                  ),
+                ),
+                // Tab 1: Sorular
+                widget.id != null
+                    ? JobQuestionsTab(
+                        jobId: widget.id!,
+                        currentUserId: currentUserId,
+                        isOwner: isOwner,
+                      )
+                    : const Center(child: Text('İlan ID bulunamadı.')),
+              ],
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: _buildBottomBar(isOwner: isOwner, canMakeOffer: canMakeOffer),
     );
