@@ -498,42 +498,106 @@
   margin-left: 4px;
   vertical-align: middle;
 }
-.muduriye-empty {
+.muduriye-active-badge {
+  font-size: 7px;
+  background: #2ecc71;
+  color: #fff;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+  vertical-align: middle;
+  animation: pulse-green 2s infinite;
+}
+@keyframes pulse-green { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+/* ===== MÜDÜRİYE AKTİF — VOLDEMORT DÖNGÜSÜ ===== */
+.muduriye-active {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
-  min-width: 90px;
+  gap: 6px;
+  padding: 6px 8px;
+  min-width: 160px;
 }
-.muduriye-empty-icon {
-  font-size: 20px;
-  opacity: 0.5;
-}
-.muduriye-empty-text {
-  font-size: 9px;
-  font-weight: 700;
-  color: #6b7280;
-  font-family: var(--font-mono);
-  letter-spacing: 1px;
-}
-.muduriye-empty-sub {
-  font-size: 8px;
-  color: #4b5563;
-  font-family: var(--font-mono);
-  font-style: italic;
-}
-.muduriye-empty-desks {
+
+/* Faz göstergesi */
+.muduriye-faz-bar {
   display: flex;
-  gap: 8px;
-  margin-top: 6px;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 2px;
 }
-.muduriye-empty-desk {
-  width: 24px;
-  height: 6px;
+.muduriye-faz-item {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
   background: rgba(255,255,255,0.05);
-  border: 1px dashed rgba(255,255,255,0.1);
-  border-radius: 2px;
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  transition: all 0.3s ease;
+  cursor: default;
+}
+.muduriye-faz-item.done {
+  background: rgba(46,204,113,0.15);
+  border-color: rgba(46,204,113,0.4);
+  opacity: 0.6;
+}
+.muduriye-faz-item.active {
+  background: rgba(var(--faz-color-rgb, 243,156,18), 0.25);
+  border-color: var(--faz-color, #f39c12);
+  box-shadow: 0 0 6px var(--faz-color, #f39c12);
+  transform: scale(1.25);
+}
+
+/* Faz mesaj kutusu */
+.muduriye-faz-msg {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(243,156,18,0.3);
+  border-radius: 5px;
+  padding: 5px 8px;
+  width: 100%;
+  text-align: center;
+  transition: opacity 0.3s ease;
+  opacity: 0;
+  min-height: 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.muduriye-faz-msg.visible { opacity: 1; }
+.muduriye-faz-label {
+  font-weight: 700;
+  font-size: 8px;
+  letter-spacing: 1px;
+  display: block;
+}
+.muduriye-faz-text {
+  color: #9ca3af;
+  font-size: 7.5px;
+  display: block;
+  word-break: break-all;
+}
+
+/* Agent sırası */
+.muduriye-agents-row {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 4px;
+}
+.muduriye-agent-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.muduriye-agent-desk {
+  transform: scale(0.85);
 }
 
 /* ===== MÜDÜRİYE LEGEND (SIDEBAR) ===== */

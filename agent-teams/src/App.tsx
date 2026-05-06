@@ -69,7 +69,23 @@ const yorgunMesajlari = [
   { icon: '🧱', text: 'Plan limiti mola vermemi engelliyor.' }
 ];
 
-/* MÜDÜRİYE mesajları — ileriki atamalar için hazır */
+const muduriyeGorevler = [
+  { task: 'Cache TTL Optimizasyonu',     result: 'Miss oranı: %23 → %4 ✅' },
+  { task: 'TypeScript Strict Mode',      result: '0 type hata — derleme temiz ✅' },
+  { task: 'MySQL Query Optimizer',       result: 'Sorgu süresi: 120ms → 34ms ✅' },
+  { task: 'API Rate Limit Konfigürasyon',result: 'DDoS koruma aktif — 60 req/dk ✅' },
+  { task: 'Redis Cluster Entegrasyonu',  result: 'Yük dağılımı optimize — +%18 hız ✅' },
+];
+
+const muduriyeFazlari = [
+  { id: 'gorev',     icon: '📋', label: 'GÖREV AL',          color: '#3498db' },
+  { id: 'voldemort', icon: '🧙', label: 'VOLDEMORT ÖNERİSİ', color: '#00e5a0' },
+  { id: 'execute',   icon: '⚙️', label: 'UYGULA',            color: '#f39c12' },
+  { id: 'test',      icon: '🧪', label: 'TEST',               color: '#9b59b6' },
+  { id: 'commit',    icon: '💾', label: 'COMMIT',             color: '#e67e22' },
+  { id: 'push',      icon: '🚀', label: 'PUSH',               color: '#2ecc71' },
+  { id: 'rapor',     icon: '📊', label: 'MÜDÜR RAPORU',      color: '#e74c3c' },
+];
 
 const kodSatirlari = [
   'const server = express();',
@@ -87,22 +103,34 @@ const kodSatirlari = [
 interface KonsolSatiri { ts: string; level: 'info'|'warn'|'error'|'debug'; msg: string }
 
 const konsolMesajlari: Array<{level: KonsolSatiri['level']; msg: string}> = [
-  { level: 'info', msg: '[MÜDÜRİYE] Test döngüsü başlatıldı — 3 ekip izleniyor' },
+  { level: 'info',  msg: '[MÜDÜRİYE] Görev döngüsü başlatıldı — VOLDEMORT danışma modu aktif' },
+  { level: 'debug', msg: '[VOLDEMORT] Görev analizi: Cache TTL optimizasyonu → öneri hazır' },
+  { level: 'info',  msg: '[GÖREV AJAN] VOLDEMORT önerisi alındı: "Redis TTL 60s → 30s"' },
+  { level: 'info',  msg: '[GÖREV AJAN] Öneri uygulandı — 3 dosya güncellendi' },
+  { level: 'info',  msg: '[TEST] Jest suite: 47/47 geçti ✅ — deploy hazır' },
+  { level: 'debug', msg: '[COMMIT] git commit -m "perf: cache TTL optimizasyonu"' },
+  { level: 'info',  msg: '[PUSH] git push origin master → başarılı ✅' },
+  { level: 'info',  msg: '[RAPOR AJAN] Müdür raporu derleniyor: 1 görev, başarılı' },
+  { level: 'info',  msg: '[MÜDÜRİYE → MÜDÜR] Rapor iletildi: miss oranı %23 → %4 ✅' },
+  { level: 'debug', msg: '[VOLDEMORT] Yeni görev önerisi: MySQL index ekle — %71 hız artışı' },
+  { level: 'info',  msg: '[GÖREV AJAN] Yeni görev alındı: "MySQL Query Optimizer"' },
+  { level: 'info',  msg: '[TEST] DB sorgu süresi: 120ms → 34ms ✅' },
+  { level: 'debug', msg: '[COMMIT] git commit -m "perf: mysql query optimizer"' },
+  { level: 'info',  msg: '[PUSH] origin/master → cfb1685c ✅' },
+  { level: 'info',  msg: '[MÜDÜRİYE → MÜDÜR] Görev #2 tamamlandı: sorgu %71 hızlandı ✅' },
   { level: 'debug', msg: 'WebSocket bağlantısı kuruldu (port 3001)' },
-  { level: 'info', msg: 'MySQL havuzu aktif: 10 bağlantı / pyapgiXu_ypgtsn' },
-  { level: 'info', msg: '[CACHE] Redis bağlantısı kuruldu — localhost:6379' },
-  { level: 'info', msg: '[CACHE] Cache miss oranı düştü: %23 → %4 ✅' },
-  { level: 'info', msg: '[FRONTEND] Jest test suite çalıştırıldı: 42/42 geçti ✅' },
-  { level: 'debug', msg: '[MÜDÜRİYE] git add -A → 12 dosya staged' },
-  { level: 'info', msg: 'API yanıt süresi: 42ms (target: <200ms) ✅' },
+  { level: 'info',  msg: 'MySQL havuzu aktif: 10 bağlantı / pyapgiXu_ypgtsn' },
+  { level: 'info',  msg: '[CACHE] Redis bağlantısı kuruldu — localhost:6379' },
+  { level: 'info',  msg: '[CACHE] Cache miss oranı düştü: %23 → %4 ✅' },
+  { level: 'info',  msg: '[FRONTEND] Jest test suite çalıştırıldı: 42/42 geçti ✅' },
+  { level: 'info',  msg: 'API yanıt süresi: 42ms (target: <200ms) ✅' },
   { level: 'error', msg: 'Timeout: /api/analytics — retry 1/3 başlatılıyor...' },
-  { level: 'info', msg: 'Retry başarılı — /api/analytics 187ms' },
-  { level: 'info', msg: '[AI] Model eval: accuracy=%94.7, loss=0.032' },
-  { level: 'warn', msg: 'Bellek kullanımı: %78 — GC tetikleniyor' },
+  { level: 'info',  msg: 'Retry başarılı — /api/analytics 187ms' },
+  { level: 'info',  msg: '[AI] Model eval: accuracy=%94.7, loss=0.032' },
+  { level: 'warn',  msg: 'Bellek kullanımı: %78 — GC tetikleniyor' },
   { level: 'debug', msg: 'GC tamamlandı — serbest: 2.4GB' },
-  { level: 'info', msg: '[MÜDÜRİYE] git push origin master → başarılı ✅' },
-  { level: 'info', msg: '[MÜDÜRİYE] Müdür raporu gönderildi: 3/3 ekip TAMAM' },
-  { level: 'info', msg: '[BACKEND] 18/18 unit test geçti — deploy hazır' },
+  { level: 'info',  msg: '[BACKEND] 18/18 unit test geçti — deploy hazır' },
+  { level: 'debug', msg: '[VOLDEMORT] Analiz tamamlandı — API rate limit ayarı önerisi gönderildi' },
 ];
 
 interface Gorev { name: string; status: 'running'|'queued'|'done'; time: string }
@@ -176,12 +204,13 @@ function DeveloperAgent({ isWorkHours }: { isWorkHours: boolean }) {
   const [isTyping, setIsTyping] = useState(true);
   const [popupVisible, setPopupVisible] = useState(false);
   const devMesajlari = [
-    '🛠️ Backend hatasını düzelttim — auth.ts:47',
-    '🔧 TypeScript derleme: 0 hata, 0 uyarı',
-    '📦 npm install tamamlandı: 142 paket',
-    '🚀 Deployment hazır — dist/ güncellendi',
+    '🧙 MÜDÜRİYE\'ye öneri: Cache TTL\'yi 30s yap',
+    '🔧 Görev Ajanı\'na: TypeScript strict optimize et',
+    '📊 Analiz tamamlandı — Rapor Ajanı\'na iletiyorum',
     '✅ Müdür, build başarılı: v2.14.8',
-    '🔗 API entegrasyonu test edildi: OK',
+    '🧙 Öneri: MySQL index ekle — sorgu %71 hızlanır',
+    '🔗 API test tamamlandı — Müdüriye\'ye rapor gönderildi',
+    '🧙 Redis cluster önerisi: 3 node → miss %4\'e düştü',
   ];
   const [mesaj, setMesaj] = useState(devMesajlari[0]);
 
@@ -221,18 +250,92 @@ function DeveloperAgent({ isWorkHours }: { isWorkHours: boolean }) {
   );
 }
 
-/* ===== MÜDÜRİYE DEPARTMANI — BOŞ (Agent atama bekleniyor) ===== */
+/* ===== MÜDÜRİYE DEPARTMANI — VOLDEMORT DANIŞMA + RAPOR DÖNGÜSÜ ===== */
 function MuduriyeManager() {
+  const [fazIndex, setFazIndex] = useState(0);
+  const [gorevIndex, setGorevIndex] = useState(0);
+  const [popupVisible, setPopupVisible] = useState(true);
+
+  const faz = muduriyeFazlari[fazIndex];
+  const gorev = muduriyeGorevler[gorevIndex];
+
+  const fazMesajlari: Record<string, string> = {
+    gorev:     `📋 Yeni görev alındı: "${gorev.task}"`,
+    voldemort: `🧙 VOLDEMORT önerisi: "${gorev.task}" için en iyi yaklaşım hazır`,
+    execute:   `⚙️ Öneri uygulanıyor — ${gorev.task}...`,
+    test:      `🧪 Test suite çalıştırılıyor — sonuç bekleniyor...`,
+    commit:    `💾 git commit -m "feat: ${gorev.task.toLowerCase()}"`,
+    push:      `🚀 git push origin master → başarılı ✅`,
+    rapor:     `📊 Müdür, görev tamamlandı: ${gorev.result}`,
+  };
+
+  useEffect(() => {
+    const fazSureleri = [2500, 4000, 3500, 3000, 2000, 2000, 4500];
+    const sure = fazSureleri[fazIndex];
+    const t = setTimeout(() => {
+      setPopupVisible(false);
+      setTimeout(() => {
+        const nextFaz = (fazIndex + 1) % muduriyeFazlari.length;
+        if (nextFaz === 0) setGorevIndex(g => (g + 1) % muduriyeGorevler.length);
+        setFazIndex(nextFaz);
+        setPopupVisible(true);
+      }, 400);
+    }, sure);
+    return () => clearTimeout(t);
+  }, [fazIndex]);
+
   return (
-    <div className="muduriye-empty">
-      <div className="muduriye-empty-icon">🔒</div>
-      <div className="muduriye-empty-text">Agent Atanmadı</div>
-      <div className="muduriye-empty-sub">Yeni atama bekleniyor...</div>
-      {/* Boş masalar */}
-      <div className="muduriye-empty-desks">
-        <div className="muduriye-empty-desk" />
-        <div className="muduriye-empty-desk" />
-        <div className="muduriye-empty-desk" />
+    <div className="muduriye-active">
+      <div className="muduriye-faz-bar">
+        {muduriyeFazlari.map((f, i) => (
+          <div
+            key={f.id}
+            className={`muduriye-faz-item ${i === fazIndex ? 'active' : ''} ${i < fazIndex ? 'done' : ''}`}
+            style={{ '--faz-color': f.color } as React.CSSProperties}
+            title={f.label}
+          >
+            <span>{f.icon}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className={`muduriye-faz-msg ${popupVisible ? 'visible' : ''}`} style={{ borderColor: faz.color }}>
+        <span className="muduriye-faz-label" style={{ color: faz.color }}>{faz.label}</span>
+        <span className="muduriye-faz-text">{fazMesajlari[faz.id]}</span>
+      </div>
+
+      <div className="muduriye-agents-row">
+        <div className="muduriye-agent-slot">
+          <div className="sub-agent-desk muduriye-agent-desk">
+            <div className="sub-agent-monitor">
+              <div className="sub-monitor-glow" style={{ backgroundColor: faz.color }}></div>
+            </div>
+          </div>
+          <div className="sub-character typing">
+            <div className="sub-char-head"><div className="sub-char-hair"></div></div>
+            <div className="sub-char-body" style={{ background: `linear-gradient(180deg, ${faz.color}, #1d4ed8)` }}>
+              <div className="sub-char-arm left"></div>
+              <div className="sub-char-arm right"></div>
+            </div>
+          </div>
+          <div className="sub-agent-label">Görev Ajanı</div>
+        </div>
+
+        <div className="muduriye-agent-slot">
+          <div className="sub-agent-desk muduriye-agent-desk">
+            <div className="sub-agent-monitor">
+              <div className="sub-monitor-glow" style={{ backgroundColor: fazIndex === 6 ? '#e74c3c' : '#555' }}></div>
+            </div>
+          </div>
+          <div className={`sub-character ${fazIndex === 6 ? 'typing' : ''}`}>
+            <div className="sub-char-head"><div className="sub-char-hair"></div></div>
+            <div className="sub-char-body" style={{ background: 'linear-gradient(180deg, #e74c3c, #8e44ad)' }}>
+              <div className="sub-char-arm left"></div>
+              <div className="sub-char-arm right"></div>
+            </div>
+          </div>
+          <div className="sub-agent-label">Rapor Ajanı</div>
+        </div>
       </div>
     </div>
   );
@@ -242,7 +345,7 @@ const ekipler = [
   { id: 1, name: 'Frontend Ekibi', status: 'Aktif', count: 3, color: '#3498db', tasks: ['UI Optimizasyonu'] },
   { id: 2, name: 'Backend Ekibi', status: 'Meşgul', count: 4, color: '#2ecc71', tasks: ['API Refactor'] },
   { id: 3, name: 'AI/ML Takımı', status: 'Eğitimde', count: 2, color: '#9b59b6', tasks: ['Model Training'] },
-  { id: 4, name: 'Müdüriye', status: 'Denetimde', count: 1, color: '#f39c12', tasks: ['Test → Commit → Push → Rapor'] },
+  { id: 4, name: 'Müdüriye', status: 'Aktif', count: 2, color: '#f39c12', tasks: ['VOLDEMORT Danışma → Rapor'] },
 ];
 
 /* ===== MONİTÖR ===== */
@@ -518,10 +621,11 @@ function App() {
         {/* MÜDÜRİYE GÖREV DÖNGÜSÜ açıklaması */}
         <div className="muduriye-legend">
           <div className="legend-title">🏛 MÜDÜRİYE DÖNGÜSÜ</div>
-          <div className="legend-item test">🔬 TEST — Tüm ekip testlerini koştur</div>
-          <div className="legend-item commit">💾 COMMIT — Sonuçları kaydet</div>
-          <div className="legend-item push">🚀 PUSH — Sunucuya gönder</div>
-          <div className="legend-item report">📊 RAPOR — Müdüre bildir</div>
+          <div className="legend-item test">📋 GÖREV — Yeni görev alındı</div>
+          <div className="legend-item report">🧙 VOLDEMORT — Öneri danışıldı</div>
+          <div className="legend-item commit">⚙️ UYGULA → 🧪 TEST et</div>
+          <div className="legend-item push">💾 COMMIT → 🚀 PUSH</div>
+          <div className="legend-item test">📊 RAPOR — Müdüre bildir</div>
         </div>
       </div>
 
@@ -555,9 +659,9 @@ function App() {
               <EkipAgent name="AI Team" color="#9b59b6" delay={1} isWorkHours={isWorkHours} />
             </div>
 
-            {/* MÜDÜRİYE DEPARTMANI — boş, atama bekleniyor */}
-            <div className="muduriye-department muduriye-department--closed">
-              <div className="muduriye-sign">🏛 MÜDÜRİYE <span className="muduriye-closed-badge">KAPALI</span></div>
+            {/* MÜDÜRİYE DEPARTMANI — aktif, VOLDEMORT danışma döngüsü */}
+            <div className="muduriye-department">
+              <div className="muduriye-sign">🏛 MÜDÜRİYE <span className="muduriye-active-badge">AKTİF</span></div>
               <div className="muduriye-divider" />
               <MuduriyeManager />
             </div>
