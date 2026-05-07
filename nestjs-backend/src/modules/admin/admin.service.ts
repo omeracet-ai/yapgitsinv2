@@ -129,7 +129,9 @@ export class AdminService {
         'phoneNumber',
         'isPhoneVerified',
         'identityVerified',
+        'role',
         'city',
+        'workerCategories',
         'createdAt',
       ],
     });
