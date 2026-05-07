@@ -53,6 +53,7 @@ export class OffersService {
     userId: string;
     price: number;
     message?: string;
+    attachmentUrls?: string[];
   }): Promise<Offer> {
     await this.tokensService.spend(
       data.userId,
@@ -65,9 +66,24 @@ export class OffersService {
       userId: data.userId,
       price: data.price,
       message: data.message,
+      attachmentUrls: this._sanitizeAttachments(data.attachmentUrls),
       status: OfferStatus.PENDING,
     });
     return this.offersRepository.save(offer);
+  }
+
+  /**
+   * Airtasker-style ek dosyalar: max 5 URL, sadece http(s)://, her biri ≤500 char.
+   * null/undefined → null (kolon NULLable).
+   */
+  private _sanitizeAttachments(urls?: string[]): string[] | null {
+    if (!Array.isArray(urls) || urls.length === 0) return null;
+    const cleaned = urls
+      .filter((u): u is string => typeof u === 'string')
+      .map((u) => u.trim())
+      .filter((u) => /^https?:\/\//.test(u) && u.length <= 500);
+    const unique = Array.from(new Set(cleaned)).slice(0, 5);
+    return unique.length > 0 ? unique : null;
   }
 
   async accept(offerId: string, _requestUserId: string): Promise<Offer> {

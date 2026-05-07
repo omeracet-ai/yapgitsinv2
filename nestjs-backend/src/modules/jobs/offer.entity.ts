@@ -57,6 +57,13 @@ export class Offer {
   @Column({ type: 'text', nullable: true, default: null })
   counterMessage: string | null;
 
+  // ── Airtasker-style ek dosyalar (foto, belge URL'leri) ─────────────────
+  // Usta teklifine portföy/iş kanıtı/numune eklemek için. JSON dizisi olarak
+  // saklanır — uploads endpoint'i (uploads/job-photos) URL döndürür, frontend
+  // o URL listesini buraya yollar. En fazla 5 dosya, herhangi bir image/pdf URL.
+  @Column({ type: 'simple-json', nullable: true, default: null })
+  attachmentUrls: string[] | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

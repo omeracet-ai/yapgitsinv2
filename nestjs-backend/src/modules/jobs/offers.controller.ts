@@ -44,7 +44,7 @@ export class OffersController {
   @Post()
   async create(
     @Param('jobId') jobId: string,
-    @Body() body: { price: number; message?: string },
+    @Body() body: { price: number; message?: string; attachmentUrls?: string[] },
     @Request() req: AuthenticatedRequest,
   ) {
     return this.offersService.create({
@@ -52,6 +52,7 @@ export class OffersController {
       userId: req.user.id,
       price: body.price,
       message: body.message,
+      attachmentUrls: body.attachmentUrls,
     });
   }
 

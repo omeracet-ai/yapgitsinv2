@@ -36,6 +36,9 @@ import { JobQuestion } from './modules/jobs/job-question.entity';
 import { JobQuestionReply } from './modules/jobs/job-question-reply.entity';
 import { OnboardingSlide } from './modules/onboarding/onboarding-slide.entity';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
+import { FavoriteProvider } from './modules/favorites/favorite-provider.entity';
+import { SavedJobSearch } from './modules/favorites/saved-job-search.entity';
+import { FavoritesModule } from './modules/favorites/favorites.module';
 
 @Module({
   imports: [
@@ -67,6 +70,8 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
           JobQuestion,
           JobQuestionReply,
           OnboardingSlide,
+          FavoriteProvider,
+          SavedJobSearch,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -117,6 +122,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
     BookingsModule,
     NotificationsModule,
     OnboardingModule,
+    FavoritesModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],
