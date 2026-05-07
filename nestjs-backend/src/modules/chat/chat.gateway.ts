@@ -12,6 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Server, Socket } from 'socket.io';
 import { ChatMessage } from './chat-message.entity';
+import { ContentFilterService } from '../moderation/content-filter.service';
 
 interface SendMessagePayload {
   from: string;
@@ -44,6 +45,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     @InjectRepository(ChatMessage)
     private messagesRepo: Repository<ChatMessage>,
+    private filter: ContentFilterService,
   ) {}
 
   handleConnection(client: Socket) {
@@ -62,18 +64,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.debug(
       `Message event: from=${data.from} to=${data.to} jobId=${data.jobId ?? '-'} bookingId=${data.bookingId ?? '-'}`,
     );
+    const result = this.filter.check(data.message);
     const saved = await this.messagesRepo.save({
       from: data.from,
       to: data.to,
       message: data.message,
       jobId: data.jobId ?? null,
       bookingId: data.bookingId ?? null,
+      flagged: result.flagged,
+      flagReason: result.flagged ? result.reasons.join(',') : null,
     });
+    const broadcastMessage = result.flagged
+      ? this.filter.sanitize(data.message)
+      : data.message;
     this.server.emit('receiveMessage', {
       ...data,
+      message: broadcastMessage,
       jobId: saved.jobId,
       bookingId: saved.bookingId,
       id: saved.id,
+      flagged: saved.flagged,
       createdAt: saved.createdAt,
     });
   }

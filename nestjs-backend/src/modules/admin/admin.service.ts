@@ -8,11 +8,22 @@ import { Offer } from '../jobs/offer.entity';
 import { Booking } from '../bookings/booking.entity';
 import { Review } from '../reviews/review.entity';
 import { PaymentEscrow, EscrowStatus } from '../escrow/payment-escrow.entity';
+import { ChatMessage } from '../chat/chat-message.entity';
+import { JobQuestion } from '../jobs/job-question.entity';
 import {
   PromoService,
   CreatePromoDto,
   UpdatePromoDto,
 } from '../promo/promo.service';
+
+export interface FlaggedItem {
+  type: 'chat' | 'question';
+  id: string;
+  text: string;
+  flagReason: string | null;
+  userId: string;
+  createdAt: Date;
+}
 
 @Injectable()
 export class AdminService {
@@ -25,8 +36,58 @@ export class AdminService {
     @InjectRepository(Booking) private bookingsRepo: Repository<Booking>,
     @InjectRepository(Review) private reviewsRepo: Repository<Review>,
     @InjectRepository(PaymentEscrow) private escrowRepo: Repository<PaymentEscrow>,
+    @InjectRepository(ChatMessage) private chatRepo: Repository<ChatMessage>,
+    @InjectRepository(JobQuestion) private questionRepo: Repository<JobQuestion>,
     private readonly promoService: PromoService,
   ) {}
+
+  // ── Moderation ────────────────────────────────────────────────────────────
+  async getFlaggedItems(): Promise<FlaggedItem[]> {
+    const [chats, questions] = await Promise.all([
+      this.chatRepo.find({
+        where: { flagged: true } as any,
+        order: { createdAt: 'DESC' },
+        take: 50,
+      }),
+      this.questionRepo.find({
+        where: { flagged: true } as any,
+        order: { createdAt: 'DESC' },
+        take: 50,
+      }),
+    ]);
+
+    const items: FlaggedItem[] = [
+      ...chats.map((c: any) => ({
+        type: 'chat' as const,
+        id: c.id,
+        text: c.text ?? c.message ?? '',
+        flagReason: c.flagReason ?? null,
+        userId: c.senderId ?? c.userId ?? '',
+        createdAt: c.createdAt,
+      })),
+      ...questions.map((q: any) => ({
+        type: 'question' as const,
+        id: q.id,
+        text: q.text ?? '',
+        flagReason: q.flagReason ?? null,
+        userId: q.userId ?? '',
+        createdAt: q.createdAt,
+      })),
+    ];
+
+    items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return items;
+  }
+
+  async clearFlaggedChat(id: string) {
+    await this.chatRepo.update(id, { text: '[silindi]', flagged: false } as any);
+    return { id, type: 'chat', cleared: true };
+  }
+
+  async clearFlaggedQuestion(id: string) {
+    await this.questionRepo.update(id, { text: '[silindi]', flagged: false } as any);
+    return { id, type: 'question', cleared: true };
+  }
 
   // ── Promo Codes (delegates to PromoService) ───────────────────────────────
   listPromoCodes() {

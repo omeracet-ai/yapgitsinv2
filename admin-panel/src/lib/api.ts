@@ -118,6 +118,11 @@ export const api = {
     return uploadFile<{ url: string }>('/uploads/onboarding-image', fd);
   },
 
+  // Moderation
+  flaggedItems:           ()                => request<FlaggedItem[]>('/admin/moderation/flagged'),
+  deleteFlaggedChat:      (id: string)      => request<{ id: string; type: string; cleared: boolean }>(`/admin/moderation/chat/${id}`,     { method: 'DELETE' }),
+  deleteFlaggedQuestion:  (id: string)      => request<{ id: string; type: string; cleared: boolean }>(`/admin/moderation/question/${id}`, { method: 'DELETE' }),
+
   // Promo codes
   promoCodes:       ()                                  => request<PromoCode[]>('/admin/promo-codes'),
   createPromoCode:  (data: Partial<PromoCode>)          => request<PromoCode>('/admin/promo-codes',         { method: 'POST',   body: JSON.stringify(data) }),
@@ -211,6 +216,15 @@ export interface PromoCode {
   appliesTo: 'tokens' | 'offer' | 'all';
   createdAt: string;
   updatedAt: string;
+}
+
+export interface FlaggedItem {
+  type: 'chat' | 'question';
+  id: string;
+  text: string;
+  flagReason: string | null;
+  userId: string;
+  createdAt: string;
 }
 
 export interface User {

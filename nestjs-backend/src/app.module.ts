@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ModerationModule } from './modules/moderation/moderation.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -157,6 +158,7 @@ import { StatementsModule } from './modules/statements/statements.module';
     JobTemplatesModule,
     StatementsModule,
     CronModule,
+    ModerationModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],

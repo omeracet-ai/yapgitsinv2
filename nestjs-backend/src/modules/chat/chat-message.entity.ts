@@ -31,6 +31,12 @@ export class ChatMessage {
   @Column({ type: 'varchar', length: 36, nullable: true })
   bookingId: string | null;
 
+  @Column({ type: 'boolean', default: false })
+  flagged: boolean;
+
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  flagReason: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

@@ -5,6 +5,7 @@ import { JobQuestion } from './job-question.entity';
 import { JobQuestionReply } from './job-question-reply.entity';
 import { Offer } from './offer.entity';
 import { Job } from './job.entity';
+import { ContentFilterService } from '../moderation/content-filter.service';
 
 @Injectable()
 export class QuestionsService {
@@ -17,6 +18,7 @@ export class QuestionsService {
     private offersRepo: Repository<Offer>,
     @InjectRepository(Job)
     private jobsRepo: Repository<Job>,
+    private filter: ContentFilterService,
   ) {}
 
   async getQuestions(jobId: string) {
@@ -65,7 +67,16 @@ export class QuestionsService {
       );
     }
 
-    const q = this.questionsRepo.create({ jobId, userId, text, photoUrl: photoUrl ?? null });
+    const result = this.filter.check(text);
+    const safeText = result.flagged ? this.filter.sanitize(text) : text;
+    const q = this.questionsRepo.create({
+      jobId,
+      userId,
+      text: safeText,
+      photoUrl: photoUrl ?? null,
+      flagged: result.flagged,
+      flagReason: result.flagged ? result.reasons.join(',') : null,
+    });
     return this.questionsRepo.save(q);
   }
 

@@ -34,6 +34,12 @@ export class JobQuestion {
   @Column({ type: 'varchar', nullable: true, default: null })
   photoUrl: string | null;
 
+  @Column({ type: 'boolean', default: false })
+  flagged: boolean;
+
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  flagReason: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

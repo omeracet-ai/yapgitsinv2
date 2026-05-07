@@ -140,4 +140,20 @@ export class AdminController {
   deletePromoCode(@Param('id') id: string) {
     return this.adminService.deletePromoCode(id);
   }
+
+  // ── Moderation ─────────────────────────────────────────────────────────────
+  @Get('moderation/flagged')
+  getFlaggedItems() {
+    return this.adminService.getFlaggedItems();
+  }
+
+  @Delete('moderation/chat/:id')
+  clearFlaggedChat(@Param('id') id: string) {
+    return this.adminService.clearFlaggedChat(id);
+  }
+
+  @Delete('moderation/question/:id')
+  clearFlaggedQuestion(@Param('id') id: string) {
+    return this.adminService.clearFlaggedQuestion(id);
+  }
 }
