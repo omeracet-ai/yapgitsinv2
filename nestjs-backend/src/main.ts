@@ -73,6 +73,10 @@ async function bootstrap() {
   // /uploads/* → uploads/ klasöründen statik dosya sun
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
 
+  // IIS reverse-proxy mount path (e.g. /backend → NestJS routes prefixed with /backend)
+  const globalPrefix = process.env.GLOBAL_PREFIX;
+  if (globalPrefix) app.setGlobalPrefix(globalPrefix);
+
   const port = process.env.PORT ?? 3000;
   await app.listen(port, '0.0.0.0');
   console.log(`🚀 HizmetApp API: http://localhost:${port}`);
