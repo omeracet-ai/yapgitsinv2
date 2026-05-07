@@ -144,8 +144,8 @@ export default function ProvidersPage() {
   return (
     <div className="max-w-6xl">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold">Sağlayıcılar & Doğrulama</h2>
-        <span className="text-sm text-gray-400">{providers.length} sağlayıcı</span>
+        <h2 className="text-lg font-semibold">Ustalar & Doğrulama</h2>
+        <span className="text-sm text-gray-400">{providers.length} usta</span>
       </div>
 
       {error && (
@@ -223,7 +223,7 @@ export default function ProvidersPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {providers.length === 0 && (
-                <tr><td colSpan={8} className="text-center py-8 text-gray-400">Henüz sağlayıcı yok.</td></tr>
+                <tr><td colSpan={8} className="text-center py-8 text-gray-400">Henüz usta yok.</td></tr>
               )}
               {providers.map(p => (
                 <tr key={p.id} className={`hover:bg-gray-50 transition-colors ${p.featuredOrder ? "bg-amber-50/30" : ""}`}>

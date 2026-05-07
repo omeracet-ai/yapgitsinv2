@@ -45,6 +45,9 @@ import { CancellationPolicy } from './modules/cancellation/cancellation-policy.e
 import { CancellationModule } from './modules/cancellation/cancellation.module';
 import { JobDispute } from './modules/disputes/job-dispute.entity';
 import { DisputesModule } from './modules/disputes/disputes.module';
+import { AvailabilitySlot } from './modules/availability/availability-slot.entity';
+import { AvailabilityBlackout } from './modules/availability/availability-blackout.entity';
+import { AvailabilityModule } from './modules/availability/availability.module';
 
 @Module({
   imports: [
@@ -81,6 +84,8 @@ import { DisputesModule } from './modules/disputes/disputes.module';
           PaymentEscrow,
           CancellationPolicy,
           JobDispute,
+          AvailabilitySlot,
+          AvailabilityBlackout,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -135,6 +140,7 @@ import { DisputesModule } from './modules/disputes/disputes.module';
     EscrowModule,
     CancellationModule,
     DisputesModule,
+    AvailabilityModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],

@@ -12,8 +12,9 @@ export class OnboardingService implements OnModuleInit {
 
   async onModuleInit() {
     const count = await this.repo.count();
-    if (count === 0) {
-      await this.repo.save([
+    if (count >= 6) return;
+    if (count > 0) await this.repo.clear();
+    await this.repo.save([
         {
           title: 'Usta Bul, Hizmet Al',
           body: 'Temizlik, tadilat, tesisattan nakliyata kadar binlerce doğrulanmış usta tek platformda.',
@@ -35,17 +36,46 @@ export class OnboardingService implements OnModuleInit {
           isActive: true,
         },
         {
-          title: 'İlan Ver, Teklif Al',
-          body: 'İhtiyacınızı ilan olarak paylaşın, uygun ustalar size teklif getirsin — tamamen ücretsiz.',
-          emoji: '⭐',
+          title: 'Sen Söyle, Onlar Gelsin',
+          body: 'İhtiyacını ilan olarak paylaş; uygun ustalar sana teklif yağdırsın.',
+          emoji: '📣',
           imageUrl: null,
           gradientStart: '#00C9A7',
           gradientEnd: '#008f75',
           sortOrder: 2,
           isActive: true,
         },
-      ]);
-    }
+        {
+          title: 'Mavi Tik Önemli',
+          body: 'Doğrulanmış ustaları gör, doğrulanmış müşterilere teklif ver — güven iki yönlü.',
+          emoji: '✓',
+          imageUrl: null,
+          gradientStart: '#1E88E5',
+          gradientEnd: '#0D47A1',
+          sortOrder: 3,
+          isActive: true,
+        },
+        {
+          title: 'Token = Teklif',
+          body: 'Hoş geldin hediyesi 100 token. Her teklif 5 token, kazandıkça yenisini al.',
+          emoji: '🎟️',
+          imageUrl: null,
+          gradientStart: '#FFA000',
+          gradientEnd: '#C67100',
+          sortOrder: 4,
+          isActive: true,
+        },
+        {
+          title: 'İlan Ver, Teklif Al',
+          body: 'İhtiyacını yaz, teklif yağsın. Hadi başlayalım.',
+          emoji: '⭐',
+          imageUrl: null,
+          gradientStart: '#7E57C2',
+          gradientEnd: '#4527A0',
+          sortOrder: 5,
+          isActive: true,
+        },
+    ]);
   }
 
   findActive(): Promise<OnboardingSlide[]> {

@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,15 +11,30 @@ import { Booking, BookingStatus } from './booking.entity';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
+import { AvailabilityService } from '../availability/availability.service';
 
 @Injectable()
 export class BookingsService {
+  private readonly logger = new Logger(BookingsService.name);
+
   constructor(
     @InjectRepository(Booking)
     private repo: Repository<Booking>,
     private usersService: UsersService,
     private notificationsService: NotificationsService,
+    private availabilityService: AvailabilityService,
   ) {}
+
+  private _parseScheduled(
+    dateStr: string | null | undefined,
+    timeStr: string | null | undefined,
+  ): Date | null {
+    if (!dateStr) return null;
+    const time = timeStr && /^\d{2}:\d{2}$/.test(timeStr) ? timeStr : '12:00';
+    const iso = `${dateStr}T${time}:00`;
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? null : d;
+  }
 
   /** Randevu oluştur (müşteri → ustaya istek gönderir) */
   async create(
@@ -35,6 +52,30 @@ export class BookingsService {
   ): Promise<Booking> {
     const worker = await this.usersService.findById(data.workerId);
     if (!worker) throw new NotFoundException('Usta bulunamadı');
+
+    const scheduledAt = this._parseScheduled(
+      data.scheduledDate,
+      data.scheduledTime,
+    );
+    if (scheduledAt) {
+      let ok = true;
+      try {
+        ok = await this.availabilityService.isAvailable(
+          data.workerId,
+          scheduledAt,
+        );
+      } catch (err) {
+        this.logger.warn(
+          `Availability check failed for worker ${data.workerId}: ${(err as Error).message}. Proceeding without block.`,
+        );
+        ok = true;
+      }
+      if (!ok) {
+        throw new BadRequestException(
+          'Seçtiğin tarih/saat için usta müsait değil. Müsait saatleri profilinden kontrol et.',
+        );
+      }
+    }
 
     const booking = this.repo.create({
       customerId,
