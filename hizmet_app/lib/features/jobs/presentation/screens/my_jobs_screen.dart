@@ -8,6 +8,7 @@ import '../../data/offer_repository.dart';
 import 'job_detail_screen.dart';
 import 'job_opportunities_screen.dart';
 import '../providers/job_provider.dart';
+import '../widgets/boost_dialog.dart';
 
 // ─── Providers ────────────────────────────────────────────────────────────────
 
@@ -438,12 +439,12 @@ class _OfferList extends StatelessWidget {
   }
 }
 
-class _CustomerJobCard extends StatelessWidget {
+class _CustomerJobCard extends ConsumerWidget {
   final Map<String, dynamic> job;
   const _CustomerJobCard({required this.job});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final status = job['status'] as String? ?? 'open';
     final title = job['title'] as String? ?? '';
     final category = job['category'] as String? ?? '';
@@ -456,6 +457,13 @@ class _CustomerJobCard extends StatelessWidget {
     final photos =
         (job['photos'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
             [];
+
+    final featuredUntilRaw = job['featuredUntil'] as String?;
+    final featuredUntil =
+        featuredUntilRaw != null ? DateTime.tryParse(featuredUntilRaw) : null;
+    final isBoosted =
+        featuredUntil != null && featuredUntil.isAfter(DateTime.now());
+    final canBoost = status == 'open' && !isBoosted;
 
     final (statusLabel, statusColor) = switch (status) {
       'open' => ('Açık', Colors.green),
@@ -535,9 +543,58 @@ class _CustomerJobCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Text(dateStr,
-                    style: const TextStyle(
-                        color: AppColors.textHint, fontSize: 12)),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isBoosted)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text('🚀 Öne Çıkmış',
+                            style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600)),
+                      )
+                    else if (canBoost)
+                      InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () async {
+                          final ok = await BoostDialog.show(
+                              context, job['id'] as String);
+                          if (ok == true) {
+                            final customerId = job['customerId'] as String?;
+                            if (customerId != null) {
+                              ref.invalidate(myJobsProvider(customerId));
+                            }
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.3)),
+                          ),
+                          child: const Text('🚀 Öne Çıkar',
+                              style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    Text(dateStr,
+                        style: const TextStyle(
+                            color: AppColors.textHint, fontSize: 12)),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 10),

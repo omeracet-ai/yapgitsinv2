@@ -12,6 +12,7 @@ import { Job, JobStatus, isValidTransition } from './job.entity';
 import { Offer, OfferStatus } from './offer.entity';
 import { UsersService } from '../users/users.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
+import { TokensService } from '../tokens/tokens.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
 import { EscrowService } from '../escrow/escrow.service';
@@ -22,6 +23,9 @@ import { DisputeType } from '../disputes/job-dispute.entity';
 
 // Geçerli UUID — SQLite ve PostgreSQL uyumlu sabit seed kimliği
 const SEED_USER_ID = '00000000-0000-0000-0000-000000000001';
+
+export const BOOST_TOKEN_COST_PER_DAY = 10;
+export const BOOST_ALLOWED_DAYS = [3, 7, 14] as const;
 
 @Injectable()
 export class JobsService {
@@ -38,7 +42,31 @@ export class JobsService {
     private escrowService: EscrowService,
     private cancellationService: CancellationService,
     private disputesService: DisputesService,
+    private tokensService: TokensService,
   ) {}
+
+  async boost(jobId: string, days: number, userId: string): Promise<Job> {
+    const job = await this.jobsRepository.findOne({ where: { id: jobId } });
+    if (!job) throw new NotFoundException('İlan bulunamadı');
+    if (job.customerId !== userId) {
+      throw new ForbiddenException('Bu ilan size ait değil');
+    }
+    if (!BOOST_ALLOWED_DAYS.includes(days as (typeof BOOST_ALLOWED_DAYS)[number])) {
+      throw new BadRequestException('Geçersiz süre — 3, 7 veya 14 gün');
+    }
+    const cost = days * BOOST_TOKEN_COST_PER_DAY;
+    await this.tokensService.spend(userId, cost, `İlan boost (${days} gün)`);
+
+    const maxRow = await this.jobsRepository
+      .createQueryBuilder('job')
+      .select('MAX(job.featuredOrder)', 'max')
+      .getRawOne<{ max: number | null }>();
+    const nextOrder = (maxRow?.max ?? 0) + 1;
+
+    job.featuredOrder = nextOrder;
+    job.featuredUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    return this.jobsRepository.save(job);
+  }
 
   async onModuleInit() {
     const seedUser = await this.usersService.findByEmail('seed@hizmet.app');

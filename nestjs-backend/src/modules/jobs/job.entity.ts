@@ -130,6 +130,10 @@ export class Job {
   @Column({ type: 'integer', nullable: true, default: null })
   featuredOrder: number | null;
 
+  /** Boost bitiş zamanı — null ise boost yok */
+  @Column({ type: 'datetime', nullable: true })
+  featuredUntil: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

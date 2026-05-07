@@ -99,6 +99,21 @@ class JobRepository {
     }
   }
 
+  /// Boost a job — backend keser token ve featuredUntil set eder
+  Future<Map<String, dynamic>> boostJob(String jobId, int days) async {
+    try {
+      final token = await _authRepository.getToken();
+      final response = await _dio.post(
+        '/jobs/$jobId/boost',
+        data: {'days': days},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw Exception(_dioMsg(e, 'İlan öne çıkarılamadı'));
+    }
+  }
+
   Future<void> postQuestionReply(String jobId, String questionId, String text) async {
     try {
       final token = await _authRepository.getToken();

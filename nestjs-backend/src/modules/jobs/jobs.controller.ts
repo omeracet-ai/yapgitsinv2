@@ -235,4 +235,14 @@ export class JobsController {
   completeJob(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.jobsService.completeJobWithPayment(id, req.user.id);
   }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':id/boost')
+  boost(
+    @Param('id') id: string,
+    @Body() body: { days: number },
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.jobsService.boost(id, body.days, req.user.id);
+  }
 }
