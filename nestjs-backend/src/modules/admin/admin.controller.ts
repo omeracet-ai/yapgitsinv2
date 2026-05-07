@@ -17,6 +17,11 @@ export class AdminController {
     return this.adminService.getDashboardStats();
   }
 
+  @Get('revenue')
+  getRevenue() {
+    return this.adminService.getRevenue();
+  }
+
   @Get('jobs')
   getRecentJobs(@Query('limit') limit?: string) {
     return this.adminService.getRecentJobs(limit ? Number(limit) : 20);

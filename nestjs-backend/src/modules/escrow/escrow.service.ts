@@ -95,6 +95,11 @@ export class EscrowService {
       );
     }
 
+    const pct = parseFloat(process.env.PLATFORM_FEE_PCT ?? '10') || 10;
+    escrow.platformFeePct = pct;
+    escrow.platformFeeAmount = Math.round((escrow.amount * pct) / 100 * 100) / 100;
+    escrow.taskerNetAmount = escrow.amount - escrow.platformFeeAmount;
+
     escrow.status = EscrowStatus.RELEASED;
     escrow.releasedAt = new Date();
     escrow.releaseReason = reason ?? null;

@@ -58,6 +58,21 @@ export const api = {
       };
     }>('/admin/stats'),
 
+  // Gelir / Platform fee
+  revenue: () =>
+    request<{
+      totalGross: number;
+      totalPlatformFee: number;
+      totalTaskerNet: number;
+      releasedCount: number;
+      last30Days: {
+        totalGross: number;
+        totalPlatformFee: number;
+        totalTaskerNet: number;
+        releasedCount: number;
+      };
+    }>('/admin/revenue'),
+
   // Son İlanlar
   recentJobs: (limit = 20) => request<Job[]>(`/admin/jobs?limit=${limit}`),
 

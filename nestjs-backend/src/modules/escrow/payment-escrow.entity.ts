@@ -38,6 +38,15 @@ export class PaymentEscrow {
   @Column({ type: 'float' })
   amount: number;
 
+  @Column({ type: 'float', default: 10 })
+  platformFeePct: number;
+
+  @Column({ type: 'float', nullable: true })
+  platformFeeAmount: number | null;
+
+  @Column({ type: 'float', nullable: true })
+  taskerNetAmount: number | null;
+
   @Column({ type: 'varchar', length: 3, default: 'TRY' })
   currency: string;
 

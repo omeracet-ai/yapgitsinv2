@@ -7,6 +7,7 @@ import { ServiceRequest } from '../service-requests/service-request.entity';
 import { Offer } from '../jobs/offer.entity';
 import { Booking } from '../bookings/booking.entity';
 import { Review } from '../reviews/review.entity';
+import { PaymentEscrow, EscrowStatus } from '../escrow/payment-escrow.entity';
 
 @Injectable()
 export class AdminService {
@@ -18,7 +19,39 @@ export class AdminService {
     @InjectRepository(Offer) private offersRepo: Repository<Offer>,
     @InjectRepository(Booking) private bookingsRepo: Repository<Booking>,
     @InjectRepository(Review) private reviewsRepo: Repository<Review>,
+    @InjectRepository(PaymentEscrow) private escrowRepo: Repository<PaymentEscrow>,
   ) {}
+
+  async getRevenue() {
+    const baseSelect = (qb: ReturnType<typeof this.escrowRepo.createQueryBuilder>) =>
+      qb
+        .select('COALESCE(SUM(e.amount), 0)', 'totalGross')
+        .addSelect('COALESCE(SUM(e.platformFeeAmount), 0)', 'totalPlatformFee')
+        .addSelect('COALESCE(SUM(e.taskerNetAmount), 0)', 'totalTaskerNet')
+        .addSelect('COUNT(*)', 'releasedCount')
+        .where('e.status = :status', { status: EscrowStatus.RELEASED });
+
+    const allRow = await baseSelect(this.escrowRepo.createQueryBuilder('e')).getRawOne();
+
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const last30Row = await baseSelect(this.escrowRepo.createQueryBuilder('e'))
+      .andWhere('e.releasedAt >= :cutoff', { cutoff })
+      .getRawOne();
+
+    const toNum = (v: unknown) => Number(v ?? 0);
+    return {
+      totalGross: toNum(allRow?.totalGross),
+      totalPlatformFee: toNum(allRow?.totalPlatformFee),
+      totalTaskerNet: toNum(allRow?.totalTaskerNet),
+      releasedCount: toNum(allRow?.releasedCount),
+      last30Days: {
+        totalGross: toNum(last30Row?.totalGross),
+        totalPlatformFee: toNum(last30Row?.totalPlatformFee),
+        totalTaskerNet: toNum(last30Row?.totalTaskerNet),
+        releasedCount: toNum(last30Row?.releasedCount),
+      },
+    };
+  }
 
   async getDashboardStats() {
     const [

@@ -21,6 +21,7 @@ const NAV = [
   { href: "/categories", label: "Kategoriler",    icon: "🏷️" },
   { href: "/providers",  label: "Sağlayıcılar",   icon: "👷" },
   { href: "/users",      label: "Kullanıcılar",   icon: "👥" },
+  { href: "/revenue",    label: "Gelir",          icon: "💰" },
   { href: "/onboarding-mgmt", label: "Onboarding",     icon: "🎯" },
 ];
 
