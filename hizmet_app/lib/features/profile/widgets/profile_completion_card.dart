@@ -61,8 +61,8 @@ class ProfileCompletionCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
         ),
-        child: Row(
-          children: const [
+        child: const Row(
+          children: [
             Icon(Icons.check_circle, color: AppColors.success, size: 20),
             SizedBox(width: 8),
             Text(

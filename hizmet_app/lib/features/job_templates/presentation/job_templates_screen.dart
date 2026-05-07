@@ -117,7 +117,7 @@ class _TemplateCardState extends ConsumerState<_TemplateCard> {
                     color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text('${useCount}× kullanıldı',
+                  child: Text('$useCount× kullanıldı',
                       style: const TextStyle(
                           fontSize: 11,
                           color: AppColors.primary,

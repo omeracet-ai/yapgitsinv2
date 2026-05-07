@@ -59,9 +59,9 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: _loading
-              ? Column(
+              ? const Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
+                  children: [
                     CircularProgressIndicator(),
                     SizedBox(height: 24),
                     Text('Email doğrulanıyor...',
