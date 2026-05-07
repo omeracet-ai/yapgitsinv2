@@ -8,6 +8,11 @@ import { Offer } from '../jobs/offer.entity';
 import { Booking } from '../bookings/booking.entity';
 import { Review } from '../reviews/review.entity';
 import { PaymentEscrow, EscrowStatus } from '../escrow/payment-escrow.entity';
+import {
+  PromoService,
+  CreatePromoDto,
+  UpdatePromoDto,
+} from '../promo/promo.service';
 
 @Injectable()
 export class AdminService {
@@ -20,7 +25,22 @@ export class AdminService {
     @InjectRepository(Booking) private bookingsRepo: Repository<Booking>,
     @InjectRepository(Review) private reviewsRepo: Repository<Review>,
     @InjectRepository(PaymentEscrow) private escrowRepo: Repository<PaymentEscrow>,
+    private readonly promoService: PromoService,
   ) {}
+
+  // ── Promo Codes (delegates to PromoService) ───────────────────────────────
+  listPromoCodes() {
+    return this.promoService.findAll();
+  }
+  createPromoCode(dto: CreatePromoDto) {
+    return this.promoService.create(dto);
+  }
+  updatePromoCode(id: string, dto: UpdatePromoDto) {
+    return this.promoService.update(id, dto);
+  }
+  deletePromoCode(id: string) {
+    return this.promoService.remove(id);
+  }
 
   async getRevenue() {
     const baseSelect = (qb: ReturnType<typeof this.escrowRepo.createQueryBuilder>) =>

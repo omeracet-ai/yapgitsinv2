@@ -117,6 +117,12 @@ export const api = {
     fd.append('image', file);
     return uploadFile<{ url: string }>('/uploads/onboarding-image', fd);
   },
+
+  // Promo codes
+  promoCodes:       ()                                  => request<PromoCode[]>('/admin/promo-codes'),
+  createPromoCode:  (data: Partial<PromoCode>)          => request<PromoCode>('/admin/promo-codes',         { method: 'POST',   body: JSON.stringify(data) }),
+  updatePromoCode:  (id: string, data: Partial<PromoCode>) => request<PromoCode>(`/admin/promo-codes/${id}`, { method: 'PATCH',  body: JSON.stringify(data) }),
+  deletePromoCode:  (id: string)                        => request<void>(`/admin/promo-codes/${id}`,        { method: 'DELETE' }),
 };
 
 // ── Tip tanımları ────────────────────────────────────────────────────────────
@@ -186,6 +192,23 @@ export interface OnboardingSlide {
   gradientEnd: string;
   sortOrder: number;
   isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PromoCode {
+  id: string;
+  code: string;
+  discountType: 'percent' | 'fixed';
+  discountValue: number;
+  maxRedemptions: number | null;
+  redeemedCount: number;
+  minSpend: number | null;
+  validFrom: string | null;
+  validUntil: string | null;
+  isActive: boolean;
+  description: string | null;
+  appliesTo: 'tokens' | 'offer' | 'all';
   createdAt: string;
   updatedAt: string;
 }

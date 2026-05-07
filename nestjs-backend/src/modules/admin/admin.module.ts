@@ -11,12 +11,14 @@ import { Review } from '../reviews/review.entity';
 import { PaymentEscrow } from '../escrow/payment-escrow.entity';
 import { CategoriesModule } from '../categories/categories.module';
 import { ProvidersModule } from '../providers/providers.module';
+import { PromoModule } from '../promo/promo.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Job, Offer, User, ServiceRequest, Booking, Review, PaymentEscrow]),
     CategoriesModule,
     ProvidersModule,
+    PromoModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

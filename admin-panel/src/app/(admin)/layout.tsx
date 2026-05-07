@@ -23,6 +23,7 @@ const NAV = [
   { href: "/users",      label: "Kullanıcılar",   icon: "👥" },
   { href: "/revenue",    label: "Gelir",          icon: "💰" },
   { href: "/onboarding-mgmt", label: "Onboarding",     icon: "🎯" },
+  { href: "/promo-codes",     label: "Promo Kodlar",   icon: "🎟️" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

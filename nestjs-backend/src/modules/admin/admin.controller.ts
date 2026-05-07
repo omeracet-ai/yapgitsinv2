@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Delete, Body, Param, Query } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CategoriesService } from '../categories/categories.service';
 import { ProvidersService } from '../providers/providers.service';
@@ -115,5 +115,29 @@ export class AdminController {
     @Body() body: { skills: string[] },
   ) {
     return this.adminService.setUserSkills(id, body.skills);
+  }
+
+  // ── Promo Codes ────────────────────────────────────────────────────────────
+  @Get('promo-codes')
+  listPromoCodes() {
+    return this.adminService.listPromoCodes();
+  }
+
+  @Post('promo-codes')
+  createPromoCode(@Body() dto: Parameters<AdminService['createPromoCode']>[0]) {
+    return this.adminService.createPromoCode(dto);
+  }
+
+  @Patch('promo-codes/:id')
+  updatePromoCode(
+    @Param('id') id: string,
+    @Body() dto: Parameters<AdminService['updatePromoCode']>[1],
+  ) {
+    return this.adminService.updatePromoCode(id, dto);
+  }
+
+  @Delete('promo-codes/:id')
+  deletePromoCode(@Param('id') id: string) {
+    return this.adminService.deletePromoCode(id);
   }
 }

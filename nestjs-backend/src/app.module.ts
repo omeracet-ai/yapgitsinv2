@@ -48,6 +48,9 @@ import { DisputesModule } from './modules/disputes/disputes.module';
 import { AvailabilitySlot } from './modules/availability/availability-slot.entity';
 import { AvailabilityBlackout } from './modules/availability/availability-blackout.entity';
 import { AvailabilityModule } from './modules/availability/availability.module';
+import { PromoCode } from './modules/promo/promo-code.entity';
+import { PromoRedemption } from './modules/promo/promo-redemption.entity';
+import { PromoModule } from './modules/promo/promo.module';
 
 @Module({
   imports: [
@@ -86,6 +89,8 @@ import { AvailabilityModule } from './modules/availability/availability.module';
           JobDispute,
           AvailabilitySlot,
           AvailabilityBlackout,
+          PromoCode,
+          PromoRedemption,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -141,6 +146,7 @@ import { AvailabilityModule } from './modules/availability/availability.module';
     CancellationModule,
     DisputesModule,
     AvailabilityModule,
+    PromoModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],
