@@ -39,6 +39,12 @@ export class UsersController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Get('me/completion')
+  getMyCompletion(@Request() req: AuthenticatedRequest) {
+    return this.svc.getCompletionScore(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Patch('me/location')
   async updateLocation(
     @Request() req: AuthenticatedRequest,

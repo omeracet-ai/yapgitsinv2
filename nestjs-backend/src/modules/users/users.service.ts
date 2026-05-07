@@ -97,6 +97,48 @@ export class UsersService {
     });
   }
 
+  /** Profile completion score (0-100) — non-worker users normalized over 70 */
+  async getCompletionScore(userId: string): Promise<{
+    score: number;
+    missing: Array<{ field: string; label: string; points: number }>;
+    isWorker: boolean;
+  }> {
+    const user = await this.repo.findOne({ where: { id: userId } });
+    if (!user) return { score: 0, missing: [], isWorker: false };
+
+    const isWorker = !!(user.workerCategories && user.workerCategories.length > 0);
+    const checks: Array<{ field: string; label: string; points: number; ok: boolean }> = [
+      { field: 'fullName', label: 'Ad Soyad', points: 10, ok: !!user.fullName },
+      { field: 'phoneNumber', label: 'Telefon Numarası', points: 10, ok: !!user.phoneNumber },
+      { field: 'email', label: 'E-posta', points: 10, ok: !!user.email },
+      { field: 'profileImageUrl', label: 'Profil Fotoğrafı', points: 10, ok: !!user.profileImageUrl },
+      { field: 'birthDate', label: 'Doğum Tarihi', points: 5, ok: !!user.birthDate },
+      { field: 'city', label: 'Şehir', points: 5, ok: !!user.city },
+      { field: 'identityPhotoUrl', label: 'Kimlik Fotoğrafı', points: 10, ok: !!user.identityPhotoUrl },
+      { field: 'identityVerified', label: 'Kimlik Doğrulama', points: 10, ok: !!user.identityVerified },
+    ];
+
+    if (isWorker) {
+      checks.push(
+        { field: 'workerBio', label: 'Hakkında / Bio', points: 10, ok: !!user.workerBio },
+        { field: 'hourlyRate', label: 'Saatlik Ücret Aralığı', points: 10, ok: !!(user.hourlyRateMin && user.hourlyRateMax) },
+        { field: 'serviceRadiusKm', label: 'Hizmet Yarıçapı', points: 5, ok: !!user.serviceRadiusKm },
+        { field: 'isAvailable', label: 'Aktif Çalışma Durumu', points: 5, ok: !!user.isAvailable },
+      );
+    }
+
+    const maxPoints = checks.reduce((s, c) => s + c.points, 0);
+    const earned = checks.filter((c) => c.ok).reduce((s, c) => s + c.points, 0);
+    const score = Math.round((earned / maxPoints) * 100);
+
+    const missing = checks
+      .filter((c) => !c.ok)
+      .map(({ field, label, points }) => ({ field, label, points }))
+      .sort((a, b) => b.points - a.points);
+
+    return { score, missing, isWorker };
+  }
+
   /** Stats güncellendikten sonra reputationScore'u yeniden hesapla */
   async recalcReputation(userId: string): Promise<void> {
     const user = await this.repo.findOne({ where: { id: userId } });

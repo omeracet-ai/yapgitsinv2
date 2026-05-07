@@ -12,6 +12,7 @@ import '../../../../core/constants/api_constants.dart';
 import 'package:dio/dio.dart';
 import '../../../calendar/presentation/calendar_screen.dart';
 import '../../../calendar/presentation/earnings_screen.dart';
+import '../../../profile/widgets/profile_completion_card.dart';
 
 // ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
 final myPublicProfileProvider =
@@ -50,6 +51,7 @@ class ProfileScreen extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
+              const ProfileCompletionCard(),
               _buildProfileHeader(user),
               _buildTokenBanner(context, ref),
               _buildIdentityStatus(user),
