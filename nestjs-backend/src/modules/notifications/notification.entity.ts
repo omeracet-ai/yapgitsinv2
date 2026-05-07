@@ -26,6 +26,7 @@ export enum NotificationType {
   JOB_COMPLETED = 'job_completed', // İş tamamlandı (job lifecycle)
   JOB_CANCELLED = 'job_cancelled', // İş iptal edildi (job lifecycle)
   REVIEW_REMINDER = 'review_reminder', // 7 gün geçti, değerlendirme hatırlatması
+  SAVED_SEARCH_MATCH = 'saved_search_match', // Kayıtlı aramaya uyan yeni ilan
 }
 
 @Entity('notifications')

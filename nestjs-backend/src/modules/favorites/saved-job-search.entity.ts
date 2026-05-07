@@ -44,4 +44,7 @@ export class SavedJobSearch {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ type: 'datetime', nullable: true })
+  lastNotifiedAt: Date | null;
 }
