@@ -14,6 +14,7 @@ import { UsersModule } from '../users/users.module';
 import { TokensModule } from '../tokens/tokens.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { EscrowModule } from '../escrow/escrow.module';
+import { CancellationModule } from '../cancellation/cancellation.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { EscrowModule } from '../escrow/escrow.module';
     TokensModule,
     NotificationsModule,
     EscrowModule,
+    CancellationModule,
   ],
   providers: [JobsService, OffersService, QuestionsService],
   controllers: [JobsController, OffersController, OffersRootController, QuestionsController],

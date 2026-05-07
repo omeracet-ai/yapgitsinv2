@@ -16,6 +16,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
 import { EscrowService } from '../escrow/escrow.service';
 import { EscrowStatus } from '../escrow/payment-escrow.entity';
+import { CancellationService } from '../cancellation/cancellation.service';
 
 // Geçerli UUID — SQLite ve PostgreSQL uyumlu sabit seed kimliği
 const SEED_USER_ID = '00000000-0000-0000-0000-000000000001';
@@ -33,6 +34,7 @@ export class JobsService {
     private dataSource: DataSource,
     private notificationsService: NotificationsService,
     private escrowService: EscrowService,
+    private cancellationService: CancellationService,
   ) {}
 
   async onModuleInit() {
@@ -196,7 +198,80 @@ export class JobsService {
         saved.status,
       );
 
-      // Job cancelled — notify the side that did NOT cancel
+      // Job cancelled — apply cancellation policy + notify the side that did NOT cancel
+      if (
+        prevStatus !== JobStatus.CANCELLED &&
+        saved.status === JobStatus.CANCELLED
+      ) {
+        try {
+          const acceptedOfferForPolicy = await this.offersRepository.findOne({
+            where: { jobId: saved.id, status: OfferStatus.ACCEPTED },
+          });
+
+          let appliesTo: string;
+          let appliesAtStage: string;
+
+          if (!acceptedOfferForPolicy) {
+            appliesTo = 'customer_cancel';
+            appliesAtStage = 'before_assignment';
+          } else {
+            const isCustomerCancel = requesterId === saved.customerId;
+            appliesTo = isCustomerCancel ? 'customer_cancel' : 'tasker_cancel';
+            if (prevStatus === JobStatus.OPEN)
+              appliesAtStage = 'before_assignment';
+            else if (prevStatus === JobStatus.IN_PROGRESS)
+              appliesAtStage = 'in_progress';
+            else if (prevStatus === JobStatus.PENDING_COMPLETION)
+              appliesAtStage = 'pending_completion';
+            else appliesAtStage = 'any';
+          }
+
+          const hoursElapsed = acceptedOfferForPolicy
+            ? (Date.now() -
+                new Date(acceptedOfferForPolicy.updatedAt).getTime()) /
+              3600000
+            : 0;
+
+          const policy = await this.cancellationService.findApplicable({
+            appliesTo,
+            appliesAtStage,
+            hoursElapsedSinceAccept: hoursElapsed,
+          });
+
+          const escrow = await this.escrowService.getByJob(saved.id);
+
+          if (policy && escrow && escrow.status === EscrowStatus.HELD) {
+            const calc = this.cancellationService.calculateRefund(
+              escrow.amount,
+              policy,
+            );
+            // Policy-driven refunds always go through as 'system' so EscrowService's
+            // admin/system gate doesn't reject the kullanıcı-initiated cancel call.
+            const refundUserId = 'system';
+            if (calc.refundAmount >= escrow.amount) {
+              await this.escrowService.refund(
+                escrow.id,
+                refundUserId,
+                calc.refundAmount,
+                `İptal politikası: ${policy.name}`,
+              );
+            } else if (calc.refundAmount > 0) {
+              await this.escrowService.refund(
+                escrow.id,
+                refundUserId,
+                calc.refundAmount,
+                `Kısmi iade — ${policy.name}`,
+              );
+            }
+            // refundAmount = 0 → escrow held, admin resolves
+          }
+        } catch (err) {
+          this.logger.warn(
+            `Cancellation policy application failed for job ${saved.id}: ${(err as Error)?.message ?? err}`,
+          );
+        }
+      }
+
       if (saved.status === JobStatus.CANCELLED) {
         const acceptedOffer = await this.offersRepository.findOne({
           where: { jobId: saved.id, status: OfferStatus.ACCEPTED },
