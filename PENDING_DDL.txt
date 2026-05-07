@@ -1,0 +1,43 @@
+# PENDING DDL — Production MariaDB Migrations Awaiting Run
+
+DNS to ftp.yapgitsin.tr çözümlenemiyor + port 3306 dış erişim bloklu (geçici).
+Önceki Phase 17–24 DB-Agent'ları aynı yolu kullanıp başarılı çalıştı.
+Bağlantı düzeldiğinde aşağıdaki script'leri sırayla çalıştır.
+
+Tüm script'ler **idempotent** — tekrar çalıştırılırsa skip eder, zarar vermez.
+
+---
+
+## Phase 25 — Email Verification (commit b60a052a)
+
+cd nestjs-backend
+node add-email-verify-schema.js
+
+Beklenen log:
+- [ok] users.emailVerified added
+- [ok] email_verification_tokens created/skipped
+
+Etki:
+- /auth/verify-email/request ve /auth/verify-email/confirm endpoint'leri çalışır hale gelir.
+- ProfileScreen email rozet "Doğrula" butonu fonksiyonel olur.
+
+---
+
+## Hızlı Doğrulama (script çalıştıktan sonra)
+
+cd nestjs-backend
+node -e "require('dotenv').config({path:'.env.production'});require('dotenv').config({path:'.env.production.local',override:true});const m=require('mysql2/promise');(async()=>{const c=await m.createConnection({host:process.env.DB_HOST,user:process.env.DB_USERNAME,password:process.env.DB_PASSWORD,database:process.env.DB_NAME});const [r1]=await c.query(\"SHOW COLUMNS FROM users WHERE Field='emailVerified'\");const [r2]=await c.query(\"SHOW TABLES LIKE 'email_verification_tokens'\");console.log('emailVerified:',r1.length>0,'| table:',r2.length>0);await c.end();})();"
+
+Beklenen: `emailVerified: true | table: true`
+
+---
+
+## Bağlantı Test Komutu
+
+cd nestjs-backend
+node test-mysql.js
+
+veya direkt IP ile:
+node test-mysql.js 93.89.224.84
+
+Bağlantı OK ise yukarıdaki migration script'lerini çalıştır.
