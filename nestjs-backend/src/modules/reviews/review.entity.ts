@@ -15,7 +15,7 @@ export class Review {
   id: string;
 
   /** FK → jobs.id (opsiyonel: provider profili yorumlarında null olabilir) */
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'varchar', length: 36, nullable: true })
   jobId: string | null;
 
   @ManyToOne(() => Job, { onDelete: 'SET NULL', nullable: true })
@@ -23,7 +23,7 @@ export class Review {
   job: Job | null;
 
   /** Değerlendirmeyi yazan kullanıcı FK → users.id */
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   reviewerId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
@@ -31,7 +31,7 @@ export class Review {
   reviewer: User;
 
   /** Değerlendirilen kullanıcı FK → users.id */
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   revieweeId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })

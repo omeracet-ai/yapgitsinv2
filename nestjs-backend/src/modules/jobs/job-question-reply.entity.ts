@@ -14,14 +14,14 @@ export class JobQuestionReply {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   questionId: string;
 
   @ManyToOne(() => JobQuestion, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'questionId' })
   question: JobQuestion;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   userId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })

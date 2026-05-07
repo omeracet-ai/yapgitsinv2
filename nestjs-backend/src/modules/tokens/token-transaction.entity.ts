@@ -29,7 +29,7 @@ export class TokenTransaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   userId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })

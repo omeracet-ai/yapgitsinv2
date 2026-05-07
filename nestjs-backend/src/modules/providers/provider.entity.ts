@@ -15,7 +15,7 @@ export class Provider {
   id: string;
 
   /** FK → users.id  (işçi/worker'ın user kaydı) */
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   userId: string;
 
   @ManyToOne(() => User, { eager: false, onDelete: 'CASCADE' })

@@ -23,7 +23,7 @@ export class Booking {
   id: string;
 
   // Müşteri
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   customerId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE', eager: false })
@@ -31,7 +31,7 @@ export class Booking {
   customer: User;
 
   // Usta
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   workerId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE', eager: false })

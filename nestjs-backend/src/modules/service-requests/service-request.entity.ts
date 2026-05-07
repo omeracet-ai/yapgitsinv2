@@ -14,7 +14,7 @@ export class ServiceRequest {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   userId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE', eager: false })
@@ -24,7 +24,7 @@ export class ServiceRequest {
   @Column({ type: 'varchar', length: 100, nullable: true })
   category: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'varchar', length: 36, nullable: true })
   categoryId: string;
 
   @Column({ type: 'varchar', length: 200 })

@@ -6,6 +6,8 @@ build/
 .env
 .env.local
 .env*.local
+.env.production
+.env.development
 *.sqlite
 .claude/
 CLAUDE.md
@@ -18,3 +20,6 @@ z.zip
 *.zip
 deploy_stage/admin/dev/
 filezilla-yapgitsin.xml
+agent-teams/release/
+agent-teams/dist/
+hizmet_app/build/

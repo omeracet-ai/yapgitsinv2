@@ -21,14 +21,14 @@ export class ServiceRequestApplication {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   serviceRequestId: string;
 
   @ManyToOne(() => ServiceRequest, { onDelete: 'CASCADE', eager: false })
   @JoinColumn({ name: 'serviceRequestId' })
   serviceRequest: ServiceRequest;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   userId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE', eager: false })

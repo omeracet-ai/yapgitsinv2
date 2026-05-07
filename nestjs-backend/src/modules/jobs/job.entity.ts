@@ -33,7 +33,7 @@ export class Job {
   category: string;
 
   /** FK → categories.id (opsiyonel) */
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'varchar', length: 36, nullable: true })
   categoryId: string | null;
 
   @ManyToOne(() => Category, {
@@ -58,10 +58,10 @@ export class Job {
   status: JobStatus;
 
   /** FK → users.id  (müşteri) */
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   customerId: string;
 
-  @ManyToOne(() => User, { eager: false, onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => User, { eager: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'customerId' })
   customer: User;
 

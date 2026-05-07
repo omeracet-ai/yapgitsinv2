@@ -23,7 +23,7 @@ export class Offer {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   jobId: string;
 
   @ManyToOne(() => Job, { eager: false, onDelete: 'CASCADE' })
@@ -31,7 +31,7 @@ export class Offer {
   job: Job;
 
   // Provider kaldırıldı — artık userId kullanılır
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   userId: string;
 
   @ManyToOne(() => User, { eager: false, onDelete: 'CASCADE' })

@@ -25,7 +25,7 @@ export class Notification {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   userId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
@@ -46,7 +46,7 @@ export class Notification {
   body: string;
 
   // İlgili kayıt ID'si (bookingId, offerId, reviewId vb.)
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'varchar', length: 36, nullable: true })
   refId: string | null;
 
   @Column({ type: 'boolean', default: false })

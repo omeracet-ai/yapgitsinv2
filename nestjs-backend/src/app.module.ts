@@ -39,7 +39,10 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: [`.env.${process.env.NODE_ENV ?? 'development'}.local`, `.env.${process.env.NODE_ENV ?? 'development'}`, '.env'],
+    }),
     // Global in-memory cache (TTL: 30 saniye, max 500 item)
     CacheModule.register({ isGlobal: true, ttl: 30000, max: 500 }),
     // Global rate limiting: dakikada 60 istek (IP başına)
@@ -81,8 +84,9 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
             username: configService.get<string>('DB_USERNAME'),
             password: configService.get<string>('DB_PASSWORD'),
             database: configService.get<string>('DB_NAME') || configService.get<string>('DB_DATABASE'),
+            charset: 'utf8mb4_unicode_ci',
             entities,
-            synchronize: true,
+            synchronize: configService.get<string>('DB_SYNCHRONIZE') !== 'false',
           };
         }
         return {
