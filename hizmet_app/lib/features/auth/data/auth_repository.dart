@@ -134,6 +134,26 @@ class AuthRepository {
     }
   }
 
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    try {
+      final response = await _dio.post('/auth/forgot-password', data: {'email': email});
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Bağlantı hatası');
+    }
+  }
+
+  Future<void> resetPassword(String token, String newPassword) async {
+    try {
+      await _dio.post('/auth/reset-password', data: {
+        'token': token,
+        'newPassword': newPassword,
+      });
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Bağlantı hatası');
+    }
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token');

@@ -167,7 +167,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               fontSize: 16)),
                 ),
               ).animate().fade(delay: 500.ms).scale(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton(
+                  onPressed: isLoading ? null : () => context.push('/forgot-password'),
+                  child: const Text('Şifremi unuttum'),
+                ),
+              ).animate().fade(delay: 550.ms),
+              const SizedBox(height: 8),
               Center(
                 child: TextButton(
                   onPressed: isLoading ? null : () => context.push('/kayit-ol'),

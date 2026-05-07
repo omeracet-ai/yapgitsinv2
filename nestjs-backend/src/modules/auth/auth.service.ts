@@ -1,14 +1,19 @@
 import {
   Injectable,
   UnauthorizedException,
+  BadRequestException,
   OnModuleInit,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserRole } from '../users/user.entity';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import { AuthUser } from '../../common/types/auth.types';
 import { TwoFactorService } from './two-factor.service';
+import { PasswordResetToken } from './password-reset-token.entity';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -16,7 +21,66 @@ export class AuthService implements OnModuleInit {
     private usersService: UsersService,
     private jwtService: JwtService,
     private twoFactorService: TwoFactorService,
+    @InjectRepository(PasswordResetToken)
+    private resetRepo: Repository<PasswordResetToken>,
   ) {}
+
+  private hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  async forgotPassword(email: string) {
+    const generic = {
+      success: true,
+      message:
+        'Eğer bu email kayıtlı ise sıfırlama bağlantısı gönderildi',
+    } as { success: true; message: string; resetUrl?: string };
+
+    if (!email) return generic;
+    const user = await this.usersService.findByEmail(email);
+    if (!user) return generic;
+
+    const plain = crypto.randomBytes(32).toString('hex');
+    const tokenHash = this.hashToken(plain);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+    await this.resetRepo.save(
+      this.resetRepo.create({ userId: user.id, tokenHash, expiresAt, usedAt: null }),
+    );
+
+    const base = process.env.FRONTEND_URL ?? 'https://yapgitsin.tr';
+    generic.resetUrl = `${base}/reset-password?token=${plain}`;
+    return generic;
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    if (!token || typeof token !== 'string') {
+      throw new BadRequestException('Geçersiz veya süresi dolmuş kod');
+    }
+    if (!newPassword || newPassword.length < 6) {
+      throw new BadRequestException('Şifre en az 6 karakter olmalı');
+    }
+    const tokenHash = this.hashToken(token);
+    const record = await this.resetRepo.findOne({ where: { tokenHash } });
+    if (!record || record.usedAt || record.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('Geçersiz veya süresi dolmuş kod');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, await bcrypt.genSalt());
+    await this.usersService.update(record.userId, { passwordHash });
+
+    const now = new Date();
+    record.usedAt = now;
+    await this.resetRepo.save(record);
+    // Diğer aktif token'ları da geçersiz kıl
+    await this.resetRepo
+      .createQueryBuilder()
+      .update(PasswordResetToken)
+      .set({ usedAt: now })
+      .where('userId = :uid AND usedAt IS NULL', { uid: record.userId })
+      .execute();
+
+    return { success: true };
+  }
 
   async onModuleInit() {
     const adminEmail = 'admin@hizmet.app';

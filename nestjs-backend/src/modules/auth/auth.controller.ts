@@ -74,4 +74,16 @@ export class AuthController {
   loginVerify2fa(@Body() body: { tempToken: string; code: string }) {
     return this.authService.loginVerify2fa(body.tempToken, body.code);
   }
+
+  /** Şifre sıfırlama isteği — generic response (privacy) */
+  @Post('forgot-password')
+  forgotPassword(@Body() body: { email: string }) {
+    return this.authService.forgotPassword(body?.email);
+  }
+
+  /** Şifre sıfırlama */
+  @Post('reset-password')
+  resetPassword(@Body() body: { token: string; newPassword: string }) {
+    return this.authService.resetPassword(body?.token, body?.newPassword);
+  }
 }

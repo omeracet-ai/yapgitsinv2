@@ -10,6 +10,8 @@ import '../../../features/ai/presentation/screens/support_agent_screen.dart';
 import '../../../features/auth/presentation/screens/public_profile_screen.dart';
 import '../../../features/auth/presentation/screens/two_factor_challenge_screen.dart';
 import '../../../features/auth/presentation/screens/two_factor_setup_screen.dart';
+import '../../../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../../features/job_templates/presentation/job_templates_screen.dart';
 import '../../../features/statements/presentation/statement_screen.dart';
@@ -71,6 +73,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/2fa-setup',
         builder: (context, state) => const TwoFactorSetupScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) {
+          final token = state.uri.queryParameters['token'] ?? '';
+          return ResetPasswordScreen(token: token);
+        },
       ),
       GoRoute(
         path: '/ilan-ver',

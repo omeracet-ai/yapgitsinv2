@@ -60,6 +60,7 @@ import { StatementsModule } from './modules/statements/statements.module';
 import { UserBlock } from './modules/user-blocks/user-block.entity';
 import { UserReport } from './modules/user-blocks/user-report.entity';
 import { UserBlocksModule } from './modules/user-blocks/user-blocks.module';
+import { PasswordResetToken } from './modules/auth/password-reset-token.entity';
 
 @Module({
   imports: [
@@ -104,6 +105,7 @@ import { UserBlocksModule } from './modules/user-blocks/user-blocks.module';
           JobTemplate,
           UserBlock,
           UserReport,
+          PasswordResetToken,
         ];
         if (dbType === 'sqlite') {
           return {
