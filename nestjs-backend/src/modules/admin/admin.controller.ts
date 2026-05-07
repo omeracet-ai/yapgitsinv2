@@ -1,4 +1,5 @@
-import { Controller, Get, Patch, Post, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Delete, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { AdminService } from './admin.service';
 import { CategoriesService } from '../categories/categories.service';
 import { ProvidersService } from '../providers/providers.service';
@@ -6,8 +7,12 @@ import { Category } from '../categories/category.entity';
 import { UserBlocksService } from '../user-blocks/user-blocks.service';
 import type { UserReportStatus } from '../user-blocks/user-report.entity';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
+import { AdminGuard } from '../../common/guards/admin.guard';
+import type { Request } from 'express';
+import type { AuthUser } from '../../common/types/auth.types';
 
 @Controller('admin')
+@UseGuards(AuthGuard('jwt'), AdminGuard)
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
@@ -47,12 +52,13 @@ export class AdminController {
   async setJobFeatured(
     @Param('id') id: string,
     @Body() body: { featuredOrder: number | null },
+    @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.setJobFeaturedOrder(
       id,
       body.featuredOrder ?? null,
     );
-    await this.adminAuditService.logAction('system', 'job.featured', 'job', id, body as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(req.user.id, 'job.featured', 'job', id, body as unknown as Record<string, unknown>);
     return result;
   }
 
@@ -65,9 +71,10 @@ export class AdminController {
   async verifyUser(
     @Param('id') id: string,
     @Body() body: { identityVerified: boolean },
+    @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.verifyUser(id, body.identityVerified);
-    await this.adminAuditService.logAction('system', 'user.verify', 'user', id, body as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(req.user.id, 'user.verify', 'user', id, body as unknown as Record<string, unknown>);
     return result;
   }
 
@@ -80,12 +87,13 @@ export class AdminController {
   async setServiceRequestFeatured(
     @Param('id') id: string,
     @Body() body: { featuredOrder: number | null },
+    @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.setServiceRequestFeaturedOrder(
       id,
       body.featuredOrder ?? null,
     );
-    await this.adminAuditService.logAction('system', 'service_request.featured', 'service_request', id, body as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(req.user.id, 'service_request.featured', 'service_request', id, body as unknown as Record<string, unknown>);
     return result;
   }
 
@@ -117,9 +125,10 @@ export class AdminController {
   async setProviderFeatured(
     @Param('id') id: string,
     @Body() body: { featuredOrder: number | null },
+    @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.providersService.setFeaturedOrder(id, body.featuredOrder ?? null);
-    await this.adminAuditService.logAction('system', 'provider.featured', 'provider', id, body as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(req.user.id, 'provider.featured', 'provider', id, body as unknown as Record<string, unknown>);
     return result;
   }
 
@@ -191,13 +200,14 @@ export class AdminController {
   async updateReport(
     @Param('id') id: string,
     @Body() body: { status: UserReportStatus; adminNote?: string },
+    @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.userBlocksService.updateReportStatus(
       id,
       body.status,
       body.adminNote,
     );
-    await this.adminAuditService.logAction('system', 'report.update', 'report', id, body as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(req.user.id, 'report.update', 'report', id, body as unknown as Record<string, unknown>);
     return result;
   }
 }
