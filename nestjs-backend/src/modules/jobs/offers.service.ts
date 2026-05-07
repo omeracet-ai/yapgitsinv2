@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Offer, OfferStatus } from './offer.entity';
@@ -64,7 +64,9 @@ export class OffersService {
     price: number;
     message?: string;
     attachmentUrls?: string[];
+    lineItems?: Array<{ label: string; qty: number; unitPrice: number; total: number }>;
   }): Promise<Offer> {
+    this._assertLineItemsMatchPrice(data.lineItems, data.price);
     await this.tokensService.spend(
       data.userId,
       OFFER_TOKEN_COST,
@@ -77,9 +79,22 @@ export class OffersService {
       price: data.price,
       message: data.message,
       attachmentUrls: this._sanitizeAttachments(data.attachmentUrls),
+      lineItems: data.lineItems && data.lineItems.length > 0 ? data.lineItems : null,
       status: OfferStatus.PENDING,
     });
     return this.offersRepository.save(offer);
+  }
+
+  /** lineItems doluysa sum(total) ile price farkı 1 TL'den fazla olmamalı. */
+  private _assertLineItemsMatchPrice(
+    lineItems: Array<{ total: number }> | undefined,
+    price: number,
+  ): void {
+    if (!Array.isArray(lineItems) || lineItems.length === 0) return;
+    const sum = lineItems.reduce((acc, it) => acc + Number(it.total || 0), 0);
+    if (Math.abs(sum - price) > 1) {
+      throw new BadRequestException('Kalemler toplamı fiyatla uyuşmuyor');
+    }
   }
 
   /**
@@ -149,7 +164,9 @@ export class OffersService {
     byUserId: string,
     counterPrice: number,
     counterMessage: string,
+    lineItems?: Array<{ label: string; qty: number; unitPrice: number; total: number }>,
   ): Promise<Offer> {
+    this._assertLineItemsMatchPrice(lineItems, counterPrice);
     const parent = await this._getOffer(offerId);
 
     // Eski API geriye dönük: parent satırına da counterPrice/Message yaz, status COUNTERED
@@ -166,6 +183,7 @@ export class OffersService {
       message: counterMessage,
       parentOfferId: parent.id,
       negotiationRound: (parent.negotiationRound ?? 0) + 1,
+      lineItems: lineItems && lineItems.length > 0 ? lineItems : null,
       status: OfferStatus.PENDING,
     });
     const saved = await this.offersRepository.save(child);

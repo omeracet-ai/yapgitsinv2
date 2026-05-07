@@ -44,11 +44,16 @@ class OfferRepository {
   }
 
   Future<Map<String, dynamic>> createOffer(
-      String jobId, double price, String message) async {
+      String jobId, double price, String message,
+      {List<Map<String, dynamic>>? lineItems}) async {
     try {
+      final body = <String, dynamic>{'price': price, 'message': message};
+      if (lineItems != null && lineItems.isNotEmpty) {
+        body['lineItems'] = lineItems;
+      }
       final res = await _dio.post(
         '/jobs/$jobId/offers',
-        data: {'price': price, 'message': message},
+        data: body,
         options: await _authOpts(),
       );
       return Map<String, dynamic>.from(res.data as Map);

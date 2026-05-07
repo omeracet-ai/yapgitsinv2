@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/job_repository.dart';
 import '../../data/offer_repository.dart';
+import '../../../offers/widgets/offer_line_items_editor.dart';
+import '../../../offers/widgets/offer_line_items_view.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/job_provider.dart';
 import '../../../reviews/presentation/screens/write_review_screen.dart';
@@ -949,6 +951,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                         style: TextStyle(fontSize: 12, color: Colors.grey.shade500,
                             fontStyle: FontStyle.italic)),
                   ]),
+                if (canSeePrice && offer['lineItems'] is List && (offer['lineItems'] as List).isNotEmpty)
+                  OfferLineItemsView(
+                    items: (offer['lineItems'] as List)
+                        .whereType<Map>()
+                        .map((m) => Map<String, dynamic>.from(m))
+                        .toList(),
+                  ),
               ],
             ),
           ),
@@ -1213,6 +1222,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   void _showBidDialog() {
     final priceCtrl = TextEditingController();
     final msgCtrl = TextEditingController();
+    final lineItemsRef = <List<Map<String, dynamic>>>[[]];
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1224,12 +1234,30 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         priceCtrl: priceCtrl,
         msgCtrl: msgCtrl,
         submitLabel: 'Gönder',
+        showLineItems: true,
+        onLineItemsChanged: (items) => lineItemsRef[0] = items,
         onSubmit: () async {
           if (widget.id == null || priceCtrl.text.isEmpty) return;
+          final price = double.parse(priceCtrl.text.replaceAll(',', '.'));
+          final items = lineItemsRef[0]
+              .where((m) =>
+                  (m['label'] ?? '').toString().trim().isNotEmpty &&
+                  ((m['qty'] as num?) ?? 0) > 0 &&
+                  ((m['unitPrice'] as num?) ?? 0) > 0)
+              .toList();
+          if (items.isNotEmpty) {
+            final sum = items.fold<double>(
+                0.0, (s, m) => s + ((m['total'] as num?)?.toDouble() ?? 0));
+            if ((sum - price).abs() > 1.0) {
+              throw Exception(
+                  'Kalemler toplamı: ₺${sum.toStringAsFixed(2)} — fiyat: ₺${price.toStringAsFixed(2)}. Devam etmek için fiyatı eşitle.');
+            }
+          }
           await ref.read(offerRepositoryProvider).createOffer(
                 widget.id!,
-                double.parse(priceCtrl.text),
+                price,
                 msgCtrl.text,
+                lineItems: items.isEmpty ? null : items,
               );
           if (widget.id != null) ref.invalidate(jobOffersProvider(widget.id!));
           if (ctx.mounted) Navigator.pop(ctx);
@@ -1570,6 +1598,8 @@ class _BidSheet extends StatefulWidget {
   final String msgLabel;
   final TextEditingController priceCtrl, msgCtrl;
   final Future<void> Function() onSubmit;
+  final bool showLineItems;
+  final ValueChanged<List<Map<String, dynamic>>>? onLineItemsChanged;
 
   const _BidSheet({
     required this.title,
@@ -1579,6 +1609,8 @@ class _BidSheet extends StatefulWidget {
     required this.submitLabel,
     required this.onSubmit,
     this.msgLabel = 'Mesajınız',
+    this.showLineItems = false,
+    this.onLineItemsChanged,
   });
 
   @override
@@ -1594,7 +1626,8 @@ class _BidSheetState extends State<_BidSheet> {
       padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
           left: 24, right: 24, top: 24),
-      child: Column(
+      child: SingleChildScrollView(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
@@ -1627,6 +1660,23 @@ class _BidSheetState extends State<_BidSheet> {
                 alignLabelWithHint: true,
                 filled: true),
           ),
+          if (widget.showLineItems) ...[
+            const SizedBox(height: 8),
+            Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: const EdgeInsets.only(bottom: 8),
+                title: const Text('Kalem Bazlı Detay (opsiyonel)',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                children: [
+                  OfferLineItemsEditor(
+                    onChanged: widget.onLineItemsChanged ?? (_) {},
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
@@ -1668,6 +1718,7 @@ class _BidSheetState extends State<_BidSheet> {
           ),
           const SizedBox(height: 24),
         ],
+      ),
       ),
     );
   }

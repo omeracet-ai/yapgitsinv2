@@ -12,6 +12,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { OffersService } from './offers.service';
 import { OfferStatus } from './offer.entity';
+import { CreateOfferDto, CounterOfferDto } from './dto/offer.dto';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 /** GET /offers/my — işçinin kendi teklifleri, iş detaylarıyla */
@@ -44,7 +45,7 @@ export class OffersController {
   @Post()
   async create(
     @Param('jobId') jobId: string,
-    @Body() body: { price: number; message?: string; attachmentUrls?: string[] },
+    @Body() body: CreateOfferDto,
     @Request() req: AuthenticatedRequest,
   ) {
     return this.offersService.create({
@@ -53,6 +54,7 @@ export class OffersController {
       price: body.price,
       message: body.message,
       attachmentUrls: body.attachmentUrls,
+      lineItems: body.lineItems,
     });
   }
 
@@ -72,7 +74,7 @@ export class OffersController {
   @Patch(':id/counter')
   counter(
     @Param('id') id: string,
-    @Body() body: { counterPrice: number; counterMessage: string },
+    @Body() body: CounterOfferDto,
     @Request() req: AuthenticatedRequest,
   ) {
     return this.offersService.counter(
@@ -80,6 +82,7 @@ export class OffersController {
       req.user.id,
       body.counterPrice,
       body.counterMessage,
+      body.lineItems,
     );
   }
 

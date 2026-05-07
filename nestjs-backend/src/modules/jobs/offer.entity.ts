@@ -74,6 +74,12 @@ export class Offer {
   @Column({ type: 'simple-json', nullable: true, default: null })
   attachmentUrls: string[] | null;
 
+  // ── Quote line items (Phase 13) ──────────────────────────────────────
+  // Usta teklifini iş kalemlerine dökebilir. Her satır: label/qty/unitPrice/total.
+  // Validation: lineItems doluysa sum(total) ≈ price (±1 TL tolerans).
+  @Column({ type: 'simple-json', nullable: true })
+  lineItems: Array<{ label: string; qty: number; unitPrice: number; total: number }> | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
