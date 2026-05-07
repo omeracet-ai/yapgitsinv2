@@ -3,12 +3,30 @@
 import { useEffect, useState } from "react";
 import { api, type Provider } from "@/lib/api";
 
+// Airtasker-style badges (UI tarafı). Manuel olanlar admin tarafından açılıp kapanır;
+// computed olanlar backend'den otomatik döner ve burada read-only olarak görünür.
+const BADGE_META: Record<string, { label: string; emoji: string; manual: boolean; color: string }> = {
+  insurance:         { label: "Sigortalı",          emoji: "🛡️", manual: true,  color: "bg-emerald-100 text-emerald-700" },
+  premium:           { label: "Premium",            emoji: "👑", manual: true,  color: "bg-amber-100 text-amber-700" },
+  partner:           { label: "Partner",            emoji: "🤝", manual: true,  color: "bg-purple-100 text-purple-700" },
+  verified_business: { label: "Doğrulanmış İşletme",emoji: "🏢", manual: true,  color: "bg-blue-100 text-blue-700" },
+  blue_tick:         { label: "Mavi Tik",           emoji: "✓",  manual: false, color: "bg-blue-100 text-blue-600" },
+  top_rated:         { label: "En Yüksek Puan",     emoji: "⭐", manual: false, color: "bg-yellow-100 text-yellow-700" },
+  reliable:          { label: "Güvenilir",          emoji: "✅", manual: false, color: "bg-green-100 text-green-700" },
+  rookie:            { label: "Yeni",               emoji: "🌱", manual: false, color: "bg-lime-100 text-lime-700" },
+  power_tasker:      { label: "Süper Usta",         emoji: "🚀", manual: false, color: "bg-rose-100 text-rose-700" },
+  fast_responder:    { label: "Hızlı Cevap",        emoji: "⚡", manual: false, color: "bg-cyan-100 text-cyan-700" },
+};
+const MANUAL_BADGE_IDS = Object.entries(BADGE_META).filter(([, m]) => m.manual).map(([id]) => id);
+
 export default function ProvidersPage() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
   const [featuring, setFeaturing] = useState<string | null>(null);
+  const [badgePicker, setBadgePicker] = useState<string | null>(null);
+  const [savingBadges, setSavingBadges] = useState<string | null>(null);
   const [slotCount, setSlotCount] = useState(3);
 
   const load = async () => {
@@ -36,6 +54,32 @@ export default function ProvidersPage() {
       setError((e as Error).message);
     } finally {
       setToggling(null);
+    }
+  };
+
+  const handleToggleBadge = async (p: Provider, badge: string) => {
+    if (!p.userId) return;
+    const current = (p.badges ?? []).filter((b) => MANUAL_BADGE_IDS.includes(b));
+    const next = current.includes(badge)
+      ? current.filter((b) => b !== badge)
+      : [...current, badge];
+    setSavingBadges(p.id);
+    // Optimistic: keep computed badges, swap manual ones
+    setProviders((prev) =>
+      prev.map((x) =>
+        x.id === p.id
+          ? { ...x, badges: [...next, ...((x.badges ?? []).filter((b) => !MANUAL_BADGE_IDS.includes(b)))] }
+          : x,
+      ),
+    );
+    try {
+      await api.setUserBadges(p.userId, next);
+      await load();
+    } catch (e) {
+      setError((e as Error).message);
+      await load();
+    } finally {
+      setSavingBadges(null);
     }
   };
 
@@ -134,13 +178,14 @@ export default function ProvidersPage() {
                 <th className="text-center px-4 py-3 font-medium text-gray-500">Puan</th>
                 <th className="text-center px-4 py-3 font-medium text-gray-500">Belge</th>
                 <th className="text-center px-4 py-3 font-medium text-gray-500">Mavi Tik</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">Rozetler</th>
                 <th className="text-center px-4 py-3 font-medium text-gray-500">Öne Çıkan</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-500">İşlemler</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {providers.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-8 text-gray-400">Henüz sağlayıcı yok.</td></tr>
+                <tr><td colSpan={7} className="text-center py-8 text-gray-400">Henüz sağlayıcı yok.</td></tr>
               )}
               {providers.map(p => (
                 <tr key={p.id} className={`hover:bg-gray-50 transition-colors ${p.featuredOrder ? "bg-amber-50/30" : ""}`}>
@@ -172,6 +217,59 @@ export default function ProvidersPage() {
                     ) : (
                       <span className="text-gray-400 text-xs">— Doğrulanmadı</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {/* Rozet pill listesi + ekleme dropdown'u */}
+                    <div className="flex flex-wrap items-center gap-1 max-w-[280px]">
+                      {(p.badges ?? []).map((b) => {
+                        const meta = BADGE_META[b];
+                        if (!meta) return null;
+                        const isManual = meta.manual;
+                        return (
+                          <span
+                            key={b}
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${meta.color}`}
+                            title={isManual ? "Manuel rozet — tıkla kaldır" : "Otomatik rozet (istatistiklerden)"}
+                          >
+                            <span>{meta.emoji}</span>
+                            <span>{meta.label}</span>
+                            {isManual && (
+                              <button
+                                onClick={() => handleToggleBadge(p, b)}
+                                disabled={savingBadges === p.id}
+                                className="ml-0.5 text-current opacity-60 hover:opacity-100 disabled:opacity-30"
+                                title="Kaldır"
+                              >×</button>
+                            )}
+                          </span>
+                        );
+                      })}
+                      <button
+                        type="button"
+                        onClick={() => setBadgePicker(badgePicker === p.id ? null : p.id)}
+                        className="text-xs text-gray-500 hover:text-blue-600 px-1.5 py-0.5 rounded border border-dashed border-gray-300 hover:border-blue-400"
+                      >+ Rozet</button>
+                      {badgePicker === p.id && (
+                        <div className="w-full mt-1 p-2 rounded-lg border border-gray-200 bg-white shadow-sm flex flex-wrap gap-1">
+                          {MANUAL_BADGE_IDS.filter((id) => !(p.badges ?? []).includes(id)).map((id) => {
+                            const m = BADGE_META[id];
+                            return (
+                              <button
+                                key={id}
+                                onClick={() => { handleToggleBadge(p, id); setBadgePicker(null); }}
+                                disabled={savingBadges === p.id}
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${m.color} hover:ring-2 hover:ring-offset-1 hover:ring-current disabled:opacity-50`}
+                              >
+                                <span>{m.emoji}</span> {m.label}
+                              </button>
+                            );
+                          })}
+                          {MANUAL_BADGE_IDS.every((id) => (p.badges ?? []).includes(id)) && (
+                            <span className="text-xs text-gray-400">Tüm manuel rozetler atandı</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <select

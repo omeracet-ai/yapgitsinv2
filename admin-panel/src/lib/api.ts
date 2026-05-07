@@ -83,6 +83,10 @@ export const api = {
   setProviderFeatured: (id: string, featuredOrder: number | null) =>
     request<void>(`/admin/providers/${id}/featured`, { method: 'PATCH', body: JSON.stringify({ featuredOrder }) }),
 
+  // Airtasker-style rozetler — manuel rozetleri user-level set eder
+  setUserBadges: (userId: string, badges: string[]) =>
+    request<{ id: string; badges: string[] }>(`/admin/users/${userId}/badges`, { method: 'PATCH', body: JSON.stringify({ badges }) }),
+
   // Onboarding slides
   onboardingSlides:       ()                                          => request<OnboardingSlide[]>('/onboarding-slides/all'),
   createOnboardingSlide:  (data: Partial<OnboardingSlide>)           => request<OnboardingSlide>('/onboarding-slides',         { method: 'POST',   body: JSON.stringify(data) }),
@@ -143,6 +147,8 @@ export interface Provider {
   hasCertificate: boolean;
   featuredOrder: number | null;
   documents: Record<string, string> | null;
+  /** Airtasker-style rozetler (manuel + computed birleşik) — backend'ten döner */
+  badges?: string[];
   user?: { id: string; fullName: string; email: string; role: string } | null;
   createdAt: string;
   updatedAt: string;
