@@ -57,6 +57,16 @@ export class Offer {
   @Column({ type: 'text', nullable: true, default: null })
   counterMessage: string | null;
 
+  // ── Counter-offer zinciri (Airtasker-style negotiation history) ────────
+  // Bir karşı-teklif yapıldığında orijinal teklifin status'ı COUNTERED olur ve
+  // YENİ bir Offer satırı oluşturulur, parentOfferId orijinali işaret eder.
+  // Frontend `parentOfferId`'i zincirleyerek pazarlık geçmişini gösterir.
+  @Column({ type: 'varchar', length: 36, nullable: true, default: null })
+  parentOfferId: string | null;
+
+  @Column({ type: 'integer', default: 0 })
+  negotiationRound: number;
+
   // ── Airtasker-style ek dosyalar (foto, belge URL'leri) ─────────────────
   // Usta teklifine portföy/iş kanıtı/numune eklemek için. JSON dizisi olarak
   // saklanır — uploads endpoint'i (uploads/job-photos) URL döndürür, frontend

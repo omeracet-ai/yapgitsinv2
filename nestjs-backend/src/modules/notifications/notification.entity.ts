@@ -18,6 +18,14 @@ export enum NotificationType {
   OFFER_REJECTED = 'offer_rejected', // Teklifin reddedildi
   NEW_REVIEW = 'new_review', // Yeni değerlendirme
   SYSTEM = 'system', // Sistem mesajı
+  COUNTER_OFFER = 'counter_offer', // Pazarlık fiyatı önerildi
+  OFFER_EXPIRED = 'offer_expired', // Teklif süresi doldu
+  DISPUTE_OPENED = 'dispute_opened', // Uyuşmazlık açıldı
+  DISPUTE_RESOLVED = 'dispute_resolved', // Uyuşmazlık çözüldü
+  JOB_PENDING_COMPLETION = 'job_pending_completion', // Usta bittim dedi, müşteri onayı bekliyor
+  JOB_COMPLETED = 'job_completed', // İş tamamlandı (job lifecycle)
+  JOB_CANCELLED = 'job_cancelled', // İş iptal edildi (job lifecycle)
+  REVIEW_REMINDER = 'review_reminder', // 7 gün geçti, değerlendirme hatırlatması
 }
 
 @Entity('notifications')

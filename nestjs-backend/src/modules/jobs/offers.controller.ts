@@ -73,12 +73,20 @@ export class OffersController {
   counter(
     @Param('id') id: string,
     @Body() body: { counterPrice: number; counterMessage: string },
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.offersService.counter(
       id,
+      req.user.id,
       body.counterPrice,
       body.counterMessage,
     );
+  }
+
+  /** Bir teklifin tüm pazarlık zincirini döndürür (root'tan leaf'e). */
+  @Get(':id/chain')
+  getChain(@Param('id') id: string) {
+    return this.offersService.getNegotiationChain(id);
   }
 
   @UseGuards(AuthGuard('jwt'))

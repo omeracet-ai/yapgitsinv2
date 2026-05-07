@@ -11,6 +11,8 @@ import { Job, JobStatus, isValidTransition } from './job.entity';
 import { Offer, OfferStatus } from './offer.entity';
 import { UsersService } from '../users/users.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/notification.entity';
 
 // Geçerli UUID — SQLite ve PostgreSQL uyumlu sabit seed kimliği
 const SEED_USER_ID = '00000000-0000-0000-0000-000000000001';
@@ -24,6 +26,7 @@ export class JobsService {
     private offersRepository: Repository<Offer>,
     private usersService: UsersService,
     private dataSource: DataSource,
+    private notificationsService: NotificationsService,
   ) {}
 
   async onModuleInit() {
@@ -186,6 +189,28 @@ export class JobsService {
         prevStatus,
         saved.status,
       );
+
+      // Job cancelled — notify the side that did NOT cancel
+      if (saved.status === JobStatus.CANCELLED) {
+        const acceptedOffer = await this.offersRepository.findOne({
+          where: { jobId: saved.id, status: OfferStatus.ACCEPTED },
+        });
+        // Only the customer can update via this method (ForbiddenException above),
+        // so the "other side" is the assigned tasker if there is one.
+        const otherUserId =
+          requesterId === saved.customerId
+            ? acceptedOffer?.userId ?? null
+            : saved.customerId;
+        if (otherUserId && otherUserId !== requesterId) {
+          await this.notificationsService.send({
+            userId: otherUserId,
+            type: NotificationType.JOB_CANCELLED,
+            title: 'İş iptal edildi',
+            body: `"${saved.title}" ilanı iptal edildi.`,
+            refId: saved.id,
+          });
+        }
+      }
     }
 
     return saved;
@@ -209,7 +234,17 @@ export class JobsService {
       );
     }
     job.status = JobStatus.PENDING_COMPLETION;
-    return this.jobsRepository.save(job);
+    const saved = await this.jobsRepository.save(job);
+
+    // Notify customer that tasker submitted completion
+    await this.notificationsService.send({
+      userId: saved.customerId,
+      type: NotificationType.JOB_PENDING_COMPLETION,
+      title: 'İş tamamlandı olarak işaretlendi',
+      body: `"${saved.title}" ilanınız için usta işi bitirdiğini belirtti. Lütfen onaylayın.`,
+      refId: saved.id,
+    });
+    return saved;
   }
 
   /** Müşteri "tamamlandı" onayı → completed (istatistik & itibar günceller). */
@@ -228,6 +263,20 @@ export class JobsService {
     job.status = JobStatus.COMPLETED;
     const saved = await this.jobsRepository.save(job);
     await this._trackStatusChange(saved.id, saved.customerId, prev, saved.status);
+
+    // Notify the assigned tasker that customer approved completion
+    const acceptedOffer = await this.offersRepository.findOne({
+      where: { jobId: saved.id, status: OfferStatus.ACCEPTED },
+    });
+    if (acceptedOffer) {
+      await this.notificationsService.send({
+        userId: acceptedOffer.userId,
+        type: NotificationType.JOB_COMPLETED,
+        title: 'İş tamamlandı',
+        body: `"${saved.title}" ilanı müşteri tarafından onaylandı. Tebrikler!`,
+        refId: saved.id,
+      });
+    }
     return saved;
   }
 
@@ -251,7 +300,22 @@ export class JobsService {
       );
     }
     job.status = JobStatus.DISPUTED;
-    return this.jobsRepository.save(job);
+    const saved = await this.jobsRepository.save(job);
+
+    // Notify the OTHER party
+    const otherUserId = isCustomer
+      ? acceptedOffer?.userId ?? null
+      : job.customerId;
+    if (otherUserId) {
+      await this.notificationsService.send({
+        userId: otherUserId,
+        type: NotificationType.DISPUTE_OPENED,
+        title: 'Uyuşmazlık açıldı',
+        body: `"${saved.title}" ilanı için karşı taraf uyuşmazlık açtı.`,
+        refId: saved.id,
+      });
+    }
+    return saved;
   }
 
   private async _trackStatusChange(

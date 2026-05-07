@@ -2,16 +2,22 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Offer, OfferStatus } from './offer.entity';
+import { Job } from './job.entity';
 import { TokensService, OFFER_TOKEN_COST } from '../tokens/tokens.service';
 import { UsersService } from '../users/users.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/notification.entity';
 
 @Injectable()
 export class OffersService {
   constructor(
     @InjectRepository(Offer)
     private offersRepository: Repository<Offer>,
+    @InjectRepository(Job)
+    private jobsRepository: Repository<Job>,
     private tokensService: TokensService,
     private usersService: UsersService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async findByJob(jobId: string): Promise<Offer[]> {
@@ -102,16 +108,72 @@ export class OffersService {
     return saved;
   }
 
+  /**
+   * Karşı-teklif yapar. Orijinal teklif COUNTERED olur ve yeni bir Offer
+   * satırı parentOfferId ile zincire eklenir. Negotiation round otomatik artar.
+   *
+   * @param offerId  karşı-teklif yapılan orijinal Offer ID'si
+   * @param byUserId  karşı-teklifi yapan kullanıcı (müşteri olabilir, usta da)
+   * @param counterPrice  yeni öne sürülen fiyat
+   * @param counterMessage  açıklama (opsiyonel)
+   */
   async counter(
     offerId: string,
+    byUserId: string,
     counterPrice: number,
     counterMessage: string,
   ): Promise<Offer> {
-    const offer = await this._getOffer(offerId);
-    offer.status = OfferStatus.COUNTERED;
-    offer.counterPrice = counterPrice;
-    offer.counterMessage = counterMessage;
-    return this.offersRepository.save(offer);
+    const parent = await this._getOffer(offerId);
+
+    // Eski API geriye dönük: parent satırına da counterPrice/Message yaz, status COUNTERED
+    parent.status = OfferStatus.COUNTERED;
+    parent.counterPrice = counterPrice;
+    parent.counterMessage = counterMessage;
+    await this.offersRepository.save(parent);
+
+    // Yeni teklif satırı (zincirin yeni halkası)
+    const child = this.offersRepository.create({
+      jobId: parent.jobId,
+      userId: byUserId,
+      price: counterPrice,
+      message: counterMessage,
+      parentOfferId: parent.id,
+      negotiationRound: (parent.negotiationRound ?? 0) + 1,
+      status: OfferStatus.PENDING,
+    });
+    const saved = await this.offersRepository.save(child);
+
+    // Notify the OTHER party — usta counter'lıyorsa müşteriye, müşteri counter'lıyorsa ustaya
+    try {
+      const job = await this.jobsRepository.findOne({ where: { id: parent.jobId } });
+      const recipientId = byUserId === job?.customerId ? parent.userId : job?.customerId;
+      if (recipientId && job) {
+        await this.notificationsService.send({
+          userId: recipientId,
+          type: NotificationType.COUNTER_OFFER,
+          title: 'Karşı teklif geldi',
+          body: `"${job.title}" ilanına ${counterPrice} ₺ karşı teklif yapıldı`,
+          refId: saved.id,
+        });
+      }
+    } catch { /* notification opsiyonel — sessiz geç */ }
+
+    return saved;
+  }
+
+  /**
+   * Bir teklifin tüm pazarlık zincirini döndürür (en eskiden en yeniye).
+   * `getNegotiationChain(latest.id)` → root'a kadar tüm parents.
+   */
+  async getNegotiationChain(offerId: string): Promise<Offer[]> {
+    const chain: Offer[] = [];
+    let current: Offer | null = await this._getOffer(offerId);
+    while (current) {
+      chain.unshift(current); // root → leaf sırası
+      if (!current.parentOfferId) break;
+      current = await this.offersRepository.findOne({ where: { id: current.parentOfferId } });
+    }
+    return chain;
   }
 
   async updateStatus(id: string, status: OfferStatus): Promise<Offer> {

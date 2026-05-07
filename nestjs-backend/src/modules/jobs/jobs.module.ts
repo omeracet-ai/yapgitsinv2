@@ -12,12 +12,14 @@ import { QuestionsService } from './questions.service';
 import { QuestionsController } from './questions.controller';
 import { UsersModule } from '../users/users.module';
 import { TokensModule } from '../tokens/tokens.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Job, Offer, JobQuestion, JobQuestionReply]),
     UsersModule,
     TokensModule,
+    NotificationsModule,
   ],
   providers: [JobsService, OffersService, QuestionsService],
   controllers: [JobsController, OffersController, OffersRootController, QuestionsController],
