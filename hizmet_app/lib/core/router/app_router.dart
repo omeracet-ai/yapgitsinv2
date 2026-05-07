@@ -12,6 +12,7 @@ import '../../../features/auth/presentation/screens/two_factor_challenge_screen.
 import '../../../features/auth/presentation/screens/two_factor_setup_screen.dart';
 import '../../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../../features/auth/presentation/screens/reset_password_screen.dart';
+import '../../../features/auth/presentation/screens/verify_email_screen.dart';
 import '../../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../../features/job_templates/presentation/job_templates_screen.dart';
 import '../../../features/statements/presentation/statement_screen.dart';
@@ -83,6 +84,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final token = state.uri.queryParameters['token'] ?? '';
           return ResetPasswordScreen(token: token);
+        },
+      ),
+      GoRoute(
+        path: '/verify-email',
+        builder: (context, state) {
+          final token = state.uri.queryParameters['token'] ?? '';
+          return VerifyEmailScreen(token: token);
         },
       ),
       GoRoute(

@@ -14,6 +14,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AuthUser } from '../../common/types/auth.types';
 import { TwoFactorService } from './two-factor.service';
 import { PasswordResetToken } from './password-reset-token.entity';
+import { EmailVerificationToken } from './email-verification-token.entity';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -23,7 +24,52 @@ export class AuthService implements OnModuleInit {
     private twoFactorService: TwoFactorService,
     @InjectRepository(PasswordResetToken)
     private resetRepo: Repository<PasswordResetToken>,
+    @InjectRepository(EmailVerificationToken)
+    private emailVerifyRepo: Repository<EmailVerificationToken>,
   ) {}
+
+  async requestEmailVerification(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new BadRequestException('Kullanıcı bulunamadı');
+    if (user.emailVerified) {
+      throw new BadRequestException('Email zaten doğrulanmış');
+    }
+    const plain = crypto.randomBytes(32).toString('hex');
+    const tokenHash = this.hashToken(plain);
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await this.emailVerifyRepo.save(
+      this.emailVerifyRepo.create({ userId: user.id, tokenHash, expiresAt, usedAt: null }),
+    );
+    const base = process.env.FRONTEND_URL ?? 'https://yapgitsin.tr';
+    const verifyUrl = `${base}/verify-email?token=${plain}`;
+    return {
+      success: true,
+      verifyUrl,
+      message: 'Doğrulama bağlantısı gönderildi',
+    };
+  }
+
+  async confirmEmailVerification(token: string) {
+    if (!token || typeof token !== 'string') {
+      throw new BadRequestException('Geçersiz veya süresi dolmuş kod');
+    }
+    const tokenHash = this.hashToken(token);
+    const record = await this.emailVerifyRepo.findOne({ where: { tokenHash } });
+    if (!record || record.usedAt || record.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('Geçersiz veya süresi dolmuş kod');
+    }
+    await this.usersService.update(record.userId, { emailVerified: true });
+    const now = new Date();
+    record.usedAt = now;
+    await this.emailVerifyRepo.save(record);
+    await this.emailVerifyRepo
+      .createQueryBuilder()
+      .update(EmailVerificationToken)
+      .set({ usedAt: now })
+      .where('userId = :uid AND usedAt IS NULL', { uid: record.userId })
+      .execute();
+    return { success: true, emailVerified: true };
+  }
 
   private hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');

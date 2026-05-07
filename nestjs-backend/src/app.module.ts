@@ -61,6 +61,7 @@ import { UserBlock } from './modules/user-blocks/user-block.entity';
 import { UserReport } from './modules/user-blocks/user-report.entity';
 import { UserBlocksModule } from './modules/user-blocks/user-blocks.module';
 import { PasswordResetToken } from './modules/auth/password-reset-token.entity';
+import { EmailVerificationToken } from './modules/auth/email-verification-token.entity';
 
 @Module({
   imports: [
@@ -106,6 +107,7 @@ import { PasswordResetToken } from './modules/auth/password-reset-token.entity';
           UserBlock,
           UserReport,
           PasswordResetToken,
+          EmailVerificationToken,
         ];
         if (dbType === 'sqlite') {
           return {

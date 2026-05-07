@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../wallet/presentation/screens/wallet_screen.dart';
 import '../../../tokens/data/token_repository.dart';
@@ -56,6 +58,7 @@ class ProfileScreen extends ConsumerWidget {
               _buildProfileHeader(user),
               _buildTokenBanner(context, ref),
               _buildIdentityStatus(user),
+              _buildEmailVerification(context, ref, user),
               _buildStatsSection(ref),
               _buildPastPhotos(ref),
               _buildReviewsSection(ref),
@@ -311,6 +314,143 @@ class ProfileScreen extends ConsumerWidget {
         ]),
       ]),
     );
+  }
+
+  Widget _buildEmailVerification(
+      BuildContext context, WidgetRef ref, Map<String, dynamic> user) {
+    final email = user['email'] as String?;
+    if (email == null || email.isEmpty) return const SizedBox.shrink();
+    final verified = user['emailVerified'] == true;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.email_outlined, color: AppColors.textSecondary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(email,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 4),
+                if (verified)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.check_circle,
+                          color: Colors.green, size: 14),
+                      const SizedBox(width: 4),
+                      Text('Doğrulanmış',
+                          style: TextStyle(
+                              color: Colors.green.shade700,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600)),
+                    ]),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text('Doğrulanmadı',
+                        style: TextStyle(
+                            color: Colors.amber.shade800,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600)),
+                  ),
+              ],
+            ),
+          ),
+          if (!verified)
+            TextButton(
+              onPressed: () => _requestEmailVerification(context, ref),
+              child: const Text('Doğrula'),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _requestEmailVerification(
+      BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final res = await ref.read(authRepositoryProvider).requestEmailVerification();
+      final url = res['verifyUrl'] as String?;
+      if (!context.mounted) return;
+      if (url == null || url.isEmpty) {
+        messenger.showSnackBar(const SnackBar(
+            content: Text('Doğrulama bağlantısı email ile gönderildi')));
+        return;
+      }
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Email Doğrulama'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                  'SMTP henüz aktif değil — bağlantıyı manuel açın',
+                  style: TextStyle(
+                      fontSize: 12, color: AppColors.textSecondary)),
+              const SizedBox(height: 12),
+              const Text('Doğrulama bağlantısı:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              SelectableText(url, style: const TextStyle(fontSize: 12)),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: url));
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                      content: Text('Bağlantı kopyalandı')));
+                }
+              },
+              child: const Text('Kopyala'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final uri = Uri.tryParse(url);
+                if (uri != null) {
+                  await launchUrl(uri,
+                      mode: LaunchMode.externalApplication);
+                }
+              },
+              child: const Text('Tarayıcıda Aç'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Kapat'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+    }
   }
 
   Widget _buildTokenBanner(BuildContext context, WidgetRef ref) {

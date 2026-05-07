@@ -143,6 +143,35 @@ class AuthRepository {
     }
   }
 
+  Future<Map<String, dynamic>> requestEmailVerification() async {
+    try {
+      final opts = await _authOptions();
+      final response =
+          await _dio.post('/auth/verify-email/request', options: opts);
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Bağlantı hatası');
+    }
+  }
+
+  Future<void> confirmEmailVerification(String token) async {
+    try {
+      await _dio.post('/auth/verify-email/confirm', data: {'token': token});
+      // Refresh stored user_data emailVerified flag if present
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('user_data');
+      if (raw != null) {
+        try {
+          final m = Map<String, dynamic>.from(jsonDecode(raw));
+          m['emailVerified'] = true;
+          await prefs.setString('user_data', jsonEncode(m));
+        } catch (_) {}
+      }
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Bağlantı hatası');
+    }
+  }
+
   Future<void> resetPassword(String token, String newPassword) async {
     try {
       await _dio.post('/auth/reset-password', data: {

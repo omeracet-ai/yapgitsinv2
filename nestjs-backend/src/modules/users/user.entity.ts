@@ -61,6 +61,9 @@ export class User {
   @Column({ type: 'boolean', default: false })
   isPhoneVerified: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  emailVerified: boolean;
+
   @Column({
     type: 'simple-enum',
     enum: UserRole,

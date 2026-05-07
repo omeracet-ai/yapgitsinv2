@@ -86,4 +86,17 @@ export class AuthController {
   resetPassword(@Body() body: { token: string; newPassword: string }) {
     return this.authService.resetPassword(body?.token, body?.newPassword);
   }
+
+  /** Email doğrulama isteği */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('verify-email/request')
+  requestEmailVerification(@Req() req: AuthenticatedRequest) {
+    return this.authService.requestEmailVerification(req.user.id);
+  }
+
+  /** Email doğrulama onayı */
+  @Post('verify-email/confirm')
+  confirmEmailVerification(@Body() body: { token: string }) {
+    return this.authService.confirmEmailVerification(body?.token);
+  }
 }

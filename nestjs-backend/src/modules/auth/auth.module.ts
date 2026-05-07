@@ -8,10 +8,11 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
 import { TwoFactorService } from './two-factor.service';
 import { PasswordResetToken } from './password-reset-token.entity';
+import { EmailVerificationToken } from './email-verification-token.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PasswordResetToken]),
+    TypeOrmModule.forFeature([PasswordResetToken, EmailVerificationToken]),
     UsersModule,
     PassportModule,
     JwtModule.registerAsync({
