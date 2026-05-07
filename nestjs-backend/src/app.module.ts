@@ -55,6 +55,7 @@ import { PromoRedemption } from './modules/promo/promo-redemption.entity';
 import { PromoModule } from './modules/promo/promo.module';
 import { JobTemplate } from './modules/job-templates/job-template.entity';
 import { JobTemplatesModule } from './modules/job-templates/job-templates.module';
+import { StatementsModule } from './modules/statements/statements.module';
 
 @Module({
   imports: [
@@ -154,6 +155,7 @@ import { JobTemplatesModule } from './modules/job-templates/job-templates.module
     AvailabilityModule,
     PromoModule,
     JobTemplatesModule,
+    StatementsModule,
     CronModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),

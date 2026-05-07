@@ -709,6 +709,9 @@ class ProfileScreen extends ConsumerWidget {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const EarningsScreen()));
           }),
+          _menuItem(Icons.receipt_long_outlined, 'Aylık Beyan', () {
+            context.push('/aylik-beyan');
+          }),
           _menuItem(Icons.location_on_outlined, 'Adreslerim', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const AddressesScreen()));
