@@ -23,6 +23,25 @@ Etki:
 
 ---
 
+## Phase 26 — Admin Audit Log (commit pending)
+
+cd nestjs-backend
+node add-admin-audit-table.js
+
+Beklenen log:
+- [ok] admin_audit_logs created/skipped
+- [ok] idx_admin_audit_admin created/skipped
+- [ok] idx_admin_audit_target created/skipped
+
+Etki:
+- GET /admin/audit-log endpoint'i çalışır hale gelir.
+- Admin verify / featured / report-update aksiyonları artık audit'e yazılır.
+
+Doğrulama:
+SHOW TABLES LIKE 'admin_audit_logs'  → 1 satır beklenir.
+
+---
+
 ## Hızlı Doğrulama (script çalıştıktan sonra)
 
 cd nestjs-backend

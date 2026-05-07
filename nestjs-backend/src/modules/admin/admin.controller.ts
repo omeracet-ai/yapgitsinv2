@@ -5,6 +5,7 @@ import { ProvidersService } from '../providers/providers.service';
 import { Category } from '../categories/category.entity';
 import { UserBlocksService } from '../user-blocks/user-blocks.service';
 import type { UserReportStatus } from '../user-blocks/user-report.entity';
+import { AdminAuditService } from '../admin-audit/admin-audit.service';
 
 @Controller('admin')
 export class AdminController {
@@ -13,7 +14,19 @@ export class AdminController {
     private readonly categoriesService: CategoriesService,
     private readonly providersService: ProvidersService,
     private readonly userBlocksService: UserBlocksService,
+    private readonly adminAuditService: AdminAuditService,
   ) {}
+
+  @Get('audit-log')
+  async getAuditLog(
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    return this.adminAuditService.findRecent(
+      limit ? Number(limit) : 100,
+      offset ? Number(offset) : 0,
+    );
+  }
 
   @Get('stats')
   getStats() {
@@ -31,14 +44,16 @@ export class AdminController {
   }
 
   @Patch('jobs/:id/featured')
-  setJobFeatured(
+  async setJobFeatured(
     @Param('id') id: string,
     @Body() body: { featuredOrder: number | null },
   ) {
-    return this.adminService.setJobFeaturedOrder(
+    const result = await this.adminService.setJobFeaturedOrder(
       id,
       body.featuredOrder ?? null,
     );
+    await this.adminAuditService.logAction('system', 'job.featured', 'job', id, body as unknown as Record<string, unknown>);
+    return result;
   }
 
   @Get('users')
@@ -47,11 +62,13 @@ export class AdminController {
   }
 
   @Patch('users/:id/verify')
-  verifyUser(
+  async verifyUser(
     @Param('id') id: string,
     @Body() body: { identityVerified: boolean },
   ) {
-    return this.adminService.verifyUser(id, body.identityVerified);
+    const result = await this.adminService.verifyUser(id, body.identityVerified);
+    await this.adminAuditService.logAction('system', 'user.verify', 'user', id, body as unknown as Record<string, unknown>);
+    return result;
   }
 
   @Get('service-requests')
@@ -60,14 +77,16 @@ export class AdminController {
   }
 
   @Patch('service-requests/:id/featured')
-  setServiceRequestFeatured(
+  async setServiceRequestFeatured(
     @Param('id') id: string,
     @Body() body: { featuredOrder: number | null },
   ) {
-    return this.adminService.setServiceRequestFeaturedOrder(
+    const result = await this.adminService.setServiceRequestFeaturedOrder(
       id,
       body.featuredOrder ?? null,
     );
+    await this.adminAuditService.logAction('system', 'service_request.featured', 'service_request', id, body as unknown as Record<string, unknown>);
+    return result;
   }
 
   @Get('categories')
@@ -95,11 +114,13 @@ export class AdminController {
   }
 
   @Patch('providers/:id/featured')
-  setProviderFeatured(
+  async setProviderFeatured(
     @Param('id') id: string,
     @Body() body: { featuredOrder: number | null },
   ) {
-    return this.providersService.setFeaturedOrder(id, body.featuredOrder ?? null);
+    const result = await this.providersService.setFeaturedOrder(id, body.featuredOrder ?? null);
+    await this.adminAuditService.logAction('system', 'provider.featured', 'provider', id, body as unknown as Record<string, unknown>);
+    return result;
   }
 
   /** Set Airtasker-style manual badges on a tasker (user-level). */
@@ -167,14 +188,16 @@ export class AdminController {
   }
 
   @Patch('reports/:id')
-  updateReport(
+  async updateReport(
     @Param('id') id: string,
     @Body() body: { status: UserReportStatus; adminNote?: string },
   ) {
-    return this.userBlocksService.updateReportStatus(
+    const result = await this.userBlocksService.updateReportStatus(
       id,
       body.status,
       body.adminNote,
     );
+    await this.adminAuditService.logAction('system', 'report.update', 'report', id, body as unknown as Record<string, unknown>);
+    return result;
   }
 }

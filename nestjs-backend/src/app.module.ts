@@ -62,6 +62,8 @@ import { UserReport } from './modules/user-blocks/user-report.entity';
 import { UserBlocksModule } from './modules/user-blocks/user-blocks.module';
 import { PasswordResetToken } from './modules/auth/password-reset-token.entity';
 import { EmailVerificationToken } from './modules/auth/email-verification-token.entity';
+import { AdminAuditLog } from './modules/admin-audit/admin-audit-log.entity';
+import { AdminAuditModule } from './modules/admin-audit/admin-audit.module';
 
 @Module({
   imports: [
@@ -108,6 +110,7 @@ import { EmailVerificationToken } from './modules/auth/email-verification-token.
           UserReport,
           PasswordResetToken,
           EmailVerificationToken,
+          AdminAuditLog,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -143,6 +146,7 @@ import { EmailVerificationToken } from './modules/auth/email-verification-token.
       },
       inject: [ConfigService],
     }),
+    AdminAuditModule,
     AuthModule,
     UsersModule,
     JobsModule,
