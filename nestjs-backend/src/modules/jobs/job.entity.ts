@@ -10,11 +10,38 @@ import {
 import { User } from '../users/user.entity';
 import { Category } from '../categories/category.entity';
 
+/**
+ * Airtasker-style ilan yaşam döngüsü.
+ * Akış:
+ *   open → in_progress → pending_completion → completed
+ *                     ↘ disputed (her iki taraf yükseltebilir)
+ *                     ↘ cancelled (open/in_progress'tan iptal)
+ *
+ * `open` semantik olarak Airtasker'ın "posted", `in_progress` "assigned"
+ * karşılığı — DB değerleri geriye dönük uyumluluk için aynı kalıyor.
+ */
 export enum JobStatus {
-  OPEN = 'open',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
+  OPEN = 'open',                              // ilan yayında, teklif kabul ediyor (Airtasker: posted)
+  IN_PROGRESS = 'in_progress',                // teklif kabul edildi, iş başladı (Airtasker: assigned)
+  PENDING_COMPLETION = 'pending_completion',  // usta "bitirdim" dedi, müşteri onayı bekliyor
+  COMPLETED = 'completed',                    // müşteri onayladı
+  CANCELLED = 'cancelled',                    // iptal
+  DISPUTED = 'disputed',                      // çatışma — admin müdahalesi
+}
+
+/** Bir durumdan diğerine geçişlere izin var mı? */
+export const ALLOWED_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
+  [JobStatus.OPEN]:               [JobStatus.IN_PROGRESS, JobStatus.CANCELLED],
+  [JobStatus.IN_PROGRESS]:        [JobStatus.PENDING_COMPLETION, JobStatus.CANCELLED, JobStatus.DISPUTED],
+  [JobStatus.PENDING_COMPLETION]: [JobStatus.COMPLETED, JobStatus.IN_PROGRESS, JobStatus.DISPUTED],
+  [JobStatus.COMPLETED]:          [JobStatus.DISPUTED], // post-completion uyuşmazlık
+  [JobStatus.CANCELLED]:          [],
+  [JobStatus.DISPUTED]:           [JobStatus.COMPLETED, JobStatus.CANCELLED], // admin çözüm
+};
+
+export function isValidTransition(from: JobStatus, to: JobStatus): boolean {
+  if (from === to) return true; // no-op izin
+  return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
 @Entity('jobs')

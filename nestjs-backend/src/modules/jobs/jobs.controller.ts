@@ -169,6 +169,38 @@ export class JobsController {
     return this.jobsService.remove(id, req.user.id);
   }
 
+  // ─── Airtasker-style Lifecycle Geçişleri ──────────────────────────────────
+
+  /** Atanan usta "iş bitti" der — pending_completion'a geçer. */
+  @UseGuards(AuthGuard('jwt'))
+  @Patch(':id/submit-completion')
+  submitCompletion(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.jobsService.submitCompletion(id, req.user.id);
+  }
+
+  /** Müşteri "tamamlandı" onayı verir — completed'a geçer + istatistik günceller. */
+  @UseGuards(AuthGuard('jwt'))
+  @Patch(':id/approve-completion')
+  approveCompletion(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.jobsService.approveCompletion(id, req.user.id);
+  }
+
+  /** Müşteri veya atanan usta uyuşmazlık başlatır — disputed'a geçer. */
+  @UseGuards(AuthGuard('jwt'))
+  @Patch(':id/dispute')
+  raiseDispute(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.jobsService.raiseDispute(id, req.user.id);
+  }
+
   // ─── İş Tamamlama ve QR Entegrasyonu ──────────────────────────────────────
 
   @UseGuards(AuthGuard('jwt'))

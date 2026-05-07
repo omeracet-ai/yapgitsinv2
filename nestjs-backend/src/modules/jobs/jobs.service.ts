@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import * as crypto from 'crypto';
-import { Job, JobStatus } from './job.entity';
+import { Job, JobStatus, isValidTransition } from './job.entity';
 import { Offer, OfferStatus } from './offer.entity';
 import { UsersService } from '../users/users.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
@@ -166,6 +166,16 @@ export class JobsService {
       throw new ForbiddenException('Bu ilanı düzenleme yetkiniz yok.');
     }
     const prevStatus = job.status;
+
+    // Lifecycle disiplin: durum değişiyorsa ALLOWED_TRANSITIONS denetle
+    if (updateJobDto.status && updateJobDto.status !== prevStatus) {
+      if (!isValidTransition(prevStatus, updateJobDto.status)) {
+        throw new ForbiddenException(
+          `Geçersiz durum geçişi: ${prevStatus} → ${updateJobDto.status}`,
+        );
+      }
+    }
+
     Object.assign(job, updateJobDto);
     const saved = await this.jobsRepository.save(job);
 
@@ -179,6 +189,69 @@ export class JobsService {
     }
 
     return saved;
+  }
+
+  /** Usta "iş bitti" der → pending_completion. Ancak teklif sahibi olabilir. */
+  async submitCompletion(jobId: string, taskerId: string): Promise<Job> {
+    const job = await this.jobsRepository.findOne({ where: { id: jobId } });
+    if (!job) throw new NotFoundException(`İlan bulunamadı: #${jobId}`);
+
+    // Sadece ilanın kabul edilmiş teklif sahibi (atanan usta) bunu yapabilir
+    const acceptedOffer = await this.offersRepository.findOne({
+      where: { jobId, status: OfferStatus.ACCEPTED },
+    });
+    if (!acceptedOffer || acceptedOffer.userId !== taskerId) {
+      throw new ForbiddenException('Bu ilana atanan usta değilsiniz.');
+    }
+    if (!isValidTransition(job.status, JobStatus.PENDING_COMPLETION)) {
+      throw new ForbiddenException(
+        `Geçersiz geçiş: ${job.status} → pending_completion`,
+      );
+    }
+    job.status = JobStatus.PENDING_COMPLETION;
+    return this.jobsRepository.save(job);
+  }
+
+  /** Müşteri "tamamlandı" onayı → completed (istatistik & itibar günceller). */
+  async approveCompletion(jobId: string, customerId: string): Promise<Job> {
+    const job = await this.jobsRepository.findOne({ where: { id: jobId } });
+    if (!job) throw new NotFoundException(`İlan bulunamadı: #${jobId}`);
+    if (job.customerId !== customerId) {
+      throw new ForbiddenException('Bu ilanın sahibi değilsiniz.');
+    }
+    if (!isValidTransition(job.status, JobStatus.COMPLETED)) {
+      throw new ForbiddenException(
+        `Geçersiz geçiş: ${job.status} → completed (ilan ${job.status})`,
+      );
+    }
+    const prev = job.status;
+    job.status = JobStatus.COMPLETED;
+    const saved = await this.jobsRepository.save(job);
+    await this._trackStatusChange(saved.id, saved.customerId, prev, saved.status);
+    return saved;
+  }
+
+  /** Taraflardan biri ilanı uyuşmazlık olarak işaretler → disputed. */
+  async raiseDispute(jobId: string, requesterId: string): Promise<Job> {
+    const job = await this.jobsRepository.findOne({ where: { id: jobId } });
+    if (!job) throw new NotFoundException(`İlan bulunamadı: #${jobId}`);
+
+    // Müşteri veya atanan usta olmalı
+    const acceptedOffer = await this.offersRepository.findOne({
+      where: { jobId, status: OfferStatus.ACCEPTED },
+    });
+    const isCustomer = job.customerId === requesterId;
+    const isTasker = acceptedOffer?.userId === requesterId;
+    if (!isCustomer && !isTasker) {
+      throw new ForbiddenException('Sadece taraflar uyuşmazlık açabilir.');
+    }
+    if (!isValidTransition(job.status, JobStatus.DISPUTED)) {
+      throw new ForbiddenException(
+        `Bu durumdan uyuşmazlık açılamaz: ${job.status}`,
+      );
+    }
+    job.status = JobStatus.DISPUTED;
+    return this.jobsRepository.save(job);
   }
 
   private async _trackStatusChange(
