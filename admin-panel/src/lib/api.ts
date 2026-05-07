@@ -129,6 +129,10 @@ export const api = {
   updateReport: (id: string, dto: { status: string; adminNote?: string }) =>
     request<UserReport>(`/admin/reports/${id}`, { method: 'PATCH', body: JSON.stringify(dto) }),
 
+  // Audit log
+  auditLog: (limit = 50, offset = 0) =>
+    request<AuditLog[]>(`/admin/audit-log?limit=${limit}&offset=${offset}`),
+
   // Promo codes
   promoCodes:       ()                                  => request<PromoCode[]>('/admin/promo-codes'),
   createPromoCode:  (data: Partial<PromoCode>)          => request<PromoCode>('/admin/promo-codes',         { method: 'POST',   body: JSON.stringify(data) }),
@@ -137,6 +141,16 @@ export const api = {
 };
 
 // ── Tip tanımları ────────────────────────────────────────────────────────────
+
+export interface AuditLog {
+  id: string;
+  adminUserId: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  payload: unknown;
+  createdAt: string;
+}
 
 export interface AdminUser {
   id: string;
