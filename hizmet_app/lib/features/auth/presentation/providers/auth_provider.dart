@@ -33,13 +33,33 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> login(String emailOrPhone, String password) async {
+  /// Returns map containing either {'requires2FA': true, 'tempToken': ...}
+  /// or sets AuthAuthenticated and returns the response.
+  Future<Map<String, dynamic>> login(String emailOrPhone, String password) async {
     state = AuthLoading();
     try {
       final data = await _repository.login(emailOrPhone, password);
+      if (data['requires2FA'] == true) {
+        // 2FA gerekli — state'i unauthenticated yap ki listener tetiklenmesin
+        state = AuthUnauthenticated();
+        return data;
+      }
       state = AuthAuthenticated(data['user'] as Map<String, dynamic>? ?? {'fullName': emailOrPhone});
+      return data;
     } catch (e) {
       state = AuthError(e.toString());
+      return {};
+    }
+  }
+
+  Future<void> verify2FALogin(String tempToken, String code) async {
+    state = AuthLoading();
+    try {
+      final data = await _repository.verify2FALogin(tempToken, code);
+      state = AuthAuthenticated(data['user'] as Map<String, dynamic>? ?? {'fullName': 'Kullanıcı'});
+    } catch (e) {
+      state = AuthError(e.toString());
+      rethrow;
     }
   }
 

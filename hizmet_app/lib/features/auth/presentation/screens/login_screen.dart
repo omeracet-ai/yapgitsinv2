@@ -57,7 +57,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
       return;
     }
-    await ref.read(authStateProvider.notifier).login(email, password);
+    final result = await ref.read(authStateProvider.notifier).login(email, password);
+    if (!mounted) return;
+    if (result['requires2FA'] == true && result['tempToken'] != null) {
+      context.push('/2fa-challenge', extra: {
+        'tempToken': result['tempToken'] as String,
+        'returnTo': widget.returnTo,
+      });
+    }
   }
 
   @override

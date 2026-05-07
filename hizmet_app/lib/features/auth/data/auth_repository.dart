@@ -23,14 +23,75 @@ class AuthRepository {
         'password': password,
       });
       if (response.statusCode == 200 || response.statusCode == 201) {
+        // 2FA gerekiyorsa token kaydetme — challenge ekranına yönlendirilecek
+        if (response.data['requires2FA'] == true) {
+          return Map<String, dynamic>.from(response.data);
+        }
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('jwt_token', response.data['access_token']);
         if (response.data['user'] != null) {
           await prefs.setString('user_data', jsonEncode(response.data['user']));
         }
-        return response.data;
+        return Map<String, dynamic>.from(response.data);
       }
       throw Exception('Giriş başarısız');
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Bağlantı hatası');
+    }
+  }
+
+  Future<Map<String, dynamic>> verify2FALogin(String tempToken, String code) async {
+    try {
+      final response = await _dio.post('/auth/2fa/login-verify', data: {
+        'tempToken': tempToken,
+        'code': code,
+      });
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('jwt_token', response.data['access_token']);
+        if (response.data['user'] != null) {
+          await prefs.setString('user_data', jsonEncode(response.data['user']));
+        }
+        return Map<String, dynamic>.from(response.data);
+      }
+      throw Exception('Doğrulama başarısız');
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Bağlantı hatası');
+    }
+  }
+
+  Future<Options> _authOptions() async {
+    final token = await getToken();
+    return Options(headers: {'Authorization': 'Bearer $token'});
+  }
+
+  Future<Map<String, dynamic>> setup2FA() async {
+    try {
+      final opts = await _authOptions();
+      final response = await _dio.post('/auth/2fa/setup', options: opts);
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Bağlantı hatası');
+    }
+  }
+
+  Future<Map<String, dynamic>> enable2FA(String code) async {
+    try {
+      final opts = await _authOptions();
+      final response = await _dio.post('/auth/2fa/enable',
+          data: {'code': code}, options: opts);
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Bağlantı hatası');
+    }
+  }
+
+  Future<Map<String, dynamic>> disable2FA(String code) async {
+    try {
+      final opts = await _authOptions();
+      final response = await _dio.post('/auth/2fa/disable',
+          data: {'code': code}, options: opts);
+      return Map<String, dynamic>.from(response.data);
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Bağlantı hatası');
     }

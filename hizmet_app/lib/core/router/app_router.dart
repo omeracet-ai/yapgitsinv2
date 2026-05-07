@@ -8,6 +8,8 @@ import '../../../features/jobs/presentation/screens/post_job_screen.dart';
 import '../../../features/tokens/presentation/screens/token_screen.dart';
 import '../../../features/ai/presentation/screens/support_agent_screen.dart';
 import '../../../features/auth/presentation/screens/public_profile_screen.dart';
+import '../../../features/auth/presentation/screens/two_factor_challenge_screen.dart';
+import '../../../features/auth/presentation/screens/two_factor_setup_screen.dart';
 import '../../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../../features/job_templates/presentation/job_templates_screen.dart';
 import '../../../features/statements/presentation/statement_screen.dart';
@@ -55,6 +57,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/kayit-ol',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/2fa-challenge',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return TwoFactorChallengeScreen(
+            tempToken: (extra?['tempToken'] ?? '') as String,
+            returnTo: extra?['returnTo'] as String?,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/2fa-setup',
+        builder: (context, state) => const TwoFactorSetupScreen(),
       ),
       GoRoute(
         path: '/ilan-ver',

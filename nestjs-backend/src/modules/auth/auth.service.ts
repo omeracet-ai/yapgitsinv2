@@ -8,12 +8,14 @@ import { JwtService } from '@nestjs/jwt';
 import { UserRole } from '../users/user.entity';
 import * as bcrypt from 'bcrypt';
 import { AuthUser } from '../../common/types/auth.types';
+import { TwoFactorService } from './two-factor.service';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private twoFactorService: TwoFactorService,
   ) {}
 
   async onModuleInit() {
@@ -50,10 +52,40 @@ export class AuthService implements OnModuleInit {
   }
 
   login(user: AuthUser) {
+    if ((user as AuthUser & { twoFactorEnabled?: boolean }).twoFactorEnabled) {
+      const tempToken = this.jwtService.sign(
+        { sub: user.id, purpose: 'twofa' },
+        { expiresIn: '5m' },
+      );
+      return { requires2FA: true, tempToken };
+    }
     const payload = { email: user.email, sub: user.id, role: user.role };
     return {
       access_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
       user,
+    };
+  }
+
+  async loginVerify2fa(tempToken: string, code: string) {
+    let payload: { sub: string; purpose: string };
+    try {
+      payload = this.jwtService.verify(tempToken);
+    } catch {
+      throw new UnauthorizedException('Geçersiz veya süresi dolmuş token');
+    }
+    if (payload.purpose !== 'twofa') {
+      throw new UnauthorizedException('Geçersiz token amacı');
+    }
+    const ok = await this.twoFactorService.verify(payload.sub, code);
+    if (!ok) throw new UnauthorizedException('Kod yanlış');
+
+    const user = await this.usersService.findById(payload.sub);
+    if (!user) throw new UnauthorizedException('Kullanıcı bulunamadı');
+    const { passwordHash: _h, ...result } = user;
+    const tokenPayload = { email: result.email, sub: result.id, role: result.role };
+    return {
+      access_token: this.jwtService.sign(tokenPayload, { expiresIn: '30d' }),
+      user: result,
     };
   }
 

@@ -157,6 +157,12 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   lastLocationAt: string | null;
 
+  @Column({ type: 'boolean', default: false })
+  twoFactorEnabled: boolean;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  twoFactorSecret: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

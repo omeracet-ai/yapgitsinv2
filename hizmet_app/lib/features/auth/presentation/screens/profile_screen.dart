@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../wallet/presentation/screens/wallet_screen.dart';
 import '../../../tokens/data/token_repository.dart';
 import '../providers/auth_provider.dart';
+import '../../data/auth_repository.dart';
 import 'personal_info_screen.dart';
 import 'addresses_screen.dart';
 import 'help_screen.dart';
@@ -721,6 +722,7 @@ class ProfileScreen extends ConsumerWidget {
               const SnackBar(content: Text('Ödeme yönetimi yakında eklenecek.')),
             );
           }),
+          _build2FAMenuItem(context, ref),
           _menuItem(Icons.help_outline, 'Yardım & Destek', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const HelpScreen()));
@@ -732,6 +734,106 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Widget _build2FAMenuItem(BuildContext context, WidgetRef ref) {
+    final auth = ref.watch(authStateProvider);
+    final user = auth is AuthAuthenticated ? auth.user : <String, dynamic>{};
+    final enabled = user['twoFactorEnabled'] == true;
+
+    return ListTile(
+      leading: Icon(
+        enabled ? Icons.verified_user : Icons.security_outlined,
+        color: enabled ? Colors.green : AppColors.textPrimary,
+        size: 22,
+      ),
+      title: const Text('İki Adımlı Doğrulama',
+          style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w500)),
+      subtitle: Text(
+        enabled ? 'Açık' : 'Kapalı',
+        style: TextStyle(
+            fontSize: 12,
+            color: enabled ? Colors.green : AppColors.textHint,
+            fontWeight: FontWeight.w600),
+      ),
+      trailing:
+          const Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
+      onTap: () async {
+        if (!enabled) {
+          final result = await context.push<bool>('/2fa-setup');
+          if (result == true) {
+            ref.read(authStateProvider.notifier)
+                .updateUserData({'twoFactorEnabled': true});
+          }
+        } else {
+          await _confirmDisable(context, ref);
+        }
+      },
+    );
+  }
+
+  Future<void> _confirmDisable(BuildContext context, WidgetRef ref) async {
+    final codeController = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('2FA Devre Dışı Bırak'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+                'Devre dışı bırakmak için authenticator uygulamanızdaki kodu girin:'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: codeController,
+              autofocus: true,
+              maxLength: 6,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontFamily: 'monospace', fontSize: 20, letterSpacing: 6),
+              decoration: const InputDecoration(
+                  counterText: '', hintText: '······'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('İptal')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Devre Dışı Bırak',
+                  style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+    final code = codeController.text.trim();
+    if (code.length != 6) return;
+
+    try {
+      await ref.read(authRepositoryProvider).disable2FA(code);
+      ref.read(authStateProvider.notifier)
+          .updateUserData({'twoFactorEnabled': false});
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('2FA devre dışı bırakıldı'),
+              backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Widget _menuItem(IconData icon, String title, VoidCallback onTap,

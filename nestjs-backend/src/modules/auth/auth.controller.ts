@@ -1,9 +1,22 @@
-import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UnauthorizedException,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
+import { TwoFactorService } from './two-factor.service';
+import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private twoFactorService: TwoFactorService,
+  ) {}
 
   /** Kullanıcı / işçi girişi */
   @Post('login')
@@ -36,5 +49,29 @@ export class AuthController {
     },
   ) {
     return this.authService.register(body);
+  }
+
+  // ── 2FA ────────────────────────────────────────────────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Post('2fa/setup')
+  setup2fa(@Req() req: AuthenticatedRequest) {
+    return this.twoFactorService.setup(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('2fa/enable')
+  enable2fa(@Req() req: AuthenticatedRequest, @Body() body: { code: string }) {
+    return this.twoFactorService.enable(req.user.id, body.code);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('2fa/disable')
+  disable2fa(@Req() req: AuthenticatedRequest, @Body() body: { code: string }) {
+    return this.twoFactorService.disable(req.user.id, body.code);
+  }
+
+  @Post('2fa/login-verify')
+  loginVerify2fa(@Body() body: { tempToken: string; code: string }) {
+    return this.authService.loginVerify2fa(body.tempToken, body.code);
   }
 }
