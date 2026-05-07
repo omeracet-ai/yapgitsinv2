@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Standalone build for IIS+iisnode hosting (server.js entry, minimal node_modules)
+  output: 'standalone',
+  // Mounted under /admin on yapgitsin.tr
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH ?? (process.env.NODE_ENV === 'production' ? '/admin' : ''),
+  assetPrefix: process.env.NEXT_PUBLIC_BASE_PATH ?? (process.env.NODE_ENV === 'production' ? '/admin' : ''),
 };
 
 export default nextConfig;
