@@ -125,6 +125,22 @@ export class User {
   @Column({ type: 'boolean', default: false })
   isAvailable: boolean;
 
+  // ── Airtasker-style rozetler ─────────────────────────────────────────────
+  // Admin'in atadığı manuel rozetler:
+  //   insurance       → İş sigortalı
+  //   premium         → Premium üye (ücretli plan)
+  //   partner         → Yapgitsin onaylı partner
+  //   verified_business → Şirket ünvanı doğrulanmış
+  // Türetilen rozetler (top_rated, reliable, rookie, power_tasker)
+  // istatistiklerden anlık hesaplanır — bu listeye eklenmez.
+  @Column({ type: 'simple-json', nullable: true })
+  badges: string[] | null;
+
+  // Ortalama yanıt süresi (dk) — fast_responder rozeti için.
+  // Mesaj/teklif zaman damgalarından hesaplanabilir; null = yeterli veri yok.
+  @Column({ type: 'integer', nullable: true })
+  responseTimeMinutes: number | null;
+
   @Column({ type: 'float', nullable: true })
   latitude: number | null;
 

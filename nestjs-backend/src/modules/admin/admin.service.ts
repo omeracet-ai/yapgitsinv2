@@ -132,6 +132,12 @@ export class AdminService {
         'role',
         'city',
         'workerCategories',
+        'badges',
+        'averageRating',
+        'totalReviews',
+        'asWorkerTotal',
+        'asWorkerSuccess',
+        'responseTimeMinutes',
         'createdAt',
       ],
     });
@@ -158,5 +164,16 @@ export class AdminService {
 
   async verifyUser(id: string, identityVerified: boolean) {
     return this.usersRepo.update(id, { identityVerified });
+  }
+
+  /**
+   * Set Airtasker-style manual badges (insurance/premium/partner/verified_business).
+   * Computed badges (top_rated, reliable, etc.) are derived at read-time and not stored.
+   */
+  async setUserBadges(id: string, badges: string[]) {
+    const allowed = ['insurance', 'premium', 'partner', 'verified_business'];
+    const filtered = (badges ?? []).filter((b) => allowed.includes(b));
+    await this.usersRepo.update(id, { badges: filtered });
+    return { id, badges: filtered };
   }
 }

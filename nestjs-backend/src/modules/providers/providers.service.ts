@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from "typeorm";
 import { Provider } from './provider.entity';
 import { User } from '../users/user.entity';
+import { computeBadges } from '../users/badges.util';
 
 /**
  * Airtasker-style "tasker" model: a tasker IS a user with workerCategories set.
@@ -52,6 +53,8 @@ export class ProvidersService {
           workerCategories: u.workerCategories ?? [],
           asWorkerSuccess: u.asWorkerSuccess ?? 0,
           asWorkerTotal: u.asWorkerTotal ?? 0,
+          // Airtasker-style rozetler (manuel + computed)
+          badges: computeBadges(u),
           // Surface user info for admin display
           user: {
             id: u.id,

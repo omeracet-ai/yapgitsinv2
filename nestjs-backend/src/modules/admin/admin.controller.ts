@@ -93,4 +93,13 @@ export class AdminController {
   ) {
     return this.providersService.setFeaturedOrder(id, body.featuredOrder ?? null);
   }
+
+  /** Set Airtasker-style manual badges on a tasker (user-level). */
+  @Patch('users/:id/badges')
+  setUserBadges(
+    @Param('id') id: string,
+    @Body() body: { badges: string[] },
+  ) {
+    return this.adminService.setUserBadges(id, body.badges);
+  }
 }

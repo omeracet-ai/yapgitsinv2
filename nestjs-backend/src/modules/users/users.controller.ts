@@ -12,6 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
+import { computeBadges } from './badges.util';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
 import { Offer, OfferStatus } from '../jobs/offer.entity';
@@ -145,11 +146,21 @@ export class UsersController {
     const { passwordHash: _ph, ...safe } = user as {
       passwordHash?: string;
     } & typeof user;
+    // Airtasker-style badges (manuel + computed) — public profile için
+    const enrichedUser = {
+      ...user,
+      averageRating: avgRating,
+      totalReviews: reviews.length,
+      reputationScore: reputation,
+    } as typeof user;
+    const badges = computeBadges(enrichedUser);
+
     return {
       ...safe,
       averageRating: avgRating,
       totalReviews: reviews.length,
       reputationScore: reputation,
+      badges,
       reviews: reviews.map((r) => ({
         id: r.id,
         rating: r.rating,
