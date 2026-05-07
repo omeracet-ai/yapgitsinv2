@@ -2,7 +2,10 @@
 // Usage: node test-mysql.js [host-override]
 //   e.g. node test-mysql.js ftp.yapgitsin.tr   (remote test from dev machine)
 //        node test-mysql.js                    (uses DB_HOST from .env.production)
-require('dotenv').config({ path: '.env.production' });
+const path = require('path');
+const dotenv = require('dotenv');
+dotenv.config({ path: path.join(__dirname, '.env.production') });
+dotenv.config({ path: path.join(__dirname, '.env.production.local'), override: true });
 const mysql = require('mysql2/promise');
 
 (async () => {

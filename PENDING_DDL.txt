@@ -8,6 +8,50 @@ Tüm script'ler **idempotent** — tekrar çalıştırılırsa skip eder, zarar 
 
 ---
 
+## Phase 22 — 2FA TOTP (commit 49c7c882)
+
+cd nestjs-backend
+node add-2fa-columns.js
+
+Beklenen log:
+- [ok] users.twoFactorEnabled added/skipped
+- [ok] users.twoFactorSecret added/skipped
+
+Etki:
+- /auth/2fa/setup ve /auth/2fa/verify endpoint'leri çalışır hale gelir.
+- Authenticator app ile iki adımlı doğrulama aktif olur.
+
+---
+
+## Phase 23 — User Block & Report (commit c6332cf2)
+
+cd nestjs-backend
+node add-user-blocks-tables.js
+
+Beklenen log:
+- [ok] user_blocks created/skipped
+- [ok] user_reports created/skipped
+
+Etki:
+- /users/:id/block ve /users/:id/report endpoint'leri çalışır hale gelir.
+- Peer-level engelleme ve şikayet akışı aktif olur.
+
+---
+
+## Phase 24 — Password Reset (commit 9c9da5ec)
+
+cd nestjs-backend
+node add-password-reset-table.js
+
+Beklenen log:
+- [ok] password_reset_tokens created/skipped
+
+Etki:
+- /auth/forgot-password ve /auth/reset-password endpoint'leri çalışır hale gelir.
+- Hash'lenmiş token tabanlı şifre sıfırlama akışı aktif olur.
+
+---
+
 ## Phase 25 — Email Verification (commit b60a052a)
 
 cd nestjs-backend
