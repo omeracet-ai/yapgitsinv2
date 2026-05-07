@@ -39,6 +39,8 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { FavoriteProvider } from './modules/favorites/favorite-provider.entity';
 import { SavedJobSearch } from './modules/favorites/saved-job-search.entity';
 import { FavoritesModule } from './modules/favorites/favorites.module';
+import { PaymentEscrow } from './modules/escrow/payment-escrow.entity';
+import { EscrowModule } from './modules/escrow/escrow.module';
 
 @Module({
   imports: [
@@ -72,6 +74,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
           OnboardingSlide,
           FavoriteProvider,
           SavedJobSearch,
+          PaymentEscrow,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -123,6 +126,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
     NotificationsModule,
     OnboardingModule,
     FavoritesModule,
+    EscrowModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],

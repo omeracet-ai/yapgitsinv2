@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Offer, OfferStatus } from './offer.entity';
@@ -7,9 +7,12 @@ import { TokensService, OFFER_TOKEN_COST } from '../tokens/tokens.service';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
+import { EscrowService } from '../escrow/escrow.service';
 
 @Injectable()
 export class OffersService {
+  private readonly logger = new Logger(OffersService.name);
+
   constructor(
     @InjectRepository(Offer)
     private offersRepository: Repository<Offer>,
@@ -18,6 +21,7 @@ export class OffersService {
     private tokensService: TokensService,
     private usersService: UsersService,
     private notificationsService: NotificationsService,
+    private escrowService: EscrowService,
   ) {}
 
   async findByJob(jobId: string): Promise<Offer[]> {
@@ -97,6 +101,29 @@ export class OffersService {
     offer.status = OfferStatus.ACCEPTED;
     const saved = await this.offersRepository.save(offer);
     await this.usersService.bumpStat(offer.userId, 'asWorkerSuccess');
+
+    // Escrow hold — bookkeeping only; never block accept on escrow failure
+    try {
+      const job = await this.jobsRepository.findOne({ where: { id: saved.jobId } });
+      if (job && job.customerId) {
+        await this.escrowService.hold({
+          jobId: saved.jobId,
+          offerId: saved.id,
+          amount: saved.price,
+          customerId: job.customerId,
+          taskerId: saved.userId,
+        });
+      } else {
+        this.logger.warn(
+          `Escrow hold skipped: job or customer missing for offer ${saved.id}`,
+        );
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Escrow hold failed for offer ${saved.id}: ${(err as Error)?.message ?? err}`,
+      );
+    }
+
     return saved;
   }
 

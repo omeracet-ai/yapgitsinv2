@@ -13,6 +13,7 @@ import { QuestionsController } from './questions.controller';
 import { UsersModule } from '../users/users.module';
 import { TokensModule } from '../tokens/tokens.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { EscrowModule } from '../escrow/escrow.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     UsersModule,
     TokensModule,
     NotificationsModule,
+    EscrowModule,
   ],
   providers: [JobsService, OffersService, QuestionsService],
   controllers: [JobsController, OffersController, OffersRootController, QuestionsController],

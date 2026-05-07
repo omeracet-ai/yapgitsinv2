@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
@@ -13,12 +14,16 @@ import { UsersService } from '../users/users.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
+import { EscrowService } from '../escrow/escrow.service';
+import { EscrowStatus } from '../escrow/payment-escrow.entity';
 
 // Geçerli UUID — SQLite ve PostgreSQL uyumlu sabit seed kimliği
 const SEED_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 @Injectable()
 export class JobsService {
+  private readonly logger = new Logger(JobsService.name);
+
   constructor(
     @InjectRepository(Job)
     private jobsRepository: Repository<Job>,
@@ -27,6 +32,7 @@ export class JobsService {
     private usersService: UsersService,
     private dataSource: DataSource,
     private notificationsService: NotificationsService,
+    private escrowService: EscrowService,
   ) {}
 
   async onModuleInit() {
@@ -264,6 +270,26 @@ export class JobsService {
     const saved = await this.jobsRepository.save(job);
     await this._trackStatusChange(saved.id, saved.customerId, prev, saved.status);
 
+    // Release escrow funds to tasker — bookkeeping only, don't break completion
+    try {
+      const escrow = await this.escrowService.getByJob(saved.id);
+      if (
+        escrow &&
+        (escrow.status === EscrowStatus.HELD ||
+          escrow.status === EscrowStatus.DISPUTED)
+      ) {
+        await this.escrowService.release(
+          escrow.id,
+          customerId,
+          'Müşteri tamamlamayı onayladı',
+        );
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Escrow release failed for job ${saved.id}: ${(err as Error)?.message ?? err}`,
+      );
+    }
+
     // Notify the assigned tasker that customer approved completion
     const acceptedOffer = await this.offersRepository.findOne({
       where: { jobId: saved.id, status: OfferStatus.ACCEPTED },
@@ -301,6 +327,22 @@ export class JobsService {
     }
     job.status = JobStatus.DISPUTED;
     const saved = await this.jobsRepository.save(job);
+
+    // Mark escrow as disputed if currently HELD — bookkeeping only
+    try {
+      const escrow = await this.escrowService.getByJob(saved.id);
+      if (escrow && escrow.status === EscrowStatus.HELD) {
+        await this.escrowService.dispute(
+          escrow.id,
+          requesterId,
+          'İlan disputed durumuna geçti',
+        );
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Escrow dispute failed for job ${saved.id}: ${(err as Error)?.message ?? err}`,
+      );
+    }
 
     // Notify the OTHER party
     const otherUserId = isCustomer
