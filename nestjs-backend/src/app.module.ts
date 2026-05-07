@@ -57,6 +57,9 @@ import { PromoModule } from './modules/promo/promo.module';
 import { JobTemplate } from './modules/job-templates/job-template.entity';
 import { JobTemplatesModule } from './modules/job-templates/job-templates.module';
 import { StatementsModule } from './modules/statements/statements.module';
+import { UserBlock } from './modules/user-blocks/user-block.entity';
+import { UserReport } from './modules/user-blocks/user-report.entity';
+import { UserBlocksModule } from './modules/user-blocks/user-blocks.module';
 
 @Module({
   imports: [
@@ -99,6 +102,8 @@ import { StatementsModule } from './modules/statements/statements.module';
           PromoCode,
           PromoRedemption,
           JobTemplate,
+          UserBlock,
+          UserReport,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -159,6 +164,7 @@ import { StatementsModule } from './modules/statements/statements.module';
     StatementsModule,
     CronModule,
     ModerationModule,
+    UserBlocksModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],

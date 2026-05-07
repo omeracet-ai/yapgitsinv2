@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/api_constants.dart';
 import 'package:dio/dio.dart';
+import '../../../users/widgets/user_action_menu.dart';
+import '../providers/auth_provider.dart';
 
 final publicProfileProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
@@ -28,17 +30,23 @@ class PublicProfileScreen extends ConsumerWidget {
         appBar: AppBar(title: const Text('Profil')),
         body: Center(child: Text(e.toString())),
       ),
-      data: (data) => _ProfileView(data: data),
+      data: (data) => _ProfileView(data: data, userId: userId),
     );
   }
 }
 
-class _ProfileView extends StatelessWidget {
+class _ProfileView extends ConsumerWidget {
   final Map<String, dynamic> data;
-  const _ProfileView({required this.data});
+  final String userId;
+  const _ProfileView({required this.data, required this.userId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+    final currentUserId = authState is AuthAuthenticated
+        ? authState.user['id'] as String?
+        : null;
+    final isSelf = currentUserId != null && currentUserId == userId;
     final name            = data['fullName']         as String? ?? 'Kullanıcı';
     final imgUrl          = data['profileImageUrl']  as String?;
     final city            = data['city']             as String? ?? '';
@@ -67,6 +75,14 @@ class _ProfileView extends StatelessWidget {
             expandedHeight: 220,
             pinned: true,
             backgroundColor: AppColors.primary,
+            actions: [
+              if (!isSelf)
+                UserActionMenu(
+                  userId: userId,
+                  userName: name,
+                  iconColor: Colors.white,
+                ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(

@@ -14,6 +14,7 @@ import { JobQuestion } from '../jobs/job-question.entity';
 import { CategoriesModule } from '../categories/categories.module';
 import { ProvidersModule } from '../providers/providers.module';
 import { PromoModule } from '../promo/promo.module';
+import { UserBlocksModule } from '../user-blocks/user-blocks.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PromoModule } from '../promo/promo.module';
     CategoriesModule,
     ProvidersModule,
     PromoModule,
+    UserBlocksModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

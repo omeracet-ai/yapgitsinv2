@@ -8,6 +8,7 @@ import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
 import { EscrowService } from '../escrow/escrow.service';
+import { UserBlocksService } from '../user-blocks/user-blocks.service';
 
 @Injectable()
 export class OffersService {
@@ -22,14 +23,24 @@ export class OffersService {
     private usersService: UsersService,
     private notificationsService: NotificationsService,
     private escrowService: EscrowService,
+    private userBlocksService: UserBlocksService,
   ) {}
 
   async findByJob(jobId: string): Promise<Offer[]> {
-    return this.offersRepository.find({
+    const offers = await this.offersRepository.find({
       where: { jobId },
       relations: ['user'],
       order: { createdAt: 'ASC' },
     });
+    if (offers.length === 0) return offers;
+    const job = await this.jobsRepository.findOne({ where: { id: jobId } });
+    if (!job?.customerId) return offers;
+    const blockedIds = await this.userBlocksService.listBlockedIds(
+      job.customerId,
+    );
+    if (blockedIds.length === 0) return offers;
+    const blockedSet = new Set(blockedIds);
+    return offers.filter((o) => !blockedSet.has(o.userId));
   }
 
   async findByUser(userId: string, page = 1, limit = 20) {

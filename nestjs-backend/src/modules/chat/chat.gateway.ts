@@ -13,6 +13,7 @@ import { Repository } from 'typeorm';
 import { Server, Socket } from 'socket.io';
 import { ChatMessage } from './chat-message.entity';
 import { ContentFilterService } from '../moderation/content-filter.service';
+import { UserBlocksService } from '../user-blocks/user-blocks.service';
 
 interface SendMessagePayload {
   from: string;
@@ -46,6 +47,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @InjectRepository(ChatMessage)
     private messagesRepo: Repository<ChatMessage>,
     private filter: ContentFilterService,
+    private userBlocksService: UserBlocksService,
   ) {}
 
   handleConnection(client: Socket) {
@@ -64,6 +66,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.debug(
       `Message event: from=${data.from} to=${data.to} jobId=${data.jobId ?? '-'} bookingId=${data.bookingId ?? '-'}`,
     );
+    if (data.from && data.to) {
+      const blocked = await this.userBlocksService.isEitherBlocked(
+        data.from,
+        data.to,
+      );
+      if (blocked) {
+        _client.emit('error', {
+          type: 'blocked',
+          message: 'Bu kullanıcıyla mesajlaşma engellendi',
+        });
+        return;
+      }
+    }
     const result = this.filter.check(data.message);
     const saved = await this.messagesRepo.save({
       from: data.from,

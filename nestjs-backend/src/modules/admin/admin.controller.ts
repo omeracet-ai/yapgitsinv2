@@ -3,6 +3,8 @@ import { AdminService } from './admin.service';
 import { CategoriesService } from '../categories/categories.service';
 import { ProvidersService } from '../providers/providers.service';
 import { Category } from '../categories/category.entity';
+import { UserBlocksService } from '../user-blocks/user-blocks.service';
+import type { UserReportStatus } from '../user-blocks/user-report.entity';
 
 @Controller('admin')
 export class AdminController {
@@ -10,6 +12,7 @@ export class AdminController {
     private readonly adminService: AdminService,
     private readonly categoriesService: CategoriesService,
     private readonly providersService: ProvidersService,
+    private readonly userBlocksService: UserBlocksService,
   ) {}
 
   @Get('stats')
@@ -155,5 +158,23 @@ export class AdminController {
   @Delete('moderation/question/:id')
   clearFlaggedQuestion(@Param('id') id: string) {
     return this.adminService.clearFlaggedQuestion(id);
+  }
+
+  // ── User Reports ───────────────────────────────────────────────────────────
+  @Get('reports')
+  getReports(@Query('status') status?: UserReportStatus) {
+    return this.userBlocksService.findReports(status);
+  }
+
+  @Patch('reports/:id')
+  updateReport(
+    @Param('id') id: string,
+    @Body() body: { status: UserReportStatus; adminNote?: string },
+  ) {
+    return this.userBlocksService.updateReportStatus(
+      id,
+      body.status,
+      body.adminNote,
+    );
   }
 }

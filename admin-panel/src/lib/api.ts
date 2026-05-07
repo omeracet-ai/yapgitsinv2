@@ -123,6 +123,12 @@ export const api = {
   deleteFlaggedChat:      (id: string)      => request<{ id: string; type: string; cleared: boolean }>(`/admin/moderation/chat/${id}`,     { method: 'DELETE' }),
   deleteFlaggedQuestion:  (id: string)      => request<{ id: string; type: string; cleared: boolean }>(`/admin/moderation/question/${id}`, { method: 'DELETE' }),
 
+  // Şikayetler
+  reports: (status?: string) =>
+    request<UserReport[]>(`/admin/reports${status && status !== 'all' ? `?status=${status}` : ''}`),
+  updateReport: (id: string, dto: { status: string; adminNote?: string }) =>
+    request<UserReport>(`/admin/reports/${id}`, { method: 'PATCH', body: JSON.stringify(dto) }),
+
   // Promo codes
   promoCodes:       ()                                  => request<PromoCode[]>('/admin/promo-codes'),
   createPromoCode:  (data: Partial<PromoCode>)          => request<PromoCode>('/admin/promo-codes',         { method: 'POST',   body: JSON.stringify(data) }),
@@ -224,6 +230,17 @@ export interface FlaggedItem {
   text: string;
   flagReason: string | null;
   userId: string;
+  createdAt: string;
+}
+
+export interface UserReport {
+  id: string;
+  reporterUserId: string;
+  reportedUserId: string;
+  reason: string;
+  description: string | null;
+  status: 'pending' | 'reviewed' | 'dismissed';
+  adminNote: string | null;
   createdAt: string;
 }
 

@@ -13,6 +13,7 @@ import '../../../photos/presentation/widgets/job_photo_picker.dart';
 import '../widgets/completion_photos_section.dart';
 import '../widgets/job_questions_tab.dart';
 import '../widgets/job_video_player.dart';
+import '../../../users/widgets/user_action_menu.dart';
 
 class JobDetailScreen extends ConsumerStatefulWidget {
   final String? id;
@@ -890,6 +891,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 14)),
                 ),
+                if (!isOfferOwner && offerUserId.isNotEmpty)
+                  SizedBox(
+                    width: 32, height: 32,
+                    child: UserActionMenu(userId: offerUserId, userName: name),
+                  ),
+                const SizedBox(width: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 3),

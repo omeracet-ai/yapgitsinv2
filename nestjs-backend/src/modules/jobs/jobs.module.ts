@@ -16,6 +16,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { EscrowModule } from '../escrow/escrow.module';
 import { CancellationModule } from '../cancellation/cancellation.module';
 import { DisputesModule } from '../disputes/disputes.module';
+import { UserBlocksModule } from '../user-blocks/user-blocks.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { DisputesModule } from '../disputes/disputes.module';
     EscrowModule,
     CancellationModule,
     DisputesModule,
+    UserBlocksModule,
   ],
   providers: [JobsService, OffersService, QuestionsService],
   controllers: [JobsController, OffersController, OffersRootController, QuestionsController],
