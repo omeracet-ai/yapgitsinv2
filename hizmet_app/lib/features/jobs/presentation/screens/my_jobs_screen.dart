@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/job_repository.dart';
@@ -91,6 +92,13 @@ class _DualRoleView extends ConsumerWidget {
                 title: const Text('İşlerim'),
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.bookmark_border),
+                    tooltip: 'Şablonlarım',
+                    onPressed: () => context.push('/sablonlarim'),
+                  ),
+                ],
                 bottom: const TabBar(
                   tabs: [
                     Tab(icon: Icon(Icons.person_outline), text: 'İlanlarım'),
@@ -303,6 +311,13 @@ class _CustomerJobsView extends ConsumerWidget {
                 title: const Text('İlanlarım'),
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.bookmark_border),
+                    tooltip: 'Şablonlarım',
+                    onPressed: () => context.push('/sablonlarim'),
+                  ),
+                ],
                 bottom: const TabBar(
                   tabs: [
                     Tab(text: 'Aktif'),

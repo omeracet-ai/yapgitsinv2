@@ -9,6 +9,7 @@ import '../../../features/tokens/presentation/screens/token_screen.dart';
 import '../../../features/ai/presentation/screens/support_agent_screen.dart';
 import '../../../features/auth/presentation/screens/public_profile_screen.dart';
 import '../../../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../../../features/job_templates/presentation/job_templates_screen.dart';
 import '../providers/navigation_provider.dart';
 import '../widgets/success_screen.dart';
 
@@ -70,6 +71,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/profil/:id',
         builder: (context, state) =>
             PublicProfileScreen(userId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/sablonlarim',
+        builder: (context, state) => const JobTemplatesScreen(),
       ),
       GoRoute(
         path: '/ilan-basarili',

@@ -10,6 +10,7 @@ import '../../../photos/data/photo_repository.dart';
 import '../../../photos/presentation/widgets/job_photo_picker.dart';
 import '../../../photos/presentation/widgets/job_video_picker.dart';
 import '../../../ai/data/ai_repository.dart';
+import '../../../job_templates/data/job_template_repository.dart';
 
 class PostJobScreen extends ConsumerStatefulWidget {
   const PostJobScreen({super.key});
@@ -24,6 +25,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   final _descController = TextEditingController();
   final _locationController = TextEditingController();
   final _budgetController = TextEditingController();
+  final _templateNameController = TextEditingController();
+  bool _saveAsTemplate = false;
 
   String? _selectedCategory;
   int _currentStep = 0;
@@ -46,6 +49,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     _descController.dispose();
     _locationController.dispose();
     _budgetController.dispose();
+    _templateNameController.dispose();
     super.dispose();
   }
 
@@ -501,6 +505,41 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           decoration:
               const InputDecoration(labelText: 'Tahmini Bütçe (₺)'),
         ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            children: [
+              CheckboxListTile(
+                value: _saveAsTemplate,
+                onChanged: (v) => setState(() => _saveAsTemplate = v ?? false),
+                title: const Text('Bu ilanı şablon olarak kaydet',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                subtitle: const Text(
+                    'Benzer ilanlar için tekrar kullan',
+                    style: TextStyle(fontSize: 12)),
+                controlAffinity: ListTileControlAffinity.leading,
+                activeColor: AppColors.primary,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              if (_saveAsTemplate)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: TextFormField(
+                    controller: _templateNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Şablon adı',
+                      hintText: 'Örn: Standart ev temizliği',
+                      isDense: true,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
         if (_uploadedPhotoUrls.isNotEmpty) ...[
           const SizedBox(height: 12),
           Container(
@@ -566,6 +605,34 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     };
 
     await ref.read(jobsProvider.notifier).addJob(jobData);
+
+    if (_saveAsTemplate) {
+      final tplName = _templateNameController.text.trim().isEmpty
+          ? _titleController.text.trim()
+          : _templateNameController.text.trim();
+      try {
+        await ref.read(jobTemplateRepositoryProvider).create({
+          'name': tplName,
+          'title': _titleController.text,
+          'description': _descController.text,
+          'category': _selectedCategory,
+          'location': _locationController.text.isEmpty
+              ? 'Belirtilmedi'
+              : _locationController.text,
+          if (double.tryParse(_budgetController.text) != null)
+            'budgetMin': double.parse(_budgetController.text),
+          'photos': const <String>[],
+        });
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                'Şablon kaydedilemedi: ${e.toString().replaceFirst('Exception: ', '')}'),
+            backgroundColor: AppColors.error,
+          ));
+        }
+      }
+    }
 
     if (mounted) {
       context.pushReplacement('/ilan-basarili');
