@@ -64,7 +64,8 @@ export class AdminController {
 
   @Get('categories')
   getCategories() {
-    return this.categoriesService.findAll();
+    // Admin pasif kategorileri de görsün — pasif sadece public listede gizlensin
+    return this.categoriesService.findAllIncludingInactive();
   }
 
   @Patch('categories/:id')

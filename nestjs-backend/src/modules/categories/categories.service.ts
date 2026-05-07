@@ -217,6 +217,13 @@ export class CategoriesService implements OnModuleInit {
     });
   }
 
+  /** Admin: tüm kategoriler (aktif + pasif) */
+  findAllIncludingInactive(): Promise<Category[]> {
+    return this.repo.find({
+      order: { sortOrder: 'ASC', createdAt: 'ASC' },
+    });
+  }
+
   async findOne(id: string): Promise<Category> {
     const cat = await this.repo.findOne({ where: { id } });
     if (!cat) throw new NotFoundException(`Kategori bulunamadı: ${id}`);

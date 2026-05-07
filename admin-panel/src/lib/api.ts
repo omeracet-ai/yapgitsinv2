@@ -64,10 +64,10 @@ export const api = {
   // Kullanıcılar
   users: () => request<User[]>('/admin/users'),
 
-  // Kategoriler
-  categories:     ()                             => request<Category[]>('/categories'),
+  // Kategoriler — admin panel pasif olanları da görmeli
+  categories:     ()                             => request<Category[]>('/admin/categories'),
   createCategory: (data: Partial<Category>)      => request<Category>('/categories',      { method: 'POST',  body: JSON.stringify(data) }),
-  updateCategory: (id: string, data: Partial<Category>) => request<Category>(`/categories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  updateCategory: (id: string, data: Partial<Category>) => request<Category>(`/admin/categories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteCategory: (id: string)                   => request<void>(`/categories/${id}`,    { method: 'DELETE' }),
 
   // Sağlayıcılar & Mavi Tik
