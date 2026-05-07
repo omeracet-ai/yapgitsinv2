@@ -43,6 +43,8 @@ import { PaymentEscrow } from './modules/escrow/payment-escrow.entity';
 import { EscrowModule } from './modules/escrow/escrow.module';
 import { CancellationPolicy } from './modules/cancellation/cancellation-policy.entity';
 import { CancellationModule } from './modules/cancellation/cancellation.module';
+import { JobDispute } from './modules/disputes/job-dispute.entity';
+import { DisputesModule } from './modules/disputes/disputes.module';
 
 @Module({
   imports: [
@@ -78,6 +80,7 @@ import { CancellationModule } from './modules/cancellation/cancellation.module';
           SavedJobSearch,
           PaymentEscrow,
           CancellationPolicy,
+          JobDispute,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -131,6 +134,7 @@ import { CancellationModule } from './modules/cancellation/cancellation.module';
     FavoritesModule,
     EscrowModule,
     CancellationModule,
+    DisputesModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],

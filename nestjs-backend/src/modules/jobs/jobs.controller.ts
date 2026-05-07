@@ -16,6 +16,7 @@ import { OffersService } from './offers.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
 import { JobStatus } from './job.entity';
 import { OfferStatus } from './offer.entity';
+import { DisputeType } from '../disputes/job-dispute.entity';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @Controller('jobs')
@@ -197,8 +198,18 @@ export class JobsController {
   raiseDispute(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
+    @Body()
+    body: {
+      disputeType: DisputeType;
+      reason: string;
+      evidenceUrls?: string[];
+    },
   ) {
-    return this.jobsService.raiseDispute(id, req.user.id);
+    return this.jobsService.raiseDispute(id, req.user.id, {
+      disputeType: body?.disputeType,
+      reason: body?.reason,
+      evidenceUrls: body?.evidenceUrls,
+    });
   }
 
   // ─── İş Tamamlama ve QR Entegrasyonu ──────────────────────────────────────

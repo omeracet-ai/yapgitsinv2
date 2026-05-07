@@ -17,6 +17,8 @@ import { NotificationType } from '../notifications/notification.entity';
 import { EscrowService } from '../escrow/escrow.service';
 import { EscrowStatus } from '../escrow/payment-escrow.entity';
 import { CancellationService } from '../cancellation/cancellation.service';
+import { DisputesService } from '../disputes/disputes.service';
+import { DisputeType } from '../disputes/job-dispute.entity';
 
 // Geçerli UUID — SQLite ve PostgreSQL uyumlu sabit seed kimliği
 const SEED_USER_ID = '00000000-0000-0000-0000-000000000001';
@@ -35,6 +37,7 @@ export class JobsService {
     private notificationsService: NotificationsService,
     private escrowService: EscrowService,
     private cancellationService: CancellationService,
+    private disputesService: DisputesService,
   ) {}
 
   async onModuleInit() {
@@ -382,7 +385,15 @@ export class JobsService {
   }
 
   /** Taraflardan biri ilanı uyuşmazlık olarak işaretler → disputed. */
-  async raiseDispute(jobId: string, requesterId: string): Promise<Job> {
+  async raiseDispute(
+    jobId: string,
+    requesterId: string,
+    payload: {
+      disputeType: DisputeType;
+      reason: string;
+      evidenceUrls?: string[];
+    },
+  ): Promise<Job> {
     const job = await this.jobsRepository.findOne({ where: { id: jobId } });
     if (!job) throw new NotFoundException(`İlan bulunamadı: #${jobId}`);
 
@@ -404,14 +415,18 @@ export class JobsService {
     const saved = await this.jobsRepository.save(job);
 
     // Mark escrow as disputed if currently HELD — bookkeeping only
+    let escrowId: string | null = null;
     try {
       const escrow = await this.escrowService.getByJob(saved.id);
-      if (escrow && escrow.status === EscrowStatus.HELD) {
-        await this.escrowService.dispute(
-          escrow.id,
-          requesterId,
-          'İlan disputed durumuna geçti',
-        );
+      if (escrow) {
+        escrowId = escrow.id;
+        if (escrow.status === EscrowStatus.HELD) {
+          await this.escrowService.dispute(
+            escrow.id,
+            requesterId,
+            'İlan disputed durumuna geçti',
+          );
+        }
       }
     } catch (err) {
       this.logger.warn(
@@ -419,13 +434,34 @@ export class JobsService {
       );
     }
 
-    // Notify the OTHER party
-    const otherUserId = isCustomer
+    // Determine counterparty
+    const counterPartyUserId = isCustomer
       ? acceptedOffer?.userId ?? null
       : job.customerId;
-    if (otherUserId) {
+
+    // Create JobDispute row
+    if (counterPartyUserId) {
+      try {
+        await this.disputesService.create({
+          jobId: saved.id,
+          raisedByUserId: requesterId,
+          counterPartyUserId,
+          escrowId,
+          disputeType: payload.disputeType,
+          reason: payload.reason,
+          evidenceUrls: payload.evidenceUrls ?? null,
+        });
+      } catch (err) {
+        this.logger.warn(
+          `JobDispute create failed for job ${saved.id}: ${(err as Error)?.message ?? err}`,
+        );
+      }
+    }
+
+    // Notify the OTHER party
+    if (counterPartyUserId) {
       await this.notificationsService.send({
-        userId: otherUserId,
+        userId: counterPartyUserId,
         type: NotificationType.DISPUTE_OPENED,
         title: 'Uyuşmazlık açıldı',
         body: `"${saved.title}" ilanı için karşı taraf uyuşmazlık açtı.`,
