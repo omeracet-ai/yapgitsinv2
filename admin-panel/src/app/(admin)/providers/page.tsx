@@ -27,6 +27,9 @@ export default function ProvidersPage() {
   const [featuring, setFeaturing] = useState<string | null>(null);
   const [badgePicker, setBadgePicker] = useState<string | null>(null);
   const [savingBadges, setSavingBadges] = useState<string | null>(null);
+  const [editingSkills, setEditingSkills] = useState<string | null>(null);
+  const [skillsDraft, setSkillsDraft] = useState<string>("");
+  const [savingSkills, setSavingSkills] = useState<string | null>(null);
   const [slotCount, setSlotCount] = useState(3);
 
   const load = async () => {
@@ -80,6 +83,40 @@ export default function ProvidersPage() {
       await load();
     } finally {
       setSavingBadges(null);
+    }
+  };
+
+  const handleSaveSkills = async (p: Provider) => {
+    if (!p.userId) return;
+    const skills = skillsDraft
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    setSavingSkills(p.id);
+    try {
+      await api.setUserSkills(p.userId, skills);
+      await load();
+      setEditingSkills(null);
+      setSkillsDraft("");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSavingSkills(null);
+    }
+  };
+
+  const handleRemoveSkill = async (p: Provider, skill: string) => {
+    if (!p.userId) return;
+    const next = (p.workerSkills ?? []).filter((s) => s !== skill);
+    setSavingSkills(p.id);
+    setProviders((prev) => prev.map((x) => (x.id === p.id ? { ...x, workerSkills: next } : x)));
+    try {
+      await api.setUserSkills(p.userId, next);
+    } catch (e) {
+      setError((e as Error).message);
+      await load();
+    } finally {
+      setSavingSkills(null);
     }
   };
 
@@ -179,13 +216,14 @@ export default function ProvidersPage() {
                 <th className="text-center px-4 py-3 font-medium text-gray-500">Belge</th>
                 <th className="text-center px-4 py-3 font-medium text-gray-500">Mavi Tik</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-500">Rozetler</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">Yetenekler</th>
                 <th className="text-center px-4 py-3 font-medium text-gray-500">Öne Çıkan</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-500">İşlemler</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {providers.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-8 text-gray-400">Henüz sağlayıcı yok.</td></tr>
+                <tr><td colSpan={8} className="text-center py-8 text-gray-400">Henüz sağlayıcı yok.</td></tr>
               )}
               {providers.map(p => (
                 <tr key={p.id} className={`hover:bg-gray-50 transition-colors ${p.featuredOrder ? "bg-amber-50/30" : ""}`}>
@@ -268,6 +306,51 @@ export default function ProvidersPage() {
                             <span className="text-xs text-gray-400">Tüm manuel rozetler atandı</span>
                           )}
                         </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    {/* Yetenekler — chip listesi + edit modu */}
+                    <div className="flex flex-wrap items-center gap-1 max-w-[260px]">
+                      {(p.workerSkills ?? []).map((s) => (
+                        <span
+                          key={s}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs border border-indigo-100"
+                        >
+                          {s}
+                          <button
+                            onClick={() => handleRemoveSkill(p, s)}
+                            disabled={savingSkills === p.id}
+                            className="opacity-50 hover:opacity-100 disabled:opacity-30"
+                            title="Kaldır"
+                          >×</button>
+                        </span>
+                      ))}
+                      {editingSkills === p.id ? (
+                        <div className="flex items-center gap-1 w-full mt-1">
+                          <input
+                            value={skillsDraft}
+                            onChange={(e) => setSkillsDraft(e.target.value)}
+                            placeholder="virgülle ayır: Su Kaçağı, Klozet…"
+                            className="flex-1 text-xs px-2 py-1 rounded border border-gray-200 focus:border-blue-400 focus:outline-none"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleSaveSkills(p)}
+                            disabled={savingSkills === p.id || !skillsDraft.trim()}
+                            className="text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                          >{savingSkills === p.id ? "…" : "Ekle"}</button>
+                          <button
+                            onClick={() => { setEditingSkills(null); setSkillsDraft(""); }}
+                            className="text-xs text-gray-400 hover:text-gray-600 px-1"
+                          >iptal</button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => { setEditingSkills(p.id); setSkillsDraft(""); }}
+                          className="text-xs text-gray-500 hover:text-blue-600 px-1.5 py-0.5 rounded border border-dashed border-gray-300 hover:border-blue-400"
+                        >+ Yetenek</button>
                       )}
                     </div>
                   </td>

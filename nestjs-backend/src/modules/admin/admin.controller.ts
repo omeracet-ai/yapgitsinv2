@@ -102,4 +102,13 @@ export class AdminController {
   ) {
     return this.adminService.setUserBadges(id, body.badges);
   }
+
+  /** Set tasker skills (granular tags beyond workerCategories). */
+  @Patch('users/:id/skills')
+  setUserSkills(
+    @Param('id') id: string,
+    @Body() body: { skills: string[] },
+  ) {
+    return this.adminService.setUserSkills(id, body.skills);
+  }
 }

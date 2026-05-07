@@ -117,6 +117,8 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
     BookingsModule,
     NotificationsModule,
     OnboardingModule,
+    // Provide User & Job repositories for AppController public stats endpoint
+    TypeOrmModule.forFeature([User, Job]),
   ],
   controllers: [AppController],
   providers: [

@@ -51,6 +51,7 @@ export class ProvidersService {
           identityVerified: u.identityVerified,
           reputationScore: u.reputationScore ?? 0,
           workerCategories: u.workerCategories ?? [],
+          workerSkills: u.workerSkills ?? [],
           asWorkerSuccess: u.asWorkerSuccess ?? 0,
           asWorkerTotal: u.asWorkerTotal ?? 0,
           // Airtasker-style rozetler (manuel + computed)

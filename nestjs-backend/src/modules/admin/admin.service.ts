@@ -132,6 +132,7 @@ export class AdminService {
         'role',
         'city',
         'workerCategories',
+        'workerSkills',
         'badges',
         'averageRating',
         'totalReviews',
@@ -175,5 +176,21 @@ export class AdminService {
     const filtered = (badges ?? []).filter((b) => allowed.includes(b));
     await this.usersRepo.update(id, { badges: filtered });
     return { id, badges: filtered };
+  }
+
+  /**
+   * Set tasker skills (free-form granular tags). Trims, dedupes, drops empties,
+   * caps to 20 to keep the JSON column small.
+   */
+  async setUserSkills(id: string, skills: string[]) {
+    const cleaned = Array.from(
+      new Set(
+        (skills ?? [])
+          .map((s) => (typeof s === 'string' ? s.trim() : ''))
+          .filter((s) => s.length > 0 && s.length <= 50),
+      ),
+    ).slice(0, 20);
+    await this.usersRepo.update(id, { workerSkills: cleaned });
+    return { id, workerSkills: cleaned };
   }
 }

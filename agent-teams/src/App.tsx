@@ -13,6 +13,39 @@ import {
 import { EkipAgent, DeveloperAgent, MuduriyeManager } from './components/Agents';
 import { MonitorEkrani, Klavye, Pencere } from './components/OfficeProps';
 
+// API base — iframe içindeyse parent origin'i kullan, yoksa env veya prod default
+const API_BASE = (() => {
+  const env = (import.meta as any).env?.VITE_API_URL as string | undefined;
+  if (env) return env;
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host.endsWith('yapgitsin.tr')) return `${window.location.protocol}//${host}/backend/main.js`;
+  }
+  return 'http://localhost:3001';
+})();
+
+// Web Audio API ile basit "ping" sesi — ekstra dosya yüklemeye gerek yok
+function playPingSound() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const o1 = ctx.createOscillator();
+    const o2 = ctx.createOscillator();
+    const g = ctx.createGain();
+    o1.frequency.value = 880; // A5
+    o2.frequency.value = 1320; // E6
+    o1.type = 'sine';
+    o2.type = 'sine';
+    o1.connect(g); o2.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
+    o1.start(); o2.start();
+    o1.stop(ctx.currentTime + 0.6);
+    o2.stop(ctx.currentTime + 0.6);
+    setTimeout(() => ctx.close(), 800);
+  } catch {/* ignore — bazı tarayıcılar user-gesture öncesi izin vermez */}
+}
+
 function App() {
   const [mesaj, setMesaj] = useState({ icon: '🫡', text: 'Selam Patron! Son görevleri bitiriyorum!' });
   const [popupGorunur, setPopupGorunur] = useState(true);
@@ -27,7 +60,51 @@ function App() {
   const [gorevler, setGorevler] = useState<Gorev[]>(baslangicGorevleri);
   const [tumGorevlerBitti, setTumGorevlerBitti] = useState(false);
   const [, setCompletionPhase] = useState(0);
+  const [joyLevel, setJoyLevel] = useState(0);
+  const [yeniUyeSayisi, setYeniUyeSayisi] = useState(0);
+  const lastUserCountRef = useRef<number | null>(null);
   const konsolRef = useRef<HTMLDivElement>(null);
+
+  // ── Yeni üye dinleyicisi: yapgitsin.tr public stats poll'la ─────────────
+  // Yeni kullanıcı kaydı geldiğinde Müdür sevinir (joy +2), ses çalar, popup gösterir.
+  useEffect(() => {
+    const tick = async () => {
+      try {
+        const r = await fetch(`${API_BASE}/stats/public`, { cache: 'no-store' });
+        if (!r.ok) return;
+        const d = await r.json() as { totalUsers: number };
+        const prev = lastUserCountRef.current;
+        if (prev !== null && d.totalUsers > prev) {
+          const delta = d.totalUsers - prev;
+          // 🎉 Yeni üye geldi — Müdür sevinç patlaması
+          playPingSound();
+          setJoyLevel(j => Math.min(10, j + 2));
+          setYeniUyeSayisi(n => n + delta);
+          setMesaj({ icon: '🎉', text: `${delta} yeni üye katıldı! Hoş geldiniz! 🎊` });
+          setPopupGorunur(true);
+          setEnergy(e => Math.min(100, e + 10));
+          setCharState('celebrating');
+          setKonsol(p => [...p, {
+            ts: simdiSaat(),
+            level: 'info',
+            msg: `🎉 [MÜDÜR] ${delta} yeni üye yapgitsin.tr'ye katıldı! Toplam: ${d.totalUsers}`,
+          }]);
+          // 8 saniye sonra normal moda dön
+          setTimeout(() => setCharState('typing'), 8000);
+        }
+        lastUserCountRef.current = d.totalUsers;
+      } catch {/* network hatası — sessiz geç */}
+    };
+    void tick();
+    const iv = setInterval(tick, 15000); // her 15 sn'de bir
+    return () => clearInterval(iv);
+  }, []);
+
+  // Joy level zamanla doğal olarak azalsın (her 30 sn -1)
+  useEffect(() => {
+    const iv = setInterval(() => setJoyLevel(j => Math.max(0, j - 1)), 30000);
+    return () => clearInterval(iv);
+  }, []);
 
   // Görev tamamlama animasyonu — her 2 saniyede bir görev bitirir
   useEffect(() => {
@@ -156,6 +233,18 @@ function App() {
   const isTyping = charState === 'typing';
   const isCelebrating = charState === 'celebrating';
 
+  // ── Müdüriye disiplini ──────────────────────────────────────────────────
+  // Aktif (queued + running) görev sayısına göre Müdüriye'nin durumu:
+  //   0 görev  → kapalı (Müdür de boşa bekler)
+  //   1 görev  → kapalı, Müdür kendi devralır
+  //   2+ görev → açık, Müdür 1'ini devralır, kalanlar Müdüriye'de döner
+  const aktifGorevSayisi = gorevler.filter(g => g.status !== 'done').length;
+  const muduriyeAktif = aktifGorevSayisi >= 2;
+  const mudurDevraldi = aktifGorevSayisi >= 1;
+  const muduriyeStatus = aktifGorevSayisi === 0 ? 'KAPALI'
+    : muduriyeAktif ? 'AKTİF'
+    : 'BEKLEMEDE';
+
   return (
     <div className="app-root">
       <div className="sidebar">
@@ -175,6 +264,24 @@ function App() {
               style={{ width: `${energy}%`, background: energy < 25 ? '#e74c3c' : '#f1c40f' }}
             ></div>
           </div>
+        </div>
+
+        <div className="usage-section">
+          <div className="usage-header">
+            <span>SEVİNÇ {joyLevel >= 6 ? '🎉' : joyLevel >= 3 ? '😄' : joyLevel >= 1 ? '🙂' : '😐'}</span>
+            <span>Lv.{joyLevel}/10</span>
+          </div>
+          <div className="usage-bar-container">
+            <div
+              className="usage-bar"
+              style={{ width: `${joyLevel * 10}%`, background: 'linear-gradient(90deg, #ff6b9d, #f9ca24)' }}
+            ></div>
+          </div>
+          {yeniUyeSayisi > 0 && (
+            <div style={{ fontSize: '11px', color: '#f9ca24', marginTop: '4px' }}>
+              🎊 Bugün {yeniUyeSayisi} yeni üye!
+            </div>
+          )}
         </div>
 
         <div className="usage-section">
@@ -269,7 +376,17 @@ function App() {
           <div className="top-bar-left">
             <span className="top-bar-title">OPERASYON MERKEZİ</span>
             <span className="top-bar-badge"><span className="live-dot"/>CANLI</span>
-            <span className="top-bar-badge muduriye-badge">{tumGorevlerBitti ? '🏆 GÖREVLER TAMAM' : '🏛 MÜDÜRİYE AKTİF'}</span>
+            <span className="top-bar-badge muduriye-badge">{
+              tumGorevlerBitti ? '🏆 GÖREVLER TAMAM'
+              : muduriyeAktif ? '🏛 MÜDÜRİYE AKTİF'
+              : aktifGorevSayisi === 1 ? '☕ MÜDÜR TEK BAŞINA'
+              : '🌙 MÜDÜRİYE KAPALI'
+            }</span>
+            {mudurDevraldi && (
+              <span className="top-bar-badge" style={{ background: '#3498db22', color: '#60a5fa' }}>
+                📋 Müdür: 1 görev
+              </span>
+            )}
           </div>
           <div className="top-bar-right">
             <span>Müdür-Agent</span><span>|</span><span>{saat}</span>
@@ -293,11 +410,30 @@ function App() {
               <EkipAgent name="AI Team" color="#9b59b6" delay={1} isWorkHours={isWorkHours} />
             </div>
 
-            <div className="muduriye-department">
-              <div className="muduriye-sign">🏛 MÜDÜRİYE <span className="muduriye-active-badge">AKTİF</span></div>
-              <div className="muduriye-divider" />
-              <MuduriyeManager />
-            </div>
+            {muduriyeAktif ? (
+              <div className="muduriye-department">
+                <div className="muduriye-sign">
+                  🏛 MÜDÜRİYE <span className="muduriye-active-badge">{muduriyeStatus}</span>
+                </div>
+                <div className="muduriye-divider" />
+                <MuduriyeManager />
+                <div style={{ fontSize: '10px', color: '#9ca3af', textAlign: 'center', marginTop: '4px' }}>
+                  Müdür 1 devraldı · Müdüriye'de {aktifGorevSayisi - 1} görev
+                </div>
+              </div>
+            ) : (
+              <div className="muduriye-department" style={{ opacity: 0.4 }}>
+                <div className="muduriye-sign" style={{ filter: 'grayscale(0.7)' }}>
+                  🏛 MÜDÜRİYE <span className="muduriye-active-badge" style={{ background: '#374151' }}>{muduriyeStatus}</span>
+                </div>
+                <div className="muduriye-divider" />
+                <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280', fontSize: '12px' }}>
+                  {aktifGorevSayisi === 0
+                    ? '🌙 Görev yok — kapalı'
+                    : '☕ Tek görev — Müdür kendi devraldı'}
+                </div>
+              </div>
+            )}
 
             <div className="wall-frame"><span className="wall-frame-text">YAPGITSIN HQ</span></div>
             <Pencere/>

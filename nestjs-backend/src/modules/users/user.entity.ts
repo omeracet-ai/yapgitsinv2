@@ -125,6 +125,13 @@ export class User {
   @Column({ type: 'boolean', default: false })
   isAvailable: boolean;
 
+  // ── Tasker skills (Airtasker-style) ──────────────────────────────────────
+  // Granular yetenek etiketleri — workerCategories'tan ayrı, daha spesifik.
+  // Örnek: workerCategories=['Temizlik'] + workerSkills=['Derin Temizlik','Cam Silme','Halı Yıkama']
+  // Tasker kendi profilinden veya admin atayabilir.
+  @Column({ type: 'simple-json', nullable: true })
+  workerSkills: string[] | null;
+
   // ── Airtasker-style rozetler ─────────────────────────────────────────────
   // Admin'in atadığı manuel rozetler:
   //   insurance       → İş sigortalı

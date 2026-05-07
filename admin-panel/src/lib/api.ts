@@ -87,6 +87,10 @@ export const api = {
   setUserBadges: (userId: string, badges: string[]) =>
     request<{ id: string; badges: string[] }>(`/admin/users/${userId}/badges`, { method: 'PATCH', body: JSON.stringify({ badges }) }),
 
+  // Tasker skills — workerCategories'tan ayrı, granular yetenek tag'leri
+  setUserSkills: (userId: string, skills: string[]) =>
+    request<{ id: string; workerSkills: string[] }>(`/admin/users/${userId}/skills`, { method: 'PATCH', body: JSON.stringify({ skills }) }),
+
   // Onboarding slides
   onboardingSlides:       ()                                          => request<OnboardingSlide[]>('/onboarding-slides/all'),
   createOnboardingSlide:  (data: Partial<OnboardingSlide>)           => request<OnboardingSlide>('/onboarding-slides',         { method: 'POST',   body: JSON.stringify(data) }),
@@ -149,6 +153,9 @@ export interface Provider {
   documents: Record<string, string> | null;
   /** Airtasker-style rozetler (manuel + computed birleşik) — backend'ten döner */
   badges?: string[];
+  /** Tasker yeteneklerini gruplar — workerCategories yanında granular tag'ler */
+  workerSkills?: string[];
+  workerCategories?: string[];
   user?: { id: string; fullName: string; email: string; role: string } | null;
   createdAt: string;
   updatedAt: string;

@@ -64,8 +64,25 @@ export class UsersController {
       address?: string;
       identityPhotoUrl?: string;
       documentPhotoUrl?: string;
+      workerCategories?: string[];
+      workerSkills?: string[];
+      workerBio?: string;
+      hourlyRateMin?: number;
+      hourlyRateMax?: number;
+      serviceRadiusKm?: number;
+      isAvailable?: boolean;
     },
   ) {
+    // Tasker can manage their own skills — sanitize like admin endpoint does
+    if (body.workerSkills) {
+      body.workerSkills = Array.from(
+        new Set(
+          body.workerSkills
+            .map((s) => (typeof s === 'string' ? s.trim() : ''))
+            .filter((s) => s.length > 0 && s.length <= 50),
+        ),
+      ).slice(0, 20);
+    }
     const updated = await this.svc.update(req.user.id, body);
     if (!updated) return null;
     const { passwordHash: _ph, ...safe } = updated as {
