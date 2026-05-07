@@ -66,6 +66,9 @@ export class AdminService {
       totalUsers,
       totalWorkers,
       verifiedWorkers,
+      // Aliases for admin panel compatibility
+      totalProviders: totalWorkers,
+      verifiedProviders: verifiedWorkers,
       totalServiceRequests,
       openServiceRequests,
       totalOffers,
