@@ -126,6 +126,10 @@ export class Job {
   @Column({ type: 'simple-json', nullable: true, default: null })
   endJobVideos: string[] | null;
 
+  /** Phase 19: Tamamlanma fotoğrafları (usta yükler) */
+  @Column({ type: 'simple-json', nullable: true, default: null })
+  completionPhotos: string[] | null;
+
   /** 1-3 → öne çıkan ilan sırası, null = normal */
   @Column({ type: 'integer', nullable: true, default: null })
   featuredOrder: number | null;

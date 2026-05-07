@@ -7,6 +7,8 @@ import {
   UploadedFiles,
   UseGuards,
   Req,
+  Request,
+  Param,
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
@@ -14,6 +16,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { memoryStorage } from 'multer';
 import { join } from 'path';
 import * as fs from 'fs';
+import type { AuthenticatedRequest } from '../../common/types/auth.types';
+import { UploadsService } from './uploads.service';
 
 const sharp = require('sharp');
 
@@ -50,6 +54,26 @@ const videoFilter = (req: any, file: any, cb: any) => {
 
 @Controller('uploads')
 export class UploadsController {
+  constructor(private readonly uploadsService: UploadsService) {}
+
+  /** POST /uploads/completion-photos/:jobId — Phase 19 tamamlanma fotoğrafları */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('completion-photos/:jobId')
+  @UseInterceptors(
+    FilesInterceptor('photos', 5, {
+      storage: memoryStorage(),
+      fileFilter: imageFilter,
+      limits: { fileSize: 8 * 1024 * 1024 },
+    }),
+  )
+  async uploadCompletionPhotos(
+    @Param('jobId') jobId: string,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.uploadsService.uploadCompletionPhotos(jobId, files, req.user.id);
+  }
+
   /** POST /uploads/job-photos  — iş ilanı fotoğrafları (sınırsız) */
   @UseGuards(AuthGuard('jwt'))
   @Post('job-photos')

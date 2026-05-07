@@ -10,6 +10,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/job_provider.dart';
 import '../../../reviews/presentation/screens/write_review_screen.dart';
 import '../../../photos/presentation/widgets/job_photo_picker.dart';
+import '../widgets/completion_photos_section.dart';
 import '../widgets/job_questions_tab.dart';
 import '../widgets/job_video_player.dart';
 
@@ -209,6 +210,22 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   if (videos.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     _buildVideosSection(videos),
+                  ],
+                  if (widget.id != null) ...[
+                    const SizedBox(height: 8),
+                    Builder(builder: (_) {
+                      final initial = (detail['completionPhotos'] as List?)
+                              ?.cast<String>() ??
+                          const <String>[];
+                      final canUpload = isWorker &&
+                          (jobStatus == 'in_progress' ||
+                              jobStatus == 'pending_completion');
+                      return CompletionPhotosSection(
+                        jobId: widget.id!,
+                        initialPhotos: initial,
+                        canUpload: canUpload,
+                      );
+                    }),
                   ],
                   const SizedBox(height: 8),
                 ],

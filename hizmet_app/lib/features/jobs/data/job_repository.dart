@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
@@ -124,6 +125,28 @@ class JobRepository {
       );
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Yanıt gönderilemedi'));
+    }
+  }
+
+  /// Tamamlama fotoğrafları yükle (atanan usta + in_progress/pending_completion)
+  Future<List<String>> uploadCompletionPhotos(String jobId, List<File> files) async {
+    try {
+      final token = await _authRepository.getToken();
+      final form = FormData();
+      for (final f in files) {
+        form.files.add(MapEntry(
+          'photos',
+          await MultipartFile.fromFile(f.path),
+        ));
+      }
+      final res = await _dio.post(
+        '/uploads/completion-photos/$jobId',
+        data: form,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return List<String>.from((res.data['photos'] as List));
+    } on DioException catch (e) {
+      throw Exception(_dioMsg(e, 'Tamamlama fotoğrafları yüklenemedi'));
     }
   }
 
