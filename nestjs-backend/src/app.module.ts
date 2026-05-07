@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { CacheModule } from '@nestjs/cache-manager';
+import { CronModule } from './modules/cron/cron.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -51,9 +53,12 @@ import { AvailabilityModule } from './modules/availability/availability.module';
 import { PromoCode } from './modules/promo/promo-code.entity';
 import { PromoRedemption } from './modules/promo/promo-redemption.entity';
 import { PromoModule } from './modules/promo/promo.module';
+import { JobTemplate } from './modules/job-templates/job-template.entity';
+import { JobTemplatesModule } from './modules/job-templates/job-templates.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [`.env.${process.env.NODE_ENV ?? 'development'}.local`, `.env.${process.env.NODE_ENV ?? 'development'}`, '.env'],
@@ -91,6 +96,7 @@ import { PromoModule } from './modules/promo/promo.module';
           AvailabilityBlackout,
           PromoCode,
           PromoRedemption,
+          JobTemplate,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -147,6 +153,8 @@ import { PromoModule } from './modules/promo/promo.module';
     DisputesModule,
     AvailabilityModule,
     PromoModule,
+    JobTemplatesModule,
+    CronModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],
