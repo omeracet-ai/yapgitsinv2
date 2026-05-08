@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/worker_filter.dart';
 
@@ -30,8 +31,15 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
   late WorkerSortBy _sortBy;
   late TextEditingController _minRateCtrl;
   late TextEditingController _maxRateCtrl;
+  // Phase 112 — geo
+  late bool _nearMe;
+  late int _radiusKm;
+  double? _userLat;
+  double? _userLng;
+  bool _locating = false;
 
   static const _ratingOptions = <double?>[null, 3.0, 3.5, 4.0, 4.5];
+  static const _radiusOptions = <int>[5, 10, 20, 50, 100];
 
   @override
   void initState() {
@@ -44,6 +52,49 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
         text: widget.initial.minRate?.toInt().toString() ?? '');
     _maxRateCtrl = TextEditingController(
         text: widget.initial.maxRate?.toInt().toString() ?? '');
+    _nearMe = widget.initial.nearMe;
+    _radiusKm = widget.initial.radiusKm;
+    _userLat = widget.initial.userLat;
+    _userLng = widget.initial.userLng;
+  }
+
+  Future<void> _enableNearMe(bool v) async {
+    if (!v) {
+      setState(() {
+        _nearMe = false;
+      });
+      return;
+    }
+    setState(() => _locating = true);
+    try {
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Konum izni gerekiyor')),
+        );
+        setState(() => _locating = false);
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
+      setState(() {
+        _nearMe = true;
+        _userLat = pos.latitude;
+        _userLng = pos.longitude;
+        _locating = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Konum alınamadı: $e')),
+      );
+      setState(() => _locating = false);
+    }
   }
 
   @override
@@ -61,6 +112,10 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
       _sortBy = WorkerSortBy.reputation;
       _minRateCtrl.clear();
       _maxRateCtrl.clear();
+      _nearMe = false;
+      _radiusKm = 20;
+      _userLat = null;
+      _userLng = null;
     });
   }
 
@@ -74,6 +129,10 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
       verifiedOnly: _verifiedOnly,
       availableOnly: _availableOnly,
       sortBy: _sortBy,
+      nearMe: _nearMe,
+      userLat: _userLat,
+      userLng: _userLng,
+      radiusKm: _radiusKm,
     );
     Navigator.of(context).pop(result);
   }
@@ -140,6 +199,56 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
                     const SizedBox(height: 8),
                     _buildSortChips(),
                     const SizedBox(height: 20),
+                    _buildSwitch(
+                      title: _locating
+                          ? 'Konum alınıyor…'
+                          : 'Yakınımdaki ustalar',
+                      subtitle: _nearMe && _userLat != null
+                          ? 'Konum: ${_userLat!.toStringAsFixed(3)}, ${_userLng!.toStringAsFixed(3)}'
+                          : 'GPS izni ile yakındaki ustaları göster',
+                      icon: Icons.my_location_rounded,
+                      iconColor: AppColors.primary,
+                      value: _nearMe,
+                      onChanged: (v) => _enableNearMe(v),
+                    ),
+                    if (_nearMe) ...[
+                      const SizedBox(height: 12),
+                      _sectionTitle('Yarıçap (km)'),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _radiusOptions.map((r) {
+                          final active = _radiusKm == r;
+                          return GestureDetector(
+                            onTap: () => setState(() => _radiusKm = r),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: active
+                                    ? AppColors.primary
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                    color: active
+                                        ? AppColors.primary
+                                        : AppColors.border),
+                              ),
+                              child: Text('$r km',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: active
+                                          ? Colors.white
+                                          : AppColors.textPrimary)),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    const SizedBox(height: 12),
                     _buildSwitch(
                       title: 'Sadece doğrulanmış',
                       subtitle: 'Mavi tikli ustalar',

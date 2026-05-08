@@ -7,6 +7,7 @@ enum WorkerSortBy {
   rating,
   rateAsc,
   rateDesc,
+  nearest,
 }
 
 extension WorkerSortByX on WorkerSortBy {
@@ -20,6 +21,8 @@ extension WorkerSortByX on WorkerSortBy {
         return 'rate_asc';
       case WorkerSortBy.rateDesc:
         return 'rate_desc';
+      case WorkerSortBy.nearest:
+        return 'nearest';
     }
   }
 
@@ -33,6 +36,8 @@ extension WorkerSortByX on WorkerSortBy {
         return 'Ücret: Düşükten Yükseğe';
       case WorkerSortBy.rateDesc:
         return 'Ücret: Yüksekten Düşüğe';
+      case WorkerSortBy.nearest:
+        return 'En Yakın';
     }
   }
 }
@@ -44,6 +49,11 @@ class WorkerFilter {
   final bool verifiedOnly;
   final bool availableOnly;
   final WorkerSortBy sortBy;
+  // Phase 112 — geo-fencing
+  final bool nearMe;
+  final double? userLat;
+  final double? userLng;
+  final int radiusKm;
 
   const WorkerFilter({
     this.minRating,
@@ -52,6 +62,10 @@ class WorkerFilter {
     this.verifiedOnly = false,
     this.availableOnly = false,
     this.sortBy = WorkerSortBy.reputation,
+    this.nearMe = false,
+    this.userLat,
+    this.userLng,
+    this.radiusKm = 20,
   });
 
   static const empty = WorkerFilter();
@@ -63,9 +77,14 @@ class WorkerFilter {
     bool? verifiedOnly,
     bool? availableOnly,
     WorkerSortBy? sortBy,
+    bool? nearMe,
+    double? userLat,
+    double? userLng,
+    int? radiusKm,
     bool clearMinRating = false,
     bool clearMinRate = false,
     bool clearMaxRate = false,
+    bool clearGeo = false,
   }) {
     return WorkerFilter(
       minRating: clearMinRating ? null : (minRating ?? this.minRating),
@@ -74,6 +93,10 @@ class WorkerFilter {
       verifiedOnly: verifiedOnly ?? this.verifiedOnly,
       availableOnly: availableOnly ?? this.availableOnly,
       sortBy: sortBy ?? this.sortBy,
+      nearMe: clearGeo ? false : (nearMe ?? this.nearMe),
+      userLat: clearGeo ? null : (userLat ?? this.userLat),
+      userLng: clearGeo ? null : (userLng ?? this.userLng),
+      radiusKm: radiusKm ?? this.radiusKm,
     );
   }
 
@@ -86,6 +109,11 @@ class WorkerFilter {
     if (verifiedOnly) m['verifiedOnly'] = true;
     if (availableOnly) m['availableOnly'] = true;
     if (sortBy != WorkerSortBy.reputation) m['sortBy'] = sortBy.apiValue;
+    if (nearMe && userLat != null && userLng != null) {
+      m['lat'] = userLat;
+      m['lng'] = userLng;
+      m['radiusKm'] = radiusKm;
+    }
     return m;
   }
 
@@ -97,6 +125,7 @@ class WorkerFilter {
     if (verifiedOnly) n++;
     if (availableOnly) n++;
     if (sortBy != WorkerSortBy.reputation) n++;
+    if (nearMe) n++;
     return n;
   }
 
