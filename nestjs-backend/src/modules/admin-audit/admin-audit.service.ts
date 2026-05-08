@@ -2,6 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AdminAuditLog } from './admin-audit-log.entity';
+import { User } from '../users/user.entity';
+
+export interface AuditLogStats {
+  totalEntries: number;
+  entriesPerDay: { date: string; count: number }[];
+  topActions: { action: string; count: number }[];
+  topAdmins: { adminUserId: string; adminName: string; count: number }[];
+  topTargetTypes: { targetType: string; count: number }[];
+}
 
 @Injectable()
 export class AdminAuditService {
@@ -10,6 +19,8 @@ export class AdminAuditService {
   constructor(
     @InjectRepository(AdminAuditLog)
     private readonly repo: Repository<AdminAuditLog>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
   ) {}
 
   async logAction(
@@ -91,5 +102,100 @@ export class AdminAuditService {
         .join(',');
     });
     return [header, ...lines].join('\n');
+  }
+
+  async getStats(daysInput: number): Promise<AuditLogStats> {
+    const days = Math.max(1, Math.min(90, Math.floor(daysInput) || 30));
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const baseWhere = (alias: string) => `${alias}.createdAt >= :since`;
+
+    const totalEntries = await this.repo
+      .createQueryBuilder('log')
+      .where(baseWhere('log'), { since })
+      .getCount();
+
+    // Per-day counts. Use SUBSTR on ISO datetime for SQLite-friendliness;
+    // works on Postgres too because TypeORM serializes Date and SUBSTR is standard.
+    const perDayRaw = await this.repo
+      .createQueryBuilder('log')
+      .select("SUBSTR(log.createdAt, 1, 10)", 'date')
+      .addSelect('COUNT(*)', 'count')
+      .where(baseWhere('log'), { since })
+      .groupBy('date')
+      .orderBy('date', 'ASC')
+      .getRawMany<{ date: string; count: string | number }>();
+
+    const entriesPerDay = perDayRaw.map((r) => ({
+      date: String(r.date),
+      count: Number(r.count),
+    }));
+
+    const topActionsRaw = await this.repo
+      .createQueryBuilder('log')
+      .select('log.action', 'action')
+      .addSelect('COUNT(*)', 'count')
+      .where(baseWhere('log'), { since })
+      .groupBy('log.action')
+      .orderBy('count', 'DESC')
+      .limit(10)
+      .getRawMany<{ action: string; count: string | number }>();
+
+    const topActions = topActionsRaw.map((r) => ({
+      action: r.action,
+      count: Number(r.count),
+    }));
+
+    const topAdminsRaw = await this.repo
+      .createQueryBuilder('log')
+      .select('log.adminUserId', 'adminUserId')
+      .addSelect('COUNT(*)', 'count')
+      .where(baseWhere('log'), { since })
+      .groupBy('log.adminUserId')
+      .orderBy('count', 'DESC')
+      .limit(10)
+      .getRawMany<{ adminUserId: string; count: string | number }>();
+
+    const adminIds = topAdminsRaw.map((r) => r.adminUserId).filter(Boolean);
+    const adminUsers = adminIds.length
+      ? await this.userRepo
+          .createQueryBuilder('u')
+          .select(['u.id', 'u.fullName', 'u.email'])
+          .whereInIds(adminIds)
+          .getMany()
+      : [];
+    const nameMap = new Map<string, string>(
+      adminUsers.map((u) => [u.id, u.fullName || u.email || u.id]),
+    );
+
+    const topAdmins = topAdminsRaw.map((r) => ({
+      adminUserId: r.adminUserId,
+      adminName: nameMap.get(r.adminUserId) || r.adminUserId,
+      count: Number(r.count),
+    }));
+
+    const topTargetTypesRaw = await this.repo
+      .createQueryBuilder('log')
+      .select('log.targetType', 'targetType')
+      .addSelect('COUNT(*)', 'count')
+      .where(baseWhere('log'), { since })
+      .andWhere('log.targetType IS NOT NULL')
+      .groupBy('log.targetType')
+      .orderBy('count', 'DESC')
+      .limit(10)
+      .getRawMany<{ targetType: string; count: string | number }>();
+
+    const topTargetTypes = topTargetTypesRaw.map((r) => ({
+      targetType: r.targetType,
+      count: Number(r.count),
+    }));
+
+    return {
+      totalEntries,
+      entriesPerDay,
+      topActions,
+      topAdmins,
+      topTargetTypes,
+    };
   }
 }

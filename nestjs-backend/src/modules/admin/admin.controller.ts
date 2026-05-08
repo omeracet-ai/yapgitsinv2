@@ -61,6 +61,12 @@ export class AdminController {
     res.send(csv);
   }
 
+  @Get('audit-log/stats')
+  getAuditLogStats(@Query('days') days?: string) {
+    const parsed = Number(days) || 30;
+    return this.adminAuditService.getStats(parsed);
+  }
+
   @Get('stats')
   getStats() {
     return this.adminService.getDashboardStats();
