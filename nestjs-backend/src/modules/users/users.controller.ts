@@ -10,8 +10,10 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  ParseIntPipe,
   BadRequestException,
 } from '@nestjs/common';
+import { AddOfferTemplateDto } from './dto/add-offer-template.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuthGuard } from '@nestjs/passport';
@@ -101,6 +103,31 @@ export class UsersController {
       req.user.id,
       body?.preferences ?? null,
     );
+  }
+
+  // ── Phase 51: Worker offer templates (max 5) ─────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/offer-templates')
+  getOfferTemplates(@Request() req: AuthenticatedRequest) {
+    return this.svc.getOfferTemplates(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/offer-templates')
+  addOfferTemplate(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: AddOfferTemplateDto,
+  ) {
+    return this.svc.addOfferTemplate(req.user.id, body.text);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('me/offer-templates/:index')
+  removeOfferTemplate(
+    @Request() req: AuthenticatedRequest,
+    @Param('index', ParseIntPipe) index: number,
+  ) {
+    return this.svc.removeOfferTemplate(req.user.id, index);
   }
 
   // Phase 44: haftalık müsaitlik takvimi

@@ -206,6 +206,10 @@ export class User {
     system: boolean;
   } | null;
 
+  // ── Phase 51 — Worker offer templates (max 5, each up to 500 chars) ──────
+  @Column({ type: 'simple-json', nullable: true })
+  offerTemplates: string[] | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

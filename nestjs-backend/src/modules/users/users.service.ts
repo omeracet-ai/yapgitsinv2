@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
@@ -311,6 +311,55 @@ export class UsersService {
     }
     await this.repo.update(userId, { notificationPreferences: normalized });
     return { preferences: normalized };
+  }
+
+  /** Phase 51 — worker offer templates (max 5, each up to 500 chars) */
+  async getOfferTemplates(userId: string): Promise<{ templates: string[] }> {
+    const user = await this.repo.findOne({
+      where: { id: userId },
+      select: ['id', 'offerTemplates'],
+    });
+    return { templates: Array.isArray(user?.offerTemplates) ? user!.offerTemplates : [] };
+  }
+
+  async addOfferTemplate(
+    userId: string,
+    text: string,
+  ): Promise<{ templates: string[] }> {
+    const trimmed = (text ?? '').trim();
+    if (trimmed.length < 1 || trimmed.length > 500) {
+      throw new BadRequestException('text 1-500 karakter olmalı');
+    }
+    const user = await this.repo.findOne({
+      where: { id: userId },
+      select: ['id', 'offerTemplates'],
+    });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    const current = Array.isArray(user.offerTemplates) ? user.offerTemplates : [];
+    if (current.length >= 5) {
+      throw new BadRequestException('En fazla 5 şablon eklenebilir');
+    }
+    const next = [...current, trimmed];
+    await this.repo.update(userId, { offerTemplates: next });
+    return { templates: next };
+  }
+
+  async removeOfferTemplate(
+    userId: string,
+    index: number,
+  ): Promise<{ templates: string[] }> {
+    const user = await this.repo.findOne({
+      where: { id: userId },
+      select: ['id', 'offerTemplates'],
+    });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    const current = Array.isArray(user.offerTemplates) ? user.offerTemplates : [];
+    if (!Number.isInteger(index) || index < 0 || index >= current.length) {
+      throw new NotFoundException('Geçersiz şablon indeksi');
+    }
+    const next = current.filter((_, i) => i !== index);
+    await this.repo.update(userId, { offerTemplates: next.length ? next : null });
+    return { templates: next };
   }
 
   /** Stats güncellendikten sonra reputationScore'u yeniden hesapla */
