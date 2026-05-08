@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
+import { SemanticSearchService } from '../ai/semantic-search.service';
 
 export type StatField =
   | 'asCustomerTotal'
@@ -17,6 +18,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private repo: Repository<User>,
+    private readonly semanticSearch: SemanticSearchService,
   ) {}
 
   findByEmail(email: string): Promise<User | null> {
@@ -54,6 +56,7 @@ export class UsersService {
     lat?: number;
     lng?: number;
     radiusKm?: number;
+    semanticQuery?: string;
   }): Promise<{
     data: (User & { distanceKm?: number })[];
     total: number;
@@ -163,8 +166,24 @@ export class UsersService {
         withDist.sort((a, b) => (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9));
       }
 
-      const total = withDist.length;
-      const slice = withDist.slice((page - 1) * limit, (page - 1) * limit + limit);
+      let final = withDist;
+      if (opts.semanticQuery && this.semanticSearch.isEnabled()) {
+        final = await this.semanticSearch.rerankWorkers(opts.semanticQuery, final);
+      }
+      const total = final.length;
+      const slice = final.slice((page - 1) * limit, (page - 1) * limit + limit);
+      return { data: slice, total, page, limit, pages: Math.ceil(total / limit) || 0 };
+    }
+
+    // Phase 134 — Semantic re-rank: fetch all, rerank, then paginate
+    if (opts.semanticQuery && this.semanticSearch.isEnabled()) {
+      const all = await qb.getMany();
+      const reranked = await this.semanticSearch.rerankWorkers(
+        opts.semanticQuery,
+        all,
+      );
+      const total = reranked.length;
+      const slice = reranked.slice((page - 1) * limit, (page - 1) * limit + limit);
       return { data: slice, total, page, limit, pages: Math.ceil(total / limit) || 0 };
     }
 

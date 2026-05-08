@@ -417,6 +417,7 @@ export class UsersController {
     @Query('lat') lat?: string,
     @Query('lng') lng?: string,
     @Query('radiusKm') radiusKm?: string,
+    @Query('semanticQuery') semanticQuery?: string,
   ) {
     const parseNum = (v?: string): number | undefined => {
       if (v == null || v === '') return undefined;
@@ -458,6 +459,9 @@ export class UsersController {
       lat: latN,
       lng: lngN,
       radiusKm: radiusN != null ? Math.min(200, Math.max(1, radiusN)) : undefined,
+      semanticQuery: semanticQuery && semanticQuery.trim().length > 0
+        ? semanticQuery.trim().slice(0, 200)
+        : undefined,
     });
 
     const data = result.data.map((u) => {

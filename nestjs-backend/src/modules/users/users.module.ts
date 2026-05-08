@@ -17,12 +17,16 @@ import { Notification } from '../notifications/notification.entity';
 import { ChatMessage } from '../chat/chat-message.entity';
 import { TokenTransaction } from '../tokens/token-transaction.entity';
 import { EarningsService } from './earnings.service';
+import { AiModule } from '../ai/ai.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([
-    User, FavoriteWorker, WorkerInsurance, DataDeletionRequest,
-    Job, Review, Offer, Booking, Notification, ChatMessage, TokenTransaction,
-  ])],
+  imports: [
+    TypeOrmModule.forFeature([
+      User, FavoriteWorker, WorkerInsurance, DataDeletionRequest,
+      Job, Review, Offer, Booking, Notification, ChatMessage, TokenTransaction,
+    ]),
+    AiModule,
+  ],
   controllers: [UsersController],
   providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, DataPrivacyService],
   exports: [UsersService, WorkerInsuranceService, DataPrivacyService],
