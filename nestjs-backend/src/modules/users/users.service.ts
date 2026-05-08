@@ -362,6 +362,38 @@ export class UsersService {
     return { templates: next };
   }
 
+  /** Phase 54: 6 auto-computed worker badges — embedded in user responses */
+  static readonly BADGE_DEFINITIONS: ReadonlyArray<{
+    key: 'verified' | 'top_rated' | 'prolific' | 'rising_star' | 'available_now' | 'complete_profile';
+    label: string;
+    icon: string;
+  }> = [
+    { key: 'verified',         label: 'Doğrulanmış',     icon: '✅' },
+    { key: 'top_rated',        label: 'Üst Sıralama',    icon: '⭐' },
+    { key: 'prolific',         label: 'Deneyimli',       icon: '🏆' },
+    { key: 'rising_star',      label: 'Yükselen',        icon: '🌟' },
+    { key: 'available_now',    label: 'Şu An Müsait',    icon: '🟢' },
+    { key: 'complete_profile', label: 'Eksiksiz Profil', icon: '💯' },
+  ];
+
+  /** Pure: compute Phase 54 badge list ({key,label,icon}[]) for a user. */
+  computeBadges(user: User): Array<{ key: string; label: string; icon: string }> {
+    const earned = new Set<string>();
+    if (user.identityVerified === true) earned.add('verified');
+    if ((user.averageRating ?? 0) >= 4.5 && (user.totalReviews ?? 0) >= 10) earned.add('top_rated');
+    if ((user.asWorkerSuccess ?? 0) >= 50) earned.add('prolific');
+    const ws = user.asWorkerSuccess ?? 0;
+    if (ws >= 5 && ws < 20 && (user.averageRating ?? 0) >= 4.0) earned.add('rising_star');
+    if (user.isAvailable === true) earned.add('available_now');
+    const completion = this.computeProfileCompletion(user);
+    if (completion.percent === 100) earned.add('complete_profile');
+    return UsersService.BADGE_DEFINITIONS.filter((b) => earned.has(b.key)).map((b) => ({
+      key: b.key,
+      label: b.label,
+      icon: b.icon,
+    }));
+  }
+
   /** Stats güncellendikten sonra reputationScore'u yeniden hesapla */
   async recalcReputation(userId: string): Promise<void> {
     const user = await this.repo.findOne({ where: { id: userId } });

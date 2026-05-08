@@ -19,7 +19,6 @@ import { Repository } from 'typeorm';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 import { FavoriteWorkersService } from './favorite-workers.service';
-import { computeBadges } from './badges.util';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
 import { Offer, OfferStatus } from '../jobs/offer.entity';
@@ -69,7 +68,8 @@ export class UsersController {
       passwordHash?: string;
     } & typeof user;
     const profileCompletion = this.svc.computeProfileCompletion(user);
-    return { ...safe, profileCompletion };
+    const badges = this.svc.computeBadges(user);
+    return { ...safe, profileCompletion, badges };
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -284,7 +284,7 @@ export class UsersController {
       const { passwordHash: _ph, ...safe } = u as {
         passwordHash?: string;
       } & typeof u;
-      return safe;
+      return { ...safe, badges: this.svc.computeBadges(u) };
     });
     return { ...result, data };
   }
@@ -353,7 +353,7 @@ export class UsersController {
       totalReviews: reviews.length,
       reputationScore: reputation,
     } as typeof user;
-    const badges = computeBadges(enrichedUser);
+    const badges = this.svc.computeBadges(enrichedUser);
 
     return {
       ...safe,
