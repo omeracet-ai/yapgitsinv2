@@ -7,6 +7,7 @@ import '../../../users/widgets/user_action_menu.dart';
 import '../../../tokens/widgets/gift_tokens_sheet.dart';
 import '../providers/auth_provider.dart';
 import '../../../reviews/widgets/review_reply_sheet.dart';
+import '../../widgets/portfolio_gallery.dart';
 
 final publicProfileProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
@@ -64,6 +65,7 @@ class _ProfileView extends ConsumerWidget {
     final since           = data['createdAt']        as String?;
     final workerCats      = (data['workerCategories'] as List?)?.cast<String>() ?? [];
     final pastPhotos      = (data['pastPhotos']       as List?)?.cast<String>() ?? [];
+    final portfolioPhotos = (data['portfolioPhotos']  as List?)?.cast<String>() ?? [];
     final reviewList      = (data['reviews']          as List?)
                                 ?.cast<Map<String, dynamic>>() ?? [];
     final isWorker        = workerCats.isNotEmpty;
@@ -271,6 +273,19 @@ class _ProfileView extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
+
+                // ── Portfolyo ────────────────────────────────────────────
+                if (portfolioPhotos.isNotEmpty || isSelf) ...[
+                  _section(
+                    title: 'Portfolyo',
+                    child: PortfolioGallery(
+                      photos: portfolioPhotos,
+                      isOwner: isSelf,
+                      userId: userId,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
 
                 // ── Geçmiş fotoğraflar ────────────────────────────────────
                 if (pastPhotos.isNotEmpty) ...[
