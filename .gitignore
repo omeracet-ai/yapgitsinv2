@@ -27,3 +27,4 @@ hizmet_app/build/
 nestjs-backend/openapi.json
 packages/api-client/generated/types.ts
 packages/api-client/node_modules/
+reports/

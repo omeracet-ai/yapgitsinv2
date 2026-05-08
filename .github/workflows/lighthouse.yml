@@ -1,0 +1,31 @@
+name: Lighthouse Audit
+on:
+  workflow_dispatch:
+    inputs:
+      web_url:
+        description: 'Web URL to audit'
+        required: true
+        default: 'https://yapgitsin.tr'
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run Lighthouse audit
+        env:
+          WEB_URL: ${{ inputs.web_url }}
+        run: bash scripts/lighthouse-audit.sh
+      - name: Print summary
+        if: always()
+        run: node scripts/lighthouse-summary.mjs || true
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: reports/lighthouse/
+          retention-days: 30
