@@ -6,6 +6,8 @@ import {
   unwrap,
   slugify,
   TR_CITIES,
+  TIER_1_CATEGORIES,
+  TIER_2_CATEGORIES,
 } from '@/lib/api';
 
 // Required for `output: 'export'` — sitemap is generated once at build time.
@@ -25,32 +27,42 @@ function altLanguages(path: string): Record<string, string> {
   };
 }
 
+// Phase 97 — tier-aware priority/changefreq.
+function tierOf(slug: string): 1 | 2 | 3 {
+  if (TIER_1_CATEGORIES.includes(slug)) return 1;
+  if (TIER_2_CATEGORIES.includes(slug)) return 2;
+  return 3;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const cats = (await getCategories()) || [];
   const workers = unwrap(await getWorkers({ limit: '100' })).slice(0, 100);
   const jobs = unwrap(await getJobs({ limit: '100' })).slice(0, 100);
 
-  // Phase 91: emit one entry per canonical TR URL with `alternates.languages`
-  // map pointing to EN/AZ/x-default. Search engines now resolve all locale
-  // variants from a single sitemap entry (xhtml:link rel="alternate" hreflang).
+  // Phase 91: hreflang alternates per entry.
+  // Phase 97: priority + changeFrequency + dynamic lastModified per tier.
   const urls: MetadataRoute.Sitemap = [];
 
   urls.push({
     url: `${SITE}/`,
     lastModified: now,
     changeFrequency: 'daily',
-    priority: 1,
+    priority: 1.0,
     alternates: { languages: altLanguages('/') },
   });
 
   for (const c of cats) {
     const slug = slugify(c.name);
+    const tier = tierOf(slug);
+    const catPriority = tier === 1 ? 0.9 : tier === 2 ? 0.8 : 0.8;
+    const cityPriority = tier === 1 ? 0.7 : 0.6;
+
     urls.push({
       url: `${SITE}/${slug}`,
       lastModified: now,
       changeFrequency: 'weekly',
-      priority: 0.9,
+      priority: catPriority,
       alternates: { languages: altLanguages(`/${slug}`) },
     });
     for (const city of TR_CITIES) {
@@ -59,7 +71,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${SITE}/${slug}/${citySlug}`,
         lastModified: now,
         changeFrequency: 'weekly',
-        priority: 0.7,
+        priority: cityPriority,
         alternates: { languages: altLanguages(`/${slug}/${citySlug}`) },
       });
     }
@@ -67,20 +79,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const w of workers) {
     const path = `/usta/${slugify(w.fullName || 'usta')}-${w.id}`;
+    const wAny = w as unknown as { lastSeenAt?: string; updatedAt?: string };
+    const lm = wAny.lastSeenAt || wAny.updatedAt;
     urls.push({
       url: `${SITE}${path}`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.6,
+      lastModified: lm ? new Date(lm) : now,
+      changeFrequency: 'monthly',
+      priority: 0.5,
       alternates: { languages: altLanguages(path) },
     });
   }
 
   for (const j of jobs) {
     const path = `/ilan/${slugify(j.title || 'ilan')}-${j.id}`;
+    const jAny = j as unknown as { updatedAt?: string; createdAt?: string };
+    const lm = jAny.updatedAt || jAny.createdAt;
     urls.push({
       url: `${SITE}${path}`,
-      lastModified: j.createdAt ? new Date(j.createdAt) : now,
+      lastModified: lm ? new Date(lm) : now,
       changeFrequency: 'weekly',
       priority: 0.5,
       alternates: { languages: altLanguages(path) },

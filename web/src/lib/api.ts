@@ -1,6 +1,27 @@
 // API wrapper for public web — server-side fetch with ISR caching
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+// Phase 97 — Sitemap tier classification (priority/changefreq tuning).
+// Tier 1 = highest commercial intent (priority 0.9 cat / 0.7 cat-city).
+// Tier 2 = moderate (0.8 / 0.6). Anything else falls back to default.
+export const TIER_1_CATEGORIES = [
+  'temizlik',
+  'tesisat',
+  'elektrikci',
+  'klima-isitma',
+  'mobilya-montaj',
+];
+export const TIER_2_CATEGORIES = [
+  'boya-badana',
+  'nakliyat',
+  'bahce-peyzaj',
+  'cilingir-kilit',
+  'haserekontrolu',
+  'cati-yalitim',
+  'zemin-parke',
+  'marangoz-ahsap',
+];
+
 type FetchOpts = { revalidate?: number; cache?: RequestCache };
 
 async function api<T>(path: string, opts: FetchOpts = {}): Promise<T | null> {
