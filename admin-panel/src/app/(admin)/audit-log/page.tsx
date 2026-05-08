@@ -72,6 +72,50 @@ export default function AuditLogPage() {
   const [stats, setStats] = useState<AuditLogStats | null>(null);
   const [statsDays, setStatsDays] = useState(30);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [purgeOpen, setPurgeOpen] = useState(false);
+  const [purgeDays, setPurgeDays] = useState(90);
+  const [purgePreview, setPurgePreview] = useState<{ wouldDelete: number; cutoffDate: string } | null>(null);
+  const [purgeLoading, setPurgeLoading] = useState(false);
+  const [purgeError, setPurgeError] = useState<string | null>(null);
+  const [refetchTick, setRefetchTick] = useState(0);
+
+  function openPurgeModal() {
+    setPurgeOpen(true);
+    setPurgeDays(90);
+    setPurgePreview(null);
+    setPurgeError(null);
+  }
+
+  async function handlePreview() {
+    setPurgeLoading(true);
+    setPurgeError(null);
+    setPurgePreview(null);
+    try {
+      const res = await api.previewAuditLogPurge(purgeDays);
+      setPurgePreview({ wouldDelete: res.wouldDelete, cutoffDate: res.cutoffDate });
+    } catch (e) {
+      setPurgeError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPurgeLoading(false);
+    }
+  }
+
+  async function handlePurge() {
+    if (!purgePreview) return;
+    if (!window.confirm(`${purgePreview.wouldDelete} kayıt KALICI silinecek, emin misin?`)) return;
+    setPurgeLoading(true);
+    setPurgeError(null);
+    try {
+      const res = await api.purgeAuditLog(purgeDays);
+      alert(`${res.deleted} kayıt silindi`);
+      setPurgeOpen(false);
+      setRefetchTick((t) => t + 1);
+    } catch (e) {
+      setPurgeError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPurgeLoading(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -90,7 +134,7 @@ export default function AuditLogPage() {
     return () => {
       cancelled = true;
     };
-  }, [statsDays]);
+  }, [statsDays, refetchTick]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -129,7 +173,7 @@ export default function AuditLogPage() {
     return () => {
       cancelled = true;
     };
-  }, [offset, actionFilter, targetTypeFilter, adminIdFilter]);
+  }, [offset, actionFilter, targetTypeFilter, adminIdFilter, refetchTick]);
 
   const page = Math.floor(offset / LIMIT) + 1;
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
@@ -178,6 +222,14 @@ export default function AuditLogPage() {
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">İstatistikler</h2>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={openPurgeModal}
+              className="px-3 py-1 text-xs rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+            >
+              🗑️ Eski Kayıtları Temizle
+            </button>
           <div className="flex gap-1">
             {[7, 30, 90].map((d) => (
               <button
@@ -193,6 +245,7 @@ export default function AuditLogPage() {
                 Son {d} gün
               </button>
             ))}
+          </div>
           </div>
         </div>
 
@@ -548,6 +601,87 @@ export default function AuditLogPage() {
           </button>
         </div>
       </div>
+
+      {purgeOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => !purgeLoading && setPurgeOpen(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-2">Eski Kayıtları Temizle</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Belirtilen günden eski denetim kayıtlarını kalıcı olarak siler.
+            </p>
+
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Şundan eski (gün)
+            </label>
+            <input
+              type="number"
+              min={30}
+              max={365}
+              value={purgeDays}
+              onChange={(e) => {
+                setPurgeDays(Number(e.target.value));
+                setPurgePreview(null);
+              }}
+              disabled={purgeLoading}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mb-3"
+            />
+            <p className="text-xs text-gray-500 mb-4">30 - 365 gün arası</p>
+
+            {purgePreview && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 mb-4 text-sm">
+                <div>
+                  <span className="font-semibold text-amber-900">
+                    {purgePreview.wouldDelete}
+                  </span>{" "}
+                  kayıt silinecek
+                </div>
+                <div className="text-xs text-amber-700 mt-1">
+                  Kesim tarihi: {new Date(purgePreview.cutoffDate).toLocaleString("tr-TR")}
+                </div>
+              </div>
+            )}
+
+            {purgeError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 mb-4 text-sm text-red-700">
+                {purgeError}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPurgeOpen(false)}
+                disabled={purgeLoading}
+                className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+              >
+                İptal
+              </button>
+              <button
+                type="button"
+                onClick={handlePreview}
+                disabled={purgeLoading || purgeDays < 30 || purgeDays > 365}
+                className="px-4 py-2 rounded-lg border border-blue-200 bg-blue-50 text-sm font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-40"
+              >
+                {purgeLoading && !purgePreview ? "Yükleniyor..." : "Önizle"}
+              </button>
+              <button
+                type="button"
+                onClick={handlePurge}
+                disabled={purgeLoading || !purgePreview || purgePreview.wouldDelete === 0}
+                className="px-4 py-2 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {purgeLoading && purgePreview ? "Siliniyor..." : "Sil"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

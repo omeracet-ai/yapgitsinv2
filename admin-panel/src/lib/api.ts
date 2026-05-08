@@ -158,6 +158,15 @@ export const api = {
   },
   auditLogStats: (days?: number) =>
     request<AuditLogStats>(`/admin/audit-log/stats${days ? `?days=${days}` : ''}`),
+  previewAuditLogPurge: (olderThanDays: number) =>
+    request<{ wouldDelete: number; cutoffDate: string; olderThanDays: number }>(
+      `/admin/audit-log/purge-preview?olderThanDays=${olderThanDays}`,
+    ),
+  purgeAuditLog: (olderThanDays: number) =>
+    request<{ deleted: number; cutoffDate: string; olderThanDays: number }>(
+      '/admin/audit-log/purge',
+      { method: 'POST', body: JSON.stringify({ olderThanDays, confirm: true }) },
+    ),
 
   // Promo codes
   promoCodes:       ()                                  => request<PromoCode[]>('/admin/promo-codes'),
