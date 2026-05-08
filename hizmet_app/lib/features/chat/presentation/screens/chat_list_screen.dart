@@ -3,14 +3,37 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../data/chat_repository.dart';
+import '../../data/chat_service.dart';
+import '../../data/presence_provider.dart';
 import 'chat_detail_screen.dart';
 
-class ChatListScreen extends ConsumerWidget {
+class ChatListScreen extends ConsumerStatefulWidget {
   const ChatListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ChatListScreen> createState() => _ChatListScreenState();
+}
+
+class _ChatListScreenState extends ConsumerState<ChatListScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Phase 78: ensure socket is up so presence broadcasts hydrate the map.
+    final chatService = ref.read(chatServiceProvider);
+    try {
+      chatService.connect();
+    } catch (_) {/* may already be connected */}
+    // Touch the provider so it subscribes to presence events.
+    ref.read(presenceProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final asyncConvos = ref.watch(conversationsProvider);
+    // Seed presence from server-side conversation snapshot whenever it arrives.
+    asyncConvos.whenData((convos) {
+      ref.read(presenceProvider.notifier).seedFromConversations(convos);
+    });
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -69,6 +92,10 @@ class ChatListScreen extends ConsumerWidget {
                 final preview = c.lastFromMe
                     ? 'Sen: ${c.lastMessageText}'
                     : c.lastMessageText;
+                // Phase 78: live presence overrides static snapshot.
+                final live = ref.watch(peerPresenceProvider(c.peerId));
+                final online = live?.isOnline ?? c.peerOnline;
+                final lastSeen = live?.lastSeenAt ?? c.peerLastSeenAt;
                 return _buildChatItem(
                   context,
                   name: c.peerName ?? 'Kullanıcı',
@@ -76,6 +103,8 @@ class ChatListScreen extends ConsumerWidget {
                   time: _formatTime(c.lastMessageAt),
                   unreadCount: c.unreadCount,
                   avatarColor: _avatarColor(index),
+                  isOnline: online,
+                  lastSeenLabel: online ? null : formatLastSeen(lastSeen),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -128,6 +157,8 @@ class ChatListScreen extends ConsumerWidget {
     required int unreadCount,
     required Color avatarColor,
     required VoidCallback onTap,
+    bool isOnline = false,
+    String? lastSeenLabel,
   }) {
     final initials = name
         .split(' ')
@@ -142,24 +173,44 @@ class ChatListScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: avatarColor.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-                border: Border.all(
-                    color: avatarColor.withValues(alpha: 0.3), width: 1.5),
-              ),
-              child: Center(
-                child: Text(
-                  initials.isEmpty ? '?' : initials,
-                  style: TextStyle(
-                      color: avatarColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18),
+            Stack(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: avatarColor.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: avatarColor.withValues(alpha: 0.3),
+                        width: 1.5),
+                  ),
+                  child: Center(
+                    child: Text(
+                      initials.isEmpty ? '?' : initials,
+                      style: TextStyle(
+                          color: avatarColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18),
+                    ),
+                  ),
                 ),
-              ),
+                if (isOnline)
+                  Positioned(
+                    right: 2,
+                    bottom: 2,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00C9A7),
+                        shape: BoxShape.circle,
+                        border:
+                            Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -230,6 +281,14 @@ class ChatListScreen extends ConsumerWidget {
                       ],
                     ],
                   ),
+                  if (!isOnline && lastSeenLabel != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      lastSeenLabel,
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textHint),
+                    ),
+                  ],
                 ],
               ),
             ),

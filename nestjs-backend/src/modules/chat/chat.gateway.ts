@@ -12,6 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, IsNull } from 'typeorm';
 import { Server, Socket } from 'socket.io';
 import { ChatMessage } from './chat-message.entity';
+import { User } from '../users/user.entity';
 import { ContentFilterService } from '../moderation/content-filter.service';
 import { UserBlocksService } from '../user-blocks/user-blocks.service';
 import { SystemSettingsService } from '../system-settings/system-settings.service';
@@ -47,20 +48,68 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(ChatGateway.name);
 
+  // Phase 78: in-memory presence tracking (userId → set of socket ids).
+  private readonly userSockets = new Map<string, Set<string>>();
+  private readonly socketUser = new Map<string, string>();
+
   constructor(
     @InjectRepository(ChatMessage)
     private messagesRepo: Repository<ChatMessage>,
+    @InjectRepository(User)
+    private usersRepo: Repository<User>,
     private filter: ContentFilterService,
     private userBlocksService: UserBlocksService,
     private systemSettings: SystemSettingsService,
   ) {}
 
-  handleConnection(client: Socket) {
-    this.logger.log(`Client connected: ${client.id}`);
+  private extractUserId(client: Socket): string | null {
+    const auth = client.handshake.auth as { userId?: string } | undefined;
+    const query = client.handshake.query as { userId?: string } | undefined;
+    return auth?.userId ?? query?.userId ?? null;
   }
 
-  handleDisconnect(client: Socket) {
+  async handleConnection(client: Socket) {
+    this.logger.log(`Client connected: ${client.id}`);
+    const userId = this.extractUserId(client);
+    if (!userId) return;
+    this.socketUser.set(client.id, userId);
+    let set = this.userSockets.get(userId);
+    if (!set) {
+      set = new Set();
+      this.userSockets.set(userId, set);
+    }
+    const wasOffline = set.size === 0;
+    set.add(client.id);
+    if (wasOffline) {
+      await this.usersRepo.update(userId, { isOnline: true });
+      client.broadcast.emit('presence', { userId, isOnline: true });
+    }
+  }
+
+  async handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
+    const userId = this.socketUser.get(client.id);
+    if (!userId) return;
+    this.socketUser.delete(client.id);
+    const set = this.userSockets.get(userId);
+    if (!set) return;
+    set.delete(client.id);
+    if (set.size === 0) {
+      this.userSockets.delete(userId);
+      const lastSeenAt = new Date();
+      await this.usersRepo.update(userId, { isOnline: false, lastSeenAt });
+      this.server.emit('presence', {
+        userId,
+        isOnline: false,
+        lastSeenAt: lastSeenAt.toISOString(),
+      });
+    }
+  }
+
+  /** Phase 78: helper for ChatService — read live presence state. */
+  isUserOnline(userId: string): boolean {
+    const set = this.userSockets.get(userId);
+    return !!set && set.size > 0;
   }
 
   @SubscribeMessage('sendMessage')

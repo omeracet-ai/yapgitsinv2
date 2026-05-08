@@ -13,6 +13,9 @@ class Conversation {
   final DateTime lastMessageAt;
   final bool lastFromMe;
   final int unreadCount;
+  // Phase 78
+  final bool peerOnline;
+  final DateTime? peerLastSeenAt;
 
   Conversation({
     required this.peerId,
@@ -22,10 +25,13 @@ class Conversation {
     required this.lastMessageAt,
     required this.lastFromMe,
     required this.unreadCount,
+    this.peerOnline = false,
+    this.peerLastSeenAt,
   });
 
   factory Conversation.fromJson(Map<String, dynamic> j) {
     final last = Map<String, dynamic>.from(j['lastMessage'] as Map);
+    final lsStr = j['peerLastSeenAt'] as String?;
     return Conversation(
       peerId: j['peerId'] as String,
       peerName: j['peerName'] as String?,
@@ -36,6 +42,29 @@ class Conversation {
               DateTime.now(),
       lastFromMe: (last['fromMe'] as bool?) ?? false,
       unreadCount: (j['unreadCount'] as num?)?.toInt() ?? 0,
+      peerOnline: (j['peerOnline'] as bool?) ?? false,
+      peerLastSeenAt: lsStr != null ? DateTime.tryParse(lsStr) : null,
+    );
+  }
+}
+
+class PresenceState {
+  final String userId;
+  final bool isOnline;
+  final DateTime? lastSeenAt;
+
+  const PresenceState({
+    required this.userId,
+    required this.isOnline,
+    this.lastSeenAt,
+  });
+
+  factory PresenceState.fromJson(Map<String, dynamic> j) {
+    final lsStr = j['lastSeenAt'] as String?;
+    return PresenceState(
+      userId: (j['userId'] as String?) ?? '',
+      isOnline: (j['isOnline'] as bool?) ?? false,
+      lastSeenAt: lsStr != null ? DateTime.tryParse(lsStr) : null,
     );
   }
 }
@@ -49,6 +78,18 @@ class ChatRepository {
           connectTimeout: const Duration(seconds: 5),
           receiveTimeout: const Duration(seconds: 10),
         ));
+
+  /// Phase 78: query single-user presence.
+  Future<PresenceState?> getPresence(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) return null;
+    final res = await _dio.get(
+      '/chat/presence/$userId',
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+    return PresenceState.fromJson(Map<String, dynamic>.from(res.data as Map));
+  }
 
   Future<List<Conversation>> getConversations() async {
     final prefs = await SharedPreferences.getInstance();

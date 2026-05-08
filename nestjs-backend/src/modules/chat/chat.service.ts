@@ -14,6 +14,15 @@ export interface ConversationItem {
     fromMe: boolean;
   };
   unreadCount: number;
+  // Phase 78
+  peerOnline: boolean;
+  peerLastSeenAt: string | null;
+}
+
+export interface PresenceState {
+  userId: string;
+  isOnline: boolean;
+  lastSeenAt: string | null;
 }
 
 @Injectable()
@@ -59,7 +68,13 @@ export class ChatService {
     const peerIds = Array.from(peers.keys());
     const users = await this.usersRepo
       .createQueryBuilder('u')
-      .select(['u.id', 'u.fullName', 'u.profileImageUrl'])
+      .select([
+        'u.id',
+        'u.fullName',
+        'u.profileImageUrl',
+        'u.isOnline',
+        'u.lastSeenAt',
+      ])
       .where('u.id IN (:...ids)', { ids: peerIds })
       .getMany();
     const userMap = new Map(users.map((u) => [u.id, u]));
@@ -77,6 +92,8 @@ export class ChatService {
           fromMe: last.from === userId,
         },
         unreadCount: unread,
+        peerOnline: u?.isOnline ?? false,
+        peerLastSeenAt: u?.lastSeenAt ? u.lastSeenAt.toISOString() : null,
       };
     });
 
@@ -86,5 +103,19 @@ export class ChatService {
         b.lastMessage.createdAt.getTime() - a.lastMessage.createdAt.getTime(),
     );
     return result;
+  }
+
+  /** Phase 78: presence query for a single user. */
+  async getPresence(userId: string): Promise<PresenceState> {
+    const u = await this.usersRepo
+      .createQueryBuilder('u')
+      .select(['u.id', 'u.isOnline', 'u.lastSeenAt'])
+      .where('u.id = :id', { id: userId })
+      .getOne();
+    return {
+      userId,
+      isOnline: u?.isOnline ?? false,
+      lastSeenAt: u?.lastSeenAt ? u.lastSeenAt.toISOString() : null,
+    };
   }
 }

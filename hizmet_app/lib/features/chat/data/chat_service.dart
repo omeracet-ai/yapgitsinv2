@@ -100,6 +100,20 @@ class ChatService {
     });
   }
 
+  /// Phase 78: subscribe to peer presence broadcasts.
+  /// Callback receives (userId, isOnline, lastSeenAt?).
+  void onPresence(
+      Function(String userId, bool isOnline, DateTime? lastSeenAt) callback) {
+    socket.on('presence', (data) {
+      final map = Map<String, dynamic>.from(data as Map);
+      final uid = (map['userId'] as String?) ?? '';
+      final online = (map['isOnline'] as bool?) ?? false;
+      final lsStr = map['lastSeenAt'] as String?;
+      final ls = lsStr != null ? DateTime.tryParse(lsStr) : null;
+      callback(uid, online, ls);
+    });
+  }
+
   void disconnect() {
     socket.disconnect();
   }

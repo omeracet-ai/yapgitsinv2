@@ -217,6 +217,13 @@ export class User {
   @Column({ type: 'simple-json', nullable: true })
   offerTemplates: string[] | null;
 
+  // ── Phase 78 — Online presence + last seen ───────────────────────────────
+  @Column({ type: 'datetime', nullable: true })
+  lastSeenAt: Date | null;
+
+  @Column({ type: 'boolean', default: false })
+  isOnline: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

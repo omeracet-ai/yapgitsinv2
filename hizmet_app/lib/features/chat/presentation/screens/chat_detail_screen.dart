@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/chat_service.dart';
+import '../../data/presence_provider.dart';
 import '../../widgets/chat_message_group.dart';
 import '../../widgets/date_divider.dart';
 import '../../widgets/typing_indicator.dart';
@@ -94,6 +95,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           }
         });
       }
+    });
+    // Phase 78: hydrate presence map for this peer.
+    Future.microtask(() {
+      ref.read(presenceProvider.notifier).ensure(widget.peerId);
     });
     // Phase 77: server-side contact-block notice.
     chatService.onMessageFiltered((reason, detectedTypes) {
@@ -230,6 +235,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final isTyping = ref.watch(chatTypingProvider);
+    final presence = ref.watch(peerPresenceProvider(widget.peerId));
+    final isOnline = presence?.isOnline ?? false;
+    final subtitle = isTyping
+        ? 'yazıyor…'
+        : isOnline
+            ? 'Çevrimiçi'
+            : formatLastSeen(presence?.lastSeenAt);
     final renderItems = _buildRenderItems();
 
     return Scaffold(
@@ -261,20 +273,21 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     ),
                   ),
                 ),
-                Positioned(
-                  right: 1,
-                  bottom: 1,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00C9A7),
-                      shape: BoxShape.circle,
-                      border:
-                          Border.all(color: AppColors.primary, width: 1.5),
+                if (isOnline)
+                  Positioned(
+                    right: 1,
+                    bottom: 1,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00C9A7),
+                        shape: BoxShape.circle,
+                        border:
+                            Border.all(color: AppColors.primary, width: 1.5),
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
             const SizedBox(width: 10),
@@ -286,9 +299,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
-                Text(isTyping ? 'yazıyor…' : 'Çevrimiçi',
-                    style: const TextStyle(
-                        fontSize: 11, color: Color(0xFF00C9A7))),
+                Text(subtitle,
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: isOnline || isTyping
+                            ? const Color(0xFF00C9A7)
+                            : Colors.white.withValues(alpha: 0.75))),
               ],
             ),
           ],
