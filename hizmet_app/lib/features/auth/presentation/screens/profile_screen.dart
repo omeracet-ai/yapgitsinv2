@@ -992,6 +992,9 @@ class ProfileScreen extends ConsumerWidget {
           _menuItem(Icons.notifications_outlined, 'Bildirim Ayarları', () {
             context.push('/bildirim-ayarlari');
           }),
+          _menuItem(Icons.notifications_active_outlined, '🔔 Kategori Abonelikleri', () {
+            context.push('/kategori-abonelikleri');
+          }),
           _menuItem(Icons.attach_money_rounded, '💱 Para Birimi', () {
             CurrencyPickerSheet.show(context);
           }),

@@ -10,6 +10,7 @@ import '../../data/provider_repository.dart';
 import '../../data/recent_searches_storage.dart';
 import '../../data/worker_filter.dart';
 import '../../widgets/worker_filter_sheet.dart';
+import '../../../subscriptions/data/category_subscription_repository.dart';
 import 'provider_profile_screen.dart';
 
 class ProviderListScreen extends ConsumerStatefulWidget {
@@ -357,6 +358,9 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
     return CustomScrollView(
       slivers: [
         if (showRecent) SliverToBoxAdapter(child: _buildRecentSearches()),
+        // Phase 143 — kategori aboneliği toggle
+        if (_activeCategory != null && _activeCategory!.isNotEmpty)
+          SliverToBoxAdapter(child: _buildSubscribeBanner(_activeCategory!)),
         // Sort bar
         SliverToBoxAdapter(
           child: Padding(
@@ -556,6 +560,94 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
           ],
         ),
       );
+
+  // Phase 143 — kategori aboneliği banner: subscribe / unsubscribe toggle
+  Widget _buildSubscribeBanner(String category) {
+    final async = ref.watch(categorySubscriptionsProvider);
+    return async.maybeWhen(
+      orElse: () => const SizedBox.shrink(),
+      data: (subs) {
+        final existing = subs.where((s) =>
+            s.category.toLowerCase() == category.toLowerCase() &&
+            (s.city == null || s.city!.isEmpty)).toList();
+        final isSubscribed = existing.isNotEmpty;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Material(
+            color: isSubscribed ? AppColors.primaryLight : AppColors.accent,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () async {
+                final repo = ref.read(categorySubscriptionRepositoryProvider);
+                try {
+                  if (isSubscribed) {
+                    await repo.unsubscribe(existing.first.id);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Abonelik iptal edildi')),
+                      );
+                    }
+                  } else {
+                    await repo.subscribe(category);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(
+                                '🔔 $category aboneliği oluşturuldu — yeni ilanlar bildirilecek')),
+                      );
+                    }
+                  }
+                  // ignore: unused_result
+                  ref.refresh(categorySubscriptionsProvider);
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('İşlem başarısız: $e')),
+                    );
+                  }
+                }
+              },
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(
+                      isSubscribed
+                          ? Icons.notifications_active
+                          : Icons.notifications_none,
+                      color: isSubscribed ? AppColors.primary : Colors.white,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        isSubscribed
+                            ? '✓ "$category" aboneliği aktif'
+                            : '🔔 "$category" için bu aramaya abone ol',
+                        style: TextStyle(
+                          color:
+                              isSubscribed ? AppColors.primary : Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      isSubscribed ? 'İptal Et' : 'Abone Ol',
+                      style: TextStyle(
+                        color: isSubscribed ? AppColors.primary : Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 enum _SortMode { rating, reviews }
