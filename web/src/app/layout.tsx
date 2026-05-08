@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { jsonLd } from '@/lib/seo';
 import { localBusinessLD } from '@/lib/seo';
 import './globals.css';
@@ -37,9 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-full flex flex-col bg-[var(--muted)]">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        {children}
       </body>
     </html>
   );

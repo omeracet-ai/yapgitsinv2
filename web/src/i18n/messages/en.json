@@ -1,0 +1,57 @@
+{
+  "site": {
+    "title": "Yapgitsin — Turkey's Service Marketplace",
+    "tagline": "Find the right pro, get quotes fast",
+    "hero_title": "Turkey's Trusted Service Platform",
+    "hero_subtitle": "Reach thousands of verified pros for cleaning, repairs, electrical, plumbing and more."
+  },
+  "nav": {
+    "home": "Home",
+    "categories": "Categories",
+    "find_service": "Find a Service",
+    "browse_categories": "Browse Categories",
+    "mobile_app": "Mobile App",
+    "providers": "Job Owner",
+    "contact": "Contact"
+  },
+  "common": {
+    "search": "Search",
+    "loading": "Loading...",
+    "not_found": "Not found",
+    "category_not_found": "Category not found",
+    "job_not_found": "Job not found",
+    "worker_not_found": "Pro not found",
+    "all_turkey": "Turkey",
+    "verified": "Verified",
+    "reviews": "reviews",
+    "completed_jobs": "completed jobs",
+    "tl_per_hour": "TL/hr",
+    "about": "About",
+    "categories_label": "Categories",
+    "rate": "Rate",
+    "hour": "hour",
+    "details": "Job Details",
+    "owner": "Posted by",
+    "no_offers": "Download the Yapgitsin mobile app to send a quote.",
+    "popular_cities": "Popular Cities",
+    "main_categories": "Main Categories",
+    "featured_workers": "Featured Pros",
+    "city_label": "Cities",
+    "providers_for": "Providers",
+    "no_workers_in_category": "No pros listed in this category yet.",
+    "no_workers_in_city": "no pros listed yet."
+  },
+  "lead": {
+    "quick_contact": "Quick Contact",
+    "quick_contact_sub": "Tell us what you need, we'll match you with the right pro.",
+    "category_lead_title": "get a quote",
+    "category_lead_sub": "Describe your needs and we'll get back to you.",
+    "job_lead_title": "Contact us to send a quote",
+    "job_lead_sub": "Leave your info, our team will connect you with the job owner.",
+    "worker_lead_sub": "Leave your info, our team will connect you with the pro shortly."
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "workers": "Pros"
+  }
+}

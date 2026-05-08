@@ -1,0 +1,57 @@
+{
+  "site": {
+    "title": "Yapgitsin — Türkiye'nin Hizmet Marketplace Platformu",
+    "tagline": "İhtiyacın olan ustayı bul, teklif al",
+    "hero_title": "Türkiye'nin Güvenilir Hizmet Platformu",
+    "hero_subtitle": "Temizlik, tadilat, elektrik, tesisat ve daha fazlası için binlerce doğrulanmış ustaya ulaşın."
+  },
+  "nav": {
+    "home": "Ana Sayfa",
+    "categories": "Kategoriler",
+    "find_service": "Hizmet Bul",
+    "browse_categories": "Kategorilere Göz At",
+    "mobile_app": "Mobil App",
+    "providers": "İlan Sahibi",
+    "contact": "İletişime Geç"
+  },
+  "common": {
+    "search": "Ara",
+    "loading": "Yükleniyor...",
+    "not_found": "Bulunamadı",
+    "category_not_found": "Kategori bulunamadı",
+    "job_not_found": "İlan bulunamadı",
+    "worker_not_found": "Usta bulunamadı",
+    "all_turkey": "Türkiye",
+    "verified": "Doğrulanmış",
+    "reviews": "yorum",
+    "completed_jobs": "tamamlanan iş",
+    "tl_per_hour": "TL/sa",
+    "about": "Hakkında",
+    "categories_label": "Kategoriler",
+    "rate": "Ücret",
+    "hour": "saat",
+    "details": "İş Detayları",
+    "owner": "İlan Sahibi",
+    "no_offers": "Teklif vermek için Yapgitsin mobil uygulamasını indirin.",
+    "popular_cities": "Popüler Şehirler",
+    "main_categories": "Ana Kategoriler",
+    "featured_workers": "Öne Çıkan Ustalar",
+    "city_label": "Şehirler",
+    "providers_for": "Sağlayıcıları",
+    "no_workers_in_category": "Henüz bu kategoride listelenmiş usta yok.",
+    "no_workers_in_city": "için henüz ustası listelenmemiş."
+  },
+  "lead": {
+    "quick_contact": "Hızlı İletişim",
+    "quick_contact_sub": "Aradığınız hizmeti yazın, doğru ustayla biz sizi buluşturalım.",
+    "category_lead_title": "için teklif al",
+    "category_lead_sub": "İhtiyacınızı yazın, dönüş alalım.",
+    "job_lead_title": "Bu işe teklif vermek için iletişime geçin",
+    "job_lead_sub": "Bilgilerinizi bırakın, ekibimiz sizi ilan sahibiyle buluştursun.",
+    "worker_lead_sub": "Bilgilerinizi bırakın, ekibimiz sizi en kısa sürede ustayla buluştursun."
+  },
+  "breadcrumb": {
+    "home": "Anasayfa",
+    "workers": "Ustalar"
+  }
+}

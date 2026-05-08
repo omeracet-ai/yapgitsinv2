@@ -1,0 +1,57 @@
+{
+  "site": {
+    "title": "Yapgitsin — Xidmət Platforması",
+    "tagline": "Lazımi ustanı tap, təklif al",
+    "hero_title": "Etibarlı Xidmət Platforması",
+    "hero_subtitle": "Təmizlik, təmir, elektrik, santexnika və daha çox üçün minlərlə təsdiqlənmiş ustaya çatın."
+  },
+  "nav": {
+    "home": "Ana Səhifə",
+    "categories": "Kateqoriyalar",
+    "find_service": "Xidmət Tap",
+    "browse_categories": "Kateqoriyalara Bax",
+    "mobile_app": "Mobil Tətbiq",
+    "providers": "Elan Sahibi",
+    "contact": "Əlaqə"
+  },
+  "common": {
+    "search": "Axtar",
+    "loading": "Yüklənir...",
+    "not_found": "Tapılmadı",
+    "category_not_found": "Kateqoriya tapılmadı",
+    "job_not_found": "Elan tapılmadı",
+    "worker_not_found": "Usta tapılmadı",
+    "all_turkey": "Türkiyə",
+    "verified": "Təsdiqlənmiş",
+    "reviews": "rəy",
+    "completed_jobs": "tamamlanmış iş",
+    "tl_per_hour": "TL/saat",
+    "about": "Haqqında",
+    "categories_label": "Kateqoriyalar",
+    "rate": "Qiymət",
+    "hour": "saat",
+    "details": "İş Təfərrüatları",
+    "owner": "Elan Sahibi",
+    "no_offers": "Təklif vermək üçün Yapgitsin mobil tətbiqini yükləyin.",
+    "popular_cities": "Populyar Şəhərlər",
+    "main_categories": "Əsas Kateqoriyalar",
+    "featured_workers": "Seçilmiş Ustalar",
+    "city_label": "Şəhərlər",
+    "providers_for": "Provayderlər",
+    "no_workers_in_category": "Bu kateqoriyada hələ usta yoxdur.",
+    "no_workers_in_city": "üçün hələ usta siyahıda yoxdur."
+  },
+  "lead": {
+    "quick_contact": "Sürətli Əlaqə",
+    "quick_contact_sub": "Lazımi xidməti yazın, sizi düzgün usta ilə əlaqələndirək.",
+    "category_lead_title": "təklif al",
+    "category_lead_sub": "Ehtiyacınızı yazın, sizə qayıdaq.",
+    "job_lead_title": "Bu işə təklif vermək üçün əlaqə saxlayın",
+    "job_lead_sub": "Məlumatlarınızı buraxın, komandamız sizi elan sahibi ilə əlaqələndirsin.",
+    "worker_lead_sub": "Məlumatlarınızı buraxın, komandamız sizi ən qısa zamanda ustayla əlaqələndirsin."
+  },
+  "breadcrumb": {
+    "home": "Ana səhifə",
+    "workers": "Ustalar"
+  }
+}
