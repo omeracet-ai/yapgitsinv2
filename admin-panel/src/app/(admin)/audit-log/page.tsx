@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api, type AuditLog } from "@/lib/api";
+import { api, type AuditLog, type AuditLogStats } from "@/lib/api";
 
 const LIMIT = 50;
 
@@ -69,6 +69,28 @@ export default function AuditLogPage() {
   const [targetTypeFilter, setTargetTypeFilter] = useState("");
   const [adminIdFilter, setAdminIdFilter] = useState("");
   const [selected, setSelected] = useState<AuditLog | null>(null);
+  const [stats, setStats] = useState<AuditLogStats | null>(null);
+  const [statsDays, setStatsDays] = useState(30);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setStatsLoading(true);
+    api
+      .auditLogStats(statsDays)
+      .then((s) => {
+        if (!cancelled) setStats(s);
+      })
+      .catch(() => {
+        if (!cancelled) setStats(null);
+      })
+      .finally(() => {
+        if (!cancelled) setStatsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [statsDays]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -152,6 +174,174 @@ export default function AuditLogPage() {
       <p className="text-sm text-gray-500 mb-6">
         Admin tarafından yapılan tüm önemli aksiyonların kaydı
       </p>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">İstatistikler</h2>
+          <div className="flex gap-1">
+            {[7, 30, 90].map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => setStatsDays(d)}
+                className={`px-3 py-1 text-xs rounded-lg border ${
+                  statsDays === d
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                Son {d} gün
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {statsLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse h-20 bg-gray-100 rounded-lg"
+              />
+            ))}
+          </div>
+        ) : !stats ? (
+          <div className="text-sm text-gray-500">İstatistik yüklenemedi</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+              <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                  Toplam Giriş
+                </div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {stats.totalEntries}
+                </div>
+              </div>
+              <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                  En Sık Aksiyon
+                </div>
+                <div className="text-sm font-mono font-semibold text-blue-700 truncate">
+                  {stats.topActions[0]?.action ?? "—"}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {stats.topActions[0]?.count ?? 0} kayıt
+                </div>
+              </div>
+              <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                  En Aktif Admin
+                </div>
+                <div className="text-sm font-semibold text-gray-900 truncate">
+                  {stats.topAdmins[0]?.adminName ?? "—"}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {stats.topAdmins[0]?.count ?? 0} aksiyon
+                </div>
+              </div>
+              <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                  En Çok Hedef
+                </div>
+                <div className="text-sm font-semibold text-gray-900 truncate">
+                  {stats.topTargetTypes[0]?.targetType ?? "—"}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {stats.topTargetTypes[0]?.count ?? 0} kayıt
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div>
+                <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">
+                  Top 5 Aksiyon
+                </div>
+                <ul className="space-y-1">
+                  {stats.topActions.slice(0, 5).map((a) => (
+                    <li
+                      key={a.action}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <span className="font-mono text-xs text-gray-700 truncate">
+                        {a.action}
+                      </span>
+                      <span className="ml-2 px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-semibold">
+                        {a.count}
+                      </span>
+                    </li>
+                  ))}
+                  {stats.topActions.length === 0 && (
+                    <li className="text-xs text-gray-400">Veri yok</li>
+                  )}
+                </ul>
+              </div>
+
+              <div>
+                <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">
+                  Top 5 Admin
+                </div>
+                <ul className="space-y-1">
+                  {stats.topAdmins.slice(0, 5).map((a) => (
+                    <li
+                      key={a.adminUserId}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <span className="text-gray-700 truncate">
+                        {a.adminName}
+                      </span>
+                      <span className="ml-2 px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-xs font-semibold">
+                        {a.count}
+                      </span>
+                    </li>
+                  ))}
+                  {stats.topAdmins.length === 0 && (
+                    <li className="text-xs text-gray-400">Veri yok</li>
+                  )}
+                </ul>
+              </div>
+
+              <div>
+                <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">
+                  Günlük Aktivite
+                </div>
+                {stats.entriesPerDay.length === 0 ? (
+                  <div className="text-xs text-gray-400">Veri yok</div>
+                ) : (
+                  (() => {
+                    const max = Math.max(
+                      1,
+                      ...stats.entriesPerDay.map((d) => d.count),
+                    );
+                    return (
+                      <div className="flex items-end gap-0.5 h-20">
+                        {stats.entriesPerDay.map((d) => (
+                          <div
+                            key={d.date}
+                            title={`${d.date}: ${d.count}`}
+                            className="flex-1 bg-blue-500 hover:bg-blue-600 rounded-t min-w-[2px]"
+                            style={{
+                              height: `${Math.max(2, (d.count / max) * 100)}%`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    );
+                  })()
+                )}
+                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                  <span>{stats.entriesPerDay[0]?.date ?? ""}</span>
+                  <span>
+                    {stats.entriesPerDay[stats.entriesPerDay.length - 1]
+                      ?.date ?? ""}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
       <div className="flex flex-wrap gap-2 mb-4 items-center">
         <select

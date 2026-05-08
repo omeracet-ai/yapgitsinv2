@@ -151,6 +151,8 @@ export const api = {
     if (!res.ok) throw new Error(`Export ${res.status}: ${await res.text().catch(() => res.statusText)}`);
     return res.blob();
   },
+  auditLogStats: (days?: number) =>
+    request<AuditLogStats>(`/admin/audit-log/stats${days ? `?days=${days}` : ''}`),
 
   // Promo codes
   promoCodes:       ()                                  => request<PromoCode[]>('/admin/promo-codes'),
@@ -176,6 +178,14 @@ export interface AuditLogResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+export interface AuditLogStats {
+  totalEntries: number;
+  entriesPerDay: { date: string; count: number }[];
+  topActions: { action: string; count: number }[];
+  topAdmins: { adminUserId: string; adminName: string; count: number }[];
+  topTargetTypes: { targetType: string; count: number }[];
 }
 
 export interface AdminUser {
