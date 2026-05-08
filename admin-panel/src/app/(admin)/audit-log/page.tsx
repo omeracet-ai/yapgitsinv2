@@ -8,12 +8,31 @@ const LIMIT = 50;
 const ACTIONS = [
   "job.featured",
   "user.verify",
+  "user.badges",
+  "user.skills",
   "service_request.featured",
   "provider.featured",
+  "provider.verify",
+  "category.update",
+  "promo.create",
+  "promo.update",
+  "promo.delete",
+  "moderation.chat.delete",
+  "moderation.question.delete",
   "report.update",
 ];
 
-const TARGET_TYPES = ["job", "user", "service_request", "provider", "report"];
+const TARGET_TYPES = [
+  "job",
+  "user",
+  "service_request",
+  "provider",
+  "category",
+  "promo_code",
+  "chat_message",
+  "job_question",
+  "report",
+];
 
 function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n - 1) + "…" : s;

@@ -132,8 +132,14 @@ export class AdminController {
   }
 
   @Patch('categories/:id')
-  updateCategory(@Param('id') id: string, @Body() body: Partial<Category>) {
-    return this.categoriesService.update(id, body);
+  async updateCategory(
+    @Param('id') id: string,
+    @Body() body: Partial<Category>,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.categoriesService.update(id, body);
+    await this.adminAuditService.logAction(req.user.id, 'category.update', 'category', id, body as unknown as Record<string, unknown>);
+    return result;
   }
 
   @Get('providers')
@@ -142,11 +148,14 @@ export class AdminController {
   }
 
   @Patch('providers/:id/verify')
-  verifyProvider(
+  async verifyProvider(
     @Param('id') id: string,
     @Body() body: { isVerified: boolean },
+    @Req() req: Request & { user: AuthUser },
   ) {
-    return this.providersService.setVerified(id, body.isVerified);
+    const result = await this.providersService.setVerified(id, body.isVerified);
+    await this.adminAuditService.logAction(req.user.id, 'provider.verify', 'provider', id, body as unknown as Record<string, unknown>);
+    return result;
   }
 
   @Patch('providers/:id/featured')
@@ -162,20 +171,26 @@ export class AdminController {
 
   /** Set Airtasker-style manual badges on a tasker (user-level). */
   @Patch('users/:id/badges')
-  setUserBadges(
+  async setUserBadges(
     @Param('id') id: string,
     @Body() body: { badges: string[] },
+    @Req() req: Request & { user: AuthUser },
   ) {
-    return this.adminService.setUserBadges(id, body.badges);
+    const result = await this.adminService.setUserBadges(id, body.badges);
+    await this.adminAuditService.logAction(req.user.id, 'user.badges', 'user', id, body as unknown as Record<string, unknown>);
+    return result;
   }
 
   /** Set tasker skills (granular tags beyond workerCategories). */
   @Patch('users/:id/skills')
-  setUserSkills(
+  async setUserSkills(
     @Param('id') id: string,
     @Body() body: { skills: string[] },
+    @Req() req: Request & { user: AuthUser },
   ) {
-    return this.adminService.setUserSkills(id, body.skills);
+    const result = await this.adminService.setUserSkills(id, body.skills);
+    await this.adminAuditService.logAction(req.user.id, 'user.skills', 'user', id, body as unknown as Record<string, unknown>);
+    return result;
   }
 
   // ── Promo Codes ────────────────────────────────────────────────────────────
@@ -185,21 +200,35 @@ export class AdminController {
   }
 
   @Post('promo-codes')
-  createPromoCode(@Body() dto: Parameters<AdminService['createPromoCode']>[0]) {
-    return this.adminService.createPromoCode(dto);
+  async createPromoCode(
+    @Body() dto: Parameters<AdminService['createPromoCode']>[0],
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.adminService.createPromoCode(dto);
+    const created = result as unknown as { id?: string };
+    await this.adminAuditService.logAction(req.user.id, 'promo.create', 'promo_code', created?.id ?? '', dto as unknown as Record<string, unknown>);
+    return result;
   }
 
   @Patch('promo-codes/:id')
-  updatePromoCode(
+  async updatePromoCode(
     @Param('id') id: string,
     @Body() dto: Parameters<AdminService['updatePromoCode']>[1],
+    @Req() req: Request & { user: AuthUser },
   ) {
-    return this.adminService.updatePromoCode(id, dto);
+    const result = await this.adminService.updatePromoCode(id, dto);
+    await this.adminAuditService.logAction(req.user.id, 'promo.update', 'promo_code', id, dto as unknown as Record<string, unknown>);
+    return result;
   }
 
   @Delete('promo-codes/:id')
-  deletePromoCode(@Param('id') id: string) {
-    return this.adminService.deletePromoCode(id);
+  async deletePromoCode(
+    @Param('id') id: string,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.adminService.deletePromoCode(id);
+    await this.adminAuditService.logAction(req.user.id, 'promo.delete', 'promo_code', id);
+    return result;
   }
 
   // ── Moderation ─────────────────────────────────────────────────────────────
@@ -209,13 +238,23 @@ export class AdminController {
   }
 
   @Delete('moderation/chat/:id')
-  clearFlaggedChat(@Param('id') id: string) {
-    return this.adminService.clearFlaggedChat(id);
+  async clearFlaggedChat(
+    @Param('id') id: string,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.adminService.clearFlaggedChat(id);
+    await this.adminAuditService.logAction(req.user.id, 'moderation.chat.delete', 'chat_message', id);
+    return result;
   }
 
   @Delete('moderation/question/:id')
-  clearFlaggedQuestion(@Param('id') id: string) {
-    return this.adminService.clearFlaggedQuestion(id);
+  async clearFlaggedQuestion(
+    @Param('id') id: string,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.adminService.clearFlaggedQuestion(id);
+    await this.adminAuditService.logAction(req.user.id, 'moderation.question.delete', 'job_question', id);
+    return result;
   }
 
   // ── User Reports ───────────────────────────────────────────────────────────
