@@ -87,6 +87,12 @@ import { LeadsModule } from './modules/leads/leads.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const dbType = configService.get<string>('DB_TYPE') || 'postgres';
+        const isProd = process.env.NODE_ENV === 'production';
+        // In prod: synchronize OFF, run pending migrations on boot.
+        // In dev: keep current synchronize behavior (auto schema from entities).
+        const synchronize = !isProd;
+        const migrationsRun = isProd;
+        const migrations = [`${__dirname}/migrations/*{.js,.ts}`];
         const entities = [
           User,
           Job,
@@ -128,7 +134,9 @@ import { LeadsModule } from './modules/leads/leads.module';
             type: 'sqlite' as const,
             database: 'hizmet_db.sqlite',
             entities,
-            synchronize: true,
+            migrations,
+            synchronize,
+            migrationsRun,
           };
         }
         if (dbType === 'mysql') {
@@ -141,7 +149,9 @@ import { LeadsModule } from './modules/leads/leads.module';
             database: configService.get<string>('DB_NAME') || configService.get<string>('DB_DATABASE'),
             charset: 'utf8mb4_unicode_ci',
             entities,
-            synchronize: configService.get<string>('DB_SYNCHRONIZE') !== 'false',
+            migrations,
+            synchronize: isProd ? false : configService.get<string>('DB_SYNCHRONIZE') !== 'false',
+            migrationsRun,
           };
         }
         return {
@@ -152,7 +162,9 @@ import { LeadsModule } from './modules/leads/leads.module';
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_DATABASE') || configService.get<string>('DB_NAME'),
           entities,
-          synchronize: true,
+          migrations,
+          synchronize,
+          migrationsRun,
         };
       },
       inject: [ConfigService],
