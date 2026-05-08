@@ -64,6 +64,29 @@ class AiRepository {
     return Options(headers: {'Authorization': 'Bearer $token'});
   }
 
+  /// Generates a job description only (lighter than jobAssistant).
+  /// Backend: POST /ai/generate-job-description → { description }
+  Future<String> generateDescription({
+    required String title,
+    String? category,
+    String? location,
+  }) async {
+    try {
+      final resp = await _dio.post(
+        '/ai/generate-job-description',
+        data: {
+          'title': title,
+          if (category != null) 'category': category,
+          if (location != null) 'location': location,
+        },
+        options: await _authOptions(),
+      );
+      return (resp.data as Map<String, dynamic>)['description'] as String? ?? '';
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'AI açıklama üretemedi');
+    }
+  }
+
   /// İlan Asistanı: generates job description + budget suggestion
   Future<JobAssistantResult> jobAssistant({
     required String title,

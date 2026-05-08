@@ -47,6 +47,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   List<String> _uploadedVideoUrls = [];
   bool _uploading = false;
   bool _aiLoading = false;
+  bool _aiDescLoading = false;
 
   // Draft autosave
   final JobDraftStorage _draftStorage = JobDraftStorage();
@@ -564,6 +565,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       children: [
         TextFormField(
           controller: _titleController,
+          onChanged: (_) => setState(() {}),
           decoration: const InputDecoration(
               labelText: 'İş Başlığı',
               hintText: 'Örn: 3+1 Daire Boyatma'),
@@ -576,7 +578,25 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           decoration: const InputDecoration(labelText: 'Açıklama'),
           validator: (v) => v?.isEmpty ?? true ? 'Boş bırakılamaz' : null,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: (_aiDescLoading || _titleController.text.trim().isEmpty)
+                ? null
+                : _suggestDescription,
+            style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+            icon: _aiDescLoading
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                  )
+                : const Icon(Icons.auto_awesome, size: 16),
+            label: Text(_aiDescLoading ? 'Üretiliyor…' : '✨ AI ile Öner'),
+          ),
+        ),
+        const SizedBox(height: 6),
         OutlinedButton.icon(
           onPressed: _aiLoading ? null : _fillWithAI,
           style: OutlinedButton.styleFrom(
@@ -654,6 +674,63 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       }
     } finally {
       if (mounted) setState(() => _aiLoading = false);
+    }
+  }
+
+  Future<void> _suggestDescription() async {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) return;
+
+    // If existing description has content, ask before overwriting.
+    if (_descController.text.trim().isNotEmpty) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Mevcut açıklamayı değiştir?'),
+          content: const Text(
+              'Yazdığınız açıklama AI önerisi ile değiştirilecek. Devam etmek istiyor musunuz?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Vazgeç'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              child: const Text('Değiştir'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+
+    setState(() => _aiDescLoading = true);
+    try {
+      final desc = await ref.read(aiRepositoryProvider).generateDescription(
+            title: title,
+            category: _selectedCategory,
+            location: _locationController.text.isEmpty ? null : _locationController.text,
+          );
+      if (!mounted) return;
+      if (desc.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('AI bir öneri üretemedi, tekrar deneyin')),
+        );
+        return;
+      }
+      setState(() => _descController.text = desc);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _aiDescLoading = false);
     }
   }
 
