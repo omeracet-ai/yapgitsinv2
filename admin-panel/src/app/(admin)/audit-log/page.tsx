@@ -219,7 +219,7 @@ export default function AuditLogPage() {
         Admin tarafından yapılan tüm önemli aksiyonların kaydı
       </p>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">İstatistikler</h2>
           <div className="flex items-center gap-2">
@@ -457,7 +457,7 @@ export default function AuditLogPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-6 space-y-3">
             {Array.from({ length: 6 }).map((_, i) => (

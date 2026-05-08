@@ -50,7 +50,7 @@ export default function BroadcastPage() {
         Seçilen segmentteki tüm kullanıcılara push bildirim gönder.
       </p>
 
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-6 space-y-5">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-5">
         {/* Başlık */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
@@ -65,7 +65,7 @@ export default function BroadcastPage() {
             maxLength={TITLE_MAX}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Örn: Yeni özellik yayında!"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={loading}
           />
         </div>
@@ -84,7 +84,7 @@ export default function BroadcastPage() {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Duyuru mesajı..."
             rows={5}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
             disabled={loading}
           />
         </div>
@@ -101,7 +101,7 @@ export default function BroadcastPage() {
                   type="button"
                   onClick={() => setSegment(s.value)}
                   disabled={loading}
-                  className={`px-3 py-2 rounded-md text-sm font-medium border transition-colors text-left ${
+                  className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors text-left ${
                     active
                       ? "bg-blue-50 border-blue-500 text-blue-700"
                       : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -120,7 +120,7 @@ export default function BroadcastPage() {
         {/* Toast */}
         {toast && (
           <div
-            className={`rounded-md px-3 py-2 text-sm ${
+            className={`rounded-lg px-3 py-2 text-sm ${
               toast.kind === "success"
                 ? "bg-green-50 text-green-700 border border-green-200"
                 : "bg-red-50 text-red-700 border border-red-200"
@@ -136,7 +136,7 @@ export default function BroadcastPage() {
             type="button"
             onClick={handleSend}
             disabled={!canSubmit}
-            className="px-5 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? "Gönderiliyor..." : "Gönder"}
           </button>
