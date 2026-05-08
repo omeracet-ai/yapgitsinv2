@@ -37,7 +37,25 @@ async function uploadFile<T>(path: string, formData: FormData): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export interface HealthStatus {
+  status: 'ok' | 'degraded' | 'down' | string;
+  uptime: number;
+  version: string;
+  database: { connected: boolean; latencyMs: number };
+  env: string;
+  timestamp: string;
+}
+
+async function requestNoAuth<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
 export const api = {
+  // Health (no auth)
+  getHealth: () => requestNoAuth<HealthStatus>('/health'),
+
   // Auth
   adminLogin: (username: string, password: string) =>
     request<{ access_token: string; user: AdminUser }>('/auth/admin/login', {
