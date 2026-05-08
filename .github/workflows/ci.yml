@@ -1,0 +1,45 @@
+name: CI
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'nestjs-backend/package-lock.json' }
+      - run: cd nestjs-backend && npm ci
+      - run: cd nestjs-backend && npx tsc --noEmit
+      - run: cd nestjs-backend && npm run build
+
+  admin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'admin-panel/package-lock.json' }
+      - run: cd admin-panel && npm ci
+      - run: cd admin-panel && npx tsc --noEmit
+      - run: cd admin-panel && npm run build
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'web/package-lock.json' }
+      - run: cd web && npm ci
+      - run: cd web && npm run build
+
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: 'stable' }
+      - run: cd hizmet_app && flutter pub get
+      - run: cd hizmet_app && flutter analyze lib/
