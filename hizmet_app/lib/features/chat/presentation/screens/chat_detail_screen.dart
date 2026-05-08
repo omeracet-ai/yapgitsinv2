@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/chat_service.dart';
+import '../../widgets/chat_message_group.dart';
+import '../../widgets/date_divider.dart';
+import '../../widgets/typing_indicator.dart';
+
+/// Phase 66: scaffold provider for peer-typing state.
+/// Phase 67 will wire WebSocket "typing" events to this.
+final chatTypingProvider = StateProvider<bool>((ref) => false);
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
   final String peerName;
@@ -30,7 +37,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     chatService.onMessageReceived((data) {
       if (mounted) {
         setState(() {
-          _messages.add(data);
+          _messages.add({
+            'from': data['from'],
+            'message': data['message'],
+            'timestamp': DateTime.now(),
+          });
         });
         _scrollToBottom();
       }
@@ -54,15 +65,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     final chatService = ref.read(chatServiceProvider);
     chatService.sendMessage(widget.peerId, 'me', _messageController.text);
-    
-    // For demo purposes, we also add our own message to the list
+
     setState(() {
       _messages.add({
         'from': 'me',
         'message': _messageController.text,
+        'timestamp': DateTime.now(),
       });
     });
-    
+
     _messageController.clear();
     _scrollToBottom();
   }
@@ -74,8 +85,64 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     super.dispose();
   }
 
+  /// Computes per-message rendering flags by walking the list once.
+  /// Decides: dateDivider before message, showAvatar, showTime,
+  /// isFirstInGroup, isLastInGroup.
+  List<_RenderItem> _buildRenderItems() {
+    final items = <_RenderItem>[];
+    for (var i = 0; i < _messages.length; i++) {
+      final msg = _messages[i];
+      final ts = msg['timestamp'] as DateTime? ?? DateTime.now();
+      final from = msg['from'] as String? ?? '';
+
+      final prev = i > 0 ? _messages[i - 1] : null;
+      final next = i < _messages.length - 1 ? _messages[i + 1] : null;
+
+      final prevTs = prev?['timestamp'] as DateTime?;
+      final nextTs = next?['timestamp'] as DateTime?;
+      final prevFrom = prev?['from'] as String?;
+      final nextFrom = next?['from'] as String?;
+
+      // Date divider when 1+ hour gap or no previous message
+      final showDivider = prevTs == null ||
+          ts.difference(prevTs).inMinutes >= 60;
+
+      // First-in-group: previous from different sender or 1+ minute gap
+      final isFirstInGroup = prevFrom != from ||
+          prevTs == null ||
+          ts.difference(prevTs).inMinutes >= 1;
+
+      // Last-in-group: next from different sender or 1+ minute gap
+      final isLastInGroup = nextFrom != from ||
+          nextTs == null ||
+          nextTs.difference(ts).inMinutes >= 1;
+
+      // Avatar only on first message of a same-sender group (peer side only)
+      final showAvatar = isFirstInGroup;
+
+      // Timestamp shown on last message of a same-minute group
+      final showTime = isLastInGroup;
+
+      items.add(_RenderItem(
+        index: i,
+        message: msg['message'] as String? ?? '',
+        from: from,
+        timestamp: ts,
+        showDivider: showDivider,
+        showAvatar: showAvatar,
+        showTime: showTime,
+        isFirstInGroup: isFirstInGroup,
+        isLastInGroup: isLastInGroup,
+      ));
+    }
+    return items;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isTyping = ref.watch(chatTypingProvider);
+    final renderItems = _buildRenderItems();
+
     return Scaffold(
       backgroundColor: const Color(0xFFECF0F5),
       appBar: AppBar(
@@ -83,7 +150,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         elevation: 0,
         titleSpacing: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: Colors.white, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
@@ -94,21 +162,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   radius: 20,
                   backgroundColor: Colors.white.withValues(alpha: 0.2),
                   child: Text(
-                    widget.peerName.isNotEmpty ? widget.peerName[0].toUpperCase() : '?',
+                    widget.peerName.isNotEmpty
+                        ? widget.peerName[0].toUpperCase()
+                        : '?',
                     style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
                 Positioned(
-                  right: 1, bottom: 1,
+                  right: 1,
+                  bottom: 1,
                   child: Container(
-                    width: 10, height: 10,
+                    width: 10,
+                    height: 10,
                     decoration: BoxDecoration(
                       color: const Color(0xFF00C9A7),
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primary, width: 1.5),
+                      border:
+                          Border.all(color: AppColors.primary, width: 1.5),
                     ),
                   ),
                 ),
@@ -123,8 +197,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
-                const Text('Çevrimiçi',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF00C9A7))),
+                Text(isTyping ? 'yazıyor…' : 'Çevrimiçi',
+                    style: const TextStyle(
+                        fontSize: 11, color: Color(0xFF00C9A7))),
               ],
             ),
           ],
@@ -140,56 +215,42 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         children: [
           Expanded(
             child: _messages.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: const BoxDecoration(
-                            color: AppColors.primaryLight,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.chat_bubble_outline_rounded,
-                              size: 40, color: AppColors.primary),
-                        ),
-                        const SizedBox(height: 14),
-                        const Text('Henüz mesaj yok',
-                            style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w500)),
-                        const SizedBox(height: 4),
-                        const Text('Merhaba diyerek başlayın!',
-                            style: TextStyle(
-                                color: AppColors.textHint, fontSize: 13)),
-                      ],
-                    ),
-                  )
+                ? _buildEmptyState()
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 16),
-                    itemCount: _messages.length,
+                    itemCount: renderItems.length,
                     itemBuilder: (context, index) {
-                      final msg = _messages[index];
-                      final isMe = msg['from'] == 'me';
-                      final showDate = index == 0;
+                      final item = renderItems[index];
+                      final isMe = item.from == 'me';
                       return Column(
                         children: [
-                          if (showDate)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Text('Bugün',
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey.shade500,
-                                      fontWeight: FontWeight.w500)),
-                            ),
-                          _buildMessageBubble(msg['message'], isMe),
+                          if (item.showDivider)
+                            DateDivider(date: item.timestamp),
+                          ChatMessageBubble(
+                            text: item.message,
+                            isMe: isMe,
+                            showAvatar: !isMe && item.showAvatar,
+                            showTime: item.showTime,
+                            timestamp: item.timestamp,
+                            peerName: widget.peerName,
+                            isFirstInGroup: item.isFirstInGroup,
+                            isLastInGroup: item.isLastInGroup,
+                          ),
                         ],
                       );
                     },
                   ),
+          ),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: isTyping
+                ? TypingIndicator(
+                    key: const ValueKey('typing'),
+                    peerName: widget.peerName,
+                  )
+                : const SizedBox.shrink(key: ValueKey('no-typing')),
           ),
           _buildMessageInput(),
         ],
@@ -197,95 +258,32 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
-  Widget _buildMessageBubble(String text, bool isMe) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: 6,
-        left: isMe ? 60 : 0,
-        right: isMe ? 0 : 60,
-      ),
-      child: Row(
-        mainAxisAlignment:
-            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (!isMe) ...[
-            CircleAvatar(
-              radius: 14,
-              backgroundColor: AppColors.primaryLight,
-              child: Text(
-                widget.peerName.isNotEmpty
-                    ? widget.peerName[0].toUpperCase()
-                    : '?',
-                style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary),
-              ),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: AppColors.primaryLight,
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: 6),
-          ],
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: isMe ? AppColors.primary : Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: Radius.circular(isMe ? 18 : 4),
-                  bottomRight: Radius.circular(isMe ? 4 : 18),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.07),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2)),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment:
-                    isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    text,
-                    style: TextStyle(
-                        color: isMe ? Colors.white : AppColors.textPrimary,
-                        fontSize: 14,
-                        height: 1.4),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _currentTime(),
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: isMe
-                                ? Colors.white.withValues(alpha: 0.65)
-                                : Colors.grey.shade400),
-                      ),
-                      if (isMe) ...[
-                        const SizedBox(width: 3),
-                        Icon(Icons.done_all_rounded,
-                            size: 13,
-                            color: Colors.white.withValues(alpha: 0.75)),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            child: const Icon(Icons.chat_bubble_outline_rounded,
+                size: 40, color: AppColors.primary),
           ),
+          const SizedBox(height: 14),
+          const Text('Henüz mesaj yok',
+              style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500)),
+          const SizedBox(height: 4),
+          const Text('Merhaba diyerek başlayın!',
+              style:
+                  TextStyle(color: AppColors.textHint, fontSize: 13)),
         ],
       ),
     );
-  }
-
-  String _currentTime() {
-    final now = DateTime.now();
-    return '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
   }
 
   Widget _buildMessageInput() {
@@ -312,8 +310,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 icon: const Icon(Icons.attach_file_rounded,
                     color: AppColors.primary, size: 20),
                 onPressed: () {},
-                constraints: const BoxConstraints(
-                    minWidth: 40, minHeight: 40),
+                constraints:
+                    const BoxConstraints(minWidth: 40, minHeight: 40),
                 padding: EdgeInsets.zero,
               ),
             ),
@@ -323,8 +321,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 decoration: BoxDecoration(
                     color: const Color(0xFFF1F4F8),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                        color: AppColors.border, width: 1)),
+                    border:
+                        Border.all(color: AppColors.border, width: 1)),
                 child: TextField(
                   controller: _messageController,
                   maxLines: 4,
@@ -360,4 +358,28 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       ),
     );
   }
+}
+
+class _RenderItem {
+  final int index;
+  final String message;
+  final String from;
+  final DateTime timestamp;
+  final bool showDivider;
+  final bool showAvatar;
+  final bool showTime;
+  final bool isFirstInGroup;
+  final bool isLastInGroup;
+
+  _RenderItem({
+    required this.index,
+    required this.message,
+    required this.from,
+    required this.timestamp,
+    required this.showDivider,
+    required this.showAvatar,
+    required this.showTime,
+    required this.isFirstInGroup,
+    required this.isLastInGroup,
+  });
 }
