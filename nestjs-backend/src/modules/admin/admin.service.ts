@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { SuspendUserDto } from './dto/suspend-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, IsNull, Between, MoreThan, In } from 'typeorm';
 import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
@@ -378,6 +379,36 @@ export class AdminService {
 
   async verifyUser(id: string, identityVerified: boolean) {
     return this.usersRepo.update(id, { identityVerified });
+  }
+
+  /**
+   * Phase 47 — Admin user suspension/ban.
+   * Self-suspend ve diğer adminleri suspend etme yasak.
+   * Audit log AdminController'da yazılır.
+   */
+  async suspendUser(targetId: string, dto: SuspendUserDto, adminUserId: string) {
+    if (targetId === adminUserId) {
+      throw new BadRequestException('Kendi hesabınızı askıya alamazsınız');
+    }
+    const target = await this.usersRepo.findOne({ where: { id: targetId } });
+    if (!target) throw new NotFoundException('Kullanıcı bulunamadı');
+    if (target.role === UserRole.ADMIN) {
+      throw new BadRequestException('Admin hesabı askıya alınamaz');
+    }
+    const now = dto.suspended ? new Date() : null;
+    await this.usersRepo.update(targetId, {
+      suspended: dto.suspended,
+      suspendedReason: dto.suspended ? (dto.reason ?? null) : null,
+      suspendedAt: now,
+      suspendedBy: dto.suspended ? adminUserId : null,
+    });
+    return {
+      id: targetId,
+      suspended: dto.suspended,
+      suspendedReason: dto.suspended ? (dto.reason ?? null) : null,
+      suspendedAt: now,
+      suspendedBy: dto.suspended ? adminUserId : null,
+    };
   }
 
   /**

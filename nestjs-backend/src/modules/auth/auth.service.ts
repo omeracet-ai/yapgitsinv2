@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  ForbiddenException,
   OnModuleInit,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
@@ -155,6 +156,10 @@ export class AuthService implements OnModuleInit {
       user.passwordHash &&
       (await bcrypt.compare(pass, user.passwordHash))
     ) {
+      // Phase 47 — askıya alınmış kullanıcı login yapamaz
+      if (user.suspended) {
+        throw new ForbiddenException('Hesap askıda');
+      }
       const { passwordHash: _hash, ...result } = user;
       return result;
     }
@@ -191,6 +196,7 @@ export class AuthService implements OnModuleInit {
 
     const user = await this.usersService.findById(payload.sub);
     if (!user) throw new UnauthorizedException('Kullanıcı bulunamadı');
+    if (user.suspended) throw new ForbiddenException('Hesap askıda');
     const { passwordHash: _h, ...result } = user;
     const tokenPayload = { email: result.email, sub: result.id, role: result.role };
     return {
@@ -207,6 +213,9 @@ export class AuthService implements OnModuleInit {
     }
     if (!(await bcrypt.compare(password, user.passwordHash))) {
       throw new UnauthorizedException('Geçersiz admin bilgileri');
+    }
+    if (user.suspended) {
+      throw new ForbiddenException('Hesap askıda');
     }
     const payload = { email: user.email, sub: user.id, role: user.role };
     return {

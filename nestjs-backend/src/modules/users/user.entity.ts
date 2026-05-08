@@ -183,6 +183,19 @@ export class User {
   @Column({ type: 'varchar', length: 64, nullable: true })
   twoFactorSecret: string | null;
 
+  // ── Phase 47 — Suspension/Ban ─────────────────────────────────────────────
+  @Column({ type: 'boolean', default: false })
+  suspended: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  suspendedReason: string | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  suspendedAt: Date | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  suspendedBy: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -11,6 +11,7 @@ import { UpdateReportStatusDto } from '../user-blocks/dto/report-user.dto';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
 import { BulkVerifyDto } from './dto/bulk-verify.dto';
+import { SuspendUserDto } from './dto/suspend-user.dto';
 import { PurgeAuditLogDto } from './dto/purge-audit-log.dto';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import type { Request } from 'express';
@@ -127,6 +128,23 @@ export class AdminController {
     @Req() req: Request & { user: AuthUser },
   ) {
     return this.adminService.bulkVerifyUsers(dto, req.user.id);
+  }
+
+  @Patch('users/:id/suspend')
+  async suspendUser(
+    @Param('id') id: string,
+    @Body() dto: SuspendUserDto,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.adminService.suspendUser(id, dto, req.user.id);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      dto.suspended ? 'user.suspend' : 'user.unsuspend',
+      'user',
+      id,
+      { reason: dto.reason ?? null },
+    );
+    return result;
   }
 
   @Patch('users/:id/verify')
