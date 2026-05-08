@@ -37,7 +37,7 @@ db.run(
       console.log('');
       console.log('Giris Bilgileri:');
       console.log('  Admin Panel  -> username: admin  | sifre: admin');
-      console.log('  Flutter App  -> email: admin@hizmet.app | sifre: admin');
+      console.log('  Flutter App  -> email: admin@yapgitsin.tr | sifre: admin');
     }
     db.close();
   });

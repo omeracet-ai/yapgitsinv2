@@ -1,11 +1,11 @@
-# HizmetApp - Cloudflare Tunnel Başlatıcı
+# Yapgitsin - Cloudflare Tunnel Başlatıcı
 # Her çalıştırmada yeni URL üretilir, aşağıyı güncel tutun.
 
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  HizmetApp Cloudflare Tunnel Başlatıcı" -ForegroundColor Cyan
+Write-Host "  Yapgitsin Cloudflare Tunnel Başlatıcı" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 

@@ -30,7 +30,7 @@ const FAQ: Record<string, string> = {
     'Ödeme doğrudan müşteri ile usta arasında yapılır. Platform şu an ödeme aracılığı yapmamaktadır.',
   ilan: 'İlan vermek ücretsizdir. Ustalar ilanınızı görür ve teklif verebilir. En fazla 20 fotoğraf ekleyebilirsiniz.',
   şikayet:
-    'Sorun yaşarsanız değerlendirme bırakabilirsiniz. Ciddi sorunlar için destek@hizmet.app adresine yazabilirsiniz.',
+    'Sorun yaşarsanız değerlendirme bırakabilirsiniz. Ciddi sorunlar için destek@yapgitsin.tr adresine yazabilirsiniz.',
   'öne çıkarma':
     'İlanınızı veya profilinizi ücretli olarak öne çıkarabilirsiniz. Detaylar için ayarlar > premium bölümüne bakın.',
 };
@@ -171,7 +171,7 @@ Include: what the job entails, what skills/experience to look for, and what the 
         return {
           answer:
             FAQ[topic] ??
-            'Bu konuda bilgi bulunamadı. destek@hizmet.app adresine yazabilirsiniz.',
+            'Bu konuda bilgi bulunamadı. destek@yapgitsin.tr adresine yazabilirsiniz.',
         };
       }
 
@@ -181,7 +181,7 @@ Include: what the job entails, what skills/experience to look for, and what the 
           tokenCostPerOffer: 5,
           startingTokens: 100,
           maxPhotosPerJob: 20,
-          supportEmail: 'destek@hizmet.app',
+          supportEmail: 'destek@yapgitsin.tr',
         };
 
       default:

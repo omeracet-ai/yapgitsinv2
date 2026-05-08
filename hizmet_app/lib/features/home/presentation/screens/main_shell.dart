@@ -197,7 +197,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            const Text('HizmetApp', style: TextStyle(color: Colors.white70, fontSize: 12)),
+            const Text('Yapgitsin', style: TextStyle(color: Colors.white70, fontSize: 12)),
           ],
         ),
         actions: [

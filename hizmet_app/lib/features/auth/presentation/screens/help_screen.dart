@@ -48,7 +48,7 @@ class _HelpScreenState extends State<HelpScreen> {
     ),
     (
       'Hesabımı nasıl silerim?',
-      'Hesap silme işlemi için destek@hizmet.app adresine e-posta gönderiniz. '
+      'Hesap silme işlemi için destek@yapgitsin.tr adresine e-posta gönderiniz. '
       'Talebiniz 5 iş günü içinde işleme alınır.',
     ),
     (
@@ -114,9 +114,9 @@ class _HelpScreenState extends State<HelpScreen> {
                   Expanded(child: _contactCard(
                     icon: Icons.email_outlined,
                     label: 'E-posta',
-                    sub: 'destek@hizmet.app',
+                    sub: 'destek@yapgitsin.tr',
                     color: Colors.blue,
-                    onTap: () => _launchUrl('mailto:destek@hizmet.app'),
+                    onTap: () => _launchUrl('mailto:destek@yapgitsin.tr'),
                   )),
                   const SizedBox(width: 12),
                   Expanded(child: _contactCard(
@@ -246,7 +246,7 @@ class _HelpScreenState extends State<HelpScreen> {
                         style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                     const SizedBox(height: 14),
                     OutlinedButton.icon(
-                      onPressed: () => _launchUrl('mailto:geri-bildirim@hizmet.app?subject=Uygulama%20Geri%20Bildirimi'),
+                      onPressed: () => _launchUrl('mailto:geri-bildirim@yapgitsin.tr?subject=Uygulama%20Geri%20Bildirimi'),
                       icon: const Icon(Icons.send_outlined, size: 16),
                       label: const Text('Geri Bildirim Gönder'),
                       style: OutlinedButton.styleFrom(
@@ -268,11 +268,11 @@ class _HelpScreenState extends State<HelpScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _textLink('Gizlilik Politikası', () => _launchUrl('https://hizmet.app/privacy')),
+                  _textLink('Gizlilik Politikası', () => _launchUrl('https://yapgitsin.tr/privacy')),
                   const Text(' · ', style: TextStyle(color: AppColors.textHint)),
-                  _textLink('Kullanım Koşulları', () => _launchUrl('https://hizmet.app/terms')),
+                  _textLink('Kullanım Koşulları', () => _launchUrl('https://yapgitsin.tr/terms')),
                   const Text(' · ', style: TextStyle(color: AppColors.textHint)),
-                  _textLink('Çerez Politikası', () => _launchUrl('https://hizmet.app/cookies')),
+                  _textLink('Çerez Politikası', () => _launchUrl('https://yapgitsin.tr/cookies')),
                 ],
               ),
             ),

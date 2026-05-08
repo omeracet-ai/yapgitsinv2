@@ -1,11 +1,11 @@
-HizmetApp
+Yapgitsin
 Türkiye Pazarı Hizmet Platformu
 Kapsamlı Proje Dokümantasyonu — v1.0
 Flutter  ·  Firebase  ·  Node.js  ·  Admin Panel
 Nisan 2026
 
 1. Yönetici Özeti
-HizmetApp, Türkiye pazarı için geliştirilecek iki taraflı bir hizmet platformudur. Müşterilerin ev ve işyeri hizmetleri için kolayca profesyonel bulmasını, ustalar içinse iş geliştirme ve yönetim süreçlerini dijitalleştirmesini hedeflemektedir.
+Yapgitsin, Türkiye pazarı için geliştirilecek iki taraflı bir hizmet platformudur. Müşterilerin ev ve işyeri hizmetleri için kolayca profesyonel bulmasını, ustalar içinse iş geliştirme ve yönetim süreçlerini dijitalleştirmesini hedeflemektedir.
 Platform; Flutter ile tek kod tabanından Android ve iOS uygulamaları, Firebase ile gerçek zamanlı bir backend ve Node.js ile esnek bir API katmanı sunacaktır.
 
 1.1 Temel Hedefler
@@ -40,7 +40,7 @@ Usta Segmenti
 ⦁ Temizlik şirketleri ve bireysel temizlikçiler
 
 2.3 Rekabet Analizi
-Platform	Güçlü Yön	Zayıf Yön	HizmetApp Avantajı
+Platform	Güçlü Yön	Zayıf Yön	Yapgitsin Avantajı
 Armut.com	Geniş kullanıcı kitlesi	Yavaş UX, eski arayüz	Modern Flutter UI
 Ustam.com	Marka bilinirliği	Sınırlı mobil deneyim	Gerçek zamanlı sohbet
 Yemeksepeti (Y. Hizmet)	Dağıtım ağı	Hizmet çeşitliliği yok	Uzmanlaşmış kategoriler
@@ -218,7 +218,7 @@ Kullanıcı güvensizliği	Orta	Yüksek	Usta doğrulama, sigorta/garanti kampany
 Teknik borç birikmesi	Orta	Orta	Code review, unit test zorunluluğu, sprint review
 
 12. Sonuç ve Sonraki Adımlar
-HizmetApp, güven eksikliği ve dijitalleşme boşluğu nedeniyle büyük fırsat barındıran Türkiye ev hizmetleri pazarına modern bir çözüm sunmaktadır. Flutter ve Firebase kombinasyonu hızlı MVP geliştirme ve düşük operasyonel maliyete imkan tanır.
+Yapgitsin, güven eksikliği ve dijitalleşme boşluğu nedeniyle büyük fırsat barındıran Türkiye ev hizmetleri pazarına modern bir çözüm sunmaktadır. Flutter ve Firebase kombinasyonu hızlı MVP geliştirme ve düşük operasyonel maliyete imkan tanır.
 Sonraki Adımlar
 1. Figma tasarım dosyasını oluştur (Ana ekranlar ve akışlar)
 2. Firebase projesi kur (Development + Production ortamları)

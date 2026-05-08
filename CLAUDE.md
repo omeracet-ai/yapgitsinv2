@@ -1,4 +1,4 @@
-# HizmetApp — CLAUDE.md
+# Yapgitsin — CLAUDE.md
 
 Türkiye pazarı için iki taraflı hizmet marketplace platformu. Müşteri ile usta (hizmet sağlayıcı) arasında köprü kurar.
 
@@ -388,7 +388,7 @@ AI: **claude-opus-4-7** model, adaptive thinking, prompt caching (`cache_control
 ## Auth & Güvenlik
 
 - **JWT**: `AuthGuard('jwt')` — `JwtStrategy` `Authorization: Bearer <token>` başlığını doğrular
-- **Admin**: `admin@hizmet.app` email, `ADMIN_INITIAL_PASSWORD` env şifre — `onModuleInit`'te otomatik oluşur
+- **Admin**: `admin@yapgitsin.tr` email, `ADMIN_INITIAL_PASSWORD` env şifre — `onModuleInit`'te otomatik oluşur
 - **Flutter**: JWT `SharedPreferences`'da `jwt_token` key'iyle saklanır
 - **Admin Panel**: JWT `localStorage`'da `admin_token` key'iyle saklanır
 - `passwordHash`: bcrypt (10 rounds)
@@ -584,7 +584,7 @@ node nestjs-backend/seed-v2.js
 `JobsService.onModuleInit()` — DB boşsa 3 örnek ilan ekler (Salon Badana, Musluk Tamiri, Ev Temizliği).
 
 ### Admin Seed
-`AuthService.onModuleInit()` — `admin@hizmet.app` yoksa `ADMIN_INITIAL_PASSWORD` ile oluşturur.
+`AuthService.onModuleInit()` — `admin@yapgitsin.tr` yoksa `ADMIN_INITIAL_PASSWORD` ile oluşturur.
 
 ### Kategori Seed
 `CategoriesService.onModuleInit()` — categories tablosu boşsa 29 kategori ekler.

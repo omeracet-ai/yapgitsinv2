@@ -21,7 +21,7 @@ async function bootstrap() {
 
   // Swagger / OpenAPI dökümantasyonu — /api/docs adresinde
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('HizmetApp API')
+    .setTitle('Yapgitsin API')
     .setDescription(
       'Yapgitsin v2 — Türkiye hizmet marketplace platformu REST API dökümantasyonu.\n\n' +
       '**Auth:** JWT Bearer token ile kimlik doğrulama.\n\n' +
@@ -49,7 +49,7 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document, {
-    customSiteTitle: 'HizmetApp API Docs',
+    customSiteTitle: 'Yapgitsin API Docs',
     customCss: '.swagger-ui .topbar { background-color: #007DFE; }',
   });
 
@@ -79,7 +79,7 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port, '0.0.0.0');
-  console.log(`🚀 HizmetApp API: http://localhost:${port}`);
+  console.log(`🚀 Yapgitsin API: http://localhost:${port}`);
   console.log(`📚 Swagger Docs: http://localhost:${port}/api/docs`);
 }
 void bootstrap();

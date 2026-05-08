@@ -75,7 +75,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside className="w-56 shrink-0 bg-slate-900 text-white flex flex-col">
         <div className="px-6 py-5 border-b border-slate-700">
-          <span className="text-lg font-bold tracking-tight">🛠️ HizmetApp</span>
+          <span className="text-lg font-bold tracking-tight">🛠️ Yapgitsin</span>
           <p className="text-xs text-slate-400 mt-0.5">Yönetim Paneli</p>
         </div>
 

@@ -130,7 +130,7 @@ export class AuthService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    const adminEmail = 'admin@hizmet.app';
+    const adminEmail = 'admin@yapgitsin.tr';
     const existing = await this.usersService.findByEmail(adminEmail);
     if (!existing) {
       const initialPassword =
@@ -206,7 +206,7 @@ export class AuthService implements OnModuleInit {
   }
 
   async adminLogin(username: string, password: string) {
-    const email = username === 'admin' ? 'admin@hizmet.app' : username;
+    const email = username === 'admin' ? 'admin@yapgitsin.tr' : username;
     const user = await this.usersService.findByEmail(email);
     if (!user || user.role !== UserRole.ADMIN) {
       throw new UnauthorizedException('Geçersiz admin bilgileri');

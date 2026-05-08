@@ -6,8 +6,8 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "HizmetApp Admin",
-  description: "HizmetApp Yönetim Paneli",
+  title: "Yapgitsin Admin",
+  description: "Yapgitsin Yönetim Paneli",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

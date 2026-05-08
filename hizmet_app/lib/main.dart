@@ -13,20 +13,20 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   runApp(
     const ProviderScope(
-      child: HizmetApp(),
+      child: YapgitsinApp(),
     ),
   );
 }
 
-class HizmetApp extends ConsumerWidget {
-  const HizmetApp({super.key});
+class YapgitsinApp extends ConsumerWidget {
+  const YapgitsinApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
-    
+
     return MaterialApp.router(
-      title: 'HizmetApp',
+      title: 'Yapgitsin',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: router,

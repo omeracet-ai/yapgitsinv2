@@ -69,13 +69,13 @@ export class JobsService {
   }
 
   async onModuleInit() {
-    const seedUser = await this.usersService.findByEmail('seed@hizmet.app');
+    const seedUser = await this.usersService.findByEmail('seed@yapgitsin.tr');
     if (!seedUser) {
       await this.usersService.create({
         id: SEED_USER_ID,
         fullName: 'Seed User',
         phoneNumber: '05555555555',
-        email: 'seed@hizmet.app',
+        email: 'seed@yapgitsin.tr',
         passwordHash: 'hashed_password',
       });
     }

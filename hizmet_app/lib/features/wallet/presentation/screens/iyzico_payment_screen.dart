@@ -32,7 +32,7 @@ class _IyzicoPaymentScreenState extends State<IyzicoPaymentScreen> {
         'basketId': 'B${DateTime.now().millisecondsSinceEpoch}',
         'user': {
           'id': 'U123',
-          'name': 'HizmetApp',
+          'name': 'Yapgitsin',
           'surname': 'User',
           'email': 'user@hizmetapp.com',
         },
