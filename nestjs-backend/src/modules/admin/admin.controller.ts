@@ -9,6 +9,7 @@ import { UserBlocksService } from '../user-blocks/user-blocks.service';
 import type { UserReportStatus } from '../user-blocks/user-report.entity';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
+import { BulkVerifyDto } from './dto/bulk-verify.dto';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import type { Request } from 'express';
 import type { AuthUser } from '../../common/types/auth.types';
@@ -100,6 +101,14 @@ export class AdminController {
   @Get('users')
   getUsers() {
     return this.adminService.getAllUsers();
+  }
+
+  @Post('users/bulk-verify')
+  async bulkVerifyUsers(
+    @Body() dto: BulkVerifyDto,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    return this.adminService.bulkVerifyUsers(dto, req.user.id);
   }
 
   @Patch('users/:id/verify')
