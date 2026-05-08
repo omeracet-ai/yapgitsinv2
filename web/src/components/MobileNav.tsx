@@ -2,10 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import SearchBar from './SearchBar';
 
 type Cat = { id: string; name: string; icon?: string; slug: string };
+type SearchCat = { name: string; slug: string; icon?: string };
 
-export default function MobileNav({ cats }: { cats: Cat[] }) {
+export default function MobileNav({
+  cats,
+  searchCats = [],
+  cities = [],
+  localePrefix = '',
+  searchPlaceholder,
+}: {
+  cats: Cat[];
+  searchCats?: SearchCat[];
+  cities?: string[];
+  localePrefix?: string;
+  searchPlaceholder?: string;
+}) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -61,6 +75,18 @@ export default function MobileNav({ cats }: { cats: Cat[] }) {
           </button>
         </div>
         <nav className="px-2 py-3 overflow-y-auto h-[calc(100%-72px)]">
+          {searchCats.length > 0 && (
+            <div className="px-2 pb-3">
+              <SearchBar
+                cats={searchCats}
+                cities={cities}
+                localePrefix={localePrefix}
+                placeholder={searchPlaceholder || 'Ara...'}
+                variant="mobile"
+                onNavigate={() => setOpen(false)}
+              />
+            </div>
+          )}
           <ul className="flex flex-col">
             {cats.map((c) => (
               <li key={c.id}>

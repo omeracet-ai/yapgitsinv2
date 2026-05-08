@@ -1,10 +1,10 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getJob, getJobs, unwrap, parseSlugId, slugify, type Job } from '@/lib/api';
 import { jsonLd, jobPostingLD, breadcrumbLD, clip } from '@/lib/seo';
 import LeadForm from '@/components/LeadForm';
 import { getDict, localePath, type Locale } from '@/i18n';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 export async function getJobStaticSlugs(): Promise<string[]> {
   const jobs = unwrap(await getJobs({ status: 'open', limit: '100' })).slice(0, 100);
@@ -47,10 +47,13 @@ export default async function renderJob(L: Locale, idSlug: string) {
 
       <section className="bg-white border-b border-[var(--border)]">
         <div className="container mx-auto max-w-4xl px-4 md:px-6 lg:px-8 py-6 md:py-8">
-          <nav className="text-xs text-gray-500 mb-3">
-            <Link href={localePath(L, '/')} className="hover:underline">{dict.breadcrumb.home}</Link>{' / '}
-            <Link href={localePath(L, `/${slugify(job.category)}`)} className="hover:underline">{job.category}</Link>
-          </nav>
+          <Breadcrumbs
+            items={[
+              { label: dict.breadcrumb.home, href: localePath(L, '/') },
+              { label: (dict.breadcrumb as { jobs?: string }).jobs || 'Jobs', href: localePath(L, `/${slugify(job.category)}`) },
+              { label: job.title },
+            ]}
+          />
           <h1 className="text-2xl sm:text-3xl md:text-3xl font-bold text-[var(--secondary)] mb-3 leading-tight">{job.title}</h1>
           <div className="flex flex-wrap gap-3 text-sm text-gray-600">
             <span>📍 {job.location}</span>

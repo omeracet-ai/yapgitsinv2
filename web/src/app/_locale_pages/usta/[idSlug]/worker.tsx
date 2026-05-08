@@ -7,6 +7,7 @@ import { personWithReviewsLD } from '@/lib/jsonld';
 import LeadForm from '@/components/LeadForm';
 import WorkerReviews from '@/components/WorkerReviews';
 import { getDict, localePath, type Locale } from '@/i18n';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 export async function getWorkerStaticSlugs(): Promise<string[]> {
   const workers = unwrap(await getWorkers({ limit: '100' })).slice(0, 100);
@@ -52,6 +53,16 @@ export default async function renderWorker(L: Locale, idSlug: string) {
           ])),
         }}
       />
+
+      <div className="container mx-auto max-w-5xl px-4 md:px-6 lg:px-8 pt-4">
+        <Breadcrumbs
+          items={[
+            { label: dict.breadcrumb.home, href: localePath(L, '/') },
+            { label: dict.breadcrumb.workers, href: localePath(L, '/') },
+            { label: w.fullName },
+          ]}
+        />
+      </div>
 
       <section className="bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] text-white">
         <div className="container mx-auto max-w-5xl px-4 md:px-6 lg:px-8 py-8 md:py-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 text-center sm:text-left">

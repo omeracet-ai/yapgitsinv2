@@ -1,30 +1,53 @@
 import Link from 'next/link';
-import { getCategories, slugify } from '@/lib/api';
+import { getCategories, slugify, TR_CITIES } from '@/lib/api';
 import MobileNav from './MobileNav';
 import LocaleSwitcher from './LocaleSwitcher';
+import SearchBar from './SearchBar';
 import { DEFAULT_LOCALE, getDict, localePath, type Locale } from '@/i18n';
+
+const SEARCH_PLACEHOLDER: Record<string, string> = {
+  tr: 'Hizmet veya şehir ara...',
+  en: 'Search service or city...',
+  az: 'Xidmət və ya şəhər axtar...',
+};
 
 export default async function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale } = {}) {
   const cats = (await getCategories()) || [];
   const top = cats.slice(0, 8);
   const dict = getDict(locale);
+  const localePrefix = locale === DEFAULT_LOCALE ? '' : `/${locale}`;
   const navCats = top.map((c) => ({
     id: c.id,
     name: c.name,
     icon: c.icon,
     slug: slugify(c.name),
   }));
+  const searchCats = (cats.length ? cats : []).map((c) => ({
+    name: c.name,
+    slug: slugify(c.name),
+    icon: c.icon,
+  }));
+  const placeholder = SEARCH_PLACEHOLDER[locale] || SEARCH_PLACEHOLDER.tr;
+
   return (
     <header className="bg-white/85 backdrop-blur-md border-b border-[var(--border)] sticky top-0 z-40">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-3 md:py-3 flex items-center justify-between gap-4 md:gap-6">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-3 md:py-3 flex items-center justify-between gap-3 md:gap-5">
         <Link
           href={localePath(locale, '/')}
-          className="flex items-center gap-2 font-bold text-lg md:text-xl text-[var(--primary)] min-h-[44px]"
+          className="flex items-center gap-2 font-bold text-lg md:text-xl text-[var(--primary)] min-h-[44px] flex-shrink-0"
         >
           <span>Yapgitsin</span>
         </Link>
-        <nav className="hidden md:flex items-center gap-4 lg:gap-5 text-sm overflow-x-auto">
-          {top.slice(0, 6).map((c) => (
+        <div className="hidden md:flex flex-1 max-w-md mx-2">
+          <SearchBar
+            cats={searchCats}
+            cities={[...TR_CITIES]}
+            localePrefix={localePrefix}
+            placeholder={placeholder}
+          />
+        </div>
+        <nav className="hidden lg:flex items-center gap-4 text-sm overflow-x-auto">
+          {top.slice(0, 4).map((c) => (
             <Link
               key={c.id}
               href={localePath(locale, `/${slugify(c.name)}`)}
@@ -35,7 +58,7 @@ export default async function Header({ locale = DEFAULT_LOCALE }: { locale?: Loc
             </Link>
           ))}
         </nav>
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-3 flex-shrink-0">
           <LocaleSwitcher current={locale} />
           <Link
             href={localePath(locale, '/')}
@@ -46,7 +69,13 @@ export default async function Header({ locale = DEFAULT_LOCALE }: { locale?: Loc
         </div>
         <div className="md:hidden flex items-center gap-2">
           <LocaleSwitcher current={locale} />
-          <MobileNav cats={navCats} />
+          <MobileNav
+            cats={navCats}
+            searchCats={searchCats}
+            cities={[...TR_CITIES]}
+            localePrefix={localePrefix}
+            searchPlaceholder={placeholder}
+          />
         </div>
       </div>
     </header>

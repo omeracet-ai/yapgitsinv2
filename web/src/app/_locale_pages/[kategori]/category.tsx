@@ -15,6 +15,7 @@ import LeadForm from '@/components/LeadForm';
 import CategorySeoContent from '@/components/CategorySeoContent';
 import { getCategoryContent } from '@/lib/category-content';
 import { getDict, localePath, type Locale } from '@/i18n';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 export async function getCategoryStaticSlugs(): Promise<string[]> {
   const cats = await getCategories();
@@ -64,10 +65,12 @@ export default async function renderCategory(L: Locale, kategori: string) {
 
       <section className="bg-white border-b border-[var(--border)]">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-10">
-          <nav className="text-xs text-gray-500 mb-3">
-            <Link href={localePath(L, '/')} className="hover:underline">{dict.breadcrumb.home}</Link>
-            {' / '}<span className="text-[var(--secondary)]">{cat.name}</span>
-          </nav>
+          <Breadcrumbs
+            items={[
+              { label: dict.breadcrumb.home, href: localePath(L, '/') },
+              { label: cat.name },
+            ]}
+          />
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--secondary)] mb-3 leading-tight">
             {cat.icon} {cat.name}
           </h1>

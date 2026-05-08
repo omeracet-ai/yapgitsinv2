@@ -52,6 +52,7 @@
   },
   "breadcrumb": {
     "home": "Home",
-    "workers": "Pros"
+    "workers": "Pros",
+    "jobs": "Jobs"
   }
 }
