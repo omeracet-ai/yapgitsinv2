@@ -210,6 +210,27 @@ export class UsersController {
     return safe;
   }
 
+  // ── Phase 113: FCM device token register ──────────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/fcm-token')
+  async registerFcmToken(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { token?: string },
+  ) {
+    const tokens = await this.svc.addFcmToken(req.user.id, body?.token ?? '');
+    return { tokens };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('me/fcm-token')
+  async unregisterFcmToken(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { token?: string },
+  ) {
+    const tokens = await this.svc.removeFcmToken(req.user.id, body?.token ?? '');
+    return { tokens };
+  }
+
   // ── Phase 60: Account self-deletion (KVKK) ────────────────────────
   @UseGuards(AuthGuard('jwt'))
   @Delete('me')

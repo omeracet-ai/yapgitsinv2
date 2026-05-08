@@ -458,6 +458,32 @@ export class UsersService {
     }));
   }
 
+  // ── Phase 113 — FCM device tokens (multi-device, max 5) ─────────────
+  async addFcmToken(userId: string, token: string): Promise<string[]> {
+    const trimmed = (token || '').trim();
+    if (!trimmed) throw new BadRequestException('token gerekli');
+    const user = await this.repo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    const current = Array.isArray(user.fcmTokens) ? user.fcmTokens : [];
+    // Dedup + move-to-end so newest is preserved on overflow
+    const next = [...current.filter((t) => t !== trimmed), trimmed];
+    const trimmedList = next.slice(-5);
+    await this.repo.update(userId, { fcmTokens: trimmedList });
+    return trimmedList;
+  }
+
+  async removeFcmToken(userId: string, token: string): Promise<string[]> {
+    const trimmed = (token || '').trim();
+    const user = await this.repo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    const current = Array.isArray(user.fcmTokens) ? user.fcmTokens : [];
+    const next = current.filter((t) => t !== trimmed);
+    await this.repo.update(userId, {
+      fcmTokens: next.length ? next : null,
+    });
+    return next;
+  }
+
   /** Stats güncellendikten sonra reputationScore'u yeniden hesapla */
   async recalcReputation(userId: string): Promise<void> {
     const user = await this.repo.findOne({ where: { id: userId } });

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification, NotificationType } from './notification.entity';
 import { User } from '../users/user.entity';
+import { FcmService } from './fcm.service';
 
 export type NotificationCategory =
   | 'booking'
@@ -18,6 +19,7 @@ export class NotificationsService {
     private repo: Repository<Notification>,
     @InjectRepository(User)
     private usersRepo: Repository<User>,
+    private readonly fcm: FcmService,
   ) {}
 
   /** Phase 49 — map notification type to a high-level preference category */
@@ -114,7 +116,15 @@ export class NotificationsService {
       relatedId,
       isRead: false,
     });
-    return this.repo.save(n);
+    const saved = await this.repo.save(n);
+    // Phase 113 — fire-and-forget FCM push (does not block API response)
+    void this.fcm.sendToUser(data.userId, data.title, data.body, {
+      type: String(data.type),
+      ...(data.refId ? { refId: data.refId } : {}),
+      ...(relatedType ? { relatedType } : {}),
+      ...(relatedId ? { relatedId } : {}),
+    });
+    return saved;
   }
 
   getByUser(userId: string): Promise<Notification[]> {

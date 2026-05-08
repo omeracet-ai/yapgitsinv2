@@ -224,6 +224,14 @@ export class User {
   @Column({ type: 'boolean', default: false })
   isOnline: boolean;
 
+  // ── Phase 113 — FCM push notifications ───────────────────────────────────
+  // Multi-device support, max 5 tokens kept (oldest evicted on overflow)
+  @Column({ type: 'simple-json', nullable: true })
+  fcmTokens: string[] | null;
+
+  @Column({ type: 'boolean', default: true })
+  pushNotificationsEnabled: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 
