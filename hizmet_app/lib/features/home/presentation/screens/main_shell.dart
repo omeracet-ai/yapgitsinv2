@@ -12,6 +12,7 @@ import '../../../jobs/presentation/providers/job_provider.dart';
 import '../../../jobs/presentation/screens/job_list_screen.dart';
 import 'hizmet_al_screen.dart';
 import '../../../map/presentation/screens/map_screen.dart';
+import '../../../notifications/data/unread_count_provider.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -20,7 +21,34 @@ class MainShell extends ConsumerStatefulWidget {
   ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends ConsumerState<MainShell> {
+class _MainShellState extends ConsumerState<MainShell>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Ensure badge provider is materialized so its auth listener fires.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(unreadCountBadgeProvider.notifier);
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final auth = ref.read(authStateProvider);
+      if (auth is AuthAuthenticated) {
+        ref.read(unreadCountBadgeProvider.notifier).refresh();
+      }
+    }
+  }
+
   void _onItemTapped(int index) {
     final authState = ref.read(authStateProvider);
     final isLoggedIn = authState is AuthAuthenticated;
@@ -30,6 +58,10 @@ class _MainShellState extends ConsumerState<MainShell> {
       return;
     }
     ref.read(selectedTabProvider.notifier).state = index;
+    if (index == 3 && isLoggedIn) {
+      // Refresh badge when entering notifications tab.
+      ref.read(unreadCountBadgeProvider.notifier).refresh();
+    }
   }
 
   @override
@@ -42,6 +74,7 @@ class _MainShellState extends ConsumerState<MainShell> {
 
     final isLoggedIn = authState is AuthAuthenticated;
     final selectedIndex = ref.watch(selectedTabProvider);
+    final unreadCount = ref.watch(unreadCountBadgeProvider);
 
     final List<Widget> pages = [
       _HomeTab(onSeeAllRequests: () => _onItemTapped(1)),
@@ -90,10 +123,16 @@ class _MainShellState extends ConsumerState<MainShell> {
                 activeIcon: Icon(Icons.map_rounded),
                 label: 'Harita'),
             BottomNavigationBarItem(
-                icon: isLoggedIn
-                    ? const Icon(Icons.notifications_outlined)
-                    : const Icon(Icons.lock_outline_rounded),
-                activeIcon: const Icon(Icons.notifications_rounded),
+                icon: _NotifIconWithBadge(
+                  icon: isLoggedIn
+                      ? Icons.notifications_outlined
+                      : Icons.lock_outline_rounded,
+                  count: isLoggedIn ? unreadCount : 0,
+                ),
+                activeIcon: _NotifIconWithBadge(
+                  icon: Icons.notifications_rounded,
+                  count: isLoggedIn ? unreadCount : 0,
+                ),
                 label: 'Bildirimler'),
             const BottomNavigationBarItem(
                 icon: Icon(Icons.person_outline_rounded),
@@ -405,6 +444,49 @@ class _GroupChip extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Bell icon with red unread-count badge in the top-right corner.
+class _NotifIconWithBadge extends StatelessWidget {
+  final IconData icon;
+  final int count;
+  const _NotifIconWithBadge({required this.icon, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    if (count <= 0) return Icon(icon);
+    final label = count > 99 ? '99+' : '$count';
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(icon),
+        Positioned(
+          right: -6,
+          top: -4,
+          child: Container(
+            padding: EdgeInsets.symmetric(
+                horizontal: count > 9 ? 5 : 4, vertical: 1.5),
+            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+            decoration: BoxDecoration(
+              color: AppColors.error,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white, width: 1.5),
+            ),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                height: 1.1,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

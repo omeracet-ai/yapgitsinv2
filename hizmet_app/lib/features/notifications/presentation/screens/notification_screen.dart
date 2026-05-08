@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/data/auth_repository.dart';
+import '../../data/unread_count_provider.dart';
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
@@ -89,6 +90,7 @@ class NotificationScreen extends ConsumerWidget {
                     options: Options(headers: {'Authorization': 'Bearer $token'}),
                   );
                   ref.invalidate(notificationsProvider);
+                  ref.read(unreadCountBadgeProvider.notifier).reset();
                 },
                 icon: const Icon(Icons.done_all, color: Colors.white, size: 18),
                 label: const Text('Tümünü Oku',
@@ -135,11 +137,15 @@ class NotificationScreen extends ConsumerWidget {
                   if (token == null) return;
                   final id = notifications[i]['id'] as String?;
                   if (id == null) return;
+                  final wasUnread = notifications[i]['isRead'] == false;
                   await Dio(BaseOptions(baseUrl: ApiConstants.baseUrl)).patch(
                     '/notifications/$id/read',
                     options: Options(headers: {'Authorization': 'Bearer $token'}),
                   );
                   ref.invalidate(notificationsProvider);
+                  if (wasUnread) {
+                    ref.read(unreadCountBadgeProvider.notifier).decrement();
+                  }
                 },
               ),
             ),
