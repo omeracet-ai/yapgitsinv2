@@ -30,4 +30,31 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Hide scrollbar for horizontal-scroll carousels (mobile) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Touch targets: ensure inputs/buttons reach 44px on mobile */
+@media (max-width: 767px) {
+  button,
+  a[role='button'] {
+    min-height: 44px;
+  }
+}
+
+/* Dark mode foundation (opt-in via .dark class — wired later) */
+.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --muted: #1e293b;
+  --border: #334155;
+  --secondary: #e2e8f0;
 }

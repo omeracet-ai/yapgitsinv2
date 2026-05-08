@@ -71,12 +71,12 @@ export default async function JobPage({
       />
 
       <section className="bg-white border-b border-[var(--border)]">
-        <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="container mx-auto max-w-4xl px-4 md:px-6 lg:px-8 py-6 md:py-8">
           <nav className="text-xs text-gray-500 mb-3">
             <Link href="/" className="hover:underline">Anasayfa</Link> /{' '}
             <Link href={`/${slugify(job.category)}`} className="hover:underline">{job.category}</Link>
           </nav>
-          <h1 className="text-2xl md:text-3xl font-bold text-[var(--secondary)] mb-3">
+          <h1 className="text-2xl sm:text-3xl md:text-3xl font-bold text-[var(--secondary)] mb-3 leading-tight">
             {job.title}
           </h1>
           <div className="flex flex-wrap gap-3 text-sm text-gray-600">
@@ -91,20 +91,37 @@ export default async function JobPage({
         </div>
       </section>
 
-      <section className="max-w-4xl mx-auto px-4 py-8 grid md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-5">
+      <section className="container mx-auto max-w-4xl px-4 md:px-6 lg:px-8 py-6 md:py-8 grid md:grid-cols-3 gap-4 md:gap-6">
+        <div className="md:col-span-2 space-y-4 md:space-y-5">
           {job.photos?.length ? (
-            <div className="grid grid-cols-3 gap-2">
-              {job.photos.map((p, i) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={i}
-                  src={p}
-                  alt={`${job.title} - ${i + 1}`}
-                  className="rounded-lg border border-[var(--border)] aspect-square object-cover"
-                />
-              ))}
-            </div>
+            <>
+              {/* Mobile: swipe carousel */}
+              <div className="md:hidden -mx-4 px-4 flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+                {job.photos.map((p, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={i}
+                    src={p}
+                    alt={`${job.title} - ${i + 1}`}
+                    className="rounded-lg border border-[var(--border)] w-[88%] aspect-[4/3] object-cover snap-start flex-shrink-0"
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+              {/* Desktop: grid */}
+              <div className="hidden md:grid grid-cols-3 gap-2">
+                {job.photos.map((p, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={i}
+                    src={p}
+                    alt={`${job.title} - ${i + 1}`}
+                    className="rounded-lg border border-[var(--border)] aspect-square object-cover"
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+            </>
           ) : null}
           <div className="bg-white border border-[var(--border)] rounded-xl p-5">
             <h2 className="font-bold text-[var(--secondary)] mb-2">İş Detayları</h2>

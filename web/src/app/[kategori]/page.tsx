@@ -87,14 +87,14 @@ export default async function CategoryPage({
       />
 
       <section className="bg-white border-b border-[var(--border)]">
-        <div className="max-w-7xl mx-auto px-4 py-10">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-10">
           <nav className="text-xs text-gray-500 mb-3">
             <Link href="/" className="hover:underline">
               Anasayfa
             </Link>{' '}
             / <span className="text-[var(--secondary)]">{cat.name}</span>
           </nav>
-          <h1 className="text-3xl md:text-4xl font-bold text-[var(--secondary)] mb-3">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--secondary)] mb-3 leading-tight">
             {cat.icon} {cat.name} Ustaları
           </h1>
           <p className="text-gray-600 max-w-3xl">
@@ -116,14 +116,14 @@ export default async function CategoryPage({
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 py-10">
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-10">
         <h2 className="text-xl font-bold text-[var(--secondary)] mb-5">
           {cat.name} Sağlayıcıları
         </h2>
         {workers.length === 0 ? (
           <p className="text-gray-500">Henüz bu kategoride listelenmiş usta yok.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             {workers.map((w: Worker) => (
               <WorkerCard key={w.id} w={w} />
             ))}
@@ -155,10 +155,10 @@ export function WorkerCard({ w }: { w: Worker }) {
   return (
     <Link
       href={`/usta/${slugify(w.fullName || 'usta')}-${w.id}`}
-      className="bg-white border border-[var(--border)] rounded-xl p-4 hover:shadow-md hover:border-[var(--primary)] transition-all"
+      className="block bg-white border border-[var(--border)] rounded-xl p-4 md:p-5 hover:shadow-md hover:border-[var(--primary)] hover:-translate-y-0.5 transition-all"
     >
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-12 h-12 rounded-full bg-[var(--primary-light)] flex items-center justify-center text-[var(--primary)] font-bold">
+        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-[var(--primary-light)] flex items-center justify-center text-[var(--primary)] font-bold">
           {w.fullName?.[0] || '?'}
         </div>
         <div className="min-w-0 flex-1">

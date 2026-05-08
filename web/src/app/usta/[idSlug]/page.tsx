@@ -80,19 +80,19 @@ export default async function WorkerPage({
       />
 
       <section className="bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] text-white">
-        <div className="max-w-5xl mx-auto px-4 py-10 flex items-center gap-5">
-          <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-4xl font-bold">
+        <div className="container mx-auto max-w-5xl px-4 md:px-6 lg:px-8 py-8 md:py-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 text-center sm:text-left">
+          <div className="w-20 h-20 md:w-[120px] md:h-[120px] mx-auto sm:mx-0 rounded-full bg-white/20 flex items-center justify-center text-3xl md:text-5xl font-bold flex-shrink-0">
             {w.fullName?.[0] || '?'}
           </div>
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-3xl font-bold flex flex-wrap items-center justify-center sm:justify-start gap-2 leading-tight">
               {w.fullName}
               {w.identityVerified && (
-                <span className="bg-white/20 text-sm px-2 py-1 rounded-full">✓ Doğrulanmış</span>
+                <span className="bg-white/20 text-xs md:text-sm px-2 py-1 rounded-full">✓ Doğrulanmış</span>
               )}
             </h1>
-            <p className="text-white/80 mt-1">{w.city || 'Türkiye'}</p>
-            <div className="flex gap-3 mt-3 text-sm">
+            <p className="text-white/80 mt-1 text-sm md:text-base">{w.city || 'Türkiye'}</p>
+            <div className="flex flex-wrap justify-center sm:justify-start gap-x-3 gap-y-1 mt-3 text-sm">
               {w.averageRating ? (
                 <span>★ {Number(w.averageRating).toFixed(1)} ({w.totalReviews || 0} yorum)</span>
               ) : null}
@@ -102,7 +102,7 @@ export default async function WorkerPage({
         </div>
       </section>
 
-      <section className="max-w-5xl mx-auto px-4 py-8 grid md:grid-cols-3 gap-6">
+      <section className="container mx-auto max-w-5xl px-4 md:px-6 lg:px-8 py-6 md:py-8 grid md:grid-cols-3 gap-4 md:gap-6 pb-24 md:pb-8">
         <div className="md:col-span-2 space-y-6">
           {w.workerBio && (
             <div className="bg-white border border-[var(--border)] rounded-xl p-5">
@@ -149,6 +149,16 @@ export default async function WorkerPage({
           )}
         </aside>
       </section>
+
+      {/* Sticky mobile CTA — direct contact via app install */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-[var(--border)] px-4 py-3 shadow-[0_-2px_12px_rgba(0,0,0,0.06)]">
+        <Link
+          href="/"
+          className="flex items-center justify-center w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-semibold rounded-lg min-h-[48px]"
+        >
+          İletişim — Mobil App&apos;te Aç
+        </Link>
+      </div>
     </>
   );
 }

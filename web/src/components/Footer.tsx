@@ -5,7 +5,7 @@ export default async function Footer() {
   const cats = (await getCategories()) || [];
   return (
     <footer className="bg-[var(--secondary)] text-white mt-16">
-      <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-12 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-sm">
         <div>
           <h3 className="font-bold mb-3 text-base">Yapgitsin</h3>
           <p className="text-white/70 leading-relaxed">
