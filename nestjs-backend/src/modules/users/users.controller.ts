@@ -469,6 +469,54 @@ export class UsersController {
     return { ...result, data };
   }
 
+  /** Phase 133 — Public customer profile (no worker fields). */
+  @Get(':id/customer-profile')
+  async getCustomerProfile(@Param('id') id: string) {
+    const user = await this.svc.findById(id);
+    if (!user) return null;
+
+    const reviews = await this.reviewsRepo.find({
+      where: { revieweeId: id },
+      relations: ['reviewer'],
+      order: { createdAt: 'DESC' },
+      take: 10,
+    });
+
+    // Bu kullanıcı müşteri olarak aldığı yorumları filtrele:
+    // reviewer = ustaysa (workerCategories doluysa) müşteri rolüyle aldığı yorum
+    const customerReviews = reviews.filter((r) => {
+      const wc = r.reviewer?.workerCategories;
+      return Array.isArray(wc) && wc.length > 0;
+    });
+
+    const completedJobsCount = await this.jobsRepo.count({
+      where: { customerId: id, status: JobStatus.COMPLETED },
+    });
+
+    const total = user.asCustomerTotal ?? 0;
+    const success = user.asCustomerSuccess ?? 0;
+    const successRate = total > 0 ? Math.round((success / total) * 100) : 0;
+
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      profileImageUrl: user.profileImageUrl ?? null,
+      joinedAt: user.createdAt,
+      identityVerified: user.identityVerified === true,
+      asCustomerTotal: total,
+      asCustomerSuccess: success,
+      customerSuccessRate: successRate,
+      completedJobsCount,
+      reviewsReceivedAsCustomer: customerReviews.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        comment: r.comment,
+        reviewerName: r.reviewer?.fullName ?? 'Usta',
+        createdAt: r.createdAt,
+      })),
+    };
+  }
+
   /** GET /users/:id/profile — public */
   @Get(':id/profile')
   async getPublicProfile(@Param('id') id: string) {
