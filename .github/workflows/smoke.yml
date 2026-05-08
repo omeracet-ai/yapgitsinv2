@@ -1,0 +1,24 @@
+name: Smoke Test
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        required: true
+        default: 'https://api.yapgitsin.tr'
+      web_url:
+        required: true
+        default: 'https://yapgitsin.tr'
+  schedule:
+    - cron: '0 */6 * * *'  # every 6 hours
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y jq
+      - name: Run smoke
+        env:
+          API_URL: ${{ inputs.api_url || 'https://api.yapgitsin.tr' }}
+          WEB_URL: ${{ inputs.web_url || 'https://yapgitsin.tr' }}
+        run: bash scripts/smoke-test.sh
