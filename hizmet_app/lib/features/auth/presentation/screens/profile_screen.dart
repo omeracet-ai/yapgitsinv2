@@ -16,6 +16,7 @@ import 'package:dio/dio.dart';
 import '../../../calendar/presentation/calendar_screen.dart';
 import '../../../calendar/presentation/earnings_screen.dart';
 import '../../../profile/widgets/profile_completion_card.dart';
+import '../../widgets/availability_editor_sheet.dart';
 
 // ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
 final myPublicProfileProvider =
@@ -845,6 +846,16 @@ class ProfileScreen extends ConsumerWidget {
           _menuItem(Icons.calendar_month_outlined, 'İş Takvimi', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const CalendarScreen()));
+          }),
+          _menuItem(Icons.event_available_outlined, 'Müsaitlik Programı', () {
+            final auth = ref.read(authStateProvider);
+            final user = auth is AuthAuthenticated ? auth.user : <String, dynamic>{};
+            final raw = user['availabilitySchedule'];
+            Map<String, bool>? initial;
+            if (raw is Map) {
+              initial = raw.map((k, v) => MapEntry(k.toString(), v == true));
+            }
+            AvailabilityEditorSheet.show(context, initial: initial);
           }),
           _menuItem(Icons.payments_outlined, 'Kazançlarım', () {
             Navigator.push(context,

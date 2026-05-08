@@ -183,6 +183,33 @@ class AuthRepository {
     }
   }
 
+  Future<Map<String, dynamic>?> updateAvailability(
+      Map<String, bool>? schedule) async {
+    try {
+      final opts = await _authOptions();
+      final response = await _dio.patch(
+        '/users/me/availability',
+        data: {'schedule': schedule},
+        options: opts,
+      );
+      // user_data cache içine availabilitySchedule yaz
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('user_data');
+      if (raw != null) {
+        try {
+          final m = Map<String, dynamic>.from(jsonDecode(raw));
+          m['availabilitySchedule'] = schedule;
+          await prefs.setString('user_data', jsonEncode(m));
+        } catch (_) {}
+      }
+      return response.data is Map
+          ? Map<String, dynamic>.from(response.data as Map)
+          : null;
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Bağlantı hatası');
+    }
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token');

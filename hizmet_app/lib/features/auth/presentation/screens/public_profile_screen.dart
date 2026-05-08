@@ -8,6 +8,7 @@ import '../../../tokens/widgets/gift_tokens_sheet.dart';
 import '../providers/auth_provider.dart';
 import '../../../reviews/widgets/review_reply_sheet.dart';
 import '../../widgets/portfolio_gallery.dart';
+import '../../widgets/availability_editor_sheet.dart';
 
 final publicProfileProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
@@ -69,6 +70,10 @@ class _ProfileView extends ConsumerWidget {
     final reviewList      = (data['reviews']          as List?)
                                 ?.cast<Map<String, dynamic>>() ?? [];
     final isWorker        = workerCats.isNotEmpty;
+    final availRaw        = data['availabilitySchedule'];
+    final Map<String, bool>? availability = availRaw is Map
+        ? availRaw.map((k, v) => MapEntry(k.toString(), v == true))
+        : null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -250,6 +255,15 @@ class _ProfileView extends ConsumerWidget {
                               ))
                           .toList(),
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                // ── Müsaitlik ────────────────────────────────────────────
+                if (availability != null && isWorker) ...[
+                  _section(
+                    title: 'Müsaitlik',
+                    child: AvailabilityChips(schedule: availability),
                   ),
                   const SizedBox(height: 8),
                 ],
