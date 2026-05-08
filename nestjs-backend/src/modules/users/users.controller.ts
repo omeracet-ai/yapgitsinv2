@@ -473,6 +473,16 @@ export class UsersController {
     return { ...result, data };
   }
 
+  /** Phase 135 — Public availability slots (next N days). */
+  @Get(':id/availability-slots')
+  async getAvailabilitySlots(
+    @Param('id') id: string,
+    @Query('days') daysRaw?: string,
+  ) {
+    const d = daysRaw ? parseInt(daysRaw, 10) : 30;
+    return this.svc.getAvailabilitySlots(id, isNaN(d) ? 30 : d);
+  }
+
   /** Phase 133 — Public customer profile (no worker fields). */
   @Get(':id/customer-profile')
   async getCustomerProfile(@Param('id') id: string) {

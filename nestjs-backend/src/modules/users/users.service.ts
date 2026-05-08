@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
+import { Booking, BookingStatus } from '../bookings/booking.entity';
 import { SemanticSearchService } from '../ai/semantic-search.service';
 
 export type StatField =
@@ -18,8 +19,75 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private repo: Repository<User>,
+    @InjectRepository(Booking)
+    private bookingsRepo: Repository<Booking>,
     private readonly semanticSearch: SemanticSearchService,
   ) {}
+
+  /** Phase 135 — Worker availability slots for next N days.
+   * Combines weekly availabilitySchedule (Phase 44) + active bookings (Phase 70).
+   * Public endpoint (no auth). fullyBooked = 8+ bookings/day (default 8 slots).
+   */
+  async getAvailabilitySlots(
+    userId: string,
+    days: number,
+  ): Promise<Array<{
+    date: string;
+    dayOfWeek: string;
+    weeklyAvailable: boolean;
+    hasBooking: boolean;
+    fullyBooked: boolean;
+  }>> {
+    const user = await this.repo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    const N = Math.min(90, Math.max(1, days || 30));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().slice(0, 10);
+    const endDate = new Date(today.getTime() + (N - 1) * 86400000);
+    const endStr = endDate.toISOString().slice(0, 10);
+
+    const bookings = await this.bookingsRepo
+      .createQueryBuilder('b')
+      .where('b.workerId = :uid', { uid: userId })
+      .andWhere('b.scheduledDate >= :s', { s: todayStr })
+      .andWhere('b.scheduledDate <= :e', { e: endStr })
+      .andWhere('b.status IN (:...st)', {
+        st: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS],
+      })
+      .getMany();
+
+    const countByDate = new Map<string, number>();
+    for (const b of bookings) {
+      countByDate.set(b.scheduledDate, (countByDate.get(b.scheduledDate) ?? 0) + 1);
+    }
+
+    const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+    const sched = user.availabilitySchedule;
+    const SLOTS_PER_DAY = 8;
+    const out: Array<{
+      date: string;
+      dayOfWeek: string;
+      weeklyAvailable: boolean;
+      hasBooking: boolean;
+      fullyBooked: boolean;
+    }> = [];
+    for (let i = 0; i < N; i++) {
+      const d = new Date(today.getTime() + i * 86400000);
+      const dateStr = d.toISOString().slice(0, 10);
+      const dow = dayKeys[d.getDay()];
+      const weeklyAvailable = sched == null ? true : sched[dow] === true;
+      const cnt = countByDate.get(dateStr) ?? 0;
+      out.push({
+        date: dateStr,
+        dayOfWeek: dow,
+        weeklyAvailable,
+        hasBooking: cnt > 0,
+        fullyBooked: cnt >= SLOTS_PER_DAY,
+      });
+    }
+    return out;
+  }
 
   findByEmail(email: string): Promise<User | null> {
     return this.repo.findOne({ where: { email } });
