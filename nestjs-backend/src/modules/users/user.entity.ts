@@ -74,6 +74,9 @@ export class User {
   @Column({ type: 'float', default: 100 })
   tokenBalance: number;
 
+  @Column({ type: 'varchar', length: 3, default: 'TRY' })
+  preferredCurrency: string;
+
   // ── Hizmet Alan (customer) istatistikleri ──────────────────────────────
   @Column({ type: 'integer', default: 0 })
   asCustomerTotal: number;
