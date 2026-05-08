@@ -40,6 +40,7 @@ import { JobQuestionReply } from './modules/jobs/job-question-reply.entity';
 import { OnboardingSlide } from './modules/onboarding/onboarding-slide.entity';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { FavoriteProvider } from './modules/favorites/favorite-provider.entity';
+import { FavoriteWorker } from './modules/users/favorite-worker.entity';
 import { SavedJobSearch } from './modules/favorites/saved-job-search.entity';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { PaymentEscrow } from './modules/escrow/payment-escrow.entity';
@@ -97,6 +98,7 @@ import { AdminAuditModule } from './modules/admin-audit/admin-audit.module';
           JobQuestionReply,
           OnboardingSlide,
           FavoriteProvider,
+          FavoriteWorker,
           SavedJobSearch,
           PaymentEscrow,
           CancellationPolicy,

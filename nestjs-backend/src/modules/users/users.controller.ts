@@ -2,16 +2,20 @@ import {
   Controller,
   Get,
   Patch,
+  Post,
+  Delete,
   Param,
   Body,
   Query,
   UseGuards,
   Request,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
+import { FavoriteWorkersService } from './favorite-workers.service';
 import { computeBadges } from './badges.util';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
@@ -22,10 +26,36 @@ import type { AuthenticatedRequest } from '../../common/types/auth.types';
 export class UsersController {
   constructor(
     private readonly svc: UsersService,
+    private readonly favWorkersSvc: FavoriteWorkersService,
     @InjectRepository(Job) private jobsRepo: Repository<Job>,
     @InjectRepository(Review) private reviewsRepo: Repository<Review>,
     @InjectRepository(Offer) private offersRepo: Repository<Offer>,
   ) {}
+
+  // ── Favorite workers ──────────────────────────────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/favorites')
+  listFavoriteWorkers(@Request() req: AuthenticatedRequest) {
+    return this.favWorkersSvc.listFavorites(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/favorites/:workerId')
+  addFavoriteWorker(
+    @Request() req: AuthenticatedRequest,
+    @Param('workerId', ParseUUIDPipe) workerId: string,
+  ) {
+    return this.favWorkersSvc.addFavorite(req.user.id, workerId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('me/favorites/:workerId')
+  removeFavoriteWorker(
+    @Request() req: AuthenticatedRequest,
+    @Param('workerId', ParseUUIDPipe) workerId: string,
+  ) {
+    return this.favWorkersSvc.removeFavorite(req.user.id, workerId);
+  }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
