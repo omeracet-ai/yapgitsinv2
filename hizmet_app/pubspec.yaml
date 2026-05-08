@@ -51,6 +51,13 @@ dependencies:
   # Paylaşım
   share_plus: ^13.1.0
 
+  # Phase 113 — Firebase Cloud Messaging (mobile push)
+  # Real platform setup (google-services.json / GoogleService-Info.plist) is
+  # done at deploy time. The FcmService stub silently no-ops if Firebase
+  # initialization fails (e.g. web / windows / missing config).
+  firebase_core: ^3.0.0
+  firebase_messaging: ^15.0.0
+
 
 
 

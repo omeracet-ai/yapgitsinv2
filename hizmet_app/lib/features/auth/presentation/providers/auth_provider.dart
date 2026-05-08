@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/auth_repository.dart';
+import '../../../../core/services/fcm_service.dart';
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.watch(authRepositoryProvider));
@@ -28,6 +30,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (token != null) {
       final userData = await _repository.getUserData();
       state = AuthAuthenticated(userData ?? {'fullName': 'Kullanıcı'});
+      // Phase 113 — re-sync FCM token for the already-logged-in user.
+      unawaited(FcmService.instance.init());
     } else {
       state = AuthUnauthenticated();
     }
@@ -45,6 +49,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return data;
       }
       state = AuthAuthenticated(data['user'] as Map<String, dynamic>? ?? {'fullName': emailOrPhone});
+      unawaited(FcmService.instance.init());
       return data;
     } catch (e) {
       state = AuthError(e.toString());
@@ -57,6 +62,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final data = await _repository.verify2FALogin(tempToken, code);
       state = AuthAuthenticated(data['user'] as Map<String, dynamic>? ?? {'fullName': 'Kullanıcı'});
+      unawaited(FcmService.instance.init());
     } catch (e) {
       state = AuthError(e.toString());
       rethrow;
@@ -88,6 +94,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         address: address,
       );
       state = AuthAuthenticated(data['user'] as Map<String, dynamic>? ?? {'fullName': fullName});
+      unawaited(FcmService.instance.init());
       return data;
     } catch (e) {
       state = AuthError(e.toString());
@@ -103,6 +110,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    // Phase 113 — drop FCM device token before clearing JWT.
+    await FcmService.instance.unregister();
     await _repository.logout();
     state = AuthUnauthenticated();
   }
