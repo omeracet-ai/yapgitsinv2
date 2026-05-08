@@ -78,6 +78,20 @@ class ServiceRequestRepository {
     }
   }
 
+  /// Phase 81: SR → Job dönüşümü. SR otomatik kapanır, yeni Job ID döner.
+  Future<Map<String, dynamic>> convertToJob(String id) async {
+    try {
+      final opts = await _authOptions();
+      final response = await _dio.post(
+        '/service-requests/$id/convert-to-job',
+        options: opts,
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } on DioException catch (e) {
+      throw Exception(_dioMsg(e, 'Dönüşüm başarısız'));
+    }
+  }
+
   Future<void> delete(String id) async {
     try {
       final opts = await _authOptions();

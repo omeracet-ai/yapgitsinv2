@@ -21,12 +21,67 @@ class _ServiceRequestDetailScreenState
   bool _loading = false;
   String? _error;
   bool _applied = false;
+  bool _converting = false;
+  bool _converted = false;
 
   @override
   void dispose() {
     _messageCtrl.dispose();
     _priceCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _convertToJob() async {
+    final id = widget.item['id'] as String?;
+    if (id == null) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Teklif akışına geç'),
+        content: const Text(
+          'Bu hizmet talebini iş ilanına çevir? '
+          'Mevcut başvurular kapanır, yeni teklif sistemi açılır.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Vazgeç'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Onayla'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+
+    setState(() => _converting = true);
+    try {
+      final repo = ref.read(serviceRequestRepositoryProvider);
+      await repo.convertToJob(id);
+      if (!mounted) return;
+      setState(() {
+        _converted = true;
+        _converting = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('İlan oluşturuldu! Teklifler bekleniyor.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _converting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _apply() async {
@@ -328,6 +383,41 @@ class _ServiceRequestDetailScreenState
                         ],
                       ),
                     ),
+                    if ((item['status'] as String? ?? 'open') == 'open' &&
+                        !_converted) ...[
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _converting ? null : _convertToJob,
+                          icon: _converting
+                              ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.swap_horiz,
+                                  color: Colors.white),
+                          label: const Text('Teklif Akışına Geç',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.accent,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'İlanını açık-teklif sistemine çevir; ustalar fiyat verir.',
+                        style: TextStyle(
+                            color: AppColors.textHint, fontSize: 12),
+                      ),
+                    ],
                   ],
 
                   const SizedBox(height: 32),

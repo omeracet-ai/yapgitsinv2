@@ -89,6 +89,16 @@ export class ServiceRequestsController {
     return this.svc.remove(id, req.user.id);
   }
 
+  /** POST /service-requests/:id/convert-to-job — SR'i Job'a çevir */
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':id/convert-to-job')
+  convertToJob(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.svc.convertToJob(id, req.user.id);
+  }
+
   // ─── Başvuru (Application) endpointleri ────────────────────────────────
 
   /** GET /service-requests/applications/my — işçinin kendi başvuruları */

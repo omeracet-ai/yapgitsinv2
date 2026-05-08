@@ -2,14 +2,16 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { ServiceRequest } from './service-request.entity';
 import {
   ServiceRequestApplication,
   ApplicationStatus,
 } from './service-request-application.entity';
+import { Job, JobStatus } from '../jobs/job.entity';
 
 @Injectable()
 export class ServiceRequestsService {
@@ -18,7 +20,51 @@ export class ServiceRequestsService {
     private repo: Repository<ServiceRequest>,
     @InjectRepository(ServiceRequestApplication)
     private appRepo: Repository<ServiceRequestApplication>,
+    @InjectRepository(Job)
+    private jobRepo: Repository<Job>,
+    private dataSource: DataSource,
   ) {}
+
+  /**
+   * Phase 81: ServiceRequest → Job dönüşümü.
+   * SR sahibi mevcut hizmet talebini açık-teklif iş ilanına çevirir.
+   * SR otomatik kapanır (status='closed'). Atomik transaction.
+   */
+  async convertToJob(
+    srId: string,
+    userId: string,
+  ): Promise<{ jobId: string; message: string }> {
+    const sr = await this.repo.findOne({ where: { id: srId } });
+    if (!sr) throw new NotFoundException('Hizmet talebi bulunamadı');
+    if (sr.userId !== userId)
+      throw new ForbiddenException('Sadece ilan sahibi dönüşüm yapabilir');
+    if (sr.status === 'closed')
+      throw new BadRequestException('Bu talep zaten kapalı');
+
+    return await this.dataSource.transaction(async (manager) => {
+      const jobRepo = manager.getRepository(Job);
+      const srRepo = manager.getRepository(ServiceRequest);
+
+      const job = jobRepo.create({
+        title: sr.title,
+        description: sr.description,
+        category: sr.category,
+        categoryId: sr.categoryId ?? null,
+        location: sr.location || sr.address || '',
+        photos: sr.imageUrl ? [sr.imageUrl] : null,
+        latitude: sr.latitude ?? null,
+        longitude: sr.longitude ?? null,
+        customerId: sr.userId,
+        status: JobStatus.OPEN,
+      });
+      const saved = await jobRepo.save(job);
+
+      sr.status = 'closed';
+      await srRepo.save(sr);
+
+      return { jobId: saved.id, message: 'İlan oluşturuldu' };
+    });
+  }
 
   findAll(category?: string): Promise<ServiceRequest[]> {
     const qb = this.repo
