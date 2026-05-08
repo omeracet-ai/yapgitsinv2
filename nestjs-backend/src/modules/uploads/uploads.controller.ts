@@ -18,6 +18,7 @@ import { join } from 'path';
 import * as fs from 'fs';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 import { UploadsService } from './uploads.service';
+import { processImage } from '../../common/image-pipeline';
 
 const sharp = require('sharp');
 
@@ -96,14 +97,11 @@ export class UploadsController {
 
     const urls: string[] = [];
     for (const file of files) {
-      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
-      const dest = join(dir, filename);
-      await sharp(file.buffer)
-        .resize({ width: 1024, withoutEnlargement: true })
-        .jpeg({ quality: 75 })
-        .toFile(dest);
+      const baseName = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      // Phase 96: render JPEG/WebP/AVIF @ 1024/640/320 + legacy <name>.jpg
+      await processImage(file.buffer, dir, baseName);
       urls.push(
-        `${req.protocol}://${req.get('host')}/uploads/jobs/${filename}`,
+        `${req.protocol}://${req.get('host')}/uploads/jobs/${baseName}.jpg`,
       );
     }
     return urls;
@@ -161,14 +159,11 @@ export class UploadsController {
     const folder = sanitizeName(fullName);
     const dir = join(process.cwd(), 'uploads', 'portfolio', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
-    const dest = join(dir, filename);
-    await sharp(file.buffer)
-      .resize({ width: 1024, withoutEnlargement: true })
-      .jpeg({ quality: 75 })
-      .toFile(dest);
+    const baseName = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    // Phase 96: render JPEG/WebP/AVIF @ 1024/640/320 + legacy <name>.jpg
+    await processImage(file.buffer, dir, baseName);
     return {
-      url: `${req.protocol}://${req.get('host')}/uploads/portfolio/${folder}/${filename}`,
+      url: `${req.protocol}://${req.get('host')}/uploads/portfolio/${folder}/${baseName}.jpg`,
     };
   }
 
@@ -193,16 +188,15 @@ export class UploadsController {
     const dir = join(process.cwd(), 'uploads', 'profile', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-    // Cache-bust dosya adı: aynı kullanıcı yeniden yüklerse CDN/cache stale kalmasın
-    const filename = `profile-${Date.now()}.jpg`;
-    const dest = join(dir, filename);
-    await sharp(file.buffer)
-      .resize(512, 512, { fit: 'cover', position: 'center' })
-      .jpeg({ quality: 80 })
-      .toFile(dest);
+    // Cache-bust isim — Phase 96: 512/256/128 cover crop, 3 format
+    const baseName = `profile-${Date.now()}`;
+    await processImage(file.buffer, dir, baseName, {
+      sizes: [512, 256, 128],
+      cover: 512,
+    });
 
     return {
-      url: `${req.protocol}://${req.get('host')}/uploads/profile/${folder}/${filename}`,
+      url: `${req.protocol}://${req.get('host')}/uploads/profile/${folder}/${baseName}.jpg`,
     };
   }
 
@@ -255,14 +249,14 @@ export class UploadsController {
     if (!file) throw new BadRequestException('Görsel seçilmedi');
     const dir = join(process.cwd(), 'uploads', 'onboarding');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
-    const dest = join(dir, filename);
-    await sharp(file.buffer)
-      .resize({ width: 1200, withoutEnlargement: true })
-      .jpeg({ quality: 82 })
-      .toFile(dest);
+    const baseName = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    // Phase 96: 1200/800/400 + 3 formats
+    await processImage(file.buffer, dir, baseName, {
+      sizes: [1200, 800, 400],
+      jpegQuality: 82,
+    });
     return {
-      url: `${req.protocol}://${req.get('host')}/uploads/onboarding/${filename}`,
+      url: `${req.protocol}://${req.get('host')}/uploads/onboarding/${baseName}.jpg`,
     };
   }
 
