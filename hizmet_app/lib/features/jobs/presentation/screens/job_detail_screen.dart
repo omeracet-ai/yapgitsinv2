@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../data/job_repository.dart';
 import '../../data/offer_repository.dart';
 import '../../../offers/widgets/offer_line_items_editor.dart';
+import '../../../offers/widgets/offer_template_picker.dart';
 import '../../../offers/widgets/offer_line_items_view.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/job_provider.dart';
@@ -1674,6 +1675,28 @@ class _BidSheetState extends State<_BidSheet> {
                 filled: true),
           ),
           const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () async {
+                final picked =
+                    await OfferTemplatePickerSheet.show(context);
+                if (picked != null && picked.isNotEmpty) {
+                  widget.msgCtrl.text = picked;
+                  widget.msgCtrl.selection = TextSelection.fromPosition(
+                      TextPosition(offset: picked.length));
+                }
+              },
+              icon: const Icon(Icons.bookmark_outline, size: 18),
+              label: const Text('Şablon Seç'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ),
           TextField(
             controller: widget.msgCtrl,
             maxLines: 2,

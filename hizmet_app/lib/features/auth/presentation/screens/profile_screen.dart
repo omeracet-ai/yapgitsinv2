@@ -857,6 +857,7 @@ class ProfileScreen extends ConsumerWidget {
             }
             AvailabilityEditorSheet.show(context, initial: initial);
           }),
+          ..._buildWorkerOnlyItems(context, ref),
           _menuItem(Icons.payments_outlined, 'Kazançlarım', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const EarningsScreen()));
@@ -897,6 +898,19 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  List<Widget> _buildWorkerOnlyItems(BuildContext context, WidgetRef ref) {
+    final auth = ref.watch(authStateProvider);
+    final user = auth is AuthAuthenticated ? auth.user : <String, dynamic>{};
+    final cats = user['workerCategories'];
+    final isWorker = cats is List && cats.isNotEmpty;
+    if (!isWorker) return const [];
+    return [
+      _menuItem(Icons.note_alt_outlined, 'Teklif Şablonlarım', () {
+        context.push('/teklif-sablonlarim');
+      }),
+    ];
   }
 
   Widget _build2FAMenuItem(BuildContext context, WidgetRef ref) {
