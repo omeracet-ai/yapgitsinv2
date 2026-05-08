@@ -24,13 +24,26 @@ export type BadgeId =
   | 'rookie'
   | 'power_tasker'
   | 'fast_responder'
-  | 'blue_tick';
+  | 'blue_tick'
+  // Phase 137 — admin-granted special badges (user.manualBadges)
+  | 'top_partner'
+  | 'platform_pioneer'
+  | 'community_hero'
+  | 'vip';
 
 export const MANUAL_BADGES: ReadonlyArray<BadgeId> = [
   'insurance',
   'premium',
   'partner',
   'verified_business',
+];
+
+// Phase 137 — admin grant/revoke pool (separate column on User.manualBadges)
+export const ADMIN_MANUAL_BADGES: ReadonlyArray<BadgeId> = [
+  'top_partner',
+  'platform_pioneer',
+  'community_hero',
+  'vip',
 ];
 
 export interface BadgeMeta {
@@ -51,6 +64,10 @@ export const BADGE_META: Record<BadgeId, BadgeMeta> = {
   power_tasker:     { id: 'power_tasker',     label: 'Süper Usta',         emoji: '🚀', computed: true  },
   fast_responder:   { id: 'fast_responder',   label: 'Hızlı Cevap Veren',  emoji: '⚡', computed: true  },
   blue_tick:        { id: 'blue_tick',        label: 'Mavi Tik',           emoji: '✓',  computed: true  },
+  top_partner:      { id: 'top_partner',      label: 'Top Partner',        emoji: '🥇', computed: false },
+  platform_pioneer: { id: 'platform_pioneer', label: 'Platform Öncüsü',    emoji: '🚀', computed: false },
+  community_hero:   { id: 'community_hero',   label: 'Topluluk Kahramanı', emoji: '❤️', computed: false },
+  vip:              { id: 'vip',              label: 'VIP',                emoji: '💎', computed: false },
 };
 
 /** Compute the full badge list (manual + derived) for a user. */
@@ -60,6 +77,11 @@ export function computeBadges(user: User): BadgeId[] {
   // Manual badges (admin-set)
   for (const b of user.badges ?? []) {
     if ((MANUAL_BADGES as readonly string[]).includes(b)) out.add(b as BadgeId);
+  }
+
+  // Phase 137 — admin-granted special badges
+  for (const b of user.manualBadges ?? []) {
+    if ((ADMIN_MANUAL_BADGES as readonly string[]).includes(b)) out.add(b as BadgeId);
   }
 
   // Derived

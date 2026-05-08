@@ -163,6 +163,11 @@ export class User {
   @Column({ type: 'simple-json', nullable: true })
   badges: string[] | null;
 
+  // Phase 137 — Admin-granted special manual badges (separate from `badges`).
+  // Allowed keys: top_partner | platform_pioneer | community_hero | vip
+  @Column({ type: 'simple-json', nullable: true })
+  manualBadges: string[] | null;
+
   // Phase 43 — Worker portfolio photos (max 10, kendi yönettiği)
   @Column({ type: 'simple-json', nullable: true })
   portfolioPhotos: string[] | null;

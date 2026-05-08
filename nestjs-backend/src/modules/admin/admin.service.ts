@@ -509,6 +509,7 @@ export class AdminService {
         'workerCategories',
         'workerSkills',
         'badges',
+        'manualBadges',
         'averageRating',
         'totalReviews',
         'asWorkerTotal',
@@ -597,5 +598,36 @@ export class AdminService {
     ).slice(0, 20);
     await this.usersRepo.update(id, { workerSkills: cleaned });
     return { id, workerSkills: cleaned };
+  }
+
+  // ── Phase 137 — Admin manual badge grant/revoke ─────────────────────
+  private static readonly ADMIN_MANUAL_BADGE_KEYS = [
+    'top_partner',
+    'platform_pioneer',
+    'community_hero',
+    'vip',
+  ];
+
+  async grantManualBadge(userId: string, badgeKey: string) {
+    if (!AdminService.ADMIN_MANUAL_BADGE_KEYS.includes(badgeKey)) {
+      throw new BadRequestException('Geçersiz rozet anahtarı');
+    }
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    const current = user.manualBadges ?? [];
+    const next = current.includes(badgeKey) ? current : [...current, badgeKey];
+    await this.usersRepo.update(userId, { manualBadges: next });
+    return { id: userId, manualBadges: next };
+  }
+
+  async revokeManualBadge(userId: string, badgeKey: string) {
+    if (!AdminService.ADMIN_MANUAL_BADGE_KEYS.includes(badgeKey)) {
+      throw new BadRequestException('Geçersiz rozet anahtarı');
+    }
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    const next = (user.manualBadges ?? []).filter((b) => b !== badgeKey);
+    await this.usersRepo.update(userId, { manualBadges: next });
+    return { id: userId, manualBadges: next };
   }
 }

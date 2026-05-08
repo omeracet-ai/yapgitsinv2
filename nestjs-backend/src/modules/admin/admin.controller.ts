@@ -355,6 +355,41 @@ export class AdminController {
     return result;
   }
 
+  // ── Phase 137 — Manual badge grant/revoke ───────────────────────────
+  @Post('users/:id/badges/grant')
+  async grantManualBadge(
+    @Param('id') id: string,
+    @Body() body: { badgeKey: string },
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.adminService.grantManualBadge(id, body.badgeKey);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'user.badge.grant',
+      'user',
+      id,
+      { badgeKey: body.badgeKey },
+    );
+    return result;
+  }
+
+  @Post('users/:id/badges/revoke')
+  async revokeManualBadge(
+    @Param('id') id: string,
+    @Body() body: { badgeKey: string },
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.adminService.revokeManualBadge(id, body.badgeKey);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'user.badge.revoke',
+      'user',
+      id,
+      { badgeKey: body.badgeKey },
+    );
+    return result;
+  }
+
   /** Set tasker skills (granular tags beyond workerCategories). */
   @Patch('users/:id/skills')
   async setUserSkills(
