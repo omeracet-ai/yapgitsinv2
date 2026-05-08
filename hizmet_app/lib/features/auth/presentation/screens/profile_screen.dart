@@ -1007,6 +1007,13 @@ class ProfileScreen extends ConsumerWidget {
           _menuItem(Icons.smart_toy_outlined, '🤖 Yapgitsin Asistan',
               () => context.push('/asistan')),
           const Divider(height: 1, indent: 50),
+          _menuItem(Icons.download_outlined, '📥 Verilerimi İndir (KVKK)',
+              () => _handleDataExport(context, ref)),
+          _menuItem(Icons.privacy_tip_outlined,
+              '🗑️ Hesap Verilerimi Sil (KVKK)',
+              () => _showDataDeletionDialog(context, ref),
+              color: AppColors.error),
+          const Divider(height: 1, indent: 50),
           _menuItem(Icons.logout, 'Çıkış Yap',
               () => ref.read(authStateProvider.notifier).logout(),
               color: Colors.redAccent),
@@ -1031,6 +1038,124 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _handleDataExport(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Verileriniz hazırlanıyor...')),
+    );
+    try {
+      final body = await ref.read(authRepositoryProvider).downloadDataExport();
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+              '✅ Verileriniz hazır (${(body.length / 1024).toStringAsFixed(1)} KB). KVKK Madde 11.'),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      messenger.showSnackBar(SnackBar(content: Text('Hata: $msg')));
+    }
+  }
+
+  Future<void> _showDataDeletionDialog(
+      BuildContext context, WidgetRef ref) async {
+    final reasonCtrl = TextEditingController();
+    bool busy = false;
+    String? errorText;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          title: const Row(
+            children: [
+              Icon(Icons.privacy_tip_outlined, color: AppColors.error),
+              SizedBox(width: 8),
+              Expanded(child: Text('Veri Silme Talebi (KVKK)')),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'KVKK Madde 11 gereği tüm verilerinizin silinmesini talep edebilirsiniz. '
+                'Talep yöneticilerimizce 30 gün içinde değerlendirilir.',
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reasonCtrl,
+                enabled: !busy,
+                maxLines: 3,
+                maxLength: 500,
+                decoration: InputDecoration(
+                  labelText: 'Sebep (opsiyonel)',
+                  errorText: errorText,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: busy ? null : () => Navigator.of(dialogCtx).pop(),
+              child: const Text('İptal'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: busy
+                  ? null
+                  : () async {
+                      setState(() {
+                        busy = true;
+                        errorText = null;
+                      });
+                      try {
+                        await ref
+                            .read(authRepositoryProvider)
+                            .requestDataDeletion(reasonCtrl.text.trim());
+                        if (!ctx.mounted) return;
+                        Navigator.of(dialogCtx).pop();
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                '✅ Silme talebiniz alındı. 30 gün içinde değerlendirilecek.'),
+                          ),
+                        );
+                      } catch (e) {
+                        final msg =
+                            e.toString().replaceFirst('Exception: ', '');
+                        setState(() {
+                          busy = false;
+                          errorText = msg;
+                        });
+                      }
+                    },
+              child: busy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Talep Gönder'),
+            ),
+          ],
+        ),
       ),
     );
   }

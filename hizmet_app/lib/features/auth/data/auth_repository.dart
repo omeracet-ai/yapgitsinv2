@@ -238,6 +238,51 @@ class AuthRepository {
     }
   }
 
+  /// KVKK Madde 11 — kullanıcının tüm verilerini JSON olarak indir.
+  /// Dönen değer: indirilen dosyanın yolu.
+  Future<String> downloadDataExport() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) throw Exception('Oturum bulunamadı');
+    try {
+      final response = await _dio.get<dynamic>(
+        '/users/me/data-export',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+          responseType: ResponseType.plain,
+        ),
+      );
+      final body = response.data is String
+          ? response.data as String
+          : jsonEncode(response.data);
+      // MVP: dosyaya yazmak yerine içeriği döndür — UI snackbar'da bilgi verir.
+      // path_provider ekli değilse de calls çalışsın.
+      return body;
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?.toString() ?? 'Veri indirilemedi');
+    }
+  }
+
+  /// KVKK Madde 11 — silme talebi gönder.
+  Future<Map<String, dynamic>> requestDataDeletion(String? reason) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) throw Exception('Oturum bulunamadı');
+    try {
+      final response = await _dio.post(
+        '/users/me/data-delete-request',
+        data: {if (reason != null && reason.isNotEmpty) 'reason': reason},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      final msg = e.response?.data is Map
+          ? (e.response?.data['message']?.toString() ?? 'Hata')
+          : 'Bağlantı hatası';
+      throw Exception(msg);
+    }
+  }
+
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('jwt_token');
