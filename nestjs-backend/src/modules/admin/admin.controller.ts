@@ -9,6 +9,7 @@ import { UserBlocksService } from '../user-blocks/user-blocks.service';
 import type { UserReportStatus } from '../user-blocks/user-report.entity';
 import { UpdateReportStatusDto } from '../user-blocks/dto/report-user.dto';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
+import { SystemSettingsService } from '../system-settings/system-settings.service';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
 import { BulkVerifyDto } from './dto/bulk-verify.dto';
 import { SuspendUserDto } from './dto/suspend-user.dto';
@@ -26,7 +27,37 @@ export class AdminController {
     private readonly providersService: ProvidersService,
     private readonly userBlocksService: UserBlocksService,
     private readonly adminAuditService: AdminAuditService,
+    private readonly systemSettings: SystemSettingsService,
   ) {}
+
+  // ── System Settings ─────────────────────────────────────────────────────────
+  @Get('settings')
+  async listSettings() {
+    return this.systemSettings.getAll();
+  }
+
+  @Get('settings/:key')
+  async getSetting(@Param('key') key: string) {
+    const value = await this.systemSettings.get(key, '');
+    return { key, value };
+  }
+
+  @Patch('settings/:key')
+  async updateSetting(
+    @Param('key') key: string,
+    @Body() body: { value: string },
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.systemSettings.set(key, body.value, req.user.id);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'setting.update',
+      'system_setting',
+      key,
+      { value: body.value },
+    );
+    return result;
+  }
 
   @Get('audit-log')
   async getAuditLog(

@@ -14,6 +14,10 @@ import { Server, Socket } from 'socket.io';
 import { ChatMessage } from './chat-message.entity';
 import { ContentFilterService } from '../moderation/content-filter.service';
 import { UserBlocksService } from '../user-blocks/user-blocks.service';
+import { SystemSettingsService } from '../system-settings/system-settings.service';
+import { detectContact, maskContact } from '../../common/contact-filter';
+
+export const CONTACT_BLOCK_SETTING_KEY = 'contact_sharing_block_enabled';
 
 interface SendMessagePayload {
   from: string;
@@ -48,6 +52,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private messagesRepo: Repository<ChatMessage>,
     private filter: ContentFilterService,
     private userBlocksService: UserBlocksService,
+    private systemSettings: SystemSettingsService,
   ) {}
 
   handleConnection(client: Socket) {
@@ -79,19 +84,44 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
     }
-    const result = this.filter.check(data.message);
+    // Phase 77: contact-sharing block (admin toggle)
+    let workingMessage = data.message;
+    let contactFiltered = false;
+    let detectedContactTypes: string[] = [];
+    const blockEnabled = await this.systemSettings.get(
+      CONTACT_BLOCK_SETTING_KEY,
+      'true',
+    );
+    if (blockEnabled === 'true') {
+      detectedContactTypes = detectContact(workingMessage);
+      if (detectedContactTypes.length > 0) {
+        workingMessage = maskContact(workingMessage);
+        contactFiltered = true;
+      }
+    }
+
+    const result = this.filter.check(workingMessage);
+    const flagReasons: string[] = result.flagged ? [...result.reasons] : [];
+    if (contactFiltered) flagReasons.push(`contact:${detectedContactTypes.join('|')}`);
     const saved = await this.messagesRepo.save({
       from: data.from,
       to: data.to,
-      message: data.message,
+      message: workingMessage,
       jobId: data.jobId ?? null,
       bookingId: data.bookingId ?? null,
-      flagged: result.flagged,
-      flagReason: result.flagged ? result.reasons.join(',') : null,
+      flagged: result.flagged || contactFiltered,
+      flagReason: flagReasons.length ? flagReasons.join(',') : null,
     });
+    if (contactFiltered) {
+      _client.emit('messageFiltered', {
+        reason: 'contact_block',
+        detectedTypes: detectedContactTypes,
+        messageId: saved.id,
+      });
+    }
     const broadcastMessage = result.flagged
-      ? this.filter.sanitize(data.message)
-      : data.message;
+      ? this.filter.sanitize(workingMessage)
+      : workingMessage;
     this.server.emit('receiveMessage', {
       ...data,
       message: broadcastMessage,

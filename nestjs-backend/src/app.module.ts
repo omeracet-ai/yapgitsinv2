@@ -67,6 +67,8 @@ import { PasswordResetToken } from './modules/auth/password-reset-token.entity';
 import { EmailVerificationToken } from './modules/auth/email-verification-token.entity';
 import { AdminAuditLog } from './modules/admin-audit/admin-audit-log.entity';
 import { AdminAuditModule } from './modules/admin-audit/admin-audit.module';
+import { SystemSetting } from './modules/system-settings/system-setting.entity';
+import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
 
 @Module({
   imports: [
@@ -116,6 +118,7 @@ import { AdminAuditModule } from './modules/admin-audit/admin-audit.module';
           PasswordResetToken,
           EmailVerificationToken,
           AdminAuditLog,
+          SystemSetting,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -152,6 +155,7 @@ import { AdminAuditModule } from './modules/admin-audit/admin-audit.module';
       inject: [ConfigService],
     }),
     AdminAuditModule,
+    SystemSettingsModule,
     AuthModule,
     UsersModule,
     JobsModule,
