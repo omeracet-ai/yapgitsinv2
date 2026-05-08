@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/services/in_app_notification_service.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 
@@ -28,6 +29,11 @@ class UnreadCountNotifier extends StateNotifier<int> {
 
   final Ref _ref;
   Timer? _timer;
+  // Phase 79 — track previous unread count to detect new arrivals; null on
+  // first fetch so we don't fire a toast for already-pending notifications.
+  int? _lastSeenCount;
+  // Latest notification metadata used for the toast preview.
+  Map<String, dynamic>? _latestNotif;
 
   Future<void> refresh() async {
     final authRepo = _ref.read(authRepositoryProvider);
@@ -46,9 +52,43 @@ class UnreadCountNotifier extends StateNotifier<int> {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       final count = (res.data['count'] as num?)?.toInt() ?? 0;
+      // Phase 79 — when the count grows past what we last saw, fetch the
+      // newest notification preview and surface it as a slide-in toast.
+      if (_lastSeenCount != null && count > _lastSeenCount!) {
+        await _maybeShowToast(dio, token);
+      }
+      _lastSeenCount = count;
       if (mounted) state = count;
     } catch (_) {
       // Silent fail — keep last known count.
+    }
+  }
+
+  Future<void> _maybeShowToast(Dio dio, String token) async {
+    try {
+      final res = await dio.get(
+        '/notifications',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      final list = List<Map<String, dynamic>>.from(res.data as List);
+      if (list.isEmpty) return;
+      final newest = list.first;
+      // Skip duplicate toast for the same notif id between polls.
+      if (_latestNotif != null && _latestNotif!['id'] == newest['id']) {
+        return;
+      }
+      _latestNotif = newest;
+      InAppNotificationService.instance.show(
+        title: (newest['title'] as String?) ?? 'Yeni bildirim',
+        message: (newest['body'] as String?) ?? '',
+        type: newest['type'] as String?,
+      );
+    } catch (_) {
+      // Fallback: generic toast if the list fetch fails.
+      InAppNotificationService.instance.show(
+        title: 'Yeni bildirim',
+        message: 'Bildirimler sekmesinden inceleyebilirsin.',
+      );
     }
   }
 
@@ -60,6 +100,8 @@ class UnreadCountNotifier extends StateNotifier<int> {
   void reset() {
     if (!mounted) return;
     state = 0;
+    _lastSeenCount = null;
+    _latestNotif = null;
   }
 
   void startPolling() {

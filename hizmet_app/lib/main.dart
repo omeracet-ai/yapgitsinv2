@@ -6,6 +6,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode_provider.dart';
 import 'core/router/app_router.dart';
+import 'core/services/in_app_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +35,19 @@ class YapgitsinApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       routerConfig: router,
+      builder: (context, child) {
+        // Phase 79 — register the root overlay so toast banners work globally.
+        return Overlay(
+          initialEntries: [
+            OverlayEntry(
+              builder: (ctx) {
+                InAppNotificationService.instance.attach(Overlay.of(ctx));
+                return child ?? const SizedBox.shrink();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
