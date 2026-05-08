@@ -873,6 +873,9 @@ class ProfileScreen extends ConsumerWidget {
           _menuItem(Icons.bookmark_border_rounded, 'Kaydedilen İşler', () {
             context.push('/kaydedilen-isler');
           }),
+          _menuItem(Icons.notifications_outlined, 'Bildirim Ayarları', () {
+            context.push('/bildirim-ayarlari');
+          }),
           _menuItem(Icons.location_on_outlined, 'Adreslerim', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const AddressesScreen()));
