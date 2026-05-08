@@ -3,6 +3,7 @@ import { Geist } from 'next/font/google';
 import { jsonLd, alternateLinks, ogLocaleFor } from '@/lib/seo';
 import { localBusinessLD } from '@/lib/seo';
 import SwRegister from '@/components/SwRegister';
+import SentryInit from '@/components/SentryInit';
 import PwaInstallBanner from '@/components/PwaInstallBanner';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { getDict } from '@/i18n';
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           {children}
           <SwRegister />
+          <SentryInit />
           <PwaInstallBanner
             title={d.pwa.title}
             installLabel={d.pwa.install}

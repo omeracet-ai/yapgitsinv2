@@ -6,9 +6,21 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import * as fs from 'fs';
+import * as Sentry from '@sentry/node';
+import { SentryFilter } from './common/sentry.filter';
+
+// Sentry — prod-only, env-driven
+if (process.env.SENTRY_DSN && process.env.NODE_ENV === 'production') {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV,
+    tracesSampleRate: 0.1,
+  });
+}
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.useGlobalFilters(new SentryFilter());
 
   // Global validation — tüm DTO dekoratörleri (class-validator) aktif hale gelir
   app.useGlobalPipes(
