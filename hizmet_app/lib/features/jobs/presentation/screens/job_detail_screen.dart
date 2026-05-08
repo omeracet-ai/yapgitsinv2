@@ -629,7 +629,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => context.push('/profile/$customerId'),
+                onPressed: () => context.push('/musteri/$customerId'),
                 icon: const Icon(Icons.person_outline_rounded, size: 16),
                 label: const Text('Profili Gör'),
                 style: OutlinedButton.styleFrom(

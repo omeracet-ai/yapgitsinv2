@@ -11,6 +11,7 @@ import '../../../features/subscriptions/presentation/screens/subscription_screen
 import '../../../features/ai/presentation/screens/support_agent_screen.dart';
 import '../../../features/ai/presentation/screens/ai_chat_screen.dart';
 import '../../../features/auth/presentation/screens/public_profile_screen.dart';
+import '../../../features/auth/presentation/screens/customer_public_profile_screen.dart';
 import '../../../features/auth/presentation/screens/two_factor_challenge_screen.dart';
 import '../../../features/auth/presentation/screens/two_factor_setup_screen.dart';
 import '../../../features/auth/presentation/screens/forgot_password_screen.dart';
@@ -142,6 +143,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/profil/:id',
         builder: (context, state) =>
             PublicProfileScreen(userId: state.pathParameters['id']!),
+      ),
+      // Phase 133 — Customer public profile (no worker fields).
+      GoRoute(
+        path: '/musteri/:id',
+        builder: (context, state) => CustomerPublicProfileScreen(
+          userId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         path: '/sablonlarim',
