@@ -8,6 +8,33 @@ import '../../../../core/theme/app_colors.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/presentation/screens/personal_info_screen.dart';
 
+// Phase 48 — Profile Completion Banner.
+// Backend contract: GET /users/me returns
+//   profileCompletion: { percent, missingFields[], totalFields, filledFields }
+
+const Map<String, String> kProfileFieldLabels = {
+  'fullName': 'Ad Soyad',
+  'phoneNumber': 'Telefon',
+  'email': 'E-posta',
+  'profileImageUrl': 'Profil Fotoğrafı',
+  'identityPhotoUrl': 'Kimlik Fotoğrafı',
+  'identityVerified': 'Kimlik Doğrulama',
+  'birthDate': 'Doğum Tarihi',
+  'gender': 'Cinsiyet',
+  'city': 'Şehir',
+  'district': 'İlçe',
+  'address': 'Adres',
+  'workerCategories': 'Hizmet Kategorileri',
+  'workerBio': 'Hakkında',
+  'hourlyRateMin': 'Saatlik Ücret (Min)',
+  'hourlyRateMax': 'Saatlik Ücret (Max)',
+  'isAvailable': 'Müsaitlik Durumu',
+  'availabilitySchedule': 'Çalışma Saatleri',
+  'serviceRadiusKm': 'Hizmet Yarıçapı',
+};
+
+String labelForField(String key) => kProfileFieldLabels[key] ?? key;
+
 final profileCompletionProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final auth = ref.watch(authStateProvider);
@@ -16,42 +43,50 @@ final profileCompletionProvider =
   final token = prefs.getString('jwt_token');
   if (token == null) return {};
   final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
-  final resp = await dio.get(
-    '/users/me/completion',
-    options: Options(headers: {'Authorization': 'Bearer $token'}),
-  );
-  return Map<String, dynamic>.from(resp.data as Map);
+  try {
+    final resp = await dio.get(
+      '/users/me',
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+    final body = Map<String, dynamic>.from(resp.data as Map);
+    final pc = body['profileCompletion'];
+    if (pc is Map) {
+      return Map<String, dynamic>.from(pc);
+    }
+    return {};
+  } catch (_) {
+    return {};
+  }
 });
 
 class ProfileCompletionCard extends ConsumerWidget {
   const ProfileCompletionCard({super.key});
 
+  Color _barColor(int percent) {
+    if (percent >= 100) return AppColors.success;
+    if (percent >= 80) return AppColors.primary;
+    if (percent >= 50) return const Color(0xFFFFA000);
+    return AppColors.error;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(profileCompletionProvider);
     return async.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.all(16),
-        child: SizedBox(
-          height: 90,
-          child: Center(
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      ),
+      loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
       data: (data) {
         if (data.isEmpty) return const SizedBox.shrink();
-        final score = (data['score'] as num?)?.toInt() ?? 0;
-        final missing =
-            (data['missing'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
-        if (score >= 100) return _buildComplete(context, ref);
-        return _buildIncomplete(context, ref, score, missing);
+        final percent = (data['percent'] as num?)?.toInt() ?? 0;
+        final missingRaw = (data['missingFields'] as List?) ?? const [];
+        final missing = missingRaw.map((e) => e.toString()).toList();
+        if (percent >= 100) return _buildComplete();
+        return _buildIncomplete(context, ref, percent, missing);
       },
     );
   }
 
-  Widget _buildComplete(BuildContext context, WidgetRef ref) {
+  Widget _buildComplete() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Container(
@@ -63,12 +98,14 @@ class ProfileCompletionCard extends ConsumerWidget {
         ),
         child: const Row(
           children: [
-            Icon(Icons.check_circle, color: AppColors.success, size: 20),
+            Icon(Icons.verified, color: AppColors.success, size: 20),
             SizedBox(width: 8),
             Text(
-              'Profilin tamamlandı',
+              'Profil Tamamlandı',
               style: TextStyle(
-                  color: AppColors.success, fontWeight: FontWeight.w600),
+                color: AppColors.success,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
@@ -76,25 +113,26 @@ class ProfileCompletionCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildIncomplete(BuildContext context, WidgetRef ref, int score,
-      List<Map<String, dynamic>> missing) {
-    final visibleMissing = missing.take(3).toList();
+  Widget _buildIncomplete(
+    BuildContext context,
+    WidgetRef ref,
+    int percent,
+    List<String> missing,
+  ) {
+    final color = _barColor(percent);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.primary, AppColors.primaryDark],
-          ),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.25),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: color.withValues(alpha: 0.12),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -102,24 +140,31 @@ class ProfileCompletionCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Profilini tamamla',
-                    style: TextStyle(
-                      color: Colors.white,
+                    'Profilini %$percent tamamla',
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
+                      color: AppColors.secondary,
                     ),
                   ),
                 ),
-                Text(
-                  '%$score',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '%$percent',
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
               ],
@@ -128,76 +173,151 @@ class ProfileCompletionCard extends ConsumerWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
-                value: score / 100.0,
+                value: (percent / 100.0).clamp(0.0, 1.0),
                 minHeight: 8,
-                backgroundColor: Colors.white.withValues(alpha: 0.25),
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(Colors.white),
+                backgroundColor: color.withValues(alpha: 0.15),
+                valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
             ),
-            if (visibleMissing.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              const Text(
-                'Eksikler:',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+            const SizedBox(height: 10),
+            Text(
+              missing.isEmpty
+                  ? 'Az kaldı, devam et!'
+                  : '${missing.length} alan eksik',
+              style: TextStyle(
+                color: AppColors.secondary.withValues(alpha: 0.75),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (missing.isNotEmpty) ...[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () =>
+                          _showMissingSheet(context, ref, missing),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: color,
+                        side: BorderSide(color: color),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text('Detay'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _goEdit(context, ref),
+                    icon: const Icon(Icons.edit, size: 18),
+                    label: const Text('Tamamla'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: color,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _goEdit(BuildContext context, WidgetRef ref) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PersonalInfoScreen()),
+    ).then((_) => ref.invalidate(profileCompletionProvider));
+  }
+
+  void _showMissingSheet(
+    BuildContext context,
+    WidgetRef ref,
+    List<String> missing,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.checklist_rtl, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Eksik Alanlar (${missing.length})',
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 360),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: missing.map((key) {
+                      return ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.radio_button_unchecked,
+                            color: AppColors.error, size: 20),
+                        title: Text(
+                          labelForField(key),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: visibleMissing.map((m) {
-                  final label = (m['label'] ?? m['field'] ?? '').toString();
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.35)),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _goEdit(context, ref);
+                  },
+                  icon: const Icon(Icons.edit, size: 18),
+                  label: const Text('Profili Düzenle'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text(
-                      label,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const PersonalInfoScreen()),
-                  ).then((_) => ref.invalidate(profileCompletionProvider));
-                },
-                icon: const Icon(Icons.edit, size: 18),
-                label: const Text('Profili Düzenle'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppColors.primary,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
                   ),
-                  textStyle: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
