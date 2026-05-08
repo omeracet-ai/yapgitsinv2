@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../categories/data/category_repository.dart';
+import '../../../users/widgets/badge_row.dart';
 import '../../../users/widgets/favorite_button.dart';
 import '../../data/provider_repository.dart';
 import '../../data/worker_filter.dart';
@@ -583,6 +584,8 @@ class _ProviderCard extends StatelessWidget {
     final isVerified = provider['isVerified'] == true;
     final isAvailable = provider['isAvailable'] == true;
     final cats = provider['categories'] as List? ?? [];
+    final badges = (provider['badges'] as List?) ??
+        (user?['badges'] as List?);
     final rateMin = (provider['hourlyRateMin'] as num?)?.toInt();
     final rateMax = (provider['hourlyRateMax'] as num?)?.toInt();
     final initials = name.isNotEmpty

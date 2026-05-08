@@ -112,7 +112,7 @@ class _PortfolioGalleryState extends ConsumerState<PortfolioGallery> {
               height: 90,
               decoration: BoxDecoration(
                 color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: AppColors.primary.withValues(alpha: 0.4),
                   style: BorderStyle.solid,
@@ -149,7 +149,7 @@ class _PortfolioGalleryState extends ConsumerState<PortfolioGallery> {
               GestureDetector(
                 onTap: () => _openLightbox(i),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                   child: Image.network(
                     url,
                     width: 90,

@@ -76,10 +76,10 @@ class _OfferLineItemsEditorState extends State<OfferLineItemsEditor> {
         ...List.generate(_rows.length, (i) {
           final row = _rows[i];
           return Card(
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            elevation: 0,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            elevation: 1,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               side: BorderSide(color: AppColors.primary.withValues(alpha: 0.15)),
             ),
             child: Padding(

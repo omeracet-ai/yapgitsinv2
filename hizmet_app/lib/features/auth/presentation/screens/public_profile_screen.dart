@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import '../../../reviews/widgets/review_reply_sheet.dart';
 import '../../widgets/portfolio_gallery.dart';
 import '../../widgets/availability_editor_sheet.dart';
+import '../../../users/widgets/badge_row.dart';
 
 final publicProfileProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
@@ -69,6 +70,7 @@ class _ProfileView extends ConsumerWidget {
     final portfolioPhotos = (data['portfolioPhotos']  as List?)?.cast<String>() ?? [];
     final reviewList      = (data['reviews']          as List?)
                                 ?.cast<Map<String, dynamic>>() ?? [];
+    final badges          = data['badges']            as List?;
     final isWorker        = workerCats.isNotEmpty;
     final availRaw        = data['availabilitySchedule'];
     final Map<String, bool>? availability = availRaw is Map
@@ -223,6 +225,15 @@ class _ProfileView extends ConsumerWidget {
                 ),
 
                 const SizedBox(height: 8),
+
+                // ── Rozetler ─────────────────────────────────────────────
+                if (badges != null && badges.isNotEmpty) ...[
+                  _section(
+                    title: 'Rozetler',
+                    child: BadgeRow(badges: badges),
+                  ),
+                  const SizedBox(height: 8),
+                ],
 
                 // ── Hakkında (worker bio) ─────────────────────────────────
                 if (bio != null && bio.isNotEmpty) ...[

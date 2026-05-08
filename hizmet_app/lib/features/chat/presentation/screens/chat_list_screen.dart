@@ -236,7 +236,7 @@ class ChatListScreen extends StatelessWidget {
                               horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(
                               color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(10)),
+                              borderRadius: BorderRadius.circular(12)),
                           child: Text(
                             '$unreadCount',
                             style: const TextStyle(
