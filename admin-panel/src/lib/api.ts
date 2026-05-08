@@ -101,6 +101,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ userIds, identityVerified }),
     }),
+  bulkFeatureUsers: (userIds: string[], featuredOrder: 1 | 2 | 3 | null) =>
+    request<BulkFeatureResult>('/admin/users/bulk-feature', {
+      method: 'POST',
+      body: JSON.stringify({ userIds, featuredOrder }),
+    }),
+  bulkUnfeatureUsers: (userIds: string[]) =>
+    request<BulkFeatureResult>('/admin/users/bulk-unfeature', {
+      method: 'POST',
+      body: JSON.stringify({ userIds }),
+    }),
   suspendUser: (userId: string, suspended: boolean, reason?: string) =>
     request<{ id: string; suspended: boolean; suspendedReason: string | null; suspendedAt: string | null; suspendedBy: string | null }>(
       `/admin/users/${userId}/suspend`,
@@ -374,4 +384,10 @@ export interface BulkVerifyResult {
   updated: number;
   notFound: string[];
   requestedSegment: 'verify' | 'unverify';
+}
+
+export interface BulkFeatureResult {
+  updated: number;
+  notFound: string[];
+  featuredOrder?: 1 | 2 | 3 | null;
 }

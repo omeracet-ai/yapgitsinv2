@@ -95,6 +95,41 @@ export default function UsersPage() {
     }
   }
 
+  const [featureMenu, setFeatureMenu] = useState(false);
+
+  async function bulkFeature(slot: 1 | 2 | 3) {
+    if (selected.size === 0 || busy) return;
+    const ids = Array.from(selected);
+    if (!window.confirm(`${ids.length} işçi slot ${slot}'e featured atanacak. Devam?`)) return;
+    setFeatureMenu(false);
+    setBusy(true);
+    try {
+      const res = await api.bulkFeatureUsers(ids, slot);
+      window.alert(`${res.updated} güncellendi, ${res.notFound.length} bulunamadı`);
+      load();
+    } catch (e) {
+      window.alert(`Hata: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function bulkUnfeature() {
+    if (selected.size === 0 || busy) return;
+    const ids = Array.from(selected);
+    if (!window.confirm(`${ids.length} işçinin featured'i kaldırılacak. Devam?`)) return;
+    setBusy(true);
+    try {
+      const res = await api.bulkUnfeatureUsers(ids);
+      window.alert(`${res.updated} güncellendi, ${res.notFound.length} bulunamadı`);
+      load();
+    } catch (e) {
+      window.alert(`Hata: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="max-w-5xl">
       {toast && (
@@ -157,6 +192,29 @@ export default function UsersPage() {
               disabled={busy}
               className="rounded-md bg-gray-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
             >Doğrulamayı Kaldır</button>
+            <div className="relative">
+              <button
+                onClick={() => setFeatureMenu(v => !v)}
+                disabled={busy}
+                className="rounded-md bg-amber-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-600 disabled:opacity-50"
+              >⭐ Featured Yap</button>
+              {featureMenu && (
+                <div className="absolute right-0 top-full mt-1 z-20 rounded-md border border-gray-200 bg-white shadow-lg">
+                  {[1, 2, 3].map(s => (
+                    <button
+                      key={s}
+                      onClick={() => bulkFeature(s as 1 | 2 | 3)}
+                      className="block w-full px-4 py-2 text-left text-sm hover:bg-amber-50"
+                    >Slot {s}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={bulkUnfeature}
+              disabled={busy}
+              className="rounded-md bg-orange-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-orange-800 disabled:opacity-50"
+            >Featured Kaldır</button>
             <button
               onClick={() => setSelected(new Set())}
               disabled={busy}
