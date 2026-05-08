@@ -50,3 +50,11 @@ export class GenerateCategoryDescriptionDto {
   @IsString() @IsOptional() city?: string;
   @IsString() @IsOptional() length?: 'short' | 'medium' | 'long';
 }
+
+export class PriceSuggestDto {
+  @IsString() @IsNotEmpty() category: string;
+  @IsString() @IsNotEmpty() description: string;
+  @IsString() @IsOptional() location?: string;
+  @IsArray() @IsOptional() photos?: string[];
+  @IsString() @IsOptional() customerType?: string;
+}

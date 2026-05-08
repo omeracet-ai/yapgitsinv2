@@ -1,12 +1,15 @@
 import { Body, Controller, Post, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { AiService } from './ai.service';
+import { PricingService } from './pricing.service';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 import {
   AiChatDto,
   GenerateCategoryDescriptionDto,
   GenerateJobDescriptionDto,
   JobAssistantDto,
+  PriceSuggestDto,
   PricingAdvisorDto,
   SummarizeReviewsDto,
   SupportAgentDto,
@@ -15,7 +18,10 @@ import {
 // Public sibling controller — no JWT guard, used by web build script for SEO.
 @Controller('ai')
 export class AiPublicController {
-  constructor(private readonly aiService: AiService) {}
+  constructor(
+    private readonly aiService: AiService,
+    private readonly pricingService: PricingService,
+  ) {}
 
   @Post('generate-category-description')
   async generateCategoryDescription(
@@ -26,6 +32,19 @@ export class AiPublicController {
       dto.city,
       dto.length,
     );
+  }
+
+  /** Phase 140: AI smart pricing — public, throttled 20/hour per IP. */
+  @Post('price-suggest')
+  @Throttle({ default: { limit: 20, ttl: 3_600_000 } })
+  async priceSuggest(@Body() dto: PriceSuggestDto) {
+    return this.pricingService.suggestPrice({
+      category: dto.category,
+      location: dto.location,
+      description: dto.description,
+      photos: dto.photos,
+      customerType: dto.customerType,
+    });
   }
 }
 
