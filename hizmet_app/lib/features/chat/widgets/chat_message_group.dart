@@ -11,6 +11,7 @@ class ChatMessageBubble extends StatelessWidget {
   final bool showAvatar;
   final bool showTime;
   final DateTime timestamp;
+  final DateTime? readAt;
   final String peerName;
   final bool isFirstInGroup;
   final bool isLastInGroup;
@@ -22,6 +23,7 @@ class ChatMessageBubble extends StatelessWidget {
     required this.showAvatar,
     required this.showTime,
     required this.timestamp,
+    this.readAt,
     required this.peerName,
     this.isFirstInGroup = false,
     this.isLastInGroup = false,
@@ -114,10 +116,16 @@ class ChatMessageBubble extends StatelessWidget {
                         ),
                         if (isMe) ...[
                           const SizedBox(width: 3),
+                          // Phase 68: read receipt — single tick when unread,
+                          // double tick (primary-tinted) when read.
                           Icon(
-                            Icons.done_all_rounded,
+                            readAt == null
+                                ? Icons.done_rounded
+                                : Icons.done_all_rounded,
                             size: 13,
-                            color: Colors.white.withValues(alpha: 0.75),
+                            color: readAt == null
+                                ? Colors.white.withValues(alpha: 0.6)
+                                : const Color(0xFF7FD8FF),
                           ),
                         ],
                       ],

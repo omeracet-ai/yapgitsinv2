@@ -58,6 +58,33 @@ class ChatService {
     });
   }
 
+  /// Phase 68: emit read-receipt for a batch of message ids.
+  void markRead(String roomId, List<String> messageIds) {
+    if (messageIds.isEmpty) return;
+    socket.emit('markRead', {
+      'roomId': roomId,
+      'messageIds': messageIds,
+    });
+  }
+
+  /// Phase 68: subscribe to peer read-receipt broadcasts.
+  /// Callback receives (messageIds, readAt).
+  void onMessagesRead(
+      Function(List<String> messageIds, DateTime readAt) callback) {
+    socket.on('messagesRead', (data) {
+      final map = Map<String, dynamic>.from(data as Map);
+      final ids = (map['messageIds'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          <String>[];
+      final readAtStr = map['readAt'] as String?;
+      final readAt = readAtStr != null
+          ? DateTime.tryParse(readAtStr) ?? DateTime.now()
+          : DateTime.now();
+      callback(ids, readAt);
+    });
+  }
+
   void disconnect() {
     socket.disconnect();
   }

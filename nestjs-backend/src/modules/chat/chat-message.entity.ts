@@ -39,4 +39,9 @@ export class ChatMessage {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  // Phase 68: read-receipt timestamp. NULL = unread (single tick),
+  // non-null = read (double tick).
+  @Column({ type: 'datetime', nullable: true })
+  readAt: Date | null;
 }

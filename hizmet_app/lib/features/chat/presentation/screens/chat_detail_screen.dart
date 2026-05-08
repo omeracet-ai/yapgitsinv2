@@ -51,15 +51,34 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     chatService.joinRoom(_roomId);
     chatService.onMessageReceived((data) {
       if (mounted) {
+        final from = data['from'] as String?;
+        final id = data['id'] as String?;
         setState(() {
           _messages.add({
-            'from': data['from'],
+            'id': id,
+            'from': from,
             'message': data['message'],
             'timestamp': DateTime.now(),
+            'readAt': null,
           });
         });
         _scrollToBottom();
+        // Phase 68: peer message arrived while screen open → mark read.
+        if (from != null && from != _meId && id != null) {
+          chatService.markRead(_roomId, [id]);
+        }
       }
+    });
+    // Phase 68: peer-side read receipts.
+    chatService.onMessagesRead((messageIds, readAt) {
+      if (!mounted) return;
+      setState(() {
+        for (final m in _messages) {
+          if (messageIds.contains(m['id'])) {
+            m['readAt'] = readAt;
+          }
+        }
+      });
     });
     // Phase 67: peer typing listener.
     chatService.onUserTyping((userId, isTyping) {
@@ -111,9 +130,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     setState(() {
       _messages.add({
+        'id': null,
         'from': 'me',
         'message': _messageController.text,
         'timestamp': DateTime.now(),
+        'readAt': null,
       });
     });
 
@@ -180,6 +201,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         message: msg['message'] as String? ?? '',
         from: from,
         timestamp: ts,
+        readAt: msg['readAt'] as DateTime?,
         showDivider: showDivider,
         showAvatar: showAvatar,
         showTime: showTime,
@@ -286,6 +308,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                             showAvatar: !isMe && item.showAvatar,
                             showTime: item.showTime,
                             timestamp: item.timestamp,
+                            readAt: item.readAt,
                             peerName: widget.peerName,
                             isFirstInGroup: item.isFirstInGroup,
                             isLastInGroup: item.isLastInGroup,
@@ -418,6 +441,7 @@ class _RenderItem {
   final String message;
   final String from;
   final DateTime timestamp;
+  final DateTime? readAt;
   final bool showDivider;
   final bool showAvatar;
   final bool showTime;
@@ -429,6 +453,7 @@ class _RenderItem {
     required this.message,
     required this.from,
     required this.timestamp,
+    this.readAt,
     required this.showDivider,
     required this.showAvatar,
     required this.showTime,

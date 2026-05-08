@@ -9,7 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In, IsNull } from 'typeorm';
 import { Server, Socket } from 'socket.io';
 import { ChatMessage } from './chat-message.entity';
 import { ContentFilterService } from '../moderation/content-filter.service';
@@ -113,6 +113,24 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.to(data.roomId).emit('userTyping', {
       userId: data.userId,
       isTyping: data.isTyping,
+    });
+  }
+
+  // Phase 68: mark a batch of messages as read and broadcast to room peers.
+  @SubscribeMessage('markRead')
+  async handleMarkRead(
+    @MessageBody() data: { messageIds: string[]; roomId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    if (!data.messageIds || data.messageIds.length === 0) return;
+    const readAt = new Date();
+    await this.messagesRepo.update(
+      { id: In(data.messageIds), readAt: IsNull() },
+      { readAt },
+    );
+    client.to(data.roomId).emit('messagesRead', {
+      messageIds: data.messageIds,
+      readAt: readAt.toISOString(),
     });
   }
 
