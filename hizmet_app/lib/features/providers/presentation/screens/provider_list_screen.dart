@@ -5,6 +5,7 @@ import '../../../categories/data/category_repository.dart';
 import '../../../users/widgets/badge_row.dart';
 import '../../../users/widgets/favorite_button.dart';
 import '../../data/provider_repository.dart';
+import '../../data/recent_searches_storage.dart';
 import '../../data/worker_filter.dart';
 import '../../widgets/worker_filter_sheet.dart';
 import 'provider_profile_screen.dart';
@@ -22,6 +23,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
   String _search = '';
   String? _activeCategory;
   _SortMode _sort = _SortMode.rating;
+  List<RecentSearch> _recentSearches = [];
 
   @override
   void initState() {
@@ -31,6 +33,43 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
       _activeCategory = widget.initialSearch;
       _searchCtrl.text = widget.initialSearch!;
     }
+    _loadRecent();
+  }
+
+  Future<void> _loadRecent() async {
+    final list = await RecentSearchesStorage.load();
+    if (mounted) setState(() => _recentSearches = list);
+  }
+
+  Future<void> _saveRecent({String? category}) async {
+    final filter = ref.read(workerFilterProvider);
+    final cat = category ?? _activeCategory;
+    // Boş arama kaydetme (hiç filtre + kategori yok)
+    if ((cat == null || cat.isEmpty) && filter.isEmpty) return;
+    final updated = await RecentSearchesStorage.add(RecentSearch(
+      category: cat,
+      minRating: filter.minRating,
+      sortBy: filter.sortBy,
+      savedAt: DateTime.now(),
+    ));
+    if (mounted) setState(() => _recentSearches = updated);
+  }
+
+  Future<void> _removeRecent(String key) async {
+    final updated = await RecentSearchesStorage.remove(key);
+    if (mounted) setState(() => _recentSearches = updated);
+  }
+
+  void _applyRecent(RecentSearch r) {
+    setState(() {
+      _activeCategory = r.category;
+      _search = r.category ?? '';
+      _searchCtrl.text = r.category ?? '';
+    });
+    ref.read(workerFilterProvider.notifier).state = WorkerFilter(
+      minRating: r.minRating,
+      sortBy: r.sortBy,
+    );
   }
 
   @override
@@ -49,20 +88,26 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
     );
     if (result != null && mounted) {
       ref.read(workerFilterProvider.notifier).state = result;
+      await _saveRecent();
     }
   }
 
-  void _selectCategory(String? cat) => setState(() {
-        if (_activeCategory == cat) {
-          _activeCategory = null;
-          _search = '';
-          _searchCtrl.clear();
-        } else {
-          _activeCategory = cat;
-          _search = cat ?? '';
-          _searchCtrl.text = cat ?? '';
-        }
-      });
+  void _selectCategory(String? cat) {
+    setState(() {
+      if (_activeCategory == cat) {
+        _activeCategory = null;
+        _search = '';
+        _searchCtrl.clear();
+      } else {
+        _activeCategory = cat;
+        _search = cat ?? '';
+        _searchCtrl.text = cat ?? '';
+      }
+    });
+    if (cat != null && cat.isNotEmpty) {
+      _saveRecent(category: cat);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -314,8 +359,13 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
           .compareTo((a['averageRating'] as num?) ?? 0));
     }
 
+    final showRecent = _search.isEmpty &&
+        _activeCategory == null &&
+        _recentSearches.isNotEmpty;
+
     return CustomScrollView(
       slivers: [
+        if (showRecent) SliverToBoxAdapter(child: _buildRecentSearches()),
         // Sort bar
         SliverToBoxAdapter(
           child: Padding(
@@ -406,6 +456,81 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildRecentSearches() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.history_rounded,
+                  size: 16, color: AppColors.textSecondary),
+              const SizedBox(width: 6),
+              const Text('Son Aramalar',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary)),
+              const Spacer(),
+              GestureDetector(
+                onTap: () async {
+                  await RecentSearchesStorage.clear();
+                  if (mounted) setState(() => _recentSearches = []);
+                },
+                child: const Text('Tümünü Sil',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _recentSearches.map((r) {
+              return InkWell(
+                onTap: () => _applyRecent(r),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.25)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(r.summary,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary)),
+                      const SizedBox(width: 4),
+                      InkWell(
+                        onTap: () => _removeRecent(r.dedupKey),
+                        borderRadius: BorderRadius.circular(20),
+                        child: const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: Icon(Icons.close,
+                              size: 12, color: AppColors.primary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 
