@@ -58,6 +58,15 @@ export class Notification {
   @Column({ type: 'varchar', length: 36, nullable: true })
   refId: string | null;
 
+  // Phase 71 — deep link target type for client-side routing
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  relatedType: string | null;
+
+  // Phase 71 — deep link target id (often equal to refId, but can override —
+  // e.g. COUNTER_OFFER refId is offerId, relatedId is jobId for navigation)
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  relatedId: string | null;
+
   @Column({ type: 'boolean', default: false })
   isRead: boolean;
 

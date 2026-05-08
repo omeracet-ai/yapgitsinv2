@@ -281,6 +281,9 @@ export class OffersService {
           title: 'Karşı teklif geldi',
           body: `"${job.title}" ilanına ${counterPrice} ₺ karşı teklif yapıldı`,
           refId: saved.id,
+          // Phase 71 — refId is offerId, but deep link should land on the job
+          relatedType: 'job',
+          relatedId: job.id,
         });
       }
     } catch { /* notification opsiyonel — sessiz geç */ }

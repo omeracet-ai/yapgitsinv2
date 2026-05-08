@@ -1,12 +1,15 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/data/auth_repository.dart';
+import '../../../calendar/presentation/calendar_screen.dart';
+import '../../../jobs/presentation/screens/job_detail_screen.dart';
 import '../../data/unread_count_provider.dart';
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -146,6 +149,7 @@ class NotificationScreen extends ConsumerWidget {
                     ref.read(unreadCountBadgeProvider.notifier).decrement();
                   }
                 },
+                onNavigate: () => _handleDeepLink(context, notifications[i]),
               ),
             ),
           );
@@ -155,12 +159,59 @@ class NotificationScreen extends ConsumerWidget {
   }
 }
 
+// ─── Phase 71 — Deep link routing ─────────────────────────────────────────────
+
+void _handleDeepLink(BuildContext context, Map<String, dynamic> notif) {
+  final relatedType = notif['relatedType'] as String?;
+  final relatedId =
+      (notif['relatedId'] as String?) ?? (notif['refId'] as String?);
+  if (relatedType == null || relatedId == null || relatedId.isEmpty) return;
+  switch (relatedType) {
+    case 'job':
+      // JobDetailScreen requires display fields; pass minimal placeholders —
+      // it loads full data via id from the API on init.
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => JobDetailScreen(
+            id: relatedId,
+            title: notif['title'] as String? ?? 'İlan',
+            description: '',
+            location: '',
+            budget: '',
+            category: '',
+            postedAt: '',
+            icon: Icons.work_outline,
+            color: AppColors.primary,
+          ),
+        ),
+      );
+      break;
+    case 'booking':
+      // No dedicated booking-detail route yet; open Calendar (lists bookings)
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const CalendarScreen()),
+      );
+      break;
+    case 'user':
+      context.go('/profil/$relatedId');
+      break;
+    default:
+      // 'system' veya bilinmeyen — no-op
+      break;
+  }
+}
+
 // ─── Kart ─────────────────────────────────────────────────────────────────────
 
 class _NotifCard extends StatelessWidget {
   final Map<String, dynamic> notif;
   final VoidCallback onRead;
-  const _NotifCard({required this.notif, required this.onRead});
+  final VoidCallback onNavigate;
+  const _NotifCard({
+    required this.notif,
+    required this.onRead,
+    required this.onNavigate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -189,6 +240,8 @@ class _NotifCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       onTap: () {
         if (!isRead) onRead();
+        // Phase 71 — deep link routing on tap
+        onNavigate();
       },
       child: Container(
         padding: const EdgeInsets.all(14),
