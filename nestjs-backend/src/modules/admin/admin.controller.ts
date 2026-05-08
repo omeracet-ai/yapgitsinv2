@@ -26,11 +26,20 @@ export class AdminController {
   async getAuditLog(
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
+    @Query('action') action?: string,
+    @Query('targetType') targetType?: string,
+    @Query('adminUserId') adminUserId?: string,
   ) {
-    return this.adminAuditService.findRecent(
-      limit ? Number(limit) : 100,
-      offset ? Number(offset) : 0,
-    );
+    const parsedLimit = Number(limit) || 50;
+    const parsedOffset = Number(offset) || 0;
+    const { data, total } = await this.adminAuditService.findFiltered({
+      limit: parsedLimit,
+      offset: parsedOffset,
+      action: action || undefined,
+      targetType: targetType || undefined,
+      adminUserId: adminUserId || undefined,
+    });
+    return { data, total, limit: parsedLimit, offset: parsedOffset };
   }
 
   @Get('stats')

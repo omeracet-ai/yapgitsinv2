@@ -130,8 +130,15 @@ export const api = {
     request<UserReport>(`/admin/reports/${id}`, { method: 'PATCH', body: JSON.stringify(dto) }),
 
   // Audit log
-  auditLog: (limit = 50, offset = 0) =>
-    request<AuditLog[]>(`/admin/audit-log?limit=${limit}&offset=${offset}`),
+  auditLog: (opts: { limit?: number; offset?: number; action?: string; targetType?: string; adminUserId?: string } = {}) => {
+    const p = new URLSearchParams();
+    if (opts.limit !== undefined) p.set('limit', String(opts.limit));
+    if (opts.offset !== undefined) p.set('offset', String(opts.offset));
+    if (opts.action) p.set('action', opts.action);
+    if (opts.targetType) p.set('targetType', opts.targetType);
+    if (opts.adminUserId) p.set('adminUserId', opts.adminUserId);
+    return request<AuditLogResponse>(`/admin/audit-log?${p.toString()}`);
+  },
 
   // Promo codes
   promoCodes:       ()                                  => request<PromoCode[]>('/admin/promo-codes'),
@@ -150,6 +157,13 @@ export interface AuditLog {
   targetId: string;
   payload: unknown;
   createdAt: string;
+}
+
+export interface AuditLogResponse {
+  data: AuditLog[];
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 export interface AdminUser {
