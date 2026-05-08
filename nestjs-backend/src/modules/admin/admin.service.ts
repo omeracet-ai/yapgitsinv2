@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, IsNull, Between, MoreThan, In } from 'typeorm';
 import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
 import { BulkVerifyDto } from './dto/bulk-verify.dto';
+import { BulkFeatureDto, BulkUnfeatureDto } from './dto/bulk-feature.dto';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { User, UserRole } from '../users/user.entity';
 import { Notification, NotificationType } from '../notifications/notification.entity';
@@ -15,6 +16,7 @@ import { Review } from '../reviews/review.entity';
 import { PaymentEscrow, EscrowStatus } from '../escrow/payment-escrow.entity';
 import { ChatMessage } from '../chat/chat-message.entity';
 import { JobQuestion } from '../jobs/job-question.entity';
+import { Provider } from '../providers/provider.entity';
 import {
   PromoService,
   CreatePromoDto,
@@ -45,6 +47,7 @@ export class AdminService {
     @InjectRepository(JobQuestion) private questionRepo: Repository<JobQuestion>,
     @InjectRepository(Notification) private notificationRepo: Repository<Notification>,
     @InjectRepository(AdminAuditLog) private auditRepo: Repository<AdminAuditLog>,
+    @InjectRepository(Provider) private providersRepo: Repository<Provider>,
     private readonly promoService: PromoService,
   ) {}
 
@@ -90,6 +93,84 @@ export class AdminService {
       notFound,
       requestedSegment: identityVerified ? 'verify' : 'unverify',
     };
+  }
+
+  async bulkFeatureWorkers(
+    dto: BulkFeatureDto,
+    adminUserId: string,
+  ): Promise<{ updated: number; notFound: string[]; featuredOrder: 1 | 2 | 3 | null }> {
+    const { userIds, featuredOrder } = dto;
+    const found = await this.usersRepo.find({
+      where: { id: In(userIds) },
+      select: ['id'],
+    });
+    const foundSet = new Set(found.map((u) => u.id));
+    const notFound = userIds.filter((id) => !foundSet.has(id));
+    const presentIds = userIds.filter((id) => foundSet.has(id));
+
+    let updated = 0;
+    if (presentIds.length > 0) {
+      const result = await this.providersRepo
+        .createQueryBuilder()
+        .update(Provider)
+        .set({ featuredOrder: featuredOrder as number | null })
+        .where('userId IN (:...ids)', { ids: presentIds })
+        .execute();
+      updated = result.affected ?? 0;
+
+      const batchSize = presentIds.length;
+      const auditEntries = presentIds.map((id) =>
+        this.auditRepo.create({
+          adminUserId,
+          action: 'user.bulk_feature',
+          targetType: 'user',
+          targetId: id,
+          payload: { bulk: true, count: batchSize, featuredOrder },
+        }),
+      );
+      await this.auditRepo.save(auditEntries);
+    }
+
+    return { updated, notFound, featuredOrder };
+  }
+
+  async bulkUnfeatureWorkers(
+    dto: BulkUnfeatureDto,
+    adminUserId: string,
+  ): Promise<{ updated: number; notFound: string[] }> {
+    const { userIds } = dto;
+    const found = await this.usersRepo.find({
+      where: { id: In(userIds) },
+      select: ['id'],
+    });
+    const foundSet = new Set(found.map((u) => u.id));
+    const notFound = userIds.filter((id) => !foundSet.has(id));
+    const presentIds = userIds.filter((id) => foundSet.has(id));
+
+    let updated = 0;
+    if (presentIds.length > 0) {
+      const result = await this.providersRepo
+        .createQueryBuilder()
+        .update(Provider)
+        .set({ featuredOrder: null })
+        .where('userId IN (:...ids)', { ids: presentIds })
+        .execute();
+      updated = result.affected ?? 0;
+
+      const batchSize = presentIds.length;
+      const auditEntries = presentIds.map((id) =>
+        this.auditRepo.create({
+          adminUserId,
+          action: 'user.bulk_feature',
+          targetType: 'user',
+          targetId: id,
+          payload: { bulk: true, count: batchSize, featuredOrder: null },
+        }),
+      );
+      await this.auditRepo.save(auditEntries);
+    }
+
+    return { updated, notFound };
   }
 
   // ── Broadcast Notifications ───────────────────────────────────────────────

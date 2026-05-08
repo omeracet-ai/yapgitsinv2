@@ -12,6 +12,7 @@ import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { SystemSettingsService } from '../system-settings/system-settings.service';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
 import { BulkVerifyDto } from './dto/bulk-verify.dto';
+import { BulkFeatureDto, BulkUnfeatureDto } from './dto/bulk-feature.dto';
 import { SuspendUserDto } from './dto/suspend-user.dto';
 import { PurgeAuditLogDto } from './dto/purge-audit-log.dto';
 import { AdminGuard } from '../../common/guards/admin.guard';
@@ -159,6 +160,22 @@ export class AdminController {
     @Req() req: Request & { user: AuthUser },
   ) {
     return this.adminService.bulkVerifyUsers(dto, req.user.id);
+  }
+
+  @Post('users/bulk-feature')
+  async bulkFeatureUsers(
+    @Body() dto: BulkFeatureDto,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    return this.adminService.bulkFeatureWorkers(dto, req.user.id);
+  }
+
+  @Post('users/bulk-unfeature')
+  async bulkUnfeatureUsers(
+    @Body() dto: BulkUnfeatureDto,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    return this.adminService.bulkUnfeatureWorkers(dto, req.user.id);
   }
 
   @Patch('users/:id/suspend')

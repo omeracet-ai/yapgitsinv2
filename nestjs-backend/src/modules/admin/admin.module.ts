@@ -11,6 +11,7 @@ import { Review } from '../reviews/review.entity';
 import { PaymentEscrow } from '../escrow/payment-escrow.entity';
 import { ChatMessage } from '../chat/chat-message.entity';
 import { JobQuestion } from '../jobs/job-question.entity';
+import { Provider } from '../providers/provider.entity';
 import { Notification } from '../notifications/notification.entity';
 import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
 import { CategoriesModule } from '../categories/categories.module';
@@ -20,7 +21,7 @@ import { UserBlocksModule } from '../user-blocks/user-blocks.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Job, Offer, User, ServiceRequest, Booking, Review, PaymentEscrow, ChatMessage, JobQuestion, Notification, AdminAuditLog]),
+    TypeOrmModule.forFeature([Job, Offer, User, ServiceRequest, Booking, Review, PaymentEscrow, ChatMessage, JobQuestion, Notification, AdminAuditLog, Provider]),
     CategoriesModule,
     ProvidersModule,
     PromoModule,
