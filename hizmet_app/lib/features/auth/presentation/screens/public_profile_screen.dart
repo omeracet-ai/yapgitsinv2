@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/api_constants.dart';
 import 'package:dio/dio.dart';
 import '../../../users/widgets/user_action_menu.dart';
+import '../../../tokens/widgets/gift_tokens_sheet.dart';
 import '../providers/auth_provider.dart';
 
 final publicProfileProvider =
@@ -76,12 +77,22 @@ class _ProfileView extends ConsumerWidget {
             pinned: true,
             backgroundColor: AppColors.primary,
             actions: [
-              if (!isSelf)
+              if (!isSelf) ...[
+                IconButton(
+                  tooltip: 'Token hediye et',
+                  icon: const Text('🎁', style: TextStyle(fontSize: 20)),
+                  onPressed: () => GiftTokensSheet.show(
+                    context,
+                    recipientId: userId,
+                    recipientName: name,
+                  ),
+                ),
                 UserActionMenu(
                   userId: userId,
                   userName: name,
                   iconColor: Colors.white,
                 ),
+              ],
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(

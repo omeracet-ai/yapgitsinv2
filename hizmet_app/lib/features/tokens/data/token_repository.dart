@@ -43,4 +43,21 @@ class TokenRepository {
       options: await _authOpts(),
     );
   }
+
+  Future<Map<String, dynamic>> giftTokens({
+    required String recipientId,
+    required int amount,
+    String? note,
+  }) async {
+    final res = await _dio.post(
+      '/tokens/gift',
+      data: {
+        'recipientId': recipientId,
+        'amount': amount,
+        if (note != null && note.isNotEmpty) 'note': note,
+      },
+      options: await _authOpts(),
+    );
+    return Map<String, dynamic>.from(res.data as Map);
+  }
 }
