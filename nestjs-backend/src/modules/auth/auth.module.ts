@@ -9,10 +9,13 @@ import { JwtStrategy } from './jwt.strategy';
 import { TwoFactorService } from './two-factor.service';
 import { PasswordResetToken } from './password-reset-token.entity';
 import { EmailVerificationToken } from './email-verification-token.entity';
+import { SmsOtp } from './sms-otp.entity';
+import { SmsModule } from '../sms/sms.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PasswordResetToken, EmailVerificationToken]),
+    TypeOrmModule.forFeature([PasswordResetToken, EmailVerificationToken, SmsOtp]),
+    SmsModule,
     UsersModule,
     PassportModule,
     JwtModule.registerAsync({

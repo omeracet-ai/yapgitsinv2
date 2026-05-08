@@ -66,6 +66,7 @@ import { UserReport } from './modules/user-blocks/user-report.entity';
 import { UserBlocksModule } from './modules/user-blocks/user-blocks.module';
 import { PasswordResetToken } from './modules/auth/password-reset-token.entity';
 import { EmailVerificationToken } from './modules/auth/email-verification-token.entity';
+import { SmsOtp } from './modules/auth/sms-otp.entity';
 import { AdminAuditLog } from './modules/admin-audit/admin-audit-log.entity';
 import { AdminAuditModule } from './modules/admin-audit/admin-audit.module';
 import { SystemSetting } from './modules/system-settings/system-setting.entity';
@@ -136,6 +137,7 @@ import { EmailModule } from './modules/email/email.module';
           UserReport,
           PasswordResetToken,
           EmailVerificationToken,
+          SmsOtp,
           AdminAuditLog,
           SystemSetting,
           LeadRequest,

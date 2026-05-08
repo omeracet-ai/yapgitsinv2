@@ -17,6 +17,9 @@ import { TwoFactorService } from './two-factor.service';
 import { PasswordResetToken } from './password-reset-token.entity';
 import { EmailVerificationToken } from './email-verification-token.entity';
 import { EmailService } from '../email/email.service';
+import { SmsOtp } from './sms-otp.entity';
+import { SmsService } from '../sms/sms.service';
+import { MoreThan } from 'typeorm';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -29,7 +32,98 @@ export class AuthService implements OnModuleInit {
     @InjectRepository(EmailVerificationToken)
     private emailVerifyRepo: Repository<EmailVerificationToken>,
     private emailService: EmailService,
+    @InjectRepository(SmsOtp)
+    private smsOtpRepo: Repository<SmsOtp>,
+    private smsService: SmsService,
   ) {}
+
+  // ── Phase 123 — SMS OTP ────────────────────────────────────────────────
+  private normalizeTrPhone(phoneNumber: string): string {
+    if (!phoneNumber) throw new BadRequestException('Telefon numarası gerekli');
+    const trimmed = phoneNumber.trim().replace(/\s|-/g, '');
+    if (!/^(\+90|0)?5\d{9}$/.test(trimmed)) {
+      throw new BadRequestException('Geçersiz TR telefon numarası (5XXXXXXXXX)');
+    }
+    let digits = trimmed.replace(/\D/g, '');
+    if (digits.startsWith('90')) digits = digits.slice(2);
+    if (digits.startsWith('0')) digits = digits.slice(1);
+    return digits; // 5XXXXXXXXX (10 haneli)
+  }
+
+  async requestSmsOtp(phoneNumber: string) {
+    const phone = this.normalizeTrPhone(phoneNumber);
+
+    // Rate limit: son 1 saatte 3 istek
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recentCount = await this.smsOtpRepo.count({
+      where: { phoneNumber: phone, createdAt: MoreThan(oneHourAgo) },
+    });
+    if (recentCount >= 3) {
+      throw new BadRequestException('Çok fazla istek. Lütfen daha sonra deneyin.');
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    await this.smsOtpRepo.save(
+      this.smsOtpRepo.create({ phoneNumber: phone, code, expiresAt }),
+    );
+
+    await this.smsService.sendSms(
+      phone,
+      `Yapgitsin doğrulama kodun: ${code} (5dk geçerli)`,
+    );
+
+    return { success: true, expiresInSec: 300 };
+  }
+
+  async verifySmsOtp(phoneNumber: string, code: string) {
+    const phone = this.normalizeTrPhone(phoneNumber);
+    if (!code || !/^\d{6}$/.test(code)) {
+      throw new BadRequestException('Geçersiz kod formatı');
+    }
+
+    const otp = await this.smsOtpRepo.findOne({
+      where: { phoneNumber: phone },
+      order: { createdAt: 'DESC' },
+    });
+    if (!otp) throw new BadRequestException('Kod bulunamadı');
+    if (otp.used) throw new BadRequestException('Kod zaten kullanıldı');
+    if (otp.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('Kod süresi doldu');
+    }
+    if (otp.attempts >= 5) {
+      throw new BadRequestException('Çok fazla deneme');
+    }
+    if (otp.code !== code) {
+      otp.attempts += 1;
+      await this.smsOtpRepo.save(otp);
+      throw new BadRequestException('Yanlış kod');
+    }
+
+    otp.used = true;
+    await this.smsOtpRepo.save(otp);
+
+    const existing = await this.usersService.findByPhone(phone);
+    if (existing) {
+      const { passwordHash: _ph, ...safe } = existing;
+      const payload = { email: safe.email, sub: safe.id, role: safe.role };
+      return {
+        access_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
+        user: safe,
+        isNewUser: false,
+      };
+    }
+
+    return {
+      access_token: null,
+      user: null,
+      isNewUser: true,
+      phoneVerified: true,
+      phoneNumber: phone,
+      message: 'İlk girişte ek bilgi gerekli',
+    };
+  }
+  // ── /Phase 123 ─────────────────────────────────────────────────────────
 
   async requestEmailVerification(userId: string) {
     const user = await this.usersService.findById(userId);

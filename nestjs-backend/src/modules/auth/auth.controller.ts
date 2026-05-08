@@ -99,4 +99,16 @@ export class AuthController {
   confirmEmailVerification(@Body() body: { token: string }) {
     return this.authService.confirmEmailVerification(body?.token);
   }
+
+  /** Phase 123 — SMS OTP iste */
+  @Post('sms/request')
+  requestSmsOtp(@Body() body: { phoneNumber: string }) {
+    return this.authService.requestSmsOtp(body?.phoneNumber);
+  }
+
+  /** Phase 123 — SMS OTP doğrula */
+  @Post('sms/verify')
+  verifySmsOtp(@Body() body: { phoneNumber: string; code: string }) {
+    return this.authService.verifySmsOtp(body?.phoneNumber, body?.code);
+  }
 }
