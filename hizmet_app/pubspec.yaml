@@ -47,6 +47,9 @@ dependencies:
   chewie: ^1.14.0
   table_calendar: ^3.1.0
 
+  # Paylaşım
+  share_plus: ^13.1.0
+
 
 
 

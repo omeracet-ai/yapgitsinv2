@@ -10,8 +10,8 @@ import '../../../offers/widgets/offer_line_items_view.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/job_provider.dart';
 import '../../../reviews/presentation/screens/write_review_screen.dart';
-import '../../../photos/presentation/widgets/job_photo_picker.dart';
 import '../widgets/completion_photos_section.dart';
+import '../../widgets/job_photo_lightbox.dart';
 import '../widgets/job_questions_tab.dart';
 import '../widgets/job_video_player.dart';
 import '../../../users/widgets/user_action_menu.dart';
@@ -691,7 +691,40 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                     TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 12),
-          PhotoGalleryView(photoUrls: photos, height: 200),
+          SizedBox(
+            height: 200,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: photos.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (ctx, i) => GestureDetector(
+                onTap: () => Navigator.of(ctx).push(
+                  MaterialPageRoute(
+                    builder: (_) => JobPhotoLightbox(
+                      photos: photos,
+                      initialIndex: i,
+                    ),
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    photos[i],
+                    height: 200,
+                    width: 160,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 160,
+                      color: AppColors.border,
+                      child: const Icon(Icons.broken_image,
+                          color: AppColors.textHint),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
