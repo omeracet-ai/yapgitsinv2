@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/user_actions_repository.dart';
+import '../data/blocked_users_provider.dart';
+import 'report_user_sheet.dart';
 
-/// Engelle / Şikayet et popup menüsü.
-class UserActionMenu extends ConsumerWidget {
+/// Engelle (toggle) / Şikayet et popup menüsü.
+/// Block durumu [blockedUsersProvider] üzerinden okunur — etiket buna göre değişir.
+class UserActionMenu extends ConsumerStatefulWidget {
   final String userId;
   final String userName;
   final Color? iconColor;
@@ -16,26 +18,48 @@ class UserActionMenu extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UserActionMenu> createState() => _UserActionMenuState();
+}
+
+class _UserActionMenuState extends ConsumerState<UserActionMenu> {
+  @override
+  void initState() {
+    super.initState();
+    // best-effort: load block list once so the toggle label is correct
+    Future.microtask(
+      () => ref.read(blockedUsersProvider.notifier).loadIfNeeded(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isBlocked =
+        ref.watch(blockedUsersProvider).contains(widget.userId);
+
     return PopupMenuButton<String>(
-      icon: Icon(Icons.more_vert, color: iconColor ?? Colors.grey.shade700),
+      icon: Icon(Icons.more_vert,
+          color: widget.iconColor ?? Colors.grey.shade700),
       tooltip: 'Daha fazla',
       onSelected: (value) async {
         if (value == 'block') {
-          await _confirmBlock(context, ref);
+          await _confirmBlock(context, isBlocked: isBlocked);
         } else if (value == 'report') {
-          await _showReportDialog(context, ref);
+          await ReportUserSheet.show(
+            context,
+            userId: widget.userId,
+            userName: widget.userName,
+          );
         }
       },
-      itemBuilder: (_) => const [
+      itemBuilder: (_) => [
         PopupMenuItem(
           value: 'block',
           child: Row(children: [
-            Text('🚫  '),
-            Text('Engelle'),
+            Text(isBlocked ? '✅  ' : '🚫  '),
+            Text(isBlocked ? 'Engellemeyi Kaldır' : 'Engelle'),
           ]),
         ),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'report',
           child: Row(children: [
             Text('🚩  '),
@@ -46,12 +70,34 @@ class UserActionMenu extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmBlock(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmBlock(BuildContext context,
+      {required bool isBlocked}) async {
+    if (isBlocked) {
+      try {
+        await ref
+            .read(blockedUsersProvider.notifier)
+            .unblock(widget.userId);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Engelleme kaldırıldı')),
+        );
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
+      return;
+    }
+
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Kullanıcıyı engelle'),
-        content: Text('$userName kullanıcısını engellemek istediğine emin misin? '
+        content: Text(
+            '${widget.userName} kullanıcısını engellemek istediğine emin misin? '
             'Bu kullanıcının ilanlarını ve mesajlarını görmeyeceksin.'),
         actions: [
           TextButton(
@@ -68,99 +114,16 @@ class UserActionMenu extends ConsumerWidget {
     );
     if (ok != true || !context.mounted) return;
     try {
-      await ref.read(userActionsRepositoryProvider).blockUser(userId);
+      await ref.read(blockedUsersProvider.notifier).block(widget.userId);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Engellendi')),
+        const SnackBar(content: Text('Kullanıcı engellendi')),
       );
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  }
-
-  Future<void> _showReportDialog(BuildContext context, WidgetRef ref) async {
-    const reasons = [
-      ('spam', 'Spam'),
-      ('harassment', 'Taciz'),
-      ('fraud', 'Dolandırıcılık'),
-      ('inappropriate', 'Uygunsuz İçerik'),
-      ('other', 'Diğer'),
-    ];
-    String selected = reasons.first.$1;
-    final descCtrl = TextEditingController();
-
-    final submitted = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          title: Text('$userName şikayet et'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Sebep', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
-                DropdownButtonFormField<String>(
-                  initialValue: selected,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  items: [
-                    for (final r in reasons)
-                      DropdownMenuItem(value: r.$1, child: Text(r.$2)),
-                  ],
-                  onChanged: (v) => setState(() { if (v != null) selected = v; }),
-                ),
-                const SizedBox(height: 12),
-                const Text('Açıklama (opsiyonel)',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: descCtrl,
-                  maxLines: 3,
-                  maxLength: 500,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: 'Detay vermek istersen yazabilirsin',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('İptal'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Gönder'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (submitted != true || !context.mounted) return;
-    try {
-      await ref.read(userActionsRepositoryProvider).reportUser(
-            userId,
-            selected,
-            description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-          );
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Şikayet alındı')),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     }
   }

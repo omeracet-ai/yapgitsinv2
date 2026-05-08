@@ -17,6 +17,7 @@ import '../../../features/onboarding/presentation/screens/onboarding_screen.dart
 import '../../../features/job_templates/presentation/job_templates_screen.dart';
 import '../../../features/statements/presentation/statement_screen.dart';
 import '../../../features/users/presentation/screens/favorites_screen.dart';
+import '../../../features/users/presentation/screens/blocked_users_screen.dart';
 import '../../../features/jobs/presentation/screens/saved_jobs_screen.dart';
 import '../providers/navigation_provider.dart';
 import '../widgets/success_screen.dart';
@@ -123,6 +124,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/favorilerim',
         builder: (context, state) => const FavoritesScreen(),
+      ),
+      GoRoute(
+        path: '/engellenenler',
+        builder: (context, state) => const BlockedUsersScreen(),
       ),
       GoRoute(
         path: '/kaydedilen-isler',
