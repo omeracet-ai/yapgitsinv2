@@ -10,6 +10,7 @@ import '../../data/offer_repository.dart';
 import '../../../tokens/data/token_repository.dart';
 import 'job_detail_screen.dart';
 import 'job_opportunities_screen.dart';
+import 'post_job_screen.dart';
 import '../providers/job_provider.dart';
 import '../widgets/boost_dialog.dart';
 
@@ -623,6 +624,32 @@ class _CustomerJobCard extends ConsumerWidget {
                 ),
               ],
             ),
+            if (status == 'completed' || status == 'cancelled') ...[
+              const SizedBox(height: 8),
+              const Divider(height: 1),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PostJobScreen(initialJob: job),
+                      ),
+                    );
+                  },
+                  icon: const Text('🔁', style: TextStyle(fontSize: 14)),
+                  label: const Text('Tekrar İlan Aç'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

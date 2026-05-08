@@ -19,7 +19,10 @@ import '../../widgets/post_job_step2.dart';
 import '../../widgets/post_job_step3.dart';
 
 class PostJobScreen extends ConsumerStatefulWidget {
-  const PostJobScreen({super.key});
+  /// Optional source job to clone (used by "🔁 Tekrar İlan Aç" feature).
+  /// When provided, wizard fields are pre-filled from this map.
+  final Map<String, dynamic>? initialJob;
+  const PostJobScreen({super.key, this.initialJob});
 
   @override
   ConsumerState<PostJobScreen> createState() => _PostJobScreenState();
@@ -63,7 +66,48 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     _descController.addListener(_scheduleDraftSave);
     _locationController.addListener(_scheduleDraftSave);
     _budgetController.addListener(_scheduleDraftSave);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeRestoreDraft());
+    if (widget.initialJob != null) {
+      // Clone-mode: pre-fill from source job, skip draft restore prompt.
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _applyInitialJob(widget.initialJob!));
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _maybeRestoreDraft());
+    }
+  }
+
+  void _applyInitialJob(Map<String, dynamic> j) {
+    _draftRestored = true;
+    _titleController.text = (j['title'] as String?) ?? '';
+    _descController.text = (j['description'] as String?) ?? '';
+    _locationController.text = (j['location'] as String?) ?? '';
+    final budgetMin = j['budgetMin'];
+    if (budgetMin is num && budgetMin > 0) {
+      _budgetController.text = budgetMin.toInt().toString();
+    }
+    setState(() {
+      _selectedCategory = j['category'] as String?;
+      final lat = j['latitude'];
+      final lng = j['longitude'];
+      if (lat is num) _lat = lat.toDouble();
+      if (lng is num) _lng = lng.toDouble();
+      _uploadedPhotoUrls = ((j['photos'] as List?) ?? [])
+          .map((e) => e.toString())
+          .toList();
+      _uploadedVideoUrls = ((j['videos'] as List?) ?? [])
+          .map((e) => e.toString())
+          .toList();
+      // dueDate intentionally NOT cloned — old date likely past.
+    });
+    _draftRestored = false;
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🔁 Önceki ilan bilgileri yüklendi — düzenleyip yayınlayabilirsin'),
+          backgroundColor: AppColors.primary,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override
