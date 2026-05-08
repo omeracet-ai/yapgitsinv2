@@ -934,6 +934,8 @@ class ProfileScreen extends ConsumerWidget {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const HelpScreen()));
           }),
+          _menuItem(Icons.smart_toy_outlined, '🤖 Yapgitsin Asistan',
+              () => context.push('/asistan')),
           const Divider(height: 1, indent: 50),
           _menuItem(Icons.logout, 'Çıkış Yap',
               () => ref.read(authStateProvider.notifier).logout(),

@@ -7,6 +7,7 @@ import '../../../features/auth/presentation/screens/register_screen.dart';
 import '../../../features/jobs/presentation/screens/post_job_screen.dart';
 import '../../../features/tokens/presentation/screens/token_screen.dart';
 import '../../../features/ai/presentation/screens/support_agent_screen.dart';
+import '../../../features/ai/presentation/screens/ai_chat_screen.dart';
 import '../../../features/auth/presentation/screens/public_profile_screen.dart';
 import '../../../features/auth/presentation/screens/two_factor_challenge_screen.dart';
 import '../../../features/auth/presentation/screens/two_factor_setup_screen.dart';
@@ -109,6 +110,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/destek',
         builder: (context, state) => const SupportAgentScreen(),
+      ),
+      GoRoute(
+        path: '/asistan',
+        builder: (context, state) => const AiChatScreen(),
       ),
       GoRoute(
         path: '/profil/:id',

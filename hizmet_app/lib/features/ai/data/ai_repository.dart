@@ -110,6 +110,26 @@ class AiRepository {
     }
   }
 
+  /// AI Chat (Yapgitsin Asistan): general purpose chat — uses /ai/chat
+  Future<String> chat({
+    required String message,
+    List<Map<String, String>> history = const [],
+  }) async {
+    try {
+      final resp = await _dio.post(
+        '/ai/chat',
+        data: {
+          'message': message,
+          if (history.isNotEmpty) 'history': history,
+        },
+        options: await _authOptions(),
+      );
+      return (resp.data as Map<String, dynamic>)['reply'] as String? ?? '';
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'AI sohbet başarısız oldu');
+    }
+  }
+
   /// Destek Ajanı: multi-turn support chat
   Future<String> supportAgent({
     required String message,
