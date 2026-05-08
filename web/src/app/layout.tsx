@@ -4,6 +4,7 @@ import { jsonLd, alternateLinks, ogLocaleFor } from '@/lib/seo';
 import { localBusinessLD } from '@/lib/seo';
 import SwRegister from '@/components/SwRegister';
 import SentryInit from '@/components/SentryInit';
+import PlausibleScript from '@/components/PlausibleScript';
 import PwaInstallBanner from '@/components/PwaInstallBanner';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { getDict } from '@/i18n';
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLd(localBusinessLD()) }}
         />
+        <PlausibleScript />
       </head>
       <body className="min-h-full flex flex-col bg-[var(--muted)] text-[var(--foreground)]">
         <ThemeProvider>
