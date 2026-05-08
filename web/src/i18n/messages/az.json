@@ -54,5 +54,10 @@
     "home": "Ana səhifə",
     "workers": "Ustalar",
     "jobs": "Elanlar"
+  },
+  "pwa": {
+    "title": "Yapgitsin-i ana ekrana əlavə et",
+    "install": "Yüklə",
+    "dismiss": "İndi yox"
   }
 }

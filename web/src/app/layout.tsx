@@ -1,7 +1,10 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist } from 'next/font/google';
 import { jsonLd, alternateLinks, ogLocaleFor } from '@/lib/seo';
 import { localBusinessLD } from '@/lib/seo';
+import SwRegister from '@/components/SwRegister';
+import PwaInstallBanner from '@/components/PwaInstallBanner';
+import { getDict } from '@/i18n';
 import './globals.css';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
@@ -32,7 +35,12 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+export const viewport: Viewport = {
+  themeColor: '#007DFE',
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const d = getDict('tr');
   return (
     <html lang="tr" className={`${geistSans.variable} h-full antialiased`}>
       <head>
@@ -43,6 +51,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-full flex flex-col bg-[var(--muted)]">
         {children}
+        <SwRegister />
+        <PwaInstallBanner
+          title={d.pwa.title}
+          installLabel={d.pwa.install}
+          dismissLabel={d.pwa.dismiss}
+        />
       </body>
     </html>
   );

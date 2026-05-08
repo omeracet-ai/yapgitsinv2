@@ -54,5 +54,10 @@
     "home": "Home",
     "workers": "Pros",
     "jobs": "Jobs"
+  },
+  "pwa": {
+    "title": "Add Yapgitsin to your home screen",
+    "install": "Install",
+    "dismiss": "Not now"
   }
 }
