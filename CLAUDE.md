@@ -256,6 +256,9 @@ Türler: `booking_request`, `booking_confirmed`, `booking_cancelled`, `booking_c
 | PATCH | `/users/me` | JWT | Profil güncelle |
 | GET | `/users/workers` | — | Usta dizini (?category=&city=) |
 | GET | `/users/:id/profile` | — | Public profil (stats + reviews + pastPhotos) |
+| GET | `/users/me/offer-templates` | JWT | Ustanın teklif şablonları (Phase 51) |
+| POST | `/users/me/offer-templates` | JWT | Şablon ekle |
+| DELETE | `/users/me/offer-templates/:id` | JWT | Şablon sil |
 
 ### Jobs (`/jobs`)
 | Method | Path | Guard | Açıklama |
@@ -371,6 +374,11 @@ AI: **claude-opus-4-7** model, adaptive thinking, prompt caching (`cache_control
 | GET | `/admin/audit-log/stats` | `?days=N` (1-90, default 30) → {totalEntries, entriesPerDay[], topActions[], topAdmins[], topTargetTypes[]} (her liste max 10) |
 | POST | `/admin/notifications/broadcast` | {title (1-100), message (1-500), segment: "all"\|"workers"\|"customers"\|"verified_workers"} → {sent, segment} |
 | POST | `/admin/users/bulk-verify` | {userIds: string[], identityVerified: boolean} → {updated} (toplu kullanıcı doğrulama) |
+
+### Health (`/health`)
+| Method | Path | Guard | Açıklama |
+|--------|------|-------|----------|
+| GET | `/health` | — | {status, db, uptime, version} — status page için (Phase 53) |
 | GET | `/admin/audit-log/purge-preview` | `?olderThanDays=N` → {count, oldestDate, newestDate} (silinecek kayıt önizleme) |
 | POST | `/admin/audit-log/purge` | {olderThanDays: N} → {deleted} (eski audit log kayıtlarını sil) |
 
@@ -618,6 +626,11 @@ node nestjs-backend/seed-v2.js
 - **Phase 34 — Admin Broadcast Notifications** (`0cd52b8c`): `POST /admin/notifications/broadcast` `{ title (1-100), message (1-500), segment: "all"|"workers"|"customers"|"verified_workers" }` → `{ sent, segment }`. Tüm hedef kullanıcılara `type:'system'` Notification insert (chunked 500'lük bulk save). Audit log: `notification.broadcast` action. Flutter `system` ikonu (`Icons.campaign`, `12a3d55a`); admin panel `/broadcast` sayfası (`6c1bc18c`)
 - **Phase 35 — Bulk User Verify** (BE `6b4e5cbf`, UI `4d291ab8`): `POST /admin/users/bulk-verify` `{ userIds, identityVerified }` → `{ updated }`. Admin panel users sayfasında checkbox seçim + toolbar (toplu onay/iptal)
 - **Phase 36 — Audit Log Retention** (BE `65dcbc99`, UI `70ee7812`): `GET /admin/audit-log/purge-preview?olderThanDays=N` ve `POST /admin/audit-log/purge` `{ olderThanDays }`. Audit log sayfasında purge modal — önizleme + onaylı silme
+- **Phase 50 — Job Draft Autosave** (Flutter `a14d33ff`): `PostJobScreen` form alanları SharedPreferences'a otomatik kaydediliyor; ekrana dönüldüğünde taslak geri yükleniyor, submit sonrası temizleniyor
+- **Phase 51 — Worker Offer Templates** (BE `5721bf1f`, FE `6f5b61b9`): `GET/POST/DELETE /users/me/offer-templates`. Ustalar sık kullandıkları teklif metinlerini şablon olarak kaydedip teklif formunda hızlıca uygulayabiliyor
+- **Phase 52 — Job Photo Lightbox + Share** (Flutter `da0d2c4a`): `JobDetailScreen` fotoğraflarına tap → tam ekran lightbox (pinch-zoom, swipe). Paylaş butonu ile ilan linki sistem share sheet'e gönderiliyor
+- **Phase 53 — Health Check + Status Page** (BE `95e8c20e`, Admin `2d1bc4ee`): `GET /health` → `{status, db, uptime, version}`. Admin panel `/status` sayfası canlı sağlık göstergesi (DB bağlantısı, uptime, sürüm)
+- **Phase 54 — Worker Badges** (BE `26fb24e7`, FE pending): Otomatik rozet sistemi — `topRated`, `verified`, `experienced`, `responsive`. Public profile API rozetleri döndürüyor; Flutter UI henüz eklenmedi
 
 ### Güvenlik
 - **JWT expiresIn** (`97d2f797`): User `30d`, admin `8h`. `ignoreExpiration: false`
@@ -651,6 +664,13 @@ IYZIPAY_URI=https://sandbox-api.iyzipay.com
 
 | Hash | Açıklama |
 |------|----------|
+| `26fb24e7` | feat(phase-54): worker badges — auto-computed badges in public profile |
+| `2d1bc4ee` | feat(phase-53): admin status page — live health check display |
+| `95e8c20e` | feat(phase-53): GET /health endpoint — db, uptime, version |
+| `da0d2c4a` | feat(phase-52): job photo lightbox + share — full-screen viewer + share sheet |
+| `6f5b61b9` | feat(phase-51): offer templates UI — quick-apply in offer form |
+| `5721bf1f` | feat(phase-51): worker offer templates — GET/POST/DELETE /users/me/offer-templates |
+| `a14d33ff` | feat(phase-50): job draft autosave — SharedPreferences persistence |
 | `70ee7812` | feat(phase-36): audit log retention — purge modal UI |
 | `65dcbc99` | feat(phase-36): audit log retention — purge-preview + purge endpoints |
 | `6b4e5cbf` | feat(phase-35): bulk user verify — POST /admin/users/bulk-verify |
