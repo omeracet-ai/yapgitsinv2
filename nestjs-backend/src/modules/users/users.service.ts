@@ -513,6 +513,55 @@ export class UsersService {
     return { templates: next };
   }
 
+  /** Phase 138 — customer message templates (max 5, each up to 500 chars) */
+  async getMessageTemplates(userId: string): Promise<{ templates: string[] }> {
+    const user = await this.repo.findOne({
+      where: { id: userId },
+      select: ['id', 'customerMessageTemplates'],
+    });
+    return { templates: Array.isArray(user?.customerMessageTemplates) ? user!.customerMessageTemplates : [] };
+  }
+
+  async addMessageTemplate(
+    userId: string,
+    text: string,
+  ): Promise<{ templates: string[] }> {
+    const trimmed = (text ?? '').trim();
+    if (trimmed.length < 1 || trimmed.length > 500) {
+      throw new BadRequestException('text 1-500 karakter olmalı');
+    }
+    const user = await this.repo.findOne({
+      where: { id: userId },
+      select: ['id', 'customerMessageTemplates'],
+    });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    const current = Array.isArray(user.customerMessageTemplates) ? user.customerMessageTemplates : [];
+    if (current.length >= 5) {
+      throw new BadRequestException('En fazla 5 şablon eklenebilir');
+    }
+    const next = [...current, trimmed];
+    await this.repo.update(userId, { customerMessageTemplates: next });
+    return { templates: next };
+  }
+
+  async removeMessageTemplate(
+    userId: string,
+    index: number,
+  ): Promise<{ templates: string[] }> {
+    const user = await this.repo.findOne({
+      where: { id: userId },
+      select: ['id', 'customerMessageTemplates'],
+    });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    const current = Array.isArray(user.customerMessageTemplates) ? user.customerMessageTemplates : [];
+    if (!Number.isInteger(index) || index < 0 || index >= current.length) {
+      throw new NotFoundException('Geçersiz şablon indeksi');
+    }
+    const next = current.filter((_, i) => i !== index);
+    await this.repo.update(userId, { customerMessageTemplates: next.length ? next : null });
+    return { templates: next };
+  }
+
   /** Phase 54: 6 auto-computed worker badges — embedded in user responses */
   static readonly BADGE_DEFINITIONS: ReadonlyArray<{
     key: 'verified' | 'top_rated' | 'prolific' | 'rising_star' | 'available_now' | 'complete_profile';

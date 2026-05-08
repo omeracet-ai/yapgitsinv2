@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { AddOfferTemplateDto } from './dto/add-offer-template.dto';
+import { AddMessageTemplateDto } from './dto/add-message-template.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { DataPrivacyService } from './data-privacy.service';
@@ -150,6 +151,31 @@ export class UsersController {
     @Param('index', ParseIntPipe) index: number,
   ) {
     return this.svc.removeOfferTemplate(req.user.id, index);
+  }
+
+  // ── Phase 138: Customer message templates (max 5) ─────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/message-templates')
+  getMessageTemplates(@Request() req: AuthenticatedRequest) {
+    return this.svc.getMessageTemplates(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/message-templates')
+  addMessageTemplate(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: AddMessageTemplateDto,
+  ) {
+    return this.svc.addMessageTemplate(req.user.id, body.text);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('me/message-templates/:index')
+  removeMessageTemplate(
+    @Request() req: AuthenticatedRequest,
+    @Param('index', ParseIntPipe) index: number,
+  ) {
+    return this.svc.removeMessageTemplate(req.user.id, index);
   }
 
   // Phase 44: haftalık müsaitlik takvimi

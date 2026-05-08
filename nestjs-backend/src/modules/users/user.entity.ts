@@ -230,6 +230,10 @@ export class User {
   @Column({ type: 'simple-json', nullable: true })
   offerTemplates: string[] | null;
 
+  // ── Phase 138 — Customer message templates (max 5, each up to 500 chars) ──
+  @Column({ type: 'simple-json', nullable: true })
+  customerMessageTemplates: string[] | null;
+
   // ── Phase 78 — Online presence + last seen ───────────────────────────────
   @Column({ type: 'datetime', nullable: true })
   lastSeenAt: Date | null;
