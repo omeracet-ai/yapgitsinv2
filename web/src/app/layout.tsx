@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
-import { jsonLd } from '@/lib/seo';
+import { jsonLd, alternateLinks, ogLocaleFor } from '@/lib/seo';
 import { localBusinessLD } from '@/lib/seo';
 import './globals.css';
 
@@ -16,9 +16,10 @@ export const metadata: Metadata = {
   },
   description:
     'Temizlik, tadilat, elektrik, tesisat ve daha fazlası için güvenilir ustalar. Türkiye genelinde binlerce hizmet sağlayıcı tek platformda.',
+  alternates: alternateLinks('/'),
   openGraph: {
     type: 'website',
-    locale: 'tr_TR',
+    ...ogLocaleFor('tr'),
     siteName: 'Yapgitsin',
     images: ['/og-default.png'],
   },

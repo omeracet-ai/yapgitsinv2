@@ -7,6 +7,40 @@ export function siteUrl(path = ''): string {
   return `${SITE}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
+// Phase 91 — hreflang alternate links
+// path: locale-agnostic path (no /en or /az prefix), e.g. '/temizlik/istanbul'
+// Returns Next.js metadata `alternates` object: canonical + languages map.
+// TR is the default locale (root, no prefix) and serves as x-default.
+export function alternateLinks(path: string = '/'): {
+  canonical: string;
+  languages: Record<string, string>;
+} {
+  const clean = path === '/' ? '' : (path.startsWith('/') ? path : `/${path}`);
+  return {
+    canonical: `${SITE}${clean || '/'}`,
+    languages: {
+      tr: `${SITE}${clean || '/'}`,
+      en: `${SITE}/en${clean}`,
+      az: `${SITE}/az${clean}`,
+      'x-default': `${SITE}${clean || '/'}`,
+    },
+  };
+}
+
+export const OG_LOCALE: Record<string, string> = {
+  tr: 'tr_TR',
+  en: 'en_US',
+  az: 'az_AZ',
+};
+
+export function ogLocaleFor(locale: string): { locale: string; alternateLocale: string[] } {
+  const main = OG_LOCALE[locale] || OG_LOCALE.tr;
+  const alts = Object.entries(OG_LOCALE)
+    .filter(([k]) => k !== locale)
+    .map(([, v]) => v);
+  return { locale: main, alternateLocale: alts };
+}
+
 export function jsonLd(data: object): string {
   return JSON.stringify(data).replace(/</g, '\\u003c');
 }
