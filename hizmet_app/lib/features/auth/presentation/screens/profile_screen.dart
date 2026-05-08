@@ -1274,6 +1274,9 @@ class ProfileScreen extends ConsumerWidget {
       _menuItem(Icons.note_alt_outlined, 'Teklif Şablonlarım', () {
         context.push('/teklif-sablonlarim');
       }),
+      _menuItem(Icons.rocket_launch_rounded, '🚀 Hızlı Boost', () {
+        context.push('/boost');
+      }),
     ];
   }
 

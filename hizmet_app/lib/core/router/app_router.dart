@@ -8,6 +8,7 @@ import '../../../features/jobs/presentation/screens/post_job_screen.dart';
 import '../../../features/tokens/presentation/screens/token_screen.dart';
 import '../../../features/loyalty/presentation/screens/loyalty_screen.dart';
 import '../../../features/subscriptions/presentation/screens/subscription_screen.dart';
+import '../../../features/boost/presentation/screens/boost_screen.dart';
 import '../../../features/ai/presentation/screens/support_agent_screen.dart';
 import '../../../features/ai/presentation/screens/ai_chat_screen.dart';
 import '../../../features/auth/presentation/screens/public_profile_screen.dart';
@@ -127,6 +128,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/abonelik',
         builder: (context, state) => const SubscriptionScreen(),
+      ),
+      GoRoute(
+        path: '/boost',
+        builder: (context, state) => const BoostScreen(),
       ),
       GoRoute(
         path: '/kazanclarim',
