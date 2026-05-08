@@ -76,6 +76,7 @@ import { LeadRequest } from './modules/leads/lead-request.entity';
 import { LeadsModule } from './modules/leads/leads.module';
 import { SubscriptionPlan } from './modules/subscriptions/subscription-plan.entity';
 import { UserSubscription } from './modules/subscriptions/user-subscription.entity';
+import { CategorySubscription } from './modules/subscriptions/category-subscription.entity';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { Currency } from './modules/currencies/currency.entity';
 import { CurrenciesModule } from './modules/currencies/currencies.module';
@@ -147,6 +148,7 @@ import { BoostModule } from './modules/boost/boost.module';
           LeadRequest,
           SubscriptionPlan,
           UserSubscription,
+          CategorySubscription,
           Currency,
           Tenant,
           Boost,

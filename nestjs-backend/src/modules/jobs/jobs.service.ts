@@ -21,6 +21,7 @@ import { CancellationService } from '../cancellation/cancellation.service';
 import { DisputesService } from '../disputes/disputes.service';
 import { DisputeType } from '../disputes/job-dispute.entity';
 import { FraudDetectionService } from '../ai/fraud-detection.service';
+import { CategorySubscriptionsService } from '../subscriptions/category-subscriptions.service';
 
 // Geçerli UUID — SQLite ve PostgreSQL uyumlu sabit seed kimliği
 const SEED_USER_ID = '00000000-0000-0000-0000-000000000001';
@@ -45,7 +46,35 @@ export class JobsService {
     private disputesService: DisputesService,
     private tokensService: TokensService,
     private fraudDetection: FraudDetectionService,
+    private categorySubsService: CategorySubscriptionsService,
   ) {}
+
+  /**
+   * Phase 143 — Yeni job için category+city subscription'ları match'le ve notify et.
+   * Fire-and-forget; hata API response'unu bloklamaz.
+   */
+  private async _notifyCategorySubscribers(job: Job): Promise<void> {
+    try {
+      const matches = await this.categorySubsService.findMatches(
+        job.category,
+        job.location,
+      );
+      for (const sub of matches) {
+        if (sub.userId === job.customerId) continue; // ilan sahibine gönderme
+        await this.notificationsService.send({
+          userId: sub.userId,
+          type: NotificationType.SYSTEM,
+          title: 'Aradığın iş geldi',
+          body: `${job.category} kategorisinde yeni ilan: ${job.title}`,
+          relatedType: 'job',
+          relatedId: job.id,
+        });
+        await this.categorySubsService.markNotified(sub.id);
+      }
+    } catch (e) {
+      this.logger.warn(`category subscription notify failed: ${String(e)}`);
+    }
+  }
 
   async boost(jobId: string, days: number, userId: string): Promise<Job> {
     const job = await this.jobsRepository.findOne({ where: { id: jobId } });
@@ -220,6 +249,8 @@ export class JobsService {
         }
       })
       .catch(() => undefined);
+    // Phase 143 — fire-and-forget category subscription notifications
+    void this._notifyCategorySubscribers(saved);
     return saved;
   }
 
