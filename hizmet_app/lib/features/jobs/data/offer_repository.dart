@@ -80,6 +80,18 @@ class OfferRepository {
     }
   }
 
+  Future<Map<String, dynamic>> withdrawOffer(String jobId, String offerId) async {
+    try {
+      final res = await _dio.patch(
+        '/jobs/$jobId/offers/$offerId/withdraw',
+        options: await _authOpts(),
+      );
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      throw Exception(_dioMsg(e, 'Teklif geri çekilemedi'));
+    }
+  }
+
   Future<void> counterOffer(
       String jobId, String offerId, double price, String message) async {
     try {

@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/job_repository.dart';
 import '../../data/offer_repository.dart';
+import '../../../tokens/data/token_repository.dart';
 import 'job_detail_screen.dart';
 import 'job_opportunities_screen.dart';
 import '../providers/job_provider.dart';
@@ -663,12 +664,63 @@ class _CustomerJobCard extends ConsumerWidget {
   }
 }
 
-class _WorkerOfferCard extends StatelessWidget {
+class _WorkerOfferCard extends ConsumerWidget {
   final Map<String, dynamic> offer;
   const _WorkerOfferCard({required this.offer});
 
+  Future<void> _withdraw(BuildContext context, WidgetRef ref) async {
+    final jobId = (offer['jobId'] as String?) ??
+        (offer['job'] as Map<String, dynamic>?)?['id'] as String?;
+    final offerId = offer['id'] as String?;
+    if (jobId == null || offerId == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Teklifi Geri Çek'),
+        content: const Text(
+            'Bu teklifi geri çekiyorsun. 5 token iade alacaksın. Devam edilsin mi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Vazgeç'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Geri Çek'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    if (!context.mounted) return;
+
+    try {
+      final res =
+          await ref.read(offerRepositoryProvider).withdrawOffer(jobId, offerId);
+      ref.invalidate(myOffersProvider);
+      ref.invalidate(tokenBalanceProvider);
+      if (!context.mounted) return;
+      final refunded = res['refunded'] == true;
+      final amount = (res['refundAmount'] as num?)?.toInt() ?? 0;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: refunded ? Colors.green : Colors.orange,
+        content: Text(refunded
+            ? 'Teklif geri çekildi. $amount token iade edildi.'
+            : 'Teklif geri çekildi.'),
+      ));
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: AppColors.error,
+        content: Text(e.toString().replaceFirst('Exception: ', '')),
+      ));
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final status = offer['status'] as String? ?? 'pending';
     final price = (offer['price'] as num?)?.toDouble() ?? 0.0;
     final message = offer['message'] as String? ?? '';
@@ -809,6 +861,23 @@ class _WorkerOfferCard extends StatelessWidget {
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,
                   fontSize: 13)),
+          if (status == 'pending' || status == 'countered') ...[
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _withdraw(context, ref),
+                icon: const Icon(Icons.undo, size: 16),
+                label: const Text('Geri Çek'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
