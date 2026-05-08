@@ -9,6 +9,14 @@ const ROLE_MAP: Record<string, { label: string; cls: string }> = {
   customer: { label: "Müşteri", cls: "bg-blue-100 text-blue-700" },
 };
 
+// Phase 137 — admin grant/revoke pool
+const MANUAL_BADGES: { key: string; label: string; emoji: string }[] = [
+  { key: "top_partner",      label: "Top Partner",        emoji: "🥇" },
+  { key: "platform_pioneer", label: "Platform Öncüsü",    emoji: "🚀" },
+  { key: "community_hero",   label: "Topluluk Kahramanı", emoji: "❤️" },
+  { key: "vip",              label: "VIP",                emoji: "💎" },
+];
+
 export default function UsersPage() {
   const [users,    setUsers]    = useState<User[]>([]);
   const [loading,  setLoading]  = useState(true);
@@ -19,6 +27,38 @@ export default function UsersPage() {
   const [suspendTarget, setSuspendTarget] = useState<User | null>(null);
   const [suspendReason,  setSuspendReason]  = useState("");
   const [suspendBusy,    setSuspendBusy]    = useState(false);
+  const [badgeTarget,  setBadgeTarget]  = useState<User | null>(null);
+  const [badgeChecked, setBadgeChecked] = useState<Set<string>>(new Set());
+  const [badgeBusy,    setBadgeBusy]    = useState(false);
+
+  function openBadgeModal(u: User) {
+    setBadgeTarget(u);
+    setBadgeChecked(new Set(u.manualBadges ?? []));
+  }
+
+  async function saveBadges() {
+    if (!badgeTarget) return;
+    const before = new Set(badgeTarget.manualBadges ?? []);
+    const after = badgeChecked;
+    const toGrant = MANUAL_BADGES.filter(b => after.has(b.key) && !before.has(b.key));
+    const toRevoke = MANUAL_BADGES.filter(b => !after.has(b.key) && before.has(b.key));
+    if (toGrant.length === 0 && toRevoke.length === 0) {
+      setBadgeTarget(null);
+      return;
+    }
+    setBadgeBusy(true);
+    try {
+      for (const b of toGrant) await api.grantBadge(badgeTarget.id, b.key);
+      for (const b of toRevoke) await api.revokeBadge(badgeTarget.id, b.key);
+      showToast(`${badgeTarget.fullName} rozetleri güncellendi`);
+      setBadgeTarget(null);
+      load();
+    } catch (e) {
+      window.alert(`Hata: ${(e as Error).message}`);
+    } finally {
+      setBadgeBusy(false);
+    }
+  }
 
   function showToast(msg: string) {
     setToast(msg);
@@ -135,6 +175,51 @@ export default function UsersPage() {
       {toast && (
         <div className="fixed top-4 right-4 z-50 rounded-lg bg-green-600 text-white px-4 py-2 text-sm shadow-lg">
           {toast}
+        </div>
+      )}
+      {badgeTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
+            <h3 className="text-base font-semibold mb-1">Rozet Yönet</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              <span className="font-medium">{badgeTarget.fullName}</span> için manuel rozetleri seç.
+            </p>
+            <div className="space-y-2">
+              {MANUAL_BADGES.map(b => {
+                const on = badgeChecked.has(b.key);
+                return (
+                  <label key={b.key} className="flex items-center gap-3 rounded-md border border-gray-200 px-3 py-2 cursor-pointer hover:bg-gray-50">
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={() => {
+                        setBadgeChecked(prev => {
+                          const n = new Set(prev);
+                          if (n.has(b.key)) n.delete(b.key); else n.add(b.key);
+                          return n;
+                        });
+                      }}
+                    />
+                    <span className="text-lg">{b.emoji}</span>
+                    <span className="text-sm font-medium">{b.label}</span>
+                    <code className="ml-auto text-xs text-gray-400">{b.key}</code>
+                  </label>
+                );
+              })}
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setBadgeTarget(null)}
+                disabled={badgeBusy}
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >İptal</button>
+              <button
+                onClick={saveBadges}
+                disabled={badgeBusy}
+                className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >{badgeBusy ? "Kaydediliyor…" : "Kaydet"}</button>
+            </div>
+          </div>
         </div>
       )}
       {suspendTarget && (
@@ -299,18 +384,25 @@ export default function UsersPage() {
                       {new Date(u.createdAt).toLocaleDateString("tr-TR")}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {u.suspended ? (
+                      <div className="flex justify-end gap-1.5">
                         <button
-                          onClick={() => doUnsuspend(u)}
+                          onClick={() => openBadgeModal(u)}
                           className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
-                        >Askıyı Kaldır</button>
-                      ) : (
-                        <button
-                          onClick={() => { setSuspendTarget(u); setSuspendReason(""); }}
-                          disabled={u.role === "admin"}
-                          className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
-                        >Askıya Al</button>
-                      )}
+                          title={(u.manualBadges ?? []).join(", ") || "Rozet yok"}
+                        >🏅 Rozet{(u.manualBadges?.length ?? 0) > 0 ? ` (${u.manualBadges!.length})` : ""}</button>
+                        {u.suspended ? (
+                          <button
+                            onClick={() => doUnsuspend(u)}
+                            className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                          >Askıyı Kaldır</button>
+                        ) : (
+                          <button
+                            onClick={() => { setSuspendTarget(u); setSuspendReason(""); }}
+                            disabled={u.role === "admin"}
+                            className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >Askıya Al</button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

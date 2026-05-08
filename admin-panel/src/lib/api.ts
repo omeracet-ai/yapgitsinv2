@@ -144,6 +144,12 @@ export const api = {
   setUserSkills: (userId: string, skills: string[]) =>
     request<{ id: string; workerSkills: string[] }>(`/admin/users/${userId}/skills`, { method: 'PATCH', body: JSON.stringify({ skills }) }),
 
+  // Phase 137 — Manuel admin rozet grant/revoke
+  grantBadge: (userId: string, badgeKey: string) =>
+    request<{ id: string; manualBadges: string[] }>(`/admin/users/${userId}/badges/grant`, { method: 'POST', body: JSON.stringify({ badgeKey }) }),
+  revokeBadge: (userId: string, badgeKey: string) =>
+    request<{ id: string; manualBadges: string[] }>(`/admin/users/${userId}/badges/revoke`, { method: 'POST', body: JSON.stringify({ badgeKey }) }),
+
   // Onboarding slides
   onboardingSlides:       ()                                          => request<OnboardingSlide[]>('/onboarding-slides/all'),
   createOnboardingSlide:  (data: Partial<OnboardingSlide>)           => request<OnboardingSlide>('/onboarding-slides',         { method: 'POST',   body: JSON.stringify(data) }),
@@ -409,6 +415,7 @@ export interface User {
   suspended?: boolean;
   suspendedReason?: string | null;
   suspendedAt?: string | null;
+  manualBadges?: string[] | null;
 }
 
 export interface BulkVerifyResult {
