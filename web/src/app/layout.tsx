@@ -17,11 +17,17 @@ export const metadata: Metadata = {
   description:
     'Temizlik, tadilat, elektrik, tesisat ve daha fazlası için güvenilir ustalar. Türkiye genelinde binlerce hizmet sağlayıcı tek platformda.',
   alternates: alternateLinks('/'),
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/favicon.svg',
+  },
   openGraph: {
     type: 'website',
     ...ogLocaleFor('tr'),
     siteName: 'Yapgitsin',
-    images: ['/og-default.png'],
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Yapgitsin' }],
   },
   robots: { index: true, follow: true },
 };

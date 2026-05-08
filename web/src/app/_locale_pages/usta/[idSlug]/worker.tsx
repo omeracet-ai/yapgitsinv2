@@ -2,8 +2,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getWorker, getWorkers, unwrap, parseSlugId, slugify, type Worker } from '@/lib/api';
-import { jsonLd, personLD, breadcrumbLD, clip } from '@/lib/seo';
+import { jsonLd, breadcrumbLD, clip } from '@/lib/seo';
+import { personWithReviewsLD } from '@/lib/jsonld';
 import LeadForm from '@/components/LeadForm';
+import WorkerReviews from '@/components/WorkerReviews';
 import { getDict, localePath, type Locale } from '@/i18n';
 
 export async function getWorkerStaticSlugs(): Promise<string[]> {
@@ -39,7 +41,7 @@ export default async function renderWorker(L: Locale, idSlug: string) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(personLD(w)) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(personWithReviewsLD(w, reviews)) }} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -82,19 +84,12 @@ export default async function renderWorker(L: Locale, idSlug: string) {
               <p className="text-gray-700 leading-relaxed text-sm">{w.workerBio}</p>
             </div>
           )}
-          {reviews.length > 0 && (
-            <div className="bg-white border border-[var(--border)] rounded-xl p-5">
-              <h2 className="font-bold text-[var(--secondary)] mb-3">{dict.common.reviews}</h2>
-              <ul className="divide-y divide-[var(--border)]">
-                {reviews.slice(0, 10).map((r: any) => (
-                  <li key={r.id} className="py-3">
-                    <div className="text-sm text-[var(--accent)] font-medium">★ {r.rating}</div>
-                    <p className="text-gray-700 text-sm">{r.comment}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <WorkerReviews
+            reviews={reviews}
+            averageRating={Number(w.averageRating || 0)}
+            totalReviews={w.totalReviews || reviews.length}
+            heading={dict.common.reviews}
+          />
         </div>
         <aside className="space-y-4">
           <div className="bg-white border border-[var(--border)] rounded-xl p-5">
