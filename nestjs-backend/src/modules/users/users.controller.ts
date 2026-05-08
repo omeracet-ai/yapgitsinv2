@@ -10,6 +10,7 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -125,6 +126,42 @@ export class UsersController {
       passwordHash?: string;
     } & typeof updated;
     return safe;
+  }
+
+  // ── Phase 43: Worker portfolio photos ─────────────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/portfolio')
+  async addPortfolioPhoto(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { url: string },
+  ) {
+    const url = (body?.url || '').trim();
+    if (!url) throw new BadRequestException('url gerekli');
+    const user = await this.svc.findById(req.user.id);
+    if (!user) return null;
+    const current = Array.isArray(user.portfolioPhotos) ? user.portfolioPhotos : [];
+    if (current.length >= 10) {
+      throw new BadRequestException('En fazla 10 portfolyo fotoğrafı eklenebilir');
+    }
+    if (current.includes(url)) return { portfolioPhotos: current };
+    const next = [...current, url];
+    await this.svc.update(req.user.id, { portfolioPhotos: next });
+    return { portfolioPhotos: next };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('me/portfolio')
+  async removePortfolioPhoto(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { url: string },
+  ) {
+    const url = (body?.url || '').trim();
+    const user = await this.svc.findById(req.user.id);
+    if (!user) return null;
+    const current = Array.isArray(user.portfolioPhotos) ? user.portfolioPhotos : [];
+    const next = current.filter((u) => u !== url);
+    await this.svc.update(req.user.id, { portfolioPhotos: next });
+    return { portfolioPhotos: next };
   }
 
   /** GET /workers — Usta dizini (advanced filters + pagination) */
@@ -265,6 +302,7 @@ export class UsersController {
         },
       })),
       pastPhotos,
+      portfolioPhotos: Array.isArray(user.portfolioPhotos) ? user.portfolioPhotos : [],
     };
   }
 }

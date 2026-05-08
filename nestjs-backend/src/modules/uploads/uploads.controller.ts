@@ -142,6 +142,36 @@ export class UploadsController {
     return urls;
   }
 
+  /** POST /uploads/portfolio  — Phase 43 worker portfolio fotoğrafı (tek) */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('portfolio')
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      storage: memoryStorage(),
+      fileFilter: imageFilter,
+      limits: { fileSize: 8 * 1024 * 1024 },
+    }),
+  )
+  async uploadPortfolioPhoto(
+    @UploadedFile() file: any,
+    @Req() req: any,
+  ): Promise<{ url: string }> {
+    if (!file) throw new BadRequestException('Fotoğraf seçilmedi');
+    const fullName: string = String(req.user?.fullName || 'user');
+    const folder = sanitizeName(fullName);
+    const dir = join(process.cwd(), 'uploads', 'portfolio', folder);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+    const dest = join(dir, filename);
+    await sharp(file.buffer)
+      .resize({ width: 1024, withoutEnlargement: true })
+      .jpeg({ quality: 75 })
+      .toFile(dest);
+    return {
+      url: `${req.protocol}://${req.get('host')}/uploads/portfolio/${folder}/${filename}`,
+    };
+  }
+
   /** POST /uploads/identity-photo  — kimlik fotoğrafı (zorunlu) */
   @UseGuards(AuthGuard('jwt'))
   @Post('identity-photo')

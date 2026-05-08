@@ -146,6 +146,10 @@ export class User {
   @Column({ type: 'simple-json', nullable: true })
   badges: string[] | null;
 
+  // Phase 43 — Worker portfolio photos (max 10, kendi yönettiği)
+  @Column({ type: 'simple-json', nullable: true })
+  portfolioPhotos: string[] | null;
+
   // Ortalama yanıt süresi (dk) — fast_responder rozeti için.
   // Mesaj/teklif zaman damgalarından hesaplanabilir; null = yeterli veri yok.
   @Column({ type: 'integer', nullable: true })
