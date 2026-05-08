@@ -5,6 +5,7 @@ import '../../../core/models/booking_model.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/list_skeleton.dart';
 import '../data/booking_repository.dart';
+import '../../escrow/widgets/escrow_status_badge.dart';
 
 enum _ViewMode { list, calendar }
 
@@ -294,6 +295,15 @@ Widget _bookingCard(Booking b, {VoidCallback? onCancel}) {
                 style: const TextStyle(
                     fontWeight: FontWeight.bold, color: Colors.blue)),
           ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: EscrowStatusBadge(bookingId: b.id),
+          ),
+          if (b.status == BookingStatus.in_progress)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: EscrowReleaseButton(bookingId: b.id),
+            ),
           if (canCancel && onCancel != null)
             Align(
               alignment: Alignment.centerRight,
