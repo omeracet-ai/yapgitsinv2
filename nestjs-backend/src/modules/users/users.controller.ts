@@ -14,6 +14,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { AddOfferTemplateDto } from './dto/add-offer-template.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
+import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuthGuard } from '@nestjs/passport';
@@ -29,6 +31,7 @@ export class UsersController {
   constructor(
     private readonly svc: UsersService,
     private readonly favWorkersSvc: FavoriteWorkersService,
+    private readonly adminAuditService: AdminAuditService,
     @InjectRepository(Job) private jobsRepo: Repository<Job>,
     @InjectRepository(Review) private reviewsRepo: Repository<Review>,
     @InjectRepository(Offer) private offersRepo: Repository<Offer>,
@@ -191,6 +194,24 @@ export class UsersController {
       passwordHash?: string;
     } & typeof updated;
     return safe;
+  }
+
+  // ── Phase 60: Account self-deletion (KVKK) ────────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('me')
+  async deleteMe(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: DeleteAccountDto,
+  ) {
+    const result = await this.svc.deactivateAccount(req.user.id, body.password);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'user.self_delete',
+      'user',
+      req.user.id,
+      { userId: req.user.id },
+    );
+    return result;
   }
 
   // ── Phase 43: Worker portfolio photos ─────────────────────────────

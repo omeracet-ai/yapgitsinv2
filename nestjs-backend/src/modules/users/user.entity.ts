@@ -196,6 +196,13 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   suspendedBy: string | null;
 
+  // ── Phase 60 — Account self-deletion (KVKK) ──────────────────────────────
+  @Column({ type: 'boolean', default: false })
+  deactivated: boolean;
+
+  @Column({ type: 'datetime', nullable: true })
+  deactivatedAt: Date | null;
+
   // ── Phase 49 — Notification preferences (null = all enabled) ─────────────
   @Column({ type: 'simple-json', nullable: true })
   notificationPreferences: {

@@ -169,6 +169,10 @@ export class AuthService implements OnModuleInit {
       if (user.suspended) {
         throw new ForbiddenException('Hesap askıda');
       }
+      // Phase 60 — silinmiş hesap login yapamaz
+      if (user.deactivated) {
+        throw new ForbiddenException('Hesap silindi');
+      }
       const { passwordHash: _hash, ...result } = user;
       return result;
     }

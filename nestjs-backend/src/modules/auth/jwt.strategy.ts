@@ -23,6 +23,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (user.suspended) {
       throw new UnauthorizedException('Hesabınız askıya alındı');
     }
+    // Phase 60 — silinmiş hesapların token'ı reddedilir
+    if (user.deactivated) {
+      throw new UnauthorizedException('Hesap silindi');
+    }
     return {
       id: payload.sub,
       email: payload.email,

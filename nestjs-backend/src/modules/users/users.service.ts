@@ -1,6 +1,7 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 
 export type StatField =
@@ -136,6 +137,21 @@ export class UsersService {
 
   async deleteById(id: string): Promise<void> {
     await this.repo.delete(id);
+  }
+
+  /** Phase 60 — Hesap kendini deaktive eder (KVKK soft-delete) */
+  async deactivateAccount(
+    userId: string,
+    password: string,
+  ): Promise<{ deactivated: true; deactivatedAt: string }> {
+    const user = await this.repo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    if (!user.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
+      throw new UnauthorizedException('Şifre yanlış');
+    }
+    const deactivatedAt = new Date();
+    await this.repo.update(userId, { deactivated: true, deactivatedAt });
+    return { deactivated: true, deactivatedAt: deactivatedAt.toISOString() };
   }
 
   async bumpStat(userId: string, field: StatField): Promise<void> {
