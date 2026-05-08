@@ -48,11 +48,14 @@ export class UsersService {
     verifiedOnly?: boolean;
     availableOnly?: boolean;
     availableDay?: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
-    sortBy?: 'rating' | 'reputation' | 'rate_asc' | 'rate_desc';
+    sortBy?: 'rating' | 'reputation' | 'rate_asc' | 'rate_desc' | 'nearest';
     page?: number;
     limit?: number;
+    lat?: number;
+    lng?: number;
+    radiusKm?: number;
   }): Promise<{
-    data: User[];
+    data: (User & { distanceKm?: number })[];
     total: number;
     page: number;
     limit: number;
@@ -118,6 +121,51 @@ export class UsersService {
       default:
         qb.orderBy('u.reputationScore', 'DESC');
         break;
+    }
+
+    // Phase 112 — Geo-fencing: lat/lng + radiusKm filter (SQLite-safe post-filter)
+    const hasGeo =
+      typeof opts.lat === 'number' &&
+      typeof opts.lng === 'number' &&
+      !isNaN(opts.lat) &&
+      !isNaN(opts.lng);
+
+    if (hasGeo || opts.sortBy === 'nearest') {
+      // Fetch all matching, post-filter + sort, then paginate
+      const all = await qb.getMany();
+      const radiusKm = Math.min(200, Math.max(1, opts.radiusKm ?? 20));
+      const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371;
+        const toRad = (d: number) => (d * Math.PI) / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+        return 2 * R * Math.asin(Math.sqrt(a));
+      };
+
+      let withDist: (User & { distanceKm?: number })[] = all.map((u) => {
+        if (hasGeo && u.latitude != null && u.longitude != null) {
+          const d = haversine(opts.lat!, opts.lng!, u.latitude, u.longitude);
+          return Object.assign(u, { distanceKm: Math.round(d * 10) / 10 });
+        }
+        return Object.assign(u, { distanceKm: undefined });
+      });
+
+      if (hasGeo) {
+        withDist = withDist.filter(
+          (u) => u.distanceKm != null && u.distanceKm <= radiusKm,
+        );
+      }
+
+      if (opts.sortBy === 'nearest') {
+        withDist.sort((a, b) => (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9));
+      }
+
+      const total = withDist.length;
+      const slice = withDist.slice((page - 1) * limit, (page - 1) * limit + limit);
+      return { data: slice, total, page, limit, pages: Math.ceil(total / limit) || 0 };
     }
 
     qb.skip((page - 1) * limit).take(limit);

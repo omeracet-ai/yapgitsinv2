@@ -278,6 +278,9 @@ export class UsersController {
     @Query('sortBy') sortBy?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('lat') lat?: string,
+    @Query('lng') lng?: string,
+    @Query('radiusKm') radiusKm?: string,
   ) {
     const parseNum = (v?: string): number | undefined => {
       if (v == null || v === '') return undefined;
@@ -292,10 +295,13 @@ export class UsersController {
     };
 
     const minRatingN = parseNum(minRating);
-    const sortAllowed = ['rating', 'reputation', 'rate_asc', 'rate_desc'];
+    const sortAllowed = ['rating', 'reputation', 'rate_asc', 'rate_desc', 'nearest'];
     const sortByVal = sortBy && sortAllowed.includes(sortBy)
-      ? (sortBy as 'rating' | 'reputation' | 'rate_asc' | 'rate_desc')
+      ? (sortBy as 'rating' | 'reputation' | 'rate_asc' | 'rate_desc' | 'nearest')
       : undefined;
+    const latN = parseNum(lat);
+    const lngN = parseNum(lng);
+    const radiusN = parseNum(radiusKm);
 
     const result = await this.svc.findWorkersAdvanced({
       category,
@@ -313,6 +319,9 @@ export class UsersController {
       sortBy: sortByVal,
       page: parseNum(page),
       limit: parseNum(limit),
+      lat: latN,
+      lng: lngN,
+      radiusKm: radiusN != null ? Math.min(200, Math.max(1, radiusN)) : undefined,
     });
 
     const data = result.data.map((u) => {
