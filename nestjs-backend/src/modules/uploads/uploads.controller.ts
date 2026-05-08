@@ -303,6 +303,82 @@ export class UploadsController {
     };
   }
 
+  /** POST /uploads/chat-attachment — Phase 139: chat file attachment (image or document) */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('chat-attachment')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      fileFilter: (req: any, file: any, cb: any) => {
+        const imageMimes = ['image/jpeg', 'image/png', 'image/webp'];
+        const docMimes = [
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+        if (
+          !imageMimes.includes(file.mimetype) &&
+          !docMimes.includes(file.mimetype)
+        ) {
+          return cb(
+            new BadRequestException(
+              'Sadece resim (jpg/png/webp) veya belge (pdf/doc/docx) yüklenebilir',
+            ),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 10 * 1024 * 1024 },
+    }),
+  )
+  async uploadChatAttachment(
+    @UploadedFile() file: any,
+    @Req() req: any,
+  ): Promise<{ url: string; type: 'image' | 'document'; name: string; size: number }> {
+    if (!file) throw new BadRequestException('Dosya seçilmedi');
+
+    const fullName: string = String(req.user?.fullName || 'user');
+    const folder = sanitizeName(fullName);
+    const dir = join(process.cwd(), 'uploads', 'chat-attachments', folder);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    const isImage = file.mimetype.startsWith('image/');
+    const ts = Date.now();
+    const rand = Math.random().toString(36).slice(2, 8);
+
+    let filename: string;
+    let finalSize: number;
+    if (isImage) {
+      filename = `${ts}-${rand}.jpg`;
+      const dest = join(dir, filename);
+      await sharp(file.buffer)
+        .resize({ width: 1024, withoutEnlargement: true })
+        .jpeg({ quality: 80 })
+        .toFile(dest);
+      finalSize = fs.statSync(dest).size;
+    } else {
+      const extMap: Record<string, string> = {
+        'application/pdf': 'pdf',
+        'application/msword': 'doc',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+          'docx',
+      };
+      const ext = extMap[file.mimetype] || 'bin';
+      filename = `${ts}-${rand}.${ext}`;
+      const dest = join(dir, filename);
+      fs.writeFileSync(dest, file.buffer);
+      finalSize = file.size;
+    }
+
+    return {
+      url: `${req.protocol}://${req.get('host')}/uploads/chat-attachments/${folder}/${filename}`,
+      type: isImage ? 'image' : 'document',
+      name: file.originalname || filename,
+      size: finalSize,
+    };
+  }
+
   /** POST /uploads/document  — belge fotoğrafı (opsiyonel) */
   @UseGuards(AuthGuard('jwt'))
   @Post('document')

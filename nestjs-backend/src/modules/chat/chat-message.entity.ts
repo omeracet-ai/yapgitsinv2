@@ -44,4 +44,17 @@ export class ChatMessage {
   // non-null = read (double tick).
   @Column({ type: 'datetime', nullable: true })
   readAt: Date | null;
+
+  // Phase 139: optional file attachment (image or document).
+  @Column({ type: 'varchar', nullable: true })
+  attachmentUrl: string | null;
+
+  @Column({ type: 'varchar', length: 16, nullable: true })
+  attachmentType: 'image' | 'document' | null;
+
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  attachmentName: string | null;
+
+  @Column({ type: 'int', nullable: true })
+  attachmentSize: number | null;
 }
