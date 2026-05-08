@@ -977,6 +977,9 @@ class ProfileScreen extends ConsumerWidget {
           _menuItem(Icons.bookmark_border_rounded, 'Kaydedilen İşler', () {
             context.push('/kaydedilen-isler');
           }),
+          _menuItem(Icons.flag_outlined, '🚩 Şikayetlerim', () {
+            context.push('/sikayetlerim');
+          }),
           _menuItem(Icons.notifications_outlined, 'Bildirim Ayarları', () {
             context.push('/bildirim-ayarlari');
           }),

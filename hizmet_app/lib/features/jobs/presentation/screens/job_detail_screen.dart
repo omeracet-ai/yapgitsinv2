@@ -213,6 +213,34 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                     const SizedBox(height: 8),
                     _buildCustomerCard(customer),
                   ],
+                  if (jobStatus == 'completed' &&
+                      customer != null &&
+                      authState is AuthAuthenticated &&
+                      (customer['id'] as String?) != currentUserId) ...[
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push(
+                            '/sikayet-olustur',
+                            extra: {
+                              'againstUserId': customer['id'] as String,
+                              'jobId': widget.id,
+                            },
+                          ),
+                          icon: const Icon(Icons.flag_outlined, size: 16),
+                          label: const Text('🚩 Şikayet Et'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red,
+                            side: const BorderSide(color: Colors.red),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   _buildDescription(description),
                   if (photos.isNotEmpty) ...[
