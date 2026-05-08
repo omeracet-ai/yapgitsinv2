@@ -128,31 +128,34 @@ class _BookingsView extends ConsumerWidget {
   }
 }
 
-class _ListView extends StatelessWidget {
+class _ListView extends ConsumerWidget {
   final List<Booking> bookings;
   const _ListView({required this.bookings});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final sorted = [...bookings]
       ..sort((a, b) => b.scheduledDate.compareTo(a.scheduledDate));
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: sorted.length,
-      itemBuilder: (_, i) => _bookingCard(sorted[i]),
+      itemBuilder: (_, i) => _bookingCard(
+        sorted[i],
+        onCancel: () => _showCancelSheet(context, ref, sorted[i]),
+      ),
     );
   }
 }
 
-class _CalendarView extends StatefulWidget {
+class _CalendarView extends ConsumerStatefulWidget {
   final List<Booking> bookings;
   const _CalendarView({required this.bookings});
 
   @override
-  State<_CalendarView> createState() => _CalendarViewState();
+  ConsumerState<_CalendarView> createState() => _CalendarViewState();
 }
 
-class _CalendarViewState extends State<_CalendarView> {
+class _CalendarViewState extends ConsumerState<_CalendarView> {
   CalendarFormat _format = CalendarFormat.month;
   DateTime _focused = DateTime.now();
   DateTime? _selected;
@@ -234,7 +237,10 @@ class _CalendarViewState extends State<_CalendarView> {
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: dayBookings.length,
-                  itemBuilder: (_, i) => _bookingCard(dayBookings[i]),
+                  itemBuilder: (_, i) => _bookingCard(
+                    dayBookings[i],
+                    onCancel: () => _showCancelSheet(context, ref, dayBookings[i]),
+                  ),
                 ),
         ),
       ],
@@ -242,7 +248,7 @@ class _CalendarViewState extends State<_CalendarView> {
   }
 }
 
-Widget _bookingCard(Booking b) {
+Widget _bookingCard(Booking b, {VoidCallback? onCancel}) {
   Color c;
   IconData ic;
   switch (b.status) {
@@ -266,19 +272,188 @@ Widget _bookingCard(Booking b) {
       c = Colors.grey;
       ic = Icons.timer;
   }
+  final canCancel = b.status == BookingStatus.pending ||
+      b.status == BookingStatus.confirmed;
   return Card(
     margin: const EdgeInsets.only(bottom: 12),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    child: ListTile(
-      leading: CircleAvatar(
-          backgroundColor: c, child: Icon(ic, color: Colors.white, size: 18)),
-      title: Text(b.category,
-          style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(b.description,
-          maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: Text(b.scheduledTime ?? '--:--',
-          style: const TextStyle(
-              fontWeight: FontWeight.bold, color: Colors.blue)),
+    child: Padding(
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        children: [
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: CircleAvatar(
+                backgroundColor: c,
+                child: Icon(ic, color: Colors.white, size: 18)),
+            title: Text(b.category,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(b.description,
+                maxLines: 1, overflow: TextOverflow.ellipsis),
+            trailing: Text(b.scheduledTime ?? '--:--',
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.blue)),
+          ),
+          if (canCancel && onCancel != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: onCancel,
+                icon: const Icon(Icons.cancel_outlined,
+                    size: 16, color: Colors.red),
+                label: const Text('İptal Et',
+                    style: TextStyle(color: Colors.red)),
+              ),
+            ),
+        ],
+      ),
     ),
+  );
+}
+
+const _kReasonLabels = <String, String>{
+  'customer_change': 'Planım değişti',
+  'worker_unavailable': 'Usta müsait değil',
+  'weather': 'Hava koşulları',
+  'emergency': 'Acil durum',
+  'other': 'Diğer',
+};
+
+void _showCancelSheet(BuildContext context, WidgetRef ref, Booking b) {
+  String reason = 'customer_change';
+  // 24h+ → 100% / <24h → 50% / past → 0%
+  final scheduledAt = b.scheduledTime != null && b.scheduledTime!.isNotEmpty
+      ? DateTime(b.scheduledDate.year, b.scheduledDate.month, b.scheduledDate.day,
+          int.tryParse(b.scheduledTime!.split(':').first) ?? 12,
+          int.tryParse(b.scheduledTime!.split(':').last) ?? 0)
+      : DateTime(b.scheduledDate.year, b.scheduledDate.month, b.scheduledDate.day, 12);
+  final diffMs = scheduledAt.difference(DateTime.now()).inMilliseconds;
+  const oneDay = 24 * 60 * 60 * 1000;
+  int percent;
+  if (diffMs >= oneDay) {
+    percent = 100;
+  } else if (diffMs >= 0) {
+    percent = 50;
+  } else {
+    percent = 0;
+  }
+  final price = b.agreedPrice ?? 0;
+  final refundAmount = (price * percent / 100).toStringAsFixed(2);
+
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (ctx) {
+      return StatefulBuilder(
+        builder: (ctx, setSt) => Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Randevuyu İptal Et',
+                  style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              const Text('Sebep',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String>(
+                initialValue: reason,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                items: _kReasonLabels.entries
+                    .map((e) =>
+                        DropdownMenuItem(value: e.key, child: Text(e.value)))
+                    .toList(),
+                onChanged: (v) => setSt(() => reason = v ?? 'other'),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('İade önizlemesi: %$percent',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.blue)),
+                    const SizedBox(height: 4),
+                    Text(
+                      price > 0
+                          ? 'Tahmini iade: $refundAmount₺'
+                          : 'Anlaşmalı fiyat yok',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      '24+ saat önce: %100 — 24 saat içinde: %50 — başlangıç sonrası: %0',
+                      style: TextStyle(fontSize: 11, color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Vazgeç'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () async {
+                        final navigator = Navigator.of(ctx);
+                        final messenger = ScaffoldMessenger.of(context);
+                        try {
+                          final res = await ref
+                              .read(bookingRepositoryProvider)
+                              .cancelBooking(b.id, reason);
+                          ref.invalidate(myCustomerBookingsProvider);
+                          ref.invalidate(myWorkerBookingsProvider);
+                          navigator.pop();
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'İptal edildi. İade: ${res['refundAmount'] ?? 0}₺ (%${res['refundPercent'] ?? 0})',
+                              ),
+                            ),
+                          );
+                        } catch (e) {
+                          messenger.showSnackBar(
+                            SnackBar(content: Text('Hata: $e')),
+                          );
+                        }
+                      },
+                      child: const Text('İptali Onayla'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
   );
 }

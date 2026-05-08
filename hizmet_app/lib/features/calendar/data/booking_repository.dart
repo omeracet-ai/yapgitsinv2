@@ -68,6 +68,17 @@ class BookingRepository {
     return Booking.fromJson(res.data as Map<String, dynamic>);
   }
 
+  /// Phase 128 — cancel a booking with reason; returns refund preview from server.
+  Future<Map<String, dynamic>> cancelBooking(
+      String bookingId, String reason) async {
+    final res = await _dio.post(
+      '/bookings/$bookingId/cancel',
+      data: {'reason': reason},
+      options: await _authOpts(),
+    );
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
   Future<List<Booking>> getMyBookingsAsCustomer() async {
     try {
       final res = await _dio.get('/bookings/my-as-customer', options: await _authOpts());
