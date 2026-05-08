@@ -21,6 +21,7 @@ import { Repository } from 'typeorm';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 import { FavoriteWorkersService } from './favorite-workers.service';
+import { EarningsService } from './earnings.service';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
 import { Offer, OfferStatus } from '../jobs/offer.entity';
@@ -31,6 +32,7 @@ export class UsersController {
   constructor(
     private readonly svc: UsersService,
     private readonly favWorkersSvc: FavoriteWorkersService,
+    private readonly earningsSvc: EarningsService,
     private readonly adminAuditService: AdminAuditService,
     @InjectRepository(Job) private jobsRepo: Repository<Job>,
     @InjectRepository(Review) private reviewsRepo: Repository<Review>,
@@ -73,6 +75,17 @@ export class UsersController {
     const profileCompletion = this.svc.computeProfileCompletion(user);
     const badges = this.svc.computeBadges(user);
     return { ...safe, profileCompletion, badges };
+  }
+
+  // ── Phase 111: Worker earnings dashboard ─────────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/earnings')
+  async getMyEarnings(
+    @Request() req: AuthenticatedRequest,
+    @Query('months') monthsRaw?: string,
+  ) {
+    const months = monthsRaw ? parseInt(monthsRaw, 10) : 6;
+    return this.earningsSvc.getEarnings(req.user.id, isNaN(months) ? 6 : months);
   }
 
   @UseGuards(AuthGuard('jwt'))

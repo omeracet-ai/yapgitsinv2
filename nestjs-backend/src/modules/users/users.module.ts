@@ -8,11 +8,13 @@ import { UsersController } from './users.controller';
 import { Job } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
 import { Offer } from '../jobs/offer.entity';
+import { Booking } from '../bookings/booking.entity';
+import { EarningsService } from './earnings.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, FavoriteWorker, Job, Review, Offer])],
+  imports: [TypeOrmModule.forFeature([User, FavoriteWorker, Job, Review, Offer, Booking])],
   controllers: [UsersController],
-  providers: [UsersService, FavoriteWorkersService],
+  providers: [UsersService, FavoriteWorkersService, EarningsService],
   exports: [UsersService],
 })
 export class UsersModule {}
