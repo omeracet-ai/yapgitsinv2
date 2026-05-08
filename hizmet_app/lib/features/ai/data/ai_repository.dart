@@ -153,6 +153,20 @@ class AiRepository {
     }
   }
 
+  /// Yorumları özetler — Backend: POST /ai/summarize-reviews { reviews } → { summary }
+  Future<String> summarizeReviews(List<String> reviews) async {
+    try {
+      final resp = await _dio.post(
+        '/ai/summarize-reviews',
+        data: {'reviews': reviews},
+        options: await _authOptions(),
+      );
+      return (resp.data as Map<String, dynamic>)['summary'] as String? ?? '';
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Yorum özeti alınamadı');
+    }
+  }
+
   /// Destek Ajanı: multi-turn support chat
   Future<String> supportAgent({
     required String message,

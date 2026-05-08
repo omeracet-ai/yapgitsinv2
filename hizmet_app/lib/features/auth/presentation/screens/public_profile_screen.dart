@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import '../../../reviews/widgets/review_reply_sheet.dart';
 import '../../widgets/portfolio_gallery.dart';
 import '../../widgets/availability_editor_sheet.dart';
+import '../../widgets/review_summary_card.dart';
 import '../../../users/widgets/badge_row.dart';
 import 'package:go_router/go_router.dart';
 
@@ -382,6 +383,17 @@ class _ProfileView extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
+                ],
+
+                // ── AI Yorum Özeti ───────────────────────────────────────
+                if (reviews >= 3) ...[
+                  ReviewSummaryCard(
+                    userId: userId,
+                    reviewComments: reviewList
+                        .map((r) => (r['comment'] as String?)?.trim() ?? '')
+                        .where((c) => c.isNotEmpty)
+                        .toList(),
+                  ),
                 ],
 
                 // ── Yorumlar ─────────────────────────────────────────────
