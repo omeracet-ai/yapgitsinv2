@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../wallet/presentation/screens/wallet_screen.dart';
 import '../../../tokens/data/token_repository.dart';
+import '../../../currencies/presentation/currency_picker_sheet.dart';
 import '../../../subscriptions/data/subscription_repository.dart';
 import '../providers/auth_provider.dart';
 import '../../data/auth_repository.dart';
@@ -978,6 +979,9 @@ class ProfileScreen extends ConsumerWidget {
           }),
           _menuItem(Icons.notifications_outlined, 'Bildirim Ayarları', () {
             context.push('/bildirim-ayarlari');
+          }),
+          _menuItem(Icons.attach_money_rounded, '💱 Para Birimi', () {
+            CurrencyPickerSheet.show(context);
           }),
           _menuItem(Icons.location_on_outlined, 'Adreslerim', () {
             Navigator.push(context,
