@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, IsNull, Between, MoreThan } from 'typeorm';
+import { Repository, Not, IsNull, Between, MoreThan, In } from 'typeorm';
+import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
+import { BulkVerifyDto } from './dto/bulk-verify.dto';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { User, UserRole } from '../users/user.entity';
 import { Notification, NotificationType } from '../notifications/notification.entity';
@@ -41,8 +43,53 @@ export class AdminService {
     @InjectRepository(ChatMessage) private chatRepo: Repository<ChatMessage>,
     @InjectRepository(JobQuestion) private questionRepo: Repository<JobQuestion>,
     @InjectRepository(Notification) private notificationRepo: Repository<Notification>,
+    @InjectRepository(AdminAuditLog) private auditRepo: Repository<AdminAuditLog>,
     private readonly promoService: PromoService,
   ) {}
+
+  async bulkVerifyUsers(
+    dto: BulkVerifyDto,
+    adminUserId: string,
+  ): Promise<{ updated: number; notFound: string[]; requestedSegment: 'verify' | 'unverify' }> {
+    const { userIds, identityVerified } = dto;
+    const found = await this.usersRepo.find({
+      where: { id: In(userIds) },
+      select: ['id'],
+    });
+    const foundSet = new Set(found.map((u) => u.id));
+    const notFound = userIds.filter((id) => !foundSet.has(id));
+    const presentIds = userIds.filter((id) => foundSet.has(id));
+
+    let updated = 0;
+    if (presentIds.length > 0) {
+      const result = await this.usersRepo
+        .createQueryBuilder()
+        .update(User)
+        .set({ identityVerified })
+        .whereInIds(presentIds)
+        .execute();
+      updated = result.affected ?? presentIds.length;
+
+      const action = identityVerified ? 'user.verify' : 'user.unverify';
+      const batchSize = presentIds.length;
+      const auditEntries = presentIds.map((id) =>
+        this.auditRepo.create({
+          adminUserId,
+          action,
+          targetType: 'user',
+          targetId: id,
+          payload: { bulk: true, batchSize, identityVerified },
+        }),
+      );
+      await this.auditRepo.save(auditEntries);
+    }
+
+    return {
+      updated,
+      notFound,
+      requestedSegment: identityVerified ? 'verify' : 'unverify',
+    };
+  }
 
   // ── Broadcast Notifications ───────────────────────────────────────────────
   async broadcastNotification(

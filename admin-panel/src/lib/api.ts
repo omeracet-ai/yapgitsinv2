@@ -78,6 +78,11 @@ export const api = {
 
   // Kullanıcılar
   users: () => request<User[]>('/admin/users'),
+  bulkVerifyUsers: (userIds: string[], identityVerified: boolean) =>
+    request<BulkVerifyResult>('/admin/users/bulk-verify', {
+      method: 'POST',
+      body: JSON.stringify({ userIds, identityVerified }),
+    }),
 
   // Kategoriler — admin panel pasif olanları da görmeli
   categories:     ()                             => request<Category[]>('/admin/categories'),
@@ -307,6 +312,13 @@ export interface User {
   email: string;
   phoneNumber: string;
   isPhoneVerified: boolean;
+  identityVerified?: boolean;
   role: string;
   createdAt: string;
+}
+
+export interface BulkVerifyResult {
+  updated: number;
+  notFound: string[];
+  requestedSegment: 'verify' | 'unverify';
 }
