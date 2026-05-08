@@ -270,6 +270,86 @@ export class AdminService {
     return { id, type: 'question', cleared: true };
   }
 
+  // ── Phase 116: Moderation Queue ───────────────────────────────────────────
+  async getModerationQueue(
+    type: 'job' | 'review' | 'chat',
+    page = 1,
+    limit = 20,
+  ): Promise<{ data: unknown[]; total: number; page: number; limit: number; pages: number }> {
+    const skip = (Math.max(1, page) - 1) * limit;
+    if (type === 'job') {
+      const [data, total] = await this.jobsRepo.findAndCount({
+        where: { flagged: true } as any,
+        order: { createdAt: 'DESC' },
+        take: limit,
+        skip,
+      });
+      return { data, total, page, limit, pages: Math.ceil(total / limit) };
+    }
+    if (type === 'review') {
+      const [data, total] = await this.reviewsRepo.findAndCount({
+        where: { flagged: true } as any,
+        order: { createdAt: 'DESC' },
+        take: limit,
+        skip,
+      });
+      return { data, total, page, limit, pages: Math.ceil(total / limit) };
+    }
+    const [data, total] = await this.chatRepo.findAndCount({
+      where: { flagged: true } as any,
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip,
+    });
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
+  }
+
+  async moderateItem(
+    type: 'job' | 'review' | 'chat',
+    id: string,
+    action: 'approve' | 'remove' | 'ban_user',
+  ): Promise<{ id: string; type: string; action: string; ok: true }> {
+    if (!['approve', 'remove', 'ban_user'].includes(action)) {
+      throw new BadRequestException('Geçersiz işlem');
+    }
+    if (type === 'job') {
+      const job = await this.jobsRepo.findOne({ where: { id } });
+      if (!job) throw new NotFoundException('İlan bulunamadı');
+      if (action === 'approve') {
+        await this.jobsRepo.update(id, { flagged: false, flagReason: null });
+      } else if (action === 'remove') {
+        await this.jobsRepo.update(id, { deletedAt: new Date(), flagged: false });
+      } else {
+        await this.usersRepo.update(job.customerId, { suspended: true, suspendedAt: new Date(), suspendedReason: 'Phase 116 fraud moderation' } as any);
+        await this.jobsRepo.update(id, { deletedAt: new Date(), flagged: false });
+      }
+    } else if (type === 'review') {
+      const review = await this.reviewsRepo.findOne({ where: { id } });
+      if (!review) throw new NotFoundException('Yorum bulunamadı');
+      if (action === 'approve') {
+        await this.reviewsRepo.update(id, { flagged: false, flagReason: null });
+      } else if (action === 'remove') {
+        await this.reviewsRepo.update(id, { deletedAt: new Date(), flagged: false });
+      } else {
+        await this.usersRepo.update(review.reviewerId, { suspended: true, suspendedAt: new Date(), suspendedReason: 'Phase 116 fraud moderation' } as any);
+        await this.reviewsRepo.update(id, { deletedAt: new Date(), flagged: false });
+      }
+    } else {
+      const chat = await this.chatRepo.findOne({ where: { id } });
+      if (!chat) throw new NotFoundException('Mesaj bulunamadı');
+      if (action === 'approve') {
+        await this.chatRepo.update(id, { flagged: false } as any);
+      } else if (action === 'remove') {
+        await this.chatRepo.update(id, { message: '[silindi]', flagged: false } as any);
+      } else {
+        const senderId = (chat as any).from;
+        if (senderId) await this.usersRepo.update(senderId, { suspended: true, suspendedAt: new Date(), suspendedReason: 'Phase 116 fraud moderation' } as any);
+        await this.chatRepo.update(id, { message: '[silindi]', flagged: false } as any);
+      }
+    }
+    return { id, type, action, ok: true };
+  }
+
   // ── Promo Codes (delegates to PromoService) ───────────────────────────────
   listPromoCodes() {
     return this.promoService.findAll();

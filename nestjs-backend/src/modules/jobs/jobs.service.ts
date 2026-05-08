@@ -20,6 +20,7 @@ import { EscrowStatus } from '../escrow/payment-escrow.entity';
 import { CancellationService } from '../cancellation/cancellation.service';
 import { DisputesService } from '../disputes/disputes.service';
 import { DisputeType } from '../disputes/job-dispute.entity';
+import { FraudDetectionService } from '../ai/fraud-detection.service';
 
 // Geçerli UUID — SQLite ve PostgreSQL uyumlu sabit seed kimliği
 const SEED_USER_ID = '00000000-0000-0000-0000-000000000001';
@@ -43,6 +44,7 @@ export class JobsService {
     private cancellationService: CancellationService,
     private disputesService: DisputesService,
     private tokensService: TokensService,
+    private fraudDetection: FraudDetectionService,
   ) {}
 
   async boost(jobId: string, days: number, userId: string): Promise<Job> {
@@ -202,7 +204,23 @@ export class JobsService {
       customerId,
       status: JobStatus.OPEN,
     });
-    return this.jobsRepository.save(job);
+    const saved = await this.jobsRepository.save(job);
+    // Phase 116: fire-and-forget fraud check
+    this.fraudDetection
+      .analyzeJobListing(saved.title, saved.description)
+      .then(async (r) => {
+        if (r.score >= 70) {
+          await this.jobsRepository.update(saved.id, {
+            flagged: true,
+            flagReason: r.reasons.join('; '),
+            fraudScore: r.score,
+          });
+        } else {
+          await this.jobsRepository.update(saved.id, { fraudScore: r.score });
+        }
+      })
+      .catch(() => undefined);
+    return saved;
   }
 
   async update(

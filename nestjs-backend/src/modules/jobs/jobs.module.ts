@@ -20,6 +20,7 @@ import { CancellationModule } from '../cancellation/cancellation.module';
 import { DisputesModule } from '../disputes/disputes.module';
 import { UserBlocksModule } from '../user-blocks/user-blocks.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { AiModule } from '../ai/ai.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
     DisputesModule,
     UserBlocksModule,
     SubscriptionsModule,
+    AiModule,
   ],
   providers: [JobsService, OffersService, QuestionsService, SavedJobsService],
   controllers: [JobsController, OffersController, OffersRootController, QuestionsController],

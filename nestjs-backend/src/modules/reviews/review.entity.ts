@@ -51,6 +51,19 @@ export class Review {
   @Column({ type: 'datetime', nullable: true })
   repliedAt: Date | null;
 
+  /** Phase 116: AI fraud-flag */
+  @Column({ type: 'boolean', default: false })
+  flagged: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  flagReason: string | null;
+
+  @Column({ type: 'integer', nullable: true })
+  fraudScore: number | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  deletedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

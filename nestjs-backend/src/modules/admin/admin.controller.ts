@@ -337,6 +337,38 @@ export class AdminController {
     return this.adminService.getFlaggedItems();
   }
 
+  // Phase 116: AI fraud detection moderation queue
+  @Get('moderation/queue')
+  getModerationQueue(
+    @Query('type') type: 'job' | 'review' | 'chat' = 'job',
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.adminService.getModerationQueue(
+      type,
+      Number(page) || 1,
+      Number(limit) || 20,
+    );
+  }
+
+  @Patch('moderation/:type/:id')
+  async moderateItem(
+    @Param('type') type: 'job' | 'review' | 'chat',
+    @Param('id') id: string,
+    @Body() body: { action: 'approve' | 'remove' | 'ban_user' },
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.adminService.moderateItem(type, id, body.action);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      `moderation.${type}.${body.action}`,
+      type,
+      id,
+      { action: body.action },
+    );
+    return result;
+  }
+
   @Delete('moderation/chat/:id')
   async clearFlaggedChat(
     @Param('id') id: string,

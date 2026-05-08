@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review } from './review.entity';
 import { UsersService } from '../users/users.service';
+import { FraudDetectionService } from '../ai/fraud-detection.service';
 
 @Injectable()
 export class ReviewsService {
@@ -10,6 +11,7 @@ export class ReviewsService {
     @InjectRepository(Review)
     private reviewsRepository: Repository<Review>,
     private usersService: UsersService,
+    private fraudDetection: FraudDetectionService,
   ) {}
 
   async create(data: Partial<Review>): Promise<Review> {
@@ -18,6 +20,23 @@ export class ReviewsService {
     // Değerlendirilen kullanıcının puanını otomatik güncelle
     if (saved.revieweeId && typeof saved.rating === 'number') {
       await this.usersService.recalcRating(saved.revieweeId, saved.rating);
+    }
+    // Phase 116: fire-and-forget fraud check
+    if (saved.comment && saved.comment.trim().length > 0) {
+      this.fraudDetection
+        .analyzeReview(saved.comment)
+        .then(async (r) => {
+          if (r.score >= 70) {
+            await this.reviewsRepository.update(saved.id, {
+              flagged: true,
+              flagReason: r.reasons.join('; '),
+              fraudScore: r.score,
+            });
+          } else {
+            await this.reviewsRepository.update(saved.id, { fraudScore: r.score });
+          }
+        })
+        .catch(() => undefined);
     }
     return saved;
   }

@@ -138,6 +138,20 @@ export class Job {
   @Column({ type: 'datetime', nullable: true })
   featuredUntil: Date | null;
 
+  /** Phase 116: AI fraud-flag */
+  @Column({ type: 'boolean', default: false })
+  flagged: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  flagReason: string | null;
+
+  @Column({ type: 'integer', nullable: true })
+  fraudScore: number | null;
+
+  /** Phase 116: soft-delete (admin moderation remove) */
+  @Column({ type: 'datetime', nullable: true })
+  deletedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
