@@ -46,6 +46,7 @@ dependencies:
   video_player: ^2.11.1
   chewie: ^1.14.0
   table_calendar: ^3.1.0
+  intl: ^0.19.0
 
   # Paylaşım
   share_plus: ^13.1.0

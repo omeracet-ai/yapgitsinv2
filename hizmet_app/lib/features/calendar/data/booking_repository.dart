@@ -12,6 +12,10 @@ final myWorkerBookingsProvider = FutureProvider<List<Booking>>((ref) async {
   return ref.watch(bookingRepositoryProvider).getMyBookingsAsWorker();
 });
 
+final myCustomerBookingsProvider = FutureProvider<List<Booking>>((ref) async {
+  return ref.watch(bookingRepositoryProvider).getMyBookingsAsCustomer();
+});
+
 class BookingRepository {
   final AuthRepository _auth;
   final Dio _dio;
@@ -30,6 +34,16 @@ class BookingRepository {
   Future<List<Booking>> getMyBookingsAsWorker() async {
     try {
       final res = await _dio.get('/bookings/my-as-worker', options: await _authOpts());
+      final List data = res.data is List ? res.data : (res.data['data'] ?? []);
+      return data.map((e) => Booking.fromJson(e)).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<Booking>> getMyBookingsAsCustomer() async {
+    try {
+      final res = await _dio.get('/bookings/my-as-customer', options: await _authOpts());
       final List data = res.data is List ? res.data : (res.data['data'] ?? []);
       return data.map((e) => Booking.fromJson(e)).toList();
     } catch (e) {
