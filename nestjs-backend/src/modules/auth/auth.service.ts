@@ -131,20 +131,29 @@ export class AuthService implements OnModuleInit {
 
   async onModuleInit() {
     const adminEmail = 'admin@yapgitsin.tr';
+    const legacyEmail = 'admin@hizmet.app';
     const existing = await this.usersService.findByEmail(adminEmail);
-    if (!existing) {
-      const initialPassword =
-        process.env.ADMIN_INITIAL_PASSWORD ?? 'change_me_now';
-      const passwordHash = await bcrypt.hash(initialPassword, 10);
-      await this.usersService.create({
-        fullName: 'Admin',
-        email: adminEmail,
-        phoneNumber: '05000000000',
-        passwordHash,
-        role: UserRole.ADMIN,
-        isPhoneVerified: true,
-      });
+    if (existing) {
+      return;
     }
+    const legacy = await this.usersService.findByEmail(legacyEmail);
+    if (legacy) {
+      await this.usersService.update(legacy.id, { email: adminEmail });
+      console.log('Admin email migrated: hizmet.app → yapgitsin.tr');
+      return;
+    }
+    const initialPassword =
+      process.env.ADMIN_INITIAL_PASSWORD ?? 'change_me_now';
+    const passwordHash = await bcrypt.hash(initialPassword, 10);
+    await this.usersService.create({
+      fullName: 'Admin',
+      email: adminEmail,
+      phoneNumber: '05000000000',
+      passwordHash,
+      role: UserRole.ADMIN,
+      isPhoneVerified: true,
+    });
+    console.log('Admin seeded');
   }
 
   async validateUser(emailOrPhone: string, pass: string): Promise<AuthUser | null> {
