@@ -15,6 +15,45 @@ export default function UsersPage() {
   const [error,    setError]    = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy,     setBusy]     = useState(false);
+  const [toast,    setToast]    = useState<string | null>(null);
+  const [suspendTarget, setSuspendTarget] = useState<User | null>(null);
+  const [suspendReason,  setSuspendReason]  = useState("");
+  const [suspendBusy,    setSuspendBusy]    = useState(false);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }
+
+  async function doSuspend() {
+    if (!suspendTarget) return;
+    const r = suspendReason.trim();
+    if (!r) { window.alert("Sebep zorunlu"); return; }
+    if (r.length > 500) { window.alert("Sebep 500 karakteri aşamaz"); return; }
+    setSuspendBusy(true);
+    try {
+      await api.suspendUser(suspendTarget.id, true, r);
+      showToast(`${suspendTarget.fullName} askıya alındı`);
+      setSuspendTarget(null);
+      setSuspendReason("");
+      load();
+    } catch (e) {
+      window.alert(`Hata: ${(e as Error).message}`);
+    } finally {
+      setSuspendBusy(false);
+    }
+  }
+
+  async function doUnsuspend(u: User) {
+    if (!window.confirm(`${u.fullName} kullanıcısının askısı kaldırılsın mı?`)) return;
+    try {
+      await api.suspendUser(u.id, false);
+      showToast(`${u.fullName} askıdan çıkarıldı`);
+      load();
+    } catch (e) {
+      window.alert(`Hata: ${(e as Error).message}`);
+    }
+  }
 
   function load() {
     setLoading(true);
@@ -58,6 +97,43 @@ export default function UsersPage() {
 
   return (
     <div className="max-w-5xl">
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 rounded-lg bg-green-600 text-white px-4 py-2 text-sm shadow-lg">
+          {toast}
+        </div>
+      )}
+      {suspendTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
+            <h3 className="text-base font-semibold mb-1">Kullanıcıyı Askıya Al</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              <span className="font-medium">{suspendTarget.fullName}</span> askıya alınacak. Sebep zorunlu.
+            </p>
+            <textarea
+              value={suspendReason}
+              onChange={(e) => setSuspendReason(e.target.value.slice(0, 500))}
+              rows={4}
+              maxLength={500}
+              placeholder="Askıya alma sebebi…"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              autoFocus
+            />
+            <div className="mt-1 text-right text-xs text-gray-400">{suspendReason.length}/500</div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => { setSuspendTarget(null); setSuspendReason(""); }}
+                disabled={suspendBusy}
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >İptal</button>
+              <button
+                onClick={doSuspend}
+                disabled={suspendBusy || !suspendReason.trim()}
+                className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >{suspendBusy ? "Askıya alınıyor…" : "Askıya Al"}</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold">Kullanıcılar</h2>
         <span className="text-sm text-gray-400">{users.length} kullanıcı</span>
@@ -111,12 +187,14 @@ export default function UsersPage() {
                 <th className="text-center px-4 py-3 font-medium text-gray-500">Rol</th>
                 <th className="text-center px-4 py-3 font-medium text-gray-500">Tel. Doğr.</th>
                 <th className="text-center px-4 py-3 font-medium text-gray-500">Kimlik</th>
+                <th className="text-center px-4 py-3 font-medium text-gray-500">Durum</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-500">Kayıt</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-500">İşlem</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {users.length === 0 && (
-                <tr><td colSpan={8} className="text-center py-8 text-gray-400">Henüz kullanıcı yok.</td></tr>
+                <tr><td colSpan={10} className="text-center py-8 text-gray-400">Henüz kullanıcı yok.</td></tr>
               )}
               {users.map(u => {
                 const role = ROLE_MAP[u.role] ?? { label: u.role, cls: "bg-gray-100 text-gray-600" };
@@ -149,8 +227,32 @@ export default function UsersPage() {
                         ? <span className="text-blue-600 font-medium">✓</span>
                         : <span className="text-gray-400">—</span>}
                     </td>
+                    <td className="px-4 py-3 text-center">
+                      {u.suspended ? (
+                        <span
+                          className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700"
+                          title={u.suspendedReason ?? ""}
+                        >Askıda</span>
+                      ) : (
+                        <span className="text-gray-300 text-xs">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right text-gray-400 text-xs">
                       {new Date(u.createdAt).toLocaleDateString("tr-TR")}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {u.suspended ? (
+                        <button
+                          onClick={() => doUnsuspend(u)}
+                          className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                        >Askıyı Kaldır</button>
+                      ) : (
+                        <button
+                          onClick={() => { setSuspendTarget(u); setSuspendReason(""); }}
+                          disabled={u.role === "admin"}
+                          className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >Askıya Al</button>
+                      )}
                     </td>
                   </tr>
                 );

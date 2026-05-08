@@ -83,6 +83,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ userIds, identityVerified }),
     }),
+  suspendUser: (userId: string, suspended: boolean, reason?: string) =>
+    request<{ id: string; suspended: boolean; suspendedReason: string | null; suspendedAt: string | null; suspendedBy: string | null }>(
+      `/admin/users/${userId}/suspend`,
+      { method: 'PATCH', body: JSON.stringify({ suspended, ...(reason ? { reason } : {}) }) },
+    ),
 
   // Kategoriler — admin panel pasif olanları da görmeli
   categories:     ()                             => request<Category[]>('/admin/categories'),
@@ -324,6 +329,9 @@ export interface User {
   identityVerified?: boolean;
   role: string;
   createdAt: string;
+  suspended?: boolean;
+  suspendedReason?: string | null;
+  suspendedAt?: string | null;
 }
 
 export interface BulkVerifyResult {
