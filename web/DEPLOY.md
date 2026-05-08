@@ -13,11 +13,15 @@ Hostinger, Natro, Turhost, etc.) over FTP.
 cd web
 cp .env.production.example .env.production   # edit URLs
 npm install
-# (opsiyonel) AI ile kategori SEO içeriklerini güncelle — Phase 89
+# (opsiyonel) AI ile kategori SEO içeriklerini güncelle — Phase 89 / 142
 # Backend ayakta + ANTHROPIC_API_KEY tanımlı olmalı:
-#   npm run generate-content
-# Bu komut src/data/category-content.json'ı yeniler. Build sırasında
-# çağrılmaz; manuel tetiklenir. JSON yoksa fallback intro kullanılır.
+#   npm run generate-content              # partial cache (sadece eksik entries)
+#   npm run generate-content -- --force   # tüm 286 entries yeniden generate
+# ENV: GEN_CONTENT_PARALLELISM (default 10), GEN_CONTENT_MAX_RETRIES (default 3)
+# Backend kapalıysa script graceful fail eder, mevcut JSON korunur.
+# CI: `.github/workflows/seo-content-refresh.yml` haftalık (Pzt 02:00 UTC) +
+# manuel `workflow_dispatch` ile çalışır; değişiklik varsa otomatik PR açar
+# (`secrets.PROD_API_URL` gerekir).
 npm run build
 ```
 

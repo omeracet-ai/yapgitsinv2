@@ -1,22 +1,32 @@
 /**
- * Build-time AI SEO content generator.
+ * Build-time AI SEO content generator (Phase 142 hardened).
  *
  * For each (category × top-N city) combination, calls the backend
  * /ai/generate-category-description endpoint and writes results to
- * src/data/category-content.json. Run manually with:
+ * src/data/category-content.json.
  *
- *   npm run generate-content
+ *   npm run generate-content              # partial cache (skip existing)
+ *   npm run generate-content -- --force   # regenerate all entries
  *
- * Backend must be reachable at NEXT_PUBLIC_API_URL (default http://localhost:3001)
- * and must have ANTHROPIC_API_KEY set. If backend is unreachable, the script
- * preserves any existing JSON (or writes an empty object) so build still works.
+ * Env:
+ *   NEXT_PUBLIC_API_URL       backend base (required; if missing → skip + warn)
+ *   GEN_CONTENT_PARALLELISM   parallel pool size (default 10)
+ *   GEN_CONTENT_MAX_RETRIES   per-entry retries (default 3)
+ *
+ * Resilience:
+ *  - existing JSON entries skipped unless --force
+ *  - exponential backoff on network errors (3 retries)
+ *  - script never exits non-zero on per-entry failures (partial JSON written)
+ *  - if NEXT_PUBLIC_API_URL unset → graceful skip, preserves existing JSON
  */
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const FORCE = process.argv.includes('--force');
+const API = process.env.NEXT_PUBLIC_API_URL;
 const OUT = path.join(process.cwd(), 'src', 'data', 'category-content.json');
-const MAX_PARALLEL = 5;
+const MAX_PARALLEL = Number(process.env.GEN_CONTENT_PARALLELISM) || 10;
+const MAX_RETRIES = Number(process.env.GEN_CONTENT_MAX_RETRIES) || 3;
 
 const FALLBACK_CATEGORY_SLUGS = [
   'temizlik', 'boya-badana', 'bahce-peyzaj', 'nakliyat', 'mobilya-montaj',
@@ -73,25 +83,41 @@ async function fetchCategories(): Promise<{ name: string; slug: string }[]> {
   }
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 async function generateOne(
   category: string,
   city?: string,
 ): Promise<CategoryContent | null> {
-  try {
-    const res = await fetch(`${API}/ai/generate-category-description`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ category, city, length: 'medium' }),
-    });
-    if (!res.ok) {
-      console.warn(`  ✗ ${category}${city ? `/${city}` : ''} → HTTP ${res.status}`);
-      return null;
+  const label = `${category}${city ? `/${city}` : ''}`;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetch(`${API}/ai/generate-category-description`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category, city, length: 'medium' }),
+      });
+      if (!res.ok) {
+        // 4xx is permanent — do not retry
+        if (res.status >= 400 && res.status < 500) {
+          console.error(`  x ${label} -> HTTP ${res.status} (no retry)`);
+          return null;
+        }
+        throw new Error(`HTTP ${res.status}`);
+      }
+      return (await res.json()) as CategoryContent;
+    } catch (e) {
+      const msg = (e as Error).message;
+      if (attempt === MAX_RETRIES) {
+        console.error(`  x ${label} -> ${msg} (gave up after ${MAX_RETRIES})`);
+        return null;
+      }
+      const backoff = 500 * Math.pow(2, attempt - 1);
+      console.warn(`  ~ ${label} -> ${msg} (retry ${attempt}/${MAX_RETRIES} in ${backoff}ms)`);
+      await sleep(backoff);
     }
-    return (await res.json()) as CategoryContent;
-  } catch (e) {
-    console.warn(`  ✗ ${category}${city ? `/${city}` : ''} → ${(e as Error).message}`);
-    return null;
   }
+  return null;
 }
 
 async function runPool<T>(
@@ -116,23 +142,31 @@ async function runPool<T>(
 }
 
 async function main() {
-  console.log(`[generate-content] backend: ${API}`);
+  if (!API) {
+    console.warn('[generate-content] NEXT_PUBLIC_API_URL unset — skipping generation, preserving existing JSON');
+    return;
+  }
+  console.log(`[generate-content] backend: ${API}  parallel=${MAX_PARALLEL}  retries=${MAX_RETRIES}  force=${FORCE}`);
   const existing = await loadExisting();
   const cats = await fetchCategories();
 
   type Job = { key: string; category: string; city?: string };
-  const jobs: Job[] = [];
+  const allJobs: Job[] = [];
   for (const c of cats) {
-    jobs.push({ key: c.slug, category: c.name });
+    allJobs.push({ key: c.slug, category: c.name });
     for (const city of TOP_CITIES) {
-      jobs.push({ key: `${c.slug}/${slugify(city)}`, category: c.name, city });
+      allJobs.push({ key: `${c.slug}/${slugify(city)}`, category: c.name, city });
     }
   }
 
-  console.log(`[generate-content] ${jobs.length} kombinasyon — concurrency ${MAX_PARALLEL}`);
+  const jobs = FORCE ? allJobs : allJobs.filter((j) => !existing[j.key]);
+  const skipped = allJobs.length - jobs.length;
+  console.log(`[generate-content] ${allJobs.length} total, ${jobs.length} to generate, ${skipped} cached`);
+
   const out: ContentMap = { ...existing };
   let done = 0;
   let ok = 0;
+  let failed = 0;
 
   await runPool(
     jobs,
@@ -142,9 +176,20 @@ async function main() {
       if (result) {
         out[job.key] = result;
         ok++;
+      } else {
+        failed++;
       }
       if (done % 10 === 0 || done === jobs.length) {
-        console.log(`  ${done}/${jobs.length} (${ok} ok)`);
+        console.log(`  ${done}/${jobs.length} (ok=${ok} fail=${failed})`);
+      }
+      // persist progressively every 25 entries — partial cache survives crashes
+      if (done % 25 === 0) {
+        try {
+          await fs.mkdir(path.dirname(OUT), { recursive: true });
+          await fs.writeFile(OUT, JSON.stringify(out, null, 2), 'utf8');
+        } catch {
+          /* best-effort */
+        }
       }
     },
     MAX_PARALLEL,
@@ -152,10 +197,13 @@ async function main() {
 
   await fs.mkdir(path.dirname(OUT), { recursive: true });
   await fs.writeFile(OUT, JSON.stringify(out, null, 2), 'utf8');
-  console.log(`[generate-content] wrote ${OUT} (${Object.keys(out).length} entries)`);
+  console.log(
+    `[generate-content] wrote ${OUT} — Generated ${ok} new, skipped ${skipped} cached, failed ${failed} (total entries: ${Object.keys(out).length})`,
+  );
 }
 
 main().catch((e) => {
+  // Never fail the script — partial JSON should already be on disk.
   console.error('[generate-content] fatal:', e);
-  process.exit(1);
+  process.exit(0);
 });
