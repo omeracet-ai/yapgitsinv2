@@ -37,10 +37,16 @@ export default async function Footer() {
           </ul>
         </div>
         <div>
-          <h3 className="font-bold mb-3">İletişim</h3>
+          <h3 className="font-bold mb-3">İletişim & Yasal</h3>
           <ul className="space-y-2 text-white/70">
             <li>destek@yapgitsin.com</li>
             <li>0850 000 00 00</li>
+          </ul>
+          <ul className="space-y-2 text-white/70 mt-3 pt-3 border-t border-white/10">
+            <li><Link href="/kvkk" className="hover:text-white">KVKK</Link></li>
+            <li><Link href="/kullanim-kosullari" className="hover:text-white">Kullanım Koşulları</Link></li>
+            <li><Link href="/gizlilik-politikasi" className="hover:text-white">Gizlilik Politikası</Link></li>
+            <li><Link href="/cerez-politikasi" className="hover:text-white">Çerez Politikası</Link></li>
           </ul>
         </div>
       </div>
