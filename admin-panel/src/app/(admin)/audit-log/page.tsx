@@ -38,6 +38,27 @@ function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n - 1) + "…" : s;
 }
 
+function Field({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">
+        {label}
+      </div>
+      <div className={`text-sm text-gray-800 ${mono ? "font-mono" : ""}`}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
 export default function AuditLogPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [total, setTotal] = useState(0);
@@ -47,6 +68,17 @@ export default function AuditLogPage() {
   const [actionFilter, setActionFilter] = useState("");
   const [targetTypeFilter, setTargetTypeFilter] = useState("");
   const [adminIdFilter, setAdminIdFilter] = useState("");
+  const [selected, setSelected] = useState<AuditLog | null>(null);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setSelected(null);
+    }
+    if (selected) {
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    }
+  }, [selected]);
 
   useEffect(() => {
     let cancelled = false;
@@ -212,7 +244,11 @@ export default function AuditLogPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {logs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50">
+                <tr
+                  key={log.id}
+                  onClick={() => setSelected(log)}
+                  className="hover:bg-gray-50 cursor-pointer"
+                >
                   <td className="px-4 py-3 whitespace-nowrap text-gray-700">
                     {new Date(log.createdAt).toLocaleString("tr-TR")}
                   </td>
@@ -239,6 +275,65 @@ export default function AuditLogPage() {
           </table>
         )}
       </div>
+
+      {selected && (
+        <div
+          onClick={() => setSelected(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold">Denetim Kaydı Detayı</h2>
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="text-gray-400 hover:text-gray-700 text-xl leading-none"
+                aria-label="Kapat"
+              >
+                ×
+              </button>
+            </div>
+            <div className="px-6 py-4 overflow-y-auto space-y-4">
+              <Field label="ID" value={selected.id} mono />
+              <Field
+                label="Tarih"
+                value={new Date(selected.createdAt).toLocaleString("tr-TR")}
+              />
+              <Field label="Admin ID" value={selected.adminUserId} mono />
+              <Field label="Aksiyon" value={selected.action} mono />
+              <Field
+                label="Hedef Tip"
+                value={selected.targetType || "—"}
+              />
+              <Field
+                label="Hedef ID"
+                value={selected.targetId || "—"}
+                mono
+              />
+              <div>
+                <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">
+                  Payload
+                </div>
+                <pre className="text-xs bg-gray-50 border border-gray-200 rounded p-3 overflow-x-auto whitespace-pre-wrap break-words font-mono">
+                  {JSON.stringify(selected.payload ?? {}, null, 2)}
+                </pre>
+              </div>
+            </div>
+            <div className="px-6 py-3 border-t border-gray-200 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800"
+              >
+                Kapat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between mt-4">
         <span className="text-sm text-gray-500">
