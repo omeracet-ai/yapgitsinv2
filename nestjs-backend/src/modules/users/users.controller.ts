@@ -364,6 +364,42 @@ export class UsersController {
     return { portfolioPhotos: next };
   }
 
+  // ── Phase 125: Worker portfolio videos ────────────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/portfolio-video')
+  async addPortfolioVideo(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { url: string },
+  ) {
+    const url = (body?.url || '').trim();
+    if (!url) throw new BadRequestException('url gerekli');
+    const user = await this.svc.findById(req.user.id);
+    if (!user) return null;
+    const current = Array.isArray(user.portfolioVideos) ? user.portfolioVideos : [];
+    if (current.length >= 3) {
+      throw new BadRequestException('En fazla 3 portfolyo videosu eklenebilir');
+    }
+    if (current.includes(url)) return { videos: current };
+    const next = [...current, url];
+    await this.svc.update(req.user.id, { portfolioVideos: next });
+    return { videos: next };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('me/portfolio-video')
+  async removePortfolioVideo(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { url: string },
+  ) {
+    const url = (body?.url || '').trim();
+    const user = await this.svc.findById(req.user.id);
+    if (!user) return null;
+    const current = Array.isArray(user.portfolioVideos) ? user.portfolioVideos : [];
+    const next = current.filter((u) => u !== url);
+    await this.svc.update(req.user.id, { portfolioVideos: next });
+    return { videos: next };
+  }
+
   /** GET /workers — Usta dizini (advanced filters + pagination) */
   @Get('workers')
   async getWorkers(
@@ -525,6 +561,7 @@ export class UsersController {
       })),
       pastPhotos,
       portfolioPhotos: Array.isArray(user.portfolioPhotos) ? user.portfolioPhotos : [],
+      portfolioVideos: Array.isArray(user.portfolioVideos) ? user.portfolioVideos : [],
     };
   }
 }

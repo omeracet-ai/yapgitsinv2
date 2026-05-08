@@ -167,6 +167,49 @@ export class UploadsController {
     };
   }
 
+  /** POST /uploads/portfolio-video — Phase 125 worker portfolio videosu (tek) */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('portfolio-video')
+  @UseInterceptors(
+    FileInterceptor('video', {
+      storage: memoryStorage(),
+      fileFilter: (req: any, file: any, cb: any) => {
+        if (!file.mimetype.match(/^video\/(mp4|quicktime|webm)$/)) {
+          return cb(
+            new BadRequestException(
+              'Sadece video dosyaları yüklenebilir (mp4, mov, webm)',
+            ),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 50 * 1024 * 1024 },
+    }),
+  )
+  async uploadPortfolioVideo(
+    @UploadedFile() file: any,
+    @Req() req: any,
+  ): Promise<{ url: string }> {
+    if (!file) throw new BadRequestException('Video seçilmedi');
+    const fullName: string = String(req.user?.fullName || 'user');
+    const folder = sanitizeName(fullName);
+    const dir = join(process.cwd(), 'uploads', 'portfolio-videos', folder);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const extMap: Record<string, string> = {
+      'video/mp4': 'mp4',
+      'video/quicktime': 'mov',
+      'video/webm': 'webm',
+    };
+    const ext = extMap[file.mimetype] || 'mp4';
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const dest = join(dir, filename);
+    fs.writeFileSync(dest, file.buffer);
+    return {
+      url: `${req.protocol}://${req.get('host')}/uploads/portfolio-videos/${folder}/${filename}`,
+    };
+  }
+
   /** POST /uploads/profile-photo — Phase 72: avatar (512×512 cover crop) */
   @UseGuards(AuthGuard('jwt'))
   @Post('profile-photo')

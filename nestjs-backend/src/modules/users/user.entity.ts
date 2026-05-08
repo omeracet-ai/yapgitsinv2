@@ -167,6 +167,10 @@ export class User {
   @Column({ type: 'simple-json', nullable: true })
   portfolioPhotos: string[] | null;
 
+  // Phase 125 — Worker portfolio videos (max 3)
+  @Column({ type: 'simple-json', nullable: true })
+  portfolioVideos: string[] | null;
+
   // Ortalama yanıt süresi (dk) — fast_responder rozeti için.
   // Mesaj/teklif zaman damgalarından hesaplanabilir; null = yeterli veri yok.
   @Column({ type: 'integer', nullable: true })
