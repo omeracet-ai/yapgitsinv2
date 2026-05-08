@@ -76,6 +76,33 @@ export class UsersController {
     return this.svc.getCompletionScore(req.user.id);
   }
 
+  // Phase 49: bildirim tercihleri (kategori bazlı opt-out)
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/notification-preferences')
+  getNotificationPreferences(@Request() req: AuthenticatedRequest) {
+    return this.svc.getNotificationPreferences(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('me/notification-preferences')
+  updateNotificationPreferences(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: {
+      preferences?: Partial<{
+        booking: boolean;
+        offer: boolean;
+        review: boolean;
+        message: boolean;
+        system: boolean;
+      }> | null;
+    },
+  ) {
+    return this.svc.updateNotificationPreferences(
+      req.user.id,
+      body?.preferences ?? null,
+    );
+  }
+
   // Phase 44: haftalık müsaitlik takvimi
   @UseGuards(AuthGuard('jwt'))
   @Patch('me/availability')

@@ -196,6 +196,16 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   suspendedBy: string | null;
 
+  // ── Phase 49 — Notification preferences (null = all enabled) ─────────────
+  @Column({ type: 'simple-json', nullable: true })
+  notificationPreferences: {
+    booking: boolean;
+    offer: boolean;
+    review: boolean;
+    message: boolean;
+    system: boolean;
+  } | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -278,6 +278,41 @@ export class UsersService {
     return { score, missing, isWorker };
   }
 
+  /** Phase 49 — notification preferences (null = all enabled) */
+  async getNotificationPreferences(
+    userId: string,
+  ): Promise<{ preferences: User['notificationPreferences'] }> {
+    const user = await this.repo.findOne({
+      where: { id: userId },
+      select: ['id', 'notificationPreferences'],
+    });
+    return { preferences: user?.notificationPreferences ?? null };
+  }
+
+  async updateNotificationPreferences(
+    userId: string,
+    prefs: Partial<NonNullable<User['notificationPreferences']>> | null,
+  ): Promise<{ preferences: User['notificationPreferences'] }> {
+    if (prefs == null) {
+      await this.repo.update(userId, { notificationPreferences: null });
+      return { preferences: null };
+    }
+    if (typeof prefs !== 'object' || Array.isArray(prefs)) {
+      throw new BadRequestException('preferences bir nesne olmalı');
+    }
+    const keys = ['booking', 'offer', 'review', 'message', 'system'] as const;
+    const normalized = {} as NonNullable<User['notificationPreferences']>;
+    for (const k of keys) {
+      const v = (prefs as Record<string, unknown>)[k];
+      if (v != null && typeof v !== 'boolean') {
+        throw new BadRequestException(`preferences.${k} boolean olmalı`);
+      }
+      normalized[k] = v == null ? true : (v as boolean);
+    }
+    await this.repo.update(userId, { notificationPreferences: normalized });
+    return { preferences: normalized };
+  }
+
   /** Stats güncellendikten sonra reputationScore'u yeniden hesapla */
   async recalcReputation(userId: string): Promise<void> {
     const user = await this.repo.findOne({ where: { id: userId } });
