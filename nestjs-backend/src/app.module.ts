@@ -77,6 +77,7 @@ import { UserSubscription } from './modules/subscriptions/user-subscription.enti
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { Currency } from './modules/currencies/currency.entity';
 import { CurrenciesModule } from './modules/currencies/currencies.module';
+import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 
 @Module({
   imports: [
@@ -211,6 +212,7 @@ import { CurrenciesModule } from './modules/currencies/currencies.module';
     LeadsModule,
     SubscriptionsModule,
     CurrenciesModule,
+    LoyaltyModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],

@@ -235,6 +235,13 @@ export class User {
   @Column({ type: 'boolean', default: true })
   pushNotificationsEnabled: boolean;
 
+  // ── Phase 118 — Loyalty + Referral ───────────────────────────────────────
+  @Column({ type: 'varchar', length: 10, nullable: true, unique: true })
+  referralCode: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  referredByUserId: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
