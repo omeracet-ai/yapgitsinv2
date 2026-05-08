@@ -80,8 +80,16 @@ class _ProfileView extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
+      body: RefreshIndicator(
+        color: AppColors.primary,
+        displacement: 50,
+        onRefresh: () async {
+          ref.invalidate(publicProfileProvider(userId));
+          await ref.read(publicProfileProvider(userId).future);
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
           // ── Hero header ──────────────────────────────────────────────────
           SliverAppBar(
             expandedHeight: 220,
@@ -397,6 +405,7 @@ class _ProfileView extends ConsumerWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }

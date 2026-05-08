@@ -211,7 +211,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () async {},
+        color: AppColors.primary,
+        displacement: 50,
+        onRefresh: () async {
+          ref.invalidate(categoriesProvider);
+          await ref.read(jobsProvider.notifier).fetchJobs();
+        },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(

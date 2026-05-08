@@ -195,7 +195,17 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         children: [
           // İlan üst bilgileri (her iki sekmede de görünür)
           Flexible(
-            child: SingleChildScrollView(
+            child: RefreshIndicator(
+              color: AppColors.primary,
+              displacement: 50,
+              onRefresh: () async {
+                if (widget.id != null) {
+                  ref.invalidate(jobDetailProvider(widget.id!));
+                  ref.invalidate(jobOffersProvider(widget.id!));
+                }
+              },
+              child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 children: [
                   _buildHeader(budgetMin: budgetMin, budgetMax: budgetMax, createdAt: createdAt, dueDate: dueDate),
@@ -232,6 +242,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   const SizedBox(height: 8),
                 ],
               ),
+            ),
             ),
           ),
           // Sekme içerikleri
