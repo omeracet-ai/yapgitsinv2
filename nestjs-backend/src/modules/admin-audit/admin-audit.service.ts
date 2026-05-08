@@ -71,4 +71,25 @@ export class AdminAuditService {
     const { data } = await this.findFiltered({ limit, offset });
     return data;
   }
+
+  async exportCsv(opts: {
+    action?: string;
+    targetType?: string;
+    adminUserId?: string;
+  }): Promise<string> {
+    const { data } = await this.findFiltered({ ...opts, limit: 10000, offset: 0 });
+    const header = 'createdAt,adminUserId,action,targetType,targetId,payload';
+    const esc = (v: unknown): string => {
+      const s = v == null ? '' : String(v);
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = data.map((r) => {
+      const ts = r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt);
+      const payload = r.payload == null ? '' : JSON.stringify(r.payload);
+      return [ts, r.adminUserId, r.action, r.targetType ?? '', r.targetId ?? '', payload]
+        .map(esc)
+        .join(',');
+    });
+    return [header, ...lines].join('\n');
+  }
 }

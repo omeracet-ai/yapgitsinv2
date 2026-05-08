@@ -1,4 +1,5 @@
-import { Controller, Get, Patch, Post, Delete, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Delete, Body, Param, Query, UseGuards, Req, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminService } from './admin.service';
 import { CategoriesService } from '../categories/categories.service';
@@ -40,6 +41,24 @@ export class AdminController {
       adminUserId: adminUserId || undefined,
     });
     return { data, total, limit: parsedLimit, offset: parsedOffset };
+  }
+
+  @Get('audit-log/export')
+  async exportAuditLog(
+    @Res() res: Response,
+    @Query('action') action?: string,
+    @Query('targetType') targetType?: string,
+    @Query('adminUserId') adminUserId?: string,
+  ) {
+    const csv = await this.adminAuditService.exportCsv({
+      action: action || undefined,
+      targetType: targetType || undefined,
+      adminUserId: adminUserId || undefined,
+    });
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    res.set('Content-Type', 'text/csv; charset=utf-8');
+    res.set('Content-Disposition', `attachment; filename="audit-log-${stamp}.csv"`);
+    res.send(csv);
   }
 
   @Get('stats')

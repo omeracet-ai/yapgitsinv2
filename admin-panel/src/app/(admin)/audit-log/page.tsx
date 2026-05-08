@@ -69,6 +69,27 @@ export default function AuditLogPage() {
     setOffset(0);
   }
 
+  async function downloadCsv() {
+    try {
+      const blob = await api.auditLogExport({
+        action: actionFilter || undefined,
+        targetType: targetTypeFilter || undefined,
+        adminUserId: adminIdFilter || undefined,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+      a.download = `audit-log-${stamp}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   function onFilterChange<T>(setter: (v: T) => void, v: T) {
     setter(v);
     setOffset(0);
@@ -125,6 +146,15 @@ export default function AuditLogPage() {
             Filtreleri Temizle
           </button>
         )}
+
+        <button
+          type="button"
+          onClick={downloadCsv}
+          disabled={loading || total === 0}
+          className="ml-auto px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          📥 CSV İndir
+        </button>
       </div>
 
       {error && (

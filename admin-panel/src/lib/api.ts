@@ -139,6 +139,18 @@ export const api = {
     if (opts.adminUserId) p.set('adminUserId', opts.adminUserId);
     return request<AuditLogResponse>(`/admin/audit-log?${p.toString()}`);
   },
+  auditLogExport: async (opts: { action?: string; targetType?: string; adminUserId?: string } = {}) => {
+    const p = new URLSearchParams();
+    if (opts.action) p.set('action', opts.action);
+    if (opts.targetType) p.set('targetType', opts.targetType);
+    if (opts.adminUserId) p.set('adminUserId', opts.adminUserId);
+    const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
+    const res = await fetch(`${BASE}/admin/audit-log/export?${p.toString()}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error(`Export ${res.status}: ${await res.text().catch(() => res.statusText)}`);
+    return res.blob();
+  },
 
   // Promo codes
   promoCodes:       ()                                  => request<PromoCode[]>('/admin/promo-codes'),
