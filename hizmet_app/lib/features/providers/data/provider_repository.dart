@@ -2,15 +2,24 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../auth/data/auth_repository.dart';
+import 'worker_filter.dart';
 
 final providerRepositoryProvider = Provider((ref) {
   return ProviderRepository(ref.watch(authRepositoryProvider));
 });
 
-/// Tüm providerlar (arama destekli)
+/// Worker filter state — Phase 39 (bottom sheet ile güncellenir)
+final workerFilterProvider =
+    StateProvider<WorkerFilter>((ref) => WorkerFilter.empty);
+
+/// Tüm providerlar (arama destekli + filtre destekli)
 final allProvidersProvider =
     FutureProvider.family<List<Map<String, dynamic>>, String>((ref, search) async {
-  return ref.watch(providerRepositoryProvider).getAllProviders(search: search.isEmpty ? null : search);
+  final filter = ref.watch(workerFilterProvider);
+  return ref.watch(providerRepositoryProvider).getAllProviders(
+        search: search.isEmpty ? null : search,
+        filter: filter,
+      );
 });
 
 /// Provider detay verisi (provider + user birleşik)
@@ -48,11 +57,17 @@ class ProviderRepository {
           receiveTimeout: const Duration(seconds: 5),
         ));
 
-  Future<List<Map<String, dynamic>>> getAllProviders({String? search}) async {
+  Future<List<Map<String, dynamic>>> getAllProviders({
+    String? search,
+    WorkerFilter? filter,
+  }) async {
     try {
+      final qp = <String, dynamic>{};
+      if (search != null) qp['search'] = search;
+      if (filter != null) qp.addAll(filter.toQueryMap());
       final response = await _dio.get(
         '/providers',
-        queryParameters: search != null ? {'search': search} : null,
+        queryParameters: qp.isEmpty ? null : qp,
       );
       return List<Map<String, dynamic>>.from(response.data as List);
     } on DioException catch (e) {

@@ -4,6 +4,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../categories/data/category_repository.dart';
 import '../../../users/widgets/favorite_button.dart';
 import '../../data/provider_repository.dart';
+import '../../data/worker_filter.dart';
+import '../../widgets/worker_filter_sheet.dart';
 import 'provider_profile_screen.dart';
 
 class ProviderListScreen extends ConsumerStatefulWidget {
@@ -36,6 +38,19 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
     super.dispose();
   }
 
+  Future<void> _openFilterSheet() async {
+    final current = ref.read(workerFilterProvider);
+    final result = await showModalBottomSheet<WorkerFilter>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => WorkerFilterSheet(initial: current),
+    );
+    if (result != null && mounted) {
+      ref.read(workerFilterProvider.notifier).state = result;
+    }
+  }
+
   void _selectCategory(String? cat) => setState(() {
         if (_activeCategory == cat) {
           _activeCategory = null;
@@ -66,12 +81,51 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
   }
 
   Widget _buildAppBar(BuildContext context) {
+    final activeCount = ref.watch(workerFilterProvider).activeCount;
     return SliverAppBar(
       pinned: true,
       expandedHeight: 160,
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
       elevation: 0,
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                tooltip: 'Filtrele',
+                icon: const Icon(Icons.tune_rounded, color: Colors.white),
+                onPressed: _openFilterSheet,
+              ),
+              if (activeCount > 0)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 5, vertical: 1),
+                    constraints:
+                        const BoxConstraints(minWidth: 16, minHeight: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.primary, width: 1.5),
+                    ),
+                    child: Text('$activeCount',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: const BoxDecoration(
