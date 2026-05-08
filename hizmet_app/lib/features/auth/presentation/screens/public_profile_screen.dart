@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import '../../../users/widgets/user_action_menu.dart';
 import '../../../tokens/widgets/gift_tokens_sheet.dart';
 import '../providers/auth_provider.dart';
+import '../../../reviews/widgets/review_reply_sheet.dart';
 
 final publicProfileProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
@@ -303,7 +304,11 @@ class _ProfileView extends ConsumerWidget {
                     child: Column(
                       children: reviewList
                           .take(5)
-                          .map((r) => _ReviewTile(review: r))
+                          .map((r) => _ReviewTile(
+                                review: r,
+                                revieweeId: userId,
+                                currentUserId: currentUserId,
+                              ))
                           .toList(),
                     ),
                   ),
@@ -384,18 +389,49 @@ class _ProfileView extends ConsumerWidget {
   }
 }
 
-class _ReviewTile extends StatelessWidget {
+class _ReviewTile extends ConsumerWidget {
   final Map<String, dynamic> review;
-  const _ReviewTile({required this.review});
+  final String revieweeId;
+  final String? currentUserId;
+  const _ReviewTile({
+    required this.review,
+    required this.revieweeId,
+    required this.currentUserId,
+  });
+
+  Future<void> _openReplySheet(BuildContext context, WidgetRef ref) async {
+    final reviewId = review['id'] as String?;
+    if (reviewId == null) return;
+    final existing = review['replyText'] as String?;
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => ReviewReplySheet(
+        reviewId: reviewId,
+        existingText: existing,
+      ),
+    );
+    if (saved == true) {
+      ref.invalidate(publicProfileProvider(revieweeId));
+    }
+  }
 
   @override
-  Widget build(BuildContext context) {
-    final reviewer = review['reviewer'] as Map<String, dynamic>?;
-    final name     = reviewer?['fullName']       as String? ?? 'Kullanıcı';
-    final imgUrl   = reviewer?['profileImageUrl'] as String?;
-    final rating   = (review['rating'] as num?)?.toInt() ?? 0;
-    final comment  = review['comment']  as String? ?? '';
-    final date     = review['createdAt'] as String?;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reviewer  = review['reviewer'] as Map<String, dynamic>?;
+    final name      = reviewer?['fullName']       as String? ?? 'Kullanıcı';
+    final imgUrl    = reviewer?['profileImageUrl'] as String?;
+    final rating    = (review['rating'] as num?)?.toInt() ?? 0;
+    final comment   = review['comment']  as String? ?? '';
+    final date      = review['createdAt'] as String?;
+    final replyText = (review['replyText'] as String?)?.trim();
+    final repliedAt = review['repliedAt'] as String?;
+    final isOwner   = currentUserId != null && currentUserId == revieweeId;
+    final hasReply  = replyText != null && replyText.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -447,6 +483,83 @@ class _ReviewTile extends StatelessWidget {
                 if (date != null)
                   Text(_timeAgo(date),
                       style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+                if (hasReply) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.reply_rounded,
+                                size: 14, color: AppColors.textSecondary),
+                            const SizedBox(width: 4),
+                            const Expanded(
+                              child: Text('Yanıt',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textSecondary)),
+                            ),
+                            if (isOwner)
+                              GestureDetector(
+                                onTap: () => _openReplySheet(context, ref),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 4, vertical: 2),
+                                  child: Text('Düzenle',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w600)),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(replyText,
+                            style: const TextStyle(
+                                fontSize: 12.5,
+                                height: 1.4,
+                                color: AppColors.textSecondary)),
+                        if (repliedAt != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(_timeAgo(repliedAt),
+                                style: TextStyle(
+                                    fontSize: 10.5,
+                                    color: Colors.grey.shade400)),
+                          ),
+                      ],
+                    ),
+                  ),
+                ] else if (isOwner) ...[
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => _openReplySheet(context, ref),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 0),
+                        minimumSize: const Size(0, 28),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        foregroundColor: AppColors.primary,
+                      ),
+                      icon: const Icon(Icons.chat_bubble_outline_rounded,
+                          size: 14),
+                      label: const Text('Yanıtla',
+                          style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

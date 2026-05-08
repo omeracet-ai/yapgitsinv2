@@ -54,6 +54,35 @@ class ReviewRepository {
     }
   }
 
+  Future<Map<String, dynamic>> replyToReview(String reviewId, String text) async {
+    try {
+      final token = await _authRepository.getToken();
+      final response = await _dio.post(
+        '/reviews/$reviewId/reply',
+        data: {'text': text},
+        options: Options(headers: {
+          'Authorization': 'Bearer $token',
+        }),
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 401) {
+        throw Exception('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.');
+      }
+      if (status == 403) {
+        throw Exception('Bu yoruma yanıt verme yetkiniz yok.');
+      }
+      if (status == 404) {
+        throw Exception('Yorum bulunamadı.');
+      }
+      final msg = e.response?.data?['message'];
+      throw Exception(msg ?? 'Yanıt gönderilemedi (${status ?? 'bağlantı hatası'})');
+    } catch (e) {
+      throw Exception('Yanıt gönderilemedi: $e');
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getReviewsForUser(String userId) async {
     try {
       final response = await _dio.get('/reviews/user/$userId');
