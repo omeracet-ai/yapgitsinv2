@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../wallet/presentation/screens/wallet_screen.dart';
 import '../../../tokens/data/token_repository.dart';
+import '../../../subscriptions/data/subscription_repository.dart';
 import '../providers/auth_provider.dart';
 import '../../data/auth_repository.dart';
 import 'personal_info_screen.dart';
@@ -61,6 +62,7 @@ class ProfileScreen extends ConsumerWidget {
               const ProfileCompletionCard(),
               _buildProfileHeader(user),
               _buildTokenBanner(context, ref),
+              _buildSubscriptionBanner(context, ref, user),
               _buildIdentityStatus(user),
               _buildEmailVerification(context, ref, user),
               _buildStatsSection(ref),
@@ -504,6 +506,61 @@ class ProfileScreen extends ConsumerWidget {
                     fontWeight: FontWeight.bold,
                     fontSize: 13)),
           ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionBanner(
+      BuildContext context, WidgetRef ref, Map<String, dynamic> user) {
+    final cats = user['workerCategories'];
+    final isWorker = cats is List && cats.isNotEmpty;
+    if (!isWorker) return const SizedBox.shrink();
+    final myAsync = ref.watch(mySubscriptionProvider);
+    return GestureDetector(
+      onTap: () => context.push('/abonelik'),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+              colors: [AppColors.accent, Color(0xFFFFB800)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(children: [
+          const Icon(Icons.workspace_premium, color: Colors.white, size: 28),
+          const SizedBox(width: 14),
+          Expanded(
+            child: myAsync.when(
+              data: (sub) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sub != null && sub.isActive
+                          ? '✓ ${sub.plan.name}'
+                          : 'Premium Üyelik',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      sub != null && sub.isActive
+                          ? 'Sınırsız teklif aktif'
+                          : 'Sınırsız teklif & Pro özellikler',
+                      style: const TextStyle(
+                          color: Colors.white70, fontSize: 12),
+                    ),
+                  ]),
+              loading: () => const Text('...',
+                  style: TextStyle(color: Colors.white)),
+              error: (_, __) => const Text('Premium Üyelik',
+                  style: TextStyle(color: Colors.white)),
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: Colors.white),
         ]),
       ),
     );
