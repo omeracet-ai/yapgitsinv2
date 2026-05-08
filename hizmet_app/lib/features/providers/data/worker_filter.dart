@@ -54,6 +54,8 @@ class WorkerFilter {
   final double? userLat;
   final double? userLng;
   final int radiusKm;
+  // Phase 134 — AI semantic search re-rank
+  final String? semanticQuery;
 
   const WorkerFilter({
     this.minRating,
@@ -66,6 +68,7 @@ class WorkerFilter {
     this.userLat,
     this.userLng,
     this.radiusKm = 20,
+    this.semanticQuery,
   });
 
   static const empty = WorkerFilter();
@@ -81,10 +84,12 @@ class WorkerFilter {
     double? userLat,
     double? userLng,
     int? radiusKm,
+    String? semanticQuery,
     bool clearMinRating = false,
     bool clearMinRate = false,
     bool clearMaxRate = false,
     bool clearGeo = false,
+    bool clearSemanticQuery = false,
   }) {
     return WorkerFilter(
       minRating: clearMinRating ? null : (minRating ?? this.minRating),
@@ -97,6 +102,9 @@ class WorkerFilter {
       userLat: clearGeo ? null : (userLat ?? this.userLat),
       userLng: clearGeo ? null : (userLng ?? this.userLng),
       radiusKm: radiusKm ?? this.radiusKm,
+      semanticQuery: clearSemanticQuery
+          ? null
+          : (semanticQuery ?? this.semanticQuery),
     );
   }
 
@@ -114,6 +122,9 @@ class WorkerFilter {
       m['lng'] = userLng;
       m['radiusKm'] = radiusKm;
     }
+    if (semanticQuery != null && semanticQuery!.trim().isNotEmpty) {
+      m['semanticQuery'] = semanticQuery!.trim();
+    }
     return m;
   }
 
@@ -126,6 +137,7 @@ class WorkerFilter {
     if (availableOnly) n++;
     if (sortBy != WorkerSortBy.reputation) n++;
     if (nearMe) n++;
+    if (semanticQuery != null && semanticQuery!.trim().isNotEmpty) n++;
     return n;
   }
 

@@ -31,6 +31,8 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
   late WorkerSortBy _sortBy;
   late TextEditingController _minRateCtrl;
   late TextEditingController _maxRateCtrl;
+  // Phase 134 — AI semantic search
+  late TextEditingController _semanticQueryCtrl;
   // Phase 112 — geo
   late bool _nearMe;
   late int _radiusKm;
@@ -52,6 +54,8 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
         text: widget.initial.minRate?.toInt().toString() ?? '');
     _maxRateCtrl = TextEditingController(
         text: widget.initial.maxRate?.toInt().toString() ?? '');
+    _semanticQueryCtrl = TextEditingController(
+        text: widget.initial.semanticQuery ?? '');
     _nearMe = widget.initial.nearMe;
     _radiusKm = widget.initial.radiusKm;
     _userLat = widget.initial.userLat;
@@ -101,6 +105,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
   void dispose() {
     _minRateCtrl.dispose();
     _maxRateCtrl.dispose();
+    _semanticQueryCtrl.dispose();
     super.dispose();
   }
 
@@ -112,6 +117,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
       _sortBy = WorkerSortBy.reputation;
       _minRateCtrl.clear();
       _maxRateCtrl.clear();
+      _semanticQueryCtrl.clear();
       _nearMe = false;
       _radiusKm = 20;
       _userLat = null;
@@ -122,6 +128,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
   void _apply() {
     final minRate = double.tryParse(_minRateCtrl.text.trim());
     final maxRate = double.tryParse(_maxRateCtrl.text.trim());
+    final semQ = _semanticQueryCtrl.text.trim();
     final result = WorkerFilter(
       minRating: _minRating,
       minRate: minRate,
@@ -133,6 +140,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
       userLat: _userLat,
       userLng: _userLng,
       radiusKm: _radiusKm,
+      semanticQuery: semQ.isEmpty ? null : semQ,
     );
     Navigator.of(context).pop(result);
   }
@@ -187,6 +195,10 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _sectionTitle('✨ Akıllı Arama (opsiyonel)'),
+                    const SizedBox(height: 8),
+                    _buildSemanticQueryField(),
+                    const SizedBox(height: 20),
                     _sectionTitle('Minimum Yıldız'),
                     const SizedBox(height: 8),
                     _buildRatingChips(),
@@ -361,6 +373,38 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildSemanticQueryField() {
+    return TextField(
+      controller: _semanticQueryCtrl,
+      maxLength: 200,
+      decoration: InputDecoration(
+        hintText: 'örn: gece geç saat çalışan tesisatçı',
+        hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 13),
+        prefixIcon: const Icon(Icons.auto_awesome_rounded,
+            size: 18, color: AppColors.primary),
+        helperText: 'AI ile sonuçları akıllı sırala',
+        helperStyle: const TextStyle(fontSize: 11, color: AppColors.textHint),
+        counterText: '',
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        filled: true,
+        fillColor: AppColors.background,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
+        ),
+      ),
     );
   }
 
