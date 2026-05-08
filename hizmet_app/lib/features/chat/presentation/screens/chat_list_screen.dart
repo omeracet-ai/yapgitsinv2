@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../data/chat_repository.dart';
 import 'chat_detail_screen.dart';
 
-class ChatListScreen extends StatelessWidget {
+class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncConvos = ref.watch(conversationsProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -17,99 +22,91 @@ class ChatListScreen extends StatelessWidget {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.search_rounded, color: Colors.white),
-            tooltip: 'Yakında',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Konuşma arama yakında eklenecek.')),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit_square, color: Colors.white),
-            tooltip: 'Yeni mesaj',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content:
-                        Text('Yeni mesaj için bir ilan veya teklife gidin.')),
-              );
-            },
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+            tooltip: 'Yenile',
+            onPressed: () => ref.invalidate(conversationsProvider),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // ── Arama çubuğu ────────────────────────────────────────────────
-          Container(
-            color: AppColors.primary,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(20),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(conversationsProvider);
+          await ref.read(conversationsProvider.future);
+        },
+        child: asyncConvos.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => ListView(
+            children: [
+              const SizedBox(height: 80),
+              EmptyState(
+                icon: Icons.error_outline,
+                title: 'Konuşmalar yüklenemedi',
+                message: e.toString(),
               ),
-              child: const TextField(
-                style: TextStyle(color: Colors.white, fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: 'Konuşma ara...',
-                  hintStyle: TextStyle(color: Colors.white60, fontSize: 14),
-                  prefixIcon: Icon(Icons.search_rounded,
-                      color: Colors.white60, size: 18),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10),
-                ),
-              ),
-            ),
+            ],
           ),
-          // ── Konuşma listesi ─────────────────────────────────────────────
-          Expanded(
-            child: ListView.separated(
+          data: (convos) {
+            if (convos.isEmpty) {
+              return ListView(
+                children: const [
+                  SizedBox(height: 80),
+                  EmptyState(
+                    emoji: '💬',
+                    title: 'Henüz mesaj yok',
+                    message:
+                        'Bir ilana teklif verdiğinde veya teklif aldığında konuşmalar burada görünecek.',
+                  ),
+                ],
+              );
+            }
+            return ListView.separated(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: 8,
-              separatorBuilder: (context, index) => const Divider(
+              itemCount: convos.length,
+              separatorBuilder: (_, __) => const Divider(
                   height: 1, indent: 88, endIndent: 16, thickness: 0.5),
               itemBuilder: (context, index) {
-                final name =
-                    index % 2 == 0 ? 'Ahmet Usta' : 'Mehmet Tesisat';
-                final isOnline = index % 3 == 0;
-                final unreadCount = index == 0 ? 2 : 0;
+                final c = convos[index];
+                final preview = c.lastFromMe
+                    ? 'Sen: ${c.lastMessageText}'
+                    : c.lastMessageText;
                 return _buildChatItem(
                   context,
-                  name: name,
-                  lastMessage: 'Teklifim hakkında ne düşünüyorsunuz?',
-                  time: '14:20',
-                  unreadCount: unreadCount,
-                  isOnline: isOnline,
+                  name: c.peerName ?? 'Kullanıcı',
+                  lastMessage: preview,
+                  time: _formatTime(c.lastMessageAt),
+                  unreadCount: c.unreadCount,
                   avatarColor: _avatarColor(index),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => ChatDetailScreen(
-                            peerName: name, peerId: 'peer-$index'),
+                          peerName: c.peerName ?? 'Kullanıcı',
+                          peerId: c.peerId,
+                        ),
                       ),
-                    );
+                    ).then((_) => ref.invalidate(conversationsProvider));
                   },
                 );
               },
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Yeni mesaj için bir ilan veya teklife gidin.')),
-          );
-        },
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.edit_rounded, color: Colors.white),
+            );
+          },
+        ),
       ),
     );
+  }
+
+  String _formatTime(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final mDay = DateTime(dt.year, dt.month, dt.day);
+    if (mDay == today) {
+      return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    }
+    final diff = today.difference(mDay).inDays;
+    if (diff == 1) return 'Dün';
+    if (diff < 7) return '$diff gün';
+    return '${dt.day}.${dt.month}';
   }
 
   Color _avatarColor(int index) {
@@ -129,7 +126,6 @@ class ChatListScreen extends StatelessWidget {
     required String lastMessage,
     required String time,
     required int unreadCount,
-    required bool isOnline,
     required Color avatarColor,
     required VoidCallback onTap,
   }) {
@@ -146,46 +142,26 @@ class ChatListScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
-            // Avatar
-            Stack(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: avatarColor.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                        color: avatarColor.withValues(alpha: 0.3), width: 1.5),
-                  ),
-                  child: Center(
-                    child: Text(
-                      initials,
-                      style: TextStyle(
-                          color: avatarColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18),
-                    ),
-                  ),
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: avatarColor.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+                border: Border.all(
+                    color: avatarColor.withValues(alpha: 0.3), width: 1.5),
+              ),
+              child: Center(
+                child: Text(
+                  initials.isEmpty ? '?' : initials,
+                  style: TextStyle(
+                      color: avatarColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18),
                 ),
-                if (isOnline)
-                  Positioned(
-                    right: 2,
-                    bottom: 2,
-                    child: Container(
-                      height: 13,
-                      width: 13,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00C9A7),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
-                  ),
-              ],
+              ),
             ),
             const SizedBox(width: 14),
-            // İçerik
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,13 +169,17 @@ class ChatListScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(name,
-                          style: TextStyle(
-                              fontWeight: unreadCount > 0
-                                  ? FontWeight.bold
-                                  : FontWeight.w600,
-                              fontSize: 15,
-                              color: AppColors.textPrimary)),
+                      Expanded(
+                        child: Text(name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontWeight: unreadCount > 0
+                                    ? FontWeight.bold
+                                    : FontWeight.w600,
+                                fontSize: 15,
+                                color: AppColors.textPrimary)),
+                      ),
                       Text(time,
                           style: TextStyle(
                               fontSize: 12,
@@ -232,13 +212,15 @@ class ChatListScreen extends StatelessWidget {
                       if (unreadCount > 0) ...[
                         const SizedBox(width: 8),
                         Container(
+                          constraints: const BoxConstraints(minWidth: 22),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(
-                              color: AppColors.primary,
+                              color: AppColors.error,
                               borderRadius: BorderRadius.circular(12)),
                           child: Text(
-                            '$unreadCount',
+                            unreadCount > 99 ? '99+' : '$unreadCount',
+                            textAlign: TextAlign.center,
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
