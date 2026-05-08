@@ -95,6 +95,21 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         });
       }
     });
+    // Phase 77: server-side contact-block notice.
+    chatService.onMessageFiltered((reason, detectedTypes) {
+      if (!mounted) return;
+      if (reason != 'contact_block') return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.orange.shade700,
+          content: Text(
+            'Mesajınız filtrelendi: iletişim bilgisi içeriyor (${detectedTypes.join(", ")}). '
+            'Lütfen sistem içi mesajlaşmayı kullanın.',
+          ),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    });
   }
 
   void _onTextChanged(String _) {

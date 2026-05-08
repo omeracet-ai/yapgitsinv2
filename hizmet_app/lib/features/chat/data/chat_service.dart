@@ -85,6 +85,21 @@ class ChatService {
     });
   }
 
+  /// Phase 77: subscribe to server-side message-filter notices (e.g. contact-block).
+  /// Callback receives (reason, detectedTypes).
+  void onMessageFiltered(
+      Function(String reason, List<String> detectedTypes) callback) {
+    socket.on('messageFiltered', (data) {
+      final map = Map<String, dynamic>.from(data as Map);
+      final reason = (map['reason'] as String?) ?? 'unknown';
+      final types = (map['detectedTypes'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          <String>[];
+      callback(reason, types);
+    });
+  }
+
   void disconnect() {
     socket.disconnect();
   }
