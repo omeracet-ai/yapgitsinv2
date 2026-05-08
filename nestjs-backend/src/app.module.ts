@@ -23,6 +23,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { Category } from './modules/categories/category.entity';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { HealthModule } from './modules/health/health.module';
 import { TokensModule } from './modules/tokens/tokens.module';
 import { TokenTransaction } from './modules/tokens/token-transaction.entity';
 import { UploadsModule } from './modules/uploads/uploads.module';
@@ -160,6 +161,7 @@ import { AdminAuditModule } from './modules/admin-audit/admin-audit.module';
     AiModule,
     CategoriesModule,
     AdminModule,
+    HealthModule,
     TokensModule,
     UploadsModule,
     ServiceRequestsModule,

@@ -75,7 +75,7 @@ async function bootstrap() {
 
   // IIS reverse-proxy mount path (e.g. /backend → NestJS routes prefixed with /backend)
   const globalPrefix = process.env.GLOBAL_PREFIX;
-  if (globalPrefix) app.setGlobalPrefix(globalPrefix);
+  if (globalPrefix) app.setGlobalPrefix(globalPrefix, { exclude: ['health'] });
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port, '0.0.0.0');
