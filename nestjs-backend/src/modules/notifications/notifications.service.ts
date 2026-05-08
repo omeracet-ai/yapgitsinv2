@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Notification, NotificationType } from './notification.entity';
 import { User } from '../users/user.entity';
 import { FcmService } from './fcm.service';
+import { EmailService } from '../email/email.service';
 
 export type NotificationCategory =
   | 'booking'
@@ -20,7 +21,52 @@ export class NotificationsService {
     @InjectRepository(User)
     private usersRepo: Repository<User>,
     private readonly fcm: FcmService,
+    private readonly email: EmailService,
   ) {}
+
+  /** Phase 121 — fire-and-forget email for selected notification types */
+  private async sendEmailForNotification(
+    userId: string,
+    type: NotificationType,
+    title: string,
+    body: string,
+  ): Promise<void> {
+    const emailTypes: NotificationType[] = [
+      NotificationType.BOOKING_CONFIRMED,
+      NotificationType.OFFER_ACCEPTED,
+      NotificationType.OFFER_REJECTED,
+    ];
+    if (!emailTypes.includes(type)) return;
+    const user = await this.usersRepo.findOne({
+      where: { id: userId },
+      select: ['id', 'email', 'fullName', 'notificationPreferences'],
+    });
+    if (!user || !user.email) return;
+    // Phase 49 — respect category prefs (already checked by send(), but guard again)
+    const cat = NotificationsService.categoryFor(type);
+    if (
+      user.notificationPreferences &&
+      user.notificationPreferences[cat] === false
+    ) {
+      return;
+    }
+    const html = `<!doctype html><body style="font-family:Arial,sans-serif;color:#2D3E50">
+      <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:8px;border:1px solid #e5e7eb">
+        <div style="background:#007DFE;padding:20px 24px;color:#fff">
+          <div style="font-size:22px;font-weight:bold">Yapgitsin</div>
+          <div style="font-size:14px">${title}</div>
+        </div>
+        <div style="padding:24px">
+          <p>Merhaba <b>${user.fullName ?? ''}</b>,</p>
+          <p>${body}</p>
+          <p style="margin-top:24px"><a href="https://yapgitsin.tr" style="background:#007DFE;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Uygulamayı Aç</a></p>
+        </div>
+        <div style="padding:16px 24px;background:#F8F9FA;color:#6b7280;font-size:12px">
+          destek@yapgitsin.tr · <a href="https://yapgitsin.tr/unsubscribe" style="color:#007DFE">Abonelikten çık</a>
+        </div>
+      </div></body>`;
+    void this.email.send(user.email, `${title} — Yapgitsin`, html);
+  }
 
   /** Phase 49 — map notification type to a high-level preference category */
   static categoryFor(type: NotificationType): NotificationCategory {
@@ -117,6 +163,8 @@ export class NotificationsService {
       isRead: false,
     });
     const saved = await this.repo.save(n);
+    // Phase 121 — fire-and-forget transactional email (selected types)
+    void this.sendEmailForNotification(data.userId, data.type, data.title, data.body);
     // Phase 113 — fire-and-forget FCM push (does not block API response)
     void this.fcm.sendToUser(data.userId, data.title, data.body, {
       type: String(data.type),

@@ -80,6 +80,7 @@ import { CurrenciesModule } from './modules/currencies/currencies.module';
 import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 import { Tenant } from './modules/tenants/tenant.entity';
 import { TenantsModule } from './modules/tenants/tenants.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
@@ -217,6 +218,7 @@ import { TenantsModule } from './modules/tenants/tenants.module';
     CurrenciesModule,
     LoyaltyModule,
     TenantsModule,
+    EmailModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],

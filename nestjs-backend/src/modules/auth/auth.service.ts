@@ -16,6 +16,7 @@ import { AuthUser } from '../../common/types/auth.types';
 import { TwoFactorService } from './two-factor.service';
 import { PasswordResetToken } from './password-reset-token.entity';
 import { EmailVerificationToken } from './email-verification-token.entity';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -27,6 +28,7 @@ export class AuthService implements OnModuleInit {
     private resetRepo: Repository<PasswordResetToken>,
     @InjectRepository(EmailVerificationToken)
     private emailVerifyRepo: Repository<EmailVerificationToken>,
+    private emailService: EmailService,
   ) {}
 
   async requestEmailVerification(userId: string) {
@@ -96,6 +98,8 @@ export class AuthService implements OnModuleInit {
 
     const base = process.env.FRONTEND_URL ?? 'https://yapgitsin.tr';
     generic.resetUrl = `${base}/reset-password?token=${plain}`;
+    // Phase 121 — fire-and-forget password reset email
+    void this.emailService.sendPasswordReset(user, plain);
     return generic;
   }
 
@@ -285,6 +289,8 @@ export class AuthService implements OnModuleInit {
     });
 
     const { passwordHash: _hash2, ...result } = newUser;
+    // Phase 121 — fire-and-forget welcome email
+    void this.emailService.sendWelcome(newUser);
     const payload = { email: result.email, sub: result.id, role: result.role };
     return {
       access_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
