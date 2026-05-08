@@ -90,6 +90,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
+  // Phase 133 — customer profile pages (derived from jobs' customerId)
+  const customerSeen = new Set<string>();
+  for (const j of jobs) {
+    const cid = (j as unknown as { customerId?: string; customer?: { fullName?: string } }).customerId;
+    const cname = (j as unknown as { customer?: { fullName?: string } }).customer?.fullName || 'musteri';
+    if (cid && !customerSeen.has(cid)) {
+      customerSeen.add(cid);
+      const path = `/musteri/${slugify(cname)}-${cid}`;
+      urls.push({
+        url: `${SITE}${path}`,
+        lastModified: now,
+        changeFrequency: 'monthly',
+        priority: 0.4,
+        alternates: { languages: altLanguages(path) },
+      });
+    }
+  }
+
   for (const j of jobs) {
     const path = `/ilan/${slugify(j.title || 'ilan')}-${j.id}`;
     const jAny = j as unknown as { updatedAt?: string; createdAt?: string };

@@ -89,6 +89,8 @@ export const getWorkers = (params: Record<string, string> = {}) => {
   return api<Worker[] | Paginated<Worker>>(`/users/workers${qs ? `?${qs}` : ''}`);
 };
 export const getWorker = (id: string) => api<any>(`/users/${id}/profile`);
+// Phase 133 — public customer profile (no worker fields)
+export const getCustomer = (id: string) => api<any>(`/users/${id}/customer-profile`);
 export const getJobs = (params: Record<string, string> = {}) => {
   const qs = new URLSearchParams(params).toString();
   return api<Paginated<Job> | Job[]>(`/jobs${qs ? `?${qs}` : ''}`);
