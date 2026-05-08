@@ -17,6 +17,7 @@ import '../../../features/auth/presentation/screens/forgot_password_screen.dart'
 import '../../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../../features/auth/presentation/screens/verify_email_screen.dart';
 import '../../../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../../../features/onboarding/presentation/screens/worker_onboarding_screen.dart';
 import '../../../features/job_templates/presentation/job_templates_screen.dart';
 import '../../../features/offers/presentation/screens/offer_templates_screen.dart';
 import '../../../features/statements/presentation/statement_screen.dart';
@@ -46,6 +47,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/hos-geldiniz',
         builder: (context, state) => const OnboardingScreen(),
+      ),
+      // Phase 129 — Worker onboarding wizard (5-step).
+      GoRoute(
+        path: '/usta-baslangic',
+        builder: (context, state) => const WorkerOnboardingScreen(),
       ),
       GoRoute(
         path: '/',

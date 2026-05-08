@@ -65,6 +65,8 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
   bool   _obscurePass   = true;
   String _gender        = 'other';
   DateTime? _birthDate;
+  // Phase 129 — Worker onboarding routing flag.
+  bool   _registerAsWorker = false;
 
   // Adım 2: Kimlik fotoğrafı
   File?  _identityPhoto;
@@ -140,8 +142,13 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         if (docUrl != null) 'documentPhotoUrl': docUrl,
       });
       if (mounted) {
-        ref.read(selectedTabProvider.notifier).state = 0;
-        context.go('/');
+        // Phase 129 — Worker registration → wizard. Customer → main shell.
+        if (_registerAsWorker) {
+          context.go('/usta-baslangic');
+        } else {
+          ref.read(selectedTabProvider.notifier).state = 0;
+          context.go('/');
+        }
       }
     } catch (e) {
       setState(() { _error = e.toString().replaceFirst('Exception: ', ''); _loading = false; });
@@ -150,8 +157,13 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
 
   Future<void> _skipStep2() async {
     if (mounted) {
-      ref.read(selectedTabProvider.notifier).state = 0;
-      context.go('/');
+      // Phase 129 — Worker'lar identity skip etse de wizard'a yönlendirilir.
+      if (_registerAsWorker) {
+        context.go('/usta-baslangic');
+      } else {
+        ref.read(selectedTabProvider.notifier).state = 0;
+        context.go('/');
+      }
     }
   }
 
@@ -260,6 +272,32 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
           ),
         ),
 
+        const SizedBox(height: 16),
+        // Phase 129 — Usta olarak kayıt ol toggle.
+        Container(
+          decoration: BoxDecoration(
+            color: _registerAsWorker
+                ? AppColors.primaryLight
+                : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: _registerAsWorker
+                  ? AppColors.primary
+                  : AppColors.border,
+            ),
+          ),
+          child: SwitchListTile(
+            value: _registerAsWorker,
+            onChanged: (v) => setState(() => _registerAsWorker = v),
+            activeThumbColor: AppColors.primary,
+            title: const Text('Usta olarak kayıt ol',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: const Text(
+              'Hizmet verirsen kayıt sonrası kısa bir kurulum yapacağız.',
+              style: TextStyle(fontSize: 12),
+            ),
+          ),
+        ),
         if (_error != null) ...[
           const SizedBox(height: 12),
           _errorBox(_error!),
