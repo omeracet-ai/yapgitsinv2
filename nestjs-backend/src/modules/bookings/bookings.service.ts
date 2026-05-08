@@ -13,9 +13,13 @@ import {
   CancellationReason,
   RefundStatus,
 } from './booking.entity';
+import { User } from '../users/user.entity';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType } from '../notifications/notification.entity';
+import {
+  Notification,
+  NotificationType,
+} from '../notifications/notification.entity';
 import { AvailabilityService } from '../availability/availability.service';
 import {
   TokenTransaction,
@@ -23,6 +27,7 @@ import {
   TxStatus,
   PaymentMethod,
 } from '../tokens/token-transaction.entity';
+import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 
 @Injectable()
@@ -77,46 +82,64 @@ export class BookingsService {
     if (!Object.values(CancellationReason).includes(reason)) {
       throw new BadRequestException('Geçersiz iptal sebebi');
     }
-    const booking = await this.repo.findOne({
-      where: { id: bookingId },
-      relations: ['customer', 'worker'],
-    });
-    if (!booking) throw new NotFoundException('Randevu bulunamadı');
-    if (booking.customerId !== userId && booking.workerId !== userId) {
-      throw new ForbiddenException('Yetkisiz işlem');
-    }
-    if (
-      booking.status === BookingStatus.CANCELLED ||
-      booking.status === BookingStatus.COMPLETED
-    ) {
-      throw new BadRequestException(
-        'Tamamlanmış veya iptal edilmiş randevular iptal edilemez',
+
+    // Phase 128 sec-fix: full transaction with pessimistic lock on booking row,
+    // ledger sync (tokenBalance += refund), audit + notifications inside TX so
+    // any failure rolls back atomically.
+    const result = await this.dataSource.transaction(async (em) => {
+      // H2: pessimistic_write lock — guards against parallel double-cancel.
+      // SQLite ignores most lock modes but TypeORM falls back gracefully;
+      // we still re-validate state below for idempotency.
+      let booking: Booking | null;
+      try {
+        booking = await em.findOne(Booking, {
+          where: { id: bookingId },
+          relations: ['customer', 'worker'],
+          lock: { mode: 'pessimistic_write' },
+        });
+      } catch {
+        // SQLite or driver without lock support — fallback to plain read
+        booking = await em.findOne(Booking, {
+          where: { id: bookingId },
+          relations: ['customer', 'worker'],
+        });
+      }
+      if (!booking) throw new NotFoundException('Randevu bulunamadı');
+      if (booking.customerId !== userId && booking.workerId !== userId) {
+        throw new ForbiddenException('Yetkisiz işlem');
+      }
+      // H2: idempotency — already-cancelled or completed → 400 (re-checked under lock)
+      if (
+        booking.status === BookingStatus.CANCELLED ||
+        booking.status === BookingStatus.COMPLETED
+      ) {
+        throw new BadRequestException(
+          'Tamamlanmış veya iptal edilmiş randevular iptal edilemez',
+        );
+      }
+
+      const scheduledAt = this._parseScheduled(
+        booking.scheduledDate,
+        booking.scheduledTime,
       );
-    }
+      const { percent, amount } = this._computeRefund(
+        scheduledAt,
+        booking.agreedPrice,
+      );
+      const refundStatus: RefundStatus =
+        amount > 0 ? RefundStatus.PENDING : RefundStatus.NONE;
 
-    const scheduledAt = this._parseScheduled(
-      booking.scheduledDate,
-      booking.scheduledTime,
-    );
-    const { percent, amount } = this._computeRefund(
-      scheduledAt,
-      booking.agreedPrice,
-    );
-    const refundStatus: RefundStatus =
-      amount > 0 ? RefundStatus.PENDING : RefundStatus.NONE;
+      const old = booking.status;
 
-    const old = booking.status;
-
-    const saved = await this.dataSource.transaction(async (em) => {
       booking.status = BookingStatus.CANCELLED;
       booking.cancelledAt = new Date();
       booking.cancelledBy = userId;
       booking.cancellationReason = reason;
       booking.refundAmount = amount;
       booking.refundStatus = refundStatus;
-      const s = await em.save(booking);
+      const saved = await em.save(booking);
 
-      // Token-based refund insert (if there was an agreedPrice)
+      // H1: Ledger ↔ balance sync. Insert REFUND tx AND increment user balance.
       if (amount > 0) {
         const tx = em.create(TokenTransaction, {
           userId: booking.customerId,
@@ -127,64 +150,72 @@ export class BookingsService {
           paymentMethod: PaymentMethod.SYSTEM,
         });
         await em.save(tx);
+        // Atomic balance bump within TX
+        await em.increment(User, { id: booking.customerId }, 'tokenBalance', amount);
       }
 
-      return s;
+      // H3: notifications inside TX so they roll back on failure
+      const cancelledByCustomer = userId === booking.customerId;
+      const actor = cancelledByCustomer
+        ? booking.customer?.fullName
+        : booking.worker?.fullName;
+      const counterPartyId = cancelledByCustomer
+        ? booking.workerId
+        : booking.customerId;
+      await em.save(
+        em.create(Notification, {
+          userId: counterPartyId,
+          type: NotificationType.BOOKING_CANCELLED,
+          title: '❌ Randevu İptal Edildi',
+          body: `${actor ?? 'Taraf'} randevuyu iptal etti. İade: ${amount}₺ (%${percent})`,
+          refId: booking.id,
+        }),
+      );
+      await em.save(
+        em.create(Notification, {
+          userId,
+          type: NotificationType.BOOKING_CANCELLED,
+          title: '❌ Randevu İptal Edildi',
+          body: `İptal işlendi. İade tutarı: ${amount}₺ (%${percent})`,
+          refId: booking.id,
+        }),
+      );
+
+      // H3: audit log inside TX
+      await em.save(
+        em.create(AdminAuditLog, {
+          adminUserId: userId,
+          action: 'booking.cancel',
+          targetType: 'booking',
+          targetId: booking.id,
+          payload: {
+            reason,
+            refundAmount: amount,
+            refundPercent: percent,
+            refundStatus,
+            previousStatus: old,
+            agreedPrice: booking.agreedPrice,
+          },
+        }),
+      );
+
+      return { saved, percent, amount, refundStatus, old };
     });
 
-    // Notifications to both parties
-    const cancelledByCustomer = userId === booking.customerId;
-    const actor = cancelledByCustomer
-      ? booking.customer?.fullName
-      : booking.worker?.fullName;
-    const counterPartyId = cancelledByCustomer
-      ? booking.workerId
-      : booking.customerId;
-    await this.notificationsService.send({
-      userId: counterPartyId,
-      type: NotificationType.BOOKING_CANCELLED,
-      title: '❌ Randevu İptal Edildi',
-      body: `${actor ?? 'Taraf'} randevuyu iptal etti. İade: ${amount}₺ (%${percent})`,
-      refId: booking.id,
-    });
-    await this.notificationsService.send({
-      userId,
-      type: NotificationType.BOOKING_CANCELLED,
-      title: '❌ Randevu İptal Edildi',
-      body: `İptal işlendi. İade tutarı: ${amount}₺ (%${percent})`,
-      refId: booking.id,
-    });
-
-    // Stats: cancelling a confirmed/in-progress counts as fail
-    if (old !== BookingStatus.PENDING) {
-      await this.usersService.bumpStat(booking.customerId, 'asCustomerFail');
-      await this.usersService.bumpStat(booking.workerId, 'asWorkerFail');
-      await this.usersService.recalcReputation(booking.customerId);
-      await this.usersService.recalcReputation(booking.workerId);
+    // Stats outside TX (non-critical, idempotent recalcs)
+    if (result.old !== BookingStatus.PENDING) {
+      await this.usersService.bumpStat(result.saved.customerId, 'asCustomerFail');
+      await this.usersService.bumpStat(result.saved.workerId, 'asWorkerFail');
+      await this.usersService.recalcReputation(result.saved.customerId);
+      await this.usersService.recalcReputation(result.saved.workerId);
     }
 
-    // Audit log
-    await this.auditService.logAction(
-      userId,
-      'booking.cancel',
-      'booking',
-      booking.id,
-      {
-        reason,
-        refundAmount: amount,
-        refundPercent: percent,
-        refundStatus,
-        previousStatus: old,
-        agreedPrice: booking.agreedPrice,
-      },
-    );
-
     return {
-      status: saved.status,
-      refundAmount: amount,
-      refundStatus,
-      refundPercent: percent,
-      booking: saved,
+      status: result.saved.status,
+      refundAmount: result.amount,
+      refundStatus: result.refundStatus,
+      refundPercent: result.percent,
+      booking: result.saved,
     };
   }
 
