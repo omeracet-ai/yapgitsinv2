@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
@@ -46,6 +46,7 @@ export class UsersService {
     maxRate?: number;
     verifiedOnly?: boolean;
     availableOnly?: boolean;
+    availableDay?: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
     sortBy?: 'rating' | 'reputation' | 'rate_asc' | 'rate_desc';
     page?: number;
     limit?: number;
@@ -93,6 +94,13 @@ export class UsersService {
     }
     if (opts.verifiedOnly) {
       qb.andWhere('u.identityVerified = :verified', { verified: true });
+    }
+    if (opts.availableDay) {
+      // null schedule = "her gün müsait"; aksi halde gün true olmalı
+      qb.andWhere(
+        '(u.availabilitySchedule IS NULL OR u.availabilitySchedule LIKE :dayPat)',
+        { dayPat: `%"${opts.availableDay}":true%` },
+      );
     }
 
     switch (opts.sortBy) {
@@ -150,6 +158,31 @@ export class UsersService {
       averageRating: Math.round(average * 100) / 100,
       reputationScore: reputation,
     });
+  }
+
+  /** Phase 44: haftalık müsaitlik takvimi — null = "her gün müsait" */
+  async updateAvailability(
+    userId: string,
+    schedule: Record<string, unknown> | null | undefined,
+  ): Promise<{ schedule: User['availabilitySchedule'] }> {
+    if (schedule == null) {
+      await this.repo.update(userId, { availabilitySchedule: null });
+      return { schedule: null };
+    }
+    if (typeof schedule !== 'object' || Array.isArray(schedule)) {
+      throw new BadRequestException('schedule bir nesne olmalı');
+    }
+    const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+    const normalized = {} as Record<(typeof days)[number], boolean>;
+    for (const d of days) {
+      const v = (schedule as Record<string, unknown>)[d];
+      if (typeof v !== 'boolean') {
+        throw new BadRequestException(`schedule.${d} boolean olmalı`);
+      }
+      normalized[d] = v;
+    }
+    await this.repo.update(userId, { availabilitySchedule: normalized });
+    return { schedule: normalized };
   }
 
   async updateLocation(id: string, latitude: number, longitude: number): Promise<void> {

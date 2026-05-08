@@ -75,6 +75,16 @@ export class UsersController {
     return this.svc.getCompletionScore(req.user.id);
   }
 
+  // Phase 44: haftalık müsaitlik takvimi
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('me/availability')
+  updateAvailability(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { schedule?: Record<string, unknown> | null },
+  ) {
+    return this.svc.updateAvailability(req.user.id, body?.schedule ?? null);
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @Patch('me/location')
   async updateLocation(
@@ -174,6 +184,7 @@ export class UsersController {
     @Query('maxRate') maxRate?: string,
     @Query('verifiedOnly') verifiedOnly?: string,
     @Query('availableOnly') availableOnly?: string,
+    @Query('availableDay') availableDay?: string,
     @Query('sortBy') sortBy?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -204,6 +215,11 @@ export class UsersController {
       maxRate: parseNum(maxRate),
       verifiedOnly: parseBool(verifiedOnly),
       availableOnly: parseBool(availableOnly),
+      availableDay: (['mon','tue','wed','thu','fri','sat','sun'] as const).includes(
+        availableDay as 'mon',
+      )
+        ? (availableDay as 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun')
+        : undefined,
       sortBy: sortByVal,
       page: parseNum(page),
       limit: parseNum(limit),

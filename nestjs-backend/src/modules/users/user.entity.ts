@@ -128,6 +128,19 @@ export class User {
   @Column({ type: 'boolean', default: false })
   isAvailable: boolean;
 
+  // Haftalık müsaitlik takvimi — null = "her gün müsait" varsayımı
+  // Format: { mon, tue, wed, thu, fri, sat, sun: boolean }
+  @Column({ type: 'simple-json', nullable: true })
+  availabilitySchedule: {
+    mon: boolean;
+    tue: boolean;
+    wed: boolean;
+    thu: boolean;
+    fri: boolean;
+    sat: boolean;
+    sun: boolean;
+  } | null;
+
   // ── Tasker skills (Airtasker-style) ──────────────────────────────────────
   // Granular yetenek etiketleri — workerCategories'tan ayrı, daha spesifik.
   // Örnek: workerCategories=['Temizlik'] + workerSkills=['Derin Temizlik','Cam Silme','Halı Yıkama']
