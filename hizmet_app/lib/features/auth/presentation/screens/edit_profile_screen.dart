@@ -11,6 +11,7 @@ import '../providers/auth_provider.dart';
 import '../../../service_requests/data/service_request_repository.dart';
 import '../../../profile/widgets/profile_completion_card.dart';
 import '../../../photos/data/photo_repository.dart';
+import '../../../insurance/data/insurance_repository.dart';
 
 // Phase 62 — Sectioned Profile Edit UX
 //
@@ -271,6 +272,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               _contactSection(missing),
               _addressSection(missing),
               if (_isWorker) _workerSection(missing),
+              if (_isWorker) _insuranceSection(),
               _identitySection(missing),
               const SizedBox(height: 32),
             ]),
@@ -830,6 +832,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ]),
       );
 
+  Widget _insuranceSection() => _InsuranceSection(repo: ref.read(insuranceRepositoryProvider));
+
   BoxDecoration _boxDeco({bool highlight = false}) => BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -838,4 +842,166 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ? AppColors.error.withValues(alpha: 0.5)
                 : Colors.grey.shade200),
       );
+}
+
+// Phase 119 — Worker insurance edit section
+class _InsuranceSection extends StatefulWidget {
+  final InsuranceRepository repo;
+  const _InsuranceSection({required this.repo});
+
+  @override
+  State<_InsuranceSection> createState() => _InsuranceSectionState();
+}
+
+class _InsuranceSectionState extends State<_InsuranceSection> {
+  final _policyCtrl = TextEditingController();
+  final _providerCtrl = TextEditingController();
+  final _coverageCtrl = TextEditingController();
+  DateTime? _expiry;
+  bool _loading = true;
+  bool _saving = false;
+  bool _verified = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final ins = await widget.repo.getMine();
+    if (!mounted) return;
+    setState(() {
+      if (ins != null) {
+        _policyCtrl.text = ins.policyNumber;
+        _providerCtrl.text = ins.provider;
+        _coverageCtrl.text = ins.coverageAmount.toStringAsFixed(0);
+        _expiry = ins.expiresAt;
+        _verified = ins.verified;
+      }
+      _loading = false;
+    });
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _expiry ?? now.add(const Duration(days: 365)),
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365 * 10)),
+    );
+    if (picked != null) setState(() => _expiry = picked);
+  }
+
+  Future<void> _save() async {
+    final policy = _policyCtrl.text.trim();
+    final provider = _providerCtrl.text.trim();
+    final coverage = double.tryParse(_coverageCtrl.text.trim()) ?? 0;
+    if (policy.isEmpty || provider.isEmpty || coverage <= 0 || _expiry == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tüm alanları doldurun')),
+      );
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      final ins = await widget.repo.upsert(
+        policyNumber: policy,
+        provider: provider,
+        coverageAmount: coverage,
+        expiresAt: _expiry!,
+      );
+      if (!mounted) return;
+      setState(() => _verified = ins.verified);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sigorta bilgisi kaydedildi (admin onayı bekleniyor)')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Hata: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Text('🛡️', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: 8),
+              const Text('Mesleki Sorumluluk Sigortası',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+              const Spacer(),
+              if (_verified)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text('Onaylı',
+                      style: TextStyle(color: AppColors.success, fontSize: 12)),
+                ),
+            ]),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _policyCtrl,
+              decoration: const InputDecoration(labelText: 'Poliçe Numarası'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _providerCtrl,
+              decoration: const InputDecoration(labelText: 'Sigorta Şirketi'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _coverageCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                  labelText: 'Teminat Tutarı (₺)'),
+            ),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: _pickDate,
+              child: InputDecorator(
+                decoration: const InputDecoration(labelText: 'Bitiş Tarihi'),
+                child: Text(_expiry != null
+                    ? '${_expiry!.day}.${_expiry!.month}.${_expiry!.year}'
+                    : 'Tarih seçin'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _saving ? null : _save,
+                child: Text(_saving ? 'Kaydediliyor...' : 'Kaydet'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

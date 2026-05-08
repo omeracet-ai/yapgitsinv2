@@ -412,6 +412,45 @@ class _ProfileView extends ConsumerWidget {
                     ),
                   ),
 
+                // ── Phase 119: Sigortalı rozeti ─────────────────────────
+                if (data['insurance'] is Map) ...[
+                  const SizedBox(height: 12),
+                  Builder(builder: (_) {
+                    final ins = Map<String, dynamic>.from(data['insurance'] as Map);
+                    final provider = (ins['provider'] ?? '') as String;
+                    final coverage = ((ins['coverageAmount'] as num?) ?? 0).toInt();
+                    return Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: AppColors.success.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(children: [
+                        const Text('🛡️', style: TextStyle(fontSize: 24)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Sigortalı',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.success)),
+                              const SizedBox(height: 2),
+                              Text('$provider · $coverage₺ teminat',
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.textSecondary)),
+                            ],
+                          ),
+                        ),
+                      ]),
+                    );
+                  }),
+                ],
+
                 const SizedBox(height: 32),
               ],
             ),
