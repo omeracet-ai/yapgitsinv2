@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,7 @@ import '../../../photos/presentation/widgets/job_photo_picker.dart';
 import '../../../photos/presentation/widgets/job_video_picker.dart';
 import '../../../ai/data/ai_repository.dart';
 import '../../../job_templates/data/job_template_repository.dart';
+import '../../data/job_draft_storage.dart';
 
 class PostJobScreen extends ConsumerStatefulWidget {
   const PostJobScreen({super.key});
@@ -42,15 +44,177 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   bool _uploading = false;
   bool _aiLoading = false;
 
+  // Draft autosave
+  final JobDraftStorage _draftStorage = JobDraftStorage();
+  Timer? _draftDebounce;
+  Timer? _savedToastTimer;
+  bool _showSavedToast = false;
+  bool _draftRestored = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController.addListener(_scheduleDraftSave);
+    _descController.addListener(_scheduleDraftSave);
+    _locationController.addListener(_scheduleDraftSave);
+    _budgetController.addListener(_scheduleDraftSave);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeRestoreDraft());
+  }
 
   @override
   void dispose() {
+    _draftDebounce?.cancel();
+    _savedToastTimer?.cancel();
     _titleController.dispose();
     _descController.dispose();
     _locationController.dispose();
     _budgetController.dispose();
     _templateNameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _maybeRestoreDraft() async {
+    final draft = await _draftStorage.load();
+    if (!mounted || draft == null || draft.isEmpty) return;
+    final saved = DateTime.fromMillisecondsSinceEpoch(draft.savedAt);
+    final ago = DateTime.now().difference(saved);
+    final agoLabel = ago.inMinutes < 1
+        ? 'az önce'
+        : ago.inHours < 1
+            ? '${ago.inMinutes} dk önce'
+            : ago.inDays < 1
+                ? '${ago.inHours} sa önce'
+                : '${ago.inDays} gün önce';
+    final shouldRestore = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Taslak bulundu'),
+        content: Text(
+            'Önceden kaydedilmiş bir ilan taslağınız var ($agoLabel). Devam etmek ister misiniz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hayır, sıfırla'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white),
+            child: const Text('Devam et'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (shouldRestore == true) {
+      _applyDraft(draft);
+    } else {
+      await _draftStorage.clear();
+    }
+  }
+
+  void _applyDraft(JobDraft d) {
+    _draftRestored = true;
+    _titleController.text = d.title ?? '';
+    _descController.text = d.description ?? '';
+    _locationController.text = d.location ?? '';
+    _budgetController.text = d.budgetMin?.toStringAsFixed(0) ?? '';
+    setState(() {
+      _selectedCategory = d.category;
+      _lat = d.latitude;
+      _lng = d.longitude;
+      _uploadedPhotoUrls = List<String>.from(d.photos);
+      _uploadedVideoUrls = List<String>.from(d.videos);
+      if (d.dueDate != null && d.dueDate!.isNotEmpty) {
+        try {
+          _dueDate = DateTime.parse(d.dueDate!);
+        } catch (_) {}
+      }
+    });
+    _draftRestored = false;
+  }
+
+  JobDraft _currentDraft() => JobDraft(
+        title: _titleController.text,
+        description: _descController.text,
+        category: _selectedCategory,
+        location: _locationController.text,
+        budgetMin: double.tryParse(_budgetController.text),
+        dueDate: _dueDate == null
+            ? null
+            : '${_dueDate!.year}-${_dueDate!.month.toString().padLeft(2, '0')}-${_dueDate!.day.toString().padLeft(2, '0')}',
+        photos: _uploadedPhotoUrls,
+        videos: _uploadedVideoUrls,
+        latitude: _lat,
+        longitude: _lng,
+        savedAt: DateTime.now().millisecondsSinceEpoch,
+      );
+
+  void _scheduleDraftSave() {
+    if (_draftRestored) return;
+    _draftDebounce?.cancel();
+    _draftDebounce = Timer(const Duration(seconds: 5), _persistDraftNow);
+  }
+
+  Future<void> _persistDraftNow() async {
+    final draft = _currentDraft();
+    if (draft.isEmpty) return;
+    await _draftStorage.save(draft);
+    if (!mounted) return;
+    setState(() => _showSavedToast = true);
+    _savedToastTimer?.cancel();
+    _savedToastTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _showSavedToast = false);
+    });
+  }
+
+  Future<void> _confirmClearDraft() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Taslağı sil?'),
+        content: const Text(
+            'Mevcut form içeriği ve kaydedilmiş taslak silinecek. Emin misiniz?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Vazgeç')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await _draftStorage.clear();
+    if (!mounted) return;
+    _draftRestored = true;
+    _titleController.clear();
+    _descController.clear();
+    _locationController.clear();
+    _budgetController.clear();
+    _templateNameController.clear();
+    setState(() {
+      _selectedCategory = null;
+      _selectedPhotos = [];
+      _selectedVideos = [];
+      _uploadedPhotoUrls = [];
+      _uploadedVideoUrls = [];
+      _lat = null;
+      _lng = null;
+      _dueDate = null;
+      _currentStep = 0;
+      _saveAsTemplate = false;
+    });
+    _draftRestored = false;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Taslak silindi')),
+    );
   }
 
   @override
@@ -61,6 +225,26 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         title: const Text('İş İlanı Ver'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        actions: [
+          if (_showSavedToast)
+            const Padding(
+              padding: EdgeInsets.only(right: 4),
+              child: Center(
+                child: Row(children: [
+                  Icon(Icons.cloud_done, size: 16, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text('Taslak kaydedildi',
+                      style: TextStyle(fontSize: 12, color: Colors.white)),
+                  SizedBox(width: 8),
+                ]),
+              ),
+            ),
+          IconButton(
+            tooltip: 'Taslağı Sil',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: _confirmClearDraft,
+          ),
+        ],
       ),
       body: Form(
         key: _formKey,
@@ -186,6 +370,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         }
 
         if (mounted) setState(() => _currentStep++);
+        await _persistDraftNow();
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -211,7 +396,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               final emoji = cat['icon'] as String? ?? '🔧';
               final isSelected = _selectedCategory == name;
               return GestureDetector(
-                onTap: () => setState(() => _selectedCategory = name),
+                onTap: () {
+                  setState(() => _selectedCategory = name);
+                  _scheduleDraftSave();
+                },
                 child: Container(
                   width: 80,
                   padding: const EdgeInsets.all(12),
@@ -262,7 +450,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         child: child!,
       ),
     );
-    if (picked != null) setState(() => _dueDate = picked);
+    if (picked != null) {
+      setState(() => _dueDate = picked);
+      _scheduleDraftSave();
+    }
   }
 
   Widget _buildDetailsStep() {
@@ -583,6 +774,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         _lat = result['lat'] as double;
         _lng = result['lng'] as double;
       });
+      _scheduleDraftSave();
     }
   }
 
@@ -605,6 +797,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     };
 
     await ref.read(jobsProvider.notifier).addJob(jobData);
+    await _draftStorage.clear();
 
     if (_saveAsTemplate) {
       final tplName = _templateNameController.text.trim().isEmpty
