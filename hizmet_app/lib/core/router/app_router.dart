@@ -6,6 +6,7 @@ import '../../../features/auth/presentation/screens/login_screen.dart';
 import '../../../features/auth/presentation/screens/register_screen.dart';
 import '../../../features/jobs/presentation/screens/post_job_screen.dart';
 import '../../../features/tokens/presentation/screens/token_screen.dart';
+import '../../../features/loyalty/presentation/screens/loyalty_screen.dart';
 import '../../../features/subscriptions/presentation/screens/subscription_screen.dart';
 import '../../../features/ai/presentation/screens/support_agent_screen.dart';
 import '../../../features/ai/presentation/screens/ai_chat_screen.dart';
@@ -110,6 +111,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/jetonlar',
         builder: (context, state) => const TokenScreen(),
+      ),
+      GoRoute(
+        path: '/sadakat',
+        builder: (context, state) => const LoyaltyScreen(),
       ),
       GoRoute(
         path: '/abonelik',

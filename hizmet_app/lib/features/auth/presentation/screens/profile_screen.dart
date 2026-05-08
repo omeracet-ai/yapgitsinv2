@@ -958,6 +958,9 @@ class ProfileScreen extends ConsumerWidget {
             AvailabilityEditorSheet.show(context, initial: initial);
           }),
           ..._buildWorkerOnlyItems(context, ref),
+          _menuItem(Icons.card_giftcard_rounded, '🎁 Arkadaş Davet', () {
+            context.push('/sadakat');
+          }),
           _menuItem(Icons.payments_outlined, 'Kazançlarım', () {
             context.push('/kazanclarim');
           }),
