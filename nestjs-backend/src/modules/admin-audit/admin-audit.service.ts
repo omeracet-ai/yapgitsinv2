@@ -104,6 +104,50 @@ export class AdminAuditService {
     return [header, ...lines].join('\n');
   }
 
+  private clampDays(input: number, min = 30, max = 365): number {
+    const n = Math.floor(Number(input));
+    if (!Number.isFinite(n)) return min;
+    return Math.max(min, Math.min(max, n));
+  }
+
+  async previewPurge(
+    olderThanDaysInput: number,
+  ): Promise<{ wouldDelete: number; cutoffDate: string; olderThanDays: number }> {
+    const olderThanDays = this.clampDays(olderThanDaysInput);
+    const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+    const wouldDelete = await this.repo
+      .createQueryBuilder('log')
+      .where('log.createdAt < :cutoff', { cutoff })
+      .getCount();
+    return {
+      wouldDelete,
+      cutoffDate: cutoff.toISOString(),
+      olderThanDays,
+    };
+  }
+
+  async purgeOlderThan(
+    olderThanDaysInput: number,
+    adminUserId: string,
+  ): Promise<{ deleted: number; cutoffDate: string; olderThanDays: number }> {
+    const olderThanDays = this.clampDays(olderThanDaysInput);
+    const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+    const result = await this.repo
+      .createQueryBuilder()
+      .delete()
+      .where('createdAt < :cutoff', { cutoff })
+      .execute();
+    const deleted = Number(result.affected ?? 0);
+    const cutoffDate = cutoff.toISOString();
+    // Audit the purge AFTER the delete so it isn't itself purged.
+    await this.logAction(adminUserId, 'audit_log.purge', 'audit_log', undefined, {
+      olderThanDays,
+      deletedCount: deleted,
+      cutoffDate,
+    });
+    return { deleted, cutoffDate, olderThanDays };
+  }
+
   async getStats(daysInput: number): Promise<AuditLogStats> {
     const days = Math.max(1, Math.min(90, Math.floor(daysInput) || 30));
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);

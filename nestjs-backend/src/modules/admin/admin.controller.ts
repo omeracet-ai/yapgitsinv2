@@ -10,6 +10,7 @@ import type { UserReportStatus } from '../user-blocks/user-report.entity';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
 import { BulkVerifyDto } from './dto/bulk-verify.dto';
+import { PurgeAuditLogDto } from './dto/purge-audit-log.dto';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import type { Request } from 'express';
 import type { AuthUser } from '../../common/types/auth.types';
@@ -67,6 +68,22 @@ export class AdminController {
   getAuditLogStats(@Query('days') days?: string) {
     const parsed = Number(days) || 30;
     return this.adminAuditService.getStats(parsed);
+  }
+
+  @Get('audit-log/purge-preview')
+  getAuditLogPurgePreview(@Query('olderThanDays') olderThanDays?: string) {
+    const raw = Number(olderThanDays);
+    const parsed = Number.isFinite(raw) ? Math.floor(raw) : 30;
+    const clamped = Math.max(30, Math.min(365, parsed));
+    return this.adminAuditService.previewPurge(clamped);
+  }
+
+  @Post('audit-log/purge')
+  async purgeAuditLog(
+    @Body() body: PurgeAuditLogDto,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    return this.adminAuditService.purgeOlderThan(body.olderThanDays, req.user.id);
   }
 
   @Get('stats')
