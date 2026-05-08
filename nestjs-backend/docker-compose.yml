@@ -1,13 +1,25 @@
 version: '3.8'
 
 services:
+  api:
+    build: .
+    container_name: yapgitsin_api
+    ports:
+      - '3001:3001'
+    env_file: .env.production
+    depends_on:
+      - db
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
+
   db:
-    image: postgres:15-alpine
-    container_name: hizmet_db
+    image: postgres:16-alpine
+    container_name: yapgitsin_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: hizmet_db
+      POSTGRES_DB: ${DB_NAME:-yapgitsin_prod}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     ports:
       - '5432:5432'
     volumes:
@@ -16,7 +28,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: hizmet_redis
+    container_name: yapgitsin_redis
     ports:
       - '6379:6379'
     volumes:
@@ -26,3 +38,4 @@ services:
 volumes:
   pgdata:
   redisdata:
+  uploads:

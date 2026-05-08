@@ -54,9 +54,20 @@ async function bootstrap() {
   });
 
   // CORS: production'da ALLOWED_ORIGINS env değişkeni ile kısıtla
-  const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-    : true; // dev ortamında tüm originlere izin ver
+  const isProd = process.env.NODE_ENV === 'production';
+  const rawOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+    : [];
+  if (isProd) {
+    if (rawOrigins.length === 0) {
+      throw new Error('Production requires ALLOWED_ORIGINS env (comma-separated list)');
+    }
+    const bad = rawOrigins.find((o) => o === '*' || /localhost|127\.0\.0\.1/.test(o));
+    if (bad) {
+      throw new Error(`Production ALLOWED_ORIGINS rejects "${bad}" (no *, localhost, 127.0.0.1)`);
+    }
+  }
+  const allowedOrigins = rawOrigins.length > 0 ? rawOrigins : true; // dev: tüm originler
   app.enableCors({
     origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
