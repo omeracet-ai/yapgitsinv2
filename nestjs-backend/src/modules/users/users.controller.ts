@@ -9,13 +9,16 @@ import {
   Query,
   UseGuards,
   Request,
+  Res,
   ParseUUIDPipe,
   ParseIntPipe,
   BadRequestException,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { AddOfferTemplateDto } from './dto/add-offer-template.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
+import { DataPrivacyService } from './data-privacy.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuthGuard } from '@nestjs/passport';
@@ -36,6 +39,7 @@ export class UsersController {
     private readonly earningsSvc: EarningsService,
     private readonly insuranceSvc: WorkerInsuranceService,
     private readonly adminAuditService: AdminAuditService,
+    private readonly dataPrivacy: DataPrivacyService,
     @InjectRepository(Job) private jobsRepo: Repository<Job>,
     @InjectRepository(Review) private reviewsRepo: Repository<Review>,
     @InjectRepository(Offer) private offersRepo: Repository<Offer>,
@@ -268,6 +272,42 @@ export class UsersController {
     if (!ins) return null;
     if (!this.insuranceSvc.isInsured(ins)) return null;
     return this.insuranceSvc.toPublic(ins);
+  }
+
+  // ── Phase 124: KVKK data export (Madde 11) ───────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/data-export')
+  async exportMyData(
+    @Request() req: AuthenticatedRequest,
+    @Res() res: Response,
+  ) {
+    const data = await this.dataPrivacy.exportUserData(req.user.id);
+    const stamp = new Date().toISOString().slice(0, 10);
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    res.set(
+      'Content-Disposition',
+      `attachment; filename="yapgitsin-veriler-${req.user.id}-${stamp}.json"`,
+    );
+    res.send(JSON.stringify(data, null, 2));
+  }
+
+  // ── Phase 124: KVKK data deletion request ─────────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/data-delete-request')
+  async requestDataDeletion(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { reason?: string },
+  ) {
+    const reason = (body?.reason || '').trim() || null;
+    const result = await this.dataPrivacy.createDeletionRequest(req.user.id, reason);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'user.data_delete_request',
+      'data_deletion_request',
+      result.id,
+      { reason },
+    );
+    return result;
   }
 
   // ── Phase 60: Account self-deletion (KVKK) ────────────────────────

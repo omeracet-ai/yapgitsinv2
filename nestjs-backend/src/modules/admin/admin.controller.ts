@@ -17,6 +17,8 @@ import { SuspendUserDto } from './dto/suspend-user.dto';
 import { PurgeAuditLogDto } from './dto/purge-audit-log.dto';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { WorkerInsuranceService } from '../users/worker-insurance.service';
+import { DataPrivacyService } from '../users/data-privacy.service';
+import { DataDeletionRequestStatus } from '../users/data-deletion-request.entity';
 import type { Request } from 'express';
 import type { AuthUser } from '../../common/types/auth.types';
 
@@ -31,7 +33,59 @@ export class AdminController {
     private readonly adminAuditService: AdminAuditService,
     private readonly systemSettings: SystemSettingsService,
     private readonly insuranceSvc: WorkerInsuranceService,
+    private readonly dataPrivacy: DataPrivacyService,
   ) {}
+
+  // ── Phase 124: KVKK data deletion request moderation ─────────────
+  @Get('data-deletion-requests')
+  async listDataDeletionRequests(@Query('status') status?: string) {
+    const validStatuses = Object.values(DataDeletionRequestStatus) as string[];
+    const filter = status && validStatuses.includes(status)
+      ? (status as DataDeletionRequestStatus)
+      : undefined;
+    return this.dataPrivacy.listDeletionRequests(filter);
+  }
+
+  @Patch('data-deletion-requests/:id')
+  async moderateDataDeletionRequest(
+    @Param('id') id: string,
+    @Body() body: { action: 'approve' | 'reject'; adminNote?: string },
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    if (body.action !== 'approve' && body.action !== 'reject') {
+      throw new Error('action approve veya reject olmalı');
+    }
+    const result = await this.dataPrivacy.moderateDeletionRequest(
+      id,
+      body.action,
+      req.user.id,
+      body.adminNote,
+    );
+    await this.adminAuditService.logAction(
+      req.user.id,
+      `data_deletion.${body.action}`,
+      'data_deletion_request',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
+    return result;
+  }
+
+  @Post('data-deletion-requests/:id/execute')
+  async executeDataDeletion(
+    @Param('id') id: string,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.dataPrivacy.executeDeletion(id, req.user.id);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'data_deletion.execute',
+      'data_deletion_request',
+      id,
+      { userId: result.userId },
+    );
+    return result;
+  }
 
   // ── Phase 119: Worker insurance verify ────────────────────────────
   @Patch('users/:id/insurance/verify')
