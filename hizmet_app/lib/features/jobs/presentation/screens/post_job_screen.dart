@@ -13,6 +13,10 @@ import '../../../photos/presentation/widgets/job_video_picker.dart';
 import '../../../ai/data/ai_repository.dart';
 import '../../../job_templates/data/job_template_repository.dart';
 import '../../data/job_draft_storage.dart';
+import '../../widgets/job_wizard_progress.dart';
+import '../../widgets/post_job_step1.dart';
+import '../../widgets/post_job_step2.dart';
+import '../../widgets/post_job_step3.dart';
 
 class PostJobScreen extends ConsumerStatefulWidget {
   const PostJobScreen({super.key});
@@ -222,9 +226,19 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('İş İlanı Ver'),
+        title: Text('Yeni İlan • Adım ${_currentStep + 1}/3'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (_currentStep > 0) {
+              setState(() => _currentStep--);
+            } else {
+              Navigator.of(context).pop();
+            }
+          },
+        ),
         actions: [
           if (_showSavedToast)
             const Padding(
@@ -248,39 +262,76 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       ),
       body: Form(
         key: _formKey,
-        child: Stepper(
-          currentStep: _currentStep,
-          onStepContinue: _onStepContinue,
-          onStepCancel: () {
-            if (_currentStep > 0) setState(() => _currentStep--);
-          },
-          controlsBuilder: (context, details) => _buildControls(details),
-          steps: [
-            Step(
-              title: const Text('Kategori'),
-              content: _buildCategoryStep(),
-              isActive: _currentStep >= 0,
-              state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+        child: Column(
+          children: [
+            JobWizardProgress(currentStep: _currentStep),
+            Expanded(
+              child: IndexedStack(
+                index: _currentStep,
+                children: [
+                  PostJobStep1(body: _buildStep1Body()),
+                  PostJobStep2(body: _buildStep2Body()),
+                  PostJobStep3(body: _buildStep3Body()),
+                ],
+              ),
             ),
-            Step(
-              title: const Text('Detaylar'),
-              content: _buildDetailsStep(),
-              isActive: _currentStep >= 1,
-              state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-            ),
-            Step(
-              title: const Text('Fotoğraflar'),
-              content: _buildPhotosStep(),
-              isActive: _currentStep >= 2,
-              state: _currentStep > 2
-                  ? StepState.complete
-                  : StepState.indexed,
-            ),
-            Step(
-              title: const Text('Bütçe & Konum'),
-              content: _buildBudgetStep(),
-              isActive: _currentStep >= 3,
-              state: StepState.indexed,
+            _buildStickyControls(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStickyControls() {
+    final isLastStep = _currentStep == 2;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.grey.shade200)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            if (_currentStep > 0)
+              Expanded(
+                flex: 1,
+                child: OutlinedButton(
+                  onPressed: _uploading
+                      ? null
+                      : () => setState(() => _currentStep--),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Geri'),
+                ),
+              ),
+            if (_currentStep > 0) const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: ElevatedButton(
+                onPressed: _uploading ? null : _onStepContinue,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+                child: _uploading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(isLastStep ? 'İlanı Yayınla' : 'İleri'),
+              ),
             ),
           ],
         ),
@@ -288,54 +339,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     );
   }
 
-  Widget _buildControls(ControlsDetails details) {
-    final isLastStep = _currentStep == 3;
-    final isPhotoStep = _currentStep == 2;
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton(
-              onPressed: _uploading ? null : details.onStepContinue,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-              child: _uploading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
-                    )
-                  : Text(
-                      isLastStep
-                          ? 'İlanı Yayınla'
-                          : isPhotoStep
-                              ? 'Fotoğrafları Yükle ve Devam Et'
-                              : 'Devam Et',
-                    ),
-            ),
-          ),
-          if (_currentStep > 0) ...[
-            const SizedBox(width: 12),
-            TextButton(
-              onPressed: details.onStepCancel,
-              child: const Text('Geri'),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
   Future<void> _onStepContinue() async {
     if (_currentStep == 0) {
+      // Step 1: kategori (dueDate opsiyonel — esnek default)
       if (_selectedCategory == null) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Lütfen bir kategori seçin')));
@@ -343,11 +349,21 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       }
       setState(() => _currentStep++);
     } else if (_currentStep == 1) {
-      if (!(_formKey.currentState?.validate() ?? false)) return;
+      // Step 2: title + description (budget opsiyonel)
+      if (_titleController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('İş başlığı boş bırakılamaz')));
+        return;
+      }
+      if (_descController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Açıklama boş bırakılamaz')));
+        return;
+      }
       setState(() => _currentStep++);
-    } else if (_currentStep == 2) {
-      // Fotoğraf & Video adımı: en az 1 fotoğraf zorunlu
-      if (_selectedPhotos.isEmpty) {
+    } else {
+      // Step 3: en az 1 fotoğraf zorunlu, sonra upload + submit
+      if (_selectedPhotos.isEmpty && _uploadedPhotoUrls.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('En az 1 fotoğraf eklemelisiniz')),
         );
@@ -355,22 +371,21 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       }
       setState(() => _uploading = true);
       try {
-        // Fotoğrafları yükle
-        final photoUrls = await ref
-            .read(photoRepositoryProvider)
-            .uploadJobPhotos(_selectedPhotos);
-        _uploadedPhotoUrls = photoUrls;
-
-        // Videoları yükle (varsa)
+        if (_selectedPhotos.isNotEmpty) {
+          final photoUrls = await ref
+              .read(photoRepositoryProvider)
+              .uploadJobPhotos(_selectedPhotos);
+          _uploadedPhotoUrls = photoUrls;
+        }
         if (_selectedVideos.isNotEmpty) {
           final videoUrls = await ref
               .read(photoRepositoryProvider)
               .uploadJobVideos(_selectedVideos);
           _uploadedVideoUrls = videoUrls;
         }
-
-        if (mounted) setState(() => _currentStep++);
         await _persistDraftNow();
+        if (!mounted) return;
+        _submitJob();
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -381,12 +396,29 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       } finally {
         if (mounted) setState(() => _uploading = false);
       }
-    } else {
-      _submitJob();
     }
   }
 
-  Widget _buildCategoryStep() {
+  Widget _buildStep1Body() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('Kategori seçin',
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary)),
+        const SizedBox(height: 12),
+        _buildCategoryGrid(),
+        const SizedBox(height: 24),
+        const Divider(),
+        const SizedBox(height: 16),
+        _buildDueDateSection(),
+      ],
+    );
+  }
+
+  Widget _buildCategoryGrid() {
     return ref.watch(categoriesProvider).when(
           data: (cats) => Wrap(
             spacing: 12,
@@ -456,88 +488,80 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     }
   }
 
-  Widget _buildDetailsStep() {
+  Widget _buildDueDateSection() {
     final dueDateLabel = _dueDate == null
         ? 'Esnek (tarih önemli değil)'
         : '${_dueDate!.day.toString().padLeft(2, '0')}/'
             '${_dueDate!.month.toString().padLeft(2, '0')}/'
             '${_dueDate!.year}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Ne zaman yapılmasını istiyorsunuz?',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary)),
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: _pickDueDate,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            decoration: BoxDecoration(
+              color: _dueDate != null ? AppColors.primaryLight : Colors.white,
+              border: Border.all(
+                color: _dueDate != null ? AppColors.primary : Colors.grey.shade300,
+                width: _dueDate != null ? 1.5 : 1,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_today_outlined,
+                    size: 18,
+                    color: _dueDate != null ? AppColors.primary : Colors.grey.shade500),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(dueDateLabel,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: _dueDate != null ? AppColors.primary : Colors.grey.shade600,
+                        fontWeight: _dueDate != null ? FontWeight.w600 : FontWeight.normal,
+                      )),
+                ),
+                if (_dueDate != null)
+                  GestureDetector(
+                    onTap: () => setState(() => _dueDate = null),
+                    child: Icon(Icons.close, size: 16, color: Colors.grey.shade500),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        GestureDetector(
+          onTap: () => setState(() => _dueDate = null),
+          child: Row(
+            children: [
+              Icon(
+                _dueDate == null ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                size: 16,
+                color: _dueDate == null ? AppColors.primary : Colors.grey.shade400,
+              ),
+              const SizedBox(width: 6),
+              Text('Esnek — tarih önemli değil',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: _dueDate == null ? AppColors.primary : Colors.grey.shade500)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
+  Widget _buildStep2Body() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Teslim tarihi — ilk seçenek (Airtasker tarzı)
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Ne zaman yapılmasını istiyorsunuz?',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary)),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: _pickDueDate,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: _dueDate != null ? AppColors.primaryLight : Colors.white,
-                        border: Border.all(
-                          color: _dueDate != null ? AppColors.primary : Colors.grey.shade300,
-                          width: _dueDate != null ? 1.5 : 1,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.calendar_today_outlined,
-                              size: 18,
-                              color: _dueDate != null ? AppColors.primary : Colors.grey.shade500),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(dueDateLabel,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: _dueDate != null ? AppColors.primary : Colors.grey.shade600,
-                                  fontWeight: _dueDate != null ? FontWeight.w600 : FontWeight.normal,
-                                )),
-                          ),
-                          if (_dueDate != null)
-                            GestureDetector(
-                              onTap: () => setState(() => _dueDate = null),
-                              child: Icon(Icons.close, size: 16, color: Colors.grey.shade500),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            GestureDetector(
-              onTap: () => setState(() => _dueDate = null),
-              child: Row(
-                children: [
-                  Icon(
-                    _dueDate == null ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                    size: 16,
-                    color: _dueDate == null ? AppColors.primary : Colors.grey.shade400,
-                  ),
-                  const SizedBox(width: 6),
-                  Text('Esnek — tarih önemli değil',
-                      style: TextStyle(
-                          fontSize: 13,
-                          color: _dueDate == null ? AppColors.primary : Colors.grey.shade500)),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        const Divider(),
-        const SizedBox(height: 16),
         TextFormField(
           controller: _titleController,
           decoration: const InputDecoration(
@@ -548,7 +572,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _descController,
-          maxLines: 3,
+          maxLines: 4,
           decoration: const InputDecoration(labelText: 'Açıklama'),
           validator: (v) => v?.isEmpty ?? true ? 'Boş bırakılamaz' : null,
         ),
@@ -569,6 +593,18 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                 )
               : const Icon(Icons.auto_awesome, size: 18),
           label: Text(_aiLoading ? 'AI hazırlıyor…' : 'AI ile Otomatik Doldur'),
+        ),
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _budgetController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Tahmini Bütçe (₺)',
+            hintText: 'Opsiyonel',
+            prefixIcon: Icon(Icons.payments_outlined),
+          ),
         ),
       ],
     );
@@ -621,26 +657,30 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     }
   }
 
-  Widget _buildPhotosStep() {
+  Widget _buildStep3Body() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const Text('Fotoğraf & Video',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary)),
+        const SizedBox(height: 10),
         JobPhotoPicker(
           initialFiles: _selectedPhotos,
           onChanged: (files) => setState(() => _selectedPhotos = files),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         JobVideoPicker(
           initialFiles: _selectedVideos,
           onChanged: (files) => setState(() => _selectedVideos = files),
         ),
-      ],
-    );
-  }
-
-  Widget _buildBudgetStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 16),
+        const Text('Konum',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary)),
+        const SizedBox(height: 10),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -689,13 +729,6 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               ],
             ),
           ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _budgetController,
-          keyboardType: TextInputType.number,
-          decoration:
-              const InputDecoration(labelText: 'Tahmini Bütçe (₺)'),
-        ),
         const SizedBox(height: 16),
         Container(
           decoration: BoxDecoration(
