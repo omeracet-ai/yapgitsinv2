@@ -37,6 +37,7 @@ import { Provider } from './modules/providers/provider.entity';
 import { ChatMessage } from './modules/chat/chat-message.entity';
 import { JobQuestion } from './modules/jobs/job-question.entity';
 import { JobQuestionReply } from './modules/jobs/job-question-reply.entity';
+import { SavedJob } from './modules/jobs/saved-job.entity';
 import { OnboardingSlide } from './modules/onboarding/onboarding-slide.entity';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { FavoriteProvider } from './modules/favorites/favorite-provider.entity';
@@ -96,6 +97,7 @@ import { AdminAuditModule } from './modules/admin-audit/admin-audit.module';
           ChatMessage,
           JobQuestion,
           JobQuestionReply,
+          SavedJob,
           OnboardingSlide,
           FavoriteProvider,
           FavoriteWorker,

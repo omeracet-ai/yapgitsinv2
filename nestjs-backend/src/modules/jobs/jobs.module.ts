@@ -4,12 +4,14 @@ import { Job } from './job.entity';
 import { Offer } from './offer.entity';
 import { JobQuestion } from './job-question.entity';
 import { JobQuestionReply } from './job-question-reply.entity';
+import { SavedJob } from './saved-job.entity';
 import { JobsService } from './jobs.service';
 import { JobsController } from './jobs.controller';
 import { OffersService } from './offers.service';
 import { OffersController, OffersRootController } from './offers.controller';
 import { QuestionsService } from './questions.service';
 import { QuestionsController } from './questions.controller';
+import { SavedJobsService } from './saved-jobs.service';
 import { UsersModule } from '../users/users.module';
 import { TokensModule } from '../tokens/tokens.module';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -20,7 +22,7 @@ import { UserBlocksModule } from '../user-blocks/user-blocks.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Job, Offer, JobQuestion, JobQuestionReply]),
+    TypeOrmModule.forFeature([Job, Offer, JobQuestion, JobQuestionReply, SavedJob]),
     UsersModule,
     TokensModule,
     NotificationsModule,
@@ -29,7 +31,7 @@ import { UserBlocksModule } from '../user-blocks/user-blocks.module';
     DisputesModule,
     UserBlocksModule,
   ],
-  providers: [JobsService, OffersService, QuestionsService],
+  providers: [JobsService, OffersService, QuestionsService, SavedJobsService],
   controllers: [JobsController, OffersController, OffersRootController, QuestionsController],
   exports: [JobsService, OffersService],
 })

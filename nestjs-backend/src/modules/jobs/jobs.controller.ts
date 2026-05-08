@@ -9,10 +9,12 @@ import {
   Query,
   UseGuards,
   Request,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JobsService } from './jobs.service';
 import { OffersService } from './offers.service';
+import { SavedJobsService } from './saved-jobs.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
 import { JobStatus } from './job.entity';
 import { OfferStatus } from './offer.entity';
@@ -24,7 +26,33 @@ export class JobsController {
   constructor(
     private readonly jobsService: JobsService,
     private readonly offersService: OffersService,
+    private readonly savedJobsService: SavedJobsService,
   ) {}
+
+  // ── Saved jobs (Phase 38) ─────────────────────────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Get('saved')
+  listSavedJobs(@Request() req: AuthenticatedRequest) {
+    return this.savedJobsService.listSaved(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('saved/:jobId')
+  saveJob(
+    @Request() req: AuthenticatedRequest,
+    @Param('jobId', ParseUUIDPipe) jobId: string,
+  ) {
+    return this.savedJobsService.saveJob(req.user.id, jobId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('saved/:jobId')
+  unsaveJob(
+    @Request() req: AuthenticatedRequest,
+    @Param('jobId', ParseUUIDPipe) jobId: string,
+  ) {
+    return this.savedJobsService.unsaveJob(req.user.id, jobId);
+  }
 
   @Get()
   findAll(
