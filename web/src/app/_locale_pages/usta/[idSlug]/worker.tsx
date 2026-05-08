@@ -8,6 +8,7 @@ import LeadForm from '@/components/LeadForm';
 import WorkerReviews from '@/components/WorkerReviews';
 import { getDict, localePath, type Locale } from '@/i18n';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import ResponsiveImage from '@/components/ResponsiveImage';
 
 export async function getWorkerStaticSlugs(): Promise<string[]> {
   const workers = unwrap(await getWorkers({ limit: '100' })).slice(0, 100);
@@ -66,8 +67,21 @@ export default async function renderWorker(L: Locale, idSlug: string) {
 
       <section className="bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] text-white">
         <div className="container mx-auto max-w-5xl px-4 md:px-6 lg:px-8 py-8 md:py-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 text-center sm:text-left">
-          <div className="w-20 h-20 md:w-[120px] md:h-[120px] mx-auto sm:mx-0 rounded-full bg-white/20 flex items-center justify-center text-3xl md:text-5xl font-bold flex-shrink-0">
-            {w.fullName?.[0] || '?'}
+          <div className="w-20 h-20 md:w-[120px] md:h-[120px] mx-auto sm:mx-0 rounded-full bg-white/20 flex items-center justify-center text-3xl md:text-5xl font-bold flex-shrink-0 overflow-hidden">
+            {w.profileImageUrl ? (
+              // Phase 96: AVIF/WebP/JPEG <picture> — above-the-fold, priority
+              <ResponsiveImage
+                src={w.profileImageUrl}
+                alt={w.fullName}
+                width={120}
+                height={120}
+                sizes="(max-width: 768px) 80px, 120px"
+                priority
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              w.fullName?.[0] || '?'
+            )}
           </div>
           <div className="min-w-0">
             <h1 className="text-2xl md:text-3xl font-bold flex flex-wrap items-center justify-center sm:justify-start gap-2 leading-tight">

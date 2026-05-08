@@ -5,6 +5,7 @@ import { jsonLd, jobPostingLD, breadcrumbLD, clip } from '@/lib/seo';
 import LeadForm from '@/components/LeadForm';
 import { getDict, localePath, type Locale } from '@/i18n';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import ResponsiveImage from '@/components/ResponsiveImage';
 
 export async function getJobStaticSlugs(): Promise<string[]> {
   const jobs = unwrap(await getJobs({ status: 'open', limit: '100' })).slice(0, 100);
@@ -70,8 +71,17 @@ export default async function renderJob(L: Locale, idSlug: string) {
           {job.photos?.length ? (
             <div className="grid grid-cols-3 gap-2">
               {job.photos.map((p, i) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img key={i} src={p} alt={`${job.title} - ${i + 1}`} className="rounded-lg border border-[var(--border)] aspect-square object-cover" loading="lazy" />
+                // Phase 96: AVIF/WebP/JPEG. First photo above-the-fold → priority.
+                <ResponsiveImage
+                  key={i}
+                  src={p}
+                  alt={`${job.title} - ${i + 1}`}
+                  width={400}
+                  height={400}
+                  sizes="(max-width: 768px) 33vw, 240px"
+                  priority={i === 0}
+                  className="rounded-lg border border-[var(--border)] aspect-square object-cover w-full h-full"
+                />
               ))}
             </div>
           ) : null}
