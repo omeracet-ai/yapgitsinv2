@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/job_shimmer.dart';
 import '../../../../features/categories/data/category_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../widgets/save_job_button.dart';
 import '../providers/job_provider.dart';
 import 'job_detail_screen.dart';
 
@@ -336,6 +337,7 @@ class _JobCard extends StatelessWidget {
                           fontSize: 14,
                           color: AppColors.primary)),
                 ),
+                SaveJobButton(jobId: job.id),
               ],
             ),
             const SizedBox(height: 12),
