@@ -958,6 +958,9 @@ class ProfileScreen extends ConsumerWidget {
           }),
           ..._buildWorkerOnlyItems(context, ref),
           _menuItem(Icons.payments_outlined, 'Kazançlarım', () {
+            context.push('/kazanclarim');
+          }),
+          _menuItem(Icons.history_outlined, 'İşlem Geçmişi', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const EarningsScreen()));
           }),

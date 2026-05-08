@@ -19,6 +19,7 @@ import '../../../features/onboarding/presentation/screens/onboarding_screen.dart
 import '../../../features/job_templates/presentation/job_templates_screen.dart';
 import '../../../features/offers/presentation/screens/offer_templates_screen.dart';
 import '../../../features/statements/presentation/statement_screen.dart';
+import '../../../features/earnings/presentation/screens/earnings_screen.dart';
 import '../../../features/users/presentation/screens/favorites_screen.dart';
 import '../../../features/users/presentation/screens/blocked_users_screen.dart';
 import '../../../features/jobs/presentation/screens/saved_jobs_screen.dart';
@@ -111,6 +112,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/abonelik',
         builder: (context, state) => const SubscriptionScreen(),
+      ),
+      GoRoute(
+        path: '/kazanclarim',
+        builder: (context, state) => const EarningsScreen(),
       ),
       GoRoute(
         path: '/destek',
