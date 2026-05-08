@@ -23,7 +23,8 @@
     "migration:create": "npm run typeorm -- migration:create",
     "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/data-source.ts",
-    "migration:show": "npm run typeorm -- migration:show -d src/data-source.ts"
+    "migration:show": "npm run typeorm -- migration:show -d src/data-source.ts",
+    "openapi:export": "ts-node -r tsconfig-paths/register scripts/export-openapi.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",

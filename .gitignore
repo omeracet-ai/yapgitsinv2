@@ -24,3 +24,6 @@ agent-teams/release/
 agent-teams/dist/
 hizmet_app/build/
 .gstack/
+nestjs-backend/openapi.json
+packages/api-client/generated/types.ts
+packages/api-client/node_modules/
