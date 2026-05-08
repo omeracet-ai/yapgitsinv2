@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import {
   TokenTransaction,
   TxType,
@@ -8,6 +8,8 @@ import {
   PaymentMethod,
 } from './token-transaction.entity';
 import { User } from '../users/user.entity';
+import { Notification, NotificationType } from '../notifications/notification.entity';
+import { GiftTokensDto } from './dto/gift-tokens.dto';
 
 export const OFFER_TOKEN_COST = 5;
 
@@ -17,7 +19,82 @@ export class TokensService {
     @InjectRepository(TokenTransaction)
     private txRepo: Repository<TokenTransaction>,
     @InjectRepository(User) private userRepo: Repository<User>,
+    private dataSource: DataSource,
   ) {}
+
+  async giftTokens(
+    senderId: string,
+    dto: GiftTokensDto,
+  ): Promise<{
+    senderBalance: number;
+    recipientBalance: number;
+    amount: number;
+    recipientName: string;
+  }> {
+    if (senderId === dto.recipientId) {
+      throw new BadRequestException('Kendine token hediye edemezsin');
+    }
+    const amount = dto.amount;
+    const note = dto.note ?? '';
+
+    return this.dataSource.transaction(async (manager) => {
+      const sender = await manager.findOne(User, { where: { id: senderId } });
+      if (!sender) throw new NotFoundException('Gönderen bulunamadı');
+      const recipient = await manager.findOne(User, {
+        where: { id: dto.recipientId },
+      });
+      if (!recipient) throw new NotFoundException('Alıcı bulunamadı');
+      if (sender.tokenBalance < amount) {
+        throw new BadRequestException(
+          `Yetersiz bakiye. Gerekli: ${amount}, Mevcut: ${sender.tokenBalance}`,
+        );
+      }
+
+      sender.tokenBalance = sender.tokenBalance - amount;
+      recipient.tokenBalance = recipient.tokenBalance + amount;
+      await manager.save(User, sender);
+      await manager.save(User, recipient);
+
+      await manager.save(TokenTransaction, [
+        manager.create(TokenTransaction, {
+          userId: senderId,
+          type: TxType.SPEND,
+          amount: -amount,
+          description: `Hediye → ${recipient.fullName}: ${note}`.trim(),
+          status: TxStatus.COMPLETED,
+          paymentMethod: PaymentMethod.SYSTEM,
+          paymentRef: `GIFT-${Date.now()}`,
+        }),
+        manager.create(TokenTransaction, {
+          userId: recipient.id,
+          type: TxType.PURCHASE,
+          amount: amount,
+          description: `Hediye ← ${sender.fullName}: ${note}`.trim(),
+          status: TxStatus.COMPLETED,
+          paymentMethod: PaymentMethod.SYSTEM,
+          paymentRef: `GIFT-${Date.now()}`,
+        }),
+      ]);
+
+      await manager.save(
+        Notification,
+        manager.create(Notification, {
+          userId: recipient.id,
+          type: NotificationType.SYSTEM,
+          title: 'Token Hediyesi',
+          body: `${sender.fullName} size ${amount} token gönderdi${note ? `: ${note}` : ''}`,
+          refId: senderId,
+        }),
+      );
+
+      return {
+        senderBalance: sender.tokenBalance,
+        recipientBalance: recipient.tokenBalance,
+        amount,
+        recipientName: recipient.fullName,
+      };
+    });
+  }
 
   async getBalance(userId: string): Promise<{ balance: number }> {
     const user = await this.userRepo.findOne({ where: { id: userId } });

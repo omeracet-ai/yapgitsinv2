@@ -9,6 +9,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { TokensService } from './tokens.service';
 import { PaymentMethod } from './token-transaction.entity';
+import { GiftTokensDto } from './dto/gift-tokens.dto';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @Controller('tokens')
@@ -34,5 +35,10 @@ export class TokensController {
     const method =
       body.paymentMethod === 'bank' ? PaymentMethod.BANK : PaymentMethod.CRYPTO;
     return this.svc.purchase(req.user.id, body.amount, method);
+  }
+
+  @Post('gift')
+  gift(@Request() req: AuthenticatedRequest, @Body() dto: GiftTokensDto) {
+    return this.svc.giftTokens(req.user.id, dto);
   }
 }
