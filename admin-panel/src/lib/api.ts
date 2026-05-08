@@ -203,7 +203,25 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  // System settings (Phase 77)
+  listSettings: () => request<SystemSetting[]>('/admin/settings'),
+  getSetting:   (key: string) => request<{ key: string; value: string }>(`/admin/settings/${key}`),
+  updateSetting:(key: string, value: string) =>
+    request<SystemSetting>(`/admin/settings/${key}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ value }),
+    }),
 };
+
+export interface SystemSetting {
+  key: string;
+  value: string;
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
+export const CONTACT_BLOCK_KEY = 'contact_sharing_block_enabled';
 
 // ── Tip tanımları ────────────────────────────────────────────────────────────
 

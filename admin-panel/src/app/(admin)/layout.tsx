@@ -29,6 +29,7 @@ const NAV = [
   { href: "/audit-log",       label: "Denetim Kaydı",  icon: "📜" },
   { href: "/broadcast",       label: "Duyuru Gönder",  icon: "📢" },
   { href: "/status",          label: "Sistem Durumu",  icon: "🩺" },
+  { href: "/ayarlar",         label: "Ayarlar",        icon: "⚙️" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
