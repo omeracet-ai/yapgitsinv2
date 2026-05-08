@@ -158,6 +158,18 @@ export const api = {
 
   // Moderation
   flaggedItems:           ()                => request<FlaggedItem[]>('/admin/moderation/flagged'),
+  getModerationQueue: (opts: { type: 'job' | 'review' | 'chat'; page?: number; limit?: number }) => {
+    const p = new URLSearchParams();
+    p.set('type', opts.type);
+    if (opts.page !== undefined) p.set('page', String(opts.page));
+    if (opts.limit !== undefined) p.set('limit', String(opts.limit));
+    return request<ModerationQueueResponse>(`/admin/moderation/queue?${p.toString()}`);
+  },
+  moderateItem: (type: 'job' | 'review' | 'chat', id: string, action: 'approve' | 'remove' | 'ban_user', adminNote?: string) =>
+    request<{ id: string; type: string; action: string; ok: boolean }>(
+      `/admin/moderation/${type}/${id}`,
+      { method: 'PATCH', body: JSON.stringify({ action, ...(adminNote ? { adminNote } : {}) }) },
+    ),
   deleteFlaggedChat:      (id: string)      => request<{ id: string; type: string; cleared: boolean }>(`/admin/moderation/chat/${id}`,     { method: 'DELETE' }),
   deleteFlaggedQuestion:  (id: string)      => request<{ id: string; type: string; cleared: boolean }>(`/admin/moderation/question/${id}`, { method: 'DELETE' }),
 
@@ -344,6 +356,25 @@ export interface PromoCode {
   appliesTo: 'tokens' | 'offer' | 'all';
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ModerationQueueItem {
+  id: string;
+  type: 'job' | 'review' | 'chat';
+  content: string;
+  flagReason: string | null;
+  fraudScore: number | null;
+  createdAt: string;
+  userId: string | null;
+  userName: string | null;
+}
+
+export interface ModerationQueueResponse {
+  data: ModerationQueueItem[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
 }
 
 export interface FlaggedItem {
