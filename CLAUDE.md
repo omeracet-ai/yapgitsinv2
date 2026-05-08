@@ -370,6 +370,9 @@ AI: **claude-opus-4-7** model, adaptive thinking, prompt caching (`cache_control
 | PATCH | `/admin/categories/:id` | Kategori güncelle |
 | GET | `/admin/audit-log/stats` | `?days=N` (1-90, default 30) → {totalEntries, entriesPerDay[], topActions[], topAdmins[], topTargetTypes[]} (her liste max 10) |
 | POST | `/admin/notifications/broadcast` | {title (1-100), message (1-500), segment: "all"\|"workers"\|"customers"\|"verified_workers"} → {sent, segment} |
+| POST | `/admin/users/bulk-verify` | {userIds: string[], identityVerified: boolean} → {updated} (toplu kullanıcı doğrulama) |
+| GET | `/admin/audit-log/purge-preview` | `?olderThanDays=N` → {count, oldestDate, newestDate} (silinecek kayıt önizleme) |
+| POST | `/admin/audit-log/purge` | {olderThanDays: N} → {deleted} (eski audit log kayıtlarını sil) |
 
 
 ---
@@ -612,7 +615,9 @@ node nestjs-backend/seed-v2.js
 - **Airtasker ilan sahibi profil kartı** (`608c3622`): `JobDetailScreen` müşteri kartı tamamen yeniden tasarlandı — büyük avatar + doğrulama rozeti, 3 istatistik chip (yıldız, iş sayısı, tamamlama oranı), "Profili Gör" butonu. `jobs.service.ts`'den `identityVerified`, `asCustomerTotal`, `asCustomerSuccess` alanları eklendi
 - **PublicProfileScreen** (`608c3622`): `/profile/:id` route'u. Hero header (gradient + avatar + verified rozet), stats satırı, kategori chip'leri, geçmiş iş fotoğrafları, yorumlar listesi
 - **Phase 33 — Audit Log Analytics** (backend `c5c5727f`, frontend `260b25f8`): `GET /admin/audit-log/stats?days=N` (1-90, default 30) → `{ totalEntries, entriesPerDay[], topActions[], topAdmins[], topTargetTypes[] }` (her liste max 10). Admin panel audit-log sayfasında stats card: 7/30/90 gün picker, 4 KPI, top-5 listeleri, daily bar sparkline
-- **Phase 34 — Admin Broadcast Notifications** (`0cd52b8c`): `POST /admin/notifications/broadcast` `{ title (1-100), message (1-500), segment: "all"|"workers"|"customers"|"verified_workers" }` → `{ sent, segment }`. Tüm hedef kullanıcılara `type:'system'` Notification insert (chunked 500'lük bulk save). Audit log: `notification.broadcast` action
+- **Phase 34 — Admin Broadcast Notifications** (`0cd52b8c`): `POST /admin/notifications/broadcast` `{ title (1-100), message (1-500), segment: "all"|"workers"|"customers"|"verified_workers" }` → `{ sent, segment }`. Tüm hedef kullanıcılara `type:'system'` Notification insert (chunked 500'lük bulk save). Audit log: `notification.broadcast` action. Flutter `system` ikonu (`Icons.campaign`, `12a3d55a`); admin panel `/broadcast` sayfası (`6c1bc18c`)
+- **Phase 35 — Bulk User Verify** (BE `6b4e5cbf`, UI `4d291ab8`): `POST /admin/users/bulk-verify` `{ userIds, identityVerified }` → `{ updated }`. Admin panel users sayfasında checkbox seçim + toolbar (toplu onay/iptal)
+- **Phase 36 — Audit Log Retention** (BE `65dcbc99`, UI `70ee7812`): `GET /admin/audit-log/purge-preview?olderThanDays=N` ve `POST /admin/audit-log/purge` `{ olderThanDays }`. Audit log sayfasında purge modal — önizleme + onaylı silme
 
 ### Güvenlik
 - **JWT expiresIn** (`97d2f797`): User `30d`, admin `8h`. `ignoreExpiration: false`
@@ -646,6 +651,12 @@ IYZIPAY_URI=https://sandbox-api.iyzipay.com
 
 | Hash | Açıklama |
 |------|----------|
+| `70ee7812` | feat(phase-36): audit log retention — purge modal UI |
+| `65dcbc99` | feat(phase-36): audit log retention — purge-preview + purge endpoints |
+| `6b4e5cbf` | feat(phase-35): bulk user verify — POST /admin/users/bulk-verify |
+| `4d291ab8` | feat(phase-35): bulk user verify — users page checkbox + toolbar |
+| `6c1bc18c` | feat(phase-34): admin broadcast UI — /broadcast page |
+| `12a3d55a` | feat(phase-34): Flutter system notification icon (Icons.campaign) |
 | `0cd52b8c` | feat(phase-34): admin broadcast notifications — segmented bulk insert with audit log |
 | `260b25f8` | feat(phase-33): audit log analytics UI — stats card with KPIs, top lists, daily sparkline |
 | `c5c5727f` | feat(phase-33): audit log analytics endpoint — GET /admin/audit-log/stats?days=N |
