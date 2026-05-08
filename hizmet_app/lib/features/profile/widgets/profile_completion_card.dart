@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
-import '../../auth/presentation/screens/personal_info_screen.dart';
+import '../../auth/presentation/screens/edit_profile_screen.dart';
 
 // Phase 48 — Profile Completion Banner.
 // Backend contract: GET /users/me returns
@@ -239,7 +239,7 @@ class ProfileCompletionCard extends ConsumerWidget {
   void _goEdit(BuildContext context, WidgetRef ref) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const PersonalInfoScreen()),
+      MaterialPageRoute(builder: (_) => const EditProfileScreen()),
     ).then((_) => ref.invalidate(profileCompletionProvider));
   }
 

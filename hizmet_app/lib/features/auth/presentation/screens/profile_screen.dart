@@ -9,6 +9,7 @@ import '../../../tokens/data/token_repository.dart';
 import '../providers/auth_provider.dart';
 import '../../data/auth_repository.dart';
 import 'personal_info_screen.dart';
+import 'edit_profile_screen.dart';
 import 'addresses_screen.dart';
 import 'help_screen.dart';
 import '../../../../core/constants/api_constants.dart';
@@ -222,8 +223,9 @@ class ProfileScreen extends ConsumerWidget {
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => const PersonalInfoScreen()),
-                    ),
+                          builder: (_) => const EditProfileScreen()),
+                    ).then((_) =>
+                        ref.invalidate(profileCompletionProvider)),
                   ),
                 ],
               ),
