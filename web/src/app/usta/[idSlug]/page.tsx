@@ -1,10 +1,22 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getWorker, parseSlugId, slugify } from '@/lib/api';
+import { getWorker, getWorkers, unwrap, parseSlugId, slugify, type Worker } from '@/lib/api';
 import { jsonLd, personLD, breadcrumbLD, clip } from '@/lib/seo';
 
-export const revalidate = 3600;
+// Static export: pre-render top 100 worker profiles at build time.
+// If backend is unreachable during build, returns [] and no worker pages emit
+// (sitemap also skips them). Mobile/admin app remains the source of truth.
+export const dynamicParams = false;
+
+export async function generateStaticParams(): Promise<{ idSlug: string }[]> {
+  const workers = unwrap(await getWorkers({ limit: '100' })).slice(0, 100);
+  const params = workers.map((w: Worker) => ({
+    idSlug: `${slugify(w.fullName || 'usta')}-${w.id}`,
+  }));
+  if (params.length === 0) return [{ idSlug: 'bulunamadi' }];
+  return params;
+}
 
 type Params = { idSlug: string };
 

@@ -8,6 +8,9 @@ import {
   TR_CITIES,
 } from '@/lib/api';
 
+// Required for `output: 'export'` — sitemap is generated once at build time.
+export const dynamic = 'force-static';
+
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

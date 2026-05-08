@@ -7,12 +7,31 @@ import {
   unwrap,
   slugify,
   TR_CITIES,
+  FALLBACK_CATEGORY_SLUGS,
   type Worker,
 } from '@/lib/api';
 import { jsonLd, serviceLD, breadcrumbLD, clip } from '@/lib/seo';
 import { WorkerCard } from '../page';
 
-export const revalidate = 3600;
+// Static export: pre-render every category × city combination at build time.
+export const dynamicParams = false;
+
+export async function generateStaticParams(): Promise<
+  { kategori: string; sehir: string }[]
+> {
+  const cats = await getCategories();
+  const slugs =
+    cats && cats.length > 0
+      ? cats.map((c) => slugify(c.name))
+      : FALLBACK_CATEGORY_SLUGS;
+  const out: { kategori: string; sehir: string }[] = [];
+  for (const k of slugs) {
+    for (const city of TR_CITIES) {
+      out.push({ kategori: k, sehir: slugify(city) });
+    }
+  }
+  return out;
+}
 
 type Params = { kategori: string; sehir: string };
 

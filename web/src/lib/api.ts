@@ -80,6 +80,18 @@ export function unwrap<T>(r: T[] | Paginated<T> | null): T[] {
   return r.data ?? [];
 }
 
+// Fallback category slugs used when the backend is unreachable at build time.
+// Mirrors the seed list in CategoriesService.onModuleInit (29 kategoriler).
+export const FALLBACK_CATEGORY_SLUGS = [
+  'temizlik', 'boya-badana', 'bahce-peyzaj', 'nakliyat', 'mobilya-montaj',
+  'hasere-kontrolu', 'havuz-spa', 'cilingir-kilit', 'elektrikci', 'tesisat',
+  'klima-isitma', 'zemin-parke', 'cati-yalitim', 'marangoz-ahsap',
+  'cam-dograma', 'alcipan-asma-tavan', 'guvenlik-sistemleri',
+  'bilgisayar-it', 'grafik-tasarim', 'web-yazilim', 'fotograf-video',
+  'dugun-organizasyon', 'ozel-ders-egitim', 'saglik-guzellik', 'evcil-hayvan',
+  'arac-oto-bakim',
+];
+
 export const TR_CITIES = [
   'Istanbul', 'Ankara', 'Izmir', 'Bursa', 'Antalya', 'Adana', 'Konya', 'Gaziantep',
   'Kayseri', 'Mersin', 'Diyarbakir', 'Eskisehir', 'Samsun', 'Trabzon',

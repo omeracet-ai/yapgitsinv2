@@ -1,10 +1,23 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getJob, parseSlugId, slugify } from '@/lib/api';
+import { getJob, getJobs, unwrap, parseSlugId, slugify, type Job } from '@/lib/api';
 import { jsonLd, jobPostingLD, breadcrumbLD, clip } from '@/lib/seo';
 
-export const revalidate = 3600;
+// Static export: pre-render top 100 open job listings at build time.
+// Backend offline → empty list, sitemap also skips. Rebuild after data changes.
+export const dynamicParams = false;
+
+export async function generateStaticParams(): Promise<{ idSlug: string }[]> {
+  const jobs = unwrap(await getJobs({ status: 'open', limit: '100' })).slice(0, 100);
+  const params = jobs.map((j: Job) => ({
+    idSlug: `${slugify(j.title || 'ilan')}-${j.id}`,
+  }));
+  // Next.js requires at least one entry when dynamicParams=false; emit a
+  // placeholder that resolves to 404 so the build still succeeds offline.
+  if (params.length === 0) return [{ idSlug: 'bulunamadi' }];
+  return params;
+}
 
 type Params = { idSlug: string };
 

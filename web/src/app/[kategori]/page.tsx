@@ -7,11 +7,23 @@ import {
   unwrap,
   slugify,
   TR_CITIES,
+  FALLBACK_CATEGORY_SLUGS,
   type Worker,
 } from '@/lib/api';
 import { jsonLd, serviceLD, breadcrumbLD, clip } from '@/lib/seo';
 
-export const revalidate = 3600;
+// Static export: pre-render all category slugs at build time.
+// If backend is unreachable, fall back to the known seed slug list so the build
+// still succeeds (sitemap will also use the fallback).
+export const dynamicParams = false;
+
+export async function generateStaticParams(): Promise<{ kategori: string }[]> {
+  const cats = await getCategories();
+  if (cats && cats.length > 0) {
+    return cats.map((c) => ({ kategori: slugify(c.name) }));
+  }
+  return FALLBACK_CATEGORY_SLUGS.map((kategori) => ({ kategori }));
+}
 
 type Params = { kategori: string };
 
