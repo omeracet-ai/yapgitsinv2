@@ -48,6 +48,34 @@ class PricingAdvisorResult {
       );
 }
 
+class PriceSuggestion {
+  final double minPrice;
+  final double maxPrice;
+  final double medianPrice;
+  final String confidence; // 'low' | 'medium' | 'high'
+  final String reasoning;
+  final String currency;
+
+  const PriceSuggestion({
+    required this.minPrice,
+    required this.maxPrice,
+    required this.medianPrice,
+    required this.confidence,
+    required this.reasoning,
+    required this.currency,
+  });
+
+  factory PriceSuggestion.fromJson(Map<String, dynamic> json) =>
+      PriceSuggestion(
+        minPrice: (json['minPrice'] as num?)?.toDouble() ?? 0,
+        maxPrice: (json['maxPrice'] as num?)?.toDouble() ?? 0,
+        medianPrice: (json['medianPrice'] as num?)?.toDouble() ?? 0,
+        confidence: json['confidence'] as String? ?? 'medium',
+        reasoning: json['reasoning'] as String? ?? '',
+        currency: json['currency'] as String? ?? 'TRY',
+      );
+}
+
 class AiRepository {
   final AuthRepository _auth;
   late final Dio _dio;
@@ -130,6 +158,35 @@ class AiRepository {
       return PricingAdvisorResult.fromJson(resp.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? 'Fiyat danışmanı başarısız oldu');
+    }
+  }
+
+  /// Phase 140: Smart price suggestion — public endpoint (no auth required).
+  /// POST /ai/price-suggest → { minPrice, maxPrice, medianPrice, confidence, reasoning, currency }
+  Future<PriceSuggestion> suggestPrice({
+    required String category,
+    required String description,
+    String? location,
+    List<String>? photos,
+    String? customerType,
+  }) async {
+    try {
+      final resp = await _dio.post(
+        '/ai/price-suggest',
+        data: {
+          'category': category,
+          'description': description,
+          if (location != null && location.isNotEmpty) 'location': location,
+          if (photos != null && photos.isNotEmpty) 'photos': photos,
+          if (customerType != null) 'customerType': customerType,
+        },
+      );
+      return PriceSuggestion.fromJson(resp.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      final msg = e.response?.data is Map
+          ? (e.response?.data as Map)['message']?.toString()
+          : null;
+      throw Exception(msg ?? 'AI fiyat önerisi alınamadı');
     }
   }
 

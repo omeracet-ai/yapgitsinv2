@@ -51,6 +51,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   bool _uploading = false;
   bool _aiLoading = false;
   bool _aiDescLoading = false;
+  bool _aiPriceLoading = false;
 
   // Draft autosave
   final JobDraftStorage _draftStorage = JobDraftStorage();
@@ -661,6 +662,22 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         const SizedBox(height: 20),
         const Divider(),
         const SizedBox(height: 16),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _aiPriceLoading ? null : _suggestPrice,
+            icon: _aiPriceLoading
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.auto_awesome, size: 18),
+            label: Text(_aiPriceLoading
+                ? 'Fiyat hesaplanıyor…'
+                : '💰 AI Fiyat Önerisi'),
+          ),
+        ),
         TextFormField(
           controller: _budgetController,
           keyboardType: TextInputType.number,
@@ -672,6 +689,55 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         ),
       ],
     );
+  }
+
+  Future<void> _suggestPrice() async {
+    final desc = _descController.text.trim();
+    final cat = _selectedCategory;
+    if (cat == null || cat.isEmpty || desc.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Önce kategori ve açıklama gerekli')),
+      );
+      return;
+    }
+    setState(() => _aiPriceLoading = true);
+    try {
+      final result = await ref.read(aiRepositoryProvider).suggestPrice(
+            category: cat,
+            description: desc,
+            location: _locationController.text.isEmpty
+                ? null
+                : _locationController.text,
+          );
+      if (!mounted) return;
+      // Use median for the single budget field; fall back to min if 0.
+      final value = result.medianPrice > 0
+          ? result.medianPrice
+          : (result.minPrice > 0 ? result.minPrice : result.maxPrice);
+      if (value > 0) {
+        _budgetController.text = value.toStringAsFixed(0);
+      }
+      final range =
+          '${result.minPrice.toStringAsFixed(0)}-${result.maxPrice.toStringAsFixed(0)}₺';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('💡 AI önerisi: $range — ${result.reasoning}'),
+          duration: const Duration(seconds: 6),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _aiPriceLoading = false);
+    }
   }
 
   Future<void> _fillWithAI() async {
