@@ -50,11 +50,14 @@ body {
   }
 }
 
-/* Dark mode foundation (opt-in via .dark class — wired later) */
+/* Dark mode foundation — wired in Phase 99 */
 .dark {
   --background: #0f172a;
   --foreground: #f1f5f9;
-  --muted: #1e293b;
+  --muted: #0b1220;
   --border: #334155;
-  --secondary: #e2e8f0;
+  --primary-light: #1e3a5f;
+  /* keep --secondary dark so dark-on-secondary surfaces (e.g. footer) stay readable */
 }
+
+html.dark { color-scheme: dark; }

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getCategories, slugify, TR_CITIES } from '@/lib/api';
 import MobileNav from './MobileNav';
 import LocaleSwitcher from './LocaleSwitcher';
+import ThemeToggle from './ThemeToggle';
 import SearchBar from './SearchBar';
 import { DEFAULT_LOCALE, getDict, localePath, type Locale } from '@/i18n';
 
@@ -30,7 +31,7 @@ export default async function Header({ locale = DEFAULT_LOCALE }: { locale?: Loc
   const placeholder = SEARCH_PLACEHOLDER[locale] || SEARCH_PLACEHOLDER.tr;
 
   return (
-    <header className="bg-white/85 backdrop-blur-md border-b border-[var(--border)] sticky top-0 z-40">
+    <header className="bg-white/85 dark:bg-slate-900/80 backdrop-blur-md border-b border-[var(--border)] sticky top-0 z-40">
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-3 md:py-3 flex items-center justify-between gap-3 md:gap-5">
         <Link
           href={localePath(locale, '/')}
@@ -59,6 +60,7 @@ export default async function Header({ locale = DEFAULT_LOCALE }: { locale?: Loc
           ))}
         </nav>
         <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+          <ThemeToggle labels={dict.theme} />
           <LocaleSwitcher current={locale} />
           <Link
             href={localePath(locale, '/')}
@@ -68,6 +70,7 @@ export default async function Header({ locale = DEFAULT_LOCALE }: { locale?: Loc
           </Link>
         </div>
         <div className="md:hidden flex items-center gap-2">
+          <ThemeToggle labels={dict.theme} />
           <LocaleSwitcher current={locale} />
           <MobileNav
             cats={navCats}

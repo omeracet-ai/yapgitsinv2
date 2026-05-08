@@ -4,8 +4,11 @@ import { jsonLd, alternateLinks, ogLocaleFor } from '@/lib/seo';
 import { localBusinessLD } from '@/lib/seo';
 import SwRegister from '@/components/SwRegister';
 import PwaInstallBanner from '@/components/PwaInstallBanner';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import { getDict } from '@/i18n';
 import './globals.css';
+
+const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme')||'system';var m=window.matchMedia('(prefers-color-scheme: dark)').matches;var d=t==='dark'||(t==='system'&&m);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 
@@ -44,19 +47,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="tr" className={`${geistSans.variable} h-full antialiased`}>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLd(localBusinessLD()) }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-[var(--muted)]">
-        {children}
-        <SwRegister />
-        <PwaInstallBanner
-          title={d.pwa.title}
-          installLabel={d.pwa.install}
-          dismissLabel={d.pwa.dismiss}
-        />
+      <body className="min-h-full flex flex-col bg-[var(--muted)] text-[var(--foreground)]">
+        <ThemeProvider>
+          {children}
+          <SwRegister />
+          <PwaInstallBanner
+            title={d.pwa.title}
+            installLabel={d.pwa.install}
+            dismissLabel={d.pwa.dismiss}
+          />
+        </ThemeProvider>
       </body>
     </html>
   );

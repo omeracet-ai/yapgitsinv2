@@ -59,5 +59,10 @@
     "title": "Yapgitsin-i ana ekrana əlavə et",
     "install": "Yüklə",
     "dismiss": "İndi yox"
+  },
+  "theme": {
+    "system": "Tema: Sistem",
+    "light": "Tema: Açıq",
+    "dark": "Tema: Tünd"
   }
 }

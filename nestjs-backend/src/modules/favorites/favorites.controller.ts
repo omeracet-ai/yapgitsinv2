@@ -65,13 +65,66 @@ export class FavoritesController {
   updateSavedSearch(
     @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
-    @Body() body: { name?: string; criteria?: SavedJobSearchCriteria },
+    @Body()
+    body: {
+      name?: string;
+      criteria?: SavedJobSearchCriteria;
+      alertEnabled?: boolean;
+    },
   ) {
     return this.svc.updateSavedSearch(req.user.id, id, body);
   }
 
   @Delete('saved-searches/jobs/:id')
   deleteSavedSearch(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ) {
+    return this.svc.deleteSavedSearch(req.user.id, id);
+  }
+
+  // Phase 83 — alias routes (/saved-searches without /jobs suffix) for the
+  // worker-facing "Kayıtlı Aramalarım" UI. Same backing service.
+
+  @Get('saved-searches')
+  listSavedSearchesAlias(@Request() req: AuthenticatedRequest) {
+    return this.svc.listSavedSearches(req.user.id);
+  }
+
+  @Post('saved-searches')
+  createSavedSearchAlias(
+    @Request() req: AuthenticatedRequest,
+    @Body()
+    body: {
+      name: string;
+      criteria: SavedJobSearchCriteria;
+      alertEnabled?: boolean;
+    },
+  ) {
+    return this.svc.createSavedSearch(
+      req.user.id,
+      body.name,
+      body.criteria,
+      body.alertEnabled,
+    );
+  }
+
+  @Patch('saved-searches/:id')
+  updateSavedSearchAlias(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body()
+    body: {
+      name?: string;
+      criteria?: SavedJobSearchCriteria;
+      alertEnabled?: boolean;
+    },
+  ) {
+    return this.svc.updateSavedSearch(req.user.id, id, body);
+  }
+
+  @Delete('saved-searches/:id')
+  deleteSavedSearchAlias(
     @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
   ) {

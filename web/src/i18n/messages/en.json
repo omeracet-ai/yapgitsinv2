@@ -59,5 +59,10 @@
     "title": "Add Yapgitsin to your home screen",
     "install": "Install",
     "dismiss": "Not now"
+  },
+  "theme": {
+    "system": "Theme: System",
+    "light": "Theme: Light",
+    "dark": "Theme: Dark"
   }
 }

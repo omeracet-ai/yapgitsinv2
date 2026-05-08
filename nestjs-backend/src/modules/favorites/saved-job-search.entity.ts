@@ -18,6 +18,7 @@ export interface SavedJobSearchCriteria {
   radiusKm?: number;
   lat?: number;
   lng?: number;
+  keywords?: string;
 }
 
 @Entity('saved_job_searches')
@@ -38,6 +39,9 @@ export class SavedJobSearch {
 
   @Column({ type: 'simple-json' })
   criteria: SavedJobSearchCriteria;
+
+  @Column({ type: 'boolean', default: true })
+  alertEnabled: boolean;
 
   @CreateDateColumn()
   createdAt: Date;
