@@ -17,6 +17,7 @@ import '../../../calendar/presentation/calendar_screen.dart';
 import '../../../calendar/presentation/earnings_screen.dart';
 import '../../../profile/widgets/profile_completion_card.dart';
 import '../../widgets/availability_editor_sheet.dart';
+import '../../../users/widgets/badge_row.dart';
 
 // ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
 final myPublicProfileProvider =
@@ -61,6 +62,7 @@ class ProfileScreen extends ConsumerWidget {
               _buildIdentityStatus(user),
               _buildEmailVerification(context, ref, user),
               _buildStatsSection(ref),
+              _buildBadgesSection(ref),
               _buildPastPhotos(ref),
               _buildReviewsSection(ref),
               _buildMenuSection(context, ref),
@@ -628,6 +630,43 @@ class ProfileScreen extends ConsumerWidget {
             style: TextStyle(
                 fontSize: 12, fontWeight: FontWeight.bold, color: color)),
       ],
+    );
+  }
+
+  // ── Rozetlerim ────────────────────────────────────────────────────────────
+  Widget _buildBadgesSection(WidgetRef ref) {
+    final profileAsync = ref.watch(myPublicProfileProvider);
+    return profileAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (data) {
+        final badges = data['badges'] as List?;
+        if (badges == null || badges.isEmpty) return const SizedBox.shrink();
+        return Container(
+          margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Rozetlerim',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              BadgeRow(badges: badges),
+            ],
+          ),
+        );
+      },
     );
   }
 

@@ -758,6 +758,12 @@ class _ProviderCard extends StatelessWidget {
                       ),
                     ],
 
+                    // Badges (Phase 54)
+                    if (badges != null && badges.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      BadgeRow(badges: badges, compact: true),
+                    ],
+
                     // Rate
                     if (rateMin != null) ...[
                       const SizedBox(height: 8),
