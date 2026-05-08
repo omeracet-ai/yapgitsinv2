@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getCategories, getWorkers, slugify, unwrap, TR_CITIES } from '@/lib/api';
 import { jsonLd, breadcrumbLD } from '@/lib/seo';
+import LeadForm from '@/components/LeadForm';
 
 export const revalidate = 3600;
 
@@ -124,6 +125,16 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-12">
+        <div className="max-w-2xl mx-auto">
+          <LeadForm
+            source="landing"
+            title="Hızlı İletişim"
+            subtitle="Aradığınız hizmeti yazın, doğru ustayla biz sizi buluşturalım."
+          />
+        </div>
+      </section>
 
       <section className="container mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-12">
         <h2 className="text-xl md:text-2xl font-bold mb-5 md:mb-6 text-[var(--secondary)]">Popüler Şehirler</h2>

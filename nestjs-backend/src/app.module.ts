@@ -69,6 +69,8 @@ import { AdminAuditLog } from './modules/admin-audit/admin-audit-log.entity';
 import { AdminAuditModule } from './modules/admin-audit/admin-audit.module';
 import { SystemSetting } from './modules/system-settings/system-setting.entity';
 import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
+import { LeadRequest } from './modules/leads/lead-request.entity';
+import { LeadsModule } from './modules/leads/leads.module';
 
 @Module({
   imports: [
@@ -119,6 +121,7 @@ import { SystemSettingsModule } from './modules/system-settings/system-settings.
           EmailVerificationToken,
           AdminAuditLog,
           SystemSetting,
+          LeadRequest,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -183,6 +186,7 @@ import { SystemSettingsModule } from './modules/system-settings/system-settings.
     CronModule,
     ModerationModule,
     UserBlocksModule,
+    LeadsModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],

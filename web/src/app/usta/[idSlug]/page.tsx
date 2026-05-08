@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getWorker, getWorkers, unwrap, parseSlugId, slugify, type Worker } from '@/lib/api';
 import { jsonLd, personLD, breadcrumbLD, clip } from '@/lib/seo';
+import LeadForm from '@/components/LeadForm';
 
 // Static export: pre-render top 100 worker profiles at build time.
 // If backend is unreachable during build, returns [] and no worker pages emit
@@ -150,14 +151,24 @@ export default async function WorkerPage({
         </aside>
       </section>
 
+      <section id="iletisim" className="container mx-auto max-w-2xl px-4 md:px-6 lg:px-8 pb-10 md:pb-16">
+        <LeadForm
+          source="worker_profile"
+          targetWorkerId={w.id}
+          category={cats[0]}
+          title={`${w.fullName} ile iletişime geçin`}
+          subtitle="Bilgilerinizi bırakın, ekibimiz sizi en kısa sürede ustayla buluştursun."
+        />
+      </section>
+
       {/* Sticky mobile CTA — direct contact via app install */}
       <div className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-[var(--border)] px-4 py-3 shadow-[0_-2px_12px_rgba(0,0,0,0.06)]">
-        <Link
-          href="/"
+        <a
+          href="#iletisim"
           className="flex items-center justify-center w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-semibold rounded-lg min-h-[48px]"
         >
-          İletişim — Mobil App&apos;te Aç
-        </Link>
+          İletişime Geç
+        </a>
       </div>
     </>
   );

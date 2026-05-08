@@ -11,6 +11,7 @@ import {
   type Worker,
 } from '@/lib/api';
 import { jsonLd, serviceLD, breadcrumbLD, clip } from '@/lib/seo';
+import LeadForm from '@/components/LeadForm';
 
 // Static export: pre-render all category slugs at build time.
 // If backend is unreachable, fall back to the known seed slug list so the build
@@ -129,6 +130,17 @@ export default async function CategoryPage({
             ))}
           </div>
         )}
+      </section>
+
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-10 border-t border-[var(--border)]">
+        <div className="max-w-2xl mx-auto">
+          <LeadForm
+            source="category"
+            category={cat.name}
+            title={`${cat.name} için teklif al`}
+            subtitle={`İhtiyacınızı yazın, ${cat.name.toLowerCase()} ustalarından dönüş alalım.`}
+          />
+        </div>
       </section>
 
       <section className="max-w-7xl mx-auto px-4 py-10 border-t border-[var(--border)]">

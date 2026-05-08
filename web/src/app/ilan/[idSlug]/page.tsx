@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getJob, getJobs, unwrap, parseSlugId, slugify, type Job } from '@/lib/api';
 import { jsonLd, jobPostingLD, breadcrumbLD, clip } from '@/lib/seo';
+import LeadForm from '@/components/LeadForm';
 
 // Static export: pre-render top 100 open job listings at build time.
 // Backend offline → empty list, sitemap also skips. Rebuild after data changes.
@@ -146,6 +147,15 @@ export default async function JobPage({
             </div>
           )}
         </aside>
+      </section>
+
+      <section className="container mx-auto max-w-2xl px-4 md:px-6 lg:px-8 pb-10 md:pb-16">
+        <LeadForm
+          source="job_detail"
+          category={job.category}
+          title="Bu işe teklif vermek için iletişime geçin"
+          subtitle="Bilgilerinizi bırakın, ekibimiz sizi ilan sahibiyle buluştursun."
+        />
       </section>
     </>
   );
