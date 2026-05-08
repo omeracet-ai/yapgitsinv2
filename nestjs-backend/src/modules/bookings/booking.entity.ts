@@ -17,6 +17,20 @@ export enum BookingStatus {
   CANCELLED = 'cancelled', // İptal
 }
 
+export enum CancellationReason {
+  CUSTOMER_CHANGE = 'customer_change',
+  WORKER_UNAVAILABLE = 'worker_unavailable',
+  WEATHER = 'weather',
+  EMERGENCY = 'emergency',
+  OTHER = 'other',
+}
+
+export enum RefundStatus {
+  PENDING = 'pending',
+  PROCESSED = 'processed',
+  NONE = 'none',
+}
+
 @Entity('bookings')
 export class Booking {
   @PrimaryGeneratedColumn('uuid')
@@ -75,6 +89,22 @@ export class Booking {
 
   @Column({ type: 'text', nullable: true })
   customerNote: string | null;
+
+  // Cancellation / refund (Phase 128)
+  @Column({ type: 'datetime', nullable: true })
+  cancelledAt: Date | null;
+
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  cancelledBy: string | null;
+
+  @Column({ type: 'simple-enum', enum: CancellationReason, nullable: true })
+  cancellationReason: CancellationReason | null;
+
+  @Column({ type: 'float', nullable: true })
+  refundAmount: number | null;
+
+  @Column({ type: 'simple-enum', enum: RefundStatus, nullable: true })
+  refundStatus: RefundStatus | null;
 
   @CreateDateColumn()
   createdAt: Date;

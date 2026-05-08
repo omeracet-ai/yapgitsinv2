@@ -6,12 +6,24 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Booking, BookingStatus } from './booking.entity';
+import { DataSource, Repository } from 'typeorm';
+import {
+  Booking,
+  BookingStatus,
+  CancellationReason,
+  RefundStatus,
+} from './booking.entity';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
 import { AvailabilityService } from '../availability/availability.service';
+import {
+  TokenTransaction,
+  TxType,
+  TxStatus,
+  PaymentMethod,
+} from '../tokens/token-transaction.entity';
+import { AdminAuditService } from '../admin-audit/admin-audit.service';
 
 @Injectable()
 export class BookingsService {
@@ -23,7 +35,158 @@ export class BookingsService {
     private usersService: UsersService,
     private notificationsService: NotificationsService,
     private availabilityService: AvailabilityService,
+    private dataSource: DataSource,
+    private auditService: AdminAuditService,
   ) {}
+
+  /**
+   * Phase 128 — Refund policy:
+   *   24h+ before scheduled → 100%
+   *   <24h before scheduled → 50%
+   *   Past scheduled time   → 0%
+   */
+  private _computeRefund(
+    scheduledAt: Date | null,
+    agreedPrice: number | null,
+  ): { percent: number; amount: number } {
+    if (!agreedPrice || agreedPrice <= 0) return { percent: 0, amount: 0 };
+    if (!scheduledAt) return { percent: 100, amount: agreedPrice };
+    const now = Date.now();
+    const diffMs = scheduledAt.getTime() - now;
+    const oneDay = 24 * 60 * 60 * 1000;
+    let percent: number;
+    if (diffMs >= oneDay) percent = 100;
+    else if (diffMs >= 0) percent = 50;
+    else percent = 0;
+    const amount = Math.round(agreedPrice * percent) / 100;
+    return { percent, amount };
+  }
+
+  /** Phase 128 — Cancel a booking with refund policy + audit + atomic tx */
+  async cancelBooking(
+    bookingId: string,
+    userId: string,
+    reason: CancellationReason,
+  ): Promise<{
+    status: BookingStatus;
+    refundAmount: number;
+    refundStatus: RefundStatus;
+    refundPercent: number;
+    booking: Booking;
+  }> {
+    if (!Object.values(CancellationReason).includes(reason)) {
+      throw new BadRequestException('Geçersiz iptal sebebi');
+    }
+    const booking = await this.repo.findOne({
+      where: { id: bookingId },
+      relations: ['customer', 'worker'],
+    });
+    if (!booking) throw new NotFoundException('Randevu bulunamadı');
+    if (booking.customerId !== userId && booking.workerId !== userId) {
+      throw new ForbiddenException('Yetkisiz işlem');
+    }
+    if (
+      booking.status === BookingStatus.CANCELLED ||
+      booking.status === BookingStatus.COMPLETED
+    ) {
+      throw new BadRequestException(
+        'Tamamlanmış veya iptal edilmiş randevular iptal edilemez',
+      );
+    }
+
+    const scheduledAt = this._parseScheduled(
+      booking.scheduledDate,
+      booking.scheduledTime,
+    );
+    const { percent, amount } = this._computeRefund(
+      scheduledAt,
+      booking.agreedPrice,
+    );
+    const refundStatus: RefundStatus =
+      amount > 0 ? RefundStatus.PENDING : RefundStatus.NONE;
+
+    const old = booking.status;
+
+    const saved = await this.dataSource.transaction(async (em) => {
+      booking.status = BookingStatus.CANCELLED;
+      booking.cancelledAt = new Date();
+      booking.cancelledBy = userId;
+      booking.cancellationReason = reason;
+      booking.refundAmount = amount;
+      booking.refundStatus = refundStatus;
+      const s = await em.save(booking);
+
+      // Token-based refund insert (if there was an agreedPrice)
+      if (amount > 0) {
+        const tx = em.create(TokenTransaction, {
+          userId: booking.customerId,
+          type: TxType.REFUND,
+          amount,
+          description: `Booking ${booking.id} iptal — ${percent}% iade`,
+          status: TxStatus.COMPLETED,
+          paymentMethod: PaymentMethod.SYSTEM,
+        });
+        await em.save(tx);
+      }
+
+      return s;
+    });
+
+    // Notifications to both parties
+    const cancelledByCustomer = userId === booking.customerId;
+    const actor = cancelledByCustomer
+      ? booking.customer?.fullName
+      : booking.worker?.fullName;
+    const counterPartyId = cancelledByCustomer
+      ? booking.workerId
+      : booking.customerId;
+    await this.notificationsService.send({
+      userId: counterPartyId,
+      type: NotificationType.BOOKING_CANCELLED,
+      title: '❌ Randevu İptal Edildi',
+      body: `${actor ?? 'Taraf'} randevuyu iptal etti. İade: ${amount}₺ (%${percent})`,
+      refId: booking.id,
+    });
+    await this.notificationsService.send({
+      userId,
+      type: NotificationType.BOOKING_CANCELLED,
+      title: '❌ Randevu İptal Edildi',
+      body: `İptal işlendi. İade tutarı: ${amount}₺ (%${percent})`,
+      refId: booking.id,
+    });
+
+    // Stats: cancelling a confirmed/in-progress counts as fail
+    if (old !== BookingStatus.PENDING) {
+      await this.usersService.bumpStat(booking.customerId, 'asCustomerFail');
+      await this.usersService.bumpStat(booking.workerId, 'asWorkerFail');
+      await this.usersService.recalcReputation(booking.customerId);
+      await this.usersService.recalcReputation(booking.workerId);
+    }
+
+    // Audit log
+    await this.auditService.logAction(
+      userId,
+      'booking.cancel',
+      'booking',
+      booking.id,
+      {
+        reason,
+        refundAmount: amount,
+        refundPercent: percent,
+        refundStatus,
+        previousStatus: old,
+        agreedPrice: booking.agreedPrice,
+      },
+    );
+
+    return {
+      status: saved.status,
+      refundAmount: amount,
+      refundStatus,
+      refundPercent: percent,
+      booking: saved,
+    };
+  }
 
   private _parseScheduled(
     dateStr: string | null | undefined,

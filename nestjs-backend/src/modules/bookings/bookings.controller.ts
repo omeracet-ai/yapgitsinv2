@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { BookingsService } from './bookings.service';
-import { BookingStatus } from './booking.entity';
+import { BookingStatus, CancellationReason } from './booking.entity';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @UseGuards(AuthGuard('jwt'))
@@ -71,6 +71,16 @@ export class BookingsController {
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.svc.findOne(id, req.user.id);
+  }
+
+  /** POST /bookings/:id/cancel — Phase 128 cancellation + refund policy */
+  @Post(':id/cancel')
+  cancel(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { reason: CancellationReason },
+  ) {
+    return this.svc.cancelBooking(id, req.user.id, body.reason);
   }
 
   /** PATCH /bookings/:id/status */
