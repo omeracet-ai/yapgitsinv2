@@ -8,6 +8,7 @@ import { Category } from '../categories/category.entity';
 import { UserBlocksService } from '../user-blocks/user-blocks.service';
 import type { UserReportStatus } from '../user-blocks/user-report.entity';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
+import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import type { Request } from 'express';
 import type { AuthUser } from '../../common/types/auth.types';
@@ -260,6 +261,23 @@ export class AdminController {
   ) {
     const result = await this.adminService.clearFlaggedQuestion(id);
     await this.adminAuditService.logAction(req.user.id, 'moderation.question.delete', 'job_question', id);
+    return result;
+  }
+
+  // ── Broadcast Notifications ────────────────────────────────────────────────
+  @Post('notifications/broadcast')
+  async broadcastNotification(
+    @Body() dto: BroadcastNotificationDto,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.adminService.broadcastNotification(dto);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'notification.broadcast',
+      'notification',
+      undefined,
+      { segment: result.segment, title: dto.title, sentCount: result.sent },
+    );
     return result;
   }
 

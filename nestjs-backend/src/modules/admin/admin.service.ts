@@ -2,7 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, IsNull, Between, MoreThan } from 'typeorm';
 import { Job, JobStatus } from '../jobs/job.entity';
-import { User } from '../users/user.entity';
+import { User, UserRole } from '../users/user.entity';
+import { Notification, NotificationType } from '../notifications/notification.entity';
+import { BroadcastNotificationDto, BroadcastSegment } from './dto/broadcast-notification.dto';
 import { ServiceRequest } from '../service-requests/service-request.entity';
 import { Offer } from '../jobs/offer.entity';
 import { Booking } from '../bookings/booking.entity';
@@ -38,8 +40,58 @@ export class AdminService {
     @InjectRepository(PaymentEscrow) private escrowRepo: Repository<PaymentEscrow>,
     @InjectRepository(ChatMessage) private chatRepo: Repository<ChatMessage>,
     @InjectRepository(JobQuestion) private questionRepo: Repository<JobQuestion>,
+    @InjectRepository(Notification) private notificationRepo: Repository<Notification>,
     private readonly promoService: PromoService,
   ) {}
+
+  // ── Broadcast Notifications ───────────────────────────────────────────────
+  async broadcastNotification(
+    dto: BroadcastNotificationDto,
+  ): Promise<{ sent: number; segment: string }> {
+    const qb = this.usersRepo
+      .createQueryBuilder('u')
+      .select('u.id', 'id')
+      .where('u.role = :role', { role: UserRole.USER });
+
+    switch (dto.segment) {
+      case BroadcastSegment.WORKERS:
+        qb.andWhere("u.workerCategories IS NOT NULL AND u.workerCategories != '' AND u.workerCategories != '[]'");
+        break;
+      case BroadcastSegment.CUSTOMERS:
+        qb.andWhere("(u.workerCategories IS NULL OR u.workerCategories = '' OR u.workerCategories = '[]')");
+        break;
+      case BroadcastSegment.VERIFIED_WORKERS:
+        qb.andWhere("u.workerCategories IS NOT NULL AND u.workerCategories != '' AND u.workerCategories != '[]'");
+        qb.andWhere('u.identityVerified = :v', { v: true });
+        break;
+      case BroadcastSegment.ALL:
+      default:
+        break;
+    }
+
+    const rows = await qb.getRawMany<{ id: string }>();
+    if (rows.length === 0) {
+      return { sent: 0, segment: dto.segment };
+    }
+
+    const entities = rows.map((r) =>
+      this.notificationRepo.create({
+        userId: r.id,
+        type: NotificationType.SYSTEM,
+        title: dto.title,
+        body: dto.message,
+        isRead: false,
+      }),
+    );
+
+    // Bulk insert in chunks to avoid SQLite parameter limits
+    const chunkSize = 500;
+    for (let i = 0; i < entities.length; i += chunkSize) {
+      await this.notificationRepo.save(entities.slice(i, i + chunkSize));
+    }
+
+    return { sent: entities.length, segment: dto.segment };
+  }
 
   // ── Moderation ────────────────────────────────────────────────────────────
   async getFlaggedItems(): Promise<FlaggedItem[]> {
