@@ -176,6 +176,7 @@ class _NotifCard extends StatelessWidget {
       'booking_completed' => (Icons.stars_rounded,         Colors.amber,       Colors.amber.shade50),
       'booking_cancelled' => (Icons.event_busy,            Colors.red,         Colors.red.shade50),
       'new_review'        => (Icons.star_rounded,          Colors.amber,       Colors.amber.shade50),
+      'system'            => (Icons.campaign,               AppColors.primary,  AppColors.primaryLight),
       _                   => (Icons.notifications_rounded, AppColors.primary,  AppColors.primaryLight),
     };
 

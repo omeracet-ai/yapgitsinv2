@@ -368,6 +368,8 @@ AI: **claude-opus-4-7** model, adaptive thinking, prompt caching (`cache_control
 | PATCH | `/admin/service-requests/:id/featured` | {featuredOrder} |
 | GET | `/admin/categories` | Kategoriler |
 | PATCH | `/admin/categories/:id` | Kategori güncelle |
+| GET | `/admin/audit-log/stats` | `?days=N` (1-90, default 30) → {totalEntries, entriesPerDay[], topActions[], topAdmins[], topTargetTypes[]} (her liste max 10) |
+| POST | `/admin/notifications/broadcast` | {title (1-100), message (1-500), segment: "all"\|"workers"\|"customers"\|"verified_workers"} → {sent, segment} |
 
 
 ---

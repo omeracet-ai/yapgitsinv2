@@ -159,6 +159,13 @@ export const api = {
   createPromoCode:  (data: Partial<PromoCode>)          => request<PromoCode>('/admin/promo-codes',         { method: 'POST',   body: JSON.stringify(data) }),
   updatePromoCode:  (id: string, data: Partial<PromoCode>) => request<PromoCode>(`/admin/promo-codes/${id}`, { method: 'PATCH',  body: JSON.stringify(data) }),
   deletePromoCode:  (id: string)                        => request<void>(`/admin/promo-codes/${id}`,        { method: 'DELETE' }),
+
+  // Broadcast notifications
+  broadcastNotification: (data: { title: string; message: string; segment: 'all' | 'workers' | 'customers' | 'verified_workers' }) =>
+    request<{ sent: number; segment: string }>('/admin/notifications/broadcast', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };
 
 // ── Tip tanımları ────────────────────────────────────────────────────────────
