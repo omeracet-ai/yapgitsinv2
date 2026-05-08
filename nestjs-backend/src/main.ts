@@ -6,6 +6,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import * as fs from 'fs';
+import helmet from 'helmet';
 import * as Sentry from '@sentry/node';
 import { SentryFilter } from './common/sentry.filter';
 
@@ -21,6 +22,15 @@ if (process.env.SENTRY_DSN && process.env.NODE_ENV === 'production') {
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useGlobalFilters(new SentryFilter());
+
+  // Phase 131 — Helmet: HTTP güvenlik header'ları (XSS, clickjacking, MIME sniffing)
+  // crossOriginResourcePolicy gevşetildi: /uploads statik dosyaları farklı originden çekilebilsin diye
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: false, // API için CSP gereksiz; web/admin Next.js tarafında ayarlanır
+    }),
+  );
 
   // Global validation — tüm DTO dekoratörleri (class-validator) aktif hale gelir
   app.useGlobalPipes(
