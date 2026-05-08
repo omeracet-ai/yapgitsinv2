@@ -29,6 +29,11 @@ import {
 } from '../tokens/token-transaction.entity';
 import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
+import { BookingEscrowService } from '../escrow/booking-escrow.service';
+import {
+  BookingEscrow,
+  BookingEscrowStatus,
+} from '../escrow/booking-escrow.entity';
 
 @Injectable()
 export class BookingsService {
@@ -42,6 +47,7 @@ export class BookingsService {
     private availabilityService: AvailabilityService,
     private dataSource: DataSource,
     private auditService: AdminAuditService,
+    private escrowService: BookingEscrowService,
   ) {}
 
   /**
@@ -139,8 +145,59 @@ export class BookingsService {
       booking.refundStatus = refundStatus;
       const saved = await em.save(booking);
 
-      // H1: Ledger ↔ balance sync. Insert REFUND tx AND increment user balance.
-      if (amount > 0) {
+      // Phase 136: If a held escrow exists for this booking, drive refund through
+      // escrow lifecycle (held → refunded) inside this same TX. Otherwise fall
+      // back to the legacy ledger-only refund (Phase 128 behaviour).
+      const heldEscrow = await em.findOne(BookingEscrow, {
+        where: { bookingId: booking.id, status: BookingEscrowStatus.HELD },
+      });
+      if (heldEscrow) {
+        const escrowRefund =
+          Math.round(((heldEscrow.amount * percent) / 100) * 100) / 100;
+        heldEscrow.status =
+          percent > 0
+            ? BookingEscrowStatus.REFUNDED
+            : BookingEscrowStatus.CANCELLED;
+        heldEscrow.refundedAt = new Date();
+        heldEscrow.refundedAmount = escrowRefund;
+        await em.save(heldEscrow);
+        if (escrowRefund > 0) {
+          await em.save(
+            em.create(TokenTransaction, {
+              userId: booking.customerId,
+              type: TxType.REFUND,
+              amount: escrowRefund,
+              description: `Escrow refund (${percent}%) — booking ${booking.id}`,
+              status: TxStatus.COMPLETED,
+              paymentMethod: PaymentMethod.SYSTEM,
+              paymentRef: `ESCROW-REFUND-${booking.id}`,
+            }),
+          );
+          await em.increment(
+            User,
+            { id: booking.customerId },
+            'tokenBalance',
+            escrowRefund,
+          );
+        }
+        await em.save(
+          em.create(AdminAuditLog, {
+            adminUserId: userId,
+            action: 'escrow.refund',
+            targetType: 'booking_escrow',
+            targetId: heldEscrow.id,
+            payload: {
+              bookingId: booking.id,
+              customerId: booking.customerId,
+              amount: heldEscrow.amount,
+              refundAmount: escrowRefund,
+              percent,
+              via: 'cancelBooking',
+            },
+          }),
+        );
+      } else if (amount > 0) {
+        // Legacy path (no escrow): keep Phase 128 behaviour.
         const tx = em.create(TokenTransaction, {
           userId: booking.customerId,
           type: TxType.REFUND,

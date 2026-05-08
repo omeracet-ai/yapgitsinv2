@@ -46,6 +46,7 @@ import { FavoriteWorker } from './modules/users/favorite-worker.entity';
 import { SavedJobSearch } from './modules/favorites/saved-job-search.entity';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { PaymentEscrow } from './modules/escrow/payment-escrow.entity';
+import { BookingEscrow } from './modules/escrow/booking-escrow.entity';
 import { EscrowModule } from './modules/escrow/escrow.module';
 import { CancellationPolicy } from './modules/cancellation/cancellation-policy.entity';
 import { CancellationModule } from './modules/cancellation/cancellation.module';
@@ -125,6 +126,7 @@ import { EmailModule } from './modules/email/email.module';
           FavoriteWorker,
           SavedJobSearch,
           PaymentEscrow,
+          BookingEscrow,
           CancellationPolicy,
           JobDispute,
           Dispute,

@@ -8,6 +8,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { AvailabilityModule } from '../availability/availability.module';
 import { TokenTransaction } from '../tokens/token-transaction.entity';
 import { AdminAuditModule } from '../admin-audit/admin-audit.module';
+import { EscrowModule } from '../escrow/escrow.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AdminAuditModule } from '../admin-audit/admin-audit.module';
     NotificationsModule,
     AvailabilityModule,
     AdminAuditModule,
+    EscrowModule,
   ],
   providers: [BookingsService],
   controllers: [BookingsController],
