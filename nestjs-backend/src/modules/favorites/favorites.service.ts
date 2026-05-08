@@ -135,6 +135,7 @@ export class FavoritesService {
     userId: string,
     name: string,
     criteria: SavedJobSearchCriteria,
+    alertEnabled?: boolean,
   ): Promise<SavedJobSearch> {
     if (!name || name.trim().length === 0) {
       throw new BadRequestException('name required');
@@ -146,6 +147,7 @@ export class FavoritesService {
       userId,
       name: name.trim().slice(0, 100),
       criteria,
+      ...(alertEnabled !== undefined ? { alertEnabled } : {}),
     });
     return this.searchRepo.save(entity);
   }
