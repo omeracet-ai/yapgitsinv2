@@ -1,6 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../../features/onboarding/data/onboarding_storage.dart';
 import '../../../features/home/presentation/screens/main_shell.dart';
 import '../../../features/auth/presentation/screens/login_screen.dart';
 import '../../../features/auth/presentation/screens/register_screen.dart';
@@ -29,8 +29,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     redirect: (context, state) async {
       if (state.matchedLocation == '/') {
-        final prefs = await SharedPreferences.getInstance();
-        if (prefs.getBool('onboarding_done') != true) {
+        if (!await OnboardingStorage.hasSeenOnboarding()) {
           return '/hos-geldiniz';
         }
       }

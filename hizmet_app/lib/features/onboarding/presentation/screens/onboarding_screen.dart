@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform;
 import '../../../../core/constants/api_constants.dart';
+import '../../data/onboarding_storage.dart';
 
 // ─── Model ────────────────────────────────────────────────────────────────────
 
@@ -140,8 +140,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _finish() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_done', true);
+    await OnboardingStorage.markSeen();
     if (mounted) context.go('/');
   }
 
