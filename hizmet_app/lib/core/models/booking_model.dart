@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 enum BookingStatus {
   pending,
   confirmed,
+  // ignore: constant_identifier_names
   in_progress,
   completed,
   cancelled,

@@ -1206,9 +1206,11 @@ class ProfileScreen extends ConsumerWidget {
           Widget tile(ThemeMode m, String label, IconData icon) {
             return RadioListTile<ThemeMode>(
               value: m,
+              // ignore: deprecated_member_use
               groupValue: current,
               title: Text(label),
               secondary: Icon(icon),
+              // ignore: deprecated_member_use
               onChanged: (v) async {
                 if (v == null) return;
                 await ref2.read(themeModeProvider.notifier).setMode(v);

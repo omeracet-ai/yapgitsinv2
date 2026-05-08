@@ -189,7 +189,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +233,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: (isCustomer ? AppColors.primary : AppColors.success)
-                    .withOpacity(0.12),
+                    .withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(

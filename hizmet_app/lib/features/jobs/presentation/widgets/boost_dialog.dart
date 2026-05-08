@@ -72,7 +72,9 @@ class _BoostDialogState extends ConsumerState<BoostDialog> {
               contentPadding: EdgeInsets.zero,
               activeColor: AppColors.primary,
               value: opt.$1,
+              // ignore: deprecated_member_use
               groupValue: _days,
+              // ignore: deprecated_member_use
               onChanged: _loading ? null : (v) => setState(() => _days = v!),
               title: Text('${opt.$1} gün'),
               subtitle: Text('${opt.$2} token'),
