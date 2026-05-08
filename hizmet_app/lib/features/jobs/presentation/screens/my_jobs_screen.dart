@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/job_repository.dart';
 import '../../data/offer_repository.dart';
@@ -147,7 +149,10 @@ class _CustomerTabContent extends ConsumerWidget {
     final jobsAsync = ref.watch(myJobsProvider(userId));
 
     return jobsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => ListSkeleton(
+        itemCount: 5,
+        itemBuilder: (_) => const JobCardSkeleton(),
+      ),
       error: (e, _) => Center(child: Text('Hata: $e')),
       data: (jobs) => DefaultTabController(
         length: 3,
@@ -207,34 +212,29 @@ class _WorkerTabContent extends ConsumerWidget {
     final offersAsync = ref.watch(myOffersProvider);
 
     return offersAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => ListSkeleton(
+        itemCount: 5,
+        itemBuilder: (_) => const JobCardSkeleton(),
+      ),
       error: (e, _) => Center(child: Text('Hata: $e')),
       data: (offers) {
         if (offers.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(22),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.handyman_rounded,
-                      size: 44, color: AppColors.primary),
-                ),
-                const SizedBox(height: 18),
-                const Text('Henüz teklif vermediniz.',
-                    style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
-                const Text('İş ilanlarını keşfedin ve teklif verin.',
-                    style: TextStyle(
-                        color: AppColors.textSecondary, fontSize: 13)),
-              ],
+          return EmptyState(
+            icon: Icons.handyman_rounded,
+            title: 'Henüz teklif vermediniz',
+            message: 'İş ilanlarını keşfet, teklif ver ve kazanmaya başla!',
+            action: ElevatedButton.icon(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const JobOpportunitiesScreen(),
+              )),
+              icon: const Icon(Icons.search),
+              label: const Text('Fırsatları Keşfet'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 12),
+              ),
             ),
           );
         }
@@ -368,27 +368,10 @@ class _JobList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (jobs.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: AppColors.primaryLight,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.work_outline_rounded,
-                  size: 40, color: AppColors.primary),
-            ),
-            const SizedBox(height: 14),
-            Text(emptyMsg,
-                style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500)),
-          ],
-        ),
+      return EmptyState(
+        icon: Icons.work_outline_rounded,
+        title: 'Henüz iş yok',
+        message: emptyMsg,
       );
     }
     return ListView.separated(
@@ -408,27 +391,10 @@ class _OfferList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (offers.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: AppColors.primaryLight,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.local_offer_outlined,
-                  size: 40, color: AppColors.primary),
-            ),
-            const SizedBox(height: 14),
-            Text(emptyMsg,
-                style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500)),
-          ],
-        ),
+      return EmptyState(
+        icon: Icons.local_offer_outlined,
+        title: 'Teklif yok',
+        message: emptyMsg,
       );
     }
     return ListView.separated(

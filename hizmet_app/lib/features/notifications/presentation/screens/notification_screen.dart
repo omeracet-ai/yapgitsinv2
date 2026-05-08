@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/data/auth_repository.dart';
 import '../../data/unread_count_provider.dart';
@@ -106,21 +108,18 @@ class NotificationScreen extends ConsumerWidget {
         ],
       ),
       body: notifAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListSkeleton(
+          padding: const EdgeInsets.all(12),
+          itemCount: 6,
+          itemBuilder: (_) => const NotificationSkeleton(),
+        ),
         error: (e, _) => Center(child: Text('Hata: $e')),
         data: (notifications) {
           if (notifications.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.notifications_off_outlined,
-                      size: 64, color: AppColors.textHint),
-                  SizedBox(height: 12),
-                  Text('Henüz bildirim yok.',
-                      style: TextStyle(color: AppColors.textHint, fontSize: 15)),
-                ],
-              ),
+            return const EmptyState(
+              icon: Icons.notifications_off_outlined,
+              title: 'Bildirim yok',
+              message: 'Yeni gelişmeler burada görünecek.',
             );
           }
           return RefreshIndicator(

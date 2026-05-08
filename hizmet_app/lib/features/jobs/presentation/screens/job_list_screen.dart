@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/job_shimmer.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../../../features/categories/data/category_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../widgets/save_job_button.dart';
@@ -81,10 +82,9 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
                       itemBuilder: (context, index) =>
                           _JobCard(job: jobs[index]),
                     ),
-              loading: () => ListView.builder(
-                padding: const EdgeInsets.all(16),
+              loading: () => ListSkeleton(
                 itemCount: 6,
-                itemBuilder: (_, __) => const JobShimmer(),
+                itemBuilder: (_) => const JobCardSkeleton(),
               ),
               error: (err, _) => Center(child: Text('Hata: $err')),
             ),
@@ -195,34 +195,30 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
 
   Widget _buildEmptyState() {
     final hasSearch = _searchQuery.isNotEmpty;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: AppColors.primaryLight,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-                hasSearch ? Icons.search_off_rounded : Icons.work_off_rounded,
-                size: 48,
-                color: AppColors.primary.withValues(alpha: 0.6)),
-          ),
-          const SizedBox(height: 20),
-          Text(hasSearch ? 'Sonuç bulunamadı.' : 'Henüz ilan bulunamadı.',
-              style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500)),
-          const SizedBox(height: 6),
-          Text(
-              hasSearch
-                  ? 'Başka bir kelime deneyin.'
-                  : 'Farklı bir kategori seçmeyi deneyin.',
-              style: const TextStyle(color: AppColors.textHint, fontSize: 13)),
-        ],
+    if (hasSearch) {
+      return const EmptyState(
+        icon: Icons.search_off_rounded,
+        title: 'Sonuç bulunamadı',
+        message: 'Başka bir kelime ya da kategori deneyin.',
+      );
+    }
+    return EmptyState(
+      icon: Icons.work_off_rounded,
+      title: 'Henüz ilan yok',
+      message: 'İlk ilanı sen aç, ustalar teklif vermeye başlasın!',
+      action: ElevatedButton.icon(
+        onPressed: () {
+          final isLoggedIn = ref.read(authStateProvider) is AuthAuthenticated;
+          context.push(isLoggedIn ? '/ilan-ver' : '/giris-yap');
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('İlan Aç'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          padding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        ),
       ),
     );
   }

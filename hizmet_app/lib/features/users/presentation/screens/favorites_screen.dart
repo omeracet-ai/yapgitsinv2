@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../../providers/presentation/screens/provider_profile_screen.dart';
 import '../../data/favorites_provider.dart';
 
@@ -19,7 +21,10 @@ class FavoritesScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
       ),
       body: favsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListSkeleton(
+          itemCount: 5,
+          itemBuilder: (_) => const ProviderCardSkeleton(),
+        ),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -49,34 +54,11 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-                color: AppColors.primaryLight, shape: BoxShape.circle),
-            child: const Icon(Icons.favorite_border_rounded,
-                size: 48, color: AppColors.primary),
-          ),
-          const SizedBox(height: 20),
-          const Text('Henüz favori ustanız yok',
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary)),
-          const SizedBox(height: 6),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              'Beğendiğiniz ustaları kalp ikonuyla favorilere ekleyin.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.textHint),
-            ),
-          ),
-        ],
-      ),
+    return const EmptyState(
+      icon: Icons.favorite_border_rounded,
+      title: 'Henüz favori usta yok',
+      message:
+          'Beğendiğin ustaları kalp ikonuyla kaydet, sonra buradan kolayca ulaş.',
     );
   }
 }

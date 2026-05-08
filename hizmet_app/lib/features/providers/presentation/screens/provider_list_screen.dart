@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../../categories/data/category_repository.dart';
 import '../../../users/widgets/badge_row.dart';
 import '../../../users/widgets/favorite_button.dart';
@@ -118,7 +120,10 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
       body: NestedScrollView(
         headerSliverBuilder: (ctx, _) => [_buildAppBar(ctx)],
         body: providersAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => ListSkeleton(
+            itemCount: 6,
+            itemBuilder: (_) => const ProviderCardSkeleton(),
+          ),
           error: (e, _) => _errorState(e.toString()),
           data: (providers) => _buildList(providers),
         ),
@@ -309,40 +314,26 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
 
   Widget _buildList(List<Map<String, dynamic>> providers) {
     if (providers.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                  color: AppColors.primaryLight, shape: BoxShape.circle),
-              child: const Icon(Icons.person_search_rounded,
-                  size: 48, color: AppColors.primary),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              _search.isEmpty
-                  ? 'Henüz usta bulunamadı.'
-                  : 'Aramanızla eşleşen usta yok.',
-              style: const TextStyle(
-                  fontSize: 15,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500),
-            ),
-            if (_search.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              TextButton(
+      final hasFilter = _search.isNotEmpty || _activeCategory != null;
+      return EmptyState(
+        icon: Icons.person_search_rounded,
+        title: hasFilter
+            ? 'Bu kriterlere uygun usta bulunamadı'
+            : 'Henüz usta yok',
+        message: hasFilter
+            ? 'Filtreleri değiştirip tekrar dene.'
+            : 'Yakında bölgenize uygun ustalar burada listelenecek.',
+        action: hasFilter
+            ? OutlinedButton.icon(
                 onPressed: () => setState(() {
                   _search = '';
                   _activeCategory = null;
                   _searchCtrl.clear();
                 }),
-                child: const Text('Aramayı Temizle'),
-              ),
-            ],
-          ],
-        ),
+                icon: const Icon(Icons.clear),
+                label: const Text('Filtreleri Temizle'),
+              )
+            : null,
       );
     }
 

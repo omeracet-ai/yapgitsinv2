@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../core/models/booking_model.dart';
+import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/list_skeleton.dart';
 import '../data/booking_repository.dart';
 
 enum _ViewMode { list, calendar }
@@ -104,13 +106,19 @@ class _BookingsView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(provider);
     return async.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => ListSkeleton(
+        itemCount: 4,
+        itemBuilder: (_) => const JobCardSkeleton(),
+      ),
       error: (e, _) => Center(child: Text('Hata: $e')),
       data: (bookings) {
         if (bookings.isEmpty) {
-          return const Center(
-              child: Text('Randevu bulunmuyor.',
-                  style: TextStyle(color: Colors.grey)));
+          return const EmptyState(
+            icon: Icons.event_available_rounded,
+            title: 'Randevu yok',
+            message:
+                'Onayladığın ya da bekleyen randevuların burada görünecek.',
+          );
         }
         return mode == _ViewMode.list
             ? _ListView(bookings: bookings)

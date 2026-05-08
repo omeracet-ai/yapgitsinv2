@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../data/saved_jobs_provider.dart';
 import 'job_detail_screen.dart';
 
@@ -19,7 +21,10 @@ class SavedJobsScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
       ),
       body: savedAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListSkeleton(
+          itemCount: 5,
+          itemBuilder: (_) => const JobCardSkeleton(),
+        ),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -49,34 +54,11 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-                color: AppColors.primaryLight, shape: BoxShape.circle),
-            child: const Icon(Icons.bookmark_border_rounded,
-                size: 48, color: AppColors.primary),
-          ),
-          const SizedBox(height: 20),
-          const Text('Kaydedilmiş ilan yok',
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary)),
-          const SizedBox(height: 6),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              'İlgilendiğiniz ilanları yer imi simgesiyle kaydedin, daha sonra buradan kolayca bulun.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.textHint),
-            ),
-          ),
-        ],
-      ),
+    return const EmptyState(
+      icon: Icons.bookmark_border_rounded,
+      title: 'Kaydedilen iş yok',
+      message:
+          'Sonra dönmek istediğin ilanları yer imine ekle, hepsi burada toplansın.',
     );
   }
 }
