@@ -10,6 +10,7 @@ import '../../../../core/constants/api_constants.dart';
 import '../providers/auth_provider.dart';
 import '../../../service_requests/data/service_request_repository.dart';
 import '../../../profile/widgets/profile_completion_card.dart';
+import '../../../photos/data/photo_repository.dart';
 
 // Phase 62 — Sectioned Profile Edit UX
 //
@@ -104,6 +105,30 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _hourlyMinCtrl.dispose();
     _hourlyMaxCtrl.dispose();
     super.dispose();
+  }
+
+  // ── Phase 72: Profile photo pick + upload ─────────────────────────────────
+  Future<void> _pickAndUploadPhoto() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 80,
+    );
+    if (picked == null) return;
+    setState(() => _busySection = 'photo');
+    try {
+      final url = await ref
+          .read(photoRepositoryProvider)
+          .uploadProfilePhoto(File(picked.path));
+      // PATCH /users/me ile kalıcı olarak kaydet — _patch zaten authState + completion
+      // refresh ediyor; setState 'photo' bitince UI yeni avatarı CircleAvatar'da gösterir.
+      await _patch('photo', {'profileImageUrl': url});
+    } catch (e) {
+      _snack(e.toString(), error: true);
+      if (mounted) setState(() => _busySection = null);
+    }
   }
 
   // ── Persistence ────────────────────────────────────────────────────────────
@@ -351,12 +376,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
               const SizedBox(height: 8),
               OutlinedButton.icon(
-                onPressed: null, // backend henüz desteklemiyor
-                icon: const Icon(Icons.cloud_upload_outlined, size: 16),
-                label: const Text('Yakında', style: TextStyle(fontSize: 12)),
+                onPressed: _busySection == 'photo' ? null : _pickAndUploadPhoto,
+                icon: _busySection == 'photo'
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.photo_camera, size: 16),
+                label: Text(
+                  _busySection == 'photo' ? 'Yükleniyor…' : 'Fotoğraf Seç',
+                  style: const TextStyle(fontSize: 12),
+                ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textSecondary,
-                  side: BorderSide(color: Colors.grey.shade300),
+                  foregroundColor: AppColors.primary,
+                  side: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 ),

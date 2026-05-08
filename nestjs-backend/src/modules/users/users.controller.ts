@@ -169,6 +169,7 @@ export class UsersController {
       address?: string;
       identityPhotoUrl?: string;
       documentPhotoUrl?: string;
+      profileImageUrl?: string;
       workerCategories?: string[];
       workerSkills?: string[];
       workerBio?: string;

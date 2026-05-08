@@ -77,6 +77,25 @@ class PhotoRepository {
     }
   }
 
+  /// Phase 72: profil fotoğrafı yükle. Backend 512×512 crop + jpeg.
+  /// URL döner; çağıran taraf PATCH /users/me ile profileImageUrl'i kaydetmeli.
+  Future<String> uploadProfilePhoto(File file) async {
+    try {
+      final token = await _authRepository.getToken();
+      final formData = FormData.fromMap({
+        'photo': await MultipartFile.fromFile(file.path),
+      });
+      final resp = await _dio.post(
+        '/uploads/profile-photo',
+        data: formData,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return (resp.data as Map)['url'] as String;
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Profil fotoğrafı yüklenemedi');
+    }
+  }
+
   Future<List<String>> uploadJobVideos(List<File> files) async {
     try {
       final token = await _authRepository.getToken();

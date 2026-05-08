@@ -172,6 +172,40 @@ export class UploadsController {
     };
   }
 
+  /** POST /uploads/profile-photo — Phase 72: avatar (512×512 cover crop) */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('profile-photo')
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      storage: memoryStorage(),
+      fileFilter: imageFilter,
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  async uploadProfilePhoto(
+    @UploadedFile() file: any,
+    @Req() req: any,
+  ): Promise<{ url: string }> {
+    if (!file) throw new BadRequestException('Profil fotoğrafı seçilmedi');
+
+    const fullName: string = String(req.user?.fullName || 'user');
+    const folder = sanitizeName(fullName);
+    const dir = join(process.cwd(), 'uploads', 'profile', folder);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    // Cache-bust dosya adı: aynı kullanıcı yeniden yüklerse CDN/cache stale kalmasın
+    const filename = `profile-${Date.now()}.jpg`;
+    const dest = join(dir, filename);
+    await sharp(file.buffer)
+      .resize(512, 512, { fit: 'cover', position: 'center' })
+      .jpeg({ quality: 80 })
+      .toFile(dest);
+
+    return {
+      url: `${req.protocol}://${req.get('host')}/uploads/profile/${folder}/${filename}`,
+    };
+  }
+
   /** POST /uploads/identity-photo  — kimlik fotoğrafı (zorunlu) */
   @UseGuards(AuthGuard('jwt'))
   @Post('identity-photo')
