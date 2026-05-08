@@ -70,6 +70,7 @@ class _ProfileView extends ConsumerWidget {
     final workerCats      = (data['workerCategories'] as List?)?.cast<String>() ?? [];
     final pastPhotos      = (data['pastPhotos']       as List?)?.cast<String>() ?? [];
     final portfolioPhotos = (data['portfolioPhotos']  as List?)?.cast<String>() ?? [];
+    final portfolioVideos = (data['portfolioVideos']  as List?)?.cast<String>() ?? [];
     final reviewList      = (data['reviews']          as List?)
                                 ?.cast<Map<String, dynamic>>() ?? [];
     final badges          = data['badges']            as List?;
@@ -348,11 +349,14 @@ class _ProfileView extends ConsumerWidget {
                 const SizedBox(height: 8),
 
                 // ── Portfolyo ────────────────────────────────────────────
-                if (portfolioPhotos.isNotEmpty || isSelf) ...[
+                if (portfolioPhotos.isNotEmpty ||
+                    portfolioVideos.isNotEmpty ||
+                    isSelf) ...[
                   _section(
                     title: 'Portfolyo',
                     child: PortfolioGallery(
                       photos: portfolioPhotos,
+                      videos: portfolioVideos,
                       isOwner: isSelf,
                       userId: userId,
                     ),

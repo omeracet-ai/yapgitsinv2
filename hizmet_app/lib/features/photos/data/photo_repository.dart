@@ -96,6 +96,43 @@ class PhotoRepository {
     }
   }
 
+  /// Phase 125: portfolio videosu yükle + users/me/portfolio-video'ya ekle.
+  Future<String> uploadPortfolioVideo(File file) async {
+    try {
+      final token = await _authRepository.getToken();
+      final formData = FormData.fromMap({
+        'video': await MultipartFile.fromFile(file.path),
+      });
+      final upResp = await _dio.post(
+        '/uploads/portfolio-video',
+        data: formData,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      final url = (upResp.data as Map)['url'] as String;
+      await _dio.post(
+        '/users/me/portfolio-video',
+        data: {'url': url},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return url;
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Video yüklenemedi');
+    }
+  }
+
+  Future<void> removePortfolioVideo(String url) async {
+    try {
+      final token = await _authRepository.getToken();
+      await _dio.delete(
+        '/users/me/portfolio-video',
+        data: {'url': url},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Video silinemedi');
+    }
+  }
+
   Future<List<String>> uploadJobVideos(List<File> files) async {
     try {
       final token = await _authRepository.getToken();
