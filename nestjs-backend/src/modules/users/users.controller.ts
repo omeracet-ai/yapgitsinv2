@@ -388,6 +388,8 @@ export class UsersController {
         rating: r.rating,
         comment: r.comment,
         createdAt: r.createdAt,
+        replyText: r.replyText ?? null,
+        repliedAt: r.repliedAt ?? null,
         reviewer: {
           id: r.reviewer?.id,
           fullName: r.reviewer?.fullName,
