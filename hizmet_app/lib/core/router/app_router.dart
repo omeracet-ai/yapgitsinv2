@@ -21,6 +21,7 @@ import '../../../features/onboarding/presentation/screens/onboarding_screen.dart
 import '../../../features/onboarding/presentation/screens/worker_onboarding_screen.dart';
 import '../../../features/job_templates/presentation/job_templates_screen.dart';
 import '../../../features/offers/presentation/screens/offer_templates_screen.dart';
+import '../../../features/messaging/presentation/screens/message_templates_screen.dart';
 import '../../../features/statements/presentation/statement_screen.dart';
 import '../../../features/earnings/presentation/screens/earnings_screen.dart';
 import '../../../features/users/presentation/screens/favorites_screen.dart';
@@ -158,6 +159,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/teklif-sablonlarim',
         builder: (context, state) => const OfferTemplatesScreen(),
+      ),
+      GoRoute(
+        path: '/mesaj-sablonlarim',
+        builder: (context, state) => const MessageTemplatesScreen(),
       ),
       GoRoute(
         path: '/aylik-beyan',

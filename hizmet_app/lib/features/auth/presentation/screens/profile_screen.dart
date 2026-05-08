@@ -959,6 +959,7 @@ class ProfileScreen extends ConsumerWidget {
             AvailabilityEditorSheet.show(context, initial: initial);
           }),
           ..._buildWorkerOnlyItems(context, ref),
+          ..._buildCustomerOnlyItems(context, ref),
           _menuItem(Icons.card_giftcard_rounded, '🎁 Arkadaş Davet', () {
             context.push('/sadakat');
           }),
@@ -1272,6 +1273,21 @@ class ProfileScreen extends ConsumerWidget {
     return [
       _menuItem(Icons.note_alt_outlined, 'Teklif Şablonlarım', () {
         context.push('/teklif-sablonlarim');
+      }),
+    ];
+  }
+
+  /// Phase 138 — customer (or general) sees message templates entry.
+  /// Shown when user is not a worker (workerCategories empty/missing).
+  List<Widget> _buildCustomerOnlyItems(BuildContext context, WidgetRef ref) {
+    final auth = ref.watch(authStateProvider);
+    final user = auth is AuthAuthenticated ? auth.user : <String, dynamic>{};
+    final cats = user['workerCategories'];
+    final isWorker = cats is List && cats.isNotEmpty;
+    if (isWorker) return const [];
+    return [
+      _menuItem(Icons.chat_bubble_outline, '💬 Mesaj Şablonlarım', () {
+        context.push('/mesaj-sablonlarim');
       }),
     ];
   }

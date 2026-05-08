@@ -9,6 +9,7 @@ import '../../data/presence_provider.dart';
 import '../../widgets/chat_message_group.dart';
 import '../../widgets/date_divider.dart';
 import '../../widgets/typing_indicator.dart';
+import '../../../messaging/widgets/message_template_picker.dart';
 
 /// Phase 66: scaffold provider for peer-typing state.
 /// Phase 67 will wire WebSocket "typing" events to this.
@@ -413,7 +414,30 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         ],
       ),
       child: SafeArea(
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _pickTemplate,
+                icon: const Icon(Icons.bookmark_outline,
+                    size: 18, color: AppColors.primary),
+                label: const Text('Şablon',
+                    style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600)),
+                style: TextButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                  minimumSize: const Size(0, 30),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
+            Row(
           children: [
             Container(
               decoration: const BoxDecoration(
@@ -470,8 +494,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             ),
           ],
         ),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> _pickTemplate() async {
+    final picked = await MessageTemplatePickerSheet.show(context);
+    if (picked == null || !mounted) return;
+    final cur = _messageController.text;
+    _messageController.text = cur.isEmpty ? picked : '$cur $picked';
+    _messageController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _messageController.text.length));
   }
 }
 
