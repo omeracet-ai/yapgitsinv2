@@ -5,8 +5,10 @@ import {
   PromoCode,
   PromoAppliesTo,
   PromoDiscountType,
+  PromoEffectType,
 } from './promo-code.entity';
 import { PromoRedemption } from './promo-redemption.entity';
+import { User } from '../users/user.entity';
 
 export interface CreatePromoDto {
   code: string;
@@ -19,9 +21,33 @@ export interface CreatePromoDto {
   isActive?: boolean;
   description?: string | null;
   appliesTo?: PromoAppliesTo;
+  effectType?: PromoEffectType | null;
+  effectValue?: number | null;
+  trialDays?: number | null;
 }
 
 export type UpdatePromoDto = Partial<CreatePromoDto>;
+
+// Phase 126: simplified admin DTO (spec shape)
+export interface AdminCreatePromoDto {
+  code: string;
+  type: PromoEffectType;
+  value: number;
+  maxUses?: number | null;
+  expiresAt?: Date | string | null;
+  description?: string | null;
+  trialDays?: number | null;
+}
+export type AdminUpdatePromoDto = Partial<AdminCreatePromoDto> & {
+  isActive?: boolean;
+};
+
+export interface RedeemEffectResult {
+  type: PromoEffectType | 'discount';
+  value: number;
+  message: string;
+  trialDays?: number;
+}
 
 export interface PromoValidationResult {
   valid: true;
@@ -40,6 +66,8 @@ export class PromoService {
     private readonly promoRepo: Repository<PromoCode>,
     @InjectRepository(PromoRedemption)
     private readonly redemptionRepo: Repository<PromoRedemption>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -191,5 +219,138 @@ export class PromoService {
     const promo = await this.findOne(id);
     await this.promoRepo.remove(promo);
     return { success: true };
+  }
+
+  // ── Phase 126 ────────────────────────────────────────────────
+  async redeemByCode(code: string, userId: string): Promise<RedeemEffectResult> {
+    return this.dataSource.transaction(async (manager) => {
+      const promoRepo = manager.getRepository(PromoCode);
+      const redemptionRepo = manager.getRepository(PromoRedemption);
+      const userRepo = manager.getRepository(User);
+      const normalized = (code || '').trim().toUpperCase();
+      if (!normalized) throw new BadRequestException('Kod geçersiz');
+      const promo = await promoRepo.findOne({ where: { code: normalized } });
+      if (!promo || !promo.isActive) {
+        throw new BadRequestException('Kod geçersiz veya kullanılmış');
+      }
+      const now = new Date();
+      if (promo.validUntil && now > new Date(promo.validUntil)) {
+        throw new BadRequestException('Kod süresi dolmuş');
+      }
+      if (
+        promo.maxRedemptions !== null &&
+        promo.maxRedemptions !== undefined &&
+        promo.redeemedCount >= promo.maxRedemptions
+      ) {
+        throw new BadRequestException('Kod kullanım limiti dolmuş');
+      }
+      const existing = await redemptionRepo.findOne({
+        where: { codeId: promo.id, userId },
+      });
+      if (existing) throw new BadRequestException('Bu kodu zaten kullandınız');
+
+      const user = await userRepo.findOne({ where: { id: userId } });
+      if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+
+      let result: RedeemEffectResult;
+      const effect = promo.effectType;
+      const val = promo.effectValue ?? promo.discountValue ?? 0;
+
+      if (effect === PromoEffectType.BONUS_TOKEN) {
+        user.tokenBalance = Number(user.tokenBalance ?? 0) + val;
+        await userRepo.save(user);
+        result = {
+          type: PromoEffectType.BONUS_TOKEN,
+          value: val,
+          message: `${val} token hesabınıza eklendi`,
+        };
+      } else if (effect === PromoEffectType.DISCOUNT_PERCENT) {
+        result = {
+          type: PromoEffectType.DISCOUNT_PERCENT,
+          value: val,
+          message: `Bir sonraki işleminizde %${val} indirim`,
+        };
+      } else if (effect === PromoEffectType.DISCOUNT_AMOUNT) {
+        result = {
+          type: PromoEffectType.DISCOUNT_AMOUNT,
+          value: val,
+          message: `Bir sonraki işleminizde ${val}₺ indirim`,
+        };
+      } else if (effect === PromoEffectType.SUBSCRIPTION_TRIAL) {
+        const days = promo.trialDays ?? Math.floor(val) ?? 7;
+        result = {
+          type: PromoEffectType.SUBSCRIPTION_TRIAL,
+          value: days,
+          trialDays: days,
+          message: `${days} günlük abonelik denemesi aktif`,
+        };
+      } else {
+        // Legacy discount-only promo
+        result = {
+          type: 'discount',
+          value: val,
+          message: `İndirim kodu uygulandı`,
+        };
+      }
+
+      await redemptionRepo.save(
+        redemptionRepo.create({
+          codeId: promo.id,
+          userId,
+          appliedAmount: result.value,
+          refType: result.type,
+          refId: null,
+        }),
+      );
+      await promoRepo.increment({ id: promo.id }, 'redeemedCount', 1);
+      return result;
+    });
+  }
+
+  async adminList(page = 1, limit = 50): Promise<{ data: PromoCode[]; total: number; page: number; limit: number; pages: number }> {
+    const p = Math.max(1, Math.floor(page));
+    const l = Math.max(1, Math.min(100, Math.floor(limit)));
+    const [data, total] = await this.promoRepo.findAndCount({
+      order: { createdAt: 'DESC' },
+      take: l,
+      skip: (p - 1) * l,
+    });
+    return { data, total, page: p, limit: l, pages: Math.max(1, Math.ceil(total / l)) };
+  }
+
+  async adminCreate(dto: AdminCreatePromoDto): Promise<PromoCode> {
+    if (!dto.code) throw new BadRequestException('code zorunlu');
+    if (!dto.type) throw new BadRequestException('type zorunlu');
+    if (typeof dto.value !== 'number') throw new BadRequestException('value zorunlu');
+    const entity = this.promoRepo.create({
+      code: dto.code.trim().toUpperCase(),
+      effectType: dto.type,
+      effectValue: dto.value,
+      trialDays: dto.trialDays ?? null,
+      maxRedemptions: dto.maxUses ?? null,
+      validUntil: dto.expiresAt ? new Date(dto.expiresAt) : null,
+      description: dto.description ?? null,
+      // legacy required fields
+      discountType: PromoDiscountType.PERCENT,
+      discountValue: dto.type === PromoEffectType.DISCOUNT_PERCENT ? dto.value : 0,
+      appliesTo: PromoAppliesTo.ALL,
+      isActive: true,
+      redeemedCount: 0,
+    });
+    return this.promoRepo.save(entity);
+  }
+
+  async adminUpdate(id: string, dto: AdminUpdatePromoDto): Promise<PromoCode> {
+    const promo = await this.findOne(id);
+    if (dto.code !== undefined) promo.code = dto.code.trim().toUpperCase();
+    if (dto.type !== undefined) promo.effectType = dto.type;
+    if (dto.value !== undefined) promo.effectValue = dto.value;
+    if (dto.maxUses !== undefined) promo.maxRedemptions = dto.maxUses;
+    if (dto.expiresAt !== undefined)
+      promo.validUntil = dto.expiresAt ? new Date(dto.expiresAt) : null;
+    if (dto.description !== undefined) promo.description = dto.description;
+    if (dto.trialDays !== undefined) promo.trialDays = dto.trialDays;
+    if (dto.isActive !== undefined) promo.isActive = dto.isActive;
+    return this.promoRepo.save(promo);
   }
 }

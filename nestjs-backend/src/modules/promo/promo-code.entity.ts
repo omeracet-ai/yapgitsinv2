@@ -18,6 +18,14 @@ export enum PromoAppliesTo {
   ALL = 'all',
 }
 
+// Phase 126: 4 effect kinds applied at redeem time
+export enum PromoEffectType {
+  BONUS_TOKEN = 'bonus_token',
+  DISCOUNT_PERCENT = 'discount_percent',
+  DISCOUNT_AMOUNT = 'discount_amount',
+  SUBSCRIPTION_TRIAL = 'subscription_trial',
+}
+
 @Entity('promo_codes')
 export class PromoCode {
   @PrimaryGeneratedColumn('uuid')
@@ -65,6 +73,20 @@ export class PromoCode {
     default: PromoAppliesTo.ALL,
   })
   appliesTo: PromoAppliesTo;
+
+  // Phase 126
+  @Column({
+    type: 'simple-enum',
+    enum: PromoEffectType,
+    nullable: true,
+  })
+  effectType: PromoEffectType | null;
+
+  @Column({ type: 'float', nullable: true })
+  effectValue: number | null;
+
+  @Column({ type: 'integer', nullable: true })
+  trialDays: number | null;
 
   @CreateDateColumn()
   createdAt: Date;

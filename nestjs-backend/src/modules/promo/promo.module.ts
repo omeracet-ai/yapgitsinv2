@@ -4,9 +4,11 @@ import { PromoCode } from './promo-code.entity';
 import { PromoRedemption } from './promo-redemption.entity';
 import { PromoService } from './promo.service';
 import { PromoController } from './promo.controller';
+import { User } from '../users/user.entity';
+import { AdminAuditModule } from '../admin-audit/admin-audit.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PromoCode, PromoRedemption])],
+  imports: [TypeOrmModule.forFeature([PromoCode, PromoRedemption, User]), AdminAuditModule],
   controllers: [PromoController],
   providers: [PromoService],
   exports: [PromoService],
