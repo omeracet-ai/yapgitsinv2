@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/chat_toast_hook.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/chat_service.dart';
 import '../../data/presence_provider.dart';
@@ -47,6 +48,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   @override
   void initState() {
     super.initState();
+    // Phase 80 — mark this peer as the active chat so the global toast hook
+    // suppresses banners for messages from them while this screen is open.
+    ChatToastHook.activeChatPeerId = widget.peerId;
     final chatService = ref.read(chatServiceProvider);
     chatService.connect();
     chatService.joinRoom(_roomId);
@@ -171,6 +175,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   @override
   void dispose() {
+    // Phase 80 — clear active-chat marker so future toasts resume.
+    if (ChatToastHook.activeChatPeerId == widget.peerId) {
+      ChatToastHook.activeChatPeerId = null;
+    }
     _typingStopTimer?.cancel();
     _peerTypingClearTimer?.cancel();
     _messageController.dispose();
