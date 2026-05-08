@@ -16,6 +16,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
 import { EscrowService } from '../escrow/escrow.service';
 import { UserBlocksService } from '../user-blocks/user-blocks.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 @Injectable()
 export class OffersService {
@@ -31,6 +32,7 @@ export class OffersService {
     private notificationsService: NotificationsService,
     private escrowService: EscrowService,
     private userBlocksService: UserBlocksService,
+    private subscriptionsService: SubscriptionsService,
     private dataSource: DataSource,
   ) {}
 
@@ -73,25 +75,29 @@ export class OffersService {
       offer.status = OfferStatus.WITHDRAWN;
       await manager.save(Offer, offer);
 
-      const refundAmount = OFFER_TOKEN_COST;
-      await manager.increment(User, { id: userId }, 'tokenBalance', refundAmount);
-      await manager.save(
-        TokenTransaction,
-        manager.create(TokenTransaction, {
-          userId,
-          type: TxType.REFUND,
-          amount: refundAmount,
-          description: 'Teklif iptali iadesi',
-          status: TxStatus.COMPLETED,
-          paymentMethod: PaymentMethod.SYSTEM,
-          paymentRef: `WITHDRAW-${offerId.slice(0, 8)}`,
-        }),
-      );
+      // Phase 110 — Aboneler token harcamadığı için iade yok
+      const isSubscriber = await this.subscriptionsService.isActiveSubscriber(userId);
+      const refundAmount = isSubscriber ? 0 : OFFER_TOKEN_COST;
+      if (refundAmount > 0) {
+        await manager.increment(User, { id: userId }, 'tokenBalance', refundAmount);
+        await manager.save(
+          TokenTransaction,
+          manager.create(TokenTransaction, {
+            userId,
+            type: TxType.REFUND,
+            amount: refundAmount,
+            description: 'Teklif iptali iadesi',
+            status: TxStatus.COMPLETED,
+            paymentMethod: PaymentMethod.SYSTEM,
+            paymentRef: `WITHDRAW-${offerId.slice(0, 8)}`,
+          }),
+        );
+      }
 
       return {
         id: offer.id,
         status: offer.status,
-        refunded: true,
+        refunded: refundAmount > 0,
         refundAmount,
       };
     });
@@ -149,11 +155,15 @@ export class OffersService {
     lineItems?: Array<{ label: string; qty: number; unitPrice: number; total: number }>;
   }): Promise<Offer> {
     this._assertLineItemsMatchPrice(data.lineItems, data.price);
-    await this.tokensService.spend(
-      data.userId,
-      OFFER_TOKEN_COST,
-      `İlan #${data.jobId.slice(0, 8)} için teklif (${data.price} ₺)`,
-    );
+    // Phase 110 — Pro/Premium aboneler için token kesimi yapılmaz (sınırsız teklif)
+    const isSubscriber = await this.subscriptionsService.isActiveSubscriber(data.userId);
+    if (!isSubscriber) {
+      await this.tokensService.spend(
+        data.userId,
+        OFFER_TOKEN_COST,
+        `İlan #${data.jobId.slice(0, 8)} için teklif (${data.price} ₺)`,
+      );
+    }
     await this.usersService.bumpStat(data.userId, 'asWorkerTotal');
     const offer = this.offersRepository.create({
       jobId: data.jobId,

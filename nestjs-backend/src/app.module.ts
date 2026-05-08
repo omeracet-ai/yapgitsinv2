@@ -71,6 +71,9 @@ import { SystemSetting } from './modules/system-settings/system-setting.entity';
 import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
 import { LeadRequest } from './modules/leads/lead-request.entity';
 import { LeadsModule } from './modules/leads/leads.module';
+import { SubscriptionPlan } from './modules/subscriptions/subscription-plan.entity';
+import { UserSubscription } from './modules/subscriptions/user-subscription.entity';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -128,6 +131,8 @@ import { LeadsModule } from './modules/leads/leads.module';
           AdminAuditLog,
           SystemSetting,
           LeadRequest,
+          SubscriptionPlan,
+          UserSubscription,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -199,6 +204,7 @@ import { LeadsModule } from './modules/leads/leads.module';
     ModerationModule,
     UserBlocksModule,
     LeadsModule,
+    SubscriptionsModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],

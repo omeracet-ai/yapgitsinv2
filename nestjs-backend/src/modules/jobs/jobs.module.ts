@@ -19,6 +19,7 @@ import { EscrowModule } from '../escrow/escrow.module';
 import { CancellationModule } from '../cancellation/cancellation.module';
 import { DisputesModule } from '../disputes/disputes.module';
 import { UserBlocksModule } from '../user-blocks/user-blocks.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UserBlocksModule } from '../user-blocks/user-blocks.module';
     CancellationModule,
     DisputesModule,
     UserBlocksModule,
+    SubscriptionsModule,
   ],
   providers: [JobsService, OffersService, QuestionsService, SavedJobsService],
   controllers: [JobsController, OffersController, OffersRootController, QuestionsController],
