@@ -7,6 +7,7 @@ import { ProvidersService } from '../providers/providers.service';
 import { Category } from '../categories/category.entity';
 import { UserBlocksService } from '../user-blocks/user-blocks.service';
 import type { UserReportStatus } from '../user-blocks/user-report.entity';
+import { UpdateReportStatusDto } from '../user-blocks/dto/report-user.dto';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
 import { BulkVerifyDto } from './dto/bulk-verify.dto';
@@ -309,8 +310,37 @@ export class AdminController {
 
   // ── User Reports ───────────────────────────────────────────────────────────
   @Get('reports')
-  getReports(@Query('status') status?: UserReportStatus) {
-    return this.userBlocksService.findReports(status);
+  getReports(
+    @Query('status') status?: UserReportStatus,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.userBlocksService.findReportsPaged(
+      status,
+      Number(page) || 1,
+      Number(limit) || 20,
+    );
+  }
+
+  @Patch('reports/:id/status')
+  async updateReportStatus(
+    @Param('id') id: string,
+    @Body() body: UpdateReportStatusDto,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.userBlocksService.updateReportStatus(
+      id,
+      body.status,
+      body.adminNote,
+    );
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'report.review',
+      'report',
+      id,
+      { newStatus: body.status, reason: result.reason },
+    );
+    return result;
   }
 
   @Patch('reports/:id')

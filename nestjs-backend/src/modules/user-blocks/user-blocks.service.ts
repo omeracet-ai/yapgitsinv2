@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -49,6 +50,44 @@ export class UserBlocksService {
     if (!existing) throw new NotFoundException('Block kaydı bulunamadı');
     await this.blocksRepo.remove(existing);
     return { ok: true };
+  }
+
+  async unblockIdempotent(
+    blockerId: string,
+    blockedUserId: string,
+  ): Promise<{ blocked: false; blockedId: string }> {
+    const existing = await this.blocksRepo.findOne({
+      where: { blockerUserId: blockerId, blockedUserId },
+    });
+    if (existing) await this.blocksRepo.remove(existing);
+    return { blocked: false, blockedId: blockedUserId };
+  }
+
+  async listBlockedPaged(blockerId: string) {
+    const rows = await this.blocksRepo.find({
+      where: { blockerUserId: blockerId },
+      order: { createdAt: 'DESC' },
+    });
+    if (rows.length === 0) return { data: [], total: 0 };
+    const ids = rows.map((r) => r.blockedUserId);
+    const users = await this.usersRepo.find({ where: { id: In(ids) } });
+    const map = new Map(users.map((u) => [u.id, u]));
+    const data = rows.map((r) => {
+      const u = map.get(r.blockedUserId);
+      return {
+        id: r.id,
+        blockedId: r.blockedUserId,
+        blockedUser: u
+          ? {
+              id: u.id,
+              fullName: u.fullName,
+              profileImageUrl: u.profileImageUrl ?? null,
+            }
+          : null,
+        createdAt: r.createdAt,
+      };
+    });
+    return { data, total: data.length };
   }
 
   async isBlocked(blockerId: string, blockedUserId: string): Promise<boolean> {
@@ -110,6 +149,16 @@ export class UserBlocksService {
     if (reporterId === reportedUserId) {
       throw new BadRequestException('Kendinizi bildiremezsiniz');
     }
+    const dup = await this.reportsRepo.findOne({
+      where: {
+        reporterUserId: reporterId,
+        reportedUserId,
+        status: 'pending',
+      },
+    });
+    if (dup) {
+      throw new ConflictException('Bu kullanıcı için bekleyen şikayetiniz var');
+    }
     const row = this.reportsRepo.create({
       reporterUserId: reporterId,
       reportedUserId,
@@ -126,6 +175,34 @@ export class UserBlocksService {
       order: { createdAt: 'DESC' },
       take: 100,
     });
+  }
+
+  async findReportsPaged(
+    status?: UserReportStatus,
+    page = 1,
+    limit = 20,
+  ): Promise<{
+    data: UserReport[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(100, Math.max(1, limit));
+    const [data, total] = await this.reportsRepo.findAndCount({
+      where: status ? { status } : {},
+      order: { createdAt: 'DESC' },
+      skip: (safePage - 1) * safeLimit,
+      take: safeLimit,
+    });
+    return {
+      data,
+      total,
+      page: safePage,
+      limit: safeLimit,
+      pages: Math.ceil(total / safeLimit) || 1,
+    };
   }
 
   async updateReportStatus(

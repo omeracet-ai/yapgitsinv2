@@ -12,6 +12,8 @@ export type UserReportReason =
   | 'harassment'
   | 'fraud'
   | 'inappropriate'
+  | 'fake_profile'
+  | 'inappropriate_content'
   | 'other';
 
 export type UserReportStatus = 'pending' | 'reviewed' | 'dismissed';
@@ -31,7 +33,15 @@ export class UserReport {
 
   @Column({
     type: 'simple-enum',
-    enum: ['spam', 'harassment', 'fraud', 'inappropriate', 'other'],
+    enum: [
+      'spam',
+      'harassment',
+      'fraud',
+      'inappropriate',
+      'fake_profile',
+      'inappropriate_content',
+      'other',
+    ],
   })
   reason: UserReportReason;
 
