@@ -134,6 +134,7 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
                   onDescriptionChanged: (v) => setState(() => _description = v),
                 ),
                 BookingStep2DateTime(
+                  workerId: widget.workerId,
                   scheduledDate: _date,
                   scheduledTime: _time,
                   onDateChanged: (d) => setState(() => _date = d),

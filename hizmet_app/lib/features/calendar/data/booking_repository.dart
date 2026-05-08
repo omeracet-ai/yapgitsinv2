@@ -79,6 +79,21 @@ class BookingRepository {
     return Map<String, dynamic>.from(res.data as Map);
   }
 
+  /// Phase 135 — Public worker availability slots (next N days).
+  Future<List<Map<String, dynamic>>> getAvailabilitySlots(
+      String workerId, {int days = 30}) async {
+    try {
+      final res = await _dio.get(
+        '/users/$workerId/availability-slots',
+        queryParameters: {'days': days},
+      );
+      final List data = res.data is List ? res.data : [];
+      return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<List<Booking>> getMyBookingsAsCustomer() async {
     try {
       final res = await _dio.get('/bookings/my-as-customer', options: await _authOpts());
