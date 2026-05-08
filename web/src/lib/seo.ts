@@ -94,6 +94,18 @@ export function breadcrumbLD(items: { name: string; url: string }[]) {
   };
 }
 
+export function faqPageLD(faqs: { q: string; a: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  };
+}
+
 export function clip(text: string, max: number): string {
   if (!text) return '';
   const t = text.replace(/\s+/g, ' ').trim();

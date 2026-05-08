@@ -7,4 +7,5 @@ export {
   personLD,
   jobPostingLD,
   breadcrumbLD,
+  faqPageLD,
 } from './seo';

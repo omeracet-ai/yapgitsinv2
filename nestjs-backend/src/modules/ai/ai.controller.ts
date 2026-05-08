@@ -4,12 +4,30 @@ import { AiService } from './ai.service';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 import {
   AiChatDto,
+  GenerateCategoryDescriptionDto,
   GenerateJobDescriptionDto,
   JobAssistantDto,
   PricingAdvisorDto,
   SummarizeReviewsDto,
   SupportAgentDto,
 } from './dto/ai.dto';
+
+// Public sibling controller — no JWT guard, used by web build script for SEO.
+@Controller('ai')
+export class AiPublicController {
+  constructor(private readonly aiService: AiService) {}
+
+  @Post('generate-category-description')
+  async generateCategoryDescription(
+    @Body() dto: GenerateCategoryDescriptionDto,
+  ) {
+    return this.aiService.generateCategoryDescription(
+      dto.category,
+      dto.city,
+      dto.length,
+    );
+  }
+}
 
 @Controller('ai')
 @UseGuards(AuthGuard('jwt'))

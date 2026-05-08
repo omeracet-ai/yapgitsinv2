@@ -20,6 +20,19 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## AI SEO Content (Phase 89)
+
+Kategori sayfaları (`/[kategori]` ve `/[kategori]/[sehir]`) AI ile üretilmiş Türkçe SEO açıklamaları, FAQ ve Schema.org `FAQPage` JSON-LD içerir. İçerik build sırasında **otomatik üretilmez**; manuel olarak güncellenir:
+
+```bash
+# Backend ayakta + ANTHROPIC_API_KEY .env'de tanımlı olmalı
+cd web
+npm run generate-content
+# → src/data/category-content.json güncellenir (~286 kombinasyon, ~5 paralel)
+```
+
+Build sırasında JSON varsa kullanılır, yoksa generic fallback intro render edilir (sayfa yine 200 döner).
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

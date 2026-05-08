@@ -13,6 +13,11 @@ Hostinger, Natro, Turhost, etc.) over FTP.
 cd web
 cp .env.production.example .env.production   # edit URLs
 npm install
+# (opsiyonel) AI ile kategori SEO içeriklerini güncelle — Phase 89
+# Backend ayakta + ANTHROPIC_API_KEY tanımlı olmalı:
+#   npm run generate-content
+# Bu komut src/data/category-content.json'ı yeniler. Build sırasında
+# çağrılmaz; manuel tetiklenir. JSON yoksa fallback intro kullanılır.
 npm run build
 ```
 

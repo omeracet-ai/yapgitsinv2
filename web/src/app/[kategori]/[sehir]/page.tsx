@@ -10,8 +10,10 @@ import {
   FALLBACK_CATEGORY_SLUGS,
   type Worker,
 } from '@/lib/api';
-import { jsonLd, serviceLD, breadcrumbLD, clip } from '@/lib/seo';
+import { jsonLd, serviceLD, breadcrumbLD, faqPageLD, clip } from '@/lib/seo';
 import { WorkerCard } from '../page';
+import CategorySeoContent from '@/components/CategorySeoContent';
+import { getCategoryContent } from '@/lib/category-content';
 
 // Static export: pre-render every category × city combination at build time.
 export const dynamicParams = false;
@@ -73,6 +75,7 @@ export default async function CategoryCityPage({
     limit: '24',
   });
   const workers = unwrap(workersResp);
+  const seoContent = getCategoryContent(cat.name, city);
 
   return (
     <>
@@ -84,6 +87,12 @@ export default async function CategoryCityPage({
           ),
         }}
       />
+      {seoContent?.faqs?.length ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd(faqPageLD(seoContent.faqs)) }}
+        />
+      ) : null}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -126,6 +135,8 @@ export default async function CategoryCityPage({
           </div>
         )}
       </section>
+
+      <CategorySeoContent categoryName={cat.name} city={city} content={seoContent} />
     </>
   );
 }

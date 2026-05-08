@@ -146,6 +146,77 @@ Include: what the job entails, what skills/experience to look for, and what the 
     }
   }
 
+  // ─── SEO: Category description generator ──────────────────────────────────
+
+  async generateCategoryDescription(
+    category: string,
+    city?: string,
+    length: 'short' | 'medium' | 'long' = 'medium',
+  ): Promise<{
+    description: string;
+    headings: string[];
+    faqs: { q: string; a: string }[];
+  }> {
+    const wordTarget =
+      length === 'short' ? 150 : length === 'long' ? 400 : 250;
+    const localTouch = city
+      ? `Şehir bağlamı: ${city}. İçerikte ${city}'da bu hizmet için yerel ipuçları ver (semt çeşitliliği, ortalama fiyat aralığı, ulaşım/erişim notu).`
+      : 'Türkiye genelinde geçerli pratik bilgiler ver.';
+
+    const userPrompt = `Türkiye'nin önde gelen hizmet marketplace platformu Yapgitsin için "${category}" kategorisi SEO içeriği üret.
+
+${localTouch}
+
+Çıktı SADECE geçerli JSON olsun, markdown fence yok, ek metin yok:
+{
+  "description": "<doğal akıcı Türkçe ${wordTarget} kelime civarı tanıtım metni; kategoriye özel pratik bilgiler, ortalama fiyat aralığı (TRY), dikkat edilecek noktalar; reklam dili değil bilgilendirici ton>",
+  "headings": ["<2-3 H2 başlık önerisi>"],
+  "faqs": [
+    { "q": "<sıkça sorulan kısa soru>", "a": "<2-3 cümlelik net cevap>" }
+  ]
+}
+
+faqs uzunluğu 3-5 arası olsun. SSS uzun-kuyruk SEO odaklı: fiyat, süre, garanti, malzeme, randevu gibi konular.`;
+
+    try {
+      const response = await this.client.messages.create({
+        model: 'claude-opus-4-7',
+        max_tokens: 2048,
+        system: [
+          {
+            type: 'text',
+            text:
+              SYSTEM_PROMPT +
+              '\n\nSEO içerik modu: Sadece geçerli JSON döndür. Anahtar kelime istifi yapma; doğal akıcı Türkçe yaz.',
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
+        messages: [{ role: 'user', content: userPrompt }],
+      });
+
+      const textBlock = response.content.find((b) => b.type === 'text');
+      const raw = textBlock ? textBlock.text : '';
+      const cleaned = raw
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```$/i, '')
+        .trim();
+      const parsed = JSON.parse(cleaned) as Record<string, unknown>;
+      return {
+        description: (parsed.description as string) ?? '',
+        headings: Array.isArray(parsed.headings)
+          ? (parsed.headings as string[])
+          : [],
+        faqs: Array.isArray(parsed.faqs)
+          ? (parsed.faqs as { q: string; a: string }[])
+          : [],
+      };
+    } catch {
+      throw new InternalServerErrorException(
+        'Kategori açıklaması üretilemedi',
+      );
+    }
+  }
+
   // ─── Agent infrastructure ─────────────────────────────────────────────────
 
   private executeTool(name: string, input: Record<string, unknown>): unknown {

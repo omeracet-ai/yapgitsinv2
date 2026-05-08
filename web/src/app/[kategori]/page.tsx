@@ -10,8 +10,10 @@ import {
   FALLBACK_CATEGORY_SLUGS,
   type Worker,
 } from '@/lib/api';
-import { jsonLd, serviceLD, breadcrumbLD, clip } from '@/lib/seo';
+import { jsonLd, serviceLD, breadcrumbLD, faqPageLD, clip } from '@/lib/seo';
 import LeadForm from '@/components/LeadForm';
+import CategorySeoContent from '@/components/CategorySeoContent';
+import { getCategoryContent } from '@/lib/category-content';
 
 // Static export: pre-render all category slugs at build time.
 // If backend is unreachable, fall back to the known seed slug list so the build
@@ -66,6 +68,7 @@ export default async function CategoryPage({
 
   const workersResp = await getWorkers({ category: cat.name, limit: '24' });
   const workers = unwrap(workersResp);
+  const seoContent = getCategoryContent(cat.name);
 
   return (
     <>
@@ -75,6 +78,12 @@ export default async function CategoryPage({
           __html: jsonLd(serviceLD(cat.name, cat.description)),
         }}
       />
+      {seoContent?.faqs?.length ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd(faqPageLD(seoContent.faqs)) }}
+        />
+      ) : null}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -131,6 +140,8 @@ export default async function CategoryPage({
           </div>
         )}
       </section>
+
+      <CategorySeoContent categoryName={cat.name} content={seoContent} />
 
       <section className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-10 border-t border-[var(--border)]">
         <div className="max-w-2xl mx-auto">

@@ -44,3 +44,9 @@ export class SupportAgentDto {
     content: string;
   }>;
 }
+
+export class GenerateCategoryDescriptionDto {
+  @IsString() @IsNotEmpty() category: string;
+  @IsString() @IsOptional() city?: string;
+  @IsString() @IsOptional() length?: 'short' | 'medium' | 'long';
+}
