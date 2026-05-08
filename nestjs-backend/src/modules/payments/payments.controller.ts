@@ -27,9 +27,9 @@ export class PaymentsController {
     );
 
     if ((result as { status: string }).status === 'success') {
-      return res.redirect('hizmetapp://payment-success');
+      return res.redirect('yapgitsin://payment-success');
     } else {
-      return res.redirect('hizmetapp://payment-failure');
+      return res.redirect('yapgitsin://payment-failure');
     }
   }
 }
