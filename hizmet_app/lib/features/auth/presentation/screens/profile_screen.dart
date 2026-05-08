@@ -8,6 +8,7 @@ import '../../../wallet/presentation/screens/wallet_screen.dart';
 import '../../../tokens/data/token_repository.dart';
 import '../../../currencies/presentation/currency_picker_sheet.dart';
 import '../../../subscriptions/data/subscription_repository.dart';
+import '../../../promo/widgets/promo_redeem_sheet.dart';
 import '../providers/auth_provider.dart';
 import '../../data/auth_repository.dart';
 import 'personal_info_screen.dart';
@@ -960,6 +961,10 @@ class ProfileScreen extends ConsumerWidget {
           ..._buildWorkerOnlyItems(context, ref),
           _menuItem(Icons.card_giftcard_rounded, '🎁 Arkadaş Davet', () {
             context.push('/sadakat');
+          }),
+          _menuItem(Icons.confirmation_number_outlined,
+              '🎟️ Promosyon Kodu Kullan', () {
+            PromoRedeemSheet.show(context);
           }),
           _menuItem(Icons.payments_outlined, 'Kazançlarım', () {
             context.push('/kazanclarim');
