@@ -127,19 +127,58 @@ export class UsersController {
     return safe;
   }
 
-  /** GET /workers?category=Temizlik&city=Istanbul — Usta dizini */
+  /** GET /workers — Usta dizini (advanced filters + pagination) */
   @Get('workers')
   async getWorkers(
     @Query('category') category?: string,
     @Query('city') city?: string,
+    @Query('minRating') minRating?: string,
+    @Query('minRate') minRate?: string,
+    @Query('maxRate') maxRate?: string,
+    @Query('verifiedOnly') verifiedOnly?: string,
+    @Query('availableOnly') availableOnly?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    const workers = await this.svc.findWorkers(category, city);
-    return workers.map((u) => {
+    const parseNum = (v?: string): number | undefined => {
+      if (v == null || v === '') return undefined;
+      const n = parseFloat(v);
+      return isNaN(n) ? undefined : n;
+    };
+    const parseBool = (v?: string): boolean | undefined => {
+      if (v == null || v === '') return undefined;
+      if (v === 'true') return true;
+      if (v === 'false') return false;
+      return undefined;
+    };
+
+    const minRatingN = parseNum(minRating);
+    const sortAllowed = ['rating', 'reputation', 'rate_asc', 'rate_desc'];
+    const sortByVal = sortBy && sortAllowed.includes(sortBy)
+      ? (sortBy as 'rating' | 'reputation' | 'rate_asc' | 'rate_desc')
+      : undefined;
+
+    const result = await this.svc.findWorkersAdvanced({
+      category,
+      city,
+      minRating: minRatingN != null ? Math.min(5, Math.max(0, minRatingN)) : undefined,
+      minRate: parseNum(minRate),
+      maxRate: parseNum(maxRate),
+      verifiedOnly: parseBool(verifiedOnly),
+      availableOnly: parseBool(availableOnly),
+      sortBy: sortByVal,
+      page: parseNum(page),
+      limit: parseNum(limit),
+    });
+
+    const data = result.data.map((u) => {
       const { passwordHash: _ph, ...safe } = u as {
         passwordHash?: string;
       } & typeof u;
       return safe;
     });
+    return { ...result, data };
   }
 
   /** GET /users/:id/profile — public */

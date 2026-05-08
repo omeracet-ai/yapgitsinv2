@@ -35,23 +35,86 @@ export class UsersService {
   }
 
   findWorkers(category?: string, city?: string): Promise<User[]> {
+    return this.findWorkersAdvanced({ category, city }).then((r) => r.data);
+  }
+
+  async findWorkersAdvanced(opts: {
+    category?: string;
+    city?: string;
+    minRating?: number;
+    minRate?: number;
+    maxRate?: number;
+    verifiedOnly?: boolean;
+    availableOnly?: boolean;
+    sortBy?: 'rating' | 'reputation' | 'rate_asc' | 'rate_desc';
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    data: User[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const page = Math.max(1, opts.page ?? 1);
+    const limit = Math.min(100, Math.max(1, opts.limit ?? 20));
+
     const qb = this.repo
       .createQueryBuilder('u')
-      .where('u.isAvailable = :available', { available: true })
-      .andWhere("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'");
+      .where("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'");
 
-    if (category) {
+    // availableOnly default true to preserve existing behavior unless explicitly false
+    if (opts.availableOnly !== false) {
+      qb.andWhere('u.isAvailable = :available', { available: true });
+    }
+
+    if (opts.category) {
       qb.andWhere('u.workerCategories LIKE :category', {
-        category: `%"${category}"%`,
+        category: `%"${opts.category}"%`,
       });
     }
-    if (city) {
+    if (opts.city) {
       qb.andWhere('LOWER(u.city) LIKE :city', {
-        city: `%${city.toLowerCase()}%`,
+        city: `%${opts.city.toLowerCase()}%`,
       });
+    }
+    if (opts.minRating != null) {
+      qb.andWhere('u.averageRating >= :minRating', { minRating: opts.minRating });
+    }
+    if (opts.minRate != null) {
+      qb.andWhere('u.hourlyRateMin IS NOT NULL AND u.hourlyRateMin >= :minRate', {
+        minRate: opts.minRate,
+      });
+    }
+    if (opts.maxRate != null) {
+      qb.andWhere('u.hourlyRateMax IS NOT NULL AND u.hourlyRateMax <= :maxRate', {
+        maxRate: opts.maxRate,
+      });
+    }
+    if (opts.verifiedOnly) {
+      qb.andWhere('u.identityVerified = :verified', { verified: true });
     }
 
-    return qb.orderBy('u.reputationScore', 'DESC').getMany();
+    switch (opts.sortBy) {
+      case 'rating':
+        qb.orderBy('u.averageRating', 'DESC').addOrderBy('u.reputationScore', 'DESC');
+        break;
+      case 'rate_asc':
+        qb.orderBy('u.hourlyRateMin', 'ASC').addOrderBy('u.reputationScore', 'DESC');
+        break;
+      case 'rate_desc':
+        qb.orderBy('u.hourlyRateMax', 'DESC').addOrderBy('u.reputationScore', 'DESC');
+        break;
+      case 'reputation':
+      default:
+        qb.orderBy('u.reputationScore', 'DESC');
+        break;
+    }
+
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
+    return { data, total, page, limit, pages: Math.ceil(total / limit) || 0 };
   }
 
   create(userData: Partial<User>): Promise<User> {
