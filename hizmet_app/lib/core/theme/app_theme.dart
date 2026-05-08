@@ -5,13 +5,15 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      brightness: Brightness.light,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
+        brightness: Brightness.light,
         primary: AppColors.primary,
-        surface: AppColors.background, // background artık surface üzerinden belirtiliyor
+        surface: AppColors.lightSurface,
         error: AppColors.error,
       ),
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: AppColors.lightBackground,
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
           fontSize: 28,
@@ -110,6 +112,123 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
+      dividerColor: AppColors.lightBorder,
+    );
+  }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.primary,
+        brightness: Brightness.dark,
+        primary: AppColors.darkPrimary,
+        surface: AppColors.darkSurface,
+        error: AppColors.error,
+        onSurface: AppColors.darkText,
+      ),
+      scaffoldBackgroundColor: AppColors.darkBackground,
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: AppColors.darkText,
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: AppColors.darkText,
+        ),
+        titleLarge: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkText,
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 16,
+          color: AppColors.darkText,
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          color: AppColors.darkTextSecondary,
+        ),
+        bodySmall: TextStyle(
+          fontSize: 12,
+          color: AppColors.darkTextSecondary,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.darkPrimary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.darkText,
+          side: const BorderSide(color: AppColors.darkBorder),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.darkSurfaceElevated,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.darkBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.darkBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide:
+              const BorderSide(color: AppColors.darkPrimary, width: 2),
+        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        hintStyle: const TextStyle(color: AppColors.darkTextSecondary),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.darkSurface,
+        foregroundColor: AppColors.darkText,
+        elevation: 0,
+        titleTextStyle: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkText,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.darkSurface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.darkBorder),
+        ),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        selectedItemColor: AppColors.darkPrimary,
+        unselectedItemColor: AppColors.darkTextSecondary,
+        backgroundColor: AppColors.darkSurface,
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
+      ),
+      dividerColor: AppColors.darkBorder,
     );
   }
 }

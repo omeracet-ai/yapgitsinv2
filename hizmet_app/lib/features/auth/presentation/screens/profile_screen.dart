@@ -19,6 +19,7 @@ import '../../../calendar/presentation/earnings_screen.dart';
 import '../../../profile/widgets/profile_completion_card.dart';
 import '../../widgets/availability_editor_sheet.dart';
 import '../../../users/widgets/badge_row.dart';
+import '../../../../core/theme/theme_mode_provider.dart';
 
 // ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
 final myPublicProfileProvider =
@@ -928,6 +929,7 @@ class ProfileScreen extends ConsumerWidget {
             );
           }),
           _build2FAMenuItem(context, ref),
+          _buildAppearanceItem(context, ref),
           _menuItem(Icons.help_outline, 'Yardım & Destek', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const HelpScreen()));
@@ -1170,6 +1172,72 @@ class ProfileScreen extends ConsumerWidget {
         );
       }
     }
+  }
+
+  Widget _buildAppearanceItem(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(themeModeProvider);
+    return ListTile(
+      leading: const Icon(Icons.brightness_6_outlined,
+          color: AppColors.textPrimary, size: 22),
+      title: const Text('Görünüm',
+          style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w500)),
+      subtitle: Text(themeModeLabel(mode),
+          style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textHint,
+              fontWeight: FontWeight.w600)),
+      trailing:
+          const Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
+      onTap: () => _showAppearanceSheet(context, ref),
+    );
+  }
+
+  void _showAppearanceSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) {
+        return Consumer(builder: (ctx, ref2, _) {
+          final current = ref2.watch(themeModeProvider);
+          Widget tile(ThemeMode m, String label, IconData icon) {
+            return RadioListTile<ThemeMode>(
+              value: m,
+              groupValue: current,
+              title: Text(label),
+              secondary: Icon(icon),
+              onChanged: (v) async {
+                if (v == null) return;
+                await ref2.read(themeModeProvider.notifier).setMode(v);
+                if (ctx.mounted) Navigator.pop(ctx);
+              },
+            );
+          }
+
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Görünüm',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                tile(ThemeMode.system, 'Sistem', Icons.settings_suggest_outlined),
+                tile(ThemeMode.light, 'Açık', Icons.light_mode_outlined),
+                tile(ThemeMode.dark, 'Koyu', Icons.dark_mode_outlined),
+                const SizedBox(height: 8),
+              ],
+            ),
+          );
+        });
+      },
+    );
   }
 
   Widget _menuItem(IconData icon, String title, VoidCallback onTap,
