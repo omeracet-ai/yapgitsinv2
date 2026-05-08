@@ -93,6 +93,16 @@ export class OffersController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Patch(':offerId/withdraw')
+  withdraw(
+    @Param('jobId') jobId: string,
+    @Param('offerId') offerId: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.offersService.withdrawOffer(jobId, offerId, req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Patch(':id/status')
   updateStatus(@Param('id') id: string, @Body() body: { status: OfferStatus }) {
     return this.offersService.updateStatus(id, body.status);

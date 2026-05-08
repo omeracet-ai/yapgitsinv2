@@ -1,9 +1,16 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Offer, OfferStatus } from './offer.entity';
-import { Job } from './job.entity';
+import { Job, JobStatus } from './job.entity';
 import { TokensService, OFFER_TOKEN_COST } from '../tokens/tokens.service';
+import {
+  TokenTransaction,
+  TxType,
+  TxStatus,
+  PaymentMethod,
+} from '../tokens/token-transaction.entity';
+import { User } from '../users/user.entity';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
@@ -24,7 +31,71 @@ export class OffersService {
     private notificationsService: NotificationsService,
     private escrowService: EscrowService,
     private userBlocksService: UserBlocksService,
+    private dataSource: DataSource,
   ) {}
+
+  /**
+   * Phase 45 — Teklif geri çekme + token iadesi.
+   * Sadece teklif sahibi, status pending|countered, job status open ise.
+   * Atomik: status → withdrawn + 5 token refund + TokenTransaction yaz.
+   */
+  async withdrawOffer(
+    jobId: string,
+    offerId: string,
+    userId: string,
+  ): Promise<{ id: string; status: OfferStatus; refunded: boolean; refundAmount: number }> {
+    return this.dataSource.transaction(async (manager) => {
+      const offer = await manager.findOne(Offer, { where: { id: offerId } });
+      if (!offer) throw new NotFoundException(`Teklif bulunamadı: #${offerId}`);
+      if (offer.jobId !== jobId) {
+        throw new BadRequestException('Teklif bu ilana ait değil');
+      }
+      if (offer.userId !== userId) {
+        throw new ForbiddenException('Sadece teklif sahibi geri çekebilir');
+      }
+      if (
+        offer.status !== OfferStatus.PENDING &&
+        offer.status !== OfferStatus.COUNTERED
+      ) {
+        throw new BadRequestException(
+          `Bu teklif geri çekilemez (durum: ${offer.status})`,
+        );
+      }
+
+      const job = await manager.findOne(Job, { where: { id: jobId } });
+      if (!job) throw new NotFoundException('İlan bulunamadı');
+      if (job.status !== JobStatus.OPEN) {
+        throw new BadRequestException(
+          `İlan açık değil, teklif geri çekilemez (durum: ${job.status})`,
+        );
+      }
+
+      offer.status = OfferStatus.WITHDRAWN;
+      await manager.save(Offer, offer);
+
+      const refundAmount = OFFER_TOKEN_COST;
+      await manager.increment(User, { id: userId }, 'tokenBalance', refundAmount);
+      await manager.save(
+        TokenTransaction,
+        manager.create(TokenTransaction, {
+          userId,
+          type: TxType.REFUND,
+          amount: refundAmount,
+          description: 'Teklif iptali iadesi',
+          status: TxStatus.COMPLETED,
+          paymentMethod: PaymentMethod.SYSTEM,
+          paymentRef: `WITHDRAW-${offerId.slice(0, 8)}`,
+        }),
+      );
+
+      return {
+        id: offer.id,
+        status: offer.status,
+        refunded: true,
+        refundAmount,
+      };
+    });
+  }
 
   async findByJob(jobId: string): Promise<Offer[]> {
     const offers = await this.offersRepository.find({
