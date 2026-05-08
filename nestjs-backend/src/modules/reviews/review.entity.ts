@@ -44,6 +44,13 @@ export class Review {
   @Column({ type: 'text', nullable: true })
   comment: string;
 
+  /** Değerlendirilen kişinin yoruma cevabı (Phase 42) */
+  @Column({ type: 'text', nullable: true })
+  replyText: string | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  repliedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

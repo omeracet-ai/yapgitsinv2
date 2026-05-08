@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ReviewsService } from './reviews.service';
+import { ReplyReviewDto } from './dto/reply-review.dto';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @Controller('reviews')
@@ -32,5 +33,15 @@ export class ReviewsController {
   @Get('job/:jobId')
   async findByJob(@Param('jobId') jobId: string) {
     return this.reviewsService.findByJob(jobId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':id/reply')
+  async reply(
+    @Param('id') id: string,
+    @Body() dto: ReplyReviewDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.reviewsService.addOrUpdateReply(id, req.user.id, dto.text);
   }
 }

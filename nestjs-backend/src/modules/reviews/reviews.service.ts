@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review } from './review.entity';
@@ -36,5 +36,24 @@ export class ReviewsService {
       relations: ['reviewer', 'reviewee'],
       order: { createdAt: 'DESC' },
     });
+  }
+
+  /** Phase 42: revieweeId yoruma cevap yazar (idempotent edit) */
+  async addOrUpdateReply(
+    reviewId: string,
+    userId: string,
+    text: string,
+  ): Promise<{ id: string; replyText: string | null; repliedAt: Date | null }> {
+    const review = await this.reviewsRepository.findOne({ where: { id: reviewId } });
+    if (!review) {
+      throw new NotFoundException('Review bulunamadı');
+    }
+    if (review.revieweeId !== userId) {
+      throw new ForbiddenException('Bu yoruma sadece değerlendirilen kişi cevap verebilir');
+    }
+    review.replyText = text;
+    review.repliedAt = new Date();
+    const saved = await this.reviewsRepository.save(review);
+    return { id: saved.id, replyText: saved.replyText, repliedAt: saved.repliedAt };
   }
 }
