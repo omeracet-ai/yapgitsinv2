@@ -66,7 +66,8 @@ export class UsersController {
     const { passwordHash: _ph, ...safe } = user as {
       passwordHash?: string;
     } & typeof user;
-    return safe;
+    const profileCompletion = this.svc.computeProfileCompletion(user);
+    return { ...safe, profileCompletion };
   }
 
   @UseGuards(AuthGuard('jwt'))

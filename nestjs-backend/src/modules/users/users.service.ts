@@ -193,6 +193,49 @@ export class UsersService {
     });
   }
 
+  /** Phase 48: Profil doluluk yüzdesi — equal-weight 10 (müşteri) / 15 (usta) alan */
+  private static readonly CUSTOMER_FIELDS: Array<{ key: string; check: (u: User) => boolean }> = [
+    { key: 'fullName', check: (u) => !!u.fullName },
+    { key: 'phoneNumber', check: (u) => !!u.phoneNumber },
+    { key: 'email', check: (u) => !!u.email },
+    { key: 'profileImageUrl', check: (u) => !!u.profileImageUrl },
+    { key: 'identityPhotoUrl', check: (u) => !!u.identityPhotoUrl },
+    { key: 'identityVerified', check: (u) => u.identityVerified === true },
+    { key: 'birthDate', check: (u) => !!u.birthDate },
+    { key: 'gender', check: (u) => !!u.gender },
+    { key: 'city', check: (u) => !!u.city },
+    { key: 'district', check: (u) => !!u.district },
+  ];
+
+  private static readonly WORKER_FIELDS: Array<{ key: string; check: (u: User) => boolean }> = [
+    { key: 'workerCategories', check: (u) => Array.isArray(u.workerCategories) && u.workerCategories.length > 0 },
+    { key: 'workerBio', check: (u) => !!u.workerBio },
+    { key: 'hourlyRateMin', check: (u) => u.hourlyRateMin != null && u.hourlyRateMin > 0 },
+    { key: 'hourlyRateMax', check: (u) => u.hourlyRateMax != null && u.hourlyRateMax > 0 },
+    { key: 'availability', check: (u) => u.isAvailable === true || u.availabilitySchedule != null },
+  ];
+
+  computeProfileCompletion(user: User): {
+    percent: number;
+    missingFields: string[];
+    totalFields: number;
+    filledFields: number;
+  } {
+    const isWorker = !!(user.workerCategories && user.workerCategories.length > 0);
+    const fields = isWorker
+      ? [...UsersService.CUSTOMER_FIELDS, ...UsersService.WORKER_FIELDS]
+      : UsersService.CUSTOMER_FIELDS;
+    const missingFields: string[] = [];
+    let filledFields = 0;
+    for (const f of fields) {
+      if (f.check(user)) filledFields++;
+      else missingFields.push(f.key);
+    }
+    const totalFields = fields.length;
+    const percent = totalFields > 0 ? Math.round((filledFields / totalFields) * 100) : 0;
+    return { percent, missingFields, totalFields, filledFields };
+  }
+
   /** Profile completion score (0-100) — non-worker users normalized over 70 */
   async getCompletionScore(userId: string): Promise<{
     score: number;
