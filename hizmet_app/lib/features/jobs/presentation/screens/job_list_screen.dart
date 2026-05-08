@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -26,10 +28,29 @@ class JobListScreen extends ConsumerStatefulWidget {
 class _JobListScreenState extends ConsumerState<JobListScreen> {
   bool get _showAppBar => widget.showAppBar;
   String? _activeCategory; // null = Tümü
+  String _searchQuery = '';
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
 
   void _selectCategory(String? category) {
     setState(() => _activeCategory = category);
-    ref.read(jobsProvider.notifier).fetchJobs(category: category);
+    ref.read(jobsProvider.notifier).fetchJobs(
+          category: category,
+          q: _searchQuery.isEmpty ? null : _searchQuery,
+        );
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      _searchQuery = value.trim();
+      ref.read(jobsProvider.notifier).setQuery(_searchQuery);
+    });
   }
 
   @override
@@ -95,8 +116,7 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12)),
             child: TextField(
-              onChanged: (v) =>
-                  ref.read(jobsProvider.notifier).filterJobs(v),
+              onChanged: _onSearchChanged,
               decoration: const InputDecoration(
                 hintText: 'İş ara...',
                 prefixIcon:
@@ -174,6 +194,7 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
   }
 
   Widget _buildEmptyState() {
+    final hasSearch = _searchQuery.isNotEmpty;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -184,19 +205,23 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
               color: AppColors.primaryLight,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.work_off_rounded,
+            child: Icon(
+                hasSearch ? Icons.search_off_rounded : Icons.work_off_rounded,
                 size: 48,
                 color: AppColors.primary.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 20),
-          const Text('Henüz ilan bulunamadı.',
-              style: TextStyle(
+          Text(hasSearch ? 'Sonuç bulunamadı.' : 'Henüz ilan bulunamadı.',
+              style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 15,
                   fontWeight: FontWeight.w500)),
           const SizedBox(height: 6),
-          const Text('Farklı bir kategori seçmeyi deneyin.',
-              style: TextStyle(color: AppColors.textHint, fontSize: 13)),
+          Text(
+              hasSearch
+                  ? 'Başka bir kelime deneyin.'
+                  : 'Farklı bir kategori seçmeyi deneyin.',
+              style: const TextStyle(color: AppColors.textHint, fontSize: 13)),
         ],
       ),
     );

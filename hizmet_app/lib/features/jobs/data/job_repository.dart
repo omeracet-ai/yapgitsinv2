@@ -25,10 +25,11 @@ class JobRepository {
           connectTimeout: const Duration(seconds: 5),
         ));
 
-  Future<List<Map<String, dynamic>>> getJobs({String? category}) async {
+  Future<List<Map<String, dynamic>>> getJobs({String? category, String? q}) async {
     try {
       final response = await _dio.get('/jobs', queryParameters: {
         if (category != null) 'category': category,
+        if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
       });
       return List<Map<String, dynamic>>.from(response.data['data'] as List);
     } on DioException catch (e) {

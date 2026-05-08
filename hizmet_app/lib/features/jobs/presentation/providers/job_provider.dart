@@ -185,15 +185,17 @@ final jobsProvider = StateNotifierProvider<JobNotifier, AsyncValue<List<Job>>>((
 class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
   final JobRepository _repository;
   List<Job> _allJobs = [];
+  String? _currentCategory;
 
   JobNotifier(this._repository) : super(const AsyncValue.loading()) {
     fetchJobs();
   }
 
-  Future<void> fetchJobs({String? category}) async {
+  Future<void> fetchJobs({String? category, String? q}) async {
+    _currentCategory = category;
     state = const AsyncValue.loading();
     try {
-      final jobsData = await _repository.getJobs(category: category);
+      final jobsData = await _repository.getJobs(category: category, q: q);
       _allJobs = jobsData.map((m) => Job.fromMap(m)).toList();
       state = AsyncValue.data(_allJobs);
     } catch (e, st) {
@@ -201,12 +203,18 @@ class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
     }
   }
 
+  /// Server-side keyword search — refetches with q param
+  Future<void> setQuery(String query) async {
+    final q = query.trim();
+    await fetchJobs(category: _currentCategory, q: q.isEmpty ? null : q);
+  }
+
   void filterJobs(String query) {
     if (query.isEmpty) {
       state = AsyncValue.data(_allJobs);
     } else {
-      final filtered = _allJobs.where((j) => 
-        j.title.toLowerCase().contains(query.toLowerCase()) || 
+      final filtered = _allJobs.where((j) =>
+        j.title.toLowerCase().contains(query.toLowerCase()) ||
         j.desc.toLowerCase().contains(query.toLowerCase())
       ).toList();
       state = AsyncValue.data(filtered);

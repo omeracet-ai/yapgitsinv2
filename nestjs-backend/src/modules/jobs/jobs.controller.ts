@@ -61,6 +61,7 @@ export class JobsController {
     @Query('limit') limit?: string,
     @Query('page') page?: string,
     @Query('customerId') customerId?: string,
+    @Query('q') q?: string,
   ) {
     return this.jobsService.findAll({
       category,
@@ -68,6 +69,7 @@ export class JobsController {
       limit: limit ? Number(limit) : undefined,
       page: page ? Number(page) : undefined,
       customerId,
+      q,
     });
   }
 

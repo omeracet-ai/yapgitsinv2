@@ -125,6 +125,7 @@ export class JobsService {
     limit?: number;
     page?: number;
     customerId?: string;
+    q?: string;
   }) {
     const limit = filters?.limit ?? 20;
     const page = filters?.page ?? 1;
@@ -139,6 +140,13 @@ export class JobsService {
     }
     if (filters?.customerId) {
       query.andWhere('job.customerId = :customerId', { customerId: filters.customerId });
+    }
+    if (filters?.q && filters.q.trim().length > 0) {
+      const q = `%${filters.q.trim().toLowerCase()}%`;
+      query.andWhere(
+        '(LOWER(job.title) LIKE :q OR LOWER(job.description) LIKE :q)',
+        { q },
+      );
     }
 
     query
