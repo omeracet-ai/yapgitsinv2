@@ -26,6 +26,9 @@ dependencies:
   # Fotoğraf seçme
   image_picker: ^1.1.2
 
+  # Dosya seçme (chat attachment — Phase 139)
+  file_picker: ^3.0.4
+
   # URL aç (e-posta, telefon, web)
   url_launcher: ^6.2.5
 

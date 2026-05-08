@@ -91,6 +91,23 @@ class ChatRepository {
     return PresenceState.fromJson(Map<String, dynamic>.from(res.data as Map));
   }
 
+  /// Phase 139: upload a chat attachment (image or document).
+  /// Returns {url, type, name, size}.
+  Future<Map<String, dynamic>?> uploadAttachment(String filePath) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) return null;
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    final res = await _dio.post(
+      '/uploads/chat-attachment',
+      data: formData,
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
   Future<List<Conversation>> getConversations() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt_token');

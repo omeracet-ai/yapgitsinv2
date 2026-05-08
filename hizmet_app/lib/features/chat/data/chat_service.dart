@@ -21,12 +21,27 @@ class ChatService {
     socket.onDisconnect((_) => debugPrint('Disconnected from socket.io'));
   }
 
-  void sendMessage(String to, String from, String message) {
-    socket.emit('sendMessage', {
+  void sendMessage(
+    String to,
+    String from,
+    String message, {
+    String? attachmentUrl,
+    String? attachmentType, // 'image' | 'document'
+    String? attachmentName,
+    int? attachmentSize,
+  }) {
+    final payload = <String, dynamic>{
       'to': to,
       'from': from,
       'message': message,
-    });
+    };
+    if (attachmentUrl != null) {
+      payload['attachmentUrl'] = attachmentUrl;
+      payload['attachmentType'] = attachmentType;
+      payload['attachmentName'] = attachmentName;
+      payload['attachmentSize'] = attachmentSize;
+    }
+    socket.emit('sendMessage', payload);
   }
 
   void onMessageReceived(Function(Map<String, dynamic>) callback) {

@@ -1,9 +1,12 @@
 import 'dart:async';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/services/chat_toast_hook.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../data/chat_repository.dart';
 import '../../data/chat_service.dart';
 import '../../data/presence_provider.dart';
 import '../../widgets/chat_message_group.dart';
@@ -38,6 +41,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   Timer? _typingStopTimer;
   Timer? _peerTypingClearTimer;
   bool _isLocallyTyping = false;
+  bool _isUploading = false;
   static const String _meId = 'me';
 
   String get _roomId {
@@ -66,6 +70,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             'message': data['message'],
             'timestamp': DateTime.now(),
             'readAt': null,
+            'attachmentUrl': data['attachmentUrl'],
+            'attachmentType': data['attachmentType'],
+            'attachmentName': data['attachmentName'],
+            'attachmentSize': data['attachmentSize'],
           });
         });
         _scrollToBottom();
@@ -147,19 +155,37 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     });
   }
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+  void _sendMessage({
+    String? attachmentUrl,
+    String? attachmentType,
+    String? attachmentName,
+    int? attachmentSize,
+  }) {
+    final text = _messageController.text;
+    if (text.trim().isEmpty && attachmentUrl == null) return;
 
     final chatService = ref.read(chatServiceProvider);
-    chatService.sendMessage(widget.peerId, 'me', _messageController.text);
+    chatService.sendMessage(
+      widget.peerId,
+      'me',
+      text,
+      attachmentUrl: attachmentUrl,
+      attachmentType: attachmentType,
+      attachmentName: attachmentName,
+      attachmentSize: attachmentSize,
+    );
 
     setState(() {
       _messages.add({
         'id': null,
         'from': 'me',
-        'message': _messageController.text,
+        'message': text,
         'timestamp': DateTime.now(),
         'readAt': null,
+        'attachmentUrl': attachmentUrl,
+        'attachmentType': attachmentType,
+        'attachmentName': attachmentName,
+        'attachmentSize': attachmentSize,
       });
     });
 
@@ -236,6 +262,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         showTime: showTime,
         isFirstInGroup: isFirstInGroup,
         isLastInGroup: isLastInGroup,
+        attachmentUrl: msg['attachmentUrl'] as String?,
+        attachmentType: msg['attachmentType'] as String?,
+        attachmentName: msg['attachmentName'] as String?,
+        attachmentSize: (msg['attachmentSize'] as num?)?.toInt(),
       ));
     }
     return items;
@@ -352,6 +382,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                             peerName: widget.peerName,
                             isFirstInGroup: item.isFirstInGroup,
                             isLastInGroup: item.isLastInGroup,
+                            attachmentUrl: item.attachmentUrl,
+                            attachmentType: item.attachmentType,
+                            attachmentName: item.attachmentName,
+                            attachmentSize: item.attachmentSize,
                           ),
                         ],
                       );
@@ -445,9 +479,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(Icons.attach_file_rounded,
-                    color: AppColors.primary, size: 20),
-                onPressed: () {},
+                icon: _isUploading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: AppColors.primary),
+                      )
+                    : const Icon(Icons.attach_file_rounded,
+                        color: AppColors.primary, size: 20),
+                onPressed: _isUploading ? null : _showAttachmentSheet,
                 constraints:
                     const BoxConstraints(minWidth: 40, minHeight: 40),
                 padding: EdgeInsets.zero,
@@ -500,6 +541,79 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
+  Future<void> _showAttachmentSheet() async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined,
+                  color: AppColors.primary),
+              title: const Text('Fotoğraf'),
+              onTap: () => Navigator.pop(ctx, 'image'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.insert_drive_file_outlined,
+                  color: AppColors.primary),
+              title: const Text('Belge (PDF / Word)'),
+              onTap: () => Navigator.pop(ctx, 'document'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (choice == null || !mounted) return;
+
+    String? path;
+    if (choice == 'image') {
+      final picker = ImagePicker();
+      final picked =
+          await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
+      path = picked?.path;
+    } else {
+      final res = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'doc', 'docx'],
+      );
+      path = res?.files.single.path;
+    }
+    if (path == null || !mounted) return;
+
+    await _uploadAndSend(path);
+  }
+
+  Future<void> _uploadAndSend(String filePath) async {
+    setState(() => _isUploading = true);
+    try {
+      final repo = ref.read(chatRepositoryProvider);
+      final res = await repo.uploadAttachment(filePath);
+      if (res == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Yükleme başarısız: oturum bulunamadı')),
+          );
+        }
+        return;
+      }
+      _sendMessage(
+        attachmentUrl: res['url'] as String?,
+        attachmentType: res['type'] as String?,
+        attachmentName: res['name'] as String?,
+        attachmentSize: (res['size'] as num?)?.toInt(),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Yükleme hatası: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
   Future<void> _pickTemplate() async {
     final picked = await MessageTemplatePickerSheet.show(context);
     if (picked == null || !mounted) return;
@@ -521,6 +635,10 @@ class _RenderItem {
   final bool showTime;
   final bool isFirstInGroup;
   final bool isLastInGroup;
+  final String? attachmentUrl;
+  final String? attachmentType;
+  final String? attachmentName;
+  final int? attachmentSize;
 
   _RenderItem({
     required this.index,
@@ -533,5 +651,9 @@ class _RenderItem {
     required this.showTime,
     required this.isFirstInGroup,
     required this.isLastInGroup,
+    this.attachmentUrl,
+    this.attachmentType,
+    this.attachmentName,
+    this.attachmentSize,
   });
 }
