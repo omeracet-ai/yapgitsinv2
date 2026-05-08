@@ -22,6 +22,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 import { FavoriteWorkersService } from './favorite-workers.service';
 import { EarningsService } from './earnings.service';
+import { WorkerInsuranceService } from './worker-insurance.service';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
 import { Offer, OfferStatus } from '../jobs/offer.entity';
@@ -33,6 +34,7 @@ export class UsersController {
     private readonly svc: UsersService,
     private readonly favWorkersSvc: FavoriteWorkersService,
     private readonly earningsSvc: EarningsService,
+    private readonly insuranceSvc: WorkerInsuranceService,
     private readonly adminAuditService: AdminAuditService,
     @InjectRepository(Job) private jobsRepo: Repository<Job>,
     @InjectRepository(Review) private reviewsRepo: Repository<Review>,
@@ -231,6 +233,43 @@ export class UsersController {
     return { tokens };
   }
 
+  // ── Phase 119: Worker insurance ──────────────────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/insurance')
+  async getMyInsurance(@Request() req: AuthenticatedRequest) {
+    const ins = await this.insuranceSvc.getByUserId(req.user.id);
+    return ins ?? null;
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/insurance')
+  async upsertMyInsurance(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: {
+      policyNumber: string;
+      provider: string;
+      coverageAmount: number;
+      expiresAt: string;
+      documentUrl?: string | null;
+    },
+  ) {
+    return this.insuranceSvc.upsert(req.user.id, body);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('me/insurance')
+  async deleteMyInsurance(@Request() req: AuthenticatedRequest) {
+    return this.insuranceSvc.remove(req.user.id);
+  }
+
+  @Get(':id/insurance')
+  async getPublicInsurance(@Param('id') id: string) {
+    const ins = await this.insuranceSvc.getByUserId(id);
+    if (!ins) return null;
+    if (!this.insuranceSvc.isInsured(ins)) return null;
+    return this.insuranceSvc.toPublic(ins);
+  }
+
   // ── Phase 60: Account self-deletion (KVKK) ────────────────────────
   @UseGuards(AuthGuard('jwt'))
   @Delete('me')
@@ -361,6 +400,7 @@ export class UsersController {
     if (!user) return null;
 
     // 3 bağımsız sorgu paralelde çalışır
+    const insurancePromise = this.insuranceSvc.getByUserId(id);
     const [reviews, customerJobs, workerJobs] = await Promise.all([
       // Son 10 değerlendirme
       this.reviewsRepo.find({
@@ -418,10 +458,14 @@ export class UsersController {
       totalReviews: reviews.length,
       reputationScore: reputation,
     } as typeof user;
+    const insurance = await insurancePromise;
+    const insured = this.insuranceSvc.isInsured(insurance);
     const badges = this.svc.computeBadges(enrichedUser);
+    if (insured) badges.push({ key: 'insured', label: 'Sigortalı', icon: '🛡️' });
 
     return {
       ...safe,
+      insurance: insured && insurance ? this.insuranceSvc.toPublic(insurance) : null,
       averageRating: avgRating,
       totalReviews: reviews.length,
       reputationScore: reputation,

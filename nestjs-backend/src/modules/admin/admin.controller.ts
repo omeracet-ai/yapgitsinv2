@@ -16,6 +16,7 @@ import { BulkFeatureDto, BulkUnfeatureDto } from './dto/bulk-feature.dto';
 import { SuspendUserDto } from './dto/suspend-user.dto';
 import { PurgeAuditLogDto } from './dto/purge-audit-log.dto';
 import { AdminGuard } from '../../common/guards/admin.guard';
+import { WorkerInsuranceService } from '../users/worker-insurance.service';
 import type { Request } from 'express';
 import type { AuthUser } from '../../common/types/auth.types';
 
@@ -29,7 +30,26 @@ export class AdminController {
     private readonly userBlocksService: UserBlocksService,
     private readonly adminAuditService: AdminAuditService,
     private readonly systemSettings: SystemSettingsService,
+    private readonly insuranceSvc: WorkerInsuranceService,
   ) {}
+
+  // ── Phase 119: Worker insurance verify ────────────────────────────
+  @Patch('users/:id/insurance/verify')
+  async verifyInsurance(
+    @Param('id') id: string,
+    @Body() body: { verified: boolean },
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.insuranceSvc.setVerified(id, !!body.verified, req.user.id);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'user.insurance.verify',
+      'user',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
+    return result;
+  }
 
   // ── System Settings ─────────────────────────────────────────────────────────
   @Get('settings')

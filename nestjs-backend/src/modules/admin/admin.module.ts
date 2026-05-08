@@ -18,6 +18,7 @@ import { CategoriesModule } from '../categories/categories.module';
 import { ProvidersModule } from '../providers/providers.module';
 import { PromoModule } from '../promo/promo.module';
 import { UserBlocksModule } from '../user-blocks/user-blocks.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { UserBlocksModule } from '../user-blocks/user-blocks.module';
     ProvidersModule,
     PromoModule,
     UserBlocksModule,
+    UsersModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],
