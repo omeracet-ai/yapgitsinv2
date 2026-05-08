@@ -105,3 +105,13 @@ push tipik. Gerçek zamanlı ihtiyaç varsa Bölüm 5'teki alternatiflere geçin
 - **CSS/JS 404** — `_next/` klasörü tam yüklenmemiş. FTP transferini doğrula.
 - **`next build` "Failed to fetch"** — `NEXT_PUBLIC_API_URL` doğru mu, CORS
   build host'unu kabul ediyor mu kontrol et.
+
+## Phase 122 — Google Jobs (JobPosting Indexing API)
+
+İlan sayfaları (`/ilan/[idSlug]`) `JobPosting` schema.org markup içerir.
+Google Jobs rich result için sitemap yeterli **değildir**. Manual submit:
+
+1. Search Console → Indexing API erişimi açın
+2. Service account JWT ile `POST https://indexing.googleapis.com/v3/urlNotifications:publish`
+   body: `{ "url": "https://yapgitsin.tr/ilan/<slug>", "type": "URL_UPDATED" }`
+3. İlan kapanınca `URL_DELETED` gönder

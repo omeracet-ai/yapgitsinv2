@@ -90,25 +90,38 @@ export function personLD(worker: any) {
 }
 
 export function jobPostingLD(job: any) {
+  // Phase 122 — Google Jobs rich result enrichment.
+  const validThrough = job.dueDate
+    ? new Date(job.dueDate)
+    : new Date(Date.parse(job.createdAt) + 30 * 86400000);
   return {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
     title: job.title,
     description: job.description,
     datePosted: job.createdAt,
+    validThrough: validThrough.toISOString(),
     employmentType: 'CONTRACTOR',
     industry: job.category,
     jobLocation: {
       '@type': 'Place',
       address: { '@type': 'PostalAddress', addressLocality: job.location, addressCountry: 'TR' },
     },
+    applicantLocationRequirements: { '@type': 'Country', name: 'Türkiye' },
+    directApply: false,
+    identifier: { '@type': 'PropertyValue', name: NAME, value: job.id },
     hiringOrganization: { '@type': 'Organization', name: NAME, sameAs: SITE },
-    ...(job.budgetMin && job.budgetMax
+    ...(job.budgetMin || job.budgetMax
       ? {
           baseSalary: {
             '@type': 'MonetaryAmount',
             currency: 'TRY',
-            value: { '@type': 'QuantitativeValue', minValue: job.budgetMin, maxValue: job.budgetMax, unitText: 'JOB' },
+            value: {
+              '@type': 'QuantitativeValue',
+              ...(job.budgetMin ? { minValue: job.budgetMin } : {}),
+              ...(job.budgetMax ? { maxValue: job.budgetMax } : {}),
+              unitText: 'PROJECT',
+            },
           },
         }
       : {}),
