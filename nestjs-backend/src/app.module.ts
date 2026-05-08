@@ -83,6 +83,8 @@ import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 import { Tenant } from './modules/tenants/tenant.entity';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { EmailModule } from './modules/email/email.module';
+import { Boost } from './modules/boost/boost.entity';
+import { BoostModule } from './modules/boost/boost.module';
 
 @Module({
   imports: [
@@ -147,6 +149,7 @@ import { EmailModule } from './modules/email/email.module';
           UserSubscription,
           Currency,
           Tenant,
+          Boost,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -223,6 +226,7 @@ import { EmailModule } from './modules/email/email.module';
     LoyaltyModule,
     TenantsModule,
     EmailModule,
+    BoostModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],

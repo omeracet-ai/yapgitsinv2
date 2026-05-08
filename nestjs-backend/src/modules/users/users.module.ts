@@ -18,6 +18,7 @@ import { ChatMessage } from '../chat/chat-message.entity';
 import { TokenTransaction } from '../tokens/token-transaction.entity';
 import { EarningsService } from './earnings.service';
 import { AiModule } from '../ai/ai.module';
+import { BoostModule } from '../boost/boost.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AiModule } from '../ai/ai.module';
       Job, Review, Offer, Booking, Notification, ChatMessage, TokenTransaction,
     ]),
     AiModule,
+    BoostModule,
   ],
   controllers: [UsersController],
   providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, DataPrivacyService],

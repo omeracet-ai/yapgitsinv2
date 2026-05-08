@@ -5,6 +5,8 @@ import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { Booking, BookingStatus } from '../bookings/booking.entity';
 import { SemanticSearchService } from '../ai/semantic-search.service';
+import { BoostService } from '../boost/boost.service';
+import { BoostType } from '../boost/boost.entity';
 
 export type StatField =
   | 'asCustomerTotal'
@@ -22,7 +24,23 @@ export class UsersService {
     @InjectRepository(Booking)
     private bookingsRepo: Repository<Booking>,
     private readonly semanticSearch: SemanticSearchService,
+    private readonly boostSvc: BoostService,
   ) {}
+
+  /** Phase 141 — Worker boost ranking: top_search_24h aktif olanları başa al. */
+  private async _applyBoostRanking<T extends { id: string }>(items: T[]): Promise<T[]> {
+    if (items.length === 0) return items;
+    const map = await this.boostSvc.getActiveBoostsForRanking();
+    if (map.size === 0) return items;
+    const boosted: T[] = [];
+    const rest: T[] = [];
+    for (const it of items) {
+      const types = map.get(it.id);
+      if (types && types.has(BoostType.TOP_SEARCH_24H)) boosted.push(it);
+      else rest.push(it);
+    }
+    return [...boosted, ...rest];
+  }
 
   /** Phase 135 — Worker availability slots for next N days.
    * Combines weekly availabilitySchedule (Phase 44) + active bookings (Phase 70).
@@ -238,6 +256,7 @@ export class UsersService {
       if (opts.semanticQuery && this.semanticSearch.isEnabled()) {
         final = await this.semanticSearch.rerankWorkers(opts.semanticQuery, final);
       }
+      final = await this._applyBoostRanking(final);
       const total = final.length;
       const slice = final.slice((page - 1) * limit, (page - 1) * limit + limit);
       return { data: slice, total, page, limit, pages: Math.ceil(total / limit) || 0 };
@@ -246,12 +265,26 @@ export class UsersService {
     // Phase 134 — Semantic re-rank: fetch all, rerank, then paginate
     if (opts.semanticQuery && this.semanticSearch.isEnabled()) {
       const all = await qb.getMany();
-      const reranked = await this.semanticSearch.rerankWorkers(
+      let reranked = await this.semanticSearch.rerankWorkers(
         opts.semanticQuery,
         all,
       );
+      reranked = await this._applyBoostRanking(reranked);
       const total = reranked.length;
       const slice = reranked.slice((page - 1) * limit, (page - 1) * limit + limit);
+      return { data: slice, total, page, limit, pages: Math.ceil(total / limit) || 0 };
+    }
+
+    // Phase 141 — Boost ranking: fetch all, reorder, then paginate
+    const boostMap = await this.boostSvc.getActiveBoostsForRanking();
+    const hasTopBoost = Array.from(boostMap.values()).some((s) =>
+      s.has(BoostType.TOP_SEARCH_24H),
+    );
+    if (hasTopBoost) {
+      const all = await qb.getMany();
+      const ranked = await this._applyBoostRanking(all);
+      const total = ranked.length;
+      const slice = ranked.slice((page - 1) * limit, (page - 1) * limit + limit);
       return { data: slice, total, page, limit, pages: Math.ceil(total / limit) || 0 };
     }
 

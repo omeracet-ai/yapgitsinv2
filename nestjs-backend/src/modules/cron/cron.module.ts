@@ -8,9 +8,14 @@ import { SavedJobSearch } from '../favorites/saved-job-search.entity';
 import { ReviewReminderService } from './review-reminder.service';
 import { SavedSearchAlertService } from './saved-search-alert.service';
 import { BoostExpiryService } from './boost-expiry.service';
+import { WorkerBoostExpiryService } from './worker-boost-expiry.service';
+import { BoostModule } from '../boost/boost.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Job, Offer, Review, Notification, SavedJobSearch])],
-  providers: [ReviewReminderService, SavedSearchAlertService, BoostExpiryService],
+  imports: [
+    TypeOrmModule.forFeature([Job, Offer, Review, Notification, SavedJobSearch]),
+    BoostModule,
+  ],
+  providers: [ReviewReminderService, SavedSearchAlertService, BoostExpiryService, WorkerBoostExpiryService],
 })
 export class CronModule {}
