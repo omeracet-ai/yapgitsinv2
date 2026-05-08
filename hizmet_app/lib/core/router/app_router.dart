@@ -21,6 +21,7 @@ import '../../../features/users/presentation/screens/favorites_screen.dart';
 import '../../../features/users/presentation/screens/blocked_users_screen.dart';
 import '../../../features/jobs/presentation/screens/saved_jobs_screen.dart';
 import '../../../features/notifications/presentation/screens/notification_preferences_screen.dart';
+import '../../../features/bookings/presentation/screens/booking_create_screen.dart';
 import '../providers/navigation_provider.dart';
 import '../widgets/success_screen.dart';
 
@@ -141,6 +142,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/bildirim-ayarlari',
         builder: (context, state) => const NotificationPreferencesScreen(),
+      ),
+      GoRoute(
+        path: '/randevu-olustur/:workerId',
+        builder: (context, state) => buildBookingCreateRoute(state),
       ),
       GoRoute(
         path: '/ilan-basarili',

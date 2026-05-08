@@ -10,6 +10,7 @@ import '../../../reviews/widgets/review_reply_sheet.dart';
 import '../../widgets/portfolio_gallery.dart';
 import '../../widgets/availability_editor_sheet.dart';
 import '../../../users/widgets/badge_row.dart';
+import 'package:go_router/go_router.dart';
 
 final publicProfileProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
@@ -265,6 +266,44 @@ class _ProfileView extends ConsumerWidget {
                                     MaterialTapTargetSize.shrinkWrap,
                               ))
                           .toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                // ── Randevu Al CTA ────────────────────────────────────────
+                if (isWorker && !isSelf) ...[
+                  Container(
+                    color: Colors.white,
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        icon: const Text('📅', style: TextStyle(fontSize: 18)),
+                        label: const Text('Randevu Al',
+                            style: TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.bold)),
+                        onPressed: () {
+                          if (currentUserId == null) {
+                            context.push('/giris-yap');
+                            return;
+                          }
+                          context.push(
+                            '/randevu-olustur/$userId',
+                            extra: {
+                              'workerName': name,
+                              'workerCategories': workerCats,
+                            },
+                          );
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),

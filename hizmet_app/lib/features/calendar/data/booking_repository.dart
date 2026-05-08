@@ -41,6 +41,33 @@ class BookingRepository {
     }
   }
 
+  Future<Booking> createBooking({
+    required String workerId,
+    required String category,
+    String? subCategory,
+    required String description,
+    required String address,
+    required String scheduledDate, // YYYY-MM-DD
+    String? scheduledTime, // HH:MM
+    double? agreedPrice,
+    String? customerNote,
+  }) async {
+    final body = <String, dynamic>{
+      'workerId': workerId,
+      'category': category,
+      'description': description,
+      'address': address,
+      'scheduledDate': scheduledDate,
+    };
+    if (subCategory != null && subCategory.isNotEmpty) body['subCategory'] = subCategory;
+    if (scheduledTime != null && scheduledTime.isNotEmpty) body['scheduledTime'] = scheduledTime;
+    if (agreedPrice != null) body['agreedPrice'] = agreedPrice;
+    if (customerNote != null && customerNote.isNotEmpty) body['customerNote'] = customerNote;
+
+    final res = await _dio.post('/bookings', data: body, options: await _authOpts());
+    return Booking.fromJson(res.data as Map<String, dynamic>);
+  }
+
   Future<List<Booking>> getMyBookingsAsCustomer() async {
     try {
       final res = await _dio.get('/bookings/my-as-customer', options: await _authOpts());
