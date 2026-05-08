@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../categories/data/category_repository.dart';
+import '../../../users/widgets/favorite_button.dart';
 import '../../data/provider_repository.dart';
 import 'provider_profile_screen.dart';
 
@@ -425,7 +426,16 @@ class _FeaturedCard extends StatelessWidget {
                 offset: const Offset(0, 4)),
           ],
         ),
-        child: Padding(
+        child: Stack(
+          children: [
+            if ((user?['id']?.toString() ?? '').isNotEmpty)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: FavoriteButton(
+                    workerId: user!['id'].toString(), size: 18),
+              ),
+            Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -495,6 +505,8 @@ class _FeaturedCard extends StatelessWidget {
               ],
             ],
           ),
+        ),
+          ],
         ),
       ),
     );
@@ -713,8 +725,18 @@ class _ProviderCard extends StatelessWidget {
                 ),
               ),
 
-              const Icon(Icons.chevron_right,
-                  color: AppColors.textHint, size: 20),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if ((user?['id']?.toString() ?? '').isNotEmpty)
+                    FavoriteButton(workerId: user!['id'].toString())
+                  else
+                    const SizedBox(height: 34),
+                  const Icon(Icons.chevron_right,
+                      color: AppColors.textHint, size: 20),
+                ],
+              ),
             ],
           ),
         ),

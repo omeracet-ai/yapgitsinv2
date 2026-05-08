@@ -16,6 +16,7 @@ import '../../../features/auth/presentation/screens/verify_email_screen.dart';
 import '../../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../../features/job_templates/presentation/job_templates_screen.dart';
 import '../../../features/statements/presentation/statement_screen.dart';
+import '../../../features/users/presentation/screens/favorites_screen.dart';
 import '../providers/navigation_provider.dart';
 import '../widgets/success_screen.dart';
 
@@ -117,6 +118,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/aylik-beyan',
         builder: (context, state) => const StatementScreen(),
+      ),
+      GoRoute(
+        path: '/favorilerim',
+        builder: (context, state) => const FavoritesScreen(),
       ),
       GoRoute(
         path: '/ilan-basarili',
