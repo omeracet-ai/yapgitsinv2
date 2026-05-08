@@ -103,6 +103,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
+  @SubscribeMessage('typing')
+  handleTyping(
+    @MessageBody()
+    data: { roomId: string; userId: string; isTyping: boolean },
+    @ConnectedSocket() client: Socket,
+  ) {
+    // Broadcast to others in the same room (sender excluded).
+    client.to(data.roomId).emit('userTyping', {
+      userId: data.userId,
+      isTyping: data.isTyping,
+    });
+  }
+
   @SubscribeMessage('joinRoom')
   handleJoinRoom(
     @MessageBody() roomId: string,

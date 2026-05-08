@@ -37,6 +37,27 @@ class ChatService {
     socket.emit('joinRoom', roomId);
   }
 
+  /// Phase 67: emit a typing event to peers in the room.
+  void emitTyping(String roomId, String userId, bool isTyping) {
+    socket.emit('typing', {
+      'roomId': roomId,
+      'userId': userId,
+      'isTyping': isTyping,
+    });
+  }
+
+  /// Phase 67: subscribe to peer typing events.
+  /// Callback receives (userId, isTyping).
+  void onUserTyping(Function(String userId, bool isTyping) callback) {
+    socket.on('userTyping', (data) {
+      final map = Map<String, dynamic>.from(data as Map);
+      callback(
+        (map['userId'] as String?) ?? '',
+        (map['isTyping'] as bool?) ?? false,
+      );
+    });
+  }
+
   void disconnect() {
     socket.disconnect();
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -29,11 +31,24 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final List<Map<String, dynamic>> _messages = [];
   final ScrollController _scrollController = ScrollController();
 
+  // Phase 67: typing-event state.
+  Timer? _typingStopTimer;
+  Timer? _peerTypingClearTimer;
+  bool _isLocallyTyping = false;
+  static const String _meId = 'me';
+
+  String get _roomId {
+    // Stable room id for the 1:1 conversation, independent of sender order.
+    final ids = [_meId, widget.peerId]..sort();
+    return 'dm:${ids[0]}:${ids[1]}';
+  }
+
   @override
   void initState() {
     super.initState();
     final chatService = ref.read(chatServiceProvider);
     chatService.connect();
+    chatService.joinRoom(_roomId);
     chatService.onMessageReceived((data) {
       if (mounted) {
         setState(() {
@@ -45,6 +60,34 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         });
         _scrollToBottom();
       }
+    });
+    // Phase 67: peer typing listener.
+    chatService.onUserTyping((userId, isTyping) {
+      if (!mounted) return;
+      if (userId == _meId) return; // ignore own echoes
+      ref.read(chatTypingProvider.notifier).state = isTyping;
+      _peerTypingClearTimer?.cancel();
+      if (isTyping) {
+        // Safety: clear stale "yazıyor…" if no follow-up event arrives.
+        _peerTypingClearTimer = Timer(const Duration(seconds: 5), () {
+          if (mounted) {
+            ref.read(chatTypingProvider.notifier).state = false;
+          }
+        });
+      }
+    });
+  }
+
+  void _onTextChanged(String _) {
+    final chatService = ref.read(chatServiceProvider);
+    if (!_isLocallyTyping) {
+      _isLocallyTyping = true;
+      chatService.emitTyping(_roomId, _meId, true);
+    }
+    _typingStopTimer?.cancel();
+    _typingStopTimer = Timer(const Duration(seconds: 2), () {
+      _isLocallyTyping = false;
+      chatService.emitTyping(_roomId, _meId, false);
     });
   }
 
@@ -76,10 +119,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     _messageController.clear();
     _scrollToBottom();
+
+    // Sending implies typing has stopped.
+    _typingStopTimer?.cancel();
+    if (_isLocallyTyping) {
+      _isLocallyTyping = false;
+      ref.read(chatServiceProvider).emitTyping(_roomId, _meId, false);
+    }
   }
 
   @override
   void dispose() {
+    _typingStopTimer?.cancel();
+    _peerTypingClearTimer?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -328,6 +380,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   maxLines: 4,
                   minLines: 1,
                   textCapitalization: TextCapitalization.sentences,
+                  onChanged: _onTextChanged,
                   decoration: const InputDecoration(
                     hintText: 'Mesaj yazın...',
                     hintStyle: TextStyle(
