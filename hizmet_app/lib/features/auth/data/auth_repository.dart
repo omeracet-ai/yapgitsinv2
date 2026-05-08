@@ -216,6 +216,28 @@ class AuthRepository {
     await prefs.remove('user_data');
   }
 
+  /// Kalıcı hesap deaktivasyonu — şifre doğrulaması ile.
+  /// 401 → şifre yanlış. Diğer hatalar → bağlantı/server hatası.
+  Future<void> deleteAccount(String password) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) {
+      throw Exception('Oturum bulunamadı');
+    }
+    try {
+      await _dio.delete(
+        '/users/me',
+        data: {'password': password},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Şifre yanlış');
+      }
+      throw Exception('Bağlantı hatası, tekrar deneyin');
+    }
+  }
+
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('jwt_token');

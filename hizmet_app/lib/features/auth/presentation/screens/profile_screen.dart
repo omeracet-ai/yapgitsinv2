@@ -934,7 +934,125 @@ class ProfileScreen extends ConsumerWidget {
           _menuItem(Icons.logout, 'Çıkış Yap',
               () => ref.read(authStateProvider.notifier).logout(),
               color: Colors.redAccent),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _showDeleteAccountDialog(context, ref),
+                icon: const Icon(Icons.delete_forever, color: AppColors.error),
+                label: const Text(
+                  'Hesabı Sil',
+                  style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.error),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _showDeleteAccountDialog(BuildContext context, WidgetRef ref) async {
+    final passwordCtrl = TextEditingController();
+    bool obscure = true;
+    bool busy = false;
+    String? errorText;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: AppColors.error),
+              SizedBox(width: 8),
+              Expanded(child: Text('Hesabı Sil')),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '⚠️ Hesabınız silinecek. Bu işlem geri alınamaz. Devam için şifrenizi girin.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: passwordCtrl,
+                obscureText: obscure,
+                enabled: !busy,
+                decoration: InputDecoration(
+                  labelText: 'Şifre',
+                  errorText: errorText,
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(obscure ? Icons.visibility : Icons.visibility_off),
+                    onPressed: () => setState(() => obscure = !obscure),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: busy ? null : () => Navigator.of(dialogCtx).pop(),
+              child: const Text('İptal'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: busy
+                  ? null
+                  : () async {
+                      final pw = passwordCtrl.text;
+                      if (pw.isEmpty) {
+                        setState(() => errorText = 'Şifrenizi girin');
+                        return;
+                      }
+                      setState(() {
+                        busy = true;
+                        errorText = null;
+                      });
+                      try {
+                        await ref.read(authRepositoryProvider).deleteAccount(pw);
+                        if (!ctx.mounted) return;
+                        Navigator.of(dialogCtx).pop();
+                        await ref.read(authStateProvider.notifier).logout();
+                        if (!context.mounted) return;
+                        context.go('/login');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Hesap silindi')),
+                        );
+                      } catch (e) {
+                        final msg = e.toString().replaceFirst('Exception: ', '');
+                        setState(() {
+                          busy = false;
+                          errorText = msg;
+                        });
+                      }
+                    },
+              child: busy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Hesabı Sil'),
+            ),
+          ],
+        ),
       ),
     );
   }
