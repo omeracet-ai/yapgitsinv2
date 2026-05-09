@@ -106,6 +106,13 @@ export class Booking {
   @Column({ type: 'simple-enum', enum: RefundStatus, nullable: true })
   refundStatus: RefundStatus | null;
 
+  // Phase 149 — schedule reminders (24h + 1h before scheduledDate/Time)
+  @Column({ type: 'datetime', nullable: true })
+  reminder24hSentAt: Date | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  reminder1hSentAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
