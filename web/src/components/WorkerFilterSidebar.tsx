@@ -9,6 +9,7 @@ export type WorkerFilterState = {
   minRate: number | null;
   maxRate: number | null;
   verifiedOnly: boolean;
+  availableOnly: boolean;
   sortBy: 'reputation' | 'rating' | 'rateAsc' | 'rateDesc';
 };
 
@@ -17,6 +18,7 @@ export const DEFAULT_FILTERS: WorkerFilterState = {
   minRate: null,
   maxRate: null,
   verifiedOnly: false,
+  availableOnly: false,
   sortBy: 'reputation',
 };
 
@@ -28,6 +30,7 @@ function readFromQuery(sp: URLSearchParams): WorkerFilterState {
     minRate: sp.get('minRate') ? Number(sp.get('minRate')) : null,
     maxRate: sp.get('maxRate') ? Number(sp.get('maxRate')) : null,
     verifiedOnly: sp.get('verified') === '1',
+    availableOnly: sp.get('available') === '1',
     sortBy: (sp.get('sort') as WorkerFilterState['sortBy']) || 'reputation',
   };
 }
@@ -38,6 +41,7 @@ export function countActive(f: WorkerFilterState): number {
   if (f.minRate != null) n++;
   if (f.maxRate != null) n++;
   if (f.verifiedOnly) n++;
+  if (f.availableOnly) n++;
   if (f.sortBy !== 'reputation') n++;
   return n;
 }
@@ -64,6 +68,7 @@ export default function WorkerFilterSidebar({
     if (filters.minRate != null) sp.set('minRate', String(filters.minRate));
     if (filters.maxRate != null) sp.set('maxRate', String(filters.maxRate));
     if (filters.verifiedOnly) sp.set('verified', '1');
+    if (filters.availableOnly) sp.set('available', '1');
     if (filters.sortBy !== 'reputation') sp.set('sort', filters.sortBy);
     const qs = sp.toString();
     router.replace(qs ? `?${qs}` : '?', { scroll: false });
@@ -134,6 +139,18 @@ export default function WorkerFilterSidebar({
           type="checkbox"
           checked={filters.verifiedOnly}
           onChange={(e) => setFilters((s) => ({ ...s, verifiedOnly: e.target.checked }))}
+          className="w-5 h-5 accent-[var(--primary)]"
+        />
+      </label>
+
+      <label className="flex items-center justify-between cursor-pointer">
+        <span className="text-sm font-semibold text-[var(--secondary)]">
+          {L('availableOnly', '🟢 Sadece Müsait Olanlar')}
+        </span>
+        <input
+          type="checkbox"
+          checked={filters.availableOnly}
+          onChange={(e) => setFilters((s) => ({ ...s, availableOnly: e.target.checked }))}
           className="w-5 h-5 accent-[var(--primary)]"
         />
       </label>
@@ -229,11 +246,13 @@ export function applyFilters<T extends {
   hourlyRateMin?: number;
   hourlyRateMax?: number;
   identityVerified?: boolean;
+  isAvailable?: boolean;
   reputationScore?: number;
 }>(workers: T[], f: WorkerFilterState): T[] {
   let out = workers.filter((w) => {
     if (f.minRating > 0 && (w.averageRating ?? 0) < f.minRating) return false;
     if (f.verifiedOnly && !w.identityVerified) return false;
+    if (f.availableOnly && w.isAvailable !== true) return false;
     if (f.minRate != null && (w.hourlyRateMax ?? w.hourlyRateMin ?? 0) < f.minRate) return false;
     if (f.maxRate != null && (w.hourlyRateMin ?? w.hourlyRateMax ?? Infinity) > f.maxRate) return false;
     return true;

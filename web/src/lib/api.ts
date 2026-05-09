@@ -63,6 +63,7 @@ export type Worker = {
   identityVerified?: boolean;
   hourlyRateMin?: number;
   hourlyRateMax?: number;
+  isAvailable?: boolean;
 };
 
 export type Job = {

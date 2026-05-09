@@ -71,6 +71,7 @@
     "any": "Any",
     "priceRange": "💰 Hourly Rate (TL)",
     "verifiedOnly": "🛡️ Verified Only",
+    "availableOnly": "🟢 Available Now",
     "sortBy": "↕️ Sort By",
     "sortReputation": "Reputation",
     "sortRating": "Rating",

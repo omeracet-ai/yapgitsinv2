@@ -71,6 +71,7 @@
     "any": "Hepsi",
     "priceRange": "💰 Saat Ücreti (TL)",
     "verifiedOnly": "🛡️ Sadece Doğrulanmış",
+    "availableOnly": "🟢 Sadece Müsait Olanlar",
     "sortBy": "↕️ Sıralama",
     "sortReputation": "İtibar",
     "sortRating": "Yıldız",
