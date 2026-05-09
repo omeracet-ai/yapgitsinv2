@@ -14,6 +14,8 @@ import {
   equirectangular,
   precisionForRadiusKm,
 } from '../../common/geohash.util';
+import { bayesianAverage, wilsonScore } from '../../common/rating.util';
+import { Review } from '../reviews/review.entity';
 
 export type StatField =
   | 'asCustomerTotal'
@@ -30,6 +32,8 @@ export class UsersService {
     private repo: Repository<User>,
     @InjectRepository(Booking)
     private bookingsRepo: Repository<Booking>,
+    @InjectRepository(Review)
+    private reviewsRepo: Repository<Review>,
     private readonly semanticSearch: SemanticSearchService,
     private readonly boostSvc: BoostService,
     @Inject(forwardRef(() => SubscriptionsService))
@@ -210,9 +214,13 @@ export class UsersService {
       );
     }
 
+    // Phase 173 — Top-rated sort uses wilsonScore first (statistically robust),
+    // reputationScore as tiebreaker.
     switch (opts.sortBy) {
       case 'rating':
-        qb.orderBy('u.averageRating', 'DESC').addOrderBy('u.reputationScore', 'DESC');
+        qb.orderBy('u.wilsonScore', 'DESC')
+          .addOrderBy('u.averageRating', 'DESC')
+          .addOrderBy('u.reputationScore', 'DESC');
         break;
       case 'rate_asc':
         qb.orderBy('u.hourlyRateMin', 'ASC').addOrderBy('u.reputationScore', 'DESC');
@@ -222,7 +230,7 @@ export class UsersService {
         break;
       case 'reputation':
       default:
-        qb.orderBy('u.reputationScore', 'DESC');
+        qb.orderBy('u.wilsonScore', 'DESC').addOrderBy('u.reputationScore', 'DESC');
         break;
     }
 
@@ -351,20 +359,35 @@ export class UsersService {
     await this.repo.increment({ id: userId }, field, 1);
   }
 
-  /** Review eklendikten sonra averageRating, totalReviews ve reputationScore'u güncelle */
-  async recalcRating(userId: string, newRating: number): Promise<void> {
+  /**
+   * Phase 173 — Review eklendikten sonra rating + Wilson + reputation hesapla.
+   * Tüm review'ları DB'den çekip Bayesian average + Wilson 95% CI lower bound üretir.
+   * `averageRating` artık Bayesian-shrunk değer (UI/sıralama için).
+   * `wilsonScore` = pozitif (>=4★) oranın güven aralığı alt sınırı (sıralama için).
+   */
+  async recalcRating(userId: string, _newRating?: number): Promise<void> {
     const user = await this.repo.findOne({ where: { id: userId } });
     if (!user) return;
-    const total = user.totalReviews + 1;
-    const average =
-      (user.averageRating * user.totalReviews + newRating) / total;
-    // reputationScore: puan ortalaması × 20 + başarılı iş sayısı × 5
+    const reviews = await this.reviewsRepo.find({
+      where: { revieweeId: userId },
+      select: ['rating'],
+    });
+    const total = reviews.length;
+    let sum = 0;
+    let positive = 0;
+    for (const r of reviews) {
+      sum += r.rating;
+      if (r.rating >= 4) positive++;
+    }
+    const bayesian = bayesianAverage(sum, total);
+    const wilson = wilsonScore(positive, total);
     const reputation =
-      Math.round(average * 20) +
+      Math.round(bayesian * 20) +
       (user.asCustomerSuccess + user.asWorkerSuccess) * 5;
     await this.repo.update(userId, {
       totalReviews: total,
-      averageRating: Math.round(average * 100) / 100,
+      averageRating: Math.round(bayesian * 100) / 100,
+      wilsonScore: Math.round(wilson * 10000) / 10000,
       reputationScore: reputation,
     });
   }
@@ -771,7 +794,11 @@ export class UsersService {
     return next;
   }
 
-  /** Stats güncellendikten sonra reputationScore'u yeniden hesapla */
+  /**
+   * Phase 173 — Stats güncellendikten sonra reputationScore'u yeniden hesapla.
+   * `averageRating` zaten Bayesian-shrunk değer (recalcRating'te yazıldı), formül aynı.
+   *   reputation = round(bayesianAvg × 20) + (customerSuccess + workerSuccess) × 5
+   */
   async recalcReputation(userId: string): Promise<void> {
     const user = await this.repo.findOne({ where: { id: userId } });
     if (!user) return;

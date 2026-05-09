@@ -112,6 +112,11 @@ export class User {
   @Column({ type: 'integer', default: 0 })
   reputationScore: number;
 
+  // Phase 173 — Wilson 95% CI lower bound (positive >=4★ ratio)
+  // Sıralama için: yeni 5★'lı kullanıcı eski 4.5★ 50-yorumluyu geçmesin
+  @Column({ type: 'float', default: 0 })
+  wilsonScore: number;
+
   // ── Usta profili (worker) ────────────────────────────────────────────────
   // Hangi kategorilerde hizmet verdiği: ["Temizlik","Elektrikçi"]
   @Column({ type: 'simple-json', nullable: true })
