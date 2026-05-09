@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { memoryStorage } from 'multer';
 import { join } from 'path';
 import * as fs from 'fs';
@@ -53,6 +54,9 @@ const videoFilter = (req: any, file: any, cb: any) => {
   cb(null, true);
 };
 
+// Phase 170 — class-level throttle: 10 req/dk per IP (default tracker).
+// JWT subject bazlı tracker eklenmek istenirse custom ThrottlerGuard.getTracker override gerekir.
+@Throttle({ uploads: { limit: 10, ttl: 60_000 } })
 @Controller('uploads')
 export class UploadsController {
   constructor(private readonly uploadsService: UploadsService) {}

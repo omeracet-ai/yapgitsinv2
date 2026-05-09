@@ -62,6 +62,126 @@ export class FcmService implements OnModuleInit {
     return this.enabled;
   }
 
+  /**
+   * Phase 171 — Send to a raw token (single device).
+   * Returns true on success. On invalid-token error, removes the token from
+   * any user that owns it.
+   */
+  async sendToToken(
+    token: string,
+    title: string,
+    body: string,
+    data?: Record<string, string>,
+  ): Promise<boolean> {
+    if (!this.enabled || !this.admin || !token) return false;
+    try {
+      await this.admin.messaging().send({
+        token,
+        notification: { title, body },
+        data: data ?? {},
+      });
+      return true;
+    } catch (err) {
+      const code = (err as { code?: string }).code ?? '';
+      if (
+        code === 'messaging/invalid-registration-token' ||
+        code === 'messaging/registration-token-not-registered'
+      ) {
+        await this.cleanupTokens([token]);
+      } else {
+        this.logger.warn(`FCM sendToToken failed: ${(err as Error).message}`);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Phase 171 — Multicast send to many tokens (chunked at 500 per FCM limit).
+   * Returns aggregate {successCount, failureCount}. Cleans invalid tokens
+   * from owning users automatically.
+   */
+  async sendToTokens(
+    tokens: string[],
+    title: string,
+    body: string,
+    data?: Record<string, string>,
+  ): Promise<{ successCount: number; failureCount: number }> {
+    if (!this.enabled || !this.admin || !tokens || tokens.length === 0) {
+      return { successCount: 0, failureCount: 0 };
+    }
+    const unique = Array.from(
+      new Set(tokens.filter((t) => typeof t === 'string' && t.length > 0)),
+    );
+    if (unique.length === 0) return { successCount: 0, failureCount: 0 };
+
+    const chunkSize = 500;
+    let successCount = 0;
+    let failureCount = 0;
+    const invalid: string[] = [];
+
+    for (let i = 0; i < unique.length; i += chunkSize) {
+      const chunk = unique.slice(i, i + chunkSize);
+      try {
+        const response = await this.admin.messaging().sendEachForMulticast({
+          tokens: chunk,
+          notification: { title, body },
+          data: data ?? {},
+        });
+        successCount += response.successCount;
+        failureCount += response.failureCount;
+        response.responses.forEach((r, idx) => {
+          if (!r.success) {
+            const code =
+              (r.error as { code?: string } | undefined)?.code ?? '';
+            if (
+              code === 'messaging/invalid-registration-token' ||
+              code === 'messaging/registration-token-not-registered'
+            ) {
+              invalid.push(chunk[idx]);
+            }
+          }
+        });
+      } catch (err) {
+        failureCount += chunk.length;
+        this.logger.warn(
+          `FCM multicast chunk failed: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    if (invalid.length) {
+      await this.cleanupTokens(invalid);
+    }
+    return { successCount, failureCount };
+  }
+
+  /** Remove invalid tokens from any owning users. */
+  private async cleanupTokens(invalid: string[]): Promise<void> {
+    if (!invalid.length) return;
+    try {
+      // Find all users whose fcmTokens contain any of the invalid tokens.
+      // simple-json field — load candidates, filter in-memory, batch update.
+      const candidates = await this.usersRepo
+        .createQueryBuilder('u')
+        .select(['u.id', 'u.fcmTokens'])
+        .where('u.fcmTokens IS NOT NULL')
+        .getMany();
+      const invalidSet = new Set(invalid);
+      for (const u of candidates) {
+        const cur = Array.isArray(u.fcmTokens) ? u.fcmTokens : [];
+        const next = cur.filter((t) => !invalidSet.has(t));
+        if (next.length !== cur.length) {
+          await this.usersRepo.update(u.id, {
+            fcmTokens: next.length ? next : null,
+          });
+        }
+      }
+      this.logger.log(`Cleaned ${invalid.length} invalid FCM token(s)`);
+    } catch (err) {
+      this.logger.warn(`FCM cleanup failed: ${(err as Error).message}`);
+    }
+  }
+
   async sendToUser(
     userId: string,
     title: string,

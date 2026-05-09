@@ -23,12 +23,48 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useGlobalFilters(new SentryFilter());
 
-  // Phase 131 — Helmet: HTTP güvenlik header'ları (XSS, clickjacking, MIME sniffing)
-  // crossOriginResourcePolicy gevşetildi: /uploads statik dosyaları farklı originden çekilebilsin diye
+  // Phase 131/170 — Helmet: HTTP güvenlik header'ları
+  // - HSTS: 1 yıl, alt domainler dahil, preload-ready
+  // - CSP: Iyzipay frame'i, Plausible/GTM analytics, self img/script/style, websocket connect
+  // - referrerPolicy + frameguard (clickjacking) + nosniff
+  // crossOriginResourcePolicy gevşetildi: /uploads farklı originden çekilebilsin
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
-      contentSecurityPolicy: false, // API için CSP gereksiz; web/admin Next.js tarafında ayarlanır
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      frameguard: { action: 'sameorigin' }, // X-Frame-Options: SAMEORIGIN
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          defaultSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            'https://www.googletagmanager.com',
+            'https://plausible.io',
+          ],
+          connectSrc: [
+            "'self'",
+            'https://yapgitsin.tr',
+            'wss://yapgitsin.tr',
+            'https://plausible.io',
+          ],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          frameSrc: [
+            "'self'",
+            'https://sandbox-api.iyzipay.com',
+            'https://api.iyzipay.com',
+          ],
+          // upgrade-insecure-requests prod TLS uyumu
+          upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
+        },
+      },
     }),
   );
 
@@ -75,7 +111,10 @@ async function bootstrap() {
     customCss: '.swagger-ui .topbar { background-color: #007DFE; }',
   });
 
-  // CORS: production'da ALLOWED_ORIGINS env değişkeni ile kısıtla
+  // CORS — Phase 170 hardening:
+  //   - Production'da http:// ve localhost reject (boot fail)
+  //   - Origin function: dev tüm localhost serbest, prod strict allowlist
+  //   - Native (Capacitor / mobil) için origin=null/undefined kabul
   const isProd = process.env.NODE_ENV === 'production';
   const rawOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
@@ -84,14 +123,32 @@ async function bootstrap() {
     if (rawOrigins.length === 0) {
       throw new Error('Production requires ALLOWED_ORIGINS env (comma-separated list)');
     }
-    const bad = rawOrigins.find((o) => o === '*' || /localhost|127\.0\.0\.1/.test(o));
+    const bad = rawOrigins.find(
+      (o) => o === '*' || o.startsWith('http://') || /localhost|127\.0\.0\.1/.test(o),
+    );
     if (bad) {
-      throw new Error(`Production ALLOWED_ORIGINS rejects "${bad}" (no *, localhost, 127.0.0.1)`);
+      throw new Error(
+        `Production ALLOWED_ORIGINS rejects "${bad}" (no *, http://, localhost, 127.0.0.1)`,
+      );
     }
   }
-  const allowedOrigins = rawOrigins.length > 0 ? rawOrigins : true; // dev: tüm originler
+  const originFn = (
+    origin: string | undefined,
+    cb: (err: Error | null, allow?: boolean) => void,
+  ) => {
+    // Native (Capacitor/mobile/curl) — origin yok
+    if (!origin) return cb(null, true);
+    if (!isProd) {
+      // dev: localhost / 127.0.0.1 / capacitor / file her zaman serbest
+      if (/^https?:\/\/(localhost|127\.0\.0\.1)/.test(origin)) return cb(null, true);
+      if (/^capacitor:\/\//.test(origin)) return cb(null, true);
+      if (rawOrigins.length === 0) return cb(null, true);
+    }
+    if (rawOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error(`CORS: origin "${origin}" not allowed`), false);
+  };
   app.enableCors({
-    origin: allowedOrigins,
+    origin: originFn,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });

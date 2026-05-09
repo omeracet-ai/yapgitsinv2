@@ -1,17 +1,51 @@
 import type { NextConfig } from "next";
 
+// Phase 170 — Public web (statik export). `headers()` statik export
+// build'inde uygulanmaz (yalnız dev server'da etkin); production HTTP
+// header'ları IIS web.config <httpProtocol><customHeaders> bloğunda
+// veya Plesk Apache/Nginx vhost'unda set edilmelidir.
+//
+// Statik HTML için CSP <meta http-equiv="Content-Security-Policy" ...>
+// app/layout.tsx içinde meta tag olarak da eklenebilir.
+const SECURITY_HEADERS = [
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "img-src 'self' data: https:",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://plausible.io",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "connect-src 'self' https://yapgitsin.tr wss://yapgitsin.tr https://plausible.io",
+      "frame-src 'self' https://sandbox-api.iyzipay.com https://api.iyzipay.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+    ].join("; "),
+  },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=(self)",
+  },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+];
+
 const nextConfig: NextConfig = {
   // Static export for FTP / shared hosting deploy.
-  // Produces fully-rendered HTML/CSS/JS in `out/` directory at build time.
-  // See node_modules/next/dist/docs/01-app/02-guides/static-exports.md
-  output: 'export',
-
-  // Emit `/foo/index.html` instead of `/foo.html` — friendlier for Apache/nginx
-  // shared hosting that doesn't auto-resolve `.html` extension.
+  output: "export",
   trailingSlash: true,
-
-  // next/image optimization requires a Node server. Disable for static export.
   images: { unoptimized: true },
+
+  // Dev server için aktif; prod static build'te no-op.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: SECURITY_HEADERS,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

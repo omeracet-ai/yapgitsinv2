@@ -60,6 +60,12 @@ export class PaymentEscrow {
   @Column({ type: 'varchar', length: 100, nullable: true })
   paymentRef: string | null;
 
+  @Column({ type: 'varchar', length: 32, default: 'iyzipay' })
+  paymentProvider: string;
+
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  paymentToken: string | null;
+
   @Column({ type: 'float', nullable: true })
   refundAmount: number | null;
 

@@ -32,6 +32,25 @@ export interface HoldArgs {
   customerId: string;
   taskerId: string;
   paymentRef?: string;
+  paymentProvider?: string;
+  paymentToken?: string;
+}
+
+export interface InitiateArgs {
+  jobId: string;
+  offerId: string;
+  amount: number;
+  customerId: string;
+  taskerId: string;
+  paymentToken?: string;
+}
+
+export function getPlatformFeeRate(): number {
+  const raw = process.env.PLATFORM_FEE_RATE;
+  if (!raw) return 0.15;
+  const parsed = parseFloat(raw);
+  if (isNaN(parsed) || parsed < 0 || parsed > 1) return 0.15;
+  return parsed;
 }
 
 @Injectable()
@@ -69,10 +88,114 @@ export class EscrowService {
       customerId: args.customerId,
       taskerId: args.taskerId,
       paymentRef: args.paymentRef ?? null,
+      paymentProvider: args.paymentProvider ?? 'iyzipay',
+      paymentToken: args.paymentToken ?? null,
       status: EscrowStatus.HELD,
       currency: 'TRY',
     });
     return this.repo.save(escrow);
+  }
+
+  /**
+   * Phase 169 — Initiate escrow (status=HELD on Iyzipay 3D init).
+   * Note: pending status is not in current state-machine; we treat this as a
+   * pre-hold record carrying the paymentToken until /confirm fires.
+   */
+  async initiate(args: InitiateArgs): Promise<PaymentEscrow> {
+    return this.hold({
+      jobId: args.jobId,
+      offerId: args.offerId,
+      amount: args.amount,
+      customerId: args.customerId,
+      taskerId: args.taskerId,
+      paymentProvider: 'iyzipay',
+      paymentToken: args.paymentToken,
+    });
+  }
+
+  /**
+   * Phase 169 — Iyzipay callback confirms payment captured.
+   * Updates paymentRef + ensures status=HELD.
+   */
+  async confirm(
+    paymentToken: string,
+    paymentRef: string,
+  ): Promise<PaymentEscrow> {
+    const escrow = await this.repo.findOne({ where: { paymentToken } });
+    if (!escrow) throw new NotFoundException('Escrow not found for token');
+    escrow.paymentRef = paymentRef;
+    if (escrow.status !== EscrowStatus.HELD) {
+      escrow.status = EscrowStatus.HELD;
+    }
+    return this.repo.save(escrow);
+  }
+
+  /**
+   * Phase 169 — admin manual resolve: release | refund | split.
+   * splitRatio: 0..1, fraction going to worker; rest refunded.
+   */
+  async adminResolve(
+    escrowId: string,
+    action: 'release' | 'refund' | 'split',
+    adminId: string,
+    adminRole: string,
+    options?: { splitRatio?: number; reason?: string; adminNote?: string },
+  ): Promise<PaymentEscrow> {
+    if (!this.isAdmin(adminRole)) {
+      throw new ForbiddenException('Admin role required');
+    }
+    const escrow = await this.repo.findOne({ where: { id: escrowId } });
+    if (!escrow) throw new NotFoundException('Escrow not found');
+
+    if (action === 'release') {
+      return this.release(escrowId, adminId, options?.reason, adminRole);
+    }
+    if (action === 'refund') {
+      return this.refund(
+        escrowId,
+        adminId,
+        escrow.amount,
+        options?.reason,
+        adminRole,
+      );
+    }
+    // split
+    const ratio = options?.splitRatio ?? 0.5;
+    if (ratio < 0 || ratio > 1) {
+      throw new BadRequestException('splitRatio must be between 0 and 1');
+    }
+    if (
+      !this.isValidTransition(escrow.status, EscrowStatus.PARTIAL_REFUND)
+    ) {
+      throw new BadRequestException(
+        `Cannot split from status ${escrow.status}`,
+      );
+    }
+    const workerShare = Math.round(escrow.amount * ratio * 100) / 100;
+    const refundShare = Math.round((escrow.amount - workerShare) * 100) / 100;
+    const feeRate = getPlatformFeeRate() * 100;
+    escrow.platformFeePct = feeRate;
+    escrow.platformFeeAmount =
+      Math.round(workerShare * feeRate) / 100;
+    escrow.taskerNetAmount = workerShare - escrow.platformFeeAmount;
+    escrow.refundAmount = refundShare;
+    escrow.status = EscrowStatus.PARTIAL_REFUND;
+    escrow.releasedAt = new Date();
+    escrow.refundedAt = new Date();
+    escrow.releaseReason = options?.reason ?? 'admin split';
+    escrow.refundReason = options?.adminNote ?? null;
+    return this.repo.save(escrow);
+  }
+
+  /**
+   * Phase 169 — combined "my escrows" (customer ∪ tasker).
+   */
+  async listMy(userId: string): Promise<PaymentEscrow[]> {
+    return this.repo
+      .createQueryBuilder('e')
+      .where('e.customerId = :uid OR e.taskerId = :uid', { uid: userId })
+      .orderBy('e.createdAt', 'DESC')
+      .getMany();
   }
 
   async release(
@@ -95,7 +218,10 @@ export class EscrowService {
       );
     }
 
-    const pct = parseFloat(process.env.PLATFORM_FEE_PCT ?? '10') || 10;
+    // PLATFORM_FEE_RATE (0..1) takes precedence over legacy PLATFORM_FEE_PCT.
+    const pct = process.env.PLATFORM_FEE_RATE
+      ? getPlatformFeeRate() * 100
+      : parseFloat(process.env.PLATFORM_FEE_PCT ?? '15') || 15;
     escrow.platformFeePct = pct;
     escrow.platformFeeAmount = Math.round((escrow.amount * pct) / 100 * 100) / 100;
     escrow.taskerNetAmount = escrow.amount - escrow.platformFeeAmount;

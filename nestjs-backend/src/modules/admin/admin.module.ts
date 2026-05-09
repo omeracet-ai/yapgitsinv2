@@ -19,6 +19,7 @@ import { ProvidersModule } from '../providers/providers.module';
 import { PromoModule } from '../promo/promo.module';
 import { UserBlocksModule } from '../user-blocks/user-blocks.module';
 import { UsersModule } from '../users/users.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UsersModule } from '../users/users.module';
     PromoModule,
     UserBlocksModule,
     UsersModule,
+    NotificationsModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

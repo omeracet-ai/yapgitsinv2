@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { ModerationModule } from './modules/moderation/moderation.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { UserOrIpThrottlerGuard } from './common/guards/user-or-ip.throttler.guard';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CronModule } from './modules/cron/cron.module';
@@ -98,8 +99,18 @@ import { BoostModule } from './modules/boost/boost.module';
     }),
     // Global in-memory cache (TTL: 30 saniye, max 500 item)
     CacheModule.register({ isGlobal: true, ttl: 30000, max: 500 }),
-    // Global rate limiting: dakikada 60 istek (IP başına)
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
+    // Phase 170 — Named throttlers (route-bazlı override için).
+    //   default: 60 req / 60s (IP başına, global)
+    //   auth-login: 5 req / 60s (brute-force koruma)
+    //   auth-register: 3 req / 60min
+    //   uploads: 10 req / 60s
+    // Decorator: @Throttle({ 'auth-login': { limit: 5, ttl: 60_000 } }) ile route override.
+    ThrottlerModule.forRoot([
+      { name: 'default', ttl: 60_000, limit: 60 },
+      { name: 'auth-login', ttl: 60_000, limit: 5 },
+      { name: 'auth-register', ttl: 3_600_000, limit: 3 },
+      { name: 'uploads', ttl: 60_000, limit: 10 },
+    ]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
@@ -239,7 +250,7 @@ import { BoostModule } from './modules/boost/boost.module';
   controllers: [AppController],
   providers: [
     AppService,
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: UserOrIpThrottlerGuard },
   ],
 })
 export class AppModule {}

@@ -17,6 +17,7 @@ import { PaymentEscrow, EscrowStatus } from '../escrow/payment-escrow.entity';
 import { ChatMessage } from '../chat/chat-message.entity';
 import { JobQuestion } from '../jobs/job-question.entity';
 import { Provider } from '../providers/provider.entity';
+import { FcmService } from '../notifications/fcm.service';
 import {
   PromoService,
   CreatePromoDto,
@@ -49,6 +50,7 @@ export class AdminService {
     @InjectRepository(AdminAuditLog) private auditRepo: Repository<AdminAuditLog>,
     @InjectRepository(Provider) private providersRepo: Repository<Provider>,
     private readonly promoService: PromoService,
+    private readonly fcmService: FcmService,
   ) {}
 
   async bulkVerifyUsers(
@@ -219,7 +221,47 @@ export class AdminService {
       await this.notificationRepo.save(entities.slice(i, i + chunkSize));
     }
 
+    // Phase 171 — fan-out FCM push to segment users (fire-and-forget).
+    // Collect all fcmTokens for these users (respecting pushNotificationsEnabled).
+    void this.broadcastFcmPush(rows.map((r) => r.id), dto.title, dto.message);
+
     return { sent: entities.length, segment: dto.segment };
+  }
+
+  /** Phase 171 — gather tokens for broadcast and multicast push (chunked). */
+  private async broadcastFcmPush(
+    userIds: string[],
+    title: string,
+    body: string,
+  ): Promise<void> {
+    if (!this.fcmService.isEnabled() || userIds.length === 0) return;
+    try {
+      const tokens: string[] = [];
+      // Page through users to avoid huge IN() clauses on large segments.
+      const pageSize = 1000;
+      for (let i = 0; i < userIds.length; i += pageSize) {
+        const page = userIds.slice(i, i + pageSize);
+        const users = await this.usersRepo.find({
+          where: { id: In(page) },
+          select: ['id', 'fcmTokens', 'pushNotificationsEnabled'],
+        });
+        for (const u of users) {
+          if (u.pushNotificationsEnabled === false) continue;
+          if (Array.isArray(u.fcmTokens)) {
+            for (const t of u.fcmTokens) {
+              if (typeof t === 'string' && t.length > 0) tokens.push(t);
+            }
+          }
+        }
+      }
+      if (tokens.length === 0) return;
+      await this.fcmService.sendToTokens(tokens, title, body, {
+        type: 'system',
+        broadcast: '1',
+      });
+    } catch {
+      // swallow — broadcast push must never block admin response
+    }
   }
 
   // ── Moderation ────────────────────────────────────────────────────────────

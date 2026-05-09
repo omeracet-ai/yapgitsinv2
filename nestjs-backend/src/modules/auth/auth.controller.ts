@@ -7,6 +7,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
@@ -18,7 +19,8 @@ export class AuthController {
     private twoFactorService: TwoFactorService,
   ) {}
 
-  /** Kullanıcı / işçi girişi */
+  /** Kullanıcı / işçi girişi — Phase 170: 5 req/dk per IP (brute-force koruma) */
+  @Throttle({ 'auth-login': { limit: 5, ttl: 60_000 } })
   @Post('login')
   async login(@Body() body: { email: string; password: string }) {
     const user = await this.authService.validateUser(body.email, body.password);
@@ -27,12 +29,14 @@ export class AuthController {
   }
 
   /** Admin girişi  –  username: "admin"  password: "admin" */
+  @Throttle({ 'auth-login': { limit: 5, ttl: 60_000 } })
   @Post('admin/login')
   adminLogin(@Body() body: { username: string; password: string }) {
     return this.authService.adminLogin(body.username, body.password);
   }
 
-  /** Yeni kullanıcı / işçi kaydı */
+  /** Yeni kullanıcı / işçi kaydı — Phase 170: 3 req/saat per IP (spam koruma) */
+  @Throttle({ 'auth-register': { limit: 3, ttl: 3_600_000 } })
   @Post('register')
   register(
     @Body()
@@ -100,7 +104,8 @@ export class AuthController {
     return this.authService.confirmEmailVerification(body?.token);
   }
 
-  /** Phase 123 — SMS OTP iste */
+  /** Phase 123 — SMS OTP iste — Phase 170: 5 req/dk (sms cost koruma) */
+  @Throttle({ 'auth-login': { limit: 5, ttl: 60_000 } })
   @Post('sms/request')
   requestSmsOtp(@Body() body: { phoneNumber: string }) {
     return this.authService.requestSmsOtp(body?.phoneNumber);
