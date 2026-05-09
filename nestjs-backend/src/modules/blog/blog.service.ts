@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BlogPost, BlogPostStatus } from './blog-post.entity';
 import { CreateBlogPostDto, UpdateBlogPostDto } from './dto/blog-post.dto';
+import { applyTenantFilter } from '../../common/tenant-aware.repository';
 
 @Injectable()
 export class BlogService {
@@ -11,7 +12,7 @@ export class BlogService {
     private readonly repo: Repository<BlogPost>,
   ) {}
 
-  async findAllPublished(page = 1, limit = 20, tag?: string) {
+  async findAllPublished(page = 1, limit = 20, tag?: string, tenantId?: string | null) {
     const safePage = Math.max(1, Number(page) || 1);
     const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
     const qb = this.repo
@@ -22,8 +23,9 @@ export class BlogService {
       .skip((safePage - 1) * safeLimit)
       .take(safeLimit);
 
+    applyTenantFilter(qb, 'p', tenantId);
+
     if (tag) {
-      // simple-json column stored as TEXT; LIKE filter is good enough for tags
       qb.andWhere('p.tags LIKE :tag', { tag: `%"${tag}"%` });
     }
 
@@ -37,22 +39,26 @@ export class BlogService {
     };
   }
 
-  async findBySlug(slug: string): Promise<BlogPost> {
-    const post = await this.repo.findOne({ where: { slug } });
+  async findBySlug(slug: string, tenantId?: string | null): Promise<BlogPost> {
+    const qb = this.repo.createQueryBuilder('p').where('p.slug = :slug', { slug });
+    applyTenantFilter(qb, 'p', tenantId);
+    const post = await qb.getOne();
     if (!post || post.status !== BlogPostStatus.PUBLISHED) {
       throw new NotFoundException('Yazı bulunamadı');
     }
     return post;
   }
 
-  async adminFindAll(page = 1, limit = 50) {
+  async adminFindAll(page = 1, limit = 50, tenantId?: string | null) {
     const safePage = Math.max(1, Number(page) || 1);
     const safeLimit = Math.min(200, Math.max(1, Number(limit) || 50));
-    const [data, total] = await this.repo.findAndCount({
-      order: { createdAt: 'DESC' },
-      skip: (safePage - 1) * safeLimit,
-      take: safeLimit,
-    });
+    const qb = this.repo
+      .createQueryBuilder('p')
+      .orderBy('p.createdAt', 'DESC')
+      .skip((safePage - 1) * safeLimit)
+      .take(safeLimit);
+    applyTenantFilter(qb, 'p', tenantId);
+    const [data, total] = await qb.getManyAndCount();
     return {
       data,
       total,
@@ -62,19 +68,27 @@ export class BlogService {
     };
   }
 
-  async adminFindOne(id: string): Promise<BlogPost> {
-    const post = await this.repo.findOne({ where: { id } });
+  async adminFindOne(id: string, tenantId?: string | null): Promise<BlogPost> {
+    const qb = this.repo.createQueryBuilder('p').where('p.id = :id', { id });
+    applyTenantFilter(qb, 'p', tenantId);
+    const post = await qb.getOne();
     if (!post) throw new NotFoundException('Yazı bulunamadı');
     return post;
   }
 
-  async adminCreate(dto: CreateBlogPostDto): Promise<BlogPost> {
+  async adminCreate(dto: CreateBlogPostDto, tenantId?: string | null): Promise<BlogPost> {
     if (!dto.slug || !dto.title || !dto.content) {
       throw new ConflictException('slug, title ve content zorunlu');
     }
-    const exists = await this.repo.findOne({ where: { slug: dto.slug } });
+    // Slug uniqueness scoped to tenant
+    const collideQb = this.repo.createQueryBuilder('p').where('p.slug = :slug', { slug: dto.slug });
+    if (tenantId) {
+      collideQb.andWhere('(p.tenantId = :tid OR p.tenantId IS NULL)', { tid: tenantId });
+    }
+    const exists = await collideQb.getOne();
     if (exists) throw new ConflictException('Bu slug zaten kullanımda');
     const entity = this.repo.create({
+      tenantId: tenantId ?? null,
       slug: dto.slug,
       title: dto.title,
       content: dto.content,
@@ -92,10 +106,14 @@ export class BlogService {
     return this.repo.save(entity);
   }
 
-  async adminUpdate(id: string, dto: UpdateBlogPostDto): Promise<BlogPost> {
-    const post = await this.adminFindOne(id);
+  async adminUpdate(id: string, dto: UpdateBlogPostDto, tenantId?: string | null): Promise<BlogPost> {
+    const post = await this.adminFindOne(id, tenantId);
     if (dto.slug && dto.slug !== post.slug) {
-      const collide = await this.repo.findOne({ where: { slug: dto.slug } });
+      const collideQb = this.repo.createQueryBuilder('p').where('p.slug = :slug', { slug: dto.slug });
+      if (tenantId) {
+        collideQb.andWhere('(p.tenantId = :tid OR p.tenantId IS NULL)', { tid: tenantId });
+      }
+      const collide = await collideQb.getOne();
       if (collide && collide.id !== id) throw new ConflictException('Bu slug zaten kullanımda');
       post.slug = dto.slug;
     }
@@ -117,20 +135,22 @@ export class BlogService {
     return this.repo.save(post);
   }
 
-  async adminDelete(id: string): Promise<{ ok: true }> {
-    const post = await this.adminFindOne(id);
+  async adminDelete(id: string, tenantId?: string | null): Promise<{ ok: true }> {
+    const post = await this.adminFindOne(id, tenantId);
     await this.repo.remove(post);
     return { ok: true };
   }
 
   /** Used by web sitemap/static params */
-  async listSlugsForStatic(limit = 100): Promise<string[]> {
-    const rows = await this.repo.find({
-      where: { status: BlogPostStatus.PUBLISHED },
-      order: { publishedAt: 'DESC' },
-      take: limit,
-      select: { slug: true } as never,
-    });
+  async listSlugsForStatic(limit = 100, tenantId?: string | null): Promise<string[]> {
+    const qb = this.repo
+      .createQueryBuilder('p')
+      .where('p.status = :status', { status: BlogPostStatus.PUBLISHED })
+      .orderBy('p.publishedAt', 'DESC')
+      .take(limit)
+      .select(['p.slug']);
+    applyTenantFilter(qb, 'p', tenantId);
+    const rows = await qb.getMany();
     return rows.map((r) => r.slug);
   }
 }
