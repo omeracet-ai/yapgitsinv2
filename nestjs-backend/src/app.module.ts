@@ -25,6 +25,8 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { HealthModule } from './modules/health/health.module';
 import { TokensModule } from './modules/tokens/tokens.module';
+import { BlogModule } from './modules/blog/blog.module';
+import { BlogPost } from './modules/blog/blog-post.entity';
 import { TokenTransaction } from './modules/tokens/token-transaction.entity';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { ServiceRequest } from './modules/service-requests/service-request.entity';
@@ -152,6 +154,7 @@ import { BoostModule } from './modules/boost/boost.module';
           Currency,
           Tenant,
           Boost,
+          BlogPost,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -229,6 +232,7 @@ import { BoostModule } from './modules/boost/boost.module';
     TenantsModule,
     EmailModule,
     BoostModule,
+    BlogModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],
