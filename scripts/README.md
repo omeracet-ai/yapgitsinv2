@@ -1,5 +1,62 @@
 # scripts/
 
+## Phase 166 — IIS + iisnode bootstrap (yapgitsin.tr production)
+
+Plesk Windows + IIS sunucusunda Node.js uygulamalarını (NestJS backend, Next.js admin) IIS pipeline'ından `iisnode` modülü üzerinden çalıştırma.
+
+**Üretilen dosyalar:**
+- `nestjs-backend/web.config` — handler `path="dist/main.js"`, URL Rewrite tüm istekleri Node entry'ye yönlendiriyor; `/uploads/*` IIS direct.
+- `admin-panel/web.config` — handler `path="server.js"` (Next.js standalone); `_next/static/*` ve public asset'ler IIS direct, kalanı server.js'e rewrite.
+- `scripts/deploy-to-d.sh` — build sonrası web.config dosyalarını sırasıyla `D:\backend\web.config` ve `D:\admin\web.config` konumlarına kopyalar (Phase 166 satırları).
+
+**Sunucu ön kontrol (RDP / Plesk SSH):**
+
+```powershell
+# 1. iisnode kurulu mu?
+Test-Path "$env:ProgramFiles\iisnode\iisnode.dll"
+# False dönerse: https://github.com/Azure/iisnode/releases  -> iisnode-full-v0.2.x-x64.msi
+
+# 2. Node.js (varsayilan PATH'te node.exe) -- Plesk panel > Tools & Settings > Node.js
+node --version
+where.exe node
+```
+
+**Plesk panel adımları (her domain/subdomain için):**
+
+1. Domain > **Node.js** sekmesi.
+2. Document root: `httpdocs` (yapgitsin.tr) — backend için subdomain önerisi: `api.yapgitsin.tr` -> `httpdocs/backend`.
+3. **Application Mode**: `production`.
+4. **Application Root**: backend için `httpdocs/backend`, admin için `httpdocs/admin`.
+5. **Application Startup File**:
+   - Backend: `dist/main.js`
+   - Admin: `server.js`
+6. **Node.js version**: en az `20.x` (NestJS 10 + Next.js 16 gerekliliği).
+7. NPM Install butonu **çalıştırılmaz** — `D:\backend`'de manuel `npm install --omit=dev` yapıldı.
+8. Environment Variables (backend için Plesk'ten ekle):
+   - `NODE_ENV=production`, `JWT_SECRET`, `DB_TYPE=mysql` veya `postgres`, DB host/user/pass, `ANTHROPIC_API_KEY`, `IYZIPAY_*`, `ALLOWED_ORIGINS=https://yapgitsin.tr,https://admin.yapgitsin.tr`. (`PORT` boş bırakılır — iisnode named pipe ile bağlar.)
+
+**Doğrulama:**
+
+```bash
+curl -I https://yapgitsin.tr/backend/health        # 200 + JSON {status,db,uptime,version}
+curl -I https://yapgitsin.tr/admin/                # 200 (Next.js login sayfasi)
+```
+
+**Troubleshooting:**
+
+| Belirti | Sebep | Çözüm |
+|---------|-------|-------|
+| 500.19 web.config error | iisnode modülü yüklü değil | iisnode MSI kur, `iisreset` |
+| 500.21 handler not registered | iisnode kurulu ama IIS handler listesinde yok | `%windir%\system32\inetsrv\appcmd.exe install module /name:iisnode /image:"%programfiles%\iisnode\iisnode.dll"` |
+| 502.5 Process Failure | dist/main.js patladı | `D:\backend\iisnode\*.txt` log'una bak; eksik env veya `node_modules` |
+| 404 her route | URL Rewrite modülü yok | IIS URL Rewrite 2.1 kur (`https://www.iis.net/downloads/microsoft/url-rewrite`) |
+| 403 admin/ | iisnode handler hiç çalışmadı | `web.config` D:\admin'de var mı, application root admin'i gösteriyor mu |
+| Node sürekli restart | `watchedFiles` çok geniş | sadece `dist\**\*.js` ve `web.config` izlenir |
+
+**Log dizinleri:** `D:\backend\iisnode\` ve `D:\admin\iisnode\` — her process per-stdout/stderr ayrı dosya. Maks 20 dosya x 1MB rotate (web.config'de tanımlı).
+
+---
+
 ## live-deploy.sh (Phase 163)
 
 FTP push from local `D:\` mirror to live host (`yapgitsin.tr` -> Plesk Windows + IIS).
@@ -55,6 +112,8 @@ bash scripts/deploy-to-d.sh
 ```
 
 **Outputs:** `D:\backend` (NestJS dist + package.json), `D:\admin` (Next.js standalone + .next/static + public), `D:\web` (Next.js static export), `D:\app` (Flutter web build).
+
+**Phase 166 — Flutter web subpath:** Flutter web `https://yapgitsin.tr/app/` altinda host edilir. Build flag zorunlu: `flutter build web --release --base-href /app/`. `web/index.html` icinde `<base href="/app/">` ayarli; `setUrlStrategy(PathUrlStrategy())` `main.dart` icinde aktif. GoRouter base href'i otomatik picks up — ek konfig gerekmez. Mobile build (APK/IPA) bu flag'den etkilenmez.
 
 **Optimization:** Admin uses `output: 'standalone'` in `next.config.ts` — drops ~260M of `.next/cache` and unused chunks (414M -> ~150M).
 

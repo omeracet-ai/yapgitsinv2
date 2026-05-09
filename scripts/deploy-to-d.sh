@@ -16,6 +16,8 @@ mv /d/backend "/d/backend.bak.$BACKUP_TS" 2>/dev/null || true
 mkdir -p /d/backend
 cp -r dist/* /d/backend/
 cp package.json package-lock.json /d/backend/
+# Phase 166: IIS + iisnode bridge
+[ -f web.config ] && cp web.config /d/backend/web.config
 
 # Admin (Next.js standalone)
 echo "-> Admin build (standalone)"
@@ -33,6 +35,8 @@ else
   cp -r .next /d/admin/
   [ -d public ] && cp -r public /d/admin/ || true
 fi
+# Phase 166: IIS + iisnode bridge (overwrite any standalone-bundled web.config)
+[ -f web.config ] && cp web.config /d/admin/web.config
 
 # Web (static export)
 if [ -d "$ROOT/web" ]; then
@@ -50,7 +54,7 @@ fi
 if [ -d "$ROOT/hizmet_app" ]; then
   echo "-> Flutter web build"
   cd "$ROOT/hizmet_app"
-  flutter build web --release > /dev/null 2>&1 || echo "  (flutter build skipped/failed)"
+  flutter build web --release --base-href /app/ > /dev/null 2>&1 || echo "  (flutter build skipped/failed)"
   if [ -d build/web ]; then
     mv /d/app "/d/app.bak.$BACKUP_TS" 2>/dev/null || true
     mkdir -p /d/app
