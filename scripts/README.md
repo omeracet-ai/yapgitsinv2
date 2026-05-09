@@ -1,5 +1,21 @@
 # scripts/
 
+## deploy-to-d.sh (Phase 162)
+
+Build all four targets and deploy to local `D:\` staging tree for FTP upload.
+
+```bash
+bash scripts/deploy-to-d.sh
+```
+
+**Outputs:** `D:\backend` (NestJS dist + package.json), `D:\admin` (Next.js standalone + .next/static + public), `D:\web` (Next.js static export), `D:\app` (Flutter web build).
+
+**Optimization:** Admin uses `output: 'standalone'` in `next.config.ts` — drops ~260M of `.next/cache` and unused chunks (414M -> ~150M).
+
+**Server step:** After FTP, run `npm install --omit=dev` in `D:\backend` on the host.
+
+**Safety:** Old folders renamed to `*.bak.<timestamp>` then deleted only after successful copy.
+
 ## smoke-test.sh
 
 Production E2E smoke test. Verifies critical backend + web endpoints after deploy.
