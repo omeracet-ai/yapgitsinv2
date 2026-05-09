@@ -10,8 +10,8 @@ import {
   type Worker,
 } from '@/lib/api';
 import { jsonLd, serviceLD, breadcrumbLD, faqPageLD, clip } from '@/lib/seo';
-import { WorkerCardI18n } from '../category';
 import CategorySeoContent from '@/components/CategorySeoContent';
+import WorkerListClient from '@/components/WorkerListClient';
 import { getCategoryContent } from '@/lib/category-content';
 import { getDict, localePath, type Locale } from '@/i18n';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -87,13 +87,7 @@ export default async function renderCategoryCity(L: Locale, kategori: string, se
       </section>
 
       <section className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-10">
-        {workers.length === 0 ? (
-          <p className="text-gray-500">{city} {dict.common.no_workers_in_city}</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-            {workers.map((w: Worker) => (<WorkerCardI18n key={w.id} w={w} locale={L} />))}
-          </div>
-        )}
+        <WorkerListClient workers={workers as Worker[]} locale={L} emptyText={`${city} ${dict.common.no_workers_in_city}`} />
       </section>
 
       <CategorySeoContent categoryName={cat.name} city={city} content={seoContent} />

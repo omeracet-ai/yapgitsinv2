@@ -64,5 +64,20 @@
     "system": "Tema: Sistem",
     "light": "Tema: Açıq",
     "dark": "Tema: Tünd"
+  },
+  "filter": {
+    "filters": "Filtrlər",
+    "minRating": "⭐ Min Ulduz",
+    "any": "Hamısı",
+    "priceRange": "💰 Saatlıq qiymət (TL)",
+    "verifiedOnly": "🛡️ Yalnız təsdiqlənmiş",
+    "sortBy": "↕️ Sıralama",
+    "sortReputation": "Reputasiya",
+    "sortRating": "Ulduz",
+    "sortRateAsc": "Qiymət ↑",
+    "sortRateDesc": "Qiymət ↓",
+    "reset": "Sıfırla",
+    "apply": "Tətbiq et",
+    "activeCount": "aktiv"
   }
 }

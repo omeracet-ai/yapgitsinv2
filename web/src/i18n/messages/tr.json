@@ -64,5 +64,20 @@
     "system": "Tema: Sistem",
     "light": "Tema: Açık",
     "dark": "Tema: Koyu"
+  },
+  "filter": {
+    "filters": "Filtreler",
+    "minRating": "⭐ Min Yıldız",
+    "any": "Hepsi",
+    "priceRange": "💰 Saat Ücreti (TL)",
+    "verifiedOnly": "🛡️ Sadece Doğrulanmış",
+    "sortBy": "↕️ Sıralama",
+    "sortReputation": "İtibar",
+    "sortRating": "Yıldız",
+    "sortRateAsc": "Ücret ↑",
+    "sortRateDesc": "Ücret ↓",
+    "reset": "Sıfırla",
+    "apply": "Uygula",
+    "activeCount": "aktif"
   }
 }

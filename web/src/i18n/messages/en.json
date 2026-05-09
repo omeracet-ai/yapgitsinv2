@@ -64,5 +64,20 @@
     "system": "Theme: System",
     "light": "Theme: Light",
     "dark": "Theme: Dark"
+  },
+  "filter": {
+    "filters": "Filters",
+    "minRating": "⭐ Min Rating",
+    "any": "Any",
+    "priceRange": "💰 Hourly Rate (TL)",
+    "verifiedOnly": "🛡️ Verified Only",
+    "sortBy": "↕️ Sort By",
+    "sortReputation": "Reputation",
+    "sortRating": "Rating",
+    "sortRateAsc": "Price ↑",
+    "sortRateDesc": "Price ↓",
+    "reset": "Reset",
+    "apply": "Apply",
+    "activeCount": "active"
   }
 }
