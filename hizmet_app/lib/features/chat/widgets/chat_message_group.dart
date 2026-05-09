@@ -1,14 +1,18 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../data/chat_repository.dart';
 import 'audio_player_widget.dart';
 
 /// Renders a single chat message bubble within a group.
 /// Avatar shown only for first message in a same-sender run.
 /// Timestamp shown only on the first message of a same-minute run.
-class ChatMessageBubble extends StatelessWidget {
+/// Phase 153: long-press to translate (TR/EN/AZ) with inline toggle.
+class ChatMessageBubble extends ConsumerStatefulWidget {
+  final String? messageId;
   final String text;
   final bool isMe;
   final bool showAvatar;
@@ -27,6 +31,7 @@ class ChatMessageBubble extends StatelessWidget {
 
   const ChatMessageBubble({
     super.key,
+    this.messageId,
     required this.text,
     required this.isMe,
     required this.showAvatar,
@@ -42,6 +47,97 @@ class ChatMessageBubble extends StatelessWidget {
     this.attachmentSize,
     this.attachmentDuration,
   });
+
+  @override
+  ConsumerState<ChatMessageBubble> createState() => _ChatMessageBubbleState();
+}
+
+class _ChatMessageBubbleState extends ConsumerState<ChatMessageBubble> {
+  String? _translated;
+  String? _translatedLang; // 'tr'|'en'|'az'
+  bool _showTranslated = false;
+  bool _loading = false;
+
+  String get text => widget.text;
+  bool get isMe => widget.isMe;
+  bool get showAvatar => widget.showAvatar;
+  bool get showTime => widget.showTime;
+  DateTime get timestamp => widget.timestamp;
+  DateTime? get readAt => widget.readAt;
+  String get peerName => widget.peerName;
+  bool get isFirstInGroup => widget.isFirstInGroup;
+  bool get isLastInGroup => widget.isLastInGroup;
+  String? get attachmentUrl => widget.attachmentUrl;
+  String? get attachmentType => widget.attachmentType;
+  String? get attachmentName => widget.attachmentName;
+  int? get attachmentSize => widget.attachmentSize;
+  int? get attachmentDuration => widget.attachmentDuration;
+
+  Future<void> _onLongPress() async {
+    if (widget.messageId == null || widget.text.trim().isEmpty) return;
+    final lang = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ListTile(
+              leading: Icon(Icons.translate_rounded),
+              title: Text('Çevir'),
+              dense: true,
+            ),
+            const Divider(height: 1),
+            ListTile(
+              title: const Text('🇹🇷 Türkçe'),
+              onTap: () => Navigator.of(ctx).pop('tr'),
+            ),
+            ListTile(
+              title: const Text('🇬🇧 English'),
+              onTap: () => Navigator.of(ctx).pop('en'),
+            ),
+            ListTile(
+              title: const Text('🇦🇿 Azərbaycan'),
+              onTap: () => Navigator.of(ctx).pop('az'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (lang == null) return;
+    await _translate(lang);
+  }
+
+  Future<void> _translate(String lang) async {
+    final id = widget.messageId;
+    if (id == null) return;
+    setState(() {
+      _loading = true;
+    });
+    try {
+      final result =
+          await ref.read(chatRepositoryProvider).translateMessage(id, lang);
+      if (!mounted) return;
+      setState(() {
+        _translated = result;
+        _translatedLang = lang;
+        _showTranslated = true;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Çeviri şu anda kullanılamıyor')),
+      );
+    }
+  }
+
+  void _toggleTranslated() {
+    if (_translated == null) return;
+    setState(() => _showTranslated = !_showTranslated);
+  }
 
   String _formatBytes(int b) {
     if (b < 1024) return '$b B';
@@ -93,7 +189,9 @@ class ChatMessageBubble extends StatelessWidget {
                   : const SizedBox.shrink(),
             ),
           Flexible(
-            child: Container(
+            child: GestureDetector(
+              onLongPress: _onLongPress,
+              child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
@@ -125,13 +223,59 @@ class ChatMessageBubble extends StatelessWidget {
                   if (text.isNotEmpty) ...[
                     if (attachmentUrl != null) const SizedBox(height: 6),
                     Text(
-                      text,
+                      _showTranslated && _translated != null
+                          ? _translated!
+                          : text,
                       style: TextStyle(
                         color: isMe ? Colors.white : AppColors.textPrimary,
                         fontSize: 14,
                         height: 1.4,
                       ),
                     ),
+                    if (_loading) ...[
+                      const SizedBox(height: 4),
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            isMe ? Colors.white70 : AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (_translated != null && !_loading) ...[
+                      const SizedBox(height: 4),
+                      InkWell(
+                        onTap: _toggleTranslated,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.translate_rounded,
+                              size: 11,
+                              color: isMe
+                                  ? Colors.white.withValues(alpha: 0.7)
+                                  : Colors.grey.shade500,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              _showTranslated
+                                  ? 'orijinali göster'
+                                  : '${_translatedLang?.toUpperCase() ?? ""}: çeviriyi göster',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontStyle: FontStyle.italic,
+                                color: isMe
+                                    ? Colors.white.withValues(alpha: 0.7)
+                                    : Colors.grey.shade500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                   if (showTime) ...[
                     const SizedBox(height: 4),
@@ -166,6 +310,7 @@ class ChatMessageBubble extends StatelessWidget {
                   ],
                 ],
               ),
+            ),
             ),
           ),
         ],

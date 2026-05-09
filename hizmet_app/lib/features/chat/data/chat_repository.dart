@@ -128,6 +128,22 @@ class ChatRepository {
     return Map<String, dynamic>.from(res.data as Map);
   }
 
+  /// Phase 153: translate a chat message to targetLang ('tr'|'en'|'az').
+  /// Returns null if not signed in. Throws on backend error (e.g. 503 if
+  /// ANTHROPIC_API_KEY is missing on backend).
+  Future<String?> translateMessage(String messageId, String targetLang) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) return null;
+    final res = await _dio.post(
+      '/chat/messages/$messageId/translate',
+      data: {'targetLang': targetLang},
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+    final data = Map<String, dynamic>.from(res.data as Map);
+    return data['translated'] as String?;
+  }
+
   Future<List<Conversation>> getConversations() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt_token');

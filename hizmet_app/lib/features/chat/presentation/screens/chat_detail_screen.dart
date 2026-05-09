@@ -258,6 +258,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
       items.add(_RenderItem(
         index: i,
+        messageId: msg['id'] as String?,
         message: msg['message'] as String? ?? '',
         from: from,
         timestamp: ts,
@@ -379,6 +380,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           if (item.showDivider)
                             DateDivider(date: item.timestamp),
                           ChatMessageBubble(
+                            messageId: item.messageId,
                             text: item.message,
                             isMe: isMe,
                             showAvatar: !isMe && item.showAvatar,
@@ -674,6 +676,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
 class _RenderItem {
   final int index;
+  final String? messageId;
   final String message;
   final String from;
   final DateTime timestamp;
@@ -691,6 +694,7 @@ class _RenderItem {
 
   _RenderItem({
     required this.index,
+    this.messageId,
     required this.message,
     required this.from,
     required this.timestamp,
