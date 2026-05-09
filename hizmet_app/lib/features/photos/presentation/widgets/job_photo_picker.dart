@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 
-/// Fotoğraf seçtiren widget (sınırsız, en az 1 zorunlu). [onChanged] ile üst widget'a iletir.
+/// Fotoğraf seçtiren widget. Phase 157: bulk multi-pick (5 max), en az 1 zorunlu.
 class JobPhotoPicker extends StatefulWidget {
+  static const int maxPhotos = 5;
   final List<File> initialFiles;
   final ValueChanged<List<File>> onChanged;
 
@@ -45,6 +46,30 @@ class _JobPhotoPickerState extends State<JobPhotoPicker> {
     widget.onChanged(List.from(_files));
   }
 
+  /// Phase 157: bulk multi-pick — gallery'den birden fazla seç, 5 cap.
+  Future<void> _pickMulti() async {
+    final remaining = JobPhotoPicker.maxPhotos - _files.length;
+    if (remaining <= 0) return;
+    final xFiles = await _picker.pickMultiImage(
+      imageQuality: 80,
+      maxWidth: 1920,
+      limit: remaining,
+    );
+    if (xFiles.isEmpty) return;
+    final added = xFiles.take(remaining).map((x) => File(x.path)).toList();
+    setState(() => _files.addAll(added));
+    widget.onChanged(List.from(_files));
+    if (xFiles.length > remaining && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'En fazla ${JobPhotoPicker.maxPhotos} fotoğraf eklenebilir.',
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _remove(int index) async {
     setState(() => _files.removeAt(index));
     widget.onChanged(List.from(_files));
@@ -60,14 +85,25 @@ class _JobPhotoPickerState extends State<JobPhotoPicker> {
             const Icon(Icons.photo_camera, color: AppColors.primary, size: 20),
             const SizedBox(width: 8),
             Text(
-              'İlan Fotoğrafları (${_files.length})',
+              'İlan Fotoğrafları (${_files.length}/${JobPhotoPicker.maxPhotos})',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
+            const Spacer(),
+            if (_files.length < JobPhotoPicker.maxPhotos)
+              TextButton.icon(
+                onPressed: _pickMulti,
+                icon: const Icon(Icons.photo_library_outlined, size: 18),
+                label: const Text('Toplu Ekle'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
           ],
         ),
         const SizedBox(height: 6),
         const Text(
-          'En az 1 fotoğraf zorunlu. İstediğiniz kadar ekleyebilirsiniz.',
+          'En az 1, en fazla ${JobPhotoPicker.maxPhotos} fotoğraf. "Toplu Ekle" ile birden fazla seçebilirsiniz.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 14),
@@ -83,13 +119,14 @@ class _JobPhotoPickerState extends State<JobPhotoPicker> {
                 onTap: () => _pick(i),
                 onRemove: () => _remove(i),
               ),
-            // "+" ekle butonu
-            _SlotTile(
-              file: null,
-              index: _files.length + 1,
-              onTap: () => _pick(_files.length),
-              onRemove: null,
-            ),
+            // "+" ekle butonu (sadece cap'e ulaşılmadıysa)
+            if (_files.length < JobPhotoPicker.maxPhotos)
+              _SlotTile(
+                file: null,
+                index: _files.length + 1,
+                onTap: () => _pick(_files.length),
+                onRemove: null,
+              ),
           ],
         ),
       ],
