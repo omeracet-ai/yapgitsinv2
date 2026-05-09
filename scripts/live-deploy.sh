@@ -22,11 +22,18 @@ FTP_PORT="${FTP_PORT:-21}"
 FTP_REMOTE_DIR="${FTP_REMOTE_DIR:-/httpdocs}"
 FTP_USE_TLS="${FTP_USE_TLS:-0}"
 
-# lftp varlik check
-command -v lftp >/dev/null 2>&1 || {
-  echo "lftp yok. Kur: pacman -S lftp / apt install lftp / brew install lftp"
-  exit 1
-}
+# lftp varlik check — yoksa PowerShell native script'e fallback (Phase 164)
+if ! command -v lftp >/dev/null 2>&1; then
+  echo "lftp yok — PowerShell native ftp-upload.ps1 fallback'e geciliyor..."
+  if command -v powershell.exe >/dev/null 2>&1; then
+    exec powershell.exe -ExecutionPolicy Bypass -File "$(dirname "$0")/ftp-upload.ps1"
+  elif command -v pwsh >/dev/null 2>&1; then
+    exec pwsh -ExecutionPolicy Bypass -File "$(dirname "$0")/ftp-upload.ps1"
+  else
+    echo "Ne lftp ne PowerShell yok. Kur: pacman -S lftp / apt install lftp / brew install lftp"
+    exit 1
+  fi
+fi
 
 # Local D:\ paths
 LOCAL_BACKEND="/d/backend"

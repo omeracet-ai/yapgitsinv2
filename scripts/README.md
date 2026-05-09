@@ -27,7 +27,24 @@ FTP_HOST=ftp.yapgitsin.tr FTP_USER=xxx FTP_PASS=yyy bash scripts/live-deploy.sh
 
 **CI alternative:** `.github/workflows/live-deploy.yml` (manual `workflow_dispatch`, secrets `FTP_HOST/USER/PASS/DIR`).
 
-**Requires:** `lftp` (`pacman -S lftp` / `apt install lftp` / `brew install lftp`).
+**Requires:** `lftp` (`pacman -S lftp` / `apt install lftp` / `brew install lftp`) — yoksa Phase 164 PowerShell fallback.
+
+## ftp-upload.ps1 (Phase 164)
+
+Windows native PowerShell FTP deploy. lftp/MSYS2 yoksa otomatik fallback (live-deploy.sh icinden veya direkt cagri).
+
+```powershell
+# Direkt PowerShell:
+powershell.exe -ExecutionPolicy Bypass -File scripts/ftp-upload.ps1
+
+# pwsh varsa:
+pwsh scripts/ftp-upload.ps1
+
+# Bash icinden (live-deploy.sh otomatik fallback yapar):
+bash scripts/live-deploy.sh
+```
+
+**Ozellikler:** `.env.deploy` parse, `System.Net.FtpWebRequest` (passive mode + binary), TLS destek (`FTP_USE_TLS=1`), 3x retry exponential backoff, klasor recursive auto-create, 4 mapping (D:\admin -> /admin, D:\app -> /app, D:\backend -> /backend, D:\web -> root). Sifir external dependency.
 
 ## deploy-to-d.sh (Phase 162)
 
