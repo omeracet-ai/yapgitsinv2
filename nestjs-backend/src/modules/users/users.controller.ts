@@ -533,6 +533,69 @@ export class UsersController {
       where: { customerId: id, status: JobStatus.COMPLETED },
     });
 
+    // Phase 145 — enrichment: monthlyActivity (last 6mo), topCategories, avgBudget, lastCompletedJobs
+    const completedJobs = await this.jobsRepo.find({
+      where: { customerId: id, status: JobStatus.COMPLETED },
+      order: { updatedAt: 'DESC' },
+      take: 200,
+    });
+
+    // Last 6 months activity
+    const now = new Date();
+    const months: { month: string; count: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      months.push({ month: key, count: 0 });
+    }
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    for (const j of completedJobs) {
+      const dt = j.updatedAt ? new Date(j.updatedAt) : null;
+      if (!dt || dt < sixMonthsAgo) continue;
+      const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+      const slot = months.find((m) => m.month === key);
+      if (slot) slot.count++;
+    }
+
+    // Top categories
+    const catMap = new Map<string, number>();
+    for (const j of completedJobs) {
+      if (!j.category) continue;
+      catMap.set(j.category, (catMap.get(j.category) ?? 0) + 1);
+    }
+    const topCategories = [...catMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([category, count]) => ({ category, count }));
+
+    // Avg budget (mid of min/max if both, else whichever exists)
+    let budgetSum = 0;
+    let budgetCount = 0;
+    for (const j of completedJobs) {
+      const lo = Number(j.budgetMin) || 0;
+      const hi = Number(j.budgetMax) || 0;
+      let val = 0;
+      if (lo > 0 && hi > 0) val = (lo + hi) / 2;
+      else if (lo > 0) val = lo;
+      else if (hi > 0) val = hi;
+      if (val > 0) {
+        budgetSum += val;
+        budgetCount++;
+      }
+    }
+    const avgBudget = budgetCount > 0 ? Math.round(budgetSum / budgetCount) : 0;
+
+    const lastCompletedJobs = completedJobs.slice(0, 5).map((j) => ({
+      id: j.id,
+      title: j.title,
+      category: j.category,
+      completedAt: j.updatedAt,
+      budget:
+        Number(j.budgetMin) > 0 && Number(j.budgetMax) > 0
+          ? (Number(j.budgetMin) + Number(j.budgetMax)) / 2
+          : Number(j.budgetMin) || Number(j.budgetMax) || 0,
+    }));
+
     const total = user.asCustomerTotal ?? 0;
     const success = user.asCustomerSuccess ?? 0;
     const successRate = total > 0 ? Math.round((success / total) * 100) : 0;
@@ -547,6 +610,10 @@ export class UsersController {
       asCustomerSuccess: success,
       customerSuccessRate: successRate,
       completedJobsCount,
+      monthlyActivity: months,
+      topCategories,
+      avgBudget,
+      lastCompletedJobs,
       reviewsReceivedAsCustomer: customerReviews.map((r) => ({
         id: r.id,
         rating: r.rating,
