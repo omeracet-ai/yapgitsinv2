@@ -470,6 +470,66 @@ class _ProfileView extends ConsumerWidget {
                   }),
                 ],
 
+                // ── Phase 159: Sertifikalar (verified only) ──────────────
+                if ((data['certifications'] as List?)?.isNotEmpty == true) ...[
+                  const SizedBox(height: 16),
+                  const Text('📜 Sertifikalar',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 8),
+                  ...((data['certifications'] as List)
+                      .cast<Map>()
+                      .map((m) => Map<String, dynamic>.from(m))
+                      .map((c) => Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: AppColors.success
+                                      .withValues(alpha: 0.3)),
+                            ),
+                            child: Row(children: [
+                              const Text('🪪',
+                                  style: TextStyle(fontSize: 22)),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text((c['name'] ?? '') as String,
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600)),
+                                    const SizedBox(height: 2),
+                                    Text((c['issuer'] ?? '') as String,
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            color:
+                                                AppColors.textSecondary)),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.success
+                                      .withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text('🪪 Doğrulandı',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.success,
+                                        fontWeight: FontWeight.w600)),
+                              ),
+                            ]),
+                          ))),
+                ],
+
                 const SizedBox(height: 32),
               ],
             ),

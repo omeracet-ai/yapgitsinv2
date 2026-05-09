@@ -13,6 +13,7 @@ import '../../../profile/widgets/profile_completion_card.dart';
 import '../../../photos/data/photo_repository.dart';
 import '../../../insurance/data/insurance_repository.dart';
 import '../../widgets/intro_video_section.dart';
+import '../../widgets/certifications_section.dart';
 
 // Phase 62 — Sectioned Profile Edit UX
 //
@@ -275,6 +276,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               if (_isWorker) _introVideoSection(),
               if (_isWorker) _workerSection(missing),
               if (_isWorker) _insuranceSection(),
+              if (_isWorker) _certificationsSection(),
               _identitySection(missing),
               const SizedBox(height: 32),
             ]),
@@ -861,6 +863,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
 
   Widget _insuranceSection() => _InsuranceSection(repo: ref.read(insuranceRepositoryProvider));
+
+  Widget _certificationsSection() => _sectionCard(
+        icon: '📜',
+        title: 'Sertifikalar',
+        isMissing: false,
+        missingFields: const [],
+        child: const CertificationsSection(),
+      );
 
   BoxDecoration _boxDeco({bool highlight = false}) => BoxDecoration(
         color: Colors.white,
