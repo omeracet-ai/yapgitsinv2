@@ -247,6 +247,16 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  // Phase 158 — Blog CMS
+  blogList: (page = 1, limit = 50) =>
+    request<{ data: BlogPost[]; total: number; page: number; limit: number; pages: number }>(
+      `/admin/blog?page=${page}&limit=${limit}`,
+    ),
+  blogGet:    (id: string)                       => request<BlogPost>(`/admin/blog/${id}`),
+  blogCreate: (data: Partial<BlogPost>)          => request<BlogPost>('/admin/blog',           { method: 'POST',   body: JSON.stringify(data) }),
+  blogUpdate: (id: string, data: Partial<BlogPost>) => request<BlogPost>(`/admin/blog/${id}`,  { method: 'PATCH',  body: JSON.stringify(data) }),
+  blogDelete: (id: string)                       => request<void>(`/admin/blog/${id}`,         { method: 'DELETE' }),
+
   // System settings (Phase 77)
   listSettings: () => request<SystemSetting[]>('/admin/settings'),
   getSetting:   (key: string) => request<{ key: string; value: string }>(`/admin/settings/${key}`),
@@ -256,6 +266,21 @@ export const api = {
       body: JSON.stringify({ value }),
     }),
 };
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  excerpt: string;
+  coverImageUrl?: string | null;
+  authorId?: string | null;
+  tags?: string[] | null;
+  status: 'draft' | 'published' | 'archived';
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface SystemSetting {
   key: string;
