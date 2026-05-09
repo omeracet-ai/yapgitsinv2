@@ -3,11 +3,15 @@ import {
   Get,
   Post,
   Body,
+  Query,
+  Res,
   UseGuards,
   Request,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { TokensService } from './tokens.service';
+import { WalletPdfService } from './wallet-pdf.service';
 import { PaymentMethod } from './token-transaction.entity';
 import { GiftTokensDto } from './dto/gift-tokens.dto';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
@@ -15,7 +19,30 @@ import type { AuthenticatedRequest } from '../../common/types/auth.types';
 @Controller('tokens')
 @UseGuards(AuthGuard('jwt'))
 export class TokensController {
-  constructor(private readonly svc: TokensService) {}
+  constructor(
+    private readonly svc: TokensService,
+    private readonly pdfSvc: WalletPdfService,
+  ) {}
+
+  @Get('history/pdf')
+  async historyPdf(
+    @Request() req: AuthenticatedRequest,
+    @Query('from') from: string | undefined,
+    @Query('to') to: string | undefined,
+    @Res() res: Response,
+  ): Promise<void> {
+    const fromDate = from ? new Date(from) : undefined;
+    const toDate = to ? new Date(to) : undefined;
+    const buf = await this.pdfSvc.generatePdf(req.user.id, fromDate, toDate);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="yapgitsin-cuzdan-${req.user.id}-${dateStr}.pdf"`,
+    );
+    res.setHeader('Content-Length', buf.length.toString());
+    res.end(buf);
+  }
 
   @Get('balance')
   getBalance(@Request() req: AuthenticatedRequest) {
