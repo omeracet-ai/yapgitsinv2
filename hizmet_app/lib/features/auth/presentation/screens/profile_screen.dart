@@ -1280,6 +1280,9 @@ class ProfileScreen extends ConsumerWidget {
       _menuItem(Icons.rocket_launch_rounded, '🚀 Hızlı Boost', () {
         context.push('/boost');
       }),
+      _menuItem(Icons.calendar_month_outlined, '📅 Takvim Senkronizasyonu', () {
+        context.push('/takvim-sync');
+      }),
     ];
   }
 

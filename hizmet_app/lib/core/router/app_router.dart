@@ -26,6 +26,7 @@ import '../../../features/offers/presentation/screens/offer_templates_screen.dar
 import '../../../features/messaging/presentation/screens/message_templates_screen.dart';
 import '../../../features/statements/presentation/statement_screen.dart';
 import '../../../features/earnings/presentation/screens/earnings_screen.dart';
+import '../../../features/calendar/presentation/screens/calendar_sync_screen.dart';
 import '../../../features/users/presentation/screens/favorites_screen.dart';
 import '../../../features/users/presentation/screens/blocked_users_screen.dart';
 import '../../../features/jobs/presentation/screens/saved_jobs_screen.dart';
@@ -141,6 +142,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/kazanclarim',
         builder: (context, state) => const EarningsScreen(),
+      ),
+      GoRoute(
+        path: '/takvim-sync',
+        builder: (context, state) => const CalendarSyncScreen(),
       ),
       GoRoute(
         path: '/destek',
