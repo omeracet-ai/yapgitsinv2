@@ -26,9 +26,10 @@ class ChatService {
     String from,
     String message, {
     String? attachmentUrl,
-    String? attachmentType, // 'image' | 'document'
+    String? attachmentType, // 'image' | 'document' | 'audio'
     String? attachmentName,
     int? attachmentSize,
+    int? attachmentDuration,
   }) {
     final payload = <String, dynamic>{
       'to': to,
@@ -40,6 +41,9 @@ class ChatService {
       payload['attachmentType'] = attachmentType;
       payload['attachmentName'] = attachmentName;
       payload['attachmentSize'] = attachmentSize;
+      if (attachmentDuration != null) {
+        payload['attachmentDuration'] = attachmentDuration;
+      }
     }
     socket.emit('sendMessage', payload);
   }

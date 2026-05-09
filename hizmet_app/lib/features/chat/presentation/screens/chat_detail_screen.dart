@@ -12,6 +12,7 @@ import '../../data/presence_provider.dart';
 import '../../widgets/chat_message_group.dart';
 import '../../widgets/date_divider.dart';
 import '../../widgets/typing_indicator.dart';
+import '../../widgets/voice_recorder_button.dart';
 import '../../../messaging/widgets/message_template_picker.dart';
 
 /// Phase 66: scaffold provider for peer-typing state.
@@ -74,6 +75,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             'attachmentType': data['attachmentType'],
             'attachmentName': data['attachmentName'],
             'attachmentSize': data['attachmentSize'],
+            'attachmentDuration': (data['attachmentDuration'] as num?)?.toInt(),
           });
         });
         _scrollToBottom();
@@ -160,6 +162,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     String? attachmentType,
     String? attachmentName,
     int? attachmentSize,
+    int? attachmentDuration,
   }) {
     final text = _messageController.text;
     if (text.trim().isEmpty && attachmentUrl == null) return;
@@ -173,6 +176,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       attachmentType: attachmentType,
       attachmentName: attachmentName,
       attachmentSize: attachmentSize,
+      attachmentDuration: attachmentDuration,
     );
 
     setState(() {
@@ -186,6 +190,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         'attachmentType': attachmentType,
         'attachmentName': attachmentName,
         'attachmentSize': attachmentSize,
+        'attachmentDuration': attachmentDuration,
       });
     });
 
@@ -266,6 +271,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         attachmentType: msg['attachmentType'] as String?,
         attachmentName: msg['attachmentName'] as String?,
         attachmentSize: (msg['attachmentSize'] as num?)?.toInt(),
+        attachmentDuration: (msg['attachmentDuration'] as num?)?.toInt(),
       ));
     }
     return items;
@@ -386,6 +392,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                             attachmentType: item.attachmentType,
                             attachmentName: item.attachmentName,
                             attachmentSize: item.attachmentSize,
+                            attachmentDuration: item.attachmentDuration,
                           ),
                         ],
                       );
@@ -520,18 +527,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            GestureDetector(
-              onTap: _sendMessage,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.send_rounded,
-                    color: Colors.white, size: 20),
-              ),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _messageController,
+              builder: (_, value, __) {
+                final hasText = value.text.trim().isNotEmpty;
+                if (hasText) {
+                  return GestureDetector(
+                    onTap: _sendMessage,
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.send_rounded,
+                          color: Colors.white, size: 20),
+                    ),
+                  );
+                }
+                return VoiceRecorderButton(onRecorded: _uploadAndSendAudio);
+              },
             ),
           ],
         ),
@@ -614,6 +630,38 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
   }
 
+  /// Phase 151: upload a recorded voice note then emit it as a chat message.
+  Future<void> _uploadAndSendAudio(String filePath, int durationSec) async {
+    setState(() => _isUploading = true);
+    try {
+      final repo = ref.read(chatRepositoryProvider);
+      final res = await repo.uploadAudio(filePath, durationSec: durationSec);
+      if (res == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Yükleme başarısız: oturum bulunamadı')),
+          );
+        }
+        return;
+      }
+      _sendMessage(
+        attachmentUrl: res['url'] as String?,
+        attachmentType: 'audio',
+        attachmentName: res['name'] as String?,
+        attachmentSize: (res['size'] as num?)?.toInt(),
+        attachmentDuration: (res['duration'] as num?)?.toInt() ?? durationSec,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ses yüklenemedi: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
   Future<void> _pickTemplate() async {
     final picked = await MessageTemplatePickerSheet.show(context);
     if (picked == null || !mounted) return;
@@ -639,6 +687,7 @@ class _RenderItem {
   final String? attachmentType;
   final String? attachmentName;
   final int? attachmentSize;
+  final int? attachmentDuration;
 
   _RenderItem({
     required this.index,
@@ -655,5 +704,6 @@ class _RenderItem {
     this.attachmentType,
     this.attachmentName,
     this.attachmentSize,
+    this.attachmentDuration,
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import 'audio_player_widget.dart';
 
 /// Renders a single chat message bubble within a group.
 /// Avatar shown only for first message in a same-sender run.
@@ -19,9 +20,10 @@ class ChatMessageBubble extends StatelessWidget {
   final bool isLastInGroup;
   // Phase 139: optional attachment metadata
   final String? attachmentUrl;
-  final String? attachmentType; // 'image' | 'document'
+  final String? attachmentType; // 'image' | 'document' | 'audio'
   final String? attachmentName;
   final int? attachmentSize;
+  final int? attachmentDuration;
 
   const ChatMessageBubble({
     super.key,
@@ -38,6 +40,7 @@ class ChatMessageBubble extends StatelessWidget {
     this.attachmentType,
     this.attachmentName,
     this.attachmentSize,
+    this.attachmentDuration,
   });
 
   String _formatBytes(int b) {
@@ -113,6 +116,12 @@ class ChatMessageBubble extends StatelessWidget {
                     _buildImageAttachment(context),
                   if (attachmentUrl != null && attachmentType == 'document')
                     _buildDocAttachment(),
+                  if (attachmentUrl != null && attachmentType == 'audio')
+                    AudioPlayerWidget(
+                      url: attachmentUrl!,
+                      durationSec: attachmentDuration,
+                      isMe: isMe,
+                    ),
                   if (text.isNotEmpty) ...[
                     if (attachmentUrl != null) const SizedBox(height: 6),
                     Text(

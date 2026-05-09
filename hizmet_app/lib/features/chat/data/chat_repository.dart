@@ -108,6 +108,26 @@ class ChatRepository {
     return Map<String, dynamic>.from(res.data as Map);
   }
 
+  /// Phase 151: upload a chat voice note. Returns {url, type:'audio', name, size, duration?}.
+  Future<Map<String, dynamic>?> uploadAudio(
+    String filePath, {
+    int? durationSec,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) return null;
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+      if (durationSec != null) 'duration': durationSec.toString(),
+    });
+    final res = await _dio.post(
+      '/uploads/chat-audio',
+      data: formData,
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
   Future<List<Conversation>> getConversations() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt_token');
