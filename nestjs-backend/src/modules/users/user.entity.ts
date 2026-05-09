@@ -76,8 +76,13 @@ export class User {
   })
   role: UserRole;
 
+  /** @deprecated Phase 174 — use tokenBalanceMinor (kuruş). Kept for backward compatibility. */
   @Column({ type: 'float', default: 100 })
   tokenBalance: number;
+
+  // Phase 174 — Integer minor units (kuruş). 100.00 TL = 10000.
+  @Column({ type: 'integer', default: 10000 })
+  tokenBalanceMinor: number;
 
   @Column({ type: 'varchar', length: 3, default: 'TRY' })
   preferredCurrency: string;
@@ -127,11 +132,20 @@ export class User {
   workerBio: string | null;
 
   // Fiyat aralığı (saat başı veya iş başı, TL)
+  /** @deprecated Phase 174 — use hourlyRateMinMinor. */
   @Column({ type: 'float', nullable: true })
   hourlyRateMin: number | null;
 
+  /** @deprecated Phase 174 — use hourlyRateMaxMinor. */
   @Column({ type: 'float', nullable: true })
   hourlyRateMax: number | null;
+
+  // Phase 174 — Integer minor units (kuruş)
+  @Column({ type: 'integer', nullable: true })
+  hourlyRateMinMinor: number | null;
+
+  @Column({ type: 'integer', nullable: true })
+  hourlyRateMaxMinor: number | null;
 
   // Hizmet yarıçapı (km) – konum bazlı eşleşme için
   @Column({ type: 'integer', default: 20 })

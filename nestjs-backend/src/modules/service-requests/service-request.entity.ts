@@ -56,8 +56,13 @@ export class ServiceRequest {
   geohash: string | null;
 
   // Fiyat DB'de tutulur, UI'da gösterilmez
+  /** @deprecated Phase 174 — use priceMinor (kuruş). */
   @Column({ type: 'float', nullable: true })
   price: number;
+
+  // Phase 174 — Integer minor units (kuruş)
+  @Column({ type: 'integer', nullable: true })
+  priceMinor: number | null;
 
   @Column({ type: 'simple-enum', enum: ['open', 'closed'], default: 'open' })
   status: string;

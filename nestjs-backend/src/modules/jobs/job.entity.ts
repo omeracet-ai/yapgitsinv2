@@ -77,12 +77,20 @@ export class Job {
   @Column({ type: 'varchar', length: 200 })
   location: string;
 
-  /** float kullanıyoruz — SQLite'da decimal string döner, float sayı döner */
+  /** @deprecated Phase 174 — use budgetMinMinor (kuruş). */
   @Column({ type: 'float', nullable: true })
   budgetMin: number;
 
+  /** @deprecated Phase 174 — use budgetMaxMinor (kuruş). */
   @Column({ type: 'float', nullable: true })
   budgetMax: number;
+
+  // Phase 174 — Integer minor units (kuruş)
+  @Column({ type: 'integer', nullable: true })
+  budgetMinMinor: number | null;
+
+  @Column({ type: 'integer', nullable: true })
+  budgetMaxMinor: number | null;
 
   @Column({ type: 'simple-enum', enum: JobStatus, default: JobStatus.OPEN })
   status: JobStatus;

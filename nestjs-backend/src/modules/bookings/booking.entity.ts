@@ -84,8 +84,13 @@ export class Booking {
   status: BookingStatus;
 
   // Fiyat (usta tarafından veya anlaşma ile belirlenir)
+  /** @deprecated Phase 174 — use agreedPriceMinor (kuruş). */
   @Column({ type: 'float', nullable: true })
   agreedPrice: number | null;
+
+  // Phase 174 — Integer minor units (kuruş)
+  @Column({ type: 'integer', nullable: true })
+  agreedPriceMinor: number | null;
 
   @Column({ type: 'text', nullable: true })
   workerNote: string | null; // Ustanın notu

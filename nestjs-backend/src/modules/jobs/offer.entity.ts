@@ -41,8 +41,13 @@ export class Offer {
   @JoinColumn({ name: 'userId' })
   user: User;
 
+  /** @deprecated Phase 174 — use priceMinor (kuruş). */
   @Column({ type: 'float' })
   price: number;
+
+  // Phase 174 — Integer minor units (kuruş)
+  @Column({ type: 'integer', default: 0 })
+  priceMinor: number;
 
   @Column({ type: 'text', nullable: true })
   message: string;
@@ -54,8 +59,13 @@ export class Offer {
   })
   status: OfferStatus;
 
+  /** @deprecated Phase 174 — use counterPriceMinor (kuruş). */
   @Column({ type: 'float', nullable: true, default: null })
   counterPrice: number | null;
+
+  // Phase 174 — Integer minor units (kuruş)
+  @Column({ type: 'integer', nullable: true, default: null })
+  counterPriceMinor: number | null;
 
   @Column({ type: 'text', nullable: true, default: null })
   counterMessage: string | null;
