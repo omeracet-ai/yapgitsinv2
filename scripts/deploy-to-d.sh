@@ -18,6 +18,8 @@ cp -r dist/* /d/backend/
 cp package.json package-lock.json /d/backend/
 # Phase 166: IIS + iisnode bridge
 [ -f web.config ] && cp web.config /d/backend/web.config
+# Phase 168: production env (DB creds, JWT secret) for runtime
+[ -f .env.production ] && cp .env.production /d/backend/.env.production
 
 # Admin (Next.js standalone)
 echo "-> Admin build (standalone)"
