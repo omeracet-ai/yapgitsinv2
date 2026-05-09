@@ -75,11 +75,11 @@ export class UploadsController {
     return this.uploadsService.uploadCompletionPhotos(jobId, files, req.user.id);
   }
 
-  /** POST /uploads/job-photos  — iş ilanı fotoğrafları (sınırsız) */
+  /** POST /uploads/job-photos  — iş ilanı fotoğrafları (Phase 157: bulk, max 5) */
   @UseGuards(AuthGuard('jwt'))
   @Post('job-photos')
   @UseInterceptors(
-    FilesInterceptor('photos', 20, {
+    FilesInterceptor('photos', 5, {
       storage: memoryStorage(),
       fileFilter: imageFilter,
       limits: { fileSize: 8 * 1024 * 1024 },
