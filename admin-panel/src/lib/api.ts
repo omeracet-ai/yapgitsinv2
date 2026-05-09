@@ -179,6 +179,21 @@ export const api = {
   deleteFlaggedChat:      (id: string)      => request<{ id: string; type: string; cleared: boolean }>(`/admin/moderation/chat/${id}`,     { method: 'DELETE' }),
   deleteFlaggedQuestion:  (id: string)      => request<{ id: string; type: string; cleared: boolean }>(`/admin/moderation/question/${id}`, { method: 'DELETE' }),
 
+  // Disputes (Phase 117 + 144)
+  disputes: (opts: { status?: string; page?: number; limit?: number } = {}) => {
+    const p = new URLSearchParams();
+    if (opts.status && opts.status !== 'all') p.set('status', opts.status);
+    if (opts.page !== undefined) p.set('page', String(opts.page));
+    if (opts.limit !== undefined) p.set('limit', String(opts.limit));
+    const qs = p.toString();
+    return request<AdminDisputesResponse>(`/admin/disputes/list${qs ? `?${qs}` : ''}`);
+  },
+  resolveDispute: (id: string, dto: { status: 'resolved' | 'dismissed'; resolution: string }) =>
+    request<AdminDispute>(`/admin/disputes/general/${id}/resolve`, {
+      method: 'PATCH',
+      body: JSON.stringify(dto),
+    }),
+
   // Şikayetler
   reports: (status?: string) =>
     request<UserReport[]>(`/admin/reports${status && status !== 'all' ? `?status=${status}` : ''}`),
@@ -401,6 +416,38 @@ export interface UserReport {
   status: 'pending' | 'reviewed' | 'dismissed';
   adminNote: string | null;
   createdAt: string;
+}
+
+export interface DisputeAiAnalysis {
+  fairnessScore: number;
+  fraudRisk: 'low' | 'medium' | 'high';
+  suggestedAction: 'refund' | 'partial_refund' | 'cancel' | 'dismiss' | 'escalate';
+  reasoning: string;
+  analyzedAt: string;
+}
+
+export interface AdminDispute {
+  id: string;
+  jobId: string | null;
+  bookingId: string | null;
+  raisedBy: string;
+  againstUserId: string;
+  type: 'quality' | 'payment' | 'no_show' | 'fraud' | 'other';
+  description: string;
+  status: 'open' | 'in_review' | 'resolved' | 'dismissed';
+  resolution: string | null;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+  aiAnalysis: DisputeAiAnalysis | null;
+  createdAt: string;
+}
+
+export interface AdminDisputesResponse {
+  data: AdminDispute[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
 }
 
 export interface User {

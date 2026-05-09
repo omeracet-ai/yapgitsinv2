@@ -26,6 +26,7 @@ const NAV = [
   { href: "/promo-codes",     label: "Promo Kodlar",   icon: "🎟️" },
   { href: "/moderation",      label: "Moderasyon",     icon: "🛡️" },
   { href: "/reports",         label: "Şikayetler",     icon: "🚩" },
+  { href: "/disputes",        label: "Anlaşmazlıklar", icon: "⚖️" },
   { href: "/audit-log",       label: "Denetim Kaydı",  icon: "📜" },
   { href: "/broadcast",       label: "Duyuru Gönder",  icon: "📢" },
   { href: "/status",          label: "Sistem Durumu",  icon: "🩺" },
