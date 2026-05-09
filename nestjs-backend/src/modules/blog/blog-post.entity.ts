@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  Unique,
 } from 'typeorm';
 
 export enum BlogPostStatus {
@@ -14,14 +15,15 @@ export enum BlogPostStatus {
 }
 
 @Entity('blog_posts')
+@Unique('UQ_blog_posts_tenant_slug', ['tenantId', 'slug'])
 export class BlogPost {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Index()
   @Column({ type: 'varchar', length: 36, nullable: true })
   tenantId!: string | null;
 
-  @Index({ unique: true })
   @Column({ type: 'varchar', length: 200 })
   slug!: string;
 
