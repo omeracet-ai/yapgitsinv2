@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { CategoryId } from '../../common/branded.types';
 
 /**
  * Kategori grup sabitleri (Airtasker / HiPages ilham alınarak)
@@ -24,7 +25,7 @@ export type CategoryGroup =
 @Entity('categories')
 export class Category {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id: CategoryId;
 
   @Column({ type: 'varchar', length: 100, unique: true })
   name: string;

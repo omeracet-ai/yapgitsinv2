@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from '../users/user.entity';
+import { BookingId, UserId } from '../../common/branded.types';
 
 export enum BookingStatus {
   PENDING = 'pending', // Müşteri oluşturdu, usta onaylamadı
@@ -34,14 +35,14 @@ export enum RefundStatus {
 @Entity('bookings')
 export class Booking {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id: BookingId;
 
   @Column({ type: 'varchar', length: 36, nullable: true })
   tenantId: string | null;
 
   // Müşteri
   @Column({ type: 'varchar', length: 36 })
-  customerId: string;
+  customerId: UserId;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE', eager: false })
   @JoinColumn({ name: 'customerId' })
@@ -49,7 +50,7 @@ export class Booking {
 
   // Usta
   @Column({ type: 'varchar', length: 36 })
-  workerId: string;
+  workerId: UserId;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE', eager: false })
   @JoinColumn({ name: 'workerId' })

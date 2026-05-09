@@ -19,8 +19,21 @@ if (process.env.SENTRY_DSN && process.env.NODE_ENV === 'production') {
   });
 }
 
+// Phase 178 — top-level crash visibility for iisnode logs.
+// Without these, an early throw produces opaque 500s with empty log files.
+process.on('uncaughtException', (err) => {
+  // eslint-disable-next-line no-console
+  console.error('[boot] uncaughtException:', err && err.stack ? err.stack : err);
+});
+process.on('unhandledRejection', (reason) => {
+  // eslint-disable-next-line no-console
+  console.error('[boot] unhandledRejection:', reason);
+});
+
 async function bootstrap() {
+  console.log('[boot] starting NestJS, node=' + process.version + ' pid=' + process.pid);
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  console.log('[boot] Nest app created');
   app.useGlobalFilters(new SentryFilter());
 
   // Phase 131/170 — Helmet: HTTP güvenlik header'ları
@@ -67,6 +80,7 @@ async function bootstrap() {
       },
     }),
   );
+  console.log('[boot] helmet ready');
 
   // Global validation — tüm DTO dekoratörleri (class-validator) aktif hale gelir
   app.useGlobalPipes(
@@ -169,7 +183,12 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port, '0.0.0.0');
+  console.log(`[boot] listening on port ${port} pid ${process.pid}`);
   console.log(`🚀 Yapgitsin API: http://localhost:${port}`);
   console.log(`📚 Swagger Docs: http://localhost:${port}/api/docs`);
 }
-void bootstrap();
+void bootstrap().catch((err) => {
+  // eslint-disable-next-line no-console
+  console.error('[boot] bootstrap failed:', err && err.stack ? err.stack : err);
+  process.exit(1);
+});

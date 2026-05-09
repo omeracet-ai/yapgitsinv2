@@ -20,6 +20,13 @@ cp package.json package-lock.json /d/backend/
 [ -f web.config ] && cp web.config /d/backend/web.config
 # Phase 168: production env (DB creds, JWT secret) for runtime
 [ -f .env.production ] && cp .env.production /d/backend/.env.production
+# Phase 178: iisnode boot-check wrapper + minimal sanity test endpoint
+[ -f boot-check.js ] && cp boot-check.js /d/backend/boot-check.js
+[ -f IISNODE_DEBUG.md ] && cp IISNODE_DEBUG.md /d/backend/IISNODE_DEBUG.md
+# _test/ stays under D:\backend (not in repo); recreate if missing
+if [ ! -d /d/backend/_test ]; then
+  mkdir -p /d/backend/_test
+fi
 
 # Admin (Next.js standalone)
 echo "-> Admin build (standalone)"
