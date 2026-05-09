@@ -43,3 +43,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase / signing secrets (Phase 113 FCM, Phase 161 scaffold)
+**/google-services.json
+**/GoogleService-Info.plist
+android/key.properties
+*.keystore
+*.jks
+ios/Runner.xcworkspace/xcuserdata/
+ios/Pods/
+

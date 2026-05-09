@@ -50,6 +50,26 @@ happen at deploy time (and cannot be checked into git).
 3. Without these env vars the backend silently disables push (logs
    `FCM disabled` on startup).
 
+## 4b. Phase 161 — Native Scaffold Notes
+
+Native folders (`android/`, `ios/`) were generated via `flutter create .
+--platforms=android,ios --org com.yapgitsin.app`. After dropping the
+Firebase config files in place, the build plugin wiring still has to be
+added manually:
+
+**Android** (`android/build.gradle`):
+```
+buildscript { dependencies { classpath 'com.google.gms:google-services:4.4.2' } }
+```
+**Android** (`android/app/build.gradle`, bottom):
+```
+apply plugin: 'com.google.gms.google-services'
+```
+**iOS**: `cd ios && pod install` after adding Firebase pods to Podfile.
+
+`google-services.json` and `GoogleService-Info.plist` are gitignored —
+each developer / CI pulls them from Firebase Console.
+
 ## 5. Verify
 
 - Login on a real device.
