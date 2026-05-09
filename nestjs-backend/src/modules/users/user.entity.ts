@@ -201,6 +201,11 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   lastLocationAt: string | null;
 
+  // Phase 177 — Geohash prefix index for fast proximity queries.
+  // Computed from latitude/longitude on save (precision 6 ≈ 1.2km cell).
+  @Column({ type: 'varchar', length: 12, nullable: true })
+  homeGeohash: string | null;
+
   @Column({ type: 'boolean', default: false })
   twoFactorEnabled: boolean;
 

@@ -12,6 +12,7 @@ import {
   ApplicationStatus,
 } from './service-request-application.entity';
 import { Job, JobStatus } from '../jobs/job.entity';
+import { encodeGeohash } from '../../common/geohash.util';
 
 @Injectable()
 export class ServiceRequestsService {
@@ -99,6 +100,10 @@ export class ServiceRequestsService {
     data: Partial<ServiceRequest>,
   ): Promise<ServiceRequest> {
     const sr = this.repo.create({ ...data, userId });
+    // Phase 177 — geohash auto-compute
+    if (sr.latitude != null && sr.longitude != null) {
+      sr.geohash = encodeGeohash(sr.latitude, sr.longitude, 6) || null;
+    }
     return this.repo.save(sr);
   }
 
@@ -111,6 +116,10 @@ export class ServiceRequestsService {
     if (!sr) throw new NotFoundException('İlan bulunamadı');
     if (sr.userId !== userId) throw new ForbiddenException('Yetkisiz');
     Object.assign(sr, data);
+    // Phase 177 — geohash recompute on location change
+    if (sr.latitude != null && sr.longitude != null) {
+      sr.geohash = encodeGeohash(sr.latitude, sr.longitude, 6) || null;
+    }
     return this.repo.save(sr);
   }
 

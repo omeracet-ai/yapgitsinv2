@@ -154,51 +154,63 @@ export class AdminAuditService {
 
     const baseWhere = (alias: string) => `${alias}.createdAt >= :since`;
 
-    const totalEntries = await this.repo
-      .createQueryBuilder('log')
-      .where(baseWhere('log'), { since })
-      .getCount();
-
-    // Per-day counts. Use SUBSTR on ISO datetime for SQLite-friendliness;
-    // works on Postgres too because TypeORM serializes Date and SUBSTR is standard.
-    const perDayRaw = await this.repo
-      .createQueryBuilder('log')
-      .select("SUBSTR(log.createdAt, 1, 10)", 'date')
-      .addSelect('COUNT(*)', 'count')
-      .where(baseWhere('log'), { since })
-      .groupBy('date')
-      .orderBy('date', 'ASC')
-      .getRawMany<{ date: string; count: string | number }>();
+    // Phase 175 — fan out all 5 independent aggregates in a single wave.
+    const t0 = Date.now();
+    const [totalEntries, perDayRaw, topActionsRaw, topAdminsRaw, topTargetTypesRaw] =
+      await Promise.all([
+        this.repo
+          .createQueryBuilder('log')
+          .where(baseWhere('log'), { since })
+          .getCount(),
+        // Per-day counts. SUBSTR on ISO datetime for SQLite-friendliness; works on
+        // Postgres too because TypeORM serializes Date and SUBSTR is standard.
+        this.repo
+          .createQueryBuilder('log')
+          .select('SUBSTR(log.createdAt, 1, 10)', 'date')
+          .addSelect('COUNT(*)', 'count')
+          .where(baseWhere('log'), { since })
+          .groupBy('date')
+          .orderBy('date', 'ASC')
+          .getRawMany<{ date: string; count: string | number }>(),
+        this.repo
+          .createQueryBuilder('log')
+          .select('log.action', 'action')
+          .addSelect('COUNT(*)', 'count')
+          .where(baseWhere('log'), { since })
+          .groupBy('log.action')
+          .orderBy('count', 'DESC')
+          .limit(10)
+          .getRawMany<{ action: string; count: string | number }>(),
+        this.repo
+          .createQueryBuilder('log')
+          .select('log.adminUserId', 'adminUserId')
+          .addSelect('COUNT(*)', 'count')
+          .where(baseWhere('log'), { since })
+          .groupBy('log.adminUserId')
+          .orderBy('count', 'DESC')
+          .limit(10)
+          .getRawMany<{ adminUserId: string; count: string | number }>(),
+        this.repo
+          .createQueryBuilder('log')
+          .select('log.targetType', 'targetType')
+          .addSelect('COUNT(*)', 'count')
+          .where(baseWhere('log'), { since })
+          .andWhere('log.targetType IS NOT NULL')
+          .groupBy('log.targetType')
+          .orderBy('count', 'DESC')
+          .limit(10)
+          .getRawMany<{ targetType: string; count: string | number }>(),
+      ]);
 
     const entriesPerDay = perDayRaw.map((r) => ({
       date: String(r.date),
       count: Number(r.count),
     }));
 
-    const topActionsRaw = await this.repo
-      .createQueryBuilder('log')
-      .select('log.action', 'action')
-      .addSelect('COUNT(*)', 'count')
-      .where(baseWhere('log'), { since })
-      .groupBy('log.action')
-      .orderBy('count', 'DESC')
-      .limit(10)
-      .getRawMany<{ action: string; count: string | number }>();
-
     const topActions = topActionsRaw.map((r) => ({
       action: r.action,
       count: Number(r.count),
     }));
-
-    const topAdminsRaw = await this.repo
-      .createQueryBuilder('log')
-      .select('log.adminUserId', 'adminUserId')
-      .addSelect('COUNT(*)', 'count')
-      .where(baseWhere('log'), { since })
-      .groupBy('log.adminUserId')
-      .orderBy('count', 'DESC')
-      .limit(10)
-      .getRawMany<{ adminUserId: string; count: string | number }>();
 
     const adminIds = topAdminsRaw.map((r) => r.adminUserId).filter(Boolean);
     const adminUsers = adminIds.length
@@ -218,16 +230,9 @@ export class AdminAuditService {
       count: Number(r.count),
     }));
 
-    const topTargetTypesRaw = await this.repo
-      .createQueryBuilder('log')
-      .select('log.targetType', 'targetType')
-      .addSelect('COUNT(*)', 'count')
-      .where(baseWhere('log'), { since })
-      .andWhere('log.targetType IS NOT NULL')
-      .groupBy('log.targetType')
-      .orderBy('count', 'DESC')
-      .limit(10)
-      .getRawMany<{ targetType: string; count: string | number }>();
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.log(`[phase-175] getStats parallel ${Date.now() - t0}ms`);
+    }
 
     const topTargetTypes = topTargetTypesRaw.map((r) => ({
       targetType: r.targetType,

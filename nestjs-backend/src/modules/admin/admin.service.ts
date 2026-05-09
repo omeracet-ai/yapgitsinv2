@@ -438,6 +438,8 @@ export class AdminService {
   }
 
   async getDashboardStats() {
+    // Phase 175 — parallelize 11 stats + chartData in a single Promise.all wave.
+    const t0 = Date.now();
     const [
       totalJobs,
       totalUsers,
@@ -450,6 +452,7 @@ export class AdminService {
       totalReviews,
       openJobs,
       completedJobs,
+      chartData,
     ] = await Promise.all([
       this.jobsRepo.count(),
       this.usersRepo.count(),
@@ -472,9 +475,12 @@ export class AdminService {
       this.reviewsRepo.count(),
       this.jobsRepo.count({ where: { status: JobStatus.OPEN } }),
       this.jobsRepo.count({ where: { status: JobStatus.COMPLETED } }),
+      this.getChartData(),
     ]);
-
-    const chartData = await this.getChartData();
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.log(`[phase-175] getDashboardStats parallel ${Date.now() - t0}ms`);
+    }
 
     return {
       totalJobs,
@@ -503,27 +509,28 @@ export class AdminService {
       return d;
     });
 
-    const jobsPerDay = await Promise.all(
-      last7Days.map(async (date) => {
-        const nextDay = new Date(date);
-        nextDay.setDate(nextDay.getDate() + 1);
-        const count = await this.jobsRepo.count({
-          where: { createdAt: Between(date, nextDay) },
-        });
-        return { date: date.toLocaleDateString('tr-TR'), count };
-      }),
-    );
+    // Phase 175 — fan out all 14 day-window counts in a single wave.
+    const ranges = last7Days.map((date) => {
+      const nextDay = new Date(date);
+      nextDay.setDate(nextDay.getDate() + 1);
+      return { date, nextDay, label: date.toLocaleDateString('tr-TR') };
+    });
 
-    const usersPerDay = await Promise.all(
-      last7Days.map(async (date) => {
-        const nextDay = new Date(date);
-        nextDay.setDate(nextDay.getDate() + 1);
-        const count = await this.usersRepo.count({
-          where: { createdAt: Between(date, nextDay) },
-        });
-        return { date: date.toLocaleDateString('tr-TR'), count };
-      }),
-    );
+    const [jobCounts, userCounts] = await Promise.all([
+      Promise.all(
+        ranges.map(({ date, nextDay }) =>
+          this.jobsRepo.count({ where: { createdAt: Between(date, nextDay) } }),
+        ),
+      ),
+      Promise.all(
+        ranges.map(({ date, nextDay }) =>
+          this.usersRepo.count({ where: { createdAt: Between(date, nextDay) } }),
+        ),
+      ),
+    ]);
+
+    const jobsPerDay = ranges.map((r, i) => ({ date: r.label, count: jobCounts[i] }));
+    const usersPerDay = ranges.map((r, i) => ({ date: r.label, count: userCounts[i] }));
 
     return { jobsPerDay, usersPerDay };
   }

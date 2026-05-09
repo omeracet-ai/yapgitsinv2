@@ -22,6 +22,7 @@ import { DisputesService } from '../disputes/disputes.service';
 import { DisputeType } from '../disputes/job-dispute.entity';
 import { FraudDetectionService } from '../ai/fraud-detection.service';
 import { CategorySubscriptionsService } from '../subscriptions/category-subscriptions.service';
+import { encodeGeohash } from '../../common/geohash.util';
 
 // Geçerli UUID — SQLite ve PostgreSQL uyumlu sabit seed kimliği
 const SEED_USER_ID = '00000000-0000-0000-0000-000000000001';
@@ -233,6 +234,10 @@ export class JobsService {
       customerId,
       status: JobStatus.OPEN,
     });
+    // Phase 177 — geohash auto-compute for proximity index
+    if (job.latitude != null && job.longitude != null) {
+      job.geohash = encodeGeohash(job.latitude, job.longitude, 6) || null;
+    }
     const saved = await this.jobsRepository.save(job);
     // Phase 116: fire-and-forget fraud check
     this.fraudDetection
@@ -276,6 +281,10 @@ export class JobsService {
     }
 
     Object.assign(job, updateJobDto);
+    // Phase 177 — geohash recompute when location changes
+    if (job.latitude != null && job.longitude != null) {
+      job.geohash = encodeGeohash(job.latitude, job.longitude, 6) || null;
+    }
     const saved = await this.jobsRepository.save(job);
 
     if (updateJobDto.status && updateJobDto.status !== prevStatus) {

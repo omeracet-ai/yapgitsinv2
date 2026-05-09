@@ -8,6 +8,12 @@ import { SemanticSearchService } from '../ai/semantic-search.service';
 import { BoostService } from '../boost/boost.service';
 import { BoostType } from '../boost/boost.entity';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import {
+  encodeGeohash,
+  geohashNeighbors,
+  equirectangular,
+  precisionForRadiusKm,
+} from '../../common/geohash.util';
 
 export type StatField =
   | 'asCustomerTotal'
@@ -303,10 +309,21 @@ export class UsersService {
   }
 
   create(userData: Partial<User>): Promise<User> {
+    if (
+      userData.latitude != null &&
+      userData.longitude != null &&
+      userData.homeGeohash == null
+    ) {
+      userData.homeGeohash =
+        encodeGeohash(userData.latitude, userData.longitude, 6) || null;
+    }
     return this.repo.save(this.repo.create(userData));
   }
 
   async update(id: string, data: Partial<User>): Promise<User | null> {
+    if (data.latitude != null && data.longitude != null) {
+      data.homeGeohash = encodeGeohash(data.latitude, data.longitude, 6) || null;
+    }
     await this.repo.update(id, data);
     return this.repo.findOne({ where: { id } });
   }
@@ -381,8 +398,82 @@ export class UsersService {
     await this.repo.update(id, {
       latitude,
       longitude,
+      homeGeohash: encodeGeohash(latitude, longitude, 6) || null,
       lastLocationAt: new Date().toISOString(),
     });
+  }
+
+  /**
+   * Phase 177 — Geohash-indexed nearby workers.
+   * Strategy:
+   *   1. Encode query (lat,lon) at radius-appropriate precision.
+   *   2. Build 9-cell prefix list (center + 8 neighbors).
+   *   3. DB query: WHERE homeGeohash LIKE 'p%' OR LIKE 'q%' ... (uses index).
+   *   4. Equirectangular distance + radius filter + sort in memory.
+   * Speedup vs old getMany() + Haversine: O(n) -> O(k) where k ≈ rows-in-9-cells.
+   */
+  async findNearbyWorkers(opts: {
+    lat: number;
+    lon: number;
+    radiusKm?: number;
+    category?: string;
+    verifiedOnly?: boolean;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    data: (User & { distanceKm: number })[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const radiusKm = Math.min(200, Math.max(1, opts.radiusKm ?? 20));
+    const page = Math.max(1, opts.page ?? 1);
+    const limit = Math.min(100, Math.max(1, opts.limit ?? 20));
+    const precision = precisionForRadiusKm(radiusKm);
+    const center = encodeGeohash(opts.lat, opts.lon, precision);
+    if (!center) {
+      return { data: [], total: 0, page, limit, pages: 0 };
+    }
+    const cells = geohashNeighbors(center);
+    const qb = this.repo
+      .createQueryBuilder('u')
+      .where("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'")
+      .andWhere('u.isAvailable = :av', { av: true })
+      .andWhere('u.homeGeohash IS NOT NULL');
+    qb.andWhere(
+      '(' +
+        cells
+          .map((_, i) => `u.homeGeohash LIKE :h${i}`)
+          .join(' OR ') +
+        ')',
+      Object.fromEntries(cells.map((c, i) => [`h${i}`, `${c}%`])),
+    );
+    if (opts.category) {
+      qb.andWhere('u.workerCategories LIKE :category', {
+        category: `%"${opts.category}"%`,
+      });
+    }
+    if (opts.verifiedOnly) {
+      qb.andWhere('u.identityVerified = :v', { v: true });
+    }
+    const candidates = await qb.getMany();
+    const annotated = candidates
+      .filter((u) => u.latitude != null && u.longitude != null)
+      .map((u) => {
+        const d = equirectangular(opts.lat, opts.lon, u.latitude!, u.longitude!);
+        return Object.assign(u, { distanceKm: Math.round(d * 10) / 10 });
+      })
+      .filter(
+        (u) =>
+          u.distanceKm <= radiusKm &&
+          // Respect worker's own service radius too
+          u.distanceKm <= (u.serviceRadiusKm ?? 9999),
+      )
+      .sort((a, b) => a.distanceKm - b.distanceKm);
+    const total = annotated.length;
+    const slice = annotated.slice((page - 1) * limit, (page - 1) * limit + limit);
+    return { data: slice, total, page, limit, pages: Math.ceil(total / limit) || 0 };
   }
 
   /** Phase 48: Profil doluluk yüzdesi — equal-weight 10 (müşteri) / 15 (usta) alan */

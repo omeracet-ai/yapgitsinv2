@@ -534,6 +534,47 @@ export class UsersController {
     res.send(ics);
   }
 
+  /**
+   * Phase 177 — Geohash-indexed nearby workers.
+   * GET /users/workers/nearby?lat=&lon=&radius=20&category=&verifiedOnly=
+   * Uses prefix index + equirectangular distance (~10x faster than Haversine).
+   */
+  @Get('workers/nearby')
+  async getNearbyWorkers(
+    @Query('lat') lat?: string,
+    @Query('lon') lon?: string,
+    @Query('radius') radius?: string,
+    @Query('category') category?: string,
+    @Query('verifiedOnly') verifiedOnly?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const parseNum = (v?: string): number | undefined => {
+      if (v == null || v === '') return undefined;
+      const n = parseFloat(v);
+      return isNaN(n) ? undefined : n;
+    };
+    const latN = parseNum(lat);
+    const lonN = parseNum(lon);
+    if (latN == null || lonN == null) {
+      return { data: [], total: 0, page: 1, limit: 20, pages: 0 };
+    }
+    const result = await this.svc.findNearbyWorkers({
+      lat: latN,
+      lon: lonN,
+      radiusKm: parseNum(radius),
+      category,
+      verifiedOnly: verifiedOnly === 'true',
+      page: parseNum(page),
+      limit: parseNum(limit),
+    });
+    const data = result.data.map((u) => {
+      const { passwordHash: _ph, ...safe } = u as { passwordHash?: string } & typeof u;
+      return safe;
+    });
+    return { ...result, data };
+  }
+
   /** GET /workers — Usta dizini (advanced filters + pagination) */
   @Get('workers')
   async getWorkers(

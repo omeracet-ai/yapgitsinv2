@@ -109,6 +109,10 @@ export class Job {
   @Column({ type: 'float', nullable: true })
   longitude: number | null;
 
+  /** Phase 177 — geohash prefix (precision 6) for fast proximity queries */
+  @Column({ type: 'varchar', length: 12, nullable: true })
+  geohash: string | null;
+
   /** Teslim/bitiş tarihi — YYYY-MM-DD formatında */
   @Column({ type: 'varchar', length: 10, nullable: true, default: null })
   dueDate: string | null;

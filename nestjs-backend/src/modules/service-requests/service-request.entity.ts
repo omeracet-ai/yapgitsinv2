@@ -51,6 +51,10 @@ export class ServiceRequest {
   @Column({ type: 'float', nullable: true })
   longitude: number | null;
 
+  /** Phase 177 — geohash prefix (precision 6) for fast proximity queries */
+  @Column({ type: 'varchar', length: 12, nullable: true })
+  geohash: string | null;
+
   // Fiyat DB'de tutulur, UI'da gösterilmez
   @Column({ type: 'float', nullable: true })
   price: number;
