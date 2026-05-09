@@ -128,6 +128,26 @@ export const api = {
   setVerification: (id: string, isVerified: boolean)     =>
     request<Provider>(`/admin/providers/${id}/verify`, { method: 'PATCH', body: JSON.stringify({ isVerified }) }),
 
+  // Phase 159 — Worker Certifications
+  pendingCertifications: () =>
+    request<Array<{
+      id: string;
+      userId: string;
+      name: string;
+      issuer: string;
+      issuedAt: string;
+      expiresAt: string | null;
+      documentUrl: string | null;
+      verified: boolean;
+      adminNote: string | null;
+      createdAt: string;
+    }>>('/admin/certifications'),
+  verifyCertification: (id: string, verified: boolean, adminNote?: string) =>
+    request<{ id: string; verified: boolean }>(`/admin/certifications/${id}/verify`, {
+      method: 'PATCH',
+      body: JSON.stringify({ verified, adminNote }),
+    }),
+
   // Öne Çıkan İlanlar
   setFeaturedOrder: (id: string, featuredOrder: number | null) =>
     request<void>(`/admin/jobs/${id}/featured`, { method: 'PATCH', body: JSON.stringify({ featuredOrder }) }),
