@@ -39,6 +39,16 @@ class _Body extends StatelessWidget {
     final reviews = (data['reviewsReceivedAsCustomer'] as List?)
             ?.cast<Map<String, dynamic>>() ??
         [];
+    final monthly = (data['monthlyActivity'] as List?)
+            ?.cast<Map<String, dynamic>>() ??
+        [];
+    final topCats = (data['topCategories'] as List?)
+            ?.cast<Map<String, dynamic>>() ??
+        [];
+    final avgBudget = (data['avgBudget'] as num?)?.toInt() ?? 0;
+    final lastJobs = (data['lastCompletedJobs'] as List?)
+            ?.cast<Map<String, dynamic>>() ??
+        [];
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -121,6 +131,77 @@ class _Body extends StatelessWidget {
         ),
 
         const SizedBox(height: 24),
+
+        // Phase 145 — Aktivite (son 6 ay)
+        const Text('Aktivite (Son 6 Ay)',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        _activityChart(monthly),
+
+        const SizedBox(height: 20),
+
+        // Top categories
+        if (topCats.isNotEmpty) ...[
+          const Text('En Sık Çalıştığı Kategoriler',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: topCats.map((c) {
+              final name = (c['category'] as String?) ?? '';
+              final count = (c['count'] as num?)?.toInt() ?? 0;
+              return Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text('$name ($count)',
+                    style: const TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13)),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+        ],
+
+        // Avg budget
+        if (avgBudget > 0) ...[
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.payments_rounded,
+                    color: AppColors.primary, size: 22),
+                const SizedBox(width: 10),
+                Text('Ortalama Bütçe: $avgBudget₺',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: AppColors.primary)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+
+        // Last completed jobs
+        if (lastJobs.isNotEmpty) ...[
+          const Text('Son Tamamlanan İşler',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          ...lastJobs.map((j) => _jobTile(j)),
+          const SizedBox(height: 20),
+        ],
+
         const Text('Bu Müşteriye Verilen Yorumlar',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
@@ -208,6 +289,109 @@ class _Body extends StatelessWidget {
                 style:
                     const TextStyle(fontSize: 11, color: Colors.black45)),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _activityChart(List<Map<String, dynamic>> monthly) {
+    if (monthly.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Text('Veri yok.', style: TextStyle(color: Colors.black54)),
+      );
+    }
+    final maxCount = monthly
+        .map((m) => (m['count'] as num?)?.toInt() ?? 0)
+        .fold<int>(0, (a, b) => a > b ? a : b);
+    final maxBar = maxCount == 0 ? 1 : maxCount;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: SizedBox(
+        height: 100,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: monthly.map((m) {
+            final count = (m['count'] as num?)?.toInt() ?? 0;
+            final month = (m['month'] as String?) ?? '';
+            final mm = month.length >= 7 ? month.substring(5, 7) : '';
+            final h = (count / maxBar) * 70;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text('$count',
+                        style: const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 2),
+                    Container(
+                      height: h.clamp(2, 70),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(mm,
+                        style: const TextStyle(
+                            fontSize: 10, color: Colors.black54)),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _jobTile(Map<String, dynamic> j) {
+    final title = (j['title'] as String?) ?? '';
+    final cat = (j['category'] as String?) ?? '';
+    final budget = (j['budget'] as num?)?.toInt() ?? 0;
+    final completedAt = j['completedAt'] as String?;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle_rounded,
+              color: AppColors.success, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 13),
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Text(
+                    '$cat${completedAt != null ? " · ${_formatDate(completedAt)}" : ""}',
+                    style: const TextStyle(
+                        fontSize: 11, color: Colors.black54)),
+              ],
+            ),
+          ),
+          if (budget > 0)
+            Text('$budget₺',
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                    fontSize: 13)),
         ],
       ),
     );
