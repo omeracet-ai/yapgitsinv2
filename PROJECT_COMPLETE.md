@@ -1,14 +1,14 @@
-# Yapgitsin — Project Complete (108 Phase)
+# Yapgitsin — Project Complete (150 Phase)
 
-> Türkiye pazarı için iki taraflı hizmet marketplace. Müşteri ile usta arasında köprü kuran, AI destekli, real-time chat'li, çok dilli, SEO-first platform.
+> Türkiye pazarı için iki taraflı hizmet marketplace. Müşteri ile usta arasında köprü kuran, AI destekli, real-time chat'li, çok dilli, SEO-first, abonelik + escrow + multi-currency'li ölçeklenebilir platform.
 
-108 phase boyunca sıfırdan production-ready noktaya geldik. NestJS backend, Next.js admin paneli, statik export edilebilir Next.js public web, Flutter mobil uygulama; üstüne Sentry + Plausible + CI + OpenAPI SDK + i18n + PWA. Pazara çıkmaya hazır.
+150 phase boyunca sıfırdan production-ready + revenue-stack noktaya geldik. NestJS backend, Next.js admin paneli, statik export edilebilir Next.js public web, Flutter mobil uygulama; üstüne Sentry + Plausible + CI + OpenAPI SDK + i18n + PWA + FCM + escrow + AI mediation + KVKK uyum.
 
 ## Statistics
-- 108 phase shipped
+- 150 phase shipped
 - 4 stacks (NestJS / Next.js admin / Next.js web / Flutter mobile)
-- ~150 commits on master
-- ~50 entity, ~80 endpoint, ~100 React/Flutter component
+- ~250 commits on master
+- ~70 entity, ~140 endpoint, ~160 React/Flutter component
 - 1200+ static SEO sayfa
 - 3 dil i18n (TR/EN/AZ)
 
@@ -41,15 +41,33 @@
 - **Cross-cutting (70-83):** Booking, deep links, profile photo, AI features, contact block, SR conversion, job repeat
 - **SEO + Web (84-99):** Public web MVP, FTP export, mobile responsive, lead form, AI category, i18n, hreflang, AggregateRating, search, deploy, PWA, WebP/AVIF, sitemap, dark mode
 - **Production (100-108):** Launch checklist, lint cleanup, legal pages, Sentry, Plausible, backup, CI, smoke test, migrations, OpenAPI SDK
+- **Retrospective (109):** Final retrospective + roadmap doc
+- **Subscription & Revenue (110-114, 141, 146):** Worker subscription, earnings dashboard, geo-fence dynamic pricing, FCM push, multi-currency (€/AZN/USD), boost pakaketi, tier badges (bronze/silver/gold)
+- **Admin & Moderation (115-117, 132, 137):** Bulk admin ops, AI fraud detection, dispute resolution flow, moderation queue UI, manual badge granting
+- **User Engagement (118-119, 138, 143):** Loyalty/referral programı, worker insurance partnership, customer message templates, category subscription alerts
+- **Multi-tenant & White-label (120):** Tenant scaffold (per-tenant config + branding)
+- **Email & SMS & Web SEO Pipeline (121-123, 142):** Transactional email (SendGrid), JobPosting schema.org, SMS OTP (Twilio/Netgsm), AI-driven web SEO content auto-gen
+- **Privacy & Polish (124-131):** KVKK self-service export/delete, portfolio video, promo banner, Lighthouse fixes, cancel/refund policy, onboarding wizard, DB index perf, prod hardening (helmet/CORS/CSRF)
+- **AI & Discovery (134, 140, 144, 145):** Semantic search (embeddings), AI dynamic pricing önerisi, AI dispute mediation, customer profile enrichment
+- **Booking & UX (135, 136, 139, 149):** Availability calendar 2.0 (slot lock), escrow ödeme, chat attachments, otomatik booking reminder
+- **Web Polish (147, 148):** Filter sidebar (kategori/lokasyon/fiyat), `isAvailable` public API expose
+- **150-Phase Milestone (150):** Doc refresh, audit, milestone commit
 
 ## Yenilikler / Diferansiyatörler
-1. **AI features** (Phase 74-76, 89): Yapgitsin asistan + ilan açıklama + yorum özet + kategori SEO content
-2. **Real-time chat** (Phase 66-69, 78-80): Typing, read receipts, presence, online göstergesi, toast
+1. **AI features** (Phase 74-76, 89, 134, 140, 144, 145): Yapgitsin asistan + ilan açıklama + yorum özet + SEO content + semantic search + dynamic pricing + dispute mediation
+2. **Real-time chat** (Phase 66-69, 78-80, 139): Typing, read receipts, presence, attachments
 3. **Multi-language i18n** (Phase 90-91): TR/EN/AZ + hreflang
 4. **PWA + WebP/AVIF** (Phase 95-96): Mobile install + responsive images
 5. **Contact-sharing block** (Phase 77): Sistem-içi iletişim zorunluluğu (commission koruma)
 6. **Static export FTP-deployable** (Phase 86): Shared hosting deploy
 7. **Comprehensive audit logging** (Phase 26-36): Kurumsal güven
+8. **Subscription + escrow revenue stack** (Phase 110, 136): Komisyon değil sabit aylık + güvenli ödeme
+9. **Multi-currency** (Phase 114): €, AZN, USD — multi-region launch için kritik
+10. **KVKK compliance** (Phase 124): Self-service export/delete — Türkiye yasal zorunluluk
+11. **FCM push + SMS OTP** (Phase 113, 123): Real-time engagement + güvenli login
+12. **AI dispute mediation + fraud detection** (Phase 116, 144): Marketplace güveni ölçeklenebilir
+13. **White-label tenant scaffold** (Phase 120): SaaS satış modeli
+14. **Worker tier badges + boost** (Phase 141, 146): Gamification + ek gelir kanalı
 
 ## Pazar Konumu
 - **Ana pazar:** Türkiye (Armut Aralık 2025 sarsıntısı sonrası fırsat penceresi)
@@ -97,8 +115,8 @@
 
 ## Voldi & Müdür imza
 
-108 phase boyunca her commit'i denetledim, lane discipline'ı koruduk, token disiplinine uyduk. Kod hazır. Pazara çıkış sırası senin (Müdür sahibi).
+150 phase boyunca her commit'i denetledim, lane discipline'ı koruduk, token disiplinine uyduk. Core + revenue + compliance + AI katmanı tamam. Pazara çıkış sırası senin (Müdür sahibi).
 
-Yapgitsin -> launch.
+Yapgitsin -> launch + scale.
 
 — Voldi & Müdür, Mayıs 2026

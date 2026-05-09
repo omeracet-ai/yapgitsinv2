@@ -1,6 +1,6 @@
 # Yapgitsin Roadmap
 
-108 phase ile core platform tamamlandı. Bu dokuman, post-launch yol haritasını ve opsiyonel Phase 110+ önerilerini içerir.
+150 phase ile core + revenue + compliance + AI katmanları tamamlandı. Bu dokuman, post-launch yol haritasını ve Phase 151+ önerilerini içerir.
 
 ## Pazar Timeline
 
@@ -33,19 +33,42 @@
 - Mısır + Pakistan: büyük pazar, yüksek CAC
 - Seed funding turu (€500K-1M) bu noktada gerek
 
-## Phase 110+ (post-launch ideas — opsiyonel)
+## Phase 110-149 — DONE (shipped)
 
-- **110:** Worker subscription model (commission alternatifi — sabit aylık)
-- **111:** Booking calendar customer-facing wizard genişletme
-- **112:** Geo-fencing (radius-based discovery + dynamic pricing)
-- **113:** Push notifications (FCM real, şu an placeholder)
-- **114:** Multi-currency support (€, AZN, USD)
-- **115:** Worker bulk operations admin (toplu suspend, toplu kategori atama)
-- **116:** AI-powered fraud detection (sahte ilan + duplicate worker detect)
-- **117:** Dispute resolution flow (müşteri-usta arası şikayet çözüm)
-- **118:** Loyalty program (returning customer rewards, token bonus)
-- **119:** Worker insurance partnership (ilave gelir + güven)
-- **120:** White-label SaaS (diğer pazarlara hizmet platformu olarak satış)
+- **110:** Worker subscription model — DONE
+- **111:** Booking calendar wizard — DONE
+- **112:** Geo-fence radius + dynamic pricing — DONE
+- **113:** FCM real push — DONE
+- **114:** Multi-currency (€, AZN, USD) — DONE
+- **115:** Worker bulk admin ops — DONE
+- **116:** AI fraud detection — DONE
+- **117:** Dispute resolution flow — DONE
+- **118:** Loyalty / referral program — DONE
+- **119:** Worker insurance partnership — DONE
+- **120:** White-label tenant scaffold — DONE
+- **121-123:** Email + JobPosting schema + SMS OTP — DONE
+- **124-131:** KVKK, portfolio video, promo, lighthouse, cancel/refund, onboarding, DB perf, prod hardening — DONE
+- **132, 137:** Moderation queue UI, manual badge granting — DONE
+- **134, 140, 144, 145:** Semantic search, AI pricing, AI dispute mediation, customer enrichment — DONE
+- **135, 136, 139, 149:** Availability calendar 2.0, escrow, chat attachments, booking reminders — DONE
+- **138, 143:** Customer message templates, category subscription alerts — DONE
+- **141, 146:** Worker earnings dashboard + boost + tier badges — DONE
+- **142:** AI-driven web SEO content auto-gen — DONE
+- **147, 148:** Web filter sidebar, isAvailable expose — DONE
+- **150:** 150-phase milestone doc refresh — DONE
+
+## Phase 151-160 (next batch — önerilen)
+
+- **151:** Customer voice notes in chat (audio mesaj kaydı + playback)
+- **152:** Worker video intro (1-min profil videosu, public profile hero)
+- **153:** AI auto-translate chat messages (TR↔EN, multi-region için)
+- **154:** Job marketplace stats public (toplam ilan / usta / başarı oranı homepage badge)
+- **155:** Worker calendar sync (Google Calendar export — .ics feed)
+- **156:** Customer wallet history PDF export (token + escrow geçmişi)
+- **157:** Multi-photo job upload bulk (5 fotoğraf tek seferde, drag-drop UI)
+- **158:** Web blog system (CMS for SEO — admin panelinden makale yayınlama)
+- **159:** Worker certification system (sertifika upload + admin verify + profilde rozet)
+- **160:** White-label tenant migration tool (mevcut platformdan tenant clone wizard)
 
 ## Teknik Borç
 

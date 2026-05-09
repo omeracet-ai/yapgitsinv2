@@ -3,11 +3,11 @@
 ![build](https://img.shields.io/badge/build-passing-brightgreen)
 ![license](https://img.shields.io/badge/license-Proprietary-blue)
 ![version](https://img.shields.io/badge/version-1.0.0-blue)
-![phases](https://img.shields.io/badge/phases-100-success)
+![phases](https://img.shields.io/badge/phases-150-success)
 
-**Yapgitsin**, müşteri ile usta arasında köprü kuran iki taraflı bir hizmet marketplace platformudur. Airtasker / Armut benzeri bir model üzerine inşa edilmiştir — ancak Türkiye pazarına yerelleştirilmiş, AI destekli içerik üretimi, gerçek zamanlı sohbet ve şeffaf puanlama sistemiyle.
+**Yapgitsin**, müşteri ile usta arasında köprü kuran iki taraflı bir hizmet marketplace platformudur. Airtasker / Armut benzeri bir model üzerine inşa edilmiştir — ancak Türkiye pazarına yerelleştirilmiş, AI destekli içerik üretimi, gerçek zamanlı sohbet, escrow ödeme ve şeffaf puanlama sistemiyle.
 
-100 phase boyunca geliştirilen platform; NestJS backend, Next.js admin paneli, Next.js public/SEO sitesi ve Flutter mobil uygulamadan oluşur. Faz 2'de KKTC, Azerbaycan ve Kosova pazarlarına genişleme planlanmaktadır.
+150 phase boyunca geliştirilen platform; NestJS backend, Next.js admin paneli, Next.js public/SEO sitesi ve Flutter mobil uygulamadan oluşur. Faz 2'de KKTC, Azerbaycan ve Kosova pazarlarına genişleme planlanmaktadır.
 
 ## Mimari
 
@@ -56,26 +56,38 @@ cd hizmet_app && flutter pub get && flutter run
 | Web (SEO) | Next.js 16 + i18n + SSG | 3002 | `web/README.md` |
 | Mobile | Flutter 3.x + Riverpod | - | `hizmet_app/` |
 
-## Özellikler (100 Phase Highlight)
+## Özellikler (150 Phase Highlight)
 
 - **Audit logging** (Phase 26-36) — admin tüm yazma aksiyonları, filtreleme, CSV export, detay modal
-- **AI features** (Phase 74-76, 89) — Claude Opus 4.7 ile ilan açıklaması, yorum özetleme, sohbet
-- **Real-time chat** (Phase 66-69, 78-80) — Socket.io, kalıcı mesajlar, online göstergesi
+- **AI features** (Phase 74-76, 89, 134, 140, 144, 145) — Claude Opus 4.7 ile ilan açıklama, yorum özet, semantic search, dynamic pricing, dispute mediation, customer enrichment
+- **Real-time chat** (Phase 66-69, 78-80, 139) — Socket.io, kalıcı mesajlar, attachments, online göstergesi
 - **Multi-language i18n** (Phase 90-91) — TR/EN/AZ + hreflang
 - **PWA + WebP/AVIF** (Phase 95-96) — offline-first, modern image format
+- **Worker subscription + earnings dashboard** (Phase 110, 141) — komisyon yerine sabit aylık plan
+- **Escrow ödeme** (Phase 136) — güvenli iş tamamlama akışı
+- **Multi-currency** (Phase 114) — €, AZN, USD; multi-region launch hazır
+- **FCM push + SMS OTP** (Phase 113, 123) — real-time engagement + güvenli login
+- **KVKK self-service** (Phase 124) — kullanıcı export/delete; Türkiye yasal uyum
+- **AI fraud detection + dispute mediation** (Phase 116, 144) — marketplace güveni
+- **Geo-fence + dynamic pricing** (Phase 112) — radius-based discovery
+- **Loyalty / referral programı** (Phase 118) — returning customer rewards
+- **Worker tier badges + boost** (Phase 141, 146) — bronze/silver/gold + ek gelir
+- **White-label tenant scaffold** (Phase 120) — SaaS satış modeli
+- **Availability calendar 2.0** (Phase 135) — slot-lock booking
+- **Onboarding wizard** (Phase 129) — yeni kullanıcı akışı
 - **Public Q&A** — Airtasker tarzı herkese açık soru-cevap
 - **Video desteği** — ilan başına 5 video, 50MB limit
 - **Token ekonomisi** — teklif başına 5 token, bcrypt + JWT auth
 - **Harita entegrasyonu** — yakındaki işler, GPS, koordinat picker
 - **Reputation sistemi** — `rating × 20 + success × 5` formülü
 - **Public profile pages** — verified rozet, stats, geçmiş işler, yorumlar
-- **Rate limiting** — IP başına dakikada 60 istek
+- **Rate limiting + Helmet/CORS/CSRF** (Phase 131) — prod hardening
 - **Swagger/OpenAPI docs** — `/api/docs`
 - **Direct booking** — randevu akışı (Job/Offer'dan ayrı)
-- **İyzipay sandbox ödeme** — token satın alma
-- **Featured/öne çıkan** sistem — ilan, hizmet, usta öne çıkarma
-- **Identity verification** — kimlik fotoğrafı + admin onayı (mavi tik)
-- **SEO + sitemap.xml + robots.txt** (Phase 85-99)
+- **İyzipay + multi-currency ödeme** — token + escrow
+- **Featured/öne çıkan + boost paketleri** — ilan, hizmet, usta
+- **Identity verification + manual badge granting** (Phase 137) — mavi tik
+- **SEO + sitemap.xml + robots.txt + JobPosting schema + AI content** (Phase 85-99, 122, 142)
 - **CSV export + filtered pagination** (Phase 29-30)
 - **Deep link** (Phase 58) — `yapgitsin://` URL şeması
 
@@ -107,4 +119,4 @@ Proprietary — © 2026 Yapgitsin. Tüm hakları saklıdır.
 
 ---
 
-**Built with discipline:** 100 phase, tek developer (Voldi + Müdür), token-disiplini ile.
+**Built with discipline:** 150 phase, tek developer (Voldi + Müdür), token-disiplini ile.
