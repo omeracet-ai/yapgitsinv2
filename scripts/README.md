@@ -1,5 +1,34 @@
 # scripts/
 
+## live-deploy.sh (Phase 163)
+
+FTP push from local `D:\` mirror to live host (`yapgitsin.tr` -> Plesk Windows + IIS).
+
+```bash
+# 1. Build + stage to D:\
+bash scripts/deploy-to-d.sh
+
+# 2. One-time: copy template + fill credentials
+cp .env.deploy.example .env.deploy
+# edit .env.deploy with FTP_HOST / FTP_USER / FTP_PASS
+
+# 3. Deploy
+source .env.deploy && bash scripts/live-deploy.sh
+
+# Or inline:
+FTP_HOST=ftp.yapgitsin.tr FTP_USER=xxx FTP_PASS=yyy bash scripts/live-deploy.sh
+```
+
+**ENV vars:** `FTP_HOST`, `FTP_USER`, `FTP_PASS`, `FTP_PORT` (21), `FTP_REMOTE_DIR` (`/httpdocs`), `FTP_USE_TLS` (`1` = FTPS).
+
+**Mirror layout (remote):** `/httpdocs` (web root) + `/httpdocs/{backend,admin,app}`.
+
+**Optimizations:** lftp `mirror -R --delete --parallel=4`, retry x3, passive mode. `.env.deploy` gitignored.
+
+**CI alternative:** `.github/workflows/live-deploy.yml` (manual `workflow_dispatch`, secrets `FTP_HOST/USER/PASS/DIR`).
+
+**Requires:** `lftp` (`pacman -S lftp` / `apt install lftp` / `brew install lftp`).
+
 ## deploy-to-d.sh (Phase 162)
 
 Build all four targets and deploy to local `D:\` staging tree for FTP upload.

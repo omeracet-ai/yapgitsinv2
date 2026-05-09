@@ -1,0 +1,86 @@
+name: Live FTP Deploy
+
+# Manual trigger only - secret leak guvenligi
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Deploy target (web|admin|backend|app|all)'
+        required: true
+        default: 'all'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Build backend
+        if: ${{ inputs.target == 'all' || inputs.target == 'backend' }}
+        run: |
+          cd nestjs-backend
+          npm ci
+          npm run build
+
+      - name: Build admin
+        if: ${{ inputs.target == 'all' || inputs.target == 'admin' }}
+        run: |
+          cd admin-panel
+          npm ci
+          npm run build
+
+      - name: Build web
+        if: ${{ inputs.target == 'all' || inputs.target == 'web' }}
+        run: |
+          cd web
+          npm ci
+          npm run build
+
+      - name: FTP Deploy backend
+        if: ${{ inputs.target == 'all' || inputs.target == 'backend' }}
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          server-dir: ${{ secrets.FTP_DIR }}/backend/
+          local-dir: ./nestjs-backend/dist/
+          protocol: ftps
+          exclude: |
+            **/node_modules/**
+            **/.git*
+
+      - name: FTP Deploy admin
+        if: ${{ inputs.target == 'all' || inputs.target == 'admin' }}
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          server-dir: ${{ secrets.FTP_DIR }}/admin/
+          local-dir: ./admin-panel/.next/standalone/
+          protocol: ftps
+
+      - name: FTP Deploy web
+        if: ${{ inputs.target == 'all' || inputs.target == 'web' }}
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          server-dir: ${{ secrets.FTP_DIR }}/
+          local-dir: ./web/out/
+          protocol: ftps
+
+      - name: Smoke test
+        run: |
+          sleep 10
+          curl -fsS https://yapgitsin.tr/ -o /dev/null && echo "OK"

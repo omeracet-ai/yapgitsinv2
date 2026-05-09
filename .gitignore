@@ -20,6 +20,7 @@ z.zip
 *.zip
 deploy_stage/admin/dev/
 filezilla-yapgitsin.xml
+.env.deploy
 agent-teams/release/
 agent-teams/dist/
 hizmet_app/build/
