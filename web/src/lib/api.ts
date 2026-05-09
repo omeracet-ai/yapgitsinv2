@@ -98,6 +98,27 @@ export const getJobs = (params: Record<string, string> = {}) => {
 };
 export const getJob = (id: string) => api<Job>(`/jobs/${id}`);
 
+// Phase 158 — Blog
+export type BlogPost = {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  excerpt: string;
+  coverImageUrl?: string | null;
+  authorId?: string | null;
+  tags?: string[] | null;
+  status: 'draft' | 'published' | 'archived';
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+export const getBlogPosts = (params: Record<string, string> = {}) => {
+  const qs = new URLSearchParams(params).toString();
+  return api<Paginated<BlogPost>>(`/blog${qs ? `?${qs}` : ''}`);
+};
+export const getBlogPost = (slug: string) => api<BlogPost>(`/blog/${slug}`);
+
 export function unwrap<T>(r: T[] | Paginated<T> | null): T[] {
   if (!r) return [];
   if (Array.isArray(r)) return r;
