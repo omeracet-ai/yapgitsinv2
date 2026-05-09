@@ -27,6 +27,7 @@ import { UsersService } from './users.service';
 import { FavoriteWorkersService } from './favorite-workers.service';
 import { EarningsService } from './earnings.service';
 import { WorkerInsuranceService } from './worker-insurance.service';
+import { WorkerCertificationService } from './worker-certification.service';
 import { CalendarSyncService } from './calendar-sync.service';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
@@ -40,6 +41,7 @@ export class UsersController {
     private readonly favWorkersSvc: FavoriteWorkersService,
     private readonly earningsSvc: EarningsService,
     private readonly insuranceSvc: WorkerInsuranceService,
+    private readonly certificationSvc: WorkerCertificationService,
     private readonly calendarSyncSvc: CalendarSyncService,
     private readonly adminAuditService: AdminAuditService,
     private readonly dataPrivacy: DataPrivacyService,
@@ -292,6 +294,43 @@ export class UsersController {
   @Delete('me/insurance')
   async deleteMyInsurance(@Request() req: AuthenticatedRequest) {
     return this.insuranceSvc.remove(req.user.id);
+  }
+
+  // ── Phase 159: Worker certifications ──────────────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/certifications')
+  async listMyCertifications(@Request() req: AuthenticatedRequest) {
+    return this.certificationSvc.listOwn(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/certifications')
+  async addMyCertification(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: {
+      name: string;
+      issuer: string;
+      issuedAt: string;
+      expiresAt?: string | null;
+      documentUrl?: string | null;
+    },
+  ) {
+    return this.certificationSvc.create(req.user.id, body);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('me/certifications/:id')
+  async deleteMyCertification(
+    @Request() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.certificationSvc.deleteOwn(req.user.id, id);
+  }
+
+  @Get(':userId/certifications')
+  async getPublicCertifications(@Param('userId') userId: string) {
+    const list = await this.certificationSvc.listPublic(userId);
+    return list.map((c) => this.certificationSvc.toPublic(c));
   }
 
   @Get(':id/insurance')
@@ -763,8 +802,11 @@ export class UsersController {
     } as typeof user;
     const insurance = await insurancePromise;
     const insured = this.insuranceSvc.isInsured(insurance);
+    const verifiedCerts = await this.certificationSvc.listPublic(id);
+    const hasCert = await this.certificationSvc.hasVerifiedCertification(id);
     const badges = await this.svc.computeBadges(enrichedUser);
     if (insured) badges.push({ key: 'insured', label: 'Sigortalı', icon: '🛡️' });
+    if (hasCert) badges.push({ key: 'certified', label: 'Sertifikalı', icon: '📜' });
 
     return {
       ...safe,
@@ -791,6 +833,7 @@ export class UsersController {
       portfolioVideos: Array.isArray(user.portfolioVideos) ? user.portfolioVideos : [],
       introVideoUrl: user.introVideoUrl ?? null,
       introVideoDuration: user.introVideoDuration ?? null,
+      certifications: verifiedCerts.map((c) => this.certificationSvc.toPublic(c)),
     };
   }
 }

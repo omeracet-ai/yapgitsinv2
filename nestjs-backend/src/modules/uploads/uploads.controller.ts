@@ -501,6 +501,51 @@ export class UploadsController {
     };
   }
 
+  /** POST /uploads/certification — Phase 159: worker certification document (pdf/jpg/png) */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('certification')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      fileFilter: (req: any, file: any, cb: any) => {
+        const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        if (!allowed.includes(file.mimetype)) {
+          return cb(
+            new BadRequestException('Sadece PDF/JPG/PNG yüklenebilir'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 10 * 1024 * 1024 },
+    }),
+  )
+  async uploadCertification(
+    @UploadedFile() file: any,
+    @Req() req: any,
+  ): Promise<{ url: string; name: string; size: number }> {
+    if (!file) throw new BadRequestException('Sertifika dosyası seçilmedi');
+    const fullName: string = String(req.user?.fullName || 'user');
+    const folder = sanitizeName(fullName);
+    const dir = join(process.cwd(), 'uploads', 'certifications', folder);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const extMap: Record<string, string> = {
+      'application/pdf': 'pdf',
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+    };
+    const ext = extMap[file.mimetype] || 'bin';
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const dest = join(dir, filename);
+    fs.writeFileSync(dest, file.buffer);
+    return {
+      url: `${req.protocol}://${req.get('host')}/uploads/certifications/${folder}/${filename}`,
+      name: file.originalname || filename,
+      size: file.size,
+    };
+  }
+
   /** POST /uploads/document  — belge fotoğrafı (opsiyonel) */
   @UseGuards(AuthGuard('jwt'))
   @Post('document')

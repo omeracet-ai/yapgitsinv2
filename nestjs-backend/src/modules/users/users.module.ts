@@ -4,10 +4,12 @@ import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { User } from './user.entity';
 import { FavoriteWorker } from './favorite-worker.entity';
 import { WorkerInsurance } from './worker-insurance.entity';
+import { WorkerCertification } from './worker-certification.entity';
 import { DataDeletionRequest } from './data-deletion-request.entity';
 import { UsersService } from './users.service';
 import { FavoriteWorkersService } from './favorite-workers.service';
 import { WorkerInsuranceService } from './worker-insurance.service';
+import { WorkerCertificationService } from './worker-certification.service';
 import { DataPrivacyService } from './data-privacy.service';
 import { CalendarSyncService } from './calendar-sync.service';
 import { UsersController } from './users.controller';
@@ -25,7 +27,7 @@ import { BoostModule } from '../boost/boost.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      User, FavoriteWorker, WorkerInsurance, DataDeletionRequest,
+      User, FavoriteWorker, WorkerInsurance, WorkerCertification, DataDeletionRequest,
       Job, Review, Offer, Booking, Notification, ChatMessage, TokenTransaction,
     ]),
     AiModule,
@@ -33,7 +35,7 @@ import { BoostModule } from '../boost/boost.module';
     forwardRef(() => SubscriptionsModule),
   ],
   controllers: [UsersController],
-  providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, DataPrivacyService, CalendarSyncService],
-  exports: [UsersService, WorkerInsuranceService, DataPrivacyService, CalendarSyncService],
+  providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, WorkerCertificationService, DataPrivacyService, CalendarSyncService],
+  exports: [UsersService, WorkerInsuranceService, WorkerCertificationService, DataPrivacyService, CalendarSyncService],
 })
 export class UsersModule {}

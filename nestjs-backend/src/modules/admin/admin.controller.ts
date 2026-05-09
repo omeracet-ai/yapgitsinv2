@@ -17,6 +17,7 @@ import { SuspendUserDto } from './dto/suspend-user.dto';
 import { PurgeAuditLogDto } from './dto/purge-audit-log.dto';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { WorkerInsuranceService } from '../users/worker-insurance.service';
+import { WorkerCertificationService } from '../users/worker-certification.service';
 import { DataPrivacyService } from '../users/data-privacy.service';
 import { DataDeletionRequestStatus } from '../users/data-deletion-request.entity';
 import type { Request } from 'express';
@@ -33,8 +34,37 @@ export class AdminController {
     private readonly adminAuditService: AdminAuditService,
     private readonly systemSettings: SystemSettingsService,
     private readonly insuranceSvc: WorkerInsuranceService,
+    private readonly certificationSvc: WorkerCertificationService,
     private readonly dataPrivacy: DataPrivacyService,
   ) {}
+
+  // ── Phase 159: Worker certifications verify queue ─────────────────
+  @Get('certifications')
+  async listPendingCertifications() {
+    return this.certificationSvc.listPending();
+  }
+
+  @Patch('certifications/:id/verify')
+  async verifyCertification(
+    @Param('id') id: string,
+    @Body() body: { verified: boolean; adminNote?: string },
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.certificationSvc.setVerified(
+      id,
+      !!body.verified,
+      req.user.id,
+      body.adminNote,
+    );
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'certification.verify',
+      'worker_certification',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
+    return result;
+  }
 
   // ── Phase 124: KVKK data deletion request moderation ─────────────
   @Get('data-deletion-requests')
