@@ -9,6 +9,7 @@ import { UsersService } from './users.service';
 import { FavoriteWorkersService } from './favorite-workers.service';
 import { WorkerInsuranceService } from './worker-insurance.service';
 import { DataPrivacyService } from './data-privacy.service';
+import { CalendarSyncService } from './calendar-sync.service';
 import { UsersController } from './users.controller';
 import { Job } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
@@ -32,7 +33,7 @@ import { BoostModule } from '../boost/boost.module';
     forwardRef(() => SubscriptionsModule),
   ],
   controllers: [UsersController],
-  providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, DataPrivacyService],
-  exports: [UsersService, WorkerInsuranceService, DataPrivacyService],
+  providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, DataPrivacyService, CalendarSyncService],
+  exports: [UsersService, WorkerInsuranceService, DataPrivacyService, CalendarSyncService],
 })
 export class UsersModule {}

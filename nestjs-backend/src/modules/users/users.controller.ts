@@ -27,6 +27,7 @@ import { UsersService } from './users.service';
 import { FavoriteWorkersService } from './favorite-workers.service';
 import { EarningsService } from './earnings.service';
 import { WorkerInsuranceService } from './worker-insurance.service';
+import { CalendarSyncService } from './calendar-sync.service';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
 import { Offer, OfferStatus } from '../jobs/offer.entity';
@@ -39,6 +40,7 @@ export class UsersController {
     private readonly favWorkersSvc: FavoriteWorkersService,
     private readonly earningsSvc: EarningsService,
     private readonly insuranceSvc: WorkerInsuranceService,
+    private readonly calendarSyncSvc: CalendarSyncService,
     private readonly adminAuditService: AdminAuditService,
     private readonly dataPrivacy: DataPrivacyService,
     @InjectRepository(Job) private jobsRepo: Repository<Job>,
@@ -454,6 +456,43 @@ export class UsersController {
       introVideoDuration: null,
     });
     return { introVideoUrl: null, introVideoDuration: null };
+  }
+
+  // ── Phase 155 — Worker calendar ICS feed (Google/Apple/Outlook subscribe) ──
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/calendar/enable')
+  enableCalendar(@Request() req: AuthenticatedRequest) {
+    return this.calendarSyncSvc.enable(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/calendar/regenerate')
+  regenerateCalendar(@Request() req: AuthenticatedRequest) {
+    return this.calendarSyncSvc.regenerate(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/calendar/disable')
+  disableCalendar(@Request() req: AuthenticatedRequest) {
+    return this.calendarSyncSvc.disable(req.user.id);
+  }
+
+  /** Public-by-token ICS feed. NO auth — token in query string is the auth. */
+  @Get(':userId/calendar.ics')
+  async getCalendarIcs(
+    @Param('userId') userId: string,
+    @Query('token') token: string,
+    @Res() res: Response,
+  ) {
+    const ics = await this.calendarSyncSvc.generateIcs(userId, token || '');
+    if (!ics) {
+      res.status(404).send('Not Found');
+      return;
+    }
+    res.set('Content-Type', 'text/calendar; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.set('Content-Disposition', 'inline; filename="yapgitsin-takvim.ics"');
+    res.send(ics);
   }
 
   /** GET /workers — Usta dizini (advanced filters + pagination) */
