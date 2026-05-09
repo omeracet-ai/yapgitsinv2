@@ -176,6 +176,13 @@ export class User {
   @Column({ type: 'simple-json', nullable: true })
   portfolioVideos: string[] | null;
 
+  // Phase 152 — Worker intro video (single, 60sec cap, profile-prominent)
+  @Column({ type: 'varchar', nullable: true })
+  introVideoUrl: string | null;
+
+  @Column({ type: 'integer', nullable: true })
+  introVideoDuration: number | null;
+
   // Ortalama yanıt süresi (dk) — fast_responder rozeti için.
   // Mesaj/teklif zaman damgalarından hesaplanabilir; null = yeterli veri yok.
   @Column({ type: 'integer', nullable: true })

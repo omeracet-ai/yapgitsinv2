@@ -426,6 +426,36 @@ export class UsersController {
     return { videos: next };
   }
 
+  // ── Phase 152: Worker intro video (60sec cap) ─────────────────────
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/intro-video')
+  async setIntroVideo(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { url: string; duration?: number | null },
+  ) {
+    const url = (body?.url || '').trim();
+    if (!url) throw new BadRequestException('url gerekli');
+    const dur = typeof body?.duration === 'number' ? Math.round(body.duration) : null;
+    if (dur != null && dur > 65) {
+      throw new BadRequestException('Tanıtım videosu 60 saniyeyi geçemez');
+    }
+    await this.svc.update(req.user.id, {
+      introVideoUrl: url,
+      introVideoDuration: dur,
+    });
+    return { introVideoUrl: url, introVideoDuration: dur };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('me/intro-video')
+  async removeIntroVideo(@Request() req: AuthenticatedRequest) {
+    await this.svc.update(req.user.id, {
+      introVideoUrl: null,
+      introVideoDuration: null,
+    });
+    return { introVideoUrl: null, introVideoDuration: null };
+  }
+
   /** GET /workers — Usta dizini (advanced filters + pagination) */
   @Get('workers')
   async getWorkers(
@@ -720,6 +750,8 @@ export class UsersController {
       pastPhotos,
       portfolioPhotos: Array.isArray(user.portfolioPhotos) ? user.portfolioPhotos : [],
       portfolioVideos: Array.isArray(user.portfolioVideos) ? user.portfolioVideos : [],
+      introVideoUrl: user.introVideoUrl ?? null,
+      introVideoDuration: user.introVideoDuration ?? null,
     };
   }
 }
