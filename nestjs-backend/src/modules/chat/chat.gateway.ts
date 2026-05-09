@@ -28,9 +28,11 @@ interface SendMessagePayload {
   bookingId?: string | null;
   // Phase 139: optional attachment metadata
   attachmentUrl?: string | null;
-  attachmentType?: 'image' | 'document' | null;
+  attachmentType?: 'image' | 'document' | 'audio' | null;
   attachmentName?: string | null;
   attachmentSize?: number | null;
+  // Phase 151: voice note duration (seconds).
+  attachmentDuration?: number | null;
 }
 
 interface GetHistoryPayload {
@@ -169,6 +171,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       attachmentType: data.attachmentType ?? null,
       attachmentName: data.attachmentName ?? null,
       attachmentSize: data.attachmentSize ?? null,
+      attachmentDuration: data.attachmentDuration ?? null,
     });
     if (contactFiltered) {
       _client.emit('messageFiltered', {
@@ -192,6 +195,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       attachmentType: saved.attachmentType,
       attachmentName: saved.attachmentName,
       attachmentSize: saved.attachmentSize,
+      attachmentDuration: saved.attachmentDuration,
     });
   }
 

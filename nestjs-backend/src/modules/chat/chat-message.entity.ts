@@ -50,11 +50,15 @@ export class ChatMessage {
   attachmentUrl: string | null;
 
   @Column({ type: 'varchar', length: 16, nullable: true })
-  attachmentType: 'image' | 'document' | null;
+  attachmentType: 'image' | 'document' | 'audio' | null;
 
   @Column({ type: 'varchar', length: 200, nullable: true })
   attachmentName: string | null;
 
   @Column({ type: 'int', nullable: true })
   attachmentSize: number | null;
+
+  // Phase 151: audio attachment duration in seconds (voice notes).
+  @Column({ type: 'int', nullable: true })
+  attachmentDuration: number | null;
 }

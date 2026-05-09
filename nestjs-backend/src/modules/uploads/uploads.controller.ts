@@ -379,6 +379,81 @@ export class UploadsController {
     };
   }
 
+  /** POST /uploads/chat-audio — Phase 151: chat voice note (audio) */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('chat-audio')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      fileFilter: (req: any, file: any, cb: any) => {
+        const audioMimes = [
+          'audio/mpeg',
+          'audio/mp4',
+          'audio/m4a',
+          'audio/x-m4a',
+          'audio/aac',
+          'audio/ogg',
+          'audio/webm',
+        ];
+        if (!audioMimes.includes(file.mimetype)) {
+          return cb(
+            new BadRequestException(
+              'Sadece ses dosyası yüklenebilir (mp3/m4a/aac/ogg/webm)',
+            ),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 10 * 1024 * 1024 },
+    }),
+  )
+  async uploadChatAudio(
+    @UploadedFile() file: any,
+    @Req() req: any,
+  ): Promise<{
+    url: string;
+    type: 'audio';
+    name: string;
+    size: number;
+    duration?: number;
+  }> {
+    if (!file) throw new BadRequestException('Ses dosyası seçilmedi');
+
+    const fullName: string = String(req.user?.fullName || 'user');
+    const folder = sanitizeName(fullName);
+    const dir = join(process.cwd(), 'uploads', 'chat-audio', folder);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    const extMap: Record<string, string> = {
+      'audio/mpeg': 'mp3',
+      'audio/mp4': 'm4a',
+      'audio/m4a': 'm4a',
+      'audio/x-m4a': 'm4a',
+      'audio/aac': 'aac',
+      'audio/ogg': 'ogg',
+      'audio/webm': 'webm',
+    };
+    const ext = extMap[file.mimetype] || 'bin';
+    const ts = Date.now();
+    const rand = Math.random().toString(36).slice(2, 8);
+    const filename = `${ts}-${rand}.${ext}`;
+    const dest = join(dir, filename);
+    fs.writeFileSync(dest, file.buffer);
+
+    const durationRaw = (req.body?.duration ?? '') as string;
+    const durationParsed = durationRaw ? parseInt(durationRaw, 10) : NaN;
+    const duration = Number.isFinite(durationParsed) ? durationParsed : undefined;
+
+    return {
+      url: `${req.protocol}://${req.get('host')}/uploads/chat-audio/${folder}/${filename}`,
+      type: 'audio',
+      name: file.originalname || filename,
+      size: file.size,
+      duration,
+    };
+  }
+
   /** POST /uploads/document  — belge fotoğrafı (opsiyonel) */
   @UseGuards(AuthGuard('jwt'))
   @Post('document')
