@@ -62,6 +62,32 @@ bash scripts/deploy-to-d.sh
 
 **Safety:** Old folders renamed to `*.bak.<timestamp>` then deleted only after successful copy.
 
+## migrate-prod.js (Phase 165)
+
+Production MariaDB schema migration runner. Idempotent, tracks applied files in
+`_migrations` table.
+
+```bash
+# Apply all pending migrations
+node scripts/migrate-prod.js
+
+# Apply a specific file
+node scripts/migrate-prod.js 001_blog_posts.sql
+```
+
+**Reads:** `nestjs-backend/.env.production` (+ optional `.env.production.local`
+override for `DB_HOST`).
+
+**Migrations:** `scripts/migrations/*.sql` — must use idempotent DDL
+(`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, etc.).
+Filenames sort alphanumerically; convention `NNN_description.sql`.
+
+**Why this exists:** `DB_SYNCHRONIZE=false` in production (TypeORM auto-schema
+disabled). New entities or column changes need an explicit migration.
+
+**Resolves `mysql2`** from `nestjs-backend/node_modules` so no extra install
+needed at repo root.
+
 ## smoke-test.sh
 
 Production E2E smoke test. Verifies critical backend + web endpoints after deploy.
