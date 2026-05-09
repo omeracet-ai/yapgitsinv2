@@ -62,6 +62,15 @@ export default async function renderCustomer(L: Locale, idSlug: string) {
   if (!c) return notFound();
 
   const reviews: any[] = c.reviewsReceivedAsCustomer || [];
+  const monthly: any[] = (c as any).monthlyActivity || [];
+  const topCats: any[] = (c as any).topCategories || [];
+  const avgBudget: number = (c as any).avgBudget || 0;
+  const lastJobs: any[] = (c as any).lastCompletedJobs || [];
+  const maxMonth = monthly.reduce(
+    (a: number, m: any) => Math.max(a, Number(m.count) || 0),
+    0,
+  );
+  const maxBar = maxMonth === 0 ? 1 : maxMonth;
 
   return (
     <>
@@ -144,6 +153,104 @@ export default async function renderCustomer(L: Locale, idSlug: string) {
           <div className="text-xs text-gray-500 mt-1">Yorum</div>
         </div>
       </section>
+
+      {/* Phase 145 — Aktivite (son 6 ay) */}
+      <section className="container mx-auto max-w-5xl px-4 md:px-6 lg:px-8 pb-6 md:pb-8">
+        <div className="bg-white border border-[var(--border)] rounded-xl p-5">
+          <h2 className="font-bold text-[var(--secondary)] mb-3">
+            Aktivite (Son 6 Ay)
+          </h2>
+          <div className="flex items-end gap-2 h-28">
+            {monthly.map((m: any) => {
+              const count = Number(m.count) || 0;
+              const month = String(m.month || '');
+              const mm = month.length >= 7 ? month.substring(5, 7) : '';
+              const h = Math.max(2, (count / maxBar) * 80);
+              return (
+                <div
+                  key={month}
+                  className="flex-1 flex flex-col items-center justify-end"
+                >
+                  <span className="text-[11px] font-bold text-[var(--secondary)]">
+                    {count}
+                  </span>
+                  <div
+                    className="w-full bg-[var(--primary)] rounded-md mt-1"
+                    style={{ height: `${h}px` }}
+                  />
+                  <span className="text-[10px] text-gray-500 mt-1">{mm}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {(topCats.length > 0 || avgBudget > 0) && (
+        <section className="container mx-auto max-w-5xl px-4 md:px-6 lg:px-8 pb-6 md:pb-8 grid md:grid-cols-2 gap-4 md:gap-6">
+          {topCats.length > 0 && (
+            <div className="bg-white border border-[var(--border)] rounded-xl p-5">
+              <h2 className="font-bold text-[var(--secondary)] mb-3">
+                En Sık Çalıştığı Kategoriler
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {topCats.map((tc: any) => (
+                  <span
+                    key={tc.category}
+                    className="bg-[var(--primary)]/10 text-[var(--primary)] text-sm font-semibold px-3 py-1 rounded-full"
+                  >
+                    {tc.category} ({tc.count})
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {avgBudget > 0 && (
+            <div className="bg-[var(--primary)]/10 border border-[var(--primary)]/20 rounded-xl p-5 flex items-center gap-3">
+              <span className="text-3xl">💰</span>
+              <div>
+                <div className="text-xs text-gray-600">Ortalama Bütçe</div>
+                <div className="text-2xl font-bold text-[var(--primary)]">
+                  {avgBudget}₺
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {lastJobs.length > 0 && (
+        <section className="container mx-auto max-w-5xl px-4 md:px-6 lg:px-8 pb-6 md:pb-8">
+          <div className="bg-white border border-[var(--border)] rounded-xl p-5">
+            <h2 className="font-bold text-[var(--secondary)] mb-3">
+              Son Tamamlanan İşler
+            </h2>
+            <ul className="divide-y divide-[var(--border)]">
+              {lastJobs.map((j: any) => (
+                <li key={j.id} className="py-2 flex items-center gap-3">
+                  <span className="text-[var(--success,#00C9A7)]">✓</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-[var(--secondary)] truncate">
+                      {j.title}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {j.category}
+                      {j.completedAt
+                        ? ` · ${new Date(j.completedAt).toLocaleDateString('tr-TR')}`
+                        : ''}
+                    </div>
+                  </div>
+                  {Number(j.budget) > 0 && (
+                    <span className="text-sm font-bold text-[var(--primary)]">
+                      {Number(j.budget)}₺
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       <section className="container mx-auto max-w-5xl px-4 md:px-6 lg:px-8 pb-10 md:pb-16">
         <div className="bg-white border border-[var(--border)] rounded-xl p-5">
