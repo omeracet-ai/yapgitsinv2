@@ -10,6 +10,10 @@
 
 $ErrorActionPreference = "Stop"
 
+# Plesk self-signed cert kabul + TLS 1.2/1.3
+[System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+try { [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 } catch {}
+
 # .env.deploy parse
 $envFile = Join-Path $PSScriptRoot "..\.env.deploy"
 if (-not (Test-Path $envFile)) {
