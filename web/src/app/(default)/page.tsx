@@ -2,6 +2,11 @@ import Link from 'next/link';
 import { getCategories, getWorkers, slugify, unwrap, TR_CITIES } from '@/lib/api';
 import { jsonLd, breadcrumbLD } from '@/lib/seo';
 import LeadForm from '@/components/LeadForm';
+import Hero from '@/components/home/Hero';
+import CategoryGrid from '@/components/home/CategoryGrid';
+import PopularJobs from '@/components/home/PopularJobs';
+import HowItWorks from '@/components/home/HowItWorks';
+import TrustBand from '@/components/home/TrustBand';
 
 export const revalidate = 3600;
 
@@ -10,8 +15,14 @@ export default async function HomePage() {
     getCategories(),
     getWorkers({ limit: '8' }),
   ]);
-  const categories = (cats || []).slice(0, 8);
+  const allCats = cats || [];
+  const gridCats = allCats.slice(0, 12);
   const workers = unwrap(workersResp).slice(0, 8);
+  const searchCats = allCats.map((c) => ({
+    name: c.name,
+    slug: slugify(c.name),
+    icon: c.icon,
+  }));
 
   return (
     <>
@@ -21,135 +32,50 @@ export default async function HomePage() {
           __html: jsonLd(breadcrumbLD([{ name: 'Anasayfa', url: '/' }])),
         }}
       />
-      <section className="bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] text-white">
-        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-12 md:py-20 text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight">
-            Türkiye&apos;nin Güvenilir Hizmet Platformu
-          </h1>
-          <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-6 md:mb-8">
-            Temizlik, tadilat, elektrik, tesisat ve daha fazlası için binlerce doğrulanmış ustaya ulaşın.
-          </p>
-          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-center gap-3">
-            <Link
-              href="/temizlik"
-              className="bg-[var(--accent)] hover:opacity-90 text-white px-6 py-3 rounded-lg font-semibold min-h-[48px] inline-flex items-center justify-center"
-            >
-              Hizmet Bul
-            </Link>
-            <Link
-              href="/elektrikci"
-              className="bg-white/10 backdrop-blur hover:bg-white/20 px-6 py-3 rounded-lg font-semibold min-h-[48px] inline-flex items-center justify-center"
-            >
-              Kategorilere Göz At
-            </Link>
-          </div>
-        </div>
-      </section>
 
-      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-12">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 md:mb-6 text-[var(--secondary)]">Ana Kategoriler</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          {categories.map((c) => (
-            <Link
-              key={c.id}
-              href={`/${slugify(c.name)}`}
-              className="bg-white border border-[var(--border)] rounded-xl p-4 md:p-5 hover:shadow-md hover:border-[var(--primary)] hover:-translate-y-0.5 transition-all min-h-[112px]"
-            >
-              <div className="text-2xl md:text-3xl mb-2">{c.icon}</div>
-              <div className="font-semibold text-sm md:text-base text-[var(--secondary)]">{c.name}</div>
-              {c.description ? (
-                <div className="text-xs text-gray-500 mt-1 line-clamp-2 hidden sm:block">{c.description}</div>
-              ) : null}
-            </Link>
-          ))}
-        </div>
-      </section>
+      <Hero searchCats={searchCats} cities={[...TR_CITIES]} />
 
-      {workers.length > 0 && (
-        <section className="container mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-12">
-          <h2 className="text-xl md:text-2xl font-bold mb-5 md:mb-6 text-[var(--secondary)]">Öne Çıkan Ustalar</h2>
-          {/* Mobile: horizontal scroll, Desktop: grid */}
-          <div className="md:hidden -mx-4 px-4 flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
-            {workers.map((w) => (
-              <Link
-                key={w.id}
-                href={`/usta/${slugify(w.fullName)}-${w.id}`}
-                className="flex-shrink-0 w-[78%] snap-start bg-white border border-[var(--border)] rounded-xl p-4 hover:shadow-md transition-all"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 rounded-full bg-[var(--primary-light)] flex items-center justify-center text-[var(--primary)] font-bold">
-                    {w.fullName?.[0] || '?'}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-semibold truncate text-[var(--secondary)]">{w.fullName}</div>
-                    <div className="text-xs text-gray-500 truncate">{w.city || 'Türkiye'}</div>
-                  </div>
-                </div>
-                <div className="text-xs text-gray-600 line-clamp-2">
-                  {(w.workerCategories || []).join(', ')}
-                </div>
-                {w.averageRating ? (
-                  <div className="text-xs mt-2 text-[var(--accent)] font-medium">
-                    ★ {w.averageRating.toFixed(1)} ({w.totalReviews || 0})
-                  </div>
-                ) : null}
-              </Link>
-            ))}
-          </div>
-          <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {workers.map((w) => (
-              <Link
-                key={w.id}
-                href={`/usta/${slugify(w.fullName)}-${w.id}`}
-                className="bg-white border border-[var(--border)] rounded-xl p-4 hover:shadow-md transition-all"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 rounded-full bg-[var(--primary-light)] flex items-center justify-center text-[var(--primary)] font-bold">
-                    {w.fullName?.[0] || '?'}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-semibold truncate text-[var(--secondary)]">{w.fullName}</div>
-                    <div className="text-xs text-gray-500 truncate">{w.city || 'Türkiye'}</div>
-                  </div>
-                </div>
-                <div className="text-xs text-gray-600 line-clamp-2">
-                  {(w.workerCategories || []).join(', ')}
-                </div>
-                {w.averageRating ? (
-                  <div className="text-xs mt-2 text-[var(--accent)] font-medium">
-                    ★ {w.averageRating.toFixed(1)} ({w.totalReviews || 0})
-                  </div>
-                ) : null}
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+      <CategoryGrid categories={gridCats} />
 
-      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-12">
-        <div className="max-w-2xl mx-auto">
+      <PopularJobs workers={workers} />
+
+      <HowItWorks />
+
+      <TrustBand />
+
+      {/* Quick lead form */}
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-14 md:py-20">
+        <div className="max-w-2xl mx-auto card-soft p-6 md:p-8">
           <LeadForm
             source="landing"
-            title="Hızlı İletişim"
+            title="Hızlı iletişim"
             subtitle="Aradığınız hizmeti yazın, doğru ustayla biz sizi buluşturalım."
           />
         </div>
       </section>
 
-      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-12">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 md:mb-6 text-[var(--secondary)]">Popüler Şehirler</h2>
+      {/* Cities */}
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+        <h2 className="h-section text-xl md:text-2xl text-[var(--secondary)] mb-5 md:mb-6">
+          Hizmet verdiğimiz şehirler
+        </h2>
         <div className="flex flex-wrap gap-2">
           {TR_CITIES.map((city) => (
             <Link
               key={city}
               href={`/temizlik/${slugify(city)}`}
-              className="bg-white border border-[var(--border)] px-4 py-2 rounded-full text-sm text-[var(--secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)] min-h-[40px] inline-flex items-center"
+              className="bg-white border border-[var(--border)] px-4 py-2 rounded-full text-sm text-[var(--secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors min-h-[40px] inline-flex items-center"
             >
               {city}
             </Link>
           ))}
         </div>
       </section>
+
+      {/* Sticky FAB — mobile only */}
+      <Link href="/ilan" className="fab md:hidden" aria-label="Ücretsiz ilan ver">
+        <span aria-hidden>＋</span> İlan Ver
+      </Link>
     </>
   );
 }
