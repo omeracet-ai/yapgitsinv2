@@ -5,12 +5,23 @@ export default async function Footer() {
   const cats = (await getCategories()) || [];
   return (
     <footer className="bg-[var(--secondary)] text-white mt-16">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-12 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-sm">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-12 md:py-16 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-sm">
         <div>
-          <h3 className="font-bold mb-3 text-base">Yapgitsin</h3>
-          <p className="text-white/70 leading-relaxed">
+          <h3 className="font-extrabold mb-3 text-lg tracking-tight">Yapgitsin</h3>
+          <p className="text-white/70 leading-relaxed mb-4">
             Türkiye&apos;nin hizmet marketplace platformu. Güvenilir ustalar, hızlı çözümler.
           </p>
+          <div className="flex gap-2">
+            <a href="#" aria-label="Instagram" className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 transition flex items-center justify-center">
+              <span className="text-base">📷</span>
+            </a>
+            <a href="#" aria-label="Twitter/X" className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 transition flex items-center justify-center">
+              <span className="text-base">𝕏</span>
+            </a>
+            <a href="#" aria-label="Facebook" className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 transition flex items-center justify-center">
+              <span className="text-base">f</span>
+            </a>
+          </div>
         </div>
         <div>
           <h3 className="font-bold mb-3">Popüler Kategoriler</h3>

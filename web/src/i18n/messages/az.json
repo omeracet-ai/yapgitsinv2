@@ -2,8 +2,14 @@
   "site": {
     "title": "Yapgitsin — Xidmət Platforması",
     "tagline": "Lazımi ustanı tap, təklif al",
-    "hero_title": "Etibarlı Xidmət Platforması",
-    "hero_subtitle": "Təmizlik, təmir, elektrik, santexnika və daha çox üçün minlərlə təsdiqlənmiş ustaya çatın."
+    "hero_title": "Lazımi ustanı tap",
+    "hero_subtitle": "Təmizlik, təmir, elektrik, santexnika və daha çox — minlərlə təsdiqlənmiş usta dəqiqələr içində təklif verir.",
+    "cta_post_job": "Elan Yerləşdir",
+    "cta_become_worker": "Usta Ol",
+    "trust_workers": "10.000+ Təsdiqlənmiş Usta",
+    "trust_jobs": "5.000+ Tamamlanmış İş",
+    "trust_satisfaction": "97% Məmnuniyyət",
+    "message_now": "İndi Mesaj Yaz"
   },
   "nav": {
     "home": "Ana Səhifə",

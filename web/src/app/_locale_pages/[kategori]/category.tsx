@@ -129,24 +129,34 @@ export function WorkerCardI18n({ w, locale }: { w: Worker; locale: Locale }) {
   return (
     <Link
       href={localePath(locale, `/usta/${slugify(w.fullName || 'usta')}-${w.id}`)}
-      className="block bg-white border border-[var(--border)] rounded-xl p-4 md:p-5 hover:shadow-md hover:border-[var(--primary)] hover:-translate-y-0.5 transition-all"
+      className="group block bg-white border border-[var(--border)] rounded-2xl p-5 hover:shadow-xl hover:shadow-blue-900/5 hover:border-[var(--primary)] hover:-translate-y-1 transition-all duration-200"
     >
-      <div className="flex items-center gap-3 mb-2">
-        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-[var(--primary-light)] flex items-center justify-center text-[var(--primary)] font-bold">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-14 h-14 rounded-full bg-[var(--primary-light)] ring-2 ring-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] font-bold text-lg flex-shrink-0">
           {w.fullName?.[0] || '?'}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="font-semibold truncate text-[var(--secondary)] flex items-center gap-1">
+          <div className="font-bold truncate text-[var(--secondary)] flex items-center gap-1.5">
             {w.fullName}
-            {w.identityVerified && <span className="text-[var(--primary)] text-sm">✓</span>}
+            {w.identityVerified && (
+              <span title={dict.common.verified} className="text-[var(--primary)] text-sm flex-shrink-0">✓</span>
+            )}
           </div>
           <div className="text-xs text-gray-500 truncate">{w.city || dict.common.all_turkey}</div>
         </div>
       </div>
-      {w.workerBio && <p className="text-xs text-gray-600 line-clamp-2 mb-2">{w.workerBio}</p>}
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-[var(--accent)] font-medium">★ {(w.averageRating || 0).toFixed(1)} ({w.totalReviews || 0})</span>
-        {w.hourlyRateMin && <span className="text-gray-500">{w.hourlyRateMin}+ {dict.common.tl_per_hour}</span>}
+      {w.workerBio && <p className="text-xs text-gray-600 line-clamp-2 mb-3 leading-relaxed min-h-[32px]">{w.workerBio}</p>}
+      <div className="flex items-center justify-between pt-3 border-t border-[var(--border)] text-xs">
+        <span className="text-[var(--accent)] font-bold">
+          ★ {(w.averageRating || 0).toFixed(1)} <span className="text-gray-400 font-normal">({w.totalReviews || 0})</span>
+        </span>
+        {w.hourlyRateMin ? (
+          <span className="text-gray-500 font-medium">{w.hourlyRateMin}+ {dict.common.tl_per_hour}</span>
+        ) : (
+          <span className="font-semibold text-[var(--primary)] group-hover:text-[var(--primary-dark)]">
+            {(dict.site as any).message_now || 'Mesajla'} →
+          </span>
+        )}
       </div>
     </Link>
   );

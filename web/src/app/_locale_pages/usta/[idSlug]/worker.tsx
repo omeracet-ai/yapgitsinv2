@@ -65,17 +65,24 @@ export default async function renderWorker(L: Locale, idSlug: string) {
         />
       </div>
 
-      <section className="bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] text-white">
-        <div className="container mx-auto max-w-5xl px-4 md:px-6 lg:px-8 py-8 md:py-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 text-center sm:text-left">
-          <div className="w-20 h-20 md:w-[120px] md:h-[120px] mx-auto sm:mx-0 rounded-full bg-white/20 flex items-center justify-center text-3xl md:text-5xl font-bold flex-shrink-0 overflow-hidden">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] text-white">
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.08] pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 30% 30%, white 1px, transparent 1px)',
+            backgroundSize: '50px 50px',
+          }}
+        />
+        <div className="relative container mx-auto max-w-5xl px-4 md:px-6 lg:px-8 py-10 md:py-14 flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-7 text-center sm:text-left">
+          <div className="w-28 h-28 md:w-[140px] md:h-[140px] mx-auto sm:mx-0 rounded-full bg-white/20 ring-4 ring-white/30 flex items-center justify-center text-4xl md:text-5xl font-bold flex-shrink-0 overflow-hidden shadow-xl">
             {w.profileImageUrl ? (
-              // Phase 96: AVIF/WebP/JPEG <picture> — above-the-fold, priority
               <ResponsiveImage
                 src={w.profileImageUrl}
                 alt={w.fullName}
-                width={120}
-                height={120}
-                sizes="(max-width: 768px) 80px, 120px"
+                width={140}
+                height={140}
+                sizes="(max-width: 768px) 112px, 140px"
                 priority
                 className="w-full h-full object-cover"
               />
@@ -83,19 +90,32 @@ export default async function renderWorker(L: Locale, idSlug: string) {
               w.fullName?.[0] || '?'
             )}
           </div>
-          <div className="min-w-0">
-            <h1 className="text-2xl md:text-3xl font-bold flex flex-wrap items-center justify-center sm:justify-start gap-2 leading-tight">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-3xl md:text-4xl font-extrabold flex flex-wrap items-center justify-center sm:justify-start gap-2 leading-tight tracking-tight">
               {w.fullName}
               {w.identityVerified && (
-                <span className="bg-white/20 text-xs md:text-sm px-2 py-1 rounded-full">✓ {dict.common.verified}</span>
+                <span className="bg-[var(--accent)] text-white text-xs md:text-sm px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1">
+                  ✓ {dict.common.verified}
+                </span>
               )}
             </h1>
-            <p className="text-white/80 mt-1 text-sm md:text-base">{w.city || dict.common.all_turkey}</p>
-            <div className="flex flex-wrap justify-center sm:justify-start gap-x-3 gap-y-1 mt-3 text-sm">
+            <p className="text-white/80 mt-1.5 text-base">{w.city || dict.common.all_turkey}</p>
+            {/* Trust signals row — Airtasker style badges */}
+            <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-4">
               {w.averageRating ? (
-                <span>★ {Number(w.averageRating).toFixed(1)} ({w.totalReviews || 0} {dict.common.reviews})</span>
+                <span className="bg-white/15 backdrop-blur px-3 py-1.5 rounded-lg text-sm font-medium inline-flex items-center gap-1.5">
+                  <span className="text-[var(--accent)]">★</span>
+                  <span className="font-bold">{Number(w.averageRating).toFixed(1)}</span>
+                  <span className="text-white/70">({w.totalReviews || 0} {dict.common.reviews})</span>
+                </span>
               ) : null}
-              {(w as any).asWorkerSuccess ? <span>{(w as any).asWorkerSuccess} {dict.common.completed_jobs}</span> : null}
+              {(w as any).asWorkerSuccess ? (
+                <span className="bg-white/15 backdrop-blur px-3 py-1.5 rounded-lg text-sm font-medium inline-flex items-center gap-1.5">
+                  <span className="text-[var(--accent)]">✓</span>
+                  <span className="font-bold">{(w as any).asWorkerSuccess}</span>
+                  <span className="text-white/70">{dict.common.completed_jobs}</span>
+                </span>
+              ) : null}
             </div>
           </div>
         </div>

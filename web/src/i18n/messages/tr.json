@@ -2,8 +2,14 @@
   "site": {
     "title": "Yapgitsin — Türkiye'nin Hizmet Marketplace Platformu",
     "tagline": "İhtiyacın olan ustayı bul, teklif al",
-    "hero_title": "Türkiye'nin Güvenilir Hizmet Platformu",
-    "hero_subtitle": "Temizlik, tadilat, elektrik, tesisat ve daha fazlası için binlerce doğrulanmış ustaya ulaşın."
+    "hero_title": "İhtiyacın olan ustayı bul",
+    "hero_subtitle": "Temizlik, tadilat, elektrik, tesisat ve daha fazlası — binlerce doğrulanmış usta dakikalar içinde teklif veriyor.",
+    "cta_post_job": "İlan Aç",
+    "cta_become_worker": "Usta Ol",
+    "trust_workers": "10.000+ Doğrulanmış Usta",
+    "trust_jobs": "5.000+ Tamamlanan İş",
+    "trust_satisfaction": "%97 Memnuniyet",
+    "message_now": "Hemen Mesajla"
   },
   "nav": {
     "home": "Ana Sayfa",

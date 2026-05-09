@@ -2,8 +2,14 @@
   "site": {
     "title": "Yapgitsin — Turkey's Service Marketplace",
     "tagline": "Find the right pro, get quotes fast",
-    "hero_title": "Turkey's Trusted Service Platform",
-    "hero_subtitle": "Reach thousands of verified pros for cleaning, repairs, electrical, plumbing and more."
+    "hero_title": "Find the right pro, fast",
+    "hero_subtitle": "Cleaning, repairs, electrical, plumbing and more — thousands of verified pros bidding within minutes.",
+    "cta_post_job": "Post a Job",
+    "cta_become_worker": "Become a Pro",
+    "trust_workers": "10,000+ Verified Pros",
+    "trust_jobs": "5,000+ Completed Jobs",
+    "trust_satisfaction": "97% Satisfaction",
+    "message_now": "Message Now"
   },
   "nav": {
     "home": "Home",
