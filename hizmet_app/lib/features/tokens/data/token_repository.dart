@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../auth/data/auth_repository.dart';
 
@@ -42,6 +44,27 @@ class TokenRepository {
       data: {'amount': amount, 'paymentMethod': paymentMethod},
       options: await _authOpts(),
     );
+  }
+
+  Future<String> downloadHistoryPdf({DateTime? from, DateTime? to}) async {
+    final t = await _auth.getToken();
+    final qp = <String, dynamic>{};
+    if (from != null) qp['from'] = from.toIso8601String();
+    if (to != null) qp['to'] = to.toIso8601String();
+    final res = await _dio.get<List<int>>(
+      '/tokens/history/pdf',
+      queryParameters: qp,
+      options: Options(
+        headers: {'Authorization': 'Bearer $t'},
+        responseType: ResponseType.bytes,
+      ),
+    );
+    final dir = await getApplicationDocumentsDirectory();
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    final path = '${dir.path}/yapgitsin-cuzdan-$stamp.pdf';
+    final file = File(path);
+    await file.writeAsBytes(res.data ?? <int>[]);
+    return path;
   }
 
   Future<Map<String, dynamic>> giftTokens({
