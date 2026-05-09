@@ -8,6 +8,7 @@ import '../../../tokens/widgets/gift_tokens_sheet.dart';
 import '../providers/auth_provider.dart';
 import '../../../reviews/widgets/review_reply_sheet.dart';
 import '../../widgets/portfolio_gallery.dart';
+import '../../widgets/intro_video_section.dart';
 import '../../widgets/availability_editor_sheet.dart';
 import '../../widgets/review_summary_card.dart';
 import '../../../users/widgets/badge_row.dart';
@@ -71,6 +72,8 @@ class _ProfileView extends ConsumerWidget {
     final pastPhotos      = (data['pastPhotos']       as List?)?.cast<String>() ?? [];
     final portfolioPhotos = (data['portfolioPhotos']  as List?)?.cast<String>() ?? [];
     final portfolioVideos = (data['portfolioVideos']  as List?)?.cast<String>() ?? [];
+    final introVideoUrl   = data['introVideoUrl']     as String?;
+    final introVideoDur   = (data['introVideoDuration'] as num?)?.toInt();
     final reviewList      = (data['reviews']          as List?)
                                 ?.cast<Map<String, dynamic>>() ?? [];
     final badges          = data['badges']            as List?;
@@ -347,6 +350,18 @@ class _ProfileView extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
+
+                // ── Tanıtım Videosu (Phase 152) ──────────────────────────
+                if (introVideoUrl != null && introVideoUrl.isNotEmpty) ...[
+                  _section(
+                    title: 'Tanıtım',
+                    child: IntroVideoPlayer(
+                      url: introVideoUrl,
+                      durationSeconds: introVideoDur,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
 
                 // ── Portfolyo ────────────────────────────────────────────
                 if (portfolioPhotos.isNotEmpty ||

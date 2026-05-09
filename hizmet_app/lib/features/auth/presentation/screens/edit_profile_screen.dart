@@ -12,6 +12,7 @@ import '../../../service_requests/data/service_request_repository.dart';
 import '../../../profile/widgets/profile_completion_card.dart';
 import '../../../photos/data/photo_repository.dart';
 import '../../../insurance/data/insurance_repository.dart';
+import '../../widgets/intro_video_section.dart';
 
 // Phase 62 — Sectioned Profile Edit UX
 //
@@ -271,6 +272,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               _personalSection(missing),
               _contactSection(missing),
               _addressSection(missing),
+              if (_isWorker) _introVideoSection(),
               if (_isWorker) _workerSection(missing),
               if (_isWorker) _insuranceSection(),
               _identitySection(missing),
@@ -511,6 +513,32 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             Icons.home_outlined,
             highlight: missing.contains('address'),
           ),
+        ),
+      ]),
+    );
+  }
+
+  // Phase 152 — Tanıtım Videosu (worker only, max 60sn)
+  Widget _introVideoSection() {
+    final user = ref.read(authStateProvider) is AuthAuthenticated
+        ? (ref.read(authStateProvider) as AuthAuthenticated).user
+        : <String, dynamic>{};
+    final url = user['introVideoUrl'] as String?;
+    final dur = (user['introVideoDuration'] as num?)?.toInt();
+    return _sectionCard(
+      icon: '🎥',
+      title: 'Tanıtım Videosu',
+      isMissing: false,
+      missingFields: const [],
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text(
+          'Profilinizde öne çıkacak 60 saniyelik tanıtım videosu.',
+          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 12),
+        IntroVideoSection(
+          introVideoUrl: url,
+          introVideoDuration: dur,
         ),
       ]),
     );

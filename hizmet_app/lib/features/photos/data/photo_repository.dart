@@ -133,6 +133,45 @@ class PhotoRepository {
     }
   }
 
+  /// Phase 152: tanıtım videosu yükle (60sec cap) + users/me/intro-video set.
+  Future<Map<String, dynamic>> uploadIntroVideo(File file, {int? durationSeconds}) async {
+    try {
+      final token = await _authRepository.getToken();
+      final formData = FormData.fromMap({
+        'video': await MultipartFile.fromFile(file.path),
+        if (durationSeconds != null) 'duration': durationSeconds.toString(),
+      });
+      final upResp = await _dio.post(
+        '/uploads/intro-video',
+        data: formData,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      final upMap = upResp.data as Map;
+      final url = upMap['url'] as String;
+      final dur = (upMap['duration'] as num?)?.toInt() ?? durationSeconds;
+      final setResp = await _dio.post(
+        '/users/me/intro-video',
+        data: {'url': url, 'duration': dur},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return Map<String, dynamic>.from(setResp.data as Map);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Tanıtım videosu yüklenemedi');
+    }
+  }
+
+  Future<void> removeIntroVideo() async {
+    try {
+      final token = await _authRepository.getToken();
+      await _dio.delete(
+        '/users/me/intro-video',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Video silinemedi');
+    }
+  }
+
   Future<List<String>> uploadJobVideos(List<File> files) async {
     try {
       final token = await _authRepository.getToken();
