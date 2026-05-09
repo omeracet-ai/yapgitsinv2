@@ -17,6 +17,10 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  // Phase 160 — multi-tenant. Nullable + default 'tr' tenant backfill via migration.
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId: string | null;
+
   @Column({ type: 'varchar', length: 100 })
   fullName: string;
 

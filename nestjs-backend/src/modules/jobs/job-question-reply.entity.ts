@@ -14,6 +14,9 @@ export class JobQuestionReply {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId: string | null;
+
   @Column({ type: 'varchar', length: 36 })
   questionId: string;
 

@@ -14,6 +14,9 @@ export class Review {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId: string | null;
+
   /** FK → jobs.id (opsiyonel: provider profili yorumlarında null olabilir) */
   @Column({ type: 'varchar', length: 36, nullable: true })
   jobId: string | null;

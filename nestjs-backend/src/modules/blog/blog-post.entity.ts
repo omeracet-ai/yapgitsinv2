@@ -18,6 +18,9 @@ export class BlogPost {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId!: string | null;
+
   @Index({ unique: true })
   @Column({ type: 'varchar', length: 200 })
   slug!: string;

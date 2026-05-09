@@ -11,6 +11,9 @@ export class AdminAuditLog {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId: string | null;
+
   @Index()
   @Column({ type: 'varchar', length: 36 })
   adminUserId: string;

@@ -36,6 +36,9 @@ export class Booking {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId: string | null;
+
   // Müşteri
   @Column({ type: 'varchar', length: 36 })
   customerId: string;
