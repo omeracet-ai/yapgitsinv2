@@ -69,6 +69,21 @@ export class Dispute {
   @Column({ type: 'varchar', length: 36, nullable: true })
   resolvedBy: string | null;
 
+  /**
+   * Phase 144 — AI ön-analiz: fairness skoru, fraud risk, çözüm önerisi.
+   * Schema: { fairnessScore: 0-100, fraudRisk: 'low'|'medium'|'high',
+   *          suggestedAction: 'refund'|'partial_refund'|'cancel'|'dismiss'|'escalate',
+   *          reasoning: string, analyzedAt: string }
+   */
+  @Column({ type: 'simple-json', nullable: true })
+  aiAnalysis: {
+    fairnessScore: number;
+    fraudRisk: 'low' | 'medium' | 'high';
+    suggestedAction: 'refund' | 'partial_refund' | 'cancel' | 'dismiss' | 'escalate';
+    reasoning: string;
+    analyzedAt: string;
+  } | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

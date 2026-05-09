@@ -14,6 +14,7 @@ import {
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
 import { User, UserRole } from '../users/user.entity';
+import { DisputeMediationService } from '../ai/dispute-mediation.service';
 
 export interface CreateDisputeDto {
   jobId?: string | null;
@@ -36,6 +37,7 @@ export class GeneralDisputesService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly notifications: NotificationsService,
+    private readonly mediation: DisputeMediationService,
   ) {}
 
   async create(raisedBy: string, dto: CreateDisputeDto): Promise<Dispute> {
@@ -67,6 +69,25 @@ export class GeneralDisputesService {
         refId: saved.id,
       });
     }
+    // Phase 144 — Fire-and-forget AI ön-analiz
+    void this.mediation
+      .analyzeDispute({
+        type: dto.type,
+        description: dto.description,
+        againstUserId: dto.againstUserId,
+        jobId: dto.jobId ?? null,
+        bookingId: dto.bookingId ?? null,
+      })
+      .then(async (analysis) => {
+        if (analysis) {
+          saved.aiAnalysis = analysis;
+          await this.repo.save(saved);
+        }
+      })
+      .catch(() => {
+        /* swallow — analiz başarısız olursa dispute zaten kaydedildi */
+      });
+
     return saved;
   }
 

@@ -14,6 +14,7 @@ import {
 } from './general-disputes.controller';
 import { EscrowModule } from '../escrow/escrow.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { AiModule } from '../ai/ai.module';
 import { User } from '../users/user.entity';
 
 @Module({
@@ -21,6 +22,7 @@ import { User } from '../users/user.entity';
     TypeOrmModule.forFeature([JobDispute, Dispute, User]),
     EscrowModule,
     NotificationsModule,
+    AiModule,
   ],
   controllers: [
     AdminDisputesController,
