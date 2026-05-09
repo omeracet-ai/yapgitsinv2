@@ -1,8 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatMessage } from './chat-message.entity';
 import { User } from '../users/user.entity';
+import {
+  TranslateService,
+  TranslateLang,
+} from '../ai/translate.service';
 
 export interface ConversationItem {
   peerId: string;
@@ -32,7 +40,40 @@ export class ChatService {
     private messagesRepo: Repository<ChatMessage>,
     @InjectRepository(User)
     private usersRepo: Repository<User>,
+    private readonly translateService: TranslateService,
   ) {}
+
+  /**
+   * Phase 153: translate a chat message to targetLang.
+   * Cached per-message in `translatedText` JSON column. Only the
+   * sender or recipient may request translation.
+   */
+  async translateMessage(
+    messageId: string,
+    userId: string,
+    targetLang: TranslateLang,
+  ): Promise<{ translated: string; lang: TranslateLang; cached: boolean }> {
+    const msg = await this.messagesRepo.findOne({ where: { id: messageId } });
+    if (!msg) throw new NotFoundException('Mesaj bulunamadı');
+    if (msg.from !== userId && msg.to !== userId) {
+      throw new ForbiddenException('Bu mesaja erişiminiz yok');
+    }
+
+    const cache = msg.translatedText ?? {};
+    const existing = cache[targetLang];
+    if (existing && existing.trim().length > 0) {
+      return { translated: existing, lang: targetLang, cached: true };
+    }
+
+    const translated = await this.translateService.translate(
+      msg.message ?? '',
+      targetLang,
+    );
+
+    msg.translatedText = { ...cache, [targetLang]: translated };
+    await this.messagesRepo.save(msg);
+    return { translated, lang: targetLang, cached: false };
+  }
 
   /**
    * Phase 69: list per-peer conversations for the given user.

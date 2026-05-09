@@ -61,4 +61,9 @@ export class ChatMessage {
   // Phase 151: audio attachment duration in seconds (voice notes).
   @Column({ type: 'int', nullable: true })
   attachmentDuration: number | null;
+
+  // Phase 153: AI auto-translate cache. Per-language translation result keyed
+  // by ISO code. Example: { tr: "merhaba", en: "hello", az: "salam" }.
+  @Column({ type: 'simple-json', nullable: true })
+  translatedText: { tr?: string; en?: string; az?: string } | null;
 }
