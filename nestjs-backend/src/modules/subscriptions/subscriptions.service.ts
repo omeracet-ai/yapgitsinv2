@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm';
+import { Repository, MoreThan, In } from 'typeorm';
 import {
   SubscriptionPlan,
   SubscriptionPeriod,
@@ -92,6 +92,33 @@ export class SubscriptionsService implements OnModuleInit {
   async isActiveSubscriber(userId: string): Promise<boolean> {
     const sub = await this.getMySubscription(userId);
     return !!sub;
+  }
+
+  /**
+   * Phase 146 — Bulk active subscription fetch (badge enrichment için).
+   * Returns Map<userId, planKey> for active subscribers only.
+   */
+  async getActiveByUserIds(userIds: string[]): Promise<Map<string, string>> {
+    const out = new Map<string, string>();
+    if (!userIds || userIds.length === 0) return out;
+    const subs = await this.subsRepo.find({
+      where: {
+        userId: In(userIds),
+        status: SubscriptionStatus.ACTIVE,
+        expiresAt: MoreThan(new Date()),
+      },
+      relations: ['plan'],
+    });
+    for (const s of subs) {
+      if (s.plan?.key) out.set(s.userId, s.plan.key);
+    }
+    return out;
+  }
+
+  /** Phase 146 — Get active plan key for a single user (or null). */
+  async getActivePlanKey(userId: string): Promise<string | null> {
+    const sub = await this.getMySubscription(userId);
+    return sub?.plan?.key ?? null;
   }
 
   /**

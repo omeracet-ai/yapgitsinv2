@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, UnauthorizedException, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -7,6 +7,7 @@ import { Booking, BookingStatus } from '../bookings/booking.entity';
 import { SemanticSearchService } from '../ai/semantic-search.service';
 import { BoostService } from '../boost/boost.service';
 import { BoostType } from '../boost/boost.entity';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 export type StatField =
   | 'asCustomerTotal'
@@ -25,7 +26,14 @@ export class UsersService {
     private bookingsRepo: Repository<Booking>,
     private readonly semanticSearch: SemanticSearchService,
     private readonly boostSvc: BoostService,
+    @Inject(forwardRef(() => SubscriptionsService))
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
+
+  /** Phase 146 — bulk planKey lookup helper exposed to controller. */
+  async getActiveSubscriptionPlanKeys(userIds: string[]): Promise<Map<string, string>> {
+    return this.subscriptionsService.getActiveByUserIds(userIds);
+  }
 
   /** Phase 141 — Worker boost ranking: top_search_24h aktif olanları başa al. */
   private async _applyBoostRanking<T extends { id: string }>(items: T[]): Promise<T[]> {
@@ -597,7 +605,7 @@ export class UsersService {
 
   /** Phase 54: 6 auto-computed worker badges — embedded in user responses */
   static readonly BADGE_DEFINITIONS: ReadonlyArray<{
-    key: 'verified' | 'top_rated' | 'prolific' | 'rising_star' | 'available_now' | 'complete_profile';
+    key: 'verified' | 'top_rated' | 'prolific' | 'rising_star' | 'available_now' | 'complete_profile' | 'pro_member' | 'premium_member';
     label: string;
     icon: string;
   }> = [
@@ -607,10 +615,20 @@ export class UsersService {
     { key: 'rising_star',      label: 'Yükselen',        icon: '🌟' },
     { key: 'available_now',    label: 'Şu An Müsait',    icon: '🟢' },
     { key: 'complete_profile', label: 'Eksiksiz Profil', icon: '💯' },
+    // Phase 146 — tier badges (auto-granted from subscription)
+    { key: 'pro_member',       label: 'Pro Üye',         icon: '💎' },
+    { key: 'premium_member',   label: 'Premium Üye',     icon: '👑' },
   ];
 
-  /** Pure: compute Phase 54 badge list ({key,label,icon}[]) for a user. */
-  computeBadges(user: User): Array<{ key: string; label: string; icon: string }> {
+  /**
+   * Phase 54 + 146: compute badge list ({key,label,icon}[]) for a user.
+   * Async: subscription tier badges (Phase 146) require a DB lookup.
+   * Optional `planKey` skips the lookup when caller already has it (bulk path).
+   */
+  async computeBadges(
+    user: User,
+    planKey?: string | null,
+  ): Promise<Array<{ key: string; label: string; icon: string }>> {
     const earned = new Set<string>();
     if (user.identityVerified === true) earned.add('verified');
     if ((user.averageRating ?? 0) >= 4.5 && (user.totalReviews ?? 0) >= 10) earned.add('top_rated');
@@ -620,6 +638,15 @@ export class UsersService {
     if (user.isAvailable === true) earned.add('available_now');
     const completion = this.computeProfileCompletion(user);
     if (completion.percent === 100) earned.add('complete_profile');
+
+    // Phase 146 — subscription tier → runtime badge
+    let tierKey = planKey;
+    if (tierKey === undefined) {
+      tierKey = await this.subscriptionsService.getActivePlanKey(user.id);
+    }
+    if (tierKey === 'pro_monthly') earned.add('pro_member');
+    else if (tierKey === 'premium_monthly') earned.add('premium_member');
+
     return UsersService.BADGE_DEFINITIONS.filter((b) => earned.has(b.key)).map((b) => ({
       key: b.key,
       label: b.label,

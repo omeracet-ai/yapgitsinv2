@@ -1,5 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { User } from './user.entity';
 import { FavoriteWorker } from './favorite-worker.entity';
 import { WorkerInsurance } from './worker-insurance.entity';
@@ -28,6 +29,7 @@ import { BoostModule } from '../boost/boost.module';
     ]),
     AiModule,
     BoostModule,
+    forwardRef(() => SubscriptionsModule),
   ],
   controllers: [UsersController],
   providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, DataPrivacyService],

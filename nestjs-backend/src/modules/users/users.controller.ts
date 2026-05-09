@@ -80,7 +80,7 @@ export class UsersController {
       passwordHash?: string;
     } & typeof user;
     const profileCompletion = this.svc.computeProfileCompletion(user);
-    const badges = this.svc.computeBadges(user);
+    const badges = await this.svc.computeBadges(user);
     return { ...safe, profileCompletion, badges };
   }
 
@@ -490,12 +490,15 @@ export class UsersController {
         : undefined,
     });
 
-    const data = result.data.map((u) => {
+    // Phase 146 — bulk subscription lookup to avoid N+1 in worker list
+    const planMap = await this.svc.getActiveSubscriptionPlanKeys(result.data.map((u) => u.id));
+    const data = await Promise.all(result.data.map(async (u) => {
       const { passwordHash: _ph, ...safe } = u as {
         passwordHash?: string;
       } & typeof u;
-      return { ...safe, badges: this.svc.computeBadges(u) };
-    });
+      const badges = await this.svc.computeBadges(u, planMap.get(u.id) ?? null);
+      return { ...safe, badges };
+    }));
     return { ...result, data };
   }
 
@@ -691,7 +694,7 @@ export class UsersController {
     } as typeof user;
     const insurance = await insurancePromise;
     const insured = this.insuranceSvc.isInsured(insurance);
-    const badges = this.svc.computeBadges(enrichedUser);
+    const badges = await this.svc.computeBadges(enrichedUser);
     if (insured) badges.push({ key: 'insured', label: 'Sigortalı', icon: '🛡️' });
 
     return {
