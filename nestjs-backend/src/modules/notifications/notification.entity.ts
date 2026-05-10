@@ -7,7 +7,6 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from '../users/user.entity';
-import { NotificationId, UserId } from '../../common/branded.types';
 
 export enum NotificationType {
   BOOKING_REQUEST = 'booking_request', // Yeni randevu isteği
@@ -33,13 +32,13 @@ export enum NotificationType {
 @Entity('notifications')
 export class Notification {
   @PrimaryGeneratedColumn('uuid')
-  id: NotificationId;
+  id: string;
 
   @Column({ type: 'varchar', length: 36, nullable: true })
   tenantId: string | null;
 
   @Column({ type: 'varchar', length: 36 })
-  userId: UserId;
+  userId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })

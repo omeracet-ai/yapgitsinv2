@@ -9,7 +9,6 @@ import {
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Category } from '../categories/category.entity';
-import { JobId, UserId, CategoryId } from '../../common/branded.types';
 
 /**
  * Airtasker-style ilan yaşam döngüsü.
@@ -48,7 +47,7 @@ export function isValidTransition(from: JobStatus, to: JobStatus): boolean {
 @Entity('jobs')
 export class Job {
   @PrimaryGeneratedColumn('uuid')
-  id: JobId;
+  id: string;
 
   @Column({ type: 'varchar', length: 36, nullable: true })
   tenantId: string | null;
@@ -65,7 +64,7 @@ export class Job {
 
   /** FK → categories.id (opsiyonel) */
   @Column({ type: 'varchar', length: 36, nullable: true })
-  categoryId: CategoryId | null;
+  categoryId: string | null;
 
   @ManyToOne(() => Category, {
     eager: false,
@@ -98,7 +97,7 @@ export class Job {
 
   /** FK → users.id  (müşteri) */
   @Column({ type: 'varchar', length: 36 })
-  customerId: UserId;
+  customerId: string;
 
   @ManyToOne(() => User, { eager: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'customerId' })

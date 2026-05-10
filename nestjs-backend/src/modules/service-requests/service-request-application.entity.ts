@@ -9,7 +9,6 @@ import {
 } from 'typeorm';
 import { ServiceRequest } from './service-request.entity';
 import { User } from '../users/user.entity';
-import { ServiceRequestApplicationId, ServiceRequestId, UserId } from '../../common/branded.types';
 
 export enum ApplicationStatus {
   PENDING = 'pending',
@@ -20,20 +19,20 @@ export enum ApplicationStatus {
 @Entity('service_request_applications')
 export class ServiceRequestApplication {
   @PrimaryGeneratedColumn('uuid')
-  id: ServiceRequestApplicationId;
+  id: string;
 
   @Column({ type: 'varchar', length: 36, nullable: true })
   tenantId: string | null;
 
   @Column({ type: 'varchar', length: 36 })
-  serviceRequestId: ServiceRequestId;
+  serviceRequestId: string;
 
   @ManyToOne(() => ServiceRequest, { onDelete: 'CASCADE', eager: false })
   @JoinColumn({ name: 'serviceRequestId' })
   serviceRequest: ServiceRequest;
 
   @Column({ type: 'varchar', length: 36 })
-  userId: UserId;
+  userId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE', eager: false })
   @JoinColumn({ name: 'userId' })

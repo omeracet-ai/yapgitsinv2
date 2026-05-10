@@ -8,19 +8,18 @@ import {
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Job } from '../jobs/job.entity';
-import { ReviewId, JobId, UserId } from '../../common/branded.types';
 
 @Entity('reviews')
 export class Review {
   @PrimaryGeneratedColumn('uuid')
-  id: ReviewId;
+  id: string;
 
   @Column({ type: 'varchar', length: 36, nullable: true })
   tenantId: string | null;
 
   /** FK → jobs.id (opsiyonel: provider profili yorumlarında null olabilir) */
   @Column({ type: 'varchar', length: 36, nullable: true })
-  jobId: JobId | null;
+  jobId: string | null;
 
   @ManyToOne(() => Job, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'jobId' })
@@ -28,7 +27,7 @@ export class Review {
 
   /** Değerlendirmeyi yazan kullanıcı FK → users.id */
   @Column({ type: 'varchar', length: 36 })
-  reviewerId: UserId;
+  reviewerId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'reviewerId' })
@@ -36,7 +35,7 @@ export class Review {
 
   /** Değerlendirilen kullanıcı FK → users.id */
   @Column({ type: 'varchar', length: 36 })
-  revieweeId: UserId;
+  revieweeId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'revieweeId' })

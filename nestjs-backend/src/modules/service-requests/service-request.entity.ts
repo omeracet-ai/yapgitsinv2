@@ -8,18 +8,17 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from '../users/user.entity';
-import { ServiceRequestId, UserId, CategoryId } from '../../common/branded.types';
 
 @Entity('service_requests')
 export class ServiceRequest {
   @PrimaryGeneratedColumn('uuid')
-  id: ServiceRequestId;
+  id: string;
 
   @Column({ type: 'varchar', length: 36, nullable: true })
   tenantId: string | null;
 
   @Column({ type: 'varchar', length: 36 })
-  userId: UserId;
+  userId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE', eager: false })
   @JoinColumn({ name: 'userId' })
@@ -29,7 +28,7 @@ export class ServiceRequest {
   category: string;
 
   @Column({ type: 'varchar', length: 36, nullable: true })
-  categoryId: CategoryId;
+  categoryId: string;
 
   @Column({ type: 'varchar', length: 200 })
   title: string;

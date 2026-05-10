@@ -6,7 +6,6 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { EscrowId, JobId, OfferId, UserId } from '../../common/branded.types';
 
 export enum EscrowStatus {
   HELD = 'HELD',
@@ -19,22 +18,22 @@ export enum EscrowStatus {
 @Entity('payment_escrows')
 export class PaymentEscrow {
   @PrimaryGeneratedColumn('uuid')
-  id: EscrowId;
+  id: string;
 
   @Index()
   @Column({ type: 'varchar', length: 36 })
-  jobId: JobId;
+  jobId: string;
 
   @Column({ type: 'varchar', length: 36 })
-  offerId: OfferId;
-
-  @Index()
-  @Column({ type: 'varchar', length: 36 })
-  customerId: UserId;
+  offerId: string;
 
   @Index()
   @Column({ type: 'varchar', length: 36 })
-  taskerId: UserId;
+  customerId: string;
+
+  @Index()
+  @Column({ type: 'varchar', length: 36 })
+  taskerId: string;
 
   @Column({ type: 'float' })
   amount: number;

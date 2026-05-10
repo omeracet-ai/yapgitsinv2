@@ -5,21 +5,20 @@ import {
   CreateDateColumn,
   Index,
 } from 'typeorm';
-import { ChatMessageId, UserId, JobId, BookingId } from '../../common/branded.types';
 
 @Entity('chat_messages')
 export class ChatMessage {
   @PrimaryGeneratedColumn('uuid')
-  id: ChatMessageId;
+  id: string;
 
   @Column({ type: 'varchar', length: 36, nullable: true })
   tenantId: string | null;
 
   @Column({ type: 'varchar' })
-  from: UserId;
+  from: string;
 
   @Column({ type: 'varchar' })
-  to: UserId;
+  to: string;
 
   @Column({ type: 'text' })
   message: string;
@@ -28,7 +27,7 @@ export class ChatMessage {
   // No FK relation on purpose — keeps migration cascade simple. Nullable for back-compat.
   @Index()
   @Column({ type: 'varchar', length: 36, nullable: true })
-  jobId: JobId | null;
+  jobId: string | null;
 
   // Optional context: which Booking this message belongs to.
   @Index()

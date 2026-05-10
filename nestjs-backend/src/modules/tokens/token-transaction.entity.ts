@@ -7,7 +7,6 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from '../users/user.entity';
-import { TokenTransactionId, UserId } from '../../common/branded.types';
 
 export enum TxType {
   PURCHASE = 'purchase',
@@ -28,10 +27,10 @@ export enum TxStatus {
 @Entity('token_transactions')
 export class TokenTransaction {
   @PrimaryGeneratedColumn('uuid')
-  id: TokenTransactionId;
+  id: string;
 
   @Column({ type: 'varchar', length: 36 })
-  userId: UserId;
+  userId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })

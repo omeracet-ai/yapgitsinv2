@@ -5,7 +5,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { UserId } from '../../common/branded.types';
 
 export enum UserRole {
   USER = 'user',
@@ -16,7 +15,7 @@ export enum UserRole {
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: UserId;
+  id: string;
 
   // Phase 160 — multi-tenant. Nullable + default 'tr' tenant backfill via migration.
   @Column({ type: 'varchar', length: 36, nullable: true })

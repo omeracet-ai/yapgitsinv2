@@ -9,7 +9,6 @@ import {
 } from 'typeorm';
 import { Job } from '../jobs/job.entity';
 import { User } from '../users/user.entity';
-import { OfferId, JobId, UserId } from '../../common/branded.types';
 
 export enum OfferStatus {
   PENDING = 'pending',
@@ -22,13 +21,13 @@ export enum OfferStatus {
 @Entity('offers')
 export class Offer {
   @PrimaryGeneratedColumn('uuid')
-  id: OfferId;
+  id: string;
 
   @Column({ type: 'varchar', length: 36, nullable: true })
   tenantId: string | null;
 
   @Column({ type: 'varchar', length: 36 })
-  jobId: JobId;
+  jobId: string;
 
   @ManyToOne(() => Job, { eager: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'jobId' })
@@ -36,7 +35,7 @@ export class Offer {
 
   // Provider kaldırıldı — artık userId kullanılır
   @Column({ type: 'varchar', length: 36 })
-  userId: UserId;
+  userId: string;
 
   @ManyToOne(() => User, { eager: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
@@ -76,7 +75,7 @@ export class Offer {
   // YENİ bir Offer satırı oluşturulur, parentOfferId orijinali işaret eder.
   // Frontend `parentOfferId`'i zincirleyerek pazarlık geçmişini gösterir.
   @Column({ type: 'varchar', length: 36, nullable: true, default: null })
-  parentOfferId: OfferId | null;
+  parentOfferId: string | null;
 
   @Column({ type: 'integer', default: 0 })
   negotiationRound: number;
