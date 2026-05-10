@@ -30,6 +30,7 @@ import {
 import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { BookingEscrowService } from '../escrow/booking-escrow.service';
+import { tlToMinor } from '../../common/money.util';
 import {
   BookingEscrow,
   BookingEscrowStatus,
@@ -167,6 +168,7 @@ export class BookingsService {
               userId: booking.customerId,
               type: TxType.REFUND,
               amount: escrowRefund,
+              amountMinor: tlToMinor(escrowRefund) ?? 0,
               description: `Escrow refund (${percent}%) — booking ${booking.id}`,
               status: TxStatus.COMPLETED,
               paymentMethod: PaymentMethod.SYSTEM,
@@ -202,6 +204,7 @@ export class BookingsService {
           userId: booking.customerId,
           type: TxType.REFUND,
           amount,
+          amountMinor: tlToMinor(amount) ?? 0,
           description: `Booking ${booking.id} iptal — ${percent}% iade`,
           status: TxStatus.COMPLETED,
           paymentMethod: PaymentMethod.SYSTEM,

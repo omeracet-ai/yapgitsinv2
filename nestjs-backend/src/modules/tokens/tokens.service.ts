@@ -10,8 +10,11 @@ import {
 import { User } from '../users/user.entity';
 import { Notification, NotificationType } from '../notifications/notification.entity';
 import { GiftTokensDto } from './dto/gift-tokens.dto';
+import { tlToMinor } from '../../common/money.util';
 
 export const OFFER_TOKEN_COST = 5;
+// Phase 174c — Integer minor (kuruş): 5 TL = 500 kuruş
+export const OFFER_TOKEN_COST_MINOR = 500;
 
 @Injectable()
 export class TokensService {
@@ -55,11 +58,14 @@ export class TokensService {
       await manager.save(User, sender);
       await manager.save(User, recipient);
 
+      // Phase 174c — Integer minor sync
+      const amountMinor = tlToMinor(amount) ?? 0;
       await manager.save(TokenTransaction, [
         manager.create(TokenTransaction, {
           userId: senderId,
           type: TxType.SPEND,
           amount: -amount,
+          amountMinor: -amountMinor,
           description: `Hediye → ${recipient.fullName}: ${note}`.trim(),
           status: TxStatus.COMPLETED,
           paymentMethod: PaymentMethod.SYSTEM,
@@ -69,6 +75,7 @@ export class TokensService {
           userId: recipient.id,
           type: TxType.PURCHASE,
           amount: amount,
+          amountMinor,
           description: `Hediye ← ${sender.fullName}: ${note}`.trim(),
           status: TxStatus.COMPLETED,
           paymentMethod: PaymentMethod.SYSTEM,
@@ -122,6 +129,7 @@ export class TokensService {
       userId,
       type: TxType.PURCHASE,
       amount,
+      amountMinor: tlToMinor(amount) ?? 0,
       description: `${amount} token satın alındı (${paymentMethod === PaymentMethod.BANK ? 'Banka' : 'Kripto'})`,
       status: TxStatus.COMPLETED,
       paymentMethod,
@@ -149,6 +157,7 @@ export class TokensService {
         userId,
         type: TxType.SPEND,
         amount,
+        amountMinor: tlToMinor(amount) ?? 0,
         description,
         status: TxStatus.COMPLETED,
         paymentMethod: null,

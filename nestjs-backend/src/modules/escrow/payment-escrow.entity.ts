@@ -35,17 +35,30 @@ export class PaymentEscrow {
   @Column({ type: 'varchar', length: 36 })
   taskerId: string;
 
+  /** @deprecated Phase 174 — use amountMinor (kuruş). */
   @Column({ type: 'float' })
   amount: number;
 
   @Column({ type: 'float', default: 10 })
   platformFeePct: number;
 
+  /** @deprecated Phase 174 — use platformFeeMinor (kuruş). */
   @Column({ type: 'float', nullable: true })
   platformFeeAmount: number | null;
 
+  /** @deprecated Phase 174 — use workerPayoutMinor (kuruş). */
   @Column({ type: 'float', nullable: true })
   taskerNetAmount: number | null;
+
+  // Phase 174c — Integer minor units (kuruş)
+  @Column({ type: 'integer', default: 0 })
+  amountMinor!: number;
+
+  @Column({ type: 'integer', default: 0 })
+  platformFeeMinor!: number;
+
+  @Column({ type: 'integer', default: 0 })
+  workerPayoutMinor!: number;
 
   @Column({ type: 'varchar', length: 3, default: 'TRY' })
   currency: string;

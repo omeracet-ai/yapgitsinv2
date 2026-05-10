@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaymentEscrow, EscrowStatus } from './payment-escrow.entity';
+import { tlToMinor, pctOfMinor, subMinor } from '../../common/money.util';
 
 export const ALLOWED_TRANSITIONS: Record<EscrowStatus, EscrowStatus[]> = {
   [EscrowStatus.HELD]: [
@@ -81,10 +82,19 @@ export class EscrowService {
       throw new BadRequestException('Escrow amount must be positive');
     }
 
+    // Phase 174c — Integer minor sync (kuruş)
+    const amountMinor = tlToMinor(args.amount) ?? 0;
+    const feePct = Math.round(getPlatformFeeRate() * 100);
+    const platformFeeMinor = pctOfMinor(amountMinor, feePct);
+    const workerPayoutMinor = subMinor(amountMinor, platformFeeMinor);
+
     const escrow = this.repo.create({
       jobId: args.jobId,
       offerId: args.offerId,
       amount: args.amount,
+      amountMinor,
+      platformFeeMinor,
+      workerPayoutMinor,
       customerId: args.customerId,
       taskerId: args.taskerId,
       paymentRef: args.paymentRef ?? null,
@@ -179,6 +189,12 @@ export class EscrowService {
       Math.round(workerShare * feeRate) / 100;
     escrow.taskerNetAmount = workerShare - escrow.platformFeeAmount;
     escrow.refundAmount = refundShare;
+
+    // Phase 174c — Integer minor sync
+    const workerShareMinor = tlToMinor(workerShare) ?? 0;
+    const platformFeeMinor = pctOfMinor(workerShareMinor, Math.round(feeRate));
+    escrow.platformFeeMinor = platformFeeMinor;
+    escrow.workerPayoutMinor = subMinor(workerShareMinor, platformFeeMinor);
     escrow.status = EscrowStatus.PARTIAL_REFUND;
     escrow.releasedAt = new Date();
     escrow.refundedAt = new Date();
@@ -225,6 +241,12 @@ export class EscrowService {
     escrow.platformFeePct = pct;
     escrow.platformFeeAmount = Math.round((escrow.amount * pct) / 100 * 100) / 100;
     escrow.taskerNetAmount = escrow.amount - escrow.platformFeeAmount;
+
+    // Phase 174c — Integer minor sync
+    const amountMinor = escrow.amountMinor || tlToMinor(escrow.amount) || 0;
+    escrow.amountMinor = amountMinor;
+    escrow.platformFeeMinor = pctOfMinor(amountMinor, Math.round(pct));
+    escrow.workerPayoutMinor = subMinor(amountMinor, escrow.platformFeeMinor);
 
     escrow.status = EscrowStatus.RELEASED;
     escrow.releasedAt = new Date();

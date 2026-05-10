@@ -39,8 +39,13 @@ export class TokenTransaction {
   @Column({ type: 'simple-enum', enum: TxType })
   type: TxType;
 
+  /** @deprecated Phase 174 — use amountMinor (kuruş). */
   @Column({ type: 'float' })
   amount: number;
+
+  // Phase 174c — Integer minor units (kuruş)
+  @Column({ type: 'integer', default: 0 })
+  amountMinor!: number;
 
   @Column({ type: 'varchar', nullable: true })
   description: string;
