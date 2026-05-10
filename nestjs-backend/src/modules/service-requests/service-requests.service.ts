@@ -13,6 +13,7 @@ import {
 } from './service-request-application.entity';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { encodeGeohash } from '../../common/geohash.util';
+import { tlToMinor } from '../../common/money.util';
 
 @Injectable()
 export class ServiceRequestsService {
@@ -100,6 +101,10 @@ export class ServiceRequestsService {
     data: Partial<ServiceRequest>,
   ): Promise<ServiceRequest> {
     const sr = this.repo.create({ ...data, userId });
+    // Phase 174b — minor sync (TL float → integer kuruş)
+    if (data.price !== undefined) {
+      sr.priceMinor = tlToMinor(data.price);
+    }
     // Phase 177 — geohash auto-compute
     if (sr.latitude != null && sr.longitude != null) {
       sr.geohash = encodeGeohash(sr.latitude, sr.longitude, 6) || null;
@@ -116,6 +121,10 @@ export class ServiceRequestsService {
     if (!sr) throw new NotFoundException('İlan bulunamadı');
     if (sr.userId !== userId) throw new ForbiddenException('Yetkisiz');
     Object.assign(sr, data);
+    // Phase 174b — minor sync if price changed
+    if (data.price !== undefined) {
+      sr.priceMinor = tlToMinor(data.price);
+    }
     // Phase 177 — geohash recompute on location change
     if (sr.latitude != null && sr.longitude != null) {
       sr.geohash = encodeGeohash(sr.latitude, sr.longitude, 6) || null;

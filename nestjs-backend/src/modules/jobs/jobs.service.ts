@@ -23,6 +23,7 @@ import { DisputeType } from '../disputes/job-dispute.entity';
 import { FraudDetectionService } from '../ai/fraud-detection.service';
 import { CategorySubscriptionsService } from '../subscriptions/category-subscriptions.service';
 import { encodeGeohash } from '../../common/geohash.util';
+import { tlToMinor } from '../../common/money.util';
 
 // Geçerli UUID — SQLite ve PostgreSQL uyumlu sabit seed kimliği
 const SEED_USER_ID = '00000000-0000-0000-0000-000000000001';
@@ -123,6 +124,8 @@ export class JobsService {
           location: 'Kadıköy, İstanbul',
           budgetMin: 500,
           budgetMax: 1500,
+          budgetMinMinor: tlToMinor(500),
+          budgetMaxMinor: tlToMinor(1500),
           status: JobStatus.OPEN,
           customerId: userId,
         },
@@ -134,6 +137,8 @@ export class JobsService {
           location: 'Beşiktaş, İstanbul',
           budgetMin: 100,
           budgetMax: 300,
+          budgetMinMinor: tlToMinor(100),
+          budgetMaxMinor: tlToMinor(300),
           status: JobStatus.OPEN,
           customerId: userId,
         },
@@ -144,6 +149,8 @@ export class JobsService {
           location: 'Üsküdar, İstanbul',
           budgetMin: 800,
           budgetMax: 1200,
+          budgetMinMinor: tlToMinor(800),
+          budgetMaxMinor: tlToMinor(1200),
           status: JobStatus.OPEN,
           customerId: userId,
         },
@@ -233,6 +240,9 @@ export class JobsService {
       ...createJobDto,
       customerId,
       status: JobStatus.OPEN,
+      // Phase 174b — minor sync: TL float → integer kuruş
+      budgetMinMinor: tlToMinor(createJobDto.budgetMin),
+      budgetMaxMinor: tlToMinor(createJobDto.budgetMax),
     });
     // Phase 177 — geohash auto-compute for proximity index
     if (job.latitude != null && job.longitude != null) {
@@ -281,6 +291,7 @@ export class JobsService {
     }
 
     Object.assign(job, updateJobDto);
+    // Phase 174b — UpdateJobDto budget alanları içermiyor; create() pathinde sync yeterli
     // Phase 177 — geohash recompute when location changes
     if (job.latitude != null && job.longitude != null) {
       job.geohash = encodeGeohash(job.latitude, job.longitude, 6) || null;

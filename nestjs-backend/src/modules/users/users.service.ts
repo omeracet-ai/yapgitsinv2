@@ -15,6 +15,7 @@ import {
   precisionForRadiusKm,
 } from '../../common/geohash.util';
 import { bayesianAverage, wilsonScore } from '../../common/rating.util';
+import { tlToMinor } from '../../common/money.util';
 import { Review } from '../reviews/review.entity';
 
 export type StatField =
@@ -331,6 +332,13 @@ export class UsersService {
   async update(id: string, data: Partial<User>): Promise<User | null> {
     if (data.latitude != null && data.longitude != null) {
       data.homeGeohash = encodeGeohash(data.latitude, data.longitude, 6) || null;
+    }
+    // Phase 174b — minor sync if hourlyRate fields changed
+    if (data.hourlyRateMin !== undefined) {
+      data.hourlyRateMinMinor = tlToMinor(data.hourlyRateMin);
+    }
+    if (data.hourlyRateMax !== undefined) {
+      data.hourlyRateMaxMinor = tlToMinor(data.hourlyRateMax);
     }
     await this.repo.update(id, data);
     return this.repo.findOne({ where: { id } });

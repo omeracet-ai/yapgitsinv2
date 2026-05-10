@@ -17,6 +17,7 @@ import { NotificationType } from '../notifications/notification.entity';
 import { EscrowService } from '../escrow/escrow.service';
 import { UserBlocksService } from '../user-blocks/user-blocks.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { tlToMinor } from '../../common/money.util';
 
 @Injectable()
 export class OffersService {
@@ -165,10 +166,12 @@ export class OffersService {
       );
     }
     await this.usersService.bumpStat(data.userId, 'asWorkerTotal');
+    // Phase 174b — minor sync: legacy float + integer kuruş aynı anda yazılır
     const offer = this.offersRepository.create({
       jobId: data.jobId,
       userId: data.userId,
       price: data.price,
+      priceMinor: tlToMinor(data.price) ?? 0,
       message: data.message,
       attachmentUrls: this._sanitizeAttachments(data.attachmentUrls),
       lineItems: data.lineItems && data.lineItems.length > 0 ? data.lineItems : null,
@@ -262,8 +265,10 @@ export class OffersService {
     const parent = await this._getOffer(offerId);
 
     // Eski API geriye dönük: parent satırına da counterPrice/Message yaz, status COUNTERED
+    // Phase 174b — counterPriceMinor sync
     parent.status = OfferStatus.COUNTERED;
     parent.counterPrice = counterPrice;
+    parent.counterPriceMinor = tlToMinor(counterPrice);
     parent.counterMessage = counterMessage;
     await this.offersRepository.save(parent);
 
@@ -272,6 +277,7 @@ export class OffersService {
       jobId: parent.jobId,
       userId: byUserId,
       price: counterPrice,
+      priceMinor: tlToMinor(counterPrice) ?? 0,
       message: counterMessage,
       parentOfferId: parent.id,
       negotiationRound: (parent.negotiationRound ?? 0) + 1,
