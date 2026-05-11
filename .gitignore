@@ -29,3 +29,6 @@ nestjs-backend/openapi.json
 packages/api-client/generated/types.ts
 packages/api-client/node_modules/
 reports/
+web/_next/
+web/out/
+web/.next/
