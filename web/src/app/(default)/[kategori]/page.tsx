@@ -96,27 +96,27 @@ export default async function CategoryPage({
         }}
       />
 
-      <section className="bg-gradient-to-br from-[var(--primary)] via-orange-400 to-yellow-300 text-white">
-        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14">
-          <nav className="text-xs text-white/80 mb-4">
-            <Link href="/" className="hover:text-white hover:underline">
+      <section className="bg-white border-b border-[var(--border)]">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-10">
+          <nav className="text-xs text-gray-500 mb-3">
+            <Link href="/" className="hover:underline">
               Anasayfa
             </Link>{' '}
-            / <span className="text-white/95">{cat.name}</span>
+            / <span className="text-[var(--secondary)]">{cat.name}</span>
           </nav>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight drop-shadow-sm">
-            {cat.icon} {cat.name}
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--secondary)] mb-3 leading-tight">
+            {cat.icon} {cat.name} Ustaları
           </h1>
-          <p className="text-base md:text-lg text-white/90 max-w-3xl leading-relaxed drop-shadow-sm">
+          <p className="text-gray-600 max-w-3xl">
             {cat.description ||
-              `Türkiye genelinde ${cat.name.toLowerCase()} hizmeti veren güvenilir, doğrulanmış ustalarla işin bittiğine emin olun.`}
+              `Türkiye genelinde ${cat.name.toLowerCase()} hizmeti veren güvenilir ustalara erişin. Yerli ve kesintisiz platform.`}
           </p>
           {cat.subServices?.length ? (
-            <div className="flex flex-wrap gap-2 mt-6">
+            <div className="flex flex-wrap gap-2 mt-4">
               {cat.subServices.map((s) => (
                 <span
                   key={s}
-                  className="bg-white/25 text-white px-4 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm border border-white/30"
+                  className="bg-[var(--primary-light)] text-[var(--primary)] px-3 py-1 rounded-full text-xs"
                 >
                   {s}
                 </span>
@@ -178,35 +178,29 @@ export function WorkerCard({ w }: { w: Worker }) {
   return (
     <Link
       href={`/usta/${slugify(w.fullName || 'usta')}-${w.id}`}
-      className="block bg-white border border-[var(--border)] rounded-[var(--radius-card)] p-4 md:p-5 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] hover:border-[var(--primary)] hover:-translate-y-1 transition-all duration-200"
+      className="block bg-white border border-[var(--border)] rounded-xl p-4 md:p-5 hover:shadow-md hover:border-[var(--primary)] hover:-translate-y-0.5 transition-all"
     >
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-[var(--primary)] font-bold text-base md:text-lg flex-shrink-0">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-[var(--primary-light)] flex items-center justify-center text-[var(--primary)] font-bold">
           {w.fullName?.[0] || '?'}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="font-semibold truncate text-[var(--secondary)] flex items-center gap-1.5">
+          <div className="font-semibold truncate text-[var(--secondary)] flex items-center gap-1">
             {w.fullName}
-            {w.identityVerified && (
-              <span className="text-[var(--primary)] text-sm flex-shrink-0" title="Kimlik doğrulanmış">
-                ✓
-              </span>
-            )}
+            {w.identityVerified && <span className="text-[var(--primary)] text-sm">✓</span>}
           </div>
-          <div className="text-xs text-[var(--secondary-muted)] truncate">{w.city || 'Türkiye'}</div>
+          <div className="text-xs text-gray-500 truncate">{w.city || 'Türkiye'}</div>
         </div>
       </div>
       {w.workerBio && (
-        <p className="text-xs text-[var(--secondary-light)] line-clamp-2 mb-3 leading-relaxed">
-          {w.workerBio}
-        </p>
+        <p className="text-xs text-gray-600 line-clamp-2 mb-2">{w.workerBio}</p>
       )}
-      <div className="flex items-center justify-between text-xs border-t border-[var(--border-soft)] pt-3">
-        <span className="text-[var(--accent)] font-semibold flex items-center gap-0.5">
-          ★ {(w.averageRating || 0).toFixed(1)} {w.totalReviews ? `(${w.totalReviews})` : ''}
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-[var(--accent)] font-medium">
+          ★ {(w.averageRating || 0).toFixed(1)} ({w.totalReviews || 0})
         </span>
         {w.hourlyRateMin && (
-          <span className="text-[var(--primary)] font-medium">{w.hourlyRateMin}+ ₺/sa</span>
+          <span className="text-gray-500">{w.hourlyRateMin}+ TL/sa</span>
         )}
       </div>
     </Link>
