@@ -294,6 +294,41 @@ export class UploadsController {
     };
   }
 
+  /** POST /uploads/profile-video — Phase 152: profil videosu (60MB, 60sec) */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('profile-video')
+  @UseInterceptors(
+    FileInterceptor('video', {
+      storage: memoryStorage(),
+      fileFilter: (req: any, file: any, cb: any) => {
+        if (!file.mimetype.match(/^video\/(mp4|quicktime|x-msvideo|mpeg)$/)) {
+          return cb(
+            new BadRequestException(
+              'Sadece video dosyaları yüklenebilir (mp4, mov, avi, mpeg)',
+            ),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 60 * 1024 * 1024 }, // Max 60MB
+    }),
+  )
+  async uploadProfileVideo(
+    @UploadedFile() file: any,
+    @Req() req: any,
+  ): Promise<{ url: string; duration?: number }> {
+    const durationRaw = (req.body?.duration ?? '') as string;
+    const durationParsed = durationRaw ? parseInt(durationRaw, 10) : NaN;
+    const duration = Number.isFinite(durationParsed) ? durationParsed : undefined;
+
+    return this.uploadsService.uploadProfileVideo(
+      file,
+      req.user.id,
+      duration,
+    );
+  }
+
   /** POST /uploads/identity-photo  — kimlik fotoğrafı (zorunlu) */
   @UseGuards(AuthGuard('jwt'))
   @Post('identity-photo')

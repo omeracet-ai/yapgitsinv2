@@ -36,6 +36,9 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   profileImageUrl: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  profileVideoUrl: string;
+
   // Kimlik fotoğrafı (zorunlu, upload sonrası set edilir)
   @Column({ type: 'varchar', nullable: true })
   identityPhotoUrl: string;

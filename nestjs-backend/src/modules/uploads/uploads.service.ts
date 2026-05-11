@@ -75,4 +75,58 @@ export class UploadsService {
 
     return { photos: job.completionPhotos };
   }
+
+  /**
+   * Phase 152 — Profil videosu yükle (60MB max, 60sec duration validation)
+   * Endpoint'ten duration alınırsa server-side doğrulama yapılır.
+   */
+  async uploadProfileVideo(
+    file: Express.Multer.File,
+    userId: string,
+    durationSeconds?: number,
+  ): Promise<{ url: string; duration?: number }> {
+    if (!file) {
+      throw new BadRequestException('Video seçilmedi');
+    }
+
+    if (file.size > 60 * 1024 * 1024) {
+      throw new BadRequestException('Video maksimum 60MB olabilir');
+    }
+
+    // Eğer duration sağlanırsa, 60 saniye sınırını doğrula
+    if (durationSeconds !== undefined && durationSeconds > 60) {
+      throw new BadRequestException(
+        `Video maksimum 60 saniye olabilir (${durationSeconds}s sağlandı)`,
+      );
+    }
+
+    // MIME type'ı kontrol et
+    const validMimes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/mpeg'];
+    if (!validMimes.includes(file.mimetype)) {
+      throw new BadRequestException(
+        'Sadece MP4, MOV, AVI, MPEG formatları desteklenir',
+      );
+    }
+
+    const fullName: string = userId; // Basit ID kullan (privacy)
+    const dir = join(process.cwd(), 'uploads', 'profile-videos', fullName);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    // MIME → extension mapping
+    const extMap: Record<string, string> = {
+      'video/mp4': 'mp4',
+      'video/quicktime': 'mov',
+      'video/x-msvideo': 'avi',
+      'video/mpeg': 'mpeg',
+    };
+    const ext = extMap[file.mimetype] || 'mp4';
+    const filename = `profile-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const dest = join(dir, filename);
+    fs.writeFileSync(dest, file.buffer);
+
+    return {
+      url: `/uploads/profile-videos/${fullName}/${filename}`,
+      duration: durationSeconds,
+    };
+  }
 }
