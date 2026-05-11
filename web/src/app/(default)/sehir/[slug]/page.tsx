@@ -14,11 +14,9 @@ import { WorkerCard } from '../../[kategori]/page';
 type Params = { slug: string };
 type SearchParams = { c?: string };
 
-// TODO Phase 155: Expand to full city pre-rendering with ISR
+// Phase 155: Pre-render all cities for static export
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
-  // Pre-render top cities only (rest will 404)
-  const topCities = ['İstanbul', 'Ankara', 'İzmir'];
-  return topCities.map((city) => ({ slug: slugify(city) }));
+  return TR_CITIES.map((city) => ({ slug: slugify(city) }));
 }
 export const dynamicParams = false;
 
