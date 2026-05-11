@@ -161,11 +161,11 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.videocam, color: AppColors.primary, size: 20),
-              const SizedBox(width: 8),
-              const Text(
+              Icon(Icons.videocam, color: AppColors.primary, size: 20),
+              SizedBox(width: 8),
+              Text(
                 'Profil Videosu',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
@@ -187,9 +187,9 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: AppColors.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -221,21 +221,21 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
         padding: const EdgeInsets.symmetric(vertical: 24),
         decoration: BoxDecoration(
           border: Border.all(
-            color: AppColors.primary.withOpacity(0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
             width: 2,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: AppColors.primary.withOpacity(0.05),
+          color: AppColors.primary.withValues(alpha: 0.05),
         ),
-        child: Column(
+        child: const Column(
           children: [
             Icon(
               Icons.cloud_upload_outlined,
               size: 40,
               color: AppColors.primary,
             ),
-            const SizedBox(height: 12),
-            const Text(
+            SizedBox(height: 12),
+            Text(
               'Video Seç',
               style: TextStyle(
                 color: AppColors.primary,
@@ -243,8 +243,8 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
                 fontSize: 14,
               ),
             ),
-            const SizedBox(height: 4),
-            const Text(
+            SizedBox(height: 4),
+            Text(
               'mp4, mov, avi, mpeg • Max 50MB',
               style: TextStyle(
                 color: AppColors.textSecondary,
@@ -262,11 +262,11 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.3),
+          color: AppColors.primary.withValues(alpha: 0.3),
           width: 2,
         ),
         borderRadius: BorderRadius.circular(12),
-        color: AppColors.primary.withOpacity(0.05),
+        color: AppColors.primary.withValues(alpha: 0.05),
       ),
       child: Column(
         children: [
@@ -312,8 +312,8 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
               child: LinearProgressIndicator(
                 value: _uploadProgress,
                 minHeight: 4,
-                backgroundColor: AppColors.primary.withOpacity(0.2),
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),
             ),
             const SizedBox(height: 8),
