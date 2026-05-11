@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, Suspense } from 'react';
 import Link from 'next/link';
 import type { Worker } from '@/lib/api';
 import { slugify } from '@/lib/api';
@@ -55,7 +55,9 @@ export default function WorkerListClient({
 
   return (
     <div className="flex flex-col md:flex-row gap-6">
-      <WorkerFilterSidebar locale={locale} onChange={setFilters} />
+      <Suspense fallback={<div className="w-48 h-64 bg-gray-200 rounded-lg animate-pulse" />}>
+        <WorkerFilterSidebar locale={locale} onChange={setFilters} />
+      </Suspense>
       <div className="flex-1 min-w-0">
         <div className="text-sm text-gray-500 mb-3">
           {filtered.length} / {workers.length}
