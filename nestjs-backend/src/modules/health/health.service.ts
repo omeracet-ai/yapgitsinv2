@@ -1,8 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pkg = require('../../../package.json') as { version: string };
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+let version = '0.0.1';
+try {
+  const pkgPath = join(__dirname, '../..', 'package.json');
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+  version = pkg.version;
+} catch {
+  // fallback
+}
 
 export interface HealthResponse {
   status: 'ok' | 'degraded' | 'down';
@@ -38,7 +47,7 @@ export class HealthService {
     return {
       status,
       uptime: Math.floor(process.uptime()),
-      version: pkg.version,
+      version,
       database: { connected: dbConnected, latencyMs },
       env: process.env.NODE_ENV ?? 'development',
       timestamp: new Date().toISOString(),
