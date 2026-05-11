@@ -701,3 +701,125 @@ IYZIPAY_URI=https://sandbox-api.iyzipay.com
 | `aed8e57c` | fix: resolve all TypeScript compiler errors and Flutter deprecations |
 | `eb1974e0` | fix: resolve all ESLint TypeScript errors in NestJS backend (690 → 0) |
 | `c6b4918d` | feat: initial commit |
+
+---
+
+## Agent Team Configuration (Müdür + 6 Voldi)
+
+### Team Structure
+
+```
+Müdür (Orchestrator)
+├── Voldi-design   — UI/design tokens, component patterns, visual polish
+├── Voldi-fs       — Frontend (Next.js/React), backend (NestJS), API integration
+├── Voldi-db       — Database schema, queries, performance optimization
+├── Voldi-ops      — Deployment, infrastructure, CI/CD, performance monitoring
+├── Voldi-sec      — Security audits, auth, XSS/injection prevention, compliance
+└── Voldi-ai       — AI features, prompt engineering, LLM integration (Claude SDK)
+```
+
+### Skill Routing Rules
+
+Invoke appropriate agent when:
+
+| Task Type | Primary Agent | Secondary | Trigger |
+|-----------|---------------|-----------|---------|
+| **Design System** | Voldi-design | — | `DESIGN_TOKENS.md`, component library, Airtasker pattern, theme colors |
+| **UI Components** | Voldi-fs | Voldi-design | React/TSX changes, component props, CSS/Tailwind |
+| **API Endpoints** | Voldi-fs | Voldi-db | NestJS controllers, DTOs, guards, middleware |
+| **Database** | Voldi-db | Voldi-fs | Schema, migrations, queries, performance (n+1, indexes) |
+| **Deployment** | Voldi-ops | Voldi-fs | FTP, static export, build output, performance metrics |
+| **Security** | Voldi-sec | Voldi-fs | JWT, XSS, CORS, env secrets, rate limiting, compliance |
+| **AI Features** | Voldi-ai | Voldi-fs | Claude SDK, prompts, batch processing, caching |
+| **Performance** | Voldi-db | Voldi-ops | Query optimization, caching, bundle size, Core Web Vitals |
+
+### Dispatch Workflow
+
+1. **User requests phase (e.g., "Phase 159 başla")**
+2. **Müdür creates phase spec** → `D:\müdür\NNN_phase_*.md`
+3. **Müdür dispatches 6 agents in parallel:**
+   ```
+   node src/cli.ts "Phase NNN: Description — 6 Voldi: design/fs/db/ops/sec/ai"
+   ```
+4. **Each agent:**
+   - Reads phase spec
+   - Works on assigned task
+   - Reports findings/code
+5. **Müdür collects all reports** → single commit + push
+6. **Output:** GitHub PR or commit message with all agent contributions
+
+### Phase Template
+
+Create `D:\müdür\NNN_phase_*.md` with:
+- **Goal:** What's the business outcome?
+- **Scope:** Which subsystems affected?
+- **Voldi-design tasks:** Design changes, tokens, component specs
+- **Voldi-fs tasks:** React/NestJS code, API changes, form logic
+- **Voldi-db tasks:** Schema, migrations, queries, performance checks
+- **Voldi-ops tasks:** Build, deploy, monitoring, performance
+- **Voldi-sec tasks:** Security audit, auth flow, data validation
+- **Voldi-ai tasks:** AI prompts, Claude integration, content generation
+- **Success criteria:** Measurable deliverables
+- **Timeline:** Estimated hours per agent
+
+### Autonomous Mode
+
+Müdür operates with:
+- ✅ Auto-commit + push (no "push edeyim mi?" prompts)
+- ✅ Parallel agent dispatch (all 6 at once)
+- ✅ Silent failures reported → single digest report
+- ✅ Phase chaining (Phase 158 → 159 → 160 automatically if no blockers)
+
+### Offline Mode (No Ollama)
+
+If Müdür offline, Claude Code assistant manually implements phases:
+1. Creates phase spec
+2. Implements work following Voldi role guidelines
+3. Commits & pushes
+4. Waits for FTP/deployment user input
+
+---
+
+## Voldi Agent Role Definitions
+
+### **Voldi-design**
+- **Responsibility:** Visual & UX coherence
+- **Expertise:** Design tokens, Tailwind, Airtasker pattern, typography, spacing, shadows, colors
+- **Outputs:** Design spec updates, component guidelines, CSS changes
+- **Key Files:** `DESIGN_TOKENS.md`, `globals.css`, component documentation
+- **Review Gate:** "Does this follow Airtasker palette (#FF5A1F, #2D3E50, #FFB400)?"
+
+### **Voldi-fs**
+- **Responsibility:** Code quality, API contracts, React patterns, NestJS structure
+- **Expertise:** Next.js App Router, React hooks, NestJS services, REST API design, TypeScript
+- **Outputs:** React/NestJS code, refactored components, API endpoints, unit tests
+- **Key Files:** `web/src/app/**/*.tsx`, `nestjs-backend/src/**/*.ts`
+- **Review Gate:** "Is this code clean, typed, and testable? Does it follow project patterns?"
+
+### **Voldi-db**
+- **Responsibility:** Data integrity, query performance, schema evolution
+- **Expertise:** SQLite/TypeORM, query optimization, migration planning, indexes, n+1 prevention
+- **Outputs:** Entity updates, migration scripts, query refactors, performance reports
+- **Key Files:** `nestjs-backend/src/entities/*.ts`, queries in services
+- **Review Gate:** "Will this scale? Are there missing indexes? Any n+1 queries?"
+
+### **Voldi-ops**
+- **Responsibility:** Build health, deployment readiness, production stability
+- **Expertise:** Next.js static export, Plesk FTP, performance monitoring, CI/CD
+- **Outputs:** Deploy checklist, performance metrics, monitoring scripts, infra docs
+- **Key Files:** `next.config.ts`, build output verification, deployment procedures
+- **Review Gate:** "Is the build reproducible? Can we deploy this safely?"
+
+### **Voldi-sec**
+- **Responsibility:** Security posture, compliance, threat prevention
+- **Expertise:** JWT/auth, XSS/injection prevention, CORS, rate limiting, env secrets, GDPR
+- **Outputs:** Security audit reports, vulnerable code fixes, security tests
+- **Key Files:** NestJS guards, middleware, validation pipes, sanitization
+- **Review Gate:** "Could an attacker exploit this? Are credentials exposed?"
+
+### **Voldi-ai**
+- **Responsibility:** AI/LLM features, prompt quality, Claude SDK integration
+- **Expertise:** Claude API, prompt engineering, batch processing, caching, streaming
+- **Outputs:** AI feature specs, prompt examples, integration code, performance tuning
+- **Key Files:** `nestjs-backend/src/ai/`, prompt templates, Claude SDK calls
+- **Review Gate:** "Is the prompt clear? Will Claude output useful? Is caching optimal?"
