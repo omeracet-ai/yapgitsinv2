@@ -162,7 +162,7 @@ export default async function CategoryPage({
           {TR_CITIES.map((city) => (
             <Link
               key={city}
-              href={`/${kategori}/${slugify(city)}`}
+              href={`/sehir/${slugify(city)}?c=${kategori}`}
               className="bg-white border border-[var(--border)] px-4 py-2 rounded-full text-sm hover:border-[var(--primary)] hover:text-[var(--primary)]"
             >
               {city}
