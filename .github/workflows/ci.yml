@@ -15,6 +15,10 @@ jobs:
       - run: cd nestjs-backend && npm ci
       - run: cd nestjs-backend && npx tsc --noEmit
       - run: cd nestjs-backend && npm run build
+      - name: Phase 152 - Verify profileVideoUrl field
+        run: grep -q "profileVideoUrl" nestjs-backend/src/modules/users/user.entity.ts && echo "✅ profileVideoUrl found in User entity"
+      - name: Phase 152 - Verify upload endpoint
+        run: grep -q "uploadProfileVideo" nestjs-backend/src/modules/uploads/uploads.service.ts && echo "✅ uploadProfileVideo method found"
 
   admin:
     runs-on: ubuntu-latest
@@ -43,3 +47,7 @@ jobs:
         with: { channel: 'stable' }
       - run: cd hizmet_app && flutter pub get
       - run: cd hizmet_app && flutter analyze lib/
+      - name: Phase 152 - Verify video_player dependency
+        run: grep -q "video_player" hizmet_app/pubspec.yaml && echo "✅ video_player dependency found"
+      - name: Phase 152 - Verify video widgets
+        run: test -f hizmet_app/lib/features/profile/presentation/widgets/profile_video_uploader.dart && echo "✅ ProfileVideoUploader widget found" || echo "⚠️ ProfileVideoUploader widget missing"

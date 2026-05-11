@@ -8,6 +8,11 @@ on:
         description: 'Deploy target (web|admin|backend|app|all)'
         required: true
         default: 'all'
+        # web: Next.js web app
+        # admin: Next.js admin panel
+        # backend: NestJS backend
+        # app: Flutter web app
+        # all: all targets
 
 jobs:
   deploy:
@@ -44,6 +49,14 @@ jobs:
           npm ci
           npm run build
 
+      - name: Build Flutter app (web)
+        if: ${{ inputs.target == 'all' || inputs.target == 'app' }}
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - run: cd hizmet_app && flutter pub get && flutter build web --release
+        if: ${{ inputs.target == 'all' || inputs.target == 'app' }}
+
       - name: FTP Deploy backend
         if: ${{ inputs.target == 'all' || inputs.target == 'backend' }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -79,6 +92,20 @@ jobs:
           server-dir: ${{ secrets.FTP_DIR }}/
           local-dir: ./web/out/
           protocol: ftps
+
+      - name: FTP Deploy Flutter app (web)
+        if: ${{ inputs.target == 'all' || inputs.target == 'app' }}
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          server-dir: ${{ secrets.FTP_DIR }}/app/
+          local-dir: ./hizmet_app/build/web/
+          protocol: ftps
+          exclude: |
+            **/node_modules/**
+            **/.git*
 
       - name: Smoke test
         run: |
