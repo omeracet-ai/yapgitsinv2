@@ -168,4 +168,47 @@ export class EmailService implements OnModuleInit {
     );
     await this.send(user.email, 'Şifre sıfırlama — Yapgitsin', html);
   }
+
+  // Phase 160 — Job Lead Notifications
+  async sendJobLeadNotification(
+    worker: MailUser,
+    leadInfo: { id: string; category: string; city: string; description?: string; budgetMin?: number; budgetMax?: number; requesterName: string },
+  ): Promise<void> {
+    if (!worker.email) return;
+    const base = process.env.FRONTEND_URL ?? 'https://yapgitsin.tr';
+    const url = `${base}/job-leads/${leadInfo.id}`;
+    const budget = leadInfo.budgetMin || leadInfo.budgetMax
+      ? `${leadInfo.budgetMin ?? 0} - ${leadInfo.budgetMax ?? '∞'} TL`
+      : 'Bütçe belirtilmedi';
+
+    const html = shell(
+      'Yeni İş İsteği',
+      `<p>Merhaba <b>${worker.fullName ?? ''}</b>,</p>
+       <p><b>${leadInfo.requesterName}</b> senin yetkinliğin alanında bir iş isteği gönderdi:</p>
+       <ul style="background:#F8F9FA;padding:16px;border-radius:6px;list-style:none;margin:16px 0">
+         <li><b>Hizmet:</b> ${leadInfo.category}</li>
+         <li><b>Konum:</b> ${leadInfo.city}</li>
+         <li><b>Bütçe:</b> ${budget}</li>
+         ${leadInfo.description ? `<li><b>Detay:</b> ${leadInfo.description.substring(0, 100)}...</li>` : ''}
+       </ul>
+       <p>Hemen yanıt ver ve işi kazan!</p>
+       <p style="margin:24px 0"><a href="${url}" style="background:${BRAND};color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">İş İsteğini Gör</a></p>`,
+    );
+    await this.send(worker.email, `Yeni iş isteği: ${leadInfo.category} — Yapgitsin`, html);
+  }
+
+  async sendLeadConfirmation(customer: MailUser, leadInfo: { category: string; city: string }): Promise<void> {
+    if (!customer.email) return;
+    const html = shell(
+      'İş İsteğin Gönderildi',
+      `<p>Merhaba <b>${customer.fullName ?? ''}</b>,</p>
+       <p>İş isteklerin başarıyla gönderildi. Uygun ustalar seni bulacak.</p>
+       <ul style="background:#F8F9FA;padding:16px;border-radius:6px;list-style:none;margin:16px 0">
+         <li><b>Hizmet:</b> ${leadInfo.category}</li>
+         <li><b>Konum:</b> ${leadInfo.city}</li>
+       </ul>
+       <p>Yakında ustalardan gelen yanıtları görebileceksin.</p>`,
+    );
+    await this.send(customer.email, 'İş isteklerin gönderildi — Yapgitsin', html);
+  }
 }

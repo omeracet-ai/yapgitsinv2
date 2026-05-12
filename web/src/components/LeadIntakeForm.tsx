@@ -61,20 +61,28 @@ export default function LeadIntakeForm({ categoryPrefill, cityPrefill, onSuccess
         return;
       }
 
-      const response = await fetch('/api/leads', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/job-leads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
-          budgetMin: formData.budgetMin ? parseInt(formData.budgetMin) : null,
-          budgetMax: formData.budgetMax ? parseInt(formData.budgetMax) : null,
+          category: formData.category,
+          city: formData.city,
+          description: formData.description || undefined,
+          budgetMin: formData.budgetMin ? parseInt(formData.budgetMin) : undefined,
+          budgetMax: formData.budgetMax ? parseInt(formData.budgetMax) : undefined,
+          budgetVisible: formData.budgetVisible,
+          requesterName: formData.requesterName,
+          requesterPhone: formData.requesterPhone,
+          requesterEmail: formData.requesterEmail,
+          preferredContactTime: formData.preferredContactTime,
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        setError(result.error || 'Bir hata oluştu');
+        setError(result.message || result.error || 'Bir hata oluştu');
         return;
       }
 
