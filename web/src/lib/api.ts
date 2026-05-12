@@ -1,5 +1,5 @@
 // API wrapper for public web — server-side fetch with ISR caching
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.yapgitsin.tr';
 
 // Phase 97 — Sitemap tier classification (priority/changefreq tuning).
 // Tier 1 = highest commercial intent (priority 0.9 cat / 0.7 cat-city).

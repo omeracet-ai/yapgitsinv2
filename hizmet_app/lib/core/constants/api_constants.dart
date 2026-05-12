@@ -6,7 +6,7 @@ class ApiConstants {
 
   // flutter run --dart-define=API_URL=https://xxxx.ngrok-free.app
   static const String _override =
-      String.fromEnvironment('API_URL', defaultValue: '');
+      String.fromEnvironment('API_URL', defaultValue: 'https://api.yapgitsin.tr');
 
   static String get baseUrl {
     if (_override.isNotEmpty) return _override;
