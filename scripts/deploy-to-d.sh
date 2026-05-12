@@ -63,7 +63,7 @@ fi
 if [ -d "$ROOT/hizmet_app" ]; then
   echo "-> Flutter web build"
   cd "$ROOT/hizmet_app"
-  flutter build web --release --base-href /app/ > /dev/null 2>&1 || echo "  (flutter build skipped/failed)"
+  flutter build web --release > /dev/null 2>&1 || echo "  (flutter build skipped/failed)"
   if [ -d build/web ]; then
     mv /d/app "/d/app.bak.$BACKUP_TS" 2>/dev/null || true
     mkdir -p /d/app
