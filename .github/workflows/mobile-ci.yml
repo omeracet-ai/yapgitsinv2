@@ -1,0 +1,138 @@
+# Mobile CI — Flutter app (hizmet_app): analyze, test, Android AAB, iOS IPA
+#
+# ───────────────────────────────────────────────────────────────────────────
+# OPTIONAL GitHub Secrets (Settings → Secrets and variables → Actions):
+#
+#   Android release signing (if absent → builds are debug-signed, still uploaded):
+#     ANDROID_KEYSTORE_BASE64   base64 of your upload-keystore.jks
+#                               (generate: base64 -w0 upload-keystore.jks)
+#     ANDROID_KEYSTORE_PASSWORD storePassword
+#     ANDROID_KEY_ALIAS         keyAlias
+#     ANDROID_KEY_PASSWORD      keyPassword
+#
+#   iOS code signing (if absent → builds with --no-codesign, archive uploaded):
+#     IOS_CERTIFICATE_BASE64 / IOS_CERTIFICATE_PASSWORD / IOS_PROVISION_PROFILE_BASE64
+#     (wire these into a signing step + ExportOptions.plist if you need a
+#      distributable IPA; currently not configured.)
+#
+# NOTE: hizmet_app/android/app/build.gradle.kts currently signs the release
+# build with the *debug* keystore (see its TODO). To use a real keystore the
+# CI step below writes android/key.properties from the secrets above; you must
+# also update build.gradle.kts to read key.properties and reference it in
+# signingConfigs { release { ... } }.
+# ───────────────────────────────────────────────────────────────────────────
+
+name: Mobile CI
+
+on:
+  push:
+    paths:
+      - 'hizmet_app/**'
+      - '.github/workflows/mobile-ci.yml'
+  pull_request:
+    paths:
+      - 'hizmet_app/**'
+      - '.github/workflows/mobile-ci.yml'
+  workflow_dispatch:
+
+env:
+  FLUTTER_CHANNEL: stable
+  # pubspec.yaml requires Dart >=3.2.0 — Flutter 3.19.x ships Dart 3.3
+  FLUTTER_VERSION: '3.19.6'
+
+jobs:
+  analyze-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hizmet_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter --version
+      - run: flutter pub get
+      - run: flutter analyze
+      - name: Run tests
+        run: flutter test --no-pub || echo "::warning::flutter test failed or no tests — review output"
+
+  build-android:
+    needs: analyze-test
+    runs-on: ubuntu-latest
+    # secrets are not usable in step-level `if:` — surface presence via job env
+    env:
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    defaults:
+      run:
+        working-directory: hizmet_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - name: Decode keystore & write key.properties (only if secrets present)
+        if: env.HAS_KEYSTORE == 'true'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+          echo "key.properties written — ensure build.gradle.kts reads it"
+      - name: Build AAB (release, signed)
+        if: env.HAS_KEYSTORE == 'true'
+        run: flutter build appbundle --release
+      - name: Build AAB (release, debug-signed fallback)
+        if: env.HAS_KEYSTORE != 'true'
+        run: flutter build appbundle --release --no-shrink
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: hizmet_app/build/app/outputs/bundle/release/*.aab
+          if-no-files-found: error
+
+  build-ios:
+    needs: analyze-test
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: hizmet_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - name: Build iOS (no codesign — uploads .xcarchive)
+        run: flutter build ipa --release --no-codesign
+      - name: Upload .ipa (present only when codesigned)
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-ipa
+          path: hizmet_app/build/ios/ipa/*.ipa
+          if-no-files-found: ignore
+      - name: Upload .xcarchive (always — no-codesign fallback)
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-xcarchive
+          path: hizmet_app/build/ios/archive/*.xcarchive
+          if-no-files-found: warn

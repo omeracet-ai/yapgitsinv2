@@ -1,0 +1,57 @@
+name: Publish API Client SDK
+
+# Manual trigger only. Regenerates types from the backend OpenAPI spec,
+# builds the package, and publishes @yapgitsin/api-client to npm.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version bump (patch | minor | major) or explicit x.y.z"
+        required: false
+        default: "patch"
+      dry_run:
+        description: "If true, run npm publish --dry-run only"
+        required: false
+        default: "false"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Install backend deps
+        working-directory: nestjs-backend
+        run: npm ci
+
+      - name: Generate SDK types from OpenAPI spec
+        run: bash scripts/gen-sdk.sh
+
+      - name: Install SDK deps
+        working-directory: packages/api-client
+        run: npm install --no-audit --no-fund
+
+      - name: Bump version
+        working-directory: packages/api-client
+        run: npm version "${{ github.event.inputs.version }}" --no-git-tag-version
+
+      - name: Build
+        working-directory: packages/api-client
+        run: npm run build
+
+      - name: Publish (dry-run)
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        working-directory: packages/api-client
+        run: npm publish --dry-run --access public
+
+      - name: Publish
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        working-directory: packages/api-client
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Reputation } from './reputation.entity';
 import { Badge } from './badge.entity';
+import { Review } from '../reviews/review.entity';
 import { ReputationService } from './reputation.service';
 import { BadgeService } from './badge.service';
 import { ReputationController } from './reputation.controller';
@@ -14,7 +15,7 @@ import { ReviewsModule } from '../reviews/reviews.module';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Reputation, Badge]),
+    TypeOrmModule.forFeature([Reputation, Badge, Review]),
     forwardRef(() => UsersModule),
     forwardRef(() => ReviewsModule),
   ],

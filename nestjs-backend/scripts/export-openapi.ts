@@ -12,7 +12,14 @@ import * as path from 'path';
 import { AppModule } from '../src/app.module';
 
 async function exportSpec() {
-  const app = await NestFactory.create(AppModule, { logger: false });
+  console.error('[export-openapi] creating Nest app (no listen)…');
+  // preview:true builds the module/route graph for Swagger without
+  // actually instantiating providers — tolerant of DI wiring gaps.
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn'],
+    abortOnError: false,
+    preview: true,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Yapgitsin API')

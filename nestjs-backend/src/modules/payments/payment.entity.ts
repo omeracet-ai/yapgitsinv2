@@ -141,7 +141,8 @@ export class Payment {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // Completion timestamp
-  @Column({ type: 'timestamp', nullable: true })
+  // Completion timestamp — no explicit DB type so TypeORM picks the driver default
+  // (timestamp on postgres, datetime on sqlite/mysql). Keeps sqlite e2e tests working.
+  @Column({ type: Date, nullable: true })
   completedAt: Date | null;
 }

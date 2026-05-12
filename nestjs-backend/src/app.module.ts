@@ -178,8 +178,12 @@ import { Badge } from './modules/reputation/badge.entity';
         if (dbType === 'sqlite') {
           return {
             type: 'sqlite' as const,
-            database: 'hizmet_db.sqlite',
+            // DB_DATABASE override allows isolated test DBs (e.g. ':memory:'); defaults to dev file.
+            database: configService.get<string>('DB_DATABASE') || 'hizmet_db.sqlite',
             entities,
+            // Pick up entities only registered via TypeOrmModule.forFeature (e.g. JobLead)
+            // so the in-memory e2e schema is complete.
+            autoLoadEntities: true,
             migrations,
             synchronize,
             migrationsRun,
