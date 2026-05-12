@@ -26,6 +26,29 @@ export interface EarningsPayload {
   monthlySeries: MonthlyPoint[];
   topCategories: CategoryAgg[];
   averageJobValue: number;
+  // Phase 169 — Airtasker-style service fee transparency.
+  /** Platform fee percentage applied to released funds. */
+  platformFeePct: number;
+  /** Total platform service fee deducted across all completed jobs (TRY). */
+  platformFeesPaid: number;
+  /** Net earnings after the platform service fee (workerNet sum) (TRY). */
+  netEarnings: number;
+  /** This-month net earnings after the platform service fee (TRY). */
+  thisMonthNetEarnings: number;
+}
+
+/**
+ * Resolve platform fee pct (0..100). Mirrors escrow FeeService — `PLATFORM_FEE_RATE`
+ * (0..1) wins if set, else `PLATFORM_FEE_PCT` (default 10).
+ */
+function resolveFeePct(): number {
+  const rate = process.env.PLATFORM_FEE_RATE;
+  if (rate !== undefined && rate !== '') {
+    const p = parseFloat(rate);
+    if (!Number.isNaN(p) && p >= 0 && p <= 1) return Math.round(p * 10000) / 100;
+  }
+  const pct = parseFloat(process.env.PLATFORM_FEE_PCT ?? '10');
+  return Number.isNaN(pct) || pct < 0 || pct > 100 ? 10 : pct;
 }
 
 @Injectable()
@@ -147,9 +170,18 @@ export class EarningsService {
         count: c.count,
       }));
 
+    const feePct = resolveFeePct();
+    const totalEarnings = Math.round(total * 100) / 100;
+    const thisMonthEarnings = Math.round(thisMonth * 100) / 100;
+    const platformFeesPaid = Math.round(totalEarnings * feePct) / 100;
+    const netEarnings =
+      Math.round((totalEarnings - platformFeesPaid) * 100) / 100;
+    const thisMonthNetEarnings =
+      Math.round(thisMonthEarnings * (100 - feePct)) / 100;
+
     return {
-      totalEarnings: Math.round(total * 100) / 100,
-      thisMonthEarnings: Math.round(thisMonth * 100) / 100,
+      totalEarnings,
+      thisMonthEarnings,
       lastMonthEarnings: Math.round(lastMonth * 100) / 100,
       growthPercent,
       completedJobsCount,
@@ -157,6 +189,10 @@ export class EarningsService {
       monthlySeries,
       topCategories,
       averageJobValue,
+      platformFeePct: feePct,
+      platformFeesPaid,
+      netEarnings,
+      thisMonthNetEarnings,
     };
   }
 }

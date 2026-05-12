@@ -80,7 +80,11 @@ export class EscrowController {
       taskerId: dto.taskerId,
       paymentToken: dto.paymentToken,
     });
-    return { escrow, paymentInitUrl: null };
+    return {
+      escrow: this.svc.withFeeBreakdown(escrow),
+      feeBreakdown: this.svc.feeBreakdownFor(escrow),
+      paymentInitUrl: null,
+    };
   }
 
   @Post('confirm')
@@ -125,15 +129,16 @@ export class EscrowController {
     if (!escrow) {
       throw new NotFoundException('No escrow found for this job');
     }
-    return escrow;
+    return this.svc.withFeeBreakdown(escrow);
   }
 
   @Get(':id')
-  getById(
+  async getById(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
   ) {
-    return this.svc.getById(id, req.user.id, req.user.role);
+    const escrow = await this.svc.getById(id, req.user.id, req.user.role);
+    return this.svc.withFeeBreakdown(escrow);
   }
 
   @Patch(':id/dispute')

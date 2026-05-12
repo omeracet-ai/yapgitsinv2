@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaymentEscrow, EscrowStatus } from './payment-escrow.entity';
 import { tlToMinor, pctOfMinor, subMinor } from '../../common/money.util';
+import { FeeService, FeeBreakdown } from './fee.service';
 
 export const ALLOWED_TRANSITIONS: Record<EscrowStatus, EscrowStatus[]> = {
   [EscrowStatus.HELD]: [
@@ -59,11 +60,27 @@ export class EscrowService {
   constructor(
     @InjectRepository(PaymentEscrow)
     private readonly repo: Repository<PaymentEscrow>,
+    private readonly feeService: FeeService,
   ) {}
 
   isValidTransition(from: EscrowStatus, to: EscrowStatus): boolean {
     const allowed = ALLOWED_TRANSITIONS[from] ?? [];
     return allowed.includes(to);
+  }
+
+  /**
+   * Phase 169 — transparent service-fee breakdown for an escrow's gross amount.
+   * Surfaced to customers so they see exactly what the worker nets vs platform fee.
+   */
+  feeBreakdownFor(escrow: Pick<PaymentEscrow, 'amount'>): FeeBreakdown {
+    return this.feeService.calculateFee(escrow.amount);
+  }
+
+  /** Convenience: { ...escrow, feeBreakdown }. Use in customer-facing responses. */
+  withFeeBreakdown<T extends PaymentEscrow>(
+    escrow: T,
+  ): T & { feeBreakdown: FeeBreakdown } {
+    return { ...escrow, feeBreakdown: this.feeBreakdownFor(escrow) };
   }
 
   private isAdmin(role?: string): boolean {
@@ -82,9 +99,9 @@ export class EscrowService {
       throw new BadRequestException('Escrow amount must be positive');
     }
 
-    // Phase 174c — Integer minor sync (kuruş)
+    // Phase 174c — Integer minor sync (kuruş). Fee pct via FeeService (Phase 169).
     const amountMinor = tlToMinor(args.amount) ?? 0;
-    const feePct = Math.round(getPlatformFeeRate() * 100);
+    const feePct = Math.round(this.feeService.getFeePct());
     const platformFeeMinor = pctOfMinor(amountMinor, feePct);
     const workerPayoutMinor = subMinor(amountMinor, platformFeeMinor);
 
@@ -234,13 +251,12 @@ export class EscrowService {
       );
     }
 
-    // PLATFORM_FEE_RATE (0..1) takes precedence over legacy PLATFORM_FEE_PCT.
-    const pct = process.env.PLATFORM_FEE_RATE
-      ? getPlatformFeeRate() * 100
-      : parseFloat(process.env.PLATFORM_FEE_PCT ?? '15') || 15;
+    // Single source of truth: FeeService (PLATFORM_FEE_RATE 0..1 wins, else PLATFORM_FEE_PCT, default 10).
+    const fb = this.feeService.calculateFee(escrow.amount);
+    const pct = fb.feePct;
     escrow.platformFeePct = pct;
-    escrow.platformFeeAmount = Math.round((escrow.amount * pct) / 100 * 100) / 100;
-    escrow.taskerNetAmount = escrow.amount - escrow.platformFeeAmount;
+    escrow.platformFeeAmount = fb.feeAmount;
+    escrow.taskerNetAmount = fb.workerNet;
 
     // Phase 174c — Integer minor sync
     const amountMinor = escrow.amountMinor || tlToMinor(escrow.amount) || 0;

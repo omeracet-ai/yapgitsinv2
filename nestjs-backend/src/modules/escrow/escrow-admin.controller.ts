@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Patch,
   Get,
   Body,
   Param,
@@ -29,6 +30,15 @@ class AdminResolveDto {
   @IsOptional() @IsNumber() @Min(0) @Max(1) splitRatio?: number;
   @IsOptional() @IsString() @MaxLength(2000) reason?: string;
   @IsOptional() @IsString() @MaxLength(2000) adminNote?: string;
+}
+
+class AdminReasonDto {
+  @IsOptional() @IsString() @MaxLength(2000) reason?: string;
+}
+
+class AdminRefundDto {
+  @IsOptional() @IsNumber() @Min(0.01) amount?: number;
+  @IsOptional() @IsString() @MaxLength(2000) reason?: string;
 }
 
 /**
@@ -66,5 +76,39 @@ export class EscrowAdminController {
       reason: dto.reason,
       adminNote: dto.adminNote,
     });
+  }
+
+  /** Phase 169 — admin manual release: held → released, worker net + platform fee. */
+  @Patch(':id/release')
+  async release(
+    @Param('id') id: string,
+    @Body() dto: AdminReasonDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    this.assertAdmin(req);
+    const escrow = await this.svc.release(
+      id,
+      req.user.id,
+      dto?.reason,
+      req.user.role,
+    );
+    return this.svc.withFeeBreakdown(escrow);
+  }
+
+  /** Phase 169 — admin manual refund: held → refunded (full or partial). */
+  @Patch(':id/refund')
+  async refund(
+    @Param('id') id: string,
+    @Body() dto: AdminRefundDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    this.assertAdmin(req);
+    return this.svc.refund(
+      id,
+      req.user.id,
+      dto?.amount,
+      dto?.reason,
+      req.user.role,
+    );
   }
 }
