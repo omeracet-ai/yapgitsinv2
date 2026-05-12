@@ -179,17 +179,17 @@ class _AppBarSection extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _ToggleBtn(
-                          label: '🗺 Harita',
-                          active: !state.showList,
-                          onTap: () {
-                            if (state.showList) notifier.toggleView();
-                          },
-                        ),
-                        _ToggleBtn(
                           label: '☰ Liste',
                           active: state.showList,
                           onTap: () {
                             if (!state.showList) notifier.toggleView();
+                          },
+                        ),
+                        _ToggleBtn(
+                          label: '🗺 Harita',
+                          active: !state.showList,
+                          onTap: () {
+                            if (state.showList) notifier.toggleView();
                           },
                         ),
                       ],
