@@ -6,6 +6,8 @@ import { JobLeadResponse, JobLeadResponseStatus } from './job-lead-response.enti
 import { CreateJobLeadDto } from './dto/create-job-lead.dto';
 import { User } from '../users/user.entity';
 import { EmailService } from '../email/email.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/notification.entity';
 
 @Injectable()
 export class JobLeadsService {
@@ -19,6 +21,7 @@ export class JobLeadsService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly emailService: EmailService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(
@@ -168,7 +171,7 @@ export class JobLeadsService {
       const workers = await this.matchWorkers(lead.id);
       this.logger.log(`[leads] notifying ${workers.length} workers for lead ${lead.id}`);
 
-      // Send emails to matched workers
+      // Send emails and push notifications to matched workers
       for (const worker of workers) {
         await this.emailService.sendJobLeadNotification(
           { id: worker.id, email: worker.email, fullName: worker.fullName },
@@ -182,6 +185,19 @@ export class JobLeadsService {
             requesterName: lead.requesterName,
           },
         );
+
+        // Phase 164 — send push notification for lead match
+        void this.notificationsService.send({
+          userId: worker.id,
+          type: NotificationType.SAVED_SEARCH_MATCH,
+          title: `Yeni ${lead.category} isteği: ${lead.city}`,
+          body: lead.description
+            ? lead.description.substring(0, 100)
+            : `Bütçe: ${lead.budgetMin || 'yazılacak'} - ${lead.budgetMax || 'yazılacak'} TL`,
+          refId: lead.id,
+          relatedType: 'job',
+          relatedId: lead.id,
+        });
 
         // Record the email send as a response entry
         await this.responseRepo.save(

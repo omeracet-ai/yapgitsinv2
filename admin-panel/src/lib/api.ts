@@ -285,6 +285,28 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ value }),
     }),
+
+  // Phase 162: Chat & Messaging
+  sendMessage: (to: string, message: string, jobLeadId?: string) =>
+    request<ChatMessageDto>('/messages', {
+      method: 'POST',
+      body: JSON.stringify({ to, message, jobLeadId }),
+    }),
+  getConversations: () =>
+    request<ConversationItemDto[]>('/messages/conversations'),
+  getMessageHistory: (peerId: string) =>
+    request<ChatMessageDto[]>(`/messages/history/${peerId}`),
+  markMessageAsRead: (messageId: string) =>
+    request<{ success: boolean }>(`/messages/${messageId}/read`, { method: 'POST' }),
+  markMessagesAsRead: (messageIds: string[]) =>
+    request<{ success: boolean; markedCount: number }>('/messages/batch/read', {
+      method: 'POST',
+      body: JSON.stringify({ messageIds }),
+    }),
+  getUnreadCount: () =>
+    request<{ unreadCount: number }>('/messages/unread-count'),
+  deleteMessage: (messageId: string) =>
+    request<{ success: boolean }>(`/messages/${messageId}`, { method: 'DELETE' }),
 };
 
 export interface BlogPost {
@@ -521,3 +543,103 @@ export interface BulkFeatureResult {
   notFound: string[];
   featuredOrder?: 1 | 2 | 3 | null;
 }
+
+// Phase 162: Chat & Messaging types
+export interface ChatMessageDto {
+  id: string;
+  from: string;
+  to: string;
+  message: string;
+  jobLeadId?: string | null;
+  jobId?: string | null;
+  bookingId?: string | null;
+  deliveryStatus: 'sent' | 'delivered' | 'failed';
+  readAt?: string | null;
+  createdAt: string;
+  attachmentUrl?: string | null;
+  attachmentType?: 'image' | 'document' | 'audio' | null;
+  attachmentName?: string | null;
+  attachmentSize?: number | null;
+}
+
+export interface ConversationItemDto {
+  peerId: string;
+  peerName: string | null;
+  peerAvatarUrl: string | null;
+  lastMessage: {
+    id: string;
+    text: string;
+    createdAt: string;
+    fromMe: boolean;
+    jobLeadId?: string | null;
+  };
+  unreadCount: number;
+  peerOnline: boolean;
+  peerLastSeenAt: string | null;
+}
+
+// ─── Analytics ────────────────────────────────────────────────────
+
+export interface AnalyticsOverview {
+  totalLeads: number;
+  activeLeads: number;
+  totalWorkers: number;
+  totalCustomers: number;
+  totalBookings: number;
+  completedBookings: number;
+  totalRevenue: number;
+  averageBookingValue: number;
+  leadConversionRate: number;
+}
+
+export interface WorkerAnalytics {
+  workerId: string;
+  workerName: string;
+  totalBookings: number;
+  completedBookings: number;
+  successRate: number;
+  averageResponseTime: number;
+  totalEarnings: number;
+  averageRating: number;
+}
+
+export interface LeadAnalytics {
+  totalLeads: number;
+  openLeads: number;
+  inProgressLeads: number;
+  closedLeads: number;
+  expiredLeads: number;
+  conversionRate: number;
+  averageResponseCount: number;
+  topCategories: Array<{ category: string; count: number }>;
+}
+
+export interface RevenueAnalytics {
+  totalRevenue: number;
+  revenueByPeriod: Array<{
+    period: string;
+    revenue: number;
+    bookingCount: number;
+  }>;
+  revenueByCategory: Array<{
+    category: string;
+    revenue: number;
+  }>;
+  averageTransactionValue: number;
+}
+
+export const analyticsApi = {
+  async overview(): Promise<AnalyticsOverview> {
+    return request<AnalyticsOverview>('/analytics/overview');
+  },
+  async workers(workerId?: string): Promise<WorkerAnalytics[]> {
+    const qs = workerId ? `?workerId=${encodeURIComponent(workerId)}` : '';
+    return request<WorkerAnalytics[]>(`/analytics/workers${qs}`);
+  },
+  async leads(): Promise<LeadAnalytics> {
+    return request<LeadAnalytics>('/analytics/leads');
+  },
+  async revenue(): Promise<RevenueAnalytics> {
+    return request<RevenueAnalytics>('/analytics/revenue');
+  },
+};

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { AdminUser } from "@/lib/api";
+import { NotificationBell } from "@/components/NotificationBell";
 
 function isTokenValid(token: string): boolean {
   try {
@@ -127,9 +128,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <h1 className="text-sm font-semibold text-gray-700">
             {NAV.find(n => path === n.href || path.startsWith(n.href + "/"))?.label ?? "Panel"}
           </h1>
-          <span className="text-xs text-gray-400">
-            {admin ? `${admin.fullName} · admin` : ""}
-          </span>
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+            <span className="text-xs text-gray-400">
+              {admin ? `${admin.fullName} · admin` : ""}
+            </span>
+          </div>
         </header>
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>

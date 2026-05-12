@@ -8,6 +8,8 @@ import { User } from '../users/user.entity';
 import { ModerationModule } from '../moderation/moderation.module';
 import { UserBlocksModule } from '../user-blocks/user-blocks.module';
 import { AiModule } from '../ai/ai.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { SystemSettingsModule } from '../system-settings/system-settings.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { AiModule } from '../ai/ai.module';
     ModerationModule,
     UserBlocksModule,
     AiModule,
+    NotificationsModule,
+    SystemSettingsModule,
   ],
   controllers: [ChatController],
   providers: [ChatGateway, ChatService],

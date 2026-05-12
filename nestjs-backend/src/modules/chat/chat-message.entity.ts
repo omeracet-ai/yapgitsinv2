@@ -14,9 +14,11 @@ export class ChatMessage {
   @Column({ type: 'varchar', length: 36, nullable: true })
   tenantId: string | null;
 
+  @Index()
   @Column({ type: 'varchar' })
   from: string;
 
+  @Index()
   @Column({ type: 'varchar' })
   to: string;
 
@@ -28,6 +30,11 @@ export class ChatMessage {
   @Index()
   @Column({ type: 'varchar', length: 36, nullable: true })
   jobId: string | null;
+
+  // Optional context: which Job Lead this message belongs to.
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  jobLeadId: string | null;
 
   // Optional context: which Booking this message belongs to.
   @Index()
@@ -41,12 +48,20 @@ export class ChatMessage {
   flagReason: string | null;
 
   @CreateDateColumn()
+  @Index()
   createdAt: Date;
 
   // Phase 68: read-receipt timestamp. NULL = unread (single tick),
   // non-null = read (double tick).
   @Column({ type: 'datetime', nullable: true })
   readAt: Date | null;
+
+  // Phase 162: delivery status tracking
+  @Column({ type: 'varchar', length: 20, default: 'sent' })
+  deliveryStatus: 'sent' | 'delivered' | 'failed';
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  deliveryFailureReason: string | null;
 
   // Phase 139: optional file attachment (image or document).
   @Column({ type: 'varchar', nullable: true })

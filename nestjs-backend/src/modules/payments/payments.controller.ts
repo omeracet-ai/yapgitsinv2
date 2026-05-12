@@ -1,25 +1,81 @@
-import { Controller, Post, Body, Res, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Res, Get, UseGuards, Req, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import type { Response } from 'express';
 import { PaymentsService } from './payments.service';
 import { AuthGuard } from '@nestjs/passport';
+import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
+import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
+import { PaymentHistoryQueryDto } from './dto/payment-history.dto';
+import { RefundPaymentDto } from './dto/refund-payment.dto';
 
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
+  // Phase 163: New Payment Intent API
+  @Post('create-intent')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.CREATED)
+  async createPaymentIntent(
+    @Req() req: any,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    @Body() dto: CreatePaymentIntentDto,
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    return this.paymentsService.createPaymentIntent(req.user.id, dto);
+  }
+
+  // Phase 163: Confirm Payment
+  @Post('confirm')
+  @UseGuards(AuthGuard('jwt'))
+  async confirmPayment(
+    @Req() req: any,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    @Body() dto: ConfirmPaymentDto,
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    return this.paymentsService.confirmPayment(req.user.id, dto);
+  }
+
+  // Phase 163: Get Payment History (Customer view)
+  @Get('history')
+  @UseGuards(AuthGuard('jwt'))
+  async getPaymentHistory(
+    @Req() req: any,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    @Query() query: PaymentHistoryQueryDto,
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    return this.paymentsService.getPaymentHistory(req.user.id, query, false);
+  }
+
+  // Phase 163: Get Worker Earnings & Refund History
   @Get('earnings')
   @UseGuards(AuthGuard('jwt'))
   async getEarnings(@Req() req: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-    return this.paymentsService.getEarnings(req.user.id);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    return this.paymentsService.getWorkerEarnings(req.user.id);
   }
 
+  // Phase 163: Refund Payment
+  @Post('refund')
+  @UseGuards(AuthGuard('jwt'))
+  async refundPayment(
+    @Req() req: any,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    @Body() dto: RefundPaymentDto,
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    return this.paymentsService.refundPayment(req.user.id, dto);
+  }
+
+  // Legacy: Iyzipay Checkout Form
   @Post('create-session')
   async createSession(@Body() body: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.paymentsService.createCheckoutForm(body);
   }
 
+  // Legacy: Iyzipay Callback
   @Post('callback')
   async callback(@Body() body: Record<string, string>, @Res() res: Response) {
     const result = await this.paymentsService.retrieveCheckoutResult(
@@ -31,5 +87,13 @@ export class PaymentsController {
     } else {
       return res.redirect('yapgitsin://payment-failure');
     }
+  }
+
+  // Phase 163: Webhook for payment provider events
+  @Post('webhook')
+  @HttpCode(HttpStatus.OK)
+  async handleWebhook(@Body() event: any) {
+    await this.paymentsService.handlePaymentWebhook(event);
+    return { received: true };
   }
 }

@@ -89,6 +89,11 @@ import { TenantsModule } from './modules/tenants/tenants.module';
 import { EmailModule } from './modules/email/email.module';
 import { Boost } from './modules/boost/boost.entity';
 import { BoostModule } from './modules/boost/boost.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { Payment } from './modules/payments/payment.entity';
+import { ReputationModule } from './modules/reputation/reputation.module';
+import { Reputation } from './modules/reputation/reputation.entity';
+import { Badge } from './modules/reputation/badge.entity';
 
 @Module({
   imports: [
@@ -166,6 +171,9 @@ import { BoostModule } from './modules/boost/boost.module';
           Tenant,
           Boost,
           BlogPost,
+          Payment,
+          Reputation,
+          Badge,
         ];
         if (dbType === 'sqlite') {
           return {
@@ -244,6 +252,8 @@ import { BoostModule } from './modules/boost/boost.module';
     EmailModule,
     BoostModule,
     BlogModule,
+    AnalyticsModule,
+    ReputationModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],

@@ -235,4 +235,69 @@ export class FcmService implements OnModuleInit {
       this.logger.warn(`FCM send failed: ${(err as Error).message}`);
     }
   }
+
+  /**
+   * Phase 164 — Broadcast push notification to all users with push enabled.
+   * Used for system-wide announcements. Returns count of successful sends.
+   */
+  async broadcastToAll(
+    title: string,
+    body: string,
+    data?: Record<string, string>,
+  ): Promise<number> {
+    if (!this.enabled || !this.admin) return 0;
+    try {
+      const users = await this.usersRepo
+        .createQueryBuilder('u')
+        .select(['u.id', 'u.fcmTokens', 'u.pushNotificationsEnabled'])
+        .where('u.pushNotificationsEnabled = :enabled', { enabled: true })
+        .andWhere('u.fcmTokens IS NOT NULL')
+        .getMany();
+
+      let totalSuccess = 0;
+      const invalid: string[] = [];
+
+      for (const user of users) {
+        const tokens = Array.isArray(user.fcmTokens)
+          ? user.fcmTokens.filter((t) => typeof t === 'string' && t.length > 0)
+          : [];
+        if (!tokens.length) continue;
+
+        try {
+          const messaging = this.admin.messaging();
+          const response = await messaging.sendEachForMulticast({
+            tokens,
+            notification: { title, body },
+            data: data ?? {},
+          });
+          totalSuccess += response.successCount;
+
+          response.responses.forEach((r, idx) => {
+            if (!r.success) {
+              const code = (r.error as { code?: string } | undefined)?.code ?? '';
+              if (
+                code === 'messaging/invalid-registration-token' ||
+                code === 'messaging/registration-token-not-registered'
+              ) {
+                invalid.push(tokens[idx]);
+              }
+            }
+          });
+        } catch (err) {
+          this.logger.warn(
+            `FCM broadcast to user ${user.id} failed: ${(err as Error).message}`,
+          );
+        }
+      }
+
+      if (invalid.length) {
+        await this.cleanupTokens(invalid);
+      }
+
+      return totalSuccess;
+    } catch (err) {
+      this.logger.warn(`FCM broadcast failed: ${(err as Error).message}`);
+      return 0;
+    }
+  }
 }

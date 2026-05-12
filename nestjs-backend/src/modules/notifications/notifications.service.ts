@@ -194,4 +194,42 @@ export class NotificationsService {
   async unreadCount(userId: string): Promise<number> {
     return this.repo.count({ where: { userId, isRead: false } });
   }
+
+  /** Phase 164 — update user push notification settings (token and/or enabled state) */
+  async updateUserPushSettings(
+    userId: string,
+    settings: {
+      fcmToken?: string | null;
+      pushNotificationsEnabled?: boolean;
+    },
+  ): Promise<void> {
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (!user) return;
+
+    const updates: Record<string, unknown> = {};
+
+    // Phase 164 — add or remove FCM token
+    if (settings.fcmToken !== undefined) {
+      if (settings.fcmToken) {
+        // Add token to list (avoid duplicates)
+        const tokens = Array.isArray(user.fcmTokens) ? user.fcmTokens : [];
+        if (!tokens.includes(settings.fcmToken)) {
+          tokens.push(settings.fcmToken);
+        }
+        updates.fcmTokens = tokens;
+      } else {
+        // Remove token (null means user cleared it)
+        updates.fcmTokens = null;
+      }
+    }
+
+    // Phase 164 — enable/disable push notifications globally
+    if (settings.pushNotificationsEnabled !== undefined) {
+      updates.pushNotificationsEnabled = settings.pushNotificationsEnabled;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await this.usersRepo.update(userId, updates);
+    }
+  }
 }
