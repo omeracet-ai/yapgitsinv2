@@ -32,3 +32,17 @@ reports/
 web/_next/
 web/out/
 web/.next/
+
+# Root-only junk: deploy/debug PHP helpers + stray Flutter web artifacts + obsolete IIS configs
+/*.php
+/index_meta.html
+/flutter.js
+/flutter_bootstrap.js
+/main.dart.js
+/main.dart.js.map
+/flutter_service_worker.js
+/version.json
+/canvaskit/
+/web.config.fix
+/web.config.smart
+/web.config.spa
