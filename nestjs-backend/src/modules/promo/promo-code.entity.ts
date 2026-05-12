@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
+import { decimalTransformer } from '../../common/transformers/decimal.transformer';
 
 export enum PromoDiscountType {
   PERCENT = 'percent',
@@ -42,7 +43,7 @@ export class PromoCode {
   })
   discountType: PromoDiscountType;
 
-  @Column({ type: 'float' })
+  @Column({ type: 'decimal', precision: 12, scale: 2, transformer: decimalTransformer })
   discountValue: number;
 
   @Column({ type: 'integer', nullable: true })
@@ -51,7 +52,7 @@ export class PromoCode {
   @Column({ type: 'integer', default: 0 })
   redeemedCount: number;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true, transformer: decimalTransformer })
   minSpend: number | null;
 
   @Column({ type: 'datetime', nullable: true })
@@ -82,7 +83,7 @@ export class PromoCode {
   })
   effectType: PromoEffectType | null;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true, transformer: decimalTransformer })
   effectValue: number | null;
 
   @Column({ type: 'integer', nullable: true })

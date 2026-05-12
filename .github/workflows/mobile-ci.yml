@@ -15,11 +15,13 @@
 #     (wire these into a signing step + ExportOptions.plist if you need a
 #      distributable IPA; currently not configured.)
 #
-# NOTE: hizmet_app/android/app/build.gradle.kts currently signs the release
-# build with the *debug* keystore (see its TODO). To use a real keystore the
-# CI step below writes android/key.properties from the secrets above; you must
-# also update build.gradle.kts to read key.properties and reference it in
-# signingConfigs { release { ... } }.
+# NOTE: hizmet_app/android/app/build.gradle.kts reads android/key.properties
+# (via rootProject.file("key.properties")) and uses signingConfigs.release when
+# it exists, otherwise falls back to the debug keystore. The CI step below
+# decodes the keystore to android/app/upload-keystore.jks and writes
+# android/key.properties with storeFile=upload-keystore.jks — which file() in
+# app/build.gradle.kts resolves relative to the app/ module dir. No further
+# changes required when the secrets above are set.
 # ───────────────────────────────────────────────────────────────────────────
 
 name: Mobile CI
@@ -95,7 +97,7 @@ jobs:
           keyAlias=$ANDROID_KEY_ALIAS
           storeFile=upload-keystore.jks
           EOF
-          echo "key.properties written — ensure build.gradle.kts reads it"
+          echo "key.properties written — build.gradle.kts reads it via rootProject.file()"
       - name: Build AAB (release, signed)
         if: env.HAS_KEYSTORE == 'true'
         run: flutter build appbundle --release

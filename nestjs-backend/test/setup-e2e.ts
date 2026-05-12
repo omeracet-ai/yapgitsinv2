@@ -4,6 +4,8 @@ process.env.NODE_ENV = 'test';
 process.env.DB_TYPE = 'sqlite';
 process.env.DB_DATABASE = ':memory:';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'e2e-test-secret';
+// Dual-secret rotation window: tokens signed with the previous key must still verify.
+process.env.JWT_SECRET_PREVIOUS = process.env.JWT_SECRET_PREVIOUS || 'e2e-test-secret-prev';
 // AuthService.onModuleInit auto-seeds an admin (admin@yapgitsin.tr) with this password.
 process.env.ADMIN_INITIAL_PASSWORD = 'admin';
 // Quiet down outbound integrations (SMS/email just log-and-skip without creds).

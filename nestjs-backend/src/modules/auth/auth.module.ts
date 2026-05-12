@@ -11,6 +11,7 @@ import { PasswordResetToken } from './password-reset-token.entity';
 import { EmailVerificationToken } from './email-verification-token.entity';
 import { SmsOtp } from './sms-otp.entity';
 import { SmsModule } from '../sms/sms.module';
+import { getJwtSigningSecret } from './jwt-secrets';
 
 @Module({
   imports: [
@@ -19,11 +20,9 @@ import { SmsModule } from '../sms/sms.module';
     UsersModule,
     PassportModule,
     JwtModule.registerAsync({
-      useFactory: () => {
-        const secret = process.env.JWT_SECRET;
-        if (!secret) throw new Error('JWT_SECRET ortam değişkeni tanımlanmamış');
-        return { secret };
-      },
+      // Signing always uses the current key (JWT_SECRET). Dual-secret verify
+      // for API auth tokens lives in JwtStrategy (see jwt-secrets.ts).
+      useFactory: () => ({ secret: getJwtSigningSecret() }),
     }),
   ],
   providers: [AuthService, JwtStrategy, TwoFactorService],

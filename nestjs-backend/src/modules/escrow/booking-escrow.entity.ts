@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   Index,
 } from 'typeorm';
+import { decimalTransformer } from '../../common/transformers/decimal.transformer';
 
 export enum BookingEscrowStatus {
   HELD = 'held',
@@ -35,7 +36,7 @@ export class BookingEscrow {
   @Column({ type: 'varchar', length: 36 })
   workerId: string;
 
-  @Column({ type: 'float' })
+  @Column({ type: 'decimal', precision: 12, scale: 2, transformer: decimalTransformer })
   amount: number;
 
   @Column({
@@ -54,7 +55,7 @@ export class BookingEscrow {
   @Column({ type: 'datetime', nullable: true })
   refundedAt: Date | null;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true, transformer: decimalTransformer })
   refundedAmount: number | null;
 
   @CreateDateColumn()

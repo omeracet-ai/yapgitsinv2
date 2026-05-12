@@ -1,0 +1,7 @@
+# Copy this file to key.properties and fill in your real values.
+# key.properties is gitignored — never commit it or your .jks keystore.
+# storeFile is resolved relative to android/app/ (where build.gradle.kts lives).
+storePassword=
+keyPassword=
+keyAlias=upload
+storeFile=upload-keystore.jks

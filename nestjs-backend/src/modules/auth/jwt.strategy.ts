@@ -3,16 +3,18 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtPayload, AuthUser } from '../../common/types/auth.types';
 import { UsersService } from '../users/users.service';
+import { jwtSecretOrKeyProvider, getJwtSigningSecret } from './jwt-secrets';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly usersService: UsersService) {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) throw new Error('JWT_SECRET ortam değişkeni tanımlanmamış');
+    // Fail fast at boot if JWT_SECRET is missing.
+    getJwtSigningSecret();
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: secret,
+      // Dual-secret verify: JWT_SECRET, then JWT_SECRET_PREVIOUS during rotation.
+      secretOrKeyProvider: jwtSecretOrKeyProvider,
     });
   }
 

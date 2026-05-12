@@ -46,6 +46,8 @@ describe('Critical flows (e2e)', () => {
     const password = 'Test1234';
     const phone = '5551112233';
     let accessToken: string;
+    let userId: string;
+    let userRole: string;
 
     it('registers a new user and returns a JWT', async () => {
       const res = await http()
@@ -56,6 +58,8 @@ describe('Critical flows (e2e)', () => {
       expect(res.body.user.email).toBe(email);
       expect(res.body.user.passwordHash).toBeUndefined();
       accessToken = res.body.access_token;
+      userId = res.body.user.id;
+      userRole = res.body.user.role;
     });
 
     it('rejects access to a JWT-protected endpoint without a token', async () => {
@@ -66,6 +70,22 @@ describe('Critical flows (e2e)', () => {
       const res = await http()
         .get('/users/me')
         .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+      expect(res.body.email).toBe(email);
+    });
+
+    it('accepts a token signed with JWT_SECRET_PREVIOUS (dual-secret rotation window)', async () => {
+      // Simulate a token issued before a JWT_SECRET rotation: sign with the old key.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const jwt = require('jsonwebtoken');
+      const oldKeyToken = jwt.sign(
+        { email, sub: userId, role: userRole },
+        process.env.JWT_SECRET_PREVIOUS as string,
+        { expiresIn: '30d' },
+      );
+      const res = await http()
+        .get('/users/me')
+        .set('Authorization', `Bearer ${oldKeyToken}`)
         .expect(200);
       expect(res.body.email).toBe(email);
     });
