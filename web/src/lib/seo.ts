@@ -1,6 +1,6 @@
 // SEO helpers — JSON-LD schema builders for Schema.org
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://yapgitsin.tr';
 const NAME = 'Yapgitsin';
 
 export function siteUrl(path = ''): string {

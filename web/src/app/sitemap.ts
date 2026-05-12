@@ -14,7 +14,7 @@ import {
 // Required for `output: 'export'` — sitemap is generated once at build time.
 export const dynamic = 'force-static';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://yapgitsin.tr';
 
 // Build hreflang alternates for a locale-agnostic path (e.g. '/temizlik').
 // TR (default) lives at root; EN/AZ at /en, /az. Plus x-default = TR.

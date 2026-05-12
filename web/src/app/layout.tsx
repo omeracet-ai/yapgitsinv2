@@ -14,7 +14,7 @@ const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme')||'system
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://yapgitsin.tr';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),

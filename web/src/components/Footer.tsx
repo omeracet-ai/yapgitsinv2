@@ -17,28 +17,30 @@ export default async function Footer() {
             </p>
           </div>
           <div className="flex gap-3">
-            <a
-              href="#"
-              className="inline-flex items-center gap-2 bg-black hover:bg-black/80 transition rounded-2xl px-5 py-3 min-w-[150px]"
-              aria-label="App Store'dan indir"
+            <span
+              role="img"
+              aria-label="App Store — yakında"
+              title="Yakında"
+              className="inline-flex items-center gap-2 bg-black/90 rounded-2xl px-5 py-3 min-w-[150px] cursor-default select-none"
             >
               <span className="text-2xl" aria-hidden></span>
               <div className="text-left leading-tight">
                 <div className="text-[10px] text-white/60 uppercase">Download on the</div>
                 <div className="text-base font-semibold">App Store</div>
               </div>
-            </a>
-            <a
-              href="#"
-              className="inline-flex items-center gap-2 bg-black hover:bg-black/80 transition rounded-2xl px-5 py-3 min-w-[150px]"
-              aria-label="Google Play'den indir"
+            </span>
+            <span
+              role="img"
+              aria-label="Google Play — yakında"
+              title="Yakında"
+              className="inline-flex items-center gap-2 bg-black/90 rounded-2xl px-5 py-3 min-w-[150px] cursor-default select-none"
             >
               <span className="text-2xl" aria-hidden>▶</span>
               <div className="text-left leading-tight">
                 <div className="text-[10px] text-white/60 uppercase">Get it on</div>
                 <div className="text-base font-semibold">Google Play</div>
               </div>
-            </a>
+            </span>
           </div>
         </div>
       </div>
@@ -56,15 +58,15 @@ export default async function Footer() {
             Türkiye&apos;nin hizmet marketplace platformu. Güvenilir ustalar, hızlı çözümler.
           </p>
           <div className="flex gap-2">
-            <a href="#" aria-label="Instagram" className="w-10 h-10 rounded-full bg-white/10 hover:bg-[var(--primary)] transition flex items-center justify-center">
-              <span className="text-base">📷</span>
-            </a>
-            <a href="#" aria-label="Twitter/X" className="w-10 h-10 rounded-full bg-white/10 hover:bg-[var(--primary)] transition flex items-center justify-center">
-              <span className="text-base">𝕏</span>
-            </a>
-            <a href="#" aria-label="Facebook" className="w-10 h-10 rounded-full bg-white/10 hover:bg-[var(--primary)] transition flex items-center justify-center">
-              <span className="text-base">f</span>
-            </a>
+            <span aria-label="Instagram — yakında" title="Yakında" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center cursor-default select-none">
+              <span className="text-base" aria-hidden>📷</span>
+            </span>
+            <span aria-label="X (Twitter) — yakında" title="Yakında" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center cursor-default select-none">
+              <span className="text-base" aria-hidden>𝕏</span>
+            </span>
+            <span aria-label="Facebook — yakında" title="Yakında" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center cursor-default select-none">
+              <span className="text-base" aria-hidden>f</span>
+            </span>
           </div>
         </div>
 

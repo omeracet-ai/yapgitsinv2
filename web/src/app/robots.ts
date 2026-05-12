@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 
 export const dynamic = 'force-static';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://yapgitsin.tr';
 
 // Phase 97 — robots.txt enrichment: explicit disallows for API/admin/internal,
 // crawl-delay for politeness, sitemap pointer.
