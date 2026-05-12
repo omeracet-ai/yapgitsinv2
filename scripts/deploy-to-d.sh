@@ -51,7 +51,13 @@ fi
 if [ -d "$ROOT/web" ]; then
   echo "-> Web build (static)"
   cd "$ROOT/web"
-  npm run build > /dev/null 2>&1 || echo "  (web build skipped/failed)"
+  # Phase 182: prod build must NOT pick up dev .env.local (it overrides
+  # .env.production in Next.js and would bake http://localhost:3000 into
+  # sitemap.xml / robots.txt / metadataBase). Hide it during the build.
+  ENVLOCAL_HIDDEN=""
+  if [ -f .env.local ]; then mv .env.local .env.local.deploybak && ENVLOCAL_HIDDEN=1; fi
+  NEXT_PUBLIC_SITE_URL="https://yapgitsin.tr" npm run build > /dev/null 2>&1 || echo "  (web build skipped/failed)"
+  if [ -n "$ENVLOCAL_HIDDEN" ]; then mv .env.local.deploybak .env.local; fi
   if [ -d out ]; then
     mv /d/web "/d/web.bak.$BACKUP_TS" 2>/dev/null || true
     mkdir -p /d/web
