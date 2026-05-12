@@ -22,6 +22,9 @@ cp package.json package-lock.json /d/backend/
 [ -f index.html ] && cp index.html /d/backend/index.html
 # Phase 168: production env (DB creds, JWT secret) for runtime
 [ -f .env.production ] && cp .env.production /d/backend/.env.production
+# Also as .env: NestJS reads .env even when NODE_ENV is unset on the host,
+# so this overrides any stale mysql .env with the correct sqlite config.
+[ -f .env.production ] && cp .env.production /d/backend/.env
 # Phase 178: iisnode boot-check wrapper + minimal sanity test endpoint
 [ -f boot-check.js ] && cp boot-check.js /d/backend/boot-check.js
 [ -f IISNODE_DEBUG.md ] && cp IISNODE_DEBUG.md /d/backend/IISNODE_DEBUG.md
@@ -50,6 +53,9 @@ fi
 [ -f web.config ] && cp web.config /d/admin/web.config
 # Static placeholder (iisnode yokken /admin/ -> 200)
 [ -f index.html ] && cp index.html /d/admin/index.html
+# Production env (also as .env so it loads even when NODE_ENV is unset)
+[ -f .env.production ] && cp .env.production /d/admin/.env.production
+[ -f .env.production ] && cp .env.production /d/admin/.env
 
 # Web (static export)
 if [ -d "$ROOT/web" ]; then
