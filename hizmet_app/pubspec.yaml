@@ -27,6 +27,9 @@ dependencies:
   image_picker: ^1.1.2
 
   # Dosya seçme (chat attachment — Phase 139)
+  # 12.x is the first major to use win32 ^6 (matches share_plus/wakelock_plus);
+  # 8.x–11.x pin win32 ^5 which conflicts. 3.0.4 used the removed v1 Android
+  # embedding and no longer compiles. Pinned via dependency_overrides below.
   file_picker: ^3.0.4
 
   # URL aç (e-posta, telefon, web)
@@ -70,6 +73,13 @@ dependencies:
 
 
 
+
+# record 5.2.1's transitive record_linux 0.7.2 doesn't implement the
+# record_platform_interface 1.5.0 API pulled in by record_android/darwin,
+# breaking compilation. Override record_linux to a compatible version.
+dependency_overrides:
+  record_linux: ^1.1.0
+  file_picker: ^12.0.0-beta.2
 
 dev_dependencies:
   flutter_test:

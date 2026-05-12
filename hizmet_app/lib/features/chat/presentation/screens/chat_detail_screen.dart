@@ -591,7 +591,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
       path = picked?.path;
     } else {
-      final res = await FilePicker.platform.pickFiles(
+      final res = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'doc', 'docx'],
       );
