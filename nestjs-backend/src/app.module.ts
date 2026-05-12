@@ -11,6 +11,8 @@ import { CronModule } from './modules/cron/cron.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { isAbsolute, join } from 'path';
+import { APP_ROOT } from './common/paths';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { JobsModule } from './modules/jobs/jobs.module';
@@ -177,10 +179,20 @@ import { Badge } from './modules/reputation/badge.entity';
           Badge,
         ];
         if (dbType === 'sqlite') {
+          // DB_DATABASE override allows isolated test DBs (e.g. ':memory:'); defaults to dev file.
+          // Resolve relative names against APP_ROOT — under iisnode process.cwd() is
+          // C:\Windows\System32\inetsrv (no write access). ':memory:' and absolute paths pass through.
+          const sqliteName =
+            configService.get<string>('DB_DATABASE') ||
+            configService.get<string>('DB_NAME') ||
+            'hizmet_db.sqlite';
+          const sqlitePath =
+            sqliteName === ':memory:' || isAbsolute(sqliteName)
+              ? sqliteName
+              : join(APP_ROOT, sqliteName);
           return {
             type: 'sqlite' as const,
-            // DB_DATABASE override allows isolated test DBs (e.g. ':memory:'); defaults to dev file.
-            database: configService.get<string>('DB_DATABASE') || 'hizmet_db.sqlite',
+            database: sqlitePath,
             entities,
             // Pick up entities only registered via TypeOrmModule.forFeature (e.g. JobLead)
             // so the in-memory e2e schema is complete.

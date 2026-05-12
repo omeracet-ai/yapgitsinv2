@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import helmet from 'helmet';
 import * as Sentry from '@sentry/node';
 import { SentryFilter } from './common/sentry.filter';
+import { APP_ROOT } from './common/paths';
 
 // Sentry — prod-only, env-driven
 if (process.env.SENTRY_DSN && process.env.NODE_ENV === 'production') {
@@ -168,14 +169,23 @@ async function bootstrap() {
   });
   app.useWebSocketAdapter(new IoAdapter(app.getHttpServer()));
 
-  // uploads/jobs klasörünü oluştur (yoksa)
-  const uploadsDir = join(process.cwd(), 'uploads', 'jobs');
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
+  // uploads/jobs klasörünü oluştur (yoksa).
+  // APP_ROOT kullan — iisnode altında process.cwd() = C:\Windows\System32\inetsrv (yazma izni yok).
+  // mkdir başarısız olsa bile app crash etmemeli: uploads özelliği devre dışı kalır, API ayakta kalır.
+  const uploadsDir = join(APP_ROOT, 'uploads', 'jobs');
+  try {
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+  } catch (e) {
+    console.warn(
+      '[boot] uploads dir create failed (uploads will be unavailable):',
+      e instanceof Error ? e.message : e,
+    );
   }
 
   // /uploads/* → uploads/ klasöründen statik dosya sun
-  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
+  app.useStaticAssets(join(APP_ROOT, 'uploads'), { prefix: '/uploads' });
 
   // IIS reverse-proxy mount path (e.g. /backend → NestJS routes prefixed with /backend)
   const globalPrefix = process.env.GLOBAL_PREFIX;

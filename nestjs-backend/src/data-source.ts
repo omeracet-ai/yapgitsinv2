@@ -12,8 +12,18 @@
 import 'reflect-metadata';
 import 'dotenv/config';
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { isAbsolute, join } from 'path';
+import { APP_ROOT } from './common/paths';
 
 const dbType = process.env.DB_TYPE || 'sqlite';
+
+/**
+ * Resolve the SQLite database path against APP_ROOT (not process.cwd(), which is
+ * C:\Windows\System32\inetsrv under iisnode). `:memory:` and absolute paths pass through.
+ */
+function resolveSqlitePath(name: string): string {
+  return name === ':memory:' || isAbsolute(name) ? name : join(APP_ROOT, name);
+}
 
 const baseOptions = {
   // Glob both .ts (CLI w/ ts-node) and .js (compiled prod) so this file works in both contexts.
@@ -27,7 +37,9 @@ let options: DataSourceOptions;
 if (dbType === 'sqlite') {
   options = {
     type: 'sqlite',
-    database: 'hizmet_db.sqlite',
+    database: resolveSqlitePath(
+      process.env.DB_DATABASE || process.env.DB_NAME || 'hizmet_db.sqlite',
+    ),
     ...baseOptions,
   };
 } else if (dbType === 'mysql') {
