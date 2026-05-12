@@ -39,7 +39,7 @@ export class ReputationService {
     metadata?: Record<string, unknown>,
     tenantId?: string | null,
   ): Promise<Reputation> {
-    const user = await this.usersService.findOne(userId);
+    const user = await this.usersService.findById(userId);
     if (!user) throw new NotFoundException('User not found');
 
     const previousScore = user.reputationScore || 0;
@@ -153,7 +153,7 @@ export class ReputationService {
    * Get complete reputation profile for a user
    */
   async getReputationProfile(userId: string, tenantId?: string | null) {
-    const user = await this.usersService.findOne(userId);
+    const user = await this.usersService.findById(userId);
     if (!user) throw new NotFoundException('User not found');
 
     const timeDecayScore = await this.calculateTimeDecayScore(userId);

@@ -10,7 +10,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ChatService, SendMessageDto } from './chat.service';
+import { ChatService } from './chat.service';
+import type { SendMessageDto } from './chat.service';
 import type { TranslateLang } from '../ai/translate.service';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 

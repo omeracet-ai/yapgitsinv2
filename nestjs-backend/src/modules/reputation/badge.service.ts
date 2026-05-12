@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Badge } from './badge.entity';
+import { Badge, BadgeType } from './badge.entity';
 import { UsersService } from '../users/users.service';
 
 /**
@@ -74,7 +74,7 @@ export class BadgeService {
    * Check and award badges based on current reputation metrics
    */
   async checkAndAwardBadges(userId: string, tenantId?: string | null): Promise<Badge[]> {
-    const user = await this.usersService.findOne(userId);
+    const user = await this.usersService.findById(userId);
     if (!user) throw new NotFoundException('User not found');
 
     const awardedBadges: Badge[] = [];
@@ -147,7 +147,7 @@ export class BadgeService {
   /**
    * Award a badge to a user
    */
-  async awardBadge(userId: string, badgeType: string, tenantId?: string | null): Promise<Badge> {
+  async awardBadge(userId: string, badgeType: BadgeType, tenantId?: string | null): Promise<Badge> {
     const def = this.BADGE_DEFINITIONS[badgeType as keyof typeof this.BADGE_DEFINITIONS];
     if (!def) {
       throw new Error(`Unknown badge type: ${badgeType}`);
@@ -174,7 +174,7 @@ export class BadgeService {
   /**
    * Revoke a badge from a user
    */
-  async revokeBadge(userId: string, badgeType: string, reason: string): Promise<void> {
+  async revokeBadge(userId: string, badgeType: BadgeType, reason: string): Promise<void> {
     await this.badgeRepo.update(
       { userId, badgeType, active: true },
       {
@@ -188,7 +188,7 @@ export class BadgeService {
   /**
    * Check if user has a specific badge
    */
-  async hasBadge(userId: string, badgeType: string): Promise<boolean> {
+  async hasBadge(userId: string, badgeType: BadgeType): Promise<boolean> {
     const count = await this.badgeRepo.count({
       where: { userId, badgeType, active: true },
     });

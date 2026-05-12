@@ -9,6 +9,15 @@ import {
 } from 'typeorm';
 import { User } from '../users/user.entity';
 
+export type BadgeType =
+  | 'verified'
+  | 'top_rated'
+  | 'fast_responder'
+  | 'reliable'
+  | 'expert'
+  | 'newcomer'
+  | 'power_tasker';
+
 /**
  * Phase 165 — Achievement badges.
  * Auto-awarded based on reputation milestones and work quality metrics.
@@ -34,14 +43,7 @@ export class Badge {
 
   /** Badge type identifier */
   @Column({ type: 'varchar', length: 50 })
-  badgeType:
-    | 'verified'
-    | 'top_rated'
-    | 'fast_responder'
-    | 'reliable'
-    | 'expert'
-    | 'newcomer'
-    | 'power_tasker';
+  badgeType: BadgeType;
 
   /** Human-readable badge name (TR & EN) */
   @Column({ type: 'varchar', length: 100 })
