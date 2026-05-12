@@ -18,6 +18,8 @@ cp -r dist/* /d/backend/
 cp package.json package-lock.json /d/backend/
 # Phase 166: IIS + iisnode bridge
 [ -f web.config ] && cp web.config /d/backend/web.config
+# Static placeholder (iisnode yokken /backend/ -> 200)
+[ -f index.html ] && cp index.html /d/backend/index.html
 # Phase 168: production env (DB creds, JWT secret) for runtime
 [ -f .env.production ] && cp .env.production /d/backend/.env.production
 # Phase 178: iisnode boot-check wrapper + minimal sanity test endpoint
@@ -46,6 +48,8 @@ else
 fi
 # Phase 166: IIS + iisnode bridge (overwrite any standalone-bundled web.config)
 [ -f web.config ] && cp web.config /d/admin/web.config
+# Static placeholder (iisnode yokken /admin/ -> 200)
+[ -f index.html ] && cp index.html /d/admin/index.html
 
 # Web (static export)
 if [ -d "$ROOT/web" ]; then
