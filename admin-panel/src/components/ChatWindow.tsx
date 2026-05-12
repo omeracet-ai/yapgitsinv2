@@ -79,7 +79,7 @@ export function ChatWindow({
       setMessageText('');
 
       try {
-        await onSendMessage(text, conversation.lastMessage.jobLeadId);
+        await onSendMessage(text, conversation.lastMessage.jobLeadId ?? undefined);
       } catch (error) {
         setMessageText(text); // Restore on error
         console.error('Failed to send message:', error);

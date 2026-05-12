@@ -47,12 +47,10 @@ export function useWebSocket(options: UseWebSocketOptions) {
       ? new URL(process.env.NEXT_PUBLIC_API_URL).host
       : window.location.host;
 
-    const wsUrl = `${protocol}//${host}/chat`;
+    const wsUrl = `${protocol}//${host}/chat?userId=${encodeURIComponent(userId)}`;
 
     try {
-      ws.current = new WebSocket(wsUrl, [], {
-        headers: { userId },
-      } as any);
+      ws.current = new WebSocket(wsUrl);
 
       ws.current.onopen = () => {
         setIsConnected(true);

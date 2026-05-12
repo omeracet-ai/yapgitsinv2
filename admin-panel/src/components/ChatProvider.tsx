@@ -205,7 +205,7 @@ export function ChatProvider({ userId, children }: ChatProviderProps) {
         markAsRead,
         deleteMessage,
         loadConversations,
-        setIsTyping,
+        setIsTyping: setTyping,
         clearError,
       }}
     >
