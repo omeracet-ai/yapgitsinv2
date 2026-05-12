@@ -1,3 +1,24 @@
+# ⚠️ OBSOLETE / GÜNCEL DURUM (2026-05-12 — Müdür/Voldi-db)
+
+Bu dosyanın başlığı YANILTICI. Production şu an MariaDB DEĞİL — **SQLite** ile çalışıyor:
+
+- DB dosyası: `nestjs-backend/hizmet_db.sqlite`
+- Deploy: FTP (FileZilla ile manuel upload)
+- TypeORM: `synchronize: true` aktif → entity değişiklikleri restart'ta otomatik şemaya uygulanıyor.
+
+Sonuç: Aşağıdaki `add-*.js` manuel DDL script'lerine **production'da gerek YOK**.
+Phase 22–26 kolon/tablo değişiklikleri zaten `synchronize` ile canlıda mevcut.
+
+Bu dosyadaki MariaDB/Postgres script'leri yalnızca **gelecekteki RDBMS geçişi** için
+tarihsel referans. O geçiş yapılırsa bu ham `add-*.js` script'leri DEĞİL,
+`docs/DB_MIGRATION_RUNBOOK.md`'deki **baseline migration** yaklaşımı kullanılacak.
+
+`nestjs-backend/add-2fa-columns.js` vb. dosyalar repoda duruyor — arşiv niteliğinde, silinmedi.
+
+---
+
+## ARŞIV — eski plan (RDBMS geçişi yapılırsa referans)
+
 # PENDING DDL — Production MariaDB Migrations Awaiting Run
 
 DNS to ftp.yapgitsin.tr çözümlenemiyor + port 3306 dış erişim bloklu (geçici).

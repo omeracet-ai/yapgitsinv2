@@ -10,10 +10,20 @@
 #     ANDROID_KEY_ALIAS         keyAlias
 #     ANDROID_KEY_PASSWORD      keyPassword
 #
-#   iOS code signing (if absent → builds with --no-codesign, archive uploaded):
-#     IOS_CERTIFICATE_BASE64 / IOS_CERTIFICATE_PASSWORD / IOS_PROVISION_PROFILE_BASE64
-#     (wire these into a signing step + ExportOptions.plist if you need a
-#      distributable IPA; currently not configured.)
+#   iOS code signing (if absent → builds with --no-codesign, .xcarchive uploaded):
+#     IOS_CERTIFICATE_BASE64        base64 of your Apple Distribution .p12
+#                                   (Apple Developer portal → Certificates →
+#                                    Apple Distribution → export .p12 from Keychain;
+#                                    then: base64 -i cert.p12 | pbcopy)
+#     IOS_CERTIFICATE_PASSWORD      the password set when exporting the .p12
+#     IOS_PROVISION_PROFILE_BASE64  base64 of your .mobileprovision
+#                                   (Apple Developer portal → Profiles → download;
+#                                    then: base64 -i profile.mobileprovision | pbcopy)
+#     IOS_KEYCHAIN_PASSWORD         (optional) password for the temp CI keychain;
+#                                   if absent a random one is generated
+#   When the cert secret is present the build runs `flutter build ipa --release
+#   --export-options-plist=ios/ExportOptions.plist` → copy ios/ExportOptions.plist.example
+#   to ios/ExportOptions.plist and fill in teamID / method (app-store or ad-hoc).
 #
 # NOTE: hizmet_app/android/app/build.gradle.kts reads android/key.properties
 # (via rootProject.file("key.properties")) and uses signingConfigs.release when
@@ -113,6 +123,9 @@ jobs:
   build-ios:
     needs: analyze-test
     runs-on: macos-latest
+    # secrets are not usable in step-level `if:` — surface presence via job env
+    env:
+      HAS_IOS_CERT: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' }}
     defaults:
       run:
         working-directory: hizmet_app
@@ -124,8 +137,51 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: flutter pub get
+
+      # ── Signed path: only runs when IOS_CERTIFICATE_BASE64 is set ──────────
+      - name: Import signing certificate & provisioning profile
+        if: env.HAS_IOS_CERT == 'true'
+        env:
+          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+          IOS_KEYCHAIN_PASSWORD: ${{ secrets.IOS_KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN_PWD="${IOS_KEYCHAIN_PASSWORD:-}"
+          if [ -z "$KEYCHAIN_PWD" ]; then KEYCHAIN_PWD="$(openssl rand -base64 24)"; fi
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          CERT_PATH="$RUNNER_TEMP/ios_cert.p12"
+          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+
+          echo "$IOS_CERTIFICATE_BASE64" | base64 -d > "$CERT_PATH"
+          echo "$IOS_PROVISION_PROFILE_BASE64" | base64 -d > "$PROFILE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$IOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH" login.keychain-db
+
+          PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES_DIR"
+          cp "$PROFILE_PATH" "$PROFILES_DIR/"
+          echo "Signing assets installed (keychain: $KEYCHAIN_PATH)"
+      - name: Build signed IPA (release)
+        if: env.HAS_IOS_CERT == 'true'
+        run: |
+          if [ ! -f ios/ExportOptions.plist ]; then
+            echo "::error::ios/ExportOptions.plist missing — copy ios/ExportOptions.plist.example, fill teamID/method, and commit it."
+            exit 1
+          fi
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+
+      # ── Fallback path: no cert secret → unsigned archive ──────────────────
       - name: Build iOS (no codesign — uploads .xcarchive)
+        if: env.HAS_IOS_CERT != 'true'
         run: flutter build ipa --release --no-codesign
+
       - name: Upload .ipa (present only when codesigned)
         uses: actions/upload-artifact@v4
         with:
@@ -138,3 +194,6 @@ jobs:
           name: app-release-xcarchive
           path: hizmet_app/build/ios/archive/*.xcarchive
           if-no-files-found: warn
+      - name: Clean up temporary keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/app-signing.keychain-db" || true

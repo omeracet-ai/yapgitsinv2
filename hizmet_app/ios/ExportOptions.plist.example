@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copy this file to ios/ExportOptions.plist and fill in the placeholders, then
+  commit it. Used by `flutter build ipa --release --export-options-plist=...`
+  in .github/workflows/mobile-ci.yml when iOS signing secrets are configured.
+
+  - method: "app-store" (TestFlight / App Store) or "ad-hoc" (registered devices)
+            other valid values: "enterprise", "development"
+  - teamID: your 10-character Apple Developer Team ID (Membership page)
+  - signingStyle: "manual" (CI uses the imported cert + provisioning profile)
+  - provisioningProfiles: bundle id  ->  provisioning profile NAME (not file).
+    Add one entry per bundle id in the app.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>method</key>
+  <string>app-store</string>
+  <key>teamID</key>
+  <string>YOUR_TEAM_ID</string>
+  <key>signingStyle</key>
+  <string>manual</string>
+  <key>uploadBitcode</key>
+  <false/>
+  <key>uploadSymbols</key>
+  <true/>
+  <key>compileBitcode</key>
+  <false/>
+  <key>stripSwiftSymbols</key>
+  <true/>
+  <key>provisioningProfiles</key>
+  <dict>
+    <key>com.example.hizmetApp</key>
+    <string>YOUR_PROVISIONING_PROFILE_NAME</string>
+  </dict>
+</dict>
+</plist>

@@ -57,6 +57,10 @@ describe('Critical flows (e2e)', () => {
       expect(res.body.access_token).toBeDefined();
       expect(res.body.user.email).toBe(email);
       expect(res.body.user.passwordHash).toBeUndefined();
+      // Phase 160 — JWT must carry the tenantId claim (null = default tenant).
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const decoded = require('jsonwebtoken').decode(res.body.access_token);
+      expect(decoded).toHaveProperty('tenantId');
       accessToken = res.body.access_token;
       userId = res.body.user.id;
       userRole = res.body.user.role;

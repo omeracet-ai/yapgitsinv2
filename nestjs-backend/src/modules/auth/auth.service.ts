@@ -106,7 +106,12 @@ export class AuthService implements OnModuleInit {
     const existing = await this.usersService.findByPhone(phone);
     if (existing) {
       const { passwordHash: _ph, ...safe } = existing;
-      const payload = { email: safe.email, sub: safe.id, role: safe.role };
+      const payload = {
+        email: safe.email,
+        sub: safe.id,
+        role: safe.role,
+        tenantId: safe.tenantId ?? null,
+      };
       return {
         access_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
         user: safe,
@@ -285,7 +290,12 @@ export class AuthService implements OnModuleInit {
       );
       return { requires2FA: true, tempToken };
     }
-    const payload = { email: user.email, sub: user.id, role: user.role };
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      tenantId: user.tenantId ?? null,
+    };
     return {
       access_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
       user,
@@ -309,7 +319,12 @@ export class AuthService implements OnModuleInit {
     if (!user) throw new UnauthorizedException('Kullanıcı bulunamadı');
     if (user.suspended) throw new ForbiddenException('Hesap askıda');
     const { passwordHash: _h, ...result } = user;
-    const tokenPayload = { email: result.email, sub: result.id, role: result.role };
+    const tokenPayload = {
+      email: result.email,
+      sub: result.id,
+      role: result.role,
+      tenantId: result.tenantId ?? null,
+    };
     return {
       access_token: this.jwtService.sign(tokenPayload, { expiresIn: '30d' }),
       user: result,
@@ -328,7 +343,12 @@ export class AuthService implements OnModuleInit {
     if (user.suspended) {
       throw new ForbiddenException('Hesap askıda');
     }
-    const payload = { email: user.email, sub: user.id, role: user.role };
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      tenantId: user.tenantId ?? null,
+    };
     return {
       access_token: this.jwtService.sign(payload, { expiresIn: '8h' }),
       user: {
@@ -385,7 +405,12 @@ export class AuthService implements OnModuleInit {
     const { passwordHash: _hash2, ...result } = newUser;
     // Phase 121 — fire-and-forget welcome email
     void this.emailService.sendWelcome(newUser);
-    const payload = { email: result.email, sub: result.id, role: result.role };
+    const payload = {
+      email: result.email,
+      sub: result.id,
+      role: result.role,
+      tenantId: result.tenantId ?? null,
+    };
     return {
       access_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
       user: result,
