@@ -99,6 +99,16 @@ export class Payment {
   @Column({ type: 'varchar', length: 255, nullable: true })
   paymentIntentId: string | null;
 
+  // Phase 175 — iyzipay checkout form token + paymentId, and the linked escrow.
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  iyzipayToken: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  iyzipayPaymentId: string | null;
+
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  escrowId: string | null;
+
   // Refund ID if refunded
   @Column({ type: 'varchar', length: 255, nullable: true })
   refundId: string | null;

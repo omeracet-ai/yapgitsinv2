@@ -79,6 +79,18 @@ export class PaymentEscrow {
   @Column({ type: 'varchar', length: 200, nullable: true })
   paymentToken: string | null;
 
+  // Phase 175 — iyzipay paymentTransactionId (needed for refunds) + capture state
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  paymentTxnId: string | null;
+
+  /** 'pending' until iyzipay callback confirms, then 'paid' | 'failed' | 'refunded'. */
+  @Column({ type: 'varchar', length: 16, default: 'pending' })
+  paymentStatus: string;
+
+  /** True if a refund was attempted at iyzipay but failed (needs admin attention). */
+  @Column({ type: 'boolean', default: false })
+  refundNeedsAttention: boolean;
+
   @Column({ type: 'float', nullable: true })
   refundAmount: number | null;
 

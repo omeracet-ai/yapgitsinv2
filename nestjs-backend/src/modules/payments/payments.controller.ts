@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Res, Get, UseGuards, Req, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Res, Get, UseGuards, Req, Query, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
 import type { Response } from 'express';
 import { PaymentsService } from './payments.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -6,10 +6,14 @@ import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 import { PaymentHistoryQueryDto } from './dto/payment-history.dto';
 import { RefundPaymentDto } from './dto/refund-payment.dto';
+import { EscrowService } from '../escrow/escrow.service';
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(
+    private readonly paymentsService: PaymentsService,
+    private readonly escrowService: EscrowService,
+  ) {}
 
   // Phase 163: New Payment Intent API
   @Post('create-intent')
@@ -87,6 +91,18 @@ export class PaymentsController {
     } else {
       return res.redirect('yapgitsin://payment-failure');
     }
+  }
+
+  // Phase 175: iyzipay Checkout Form callback — iyzipay POSTs { token } here
+  // after the customer pays. We re-verify the token server-side (retrieveCheckout)
+  // and only then move the escrow to a captured state. No auth: this is iyzipay → us.
+  @Post('iyzipay/callback')
+  @HttpCode(HttpStatus.OK)
+  async iyzipayCallback(@Body() body: Record<string, string>) {
+    const token = body?.token;
+    if (!token) throw new BadRequestException('Missing token');
+    const escrow = await this.escrowService.confirmByToken(token);
+    return { status: escrow.paymentStatus, escrowId: escrow.id };
   }
 
   // Phase 163: Webhook for payment provider events

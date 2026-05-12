@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PaymentEscrow } from './payment-escrow.entity';
 import { EscrowService } from './escrow.service';
 import { FeeService } from './fee.service';
+import { IyzipayService } from './iyzipay.service';
 import { EscrowController } from './escrow.controller';
 import { EscrowAdminController } from './escrow-admin.controller';
 import { BookingEscrow } from './booking-escrow.entity';
@@ -23,7 +24,7 @@ import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
     ]),
   ],
   controllers: [EscrowController, EscrowAdminController, BookingEscrowController],
-  providers: [EscrowService, FeeService, BookingEscrowService],
-  exports: [EscrowService, FeeService, BookingEscrowService],
+  providers: [EscrowService, FeeService, IyzipayService, BookingEscrowService],
+  exports: [EscrowService, FeeService, IyzipayService, BookingEscrowService],
 })
 export class EscrowModule {}

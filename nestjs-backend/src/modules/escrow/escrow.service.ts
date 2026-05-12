@@ -3,12 +3,14 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaymentEscrow, EscrowStatus } from './payment-escrow.entity';
 import { tlToMinor, pctOfMinor, subMinor } from '../../common/money.util';
 import { FeeService, FeeBreakdown } from './fee.service';
+import { IyzipayService } from './iyzipay.service';
 
 export const ALLOWED_TRANSITIONS: Record<EscrowStatus, EscrowStatus[]> = {
   [EscrowStatus.HELD]: [
@@ -45,6 +47,26 @@ export interface InitiateArgs {
   customerId: string;
   taskerId: string;
   paymentToken?: string;
+  /** Buyer details forwarded to iyzipay checkout form (optional). */
+  buyer?: {
+    name?: string;
+    surname?: string;
+    email?: string;
+    gsmNumber?: string;
+    ip?: string;
+    city?: string;
+  };
+}
+
+export interface InitiateResult {
+  escrow: PaymentEscrow;
+  /** iyzipay hosted payment page URL (null only on hard failure). */
+  paymentInitUrl: string | null;
+  /** iyzipay checkout form token. */
+  paymentToken: string | null;
+  /** inline checkout form snippet (alternative to redirect). */
+  checkoutFormContent: string | null;
+  mock: boolean;
 }
 
 export function getPlatformFeeRate(): number {
@@ -57,10 +79,13 @@ export function getPlatformFeeRate(): number {
 
 @Injectable()
 export class EscrowService {
+  private readonly logger = new Logger(EscrowService.name);
+
   constructor(
     @InjectRepository(PaymentEscrow)
     private readonly repo: Repository<PaymentEscrow>,
     private readonly feeService: FeeService,
+    private readonly iyzipay: IyzipayService,
   ) {}
 
   isValidTransition(from: EscrowStatus, to: EscrowStatus): boolean {
@@ -124,12 +149,18 @@ export class EscrowService {
   }
 
   /**
-   * Phase 169 — Initiate escrow (status=HELD on Iyzipay 3D init).
-   * Note: pending status is not in current state-machine; we treat this as a
-   * pre-hold record carrying the paymentToken until /confirm fires.
+   * Phase 175 — Initiate escrow + real iyzipay checkout form.
+   *
+   * Creates the escrow record (status=HELD, paymentStatus='pending'), then asks
+   * iyzipay for a Checkout Form (token + hosted payment page URL). The customer
+   * pays on iyzipay's page; iyzipay POSTs the token back to our callback which
+   * calls {@link confirmByToken}. Returns `paymentInitUrl` (no longer null).
+   *
+   * Note: HELD is the only "live" status in the state machine; paymentStatus
+   * carries the pre-capture/captured/failed sub-state.
    */
-  async initiate(args: InitiateArgs): Promise<PaymentEscrow> {
-    return this.hold({
+  async initiate(args: InitiateArgs): Promise<InitiateResult> {
+    const escrow = await this.hold({
       jobId: args.jobId,
       offerId: args.offerId,
       amount: args.amount,
@@ -138,11 +169,69 @@ export class EscrowService {
       paymentProvider: 'iyzipay',
       paymentToken: args.paymentToken,
     });
+    escrow.paymentStatus = 'pending';
+
+    try {
+      const cf = await this.iyzipay.createCheckoutForm({
+        refId: escrow.id,
+        gross: escrow.amount,
+        callbackUrl: IyzipayService.callbackUrl(),
+        buyer: args.buyer
+          ? { ...args.buyer, id: escrow.customerId }
+          : { id: escrow.customerId },
+        itemName: `Hizmet #${escrow.jobId}`,
+      });
+      escrow.paymentToken = cf.token;
+      await this.repo.save(escrow);
+      return {
+        escrow,
+        paymentInitUrl: cf.paymentPageUrl,
+        paymentToken: cf.token,
+        checkoutFormContent: cf.checkoutFormContent,
+        mock: cf.mock,
+      };
+    } catch (err) {
+      this.logger.error(
+        `iyzipay checkout init failed for escrow ${escrow.id}: ${(err as Error).message}`,
+      );
+      escrow.paymentStatus = 'failed';
+      await this.repo.save(escrow);
+      return {
+        escrow,
+        paymentInitUrl: null,
+        paymentToken: escrow.paymentToken ?? null,
+        checkoutFormContent: null,
+        mock: this.iyzipay.mockMode,
+      };
+    }
   }
 
   /**
-   * Phase 169 — Iyzipay callback confirms payment captured.
-   * Updates paymentRef + ensures status=HELD.
+   * Phase 175 — iyzipay callback. The token comes from iyzipay's POST after the
+   * customer pays. We MUST re-verify it server-side with retrieveCheckout — we
+   * never trust a client-supplied "success" flag.
+   */
+  async confirmByToken(paymentToken: string): Promise<PaymentEscrow> {
+    if (!paymentToken) throw new BadRequestException('Missing payment token');
+    const escrow = await this.repo.findOne({ where: { paymentToken } });
+    if (!escrow) throw new NotFoundException('Escrow not found for token');
+
+    const result = await this.iyzipay.retrieveCheckout(paymentToken);
+    if (result.status === 'SUCCESS') {
+      escrow.paymentRef = result.paymentId ?? escrow.paymentRef;
+      escrow.paymentTxnId = result.paymentTransactionId ?? escrow.paymentTxnId;
+      escrow.paymentStatus = 'paid';
+      if (escrow.status !== EscrowStatus.HELD) {
+        escrow.status = EscrowStatus.HELD;
+      }
+    } else {
+      escrow.paymentStatus = 'failed';
+    }
+    return this.repo.save(escrow);
+  }
+
+  /**
+   * Phase 169 — legacy confirm (manual paymentRef supply). Kept for compatibility.
    */
   async confirm(
     paymentToken: string,
@@ -151,6 +240,7 @@ export class EscrowService {
     const escrow = await this.repo.findOne({ where: { paymentToken } });
     if (!escrow) throw new NotFoundException('Escrow not found for token');
     escrow.paymentRef = paymentRef;
+    escrow.paymentStatus = 'paid';
     if (escrow.status !== EscrowStatus.HELD) {
       escrow.status = EscrowStatus.HELD;
     }
@@ -300,14 +390,34 @@ export class EscrowService {
       );
     }
 
+    // Phase 175 — best-effort iyzipay refund. If it fails the escrow state still
+    // transitions; we flag the record + log so an admin can reconcile manually.
+    if (escrow.paymentProvider === 'iyzipay' && escrow.paymentTxnId) {
+      try {
+        const r = await this.iyzipay.refund({
+          paymentTransactionId: escrow.paymentTxnId,
+          price: refundAmount,
+        });
+        if (r.status === 'success') {
+          escrow.paymentStatus = 'refunded';
+        } else {
+          escrow.refundNeedsAttention = true;
+          this.logger.warn(
+            `iyzipay refund failed for escrow ${escrow.id}: ${r.error ?? 'unknown'} — flagged for admin`,
+          );
+        }
+      } catch (err) {
+        escrow.refundNeedsAttention = true;
+        this.logger.warn(
+          `iyzipay refund threw for escrow ${escrow.id}: ${(err as Error).message} — flagged for admin`,
+        );
+      }
+    }
+
     escrow.status = target;
     escrow.refundedAt = new Date();
     escrow.refundReason = reason ?? null;
-    if (isPartial) {
-      escrow.refundAmount = refundAmount;
-    } else {
-      escrow.refundAmount = refundAmount;
-    }
+    escrow.refundAmount = refundAmount;
     return this.repo.save(escrow);
   }
 

@@ -72,7 +72,7 @@ export class EscrowController {
     @Request() req: AuthenticatedRequest,
   ) {
     if (!dto || !dto.jobId) throw new BadRequestException('Invalid payload');
-    const escrow = await this.svc.initiate({
+    const result = await this.svc.initiate({
       jobId: dto.jobId,
       offerId: dto.offerId,
       amount: dto.amount,
@@ -81,9 +81,12 @@ export class EscrowController {
       paymentToken: dto.paymentToken,
     });
     return {
-      escrow: this.svc.withFeeBreakdown(escrow),
-      feeBreakdown: this.svc.feeBreakdownFor(escrow),
-      paymentInitUrl: null,
+      escrow: this.svc.withFeeBreakdown(result.escrow),
+      feeBreakdown: this.svc.feeBreakdownFor(result.escrow),
+      paymentInitUrl: result.paymentInitUrl,
+      paymentToken: result.paymentToken,
+      checkoutFormContent: result.checkoutFormContent,
+      mock: result.mock,
     };
   }
 

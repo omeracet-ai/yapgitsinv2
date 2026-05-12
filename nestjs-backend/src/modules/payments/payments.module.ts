@@ -5,11 +5,13 @@ import { PaymentsController } from './payments.controller';
 import { Booking } from '../bookings/booking.entity';
 import { Payment } from './payment.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { EscrowModule } from '../escrow/escrow.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Booking, Payment]),
     NotificationsModule,
+    EscrowModule,
   ],
   controllers: [PaymentsController],
   providers: [PaymentsService],

@@ -11,3 +11,5 @@ process.env.ADMIN_INITIAL_PASSWORD = 'admin';
 // Quiet down outbound integrations (SMS/email just log-and-skip without creds).
 delete process.env.NETGSM_USER;
 delete process.env.SENTRY_DSN;
+// iyzipay: never make live calls in tests — IyzipayService returns deterministic fakes.
+process.env.MOCK_IYZIPAY = '1';
