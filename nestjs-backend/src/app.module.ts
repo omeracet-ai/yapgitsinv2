@@ -6,6 +6,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { UserOrIpThrottlerGuard } from './common/guards/user-or-ip.throttler.guard';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CacheModule } from '@nestjs/cache-manager';
+import { cacheConfigAsync } from './common/cache/cache.config';
 import { CronModule } from './modules/cron/cron.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -102,8 +103,8 @@ import { Badge } from './modules/reputation/badge.entity';
       isGlobal: true,
       envFilePath: [`.env.${process.env.NODE_ENV ?? 'development'}.local`, `.env.${process.env.NODE_ENV ?? 'development'}`, '.env'],
     }),
-    // Global in-memory cache (TTL: 30 saniye, max 500 item)
-    CacheModule.register({ isGlobal: true, ttl: 30000, max: 500 }),
+    // Phase 170 — Cache katmanı: REDIS_URL varsa Redis, yoksa in-memory (graceful fallback).
+    CacheModule.registerAsync(cacheConfigAsync),
     // Phase 170 — Named throttlers (route-bazlı override için).
     //   default: 60 req / 60s (IP başına, global)
     //   auth-login: 5 req / 60s (brute-force koruma)

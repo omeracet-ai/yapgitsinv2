@@ -23,6 +23,16 @@ describe('AppController (e2e)', () => {
       .expect('Hello World!');
   });
 
+  // Phase 170 — cache katmanı: Redis olmadan in-memory fallback ile çalışmalı.
+  // Aynı endpoint'i iki kez çağır; ikincisi cache'ten gelse de aynı yanıt + 200 olmalı.
+  it('GET /stats/public — cache fallback (Redis yokken patlamamalı, idempotent)', async () => {
+    const first = await request(app.getHttpServer()).get('/stats/public').expect(200);
+    const second = await request(app.getHttpServer()).get('/stats/public').expect(200);
+    expect(typeof first.body.totalUsers).toBe('number');
+    expect(second.body.totalUsers).toBe(first.body.totalUsers);
+    expect(second.body.totalJobs).toBe(first.body.totalJobs);
+  });
+
   afterEach(async () => {
     await app.close();
   });

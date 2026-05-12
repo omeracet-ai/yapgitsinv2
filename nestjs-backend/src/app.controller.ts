@@ -1,4 +1,5 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AppService } from './app.service';
@@ -23,6 +24,9 @@ export class AppController {
    * üye katılımı / iş eklenmesini bu uçtan poll'lar.
    */
   @Get('stats/public')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('stats:public')
+  @CacheTTL(5 * 60 * 1000) // Phase 170 — 5 dk cache (sayaçlar yaklaşık değer, sık değişir ama exact olması şart değil)
   async getPublicStats() {
     const [totalUsers, totalJobs, totalWorkers] = await Promise.all([
       this.usersRepo.count(),

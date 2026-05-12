@@ -13,7 +13,10 @@ import {
   ParseUUIDPipe,
   ParseIntPipe,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import type { Response } from 'express';
 import { AddOfferTemplateDto } from './dto/add-offer-template.dto';
 import { AddMessageTemplateDto } from './dto/add-message-template.dto';
@@ -48,7 +51,23 @@ export class UsersController {
     @InjectRepository(Job) private jobsRepo: Repository<Job>,
     @InjectRepository(Review) private reviewsRepo: Repository<Review>,
     @InjectRepository(Offer) private offersRepo: Repository<Offer>,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
+
+  /** Phase 170 — public worker profile cache key + TTL (ms). */
+  private static profileCacheKey(id: string): string {
+    return `worker:profile:${id}`;
+  }
+  private static readonly PROFILE_CACHE_TTL = 60 * 1000; // 1 dk
+
+  /** Profil değiştiren operasyonlardan sonra çağrılır. */
+  private async invalidateProfileCache(id: string): Promise<void> {
+    try {
+      await this.cache.del(UsersController.profileCacheKey(id));
+    } catch {
+      /* cache erişilemezse sessiz geç */
+    }
+  }
 
   // ── Favorite workers ──────────────────────────────────────────────
   @UseGuards(AuthGuard('jwt'))
@@ -241,6 +260,7 @@ export class UsersController {
     }
     const updated = await this.svc.update(req.user.id, body);
     if (!updated) return null;
+    await this.invalidateProfileCache(req.user.id);
     const { passwordHash: _ph, ...safe } = updated as {
       passwordHash?: string;
     } & typeof updated;
@@ -777,9 +797,29 @@ export class UsersController {
     };
   }
 
-  /** GET /users/:id/profile — public */
+  /** GET /users/:id/profile — public (Phase 170: 60s cache, profil güncellemesinde invalidate). */
   @Get(':id/profile')
   async getPublicProfile(@Param('id') id: string) {
+    const cacheKey = UsersController.profileCacheKey(id);
+    try {
+      const cached = await this.cache.get(cacheKey);
+      if (cached !== undefined && cached !== null) return cached;
+    } catch {
+      /* cache erişilemezse normal akışa devam */
+    }
+
+    const profile = await this.buildPublicProfile(id);
+    if (profile !== null) {
+      try {
+        await this.cache.set(cacheKey, profile, UsersController.PROFILE_CACHE_TTL);
+      } catch {
+        /* cache yazılamazsa sorun değil */
+      }
+    }
+    return profile;
+  }
+
+  private async buildPublicProfile(id: string) {
     const user = await this.svc.findById(id);
     if (!user) return null;
 
