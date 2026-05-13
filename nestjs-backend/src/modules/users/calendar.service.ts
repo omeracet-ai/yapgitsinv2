@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import * as crypto from 'crypto';
 import { Booking, BookingStatus } from '../bookings/booking.entity';
+import { User } from './user.entity';
 
 /**
  * Phase 177 — Worker calendar .ics export (RFC 5545).
@@ -15,7 +17,43 @@ export class CalendarService {
   constructor(
     @InjectRepository(Booking)
     private readonly bookingRepo: Repository<Booking>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
   ) {}
+
+  // ── Phase 179 — Calendar token (URL-based auth for subscribe-by-URL) ──
+
+  private generateToken(): string {
+    return crypto.randomBytes(32).toString('base64url');
+  }
+
+  async getOrCreateCalendarToken(userId: string): Promise<string> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new Error('User not found');
+    if (user.calendarToken) return user.calendarToken;
+    const token = this.generateToken();
+    user.calendarToken = token;
+    await this.userRepo.save(user);
+    return token;
+  }
+
+  async rotateCalendarToken(userId: string): Promise<string> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new Error('User not found');
+    const token = this.generateToken();
+    user.calendarToken = token;
+    await this.userRepo.save(user);
+    return token;
+  }
+
+  async revokeCalendarToken(userId: string): Promise<void> {
+    await this.userRepo.update({ id: userId }, { calendarToken: null });
+  }
+
+  async findUserByCalendarToken(token: string): Promise<User | null> {
+    if (!token || token.length < 16) return null;
+    return this.userRepo.findOne({ where: { calendarToken: token } });
+  }
 
   async findWorkerBookings(workerId: string): Promise<Booking[]> {
     const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);

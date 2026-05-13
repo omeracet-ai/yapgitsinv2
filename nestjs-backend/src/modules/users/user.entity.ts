@@ -294,8 +294,8 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   referredByUserId: string | null;
 
-  // ── Phase 155 — Worker calendar ICS feed (Google/Apple/Outlook subscribe) ──
-  @Column({ type: 'varchar', length: 64, nullable: true })
+  // ── Phase 155/179 — Worker calendar ICS feed (Google/Apple/Outlook subscribe) ──
+  @Column({ type: 'varchar', length: 64, nullable: true, unique: true })
   calendarToken: string | null;
 
   @CreateDateColumn()

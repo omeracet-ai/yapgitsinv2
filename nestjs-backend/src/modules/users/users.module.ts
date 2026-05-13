@@ -13,8 +13,10 @@ import { WorkerCertificationService } from './worker-certification.service';
 import { DataPrivacyService } from './data-privacy.service';
 import { CalendarSyncService } from './calendar-sync.service';
 import { CalendarService } from './calendar.service';
-import { CalendarController } from './calendar.controller';
+import { CalendarController, CalendarPublicController } from './calendar.controller';
 import { UsersController } from './users.controller';
+import { WalletController } from './wallet.controller';
+import { WalletService } from './wallet.service';
 import { Job } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
 import { Offer } from '../jobs/offer.entity';
@@ -22,6 +24,8 @@ import { Booking } from '../bookings/booking.entity';
 import { Notification } from '../notifications/notification.entity';
 import { ChatMessage } from '../chat/chat-message.entity';
 import { TokenTransaction } from '../tokens/token-transaction.entity';
+import { Payment } from '../payments/payment.entity';
+import { PaymentEscrow } from '../escrow/payment-escrow.entity';
 import { EarningsService } from './earnings.service';
 import { AiModule } from '../ai/ai.module';
 import { BoostModule } from '../boost/boost.module';
@@ -31,13 +35,14 @@ import { BoostModule } from '../boost/boost.module';
     TypeOrmModule.forFeature([
       User, FavoriteWorker, WorkerInsurance, WorkerCertification, DataDeletionRequest,
       Job, Review, Offer, Booking, Notification, ChatMessage, TokenTransaction,
+      Payment, PaymentEscrow,
     ]),
     AiModule,
     BoostModule,
     forwardRef(() => SubscriptionsModule),
   ],
-  controllers: [CalendarController, UsersController],
-  providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, WorkerCertificationService, DataPrivacyService, CalendarSyncService, CalendarService],
+  controllers: [CalendarController, CalendarPublicController, UsersController, WalletController],
+  providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, WorkerCertificationService, DataPrivacyService, CalendarSyncService, CalendarService, WalletService],
   exports: [UsersService, WorkerInsuranceService, WorkerCertificationService, DataPrivacyService, CalendarSyncService],
 })
 export class UsersModule {}

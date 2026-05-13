@@ -56,4 +56,45 @@ describe('Worker calendar .ics export (e2e)', () => {
     expect(res.text).toContain('VERSION:2.0');
     expect(res.text).toContain('END:VCALENDAR');
   });
+
+  // ── Phase 179 — URL-token subscribe-by-URL ─────────────────────────────
+  describe('Phase 179 — URL token feed', () => {
+    let urlToken: string;
+
+    it('C. POST /users/me/calendar/token issues a token + URL', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/users/me/calendar/token')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(201);
+      expect(res.body.token).toMatch(/^[A-Za-z0-9_-]{32,}$/);
+      expect(res.body.url).toContain('/calendar/');
+      expect(res.body.url).toContain('/feed.ics');
+      urlToken = res.body.token;
+    });
+
+    it('D. public GET /calendar/:token/feed.ics works without auth header', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/calendar/${urlToken}/feed.ics`)
+        .expect(200);
+      expect(res.headers['content-type']).toMatch(/text\/calendar/);
+      expect(res.text).toContain('BEGIN:VCALENDAR');
+      expect(res.text).toContain('END:VCALENDAR');
+    });
+
+    it('E. unknown token → 404', async () => {
+      await request(app.getHttpServer())
+        .get('/calendar/totally-bogus-token-value-1234567890/feed.ics')
+        .expect(404);
+    });
+
+    it('F. DELETE revokes; the old token then returns 404', async () => {
+      await request(app.getHttpServer())
+        .delete('/users/me/calendar/token')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      await request(app.getHttpServer())
+        .get(`/calendar/${urlToken}/feed.ics`)
+        .expect(404);
+    });
+  });
 });
