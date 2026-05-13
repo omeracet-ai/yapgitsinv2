@@ -12,6 +12,8 @@ import { WorkerInsuranceService } from './worker-insurance.service';
 import { WorkerCertificationService } from './worker-certification.service';
 import { DataPrivacyService } from './data-privacy.service';
 import { CalendarSyncService } from './calendar-sync.service';
+import { CalendarService } from './calendar.service';
+import { CalendarController } from './calendar.controller';
 import { UsersController } from './users.controller';
 import { Job } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
@@ -34,8 +36,8 @@ import { BoostModule } from '../boost/boost.module';
     BoostModule,
     forwardRef(() => SubscriptionsModule),
   ],
-  controllers: [UsersController],
-  providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, WorkerCertificationService, DataPrivacyService, CalendarSyncService],
+  controllers: [CalendarController, UsersController],
+  providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, WorkerCertificationService, DataPrivacyService, CalendarSyncService, CalendarService],
   exports: [UsersService, WorkerInsuranceService, WorkerCertificationService, DataPrivacyService, CalendarSyncService],
 })
 export class UsersModule {}
