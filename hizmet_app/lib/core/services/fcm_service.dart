@@ -45,8 +45,8 @@ class FcmService {
           badge: true,
           sound: true,
         );
-      } catch (_) {
-        // Some platforms throw — non-fatal.
+      } catch (e, st) {
+        debugPrint('fcm_service.init.requestPermission: $e\n$st');
       }
 
       // Foreground messages — bridge into the existing in-app banner.
@@ -114,8 +114,8 @@ class FcmService {
           options: Options(headers: {'Authorization': 'Bearer $jwt'}),
         );
       }
-    } catch (_) {
-      // Best-effort cleanup.
+    } catch (e, st) {
+      debugPrint('fcm_service.unregister: $e\n$st');
     }
     await _foregroundSub?.cancel();
     await _tokenRefreshSub?.cancel();

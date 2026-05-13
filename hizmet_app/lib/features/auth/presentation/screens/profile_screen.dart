@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../wallet/presentation/screens/wallet_screen.dart';
+import '../../../wallet/presentation/screens/wallet_screen.dart' deferred as wallet_lib;
+import '../../../../core/widgets/deferred_screen_loader.dart';
 import '../../../tokens/data/token_repository.dart';
 import '../../../currencies/presentation/currency_picker_sheet.dart';
 import '../../../subscriptions/data/subscription_repository.dart';
@@ -946,7 +947,12 @@ class ProfileScreen extends ConsumerWidget {
           }),
           _menuItem(Icons.account_balance_wallet_outlined, 'Cüzdanım', () {
             Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const WalletScreen()));
+                MaterialPageRoute(
+                  builder: (_) => DeferredScreenLoader(
+                    loader: wallet_lib.loadLibrary,
+                    builder: () => wallet_lib.WalletScreen(),
+                  ),
+                ));
           }),
           _menuItem(Icons.calendar_month_outlined, 'İş Takvimi', () {
             Navigator.push(context,

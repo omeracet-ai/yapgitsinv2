@@ -41,8 +41,8 @@ class _IntroVideoSectionState extends ConsumerState<IntroVideoSection> {
     try {
       await ctrl.initialize();
       durationSeconds = ctrl.value.duration.inSeconds;
-    } catch (_) {
-      // initialize başarısız olursa null bırak — server tolerans verir
+    } catch (e, st) {
+      debugPrint('intro_video_section.pickVideo.initialize: $e\n$st');
     } finally {
       await ctrl.dispose();
     }

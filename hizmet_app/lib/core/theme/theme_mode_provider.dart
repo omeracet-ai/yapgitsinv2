@@ -14,8 +14,8 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_prefsKey);
       state = _decode(raw);
-    } catch (_) {
-      // sessizce sistem moduna düş
+    } catch (e, st) {
+      debugPrint('theme_mode_provider._load: $e\n$st');
     }
   }
 
@@ -24,7 +24,9 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_prefsKey, _encode(mode));
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('theme_mode_provider.setMode: $e\n$st');
+    }
   }
 
   static String _encode(ThemeMode m) {

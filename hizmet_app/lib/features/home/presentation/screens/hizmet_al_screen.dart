@@ -5,8 +5,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../jobs/presentation/screens/job_opportunities_screen.dart';
 import '../../../jobs/presentation/screens/my_jobs_screen.dart';
-import '../../../map/presentation/screens/map_screen.dart';
+import '../../../map/presentation/screens/map_screen.dart' deferred as map_lib;
 import '../../../service_requests/presentation/screens/service_request_screen.dart';
+import '../../../../core/widgets/deferred_screen_loader.dart';
 
 class HizmetAlScreen extends ConsumerStatefulWidget {
   const HizmetAlScreen({super.key});
@@ -73,11 +74,14 @@ class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          ServiceRequestBody(),
-          JobOpportunitiesBody(),
-          MapScreen(),
-          MyJobsBody(),
+        children: [
+          const ServiceRequestBody(),
+          const JobOpportunitiesBody(),
+          DeferredScreenLoader(
+            loader: map_lib.loadLibrary,
+            builder: () => map_lib.MapScreen(),
+          ),
+          const MyJobsBody(),
         ],
       ),
     );

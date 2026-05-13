@@ -22,7 +22,9 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     final chatService = ref.read(chatServiceProvider);
     try {
       chatService.connect();
-    } catch (_) {/* may already be connected */}
+    } catch (e, st) {
+      debugPrint('chat_list_screen.initState.connect: $e\n$st');
+    }
     // Touch the provider so it subscribes to presence events.
     ref.read(presenceProvider);
   }

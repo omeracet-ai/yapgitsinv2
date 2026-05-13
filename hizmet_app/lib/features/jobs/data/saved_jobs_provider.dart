@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'saved_jobs_repository.dart';
 
@@ -19,8 +20,8 @@ class SavedJobsNotifier extends StateNotifier<Set<String>> {
           .where((id) => id.isNotEmpty)
           .toSet();
       _loaded = true;
-    } catch (_) {
-      // silent
+    } catch (e, st) {
+      debugPrint('saved_jobs_provider.loadIfNeeded: $e\n$st');
     }
   }
 

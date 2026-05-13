@@ -92,7 +92,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (bd != null && bd.isNotEmpty) {
       try {
         _birthDate = DateTime.parse(bd);
-      } catch (_) {}
+      } catch (e, st) {
+        debugPrint('edit_profile_screen.parseBirthDate: $e\n$st');
+      }
     }
   }
 

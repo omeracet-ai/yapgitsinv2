@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'favorites_repository.dart';
 
@@ -21,8 +22,8 @@ class FavoritesNotifier extends StateNotifier<Set<String>> {
           .where((id) => id.isNotEmpty)
           .toSet();
       _loaded = true;
-    } catch (_) {
-      // silent — empty set is a safe default
+    } catch (e, st) {
+      debugPrint('favorites_provider.loadIfNeeded: $e\n$st');
     }
   }
 

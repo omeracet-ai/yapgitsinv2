@@ -111,7 +111,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         });
         _mapController.move(_selected, 14);
       }
-    } catch (_) {} finally {
+    } catch (e, st) {
+      debugPrint('location_picker._searchAndJump: $e\n$st');
+    } finally {
       setState(() => _loading = false);
     }
   }

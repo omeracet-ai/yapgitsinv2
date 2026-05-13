@@ -68,7 +68,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     if (bd != null && bd.isNotEmpty) {
       try {
         _birthDate = DateTime.parse(bd);
-      } catch (_) {}
+      } catch (e, st) {
+        debugPrint('personal_info_screen.parseBirthDate: $e\n$st');
+      }
     }
   }
 

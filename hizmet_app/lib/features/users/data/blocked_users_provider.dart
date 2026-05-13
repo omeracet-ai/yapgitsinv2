@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'moderation_repository.dart';
 
@@ -20,8 +21,8 @@ class BlockedUsersNotifier extends StateNotifier<Set<String>> {
           .where((id) => id.isNotEmpty)
           .toSet();
       _loaded = true;
-    } catch (_) {
-      // empty set is a safe default
+    } catch (e, st) {
+      debugPrint('blocked_users_provider.loadIfNeeded: $e\n$st');
     }
   }
 

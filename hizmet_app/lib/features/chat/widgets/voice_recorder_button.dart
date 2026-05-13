@@ -101,7 +101,9 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton>
       if (path != null) {
         try {
           await File(path).delete();
-        } catch (_) {}
+        } catch (e, st) {
+          debugPrint('voice_recorder_button._stop.cancelDelete: $e\n$st');
+        }
       }
       return;
     }
@@ -109,7 +111,9 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton>
     if (secs < 1) {
       try {
         await File(path).delete();
-      } catch (_) {}
+      } catch (e, st) {
+        debugPrint('voice_recorder_button._stop.shortDelete: $e\n$st');
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Çok kısa, basılı tutun')),

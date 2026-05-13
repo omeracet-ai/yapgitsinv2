@@ -108,7 +108,9 @@ class BoostScreen extends ConsumerWidget {
       } else {
         left = 'Az sonra biter';
       }
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('boost_screen._buildActiveCard.parseExpires: $e\n$st');
+    }
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

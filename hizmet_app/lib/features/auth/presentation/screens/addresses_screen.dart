@@ -83,7 +83,9 @@ class AddressesNotifier extends StateNotifier<List<SavedAddress>> {
             .map((e) => SavedAddress.fromJson(e as Map<String, dynamic>))
             .toList();
         return;
-      } catch (_) {}
+      } catch (e, st) {
+        debugPrint('addresses_screen._load.decode: $e\n$st');
+      }
     }
     // Kullanıcının mevcut adresini varsayılan olarak al
     final auth = _ref.read(authStateProvider);
@@ -160,7 +162,9 @@ class AddressesNotifier extends StateNotifier<List<SavedAddress>> {
         },
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('addresses_screen._syncToProfile: $e\n$st');
+    }
   }
 }
 

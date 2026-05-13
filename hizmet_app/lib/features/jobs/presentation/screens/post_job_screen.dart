@@ -179,7 +179,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       if (d.dueDate != null && d.dueDate!.isNotEmpty) {
         try {
           _dueDate = DateTime.parse(d.dueDate!);
-        } catch (_) {}
+        } catch (e, st) {
+          debugPrint('post_job_screen.restoreDraft.parseDueDate: $e\n$st');
+        }
       }
     });
     _draftRestored = false;

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/services/in_app_notification_service.dart';
@@ -59,8 +60,8 @@ class UnreadCountNotifier extends StateNotifier<int> {
       }
       _lastSeenCount = count;
       if (mounted) state = count;
-    } catch (_) {
-      // Silent fail — keep last known count.
+    } catch (e, st) {
+      debugPrint('unread_count_provider.refresh: $e\n$st');
     }
   }
 

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class ApiConstants {
@@ -11,7 +10,10 @@ class ApiConstants {
   static String get baseUrl {
     if (_override.isNotEmpty) return _override;
     if (kIsWeb) return 'http://localhost:$backendPort';
-    if (Platform.isAndroid) return 'http://10.0.2.2:$backendPort';
+    // Use defaultTargetPlatform so this file works on web without importing dart:io.
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:$backendPort';
+    }
     return 'http://localhost:$backendPort';
   }
 }

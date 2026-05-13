@@ -3,18 +3,55 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/services/secure_token_store.dart';
 
 final authRepositoryProvider = Provider((ref) => AuthRepository());
 
 class AuthRepository {
   final Dio _dio;
+  final SecureTokenStore _secureTokenStore;
 
-  AuthRepository()
-      : _dio = Dio(BaseOptions(
+  /// Tracks whether the one-shot SharedPreferences → SecureStorage migration
+  /// has run for this app process. Idempotent across calls.
+  static bool _migrationChecked = false;
+
+  AuthRepository({SecureTokenStore? secureTokenStore})
+      : _secureTokenStore = secureTokenStore ?? SecureTokenStore(),
+        _dio = Dio(BaseOptions(
           baseUrl: ApiConstants.baseUrl,
           connectTimeout: const Duration(seconds: 5),
           receiveTimeout: const Duration(seconds: 10),
         ));
+
+  /// One-shot migration (Phase 187/5): if the secure store has no token but
+  /// the legacy SharedPreferences store does, copy it over. Uses a
+  /// write-through pattern — the SP entry is intentionally NOT removed so
+  /// Voldi-sec-1's ApiClient interceptor (which still reads SP directly)
+  /// keeps working until its own migration lands.
+  Future<void> _ensureTokenMigration() async {
+    if (_migrationChecked) return;
+    _migrationChecked = true;
+    try {
+      final secure = await _secureTokenStore.readToken();
+      if (secure != null && secure.isNotEmpty) return;
+      final prefs = await SharedPreferences.getInstance();
+      final legacy = prefs.getString('jwt_token');
+      if (legacy != null && legacy.isNotEmpty) {
+        await _secureTokenStore.writeToken(legacy);
+        // Write-through: keep SP value for Voldi-sec-1 interceptor compat.
+      }
+    } catch (_) {
+      // Best-effort migration; never block auth flows on shim failure.
+    }
+  }
+
+  /// Persist the access token to both secure storage (primary) and the legacy
+  /// SharedPreferences `jwt_token` key (write-through, for Voldi-sec-1 compat).
+  Future<void> _persistToken(String token) async {
+    await _secureTokenStore.writeToken(token);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('jwt_token', token);
+  }
 
   Future<Map<String, dynamic>> login(String emailOrPhone, String password) async {
     try {
@@ -27,9 +64,9 @@ class AuthRepository {
         if (response.data['requires2FA'] == true) {
           return Map<String, dynamic>.from(response.data);
         }
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('jwt_token', response.data['access_token']);
+        await _persistToken(response.data['access_token']);
         if (response.data['user'] != null) {
+          final prefs = await SharedPreferences.getInstance();
           await prefs.setString('user_data', jsonEncode(response.data['user']));
         }
         return Map<String, dynamic>.from(response.data);
@@ -47,9 +84,9 @@ class AuthRepository {
         'code': code,
       });
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('jwt_token', response.data['access_token']);
+        await _persistToken(response.data['access_token']);
         if (response.data['user'] != null) {
+          final prefs = await SharedPreferences.getInstance();
           await prefs.setString('user_data', jsonEncode(response.data['user']));
         }
         return Map<String, dynamic>.from(response.data);
@@ -121,9 +158,9 @@ class AuthRepository {
         if (address != null && address.isNotEmpty) 'address': address,
       });
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('jwt_token', response.data['access_token']);
+        await _persistToken(response.data['access_token']);
         if (response.data['user'] != null) {
+          final prefs = await SharedPreferences.getInstance();
           await prefs.setString('user_data', jsonEncode(response.data['user']));
         }
         return response.data;
@@ -211,6 +248,7 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
+    await _secureTokenStore.clear();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token');
     await prefs.remove('user_data');
@@ -219,8 +257,7 @@ class AuthRepository {
   /// Kalıcı hesap deaktivasyonu — şifre doğrulaması ile.
   /// 401 → şifre yanlış. Diğer hatalar → bağlantı/server hatası.
   Future<void> deleteAccount(String password) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
+    final token = await getToken();
     if (token == null) {
       throw Exception('Oturum bulunamadı');
     }
@@ -241,8 +278,7 @@ class AuthRepository {
   /// KVKK Madde 11 — kullanıcının tüm verilerini JSON olarak indir.
   /// Dönen değer: indirilen dosyanın yolu.
   Future<String> downloadDataExport() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
+    final token = await getToken();
     if (token == null) throw Exception('Oturum bulunamadı');
     try {
       final response = await _dio.get<dynamic>(
@@ -265,8 +301,7 @@ class AuthRepository {
 
   /// KVKK Madde 11 — silme talebi gönder.
   Future<Map<String, dynamic>> requestDataDeletion(String? reason) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
+    final token = await getToken();
     if (token == null) throw Exception('Oturum bulunamadı');
     try {
       final response = await _dio.post(
@@ -284,6 +319,10 @@ class AuthRepository {
   }
 
   Future<String?> getToken() async {
+    await _ensureTokenMigration();
+    final secure = await _secureTokenStore.readToken();
+    if (secure != null && secure.isNotEmpty) return secure;
+    // Fallback: read legacy SP key (covers cold path before migration ran).
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('jwt_token');
   }
