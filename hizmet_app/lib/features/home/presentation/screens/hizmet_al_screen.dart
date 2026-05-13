@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../jobs/presentation/screens/job_list_screen.dart';
 import '../../../jobs/presentation/screens/job_opportunities_screen.dart';
 import '../../../jobs/presentation/screens/my_jobs_screen.dart';
+import '../../../map/presentation/screens/map_screen.dart';
 import '../../../service_requests/presentation/screens/service_request_screen.dart';
 
 class HizmetAlScreen extends ConsumerStatefulWidget {
@@ -21,7 +21,7 @@ class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
 
   static const _tabs = [
     Tab(text: 'Hizmet İlanları'),
-    Tab(text: 'İş İlanları'),
+    Tab(text: 'Harita'),
     Tab(text: 'Fırsatlar'),
     Tab(text: 'İşlerim'),
   ];
@@ -75,7 +75,7 @@ class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
         controller: _tabController,
         children: const [
           ServiceRequestBody(),
-          JobListBody(),
+          MapScreen(),
           JobOpportunitiesBody(),
           MyJobsBody(),
         ],

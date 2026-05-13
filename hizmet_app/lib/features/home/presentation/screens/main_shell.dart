@@ -11,7 +11,6 @@ import '../../../categories/data/category_repository.dart';
 import '../../../jobs/presentation/providers/job_provider.dart';
 import '../../../jobs/presentation/screens/job_list_screen.dart';
 import 'hizmet_al_screen.dart';
-import '../../../map/presentation/screens/map_screen.dart';
 import '../../../notifications/data/unread_count_provider.dart';
 
 class MainShell extends ConsumerStatefulWidget {
@@ -79,7 +78,7 @@ class _MainShellState extends ConsumerState<MainShell>
     final List<Widget> pages = [
       _HomeTab(onSeeAllRequests: () => _onItemTapped(1)),
       const HizmetAlScreen(),
-      const MapScreen(),
+      const JobListScreen(),
       const NotificationScreen(),
       const ProfileScreen(),
     ];
@@ -119,9 +118,9 @@ class _MainShellState extends ConsumerState<MainShell>
                 activeIcon: Icon(Icons.handyman_rounded),
                 label: 'Yapgitsin'),
             const BottomNavigationBarItem(
-                icon: Icon(Icons.map_outlined),
-                activeIcon: Icon(Icons.map_rounded),
-                label: 'Harita'),
+                icon: Icon(Icons.work_outline),
+                activeIcon: Icon(Icons.work_rounded),
+                label: 'İş İlanları'),
             BottomNavigationBarItem(
                 icon: _NotifIconWithBadge(
                   icon: isLoggedIn
