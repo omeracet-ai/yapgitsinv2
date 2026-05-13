@@ -10,10 +10,14 @@
  *   npm run migration:revert
  */
 import 'reflect-metadata';
-import 'dotenv/config';
+import { config as loadDotenv } from 'dotenv';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { isAbsolute, join } from 'path';
 import { APP_ROOT } from './common/paths';
+
+// iisnode/Plesk Node altında process.cwd() != uygulama dizini; .env'i APP_ROOT'a göre yükle.
+loadDotenv({ path: join(APP_ROOT, `.env.${process.env.NODE_ENV ?? 'development'}`) });
+loadDotenv({ path: join(APP_ROOT, '.env') });
 
 const dbType = process.env.DB_TYPE || 'sqlite';
 

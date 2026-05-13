@@ -103,7 +103,13 @@ import { Badge } from './modules/reputation/badge.entity';
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [`.env.${process.env.NODE_ENV ?? 'development'}.local`, `.env.${process.env.NODE_ENV ?? 'development'}`, '.env'],
+      // iisnode/Plesk Node altında process.cwd() != uygulama dizini olduğundan
+      // .env dosyalarını APP_ROOT'a (= package.json/.env'in bulunduğu kök) göre çözüyoruz.
+      envFilePath: [
+        join(APP_ROOT, `.env.${process.env.NODE_ENV ?? 'development'}.local`),
+        join(APP_ROOT, `.env.${process.env.NODE_ENV ?? 'development'}`),
+        join(APP_ROOT, '.env'),
+      ],
     }),
     // Phase 170 — Cache katmanı: REDIS_URL varsa Redis, yoksa in-memory (graceful fallback).
     CacheModule.registerAsync(cacheConfigAsync),
