@@ -1,11 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
 import '../../../core/models/booking_model.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 final bookingRepositoryProvider = Provider((ref) {
-  return BookingRepository(ref.watch(authRepositoryProvider));
+  return BookingRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 final myWorkerBookingsProvider = FutureProvider<List<Booking>>((ref) async {
@@ -17,23 +16,13 @@ final myCustomerBookingsProvider = FutureProvider<List<Booking>>((ref) async {
 });
 
 class BookingRepository {
-  final AuthRepository _auth;
   final Dio _dio;
 
-  BookingRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-        ));
-
-  Future<Options> _authOpts() async {
-    final t = await _auth.getToken();
-    return Options(headers: {'Authorization': 'Bearer $t'});
-  }
+  BookingRepository({required Dio dio}) : _dio = dio;
 
   Future<List<Booking>> getMyBookingsAsWorker() async {
     try {
-      final res = await _dio.get('/bookings/my-as-worker', options: await _authOpts());
+      final res = await _dio.get('/bookings/my-as-worker');
       final List data = res.data is List ? res.data : (res.data['data'] ?? []);
       return data.map((e) => Booking.fromJson(e)).toList();
     } catch (e) {
@@ -64,7 +53,7 @@ class BookingRepository {
     if (agreedPrice != null) body['agreedPrice'] = agreedPrice;
     if (customerNote != null && customerNote.isNotEmpty) body['customerNote'] = customerNote;
 
-    final res = await _dio.post('/bookings', data: body, options: await _authOpts());
+    final res = await _dio.post('/bookings', data: body);
     return Booking.fromJson(res.data as Map<String, dynamic>);
   }
 
@@ -74,7 +63,6 @@ class BookingRepository {
     final res = await _dio.post(
       '/bookings/$bookingId/cancel',
       data: {'reason': reason},
-      options: await _authOpts(),
     );
     return Map<String, dynamic>.from(res.data as Map);
   }
@@ -96,7 +84,7 @@ class BookingRepository {
 
   Future<List<Booking>> getMyBookingsAsCustomer() async {
     try {
-      final res = await _dio.get('/bookings/my-as-customer', options: await _authOpts());
+      final res = await _dio.get('/bookings/my-as-customer');
       final List data = res.data is List ? res.data : (res.data['data'] ?? []);
       return data.map((e) => Booking.fromJson(e)).toList();
     } catch (e) {

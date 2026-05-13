@@ -2,11 +2,10 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 final tokenRepositoryProvider = Provider((ref) {
-  return TokenRepository(ref.watch(authRepositoryProvider));
+  return TokenRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 final tokenBalanceProvider = FutureProvider<int>((ref) async {
@@ -14,27 +13,17 @@ final tokenBalanceProvider = FutureProvider<int>((ref) async {
 });
 
 class TokenRepository {
-  final AuthRepository _auth;
   final Dio _dio;
 
-  TokenRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-        ));
-
-  Future<Options> _authOpts() async {
-    final t = await _auth.getToken();
-    return Options(headers: {'Authorization': 'Bearer $t'});
-  }
+  TokenRepository({required Dio dio}) : _dio = dio;
 
   Future<int> getBalance() async {
-    final res = await _dio.get('/tokens/balance', options: await _authOpts());
+    final res = await _dio.get('/tokens/balance');
     return ((res.data['balance'] as num?) ?? 0).toInt();
   }
 
   Future<List<Map<String, dynamic>>> getHistory() async {
-    final res = await _dio.get('/tokens/history', options: await _authOpts());
+    final res = await _dio.get('/tokens/history');
     return List<Map<String, dynamic>>.from(res.data as List);
   }
 
@@ -42,22 +31,17 @@ class TokenRepository {
     await _dio.post(
       '/tokens/purchase',
       data: {'amount': amount, 'paymentMethod': paymentMethod},
-      options: await _authOpts(),
     );
   }
 
   Future<String> downloadHistoryPdf({DateTime? from, DateTime? to}) async {
-    final t = await _auth.getToken();
     final qp = <String, dynamic>{};
     if (from != null) qp['from'] = from.toIso8601String();
     if (to != null) qp['to'] = to.toIso8601String();
     final res = await _dio.get<List<int>>(
       '/tokens/history/pdf',
       queryParameters: qp,
-      options: Options(
-        headers: {'Authorization': 'Bearer $t'},
-        responseType: ResponseType.bytes,
-      ),
+      options: Options(responseType: ResponseType.bytes),
     );
     final dir = await getApplicationDocumentsDirectory();
     final stamp = DateTime.now().millisecondsSinceEpoch;
@@ -79,7 +63,6 @@ class TokenRepository {
         'amount': amount,
         if (note != null && note.isNotEmpty) 'note': note,
       },
-      options: await _authOpts(),
     );
     return Map<String, dynamic>.from(res.data as Map);
   }

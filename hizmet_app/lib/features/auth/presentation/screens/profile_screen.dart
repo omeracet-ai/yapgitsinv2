@@ -25,6 +25,9 @@ import '../../../profile/presentation/widgets/profile_video_uploader.dart';
 import '../../widgets/availability_editor_sheet.dart';
 import '../../../users/widgets/badge_row.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
+import '../../../../core/services/locale_provider.dart';
+import '../../../../l10n/app_localizations.dart';
+// TODO(P190): migrate remaining strings to AppLocalizations
 
 // ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
 final myPublicProfileProvider =
@@ -53,7 +56,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Profil'),
+        title: Text(AppLocalizations.of(context).tabProfil),
         backgroundColor: AppColors.primary,
         elevation: 0,
       ),
@@ -88,7 +91,8 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildGuestView(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Profil'), backgroundColor: AppColors.primary),
+          title: Text(AppLocalizations.of(context).tabProfil),
+          backgroundColor: AppColors.primary),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32.0),
@@ -107,7 +111,7 @@ class ProfileScreen extends ConsumerWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => context.push('/giris-yap'),
-                  child: const Text('Giriş Yap'),
+                  child: Text(AppLocalizations.of(context).loginButton),
                 ),
               ),
             ],
@@ -945,7 +949,8 @@ class ProfileScreen extends ConsumerWidget {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const PersonalInfoScreen()));
           }),
-          _menuItem(Icons.account_balance_wallet_outlined, 'Cüzdanım', () {
+          _menuItem(Icons.account_balance_wallet_outlined,
+              AppLocalizations.of(context).myWallet, () {
             Navigator.push(context,
                 MaterialPageRoute(
                   builder: (_) => DeferredScreenLoader(
@@ -1008,7 +1013,8 @@ class ProfileScreen extends ConsumerWidget {
           _menuItem(Icons.attach_money_rounded, '💱 Para Birimi', () {
             CurrencyPickerSheet.show(context);
           }),
-          _menuItem(Icons.location_on_outlined, 'Adreslerim', () {
+          _menuItem(Icons.location_on_outlined,
+              AppLocalizations.of(context).myAddresses, () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const AddressesScreen()));
           }),
@@ -1019,6 +1025,7 @@ class ProfileScreen extends ConsumerWidget {
           }),
           _build2FAMenuItem(context, ref),
           _buildAppearanceItem(context, ref),
+          _buildLanguageItem(context, ref),
           _menuItem(Icons.help_outline, 'Yardım & Destek', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const HelpScreen()));
@@ -1033,7 +1040,7 @@ class ProfileScreen extends ConsumerWidget {
               () => _showDataDeletionDialog(context, ref),
               color: AppColors.error),
           const Divider(height: 1, indent: 50),
-          _menuItem(Icons.logout, 'Çıkış Yap',
+          _menuItem(Icons.logout, AppLocalizations.of(context).logout,
               () => ref.read(authStateProvider.notifier).logout(),
               color: Colors.redAccent),
           const SizedBox(height: 8),
@@ -1470,6 +1477,73 @@ class ProfileScreen extends ConsumerWidget {
                 tile(ThemeMode.system, 'Sistem', Icons.settings_suggest_outlined),
                 tile(ThemeMode.light, 'Açık', Icons.light_mode_outlined),
                 tile(ThemeMode.dark, 'Koyu', Icons.dark_mode_outlined),
+                const SizedBox(height: 8),
+              ],
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  Widget _buildLanguageItem(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+    return ListTile(
+      leading: const Icon(Icons.language_outlined,
+          color: AppColors.textPrimary, size: 22),
+      title: const Text('Dil / Language',
+          style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w500)),
+      subtitle: Text(localeLabel(locale),
+          style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textHint,
+              fontWeight: FontWeight.w600)),
+      trailing:
+          const Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
+      onTap: () => _showLanguageSheet(context, ref),
+    );
+  }
+
+  void _showLanguageSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) {
+        return Consumer(builder: (ctx, ref2, _) {
+          final current = ref2.watch(localeProvider);
+          Widget tile(Locale loc, String label) {
+            return RadioListTile<String>(
+              value: loc.languageCode,
+              // ignore: deprecated_member_use
+              groupValue: current.languageCode,
+              title: Text(label),
+              secondary: const Icon(Icons.translate_outlined),
+              // ignore: deprecated_member_use
+              onChanged: (v) async {
+                if (v == null) return;
+                await ref2.read(localeProvider.notifier).setLocale(loc);
+                if (ctx.mounted) Navigator.pop(ctx);
+              },
+            );
+          }
+
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Dil / Language',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                tile(const Locale('tr'), 'Türkçe'),
+                tile(const Locale('en'), 'English'),
                 const SizedBox(height: 8),
               ],
             ),

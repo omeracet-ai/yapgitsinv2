@@ -11,24 +11,41 @@ import * as Sentry from '@sentry/node';
 import { SentryFilter } from './common/sentry.filter';
 import { APP_ROOT } from './common/paths';
 
-// Sentry — prod-only, env-driven
-if (process.env.SENTRY_DSN && process.env.NODE_ENV === 'production') {
+// Sentry — prod-only, env-driven. Phase 189/4: release tag + tighter sample rate.
+const SENTRY_ENABLED =
+  !!process.env.SENTRY_DSN && process.env.NODE_ENV === 'production';
+if (SENTRY_ENABLED) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
-    tracesSampleRate: 0.1,
+    tracesSampleRate: 0.05,
+    release: process.env.GIT_SHA || 'unknown',
   });
 }
 
-// Phase 178 — top-level crash visibility for iisnode logs.
+// Phase 178/189 — top-level crash visibility for iisnode logs + Sentry capture.
 // Without these, an early throw produces opaque 500s with empty log files.
 process.on('uncaughtException', (err) => {
   // eslint-disable-next-line no-console
   console.error('[boot] uncaughtException:', err && err.stack ? err.stack : err);
+  if (SENTRY_ENABLED) {
+    try {
+      Sentry.captureException(err);
+    } catch {
+      /* never let Sentry crash the crash handler */
+    }
+  }
 });
 process.on('unhandledRejection', (reason) => {
   // eslint-disable-next-line no-console
   console.error('[boot] unhandledRejection:', reason);
+  if (SENTRY_ENABLED) {
+    try {
+      Sentry.captureException(reason instanceof Error ? reason : new Error(String(reason)));
+    } catch {
+      /* swallow */
+    }
+  }
 });
 
 async function bootstrap() {

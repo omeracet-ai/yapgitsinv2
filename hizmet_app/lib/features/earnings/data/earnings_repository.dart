@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 class MonthlyPoint {
   final String month; // YYYY-MM
@@ -68,27 +67,20 @@ class EarningsData {
 }
 
 class EarningsRepository {
-  final AuthRepository _auth;
   final Dio _dio;
-  EarningsRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-        ));
+  EarningsRepository({required Dio dio}) : _dio = dio;
 
   Future<EarningsData> getEarnings(int months) async {
-    final t = await _auth.getToken();
     final res = await _dio.get(
       '/users/me/earnings',
       queryParameters: {'months': months},
-      options: Options(headers: {'Authorization': 'Bearer $t'}),
     );
     return EarningsData.fromJson(Map<String, dynamic>.from(res.data as Map));
   }
 }
 
 final earningsRepositoryProvider = Provider((ref) {
-  return EarningsRepository(ref.watch(authRepositoryProvider));
+  return EarningsRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 final earningsProvider =

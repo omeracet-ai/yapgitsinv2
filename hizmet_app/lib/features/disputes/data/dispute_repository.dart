@@ -1,27 +1,15 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 final disputeRepositoryProvider = Provider((ref) {
-  return DisputeRepository(ref.watch(authRepositoryProvider));
+  return DisputeRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 class DisputeRepository {
-  final AuthRepository _auth;
   final Dio _dio;
 
-  DisputeRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 5),
-          receiveTimeout: const Duration(seconds: 10),
-        ));
-
-  Future<Options> _opts() async {
-    final t = await _auth.getToken();
-    return Options(headers: {'Authorization': 'Bearer $t'});
-  }
+  DisputeRepository({required Dio dio}) : _dio = dio;
 
   Future<Map<String, dynamic>> createDispute({
     String? jobId,
@@ -40,7 +28,6 @@ class DisputeRepository {
           'type': type,
           'description': description,
         },
-        options: await _opts(),
       );
       return Map<String, dynamic>.from(r.data as Map);
     } on DioException catch (e) {
@@ -50,7 +37,7 @@ class DisputeRepository {
 
   Future<List<Map<String, dynamic>>> myDisputes() async {
     try {
-      final r = await _dio.get('/disputes/mine', options: await _opts());
+      final r = await _dio.get('/disputes/mine');
       return List<Map<String, dynamic>>.from(r.data as List);
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Şikayetler yüklenemedi');

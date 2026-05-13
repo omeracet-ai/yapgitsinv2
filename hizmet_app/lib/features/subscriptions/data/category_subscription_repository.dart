@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 /// Phase 143 — Category+City job alert subscription model.
 class CategorySubscription {
@@ -34,7 +33,7 @@ class CategorySubscription {
 
 final categorySubscriptionRepositoryProvider =
     Provider((ref) => CategorySubscriptionRepository(
-          ref.watch(authRepositoryProvider),
+          dio: ref.read(apiClientProvider).dio,
         ));
 
 final categorySubscriptionsProvider =
@@ -43,23 +42,12 @@ final categorySubscriptionsProvider =
 });
 
 class CategorySubscriptionRepository {
-  final AuthRepository _auth;
   final Dio _dio;
 
-  CategorySubscriptionRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-        ));
-
-  Future<Options> _opts() async {
-    final t = await _auth.getToken();
-    return Options(headers: {'Authorization': 'Bearer $t'});
-  }
+  CategorySubscriptionRepository({required Dio dio}) : _dio = dio;
 
   Future<List<CategorySubscription>> getMine() async {
-    final res =
-        await _dio.get('/subscriptions/category', options: await _opts());
+    final res = await _dio.get('/subscriptions/category');
     final list = (res.data as List).cast<Map<String, dynamic>>();
     return list.map(CategorySubscription.fromJson).toList();
   }
@@ -71,13 +59,12 @@ class CategorySubscriptionRepository {
         'category': category,
         if (city != null && city.trim().isNotEmpty) 'city': city.trim(),
       },
-      options: await _opts(),
     );
     return CategorySubscription.fromJson(
         Map<String, dynamic>.from(res.data as Map));
   }
 
   Future<void> unsubscribe(String id) async {
-    await _dio.delete('/subscriptions/category/$id', options: await _opts());
+    await _dio.delete('/subscriptions/category/$id');
   }
 }

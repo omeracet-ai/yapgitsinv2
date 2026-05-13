@@ -1,11 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 import 'worker_filter.dart';
 
 final providerRepositoryProvider = Provider((ref) {
-  return ProviderRepository(ref.watch(authRepositoryProvider));
+  return ProviderRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 /// Worker filter state — Phase 39 (bottom sheet ile güncellenir)
@@ -47,15 +46,9 @@ final providerCompletedJobsProvider =
 });
 
 class ProviderRepository {
-  final AuthRepository _authRepository;
   final Dio _dio;
 
-  ProviderRepository(this._authRepository)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 5),
-          receiveTimeout: const Duration(seconds: 5),
-        ));
+  ProviderRepository({required Dio dio}) : _dio = dio;
 
   Future<List<Map<String, dynamic>>> getAllProviders({
     String? search,
@@ -96,7 +89,6 @@ class ProviderRepository {
   }
 
   Future<Map<String, dynamic>> createProvider({
-    required String token,
     required String businessName,
     String? bio,
     Map<String, String>? documents,
@@ -109,7 +101,6 @@ class ProviderRepository {
           if (bio != null && bio.isNotEmpty) 'bio': bio,
           if (documents != null) 'documents': documents,
         },
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       return Map<String, dynamic>.from(response.data);
     } on DioException catch (e) {
@@ -119,12 +110,7 @@ class ProviderRepository {
 
   Future<Map<String, dynamic>> updateProvider(String id, Map<String, dynamic> data) async {
     try {
-      final token = await _authRepository.getToken();
-      final response = await _dio.patch(
-        '/providers/$id',
-        data: data,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await _dio.patch('/providers/$id', data: data);
       return Map<String, dynamic>.from(response.data);
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Güncelleme başarısız');

@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 class WorkerCertification {
   final String id;
@@ -66,28 +65,17 @@ class PublicCertification {
 }
 
 final certificationRepositoryProvider = Provider((ref) {
-  return CertificationRepository(ref.watch(authRepositoryProvider));
+  return CertificationRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 class CertificationRepository {
-  final AuthRepository _auth;
   final Dio _dio;
 
-  CertificationRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-        ));
-
-  Future<Options> _opts() async {
-    final t = await _auth.getToken();
-    return Options(headers: {'Authorization': 'Bearer $t'});
-  }
+  CertificationRepository({required Dio dio}) : _dio = dio;
 
   Future<List<WorkerCertification>> listMine() async {
     try {
-      final res =
-          await _dio.get('/users/me/certifications', options: await _opts());
+      final res = await _dio.get('/users/me/certifications');
       final list = (res.data as List?) ?? const [];
       return list
           .map((e) =>
@@ -114,14 +102,13 @@ class CertificationRepository {
         if (expiresAt != null) 'expiresAt': expiresAt.toIso8601String(),
         if (documentUrl != null) 'documentUrl': documentUrl,
       },
-      options: await _opts(),
     );
     return WorkerCertification.fromJson(
         Map<String, dynamic>.from(res.data as Map));
   }
 
   Future<void> remove(String id) async {
-    await _dio.delete('/users/me/certifications/$id', options: await _opts());
+    await _dio.delete('/users/me/certifications/$id');
   }
 
   Future<List<PublicCertification>> getPublic(String userId) async {
@@ -142,11 +129,7 @@ class CertificationRepository {
     final form = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
     });
-    final res = await _dio.post(
-      '/uploads/certification',
-      data: form,
-      options: await _opts(),
-    );
+    final res = await _dio.post('/uploads/certification', data: form);
     return ((res.data as Map)['url'] ?? '') as String;
   }
 }

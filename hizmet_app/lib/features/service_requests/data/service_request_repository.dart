@@ -1,30 +1,15 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../../core/constants/api_constants.dart';
+import '../../../core/network/api_client_provider.dart';
 
-final serviceRequestRepositoryProvider = Provider((ref) => ServiceRequestRepository());
+final serviceRequestRepositoryProvider = Provider(
+    (ref) => ServiceRequestRepository(dio: ref.read(apiClientProvider).dio));
 
 class ServiceRequestRepository {
   final Dio _dio;
 
-  ServiceRequestRepository()
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 15),
-        ));
-
-  Future<String?> _token() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('jwt_token');
-  }
-
-  Future<Options> _authOptions() async {
-    final token = await _token();
-    return Options(headers: {'Authorization': 'Bearer $token'});
-  }
+  ServiceRequestRepository({required Dio dio}) : _dio = dio;
 
   Future<List<Map<String, dynamic>>> getAll({String? category}) async {
     try {
@@ -40,8 +25,7 @@ class ServiceRequestRepository {
 
   Future<List<Map<String, dynamic>>> getMine() async {
     try {
-      final opts = await _authOptions();
-      final response = await _dio.get('/service-requests/my', options: opts);
+      final response = await _dio.get('/service-requests/my');
       return List<Map<String, dynamic>>.from(response.data as List);
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'İlanlarınız yüklenemedi'));
@@ -60,7 +44,6 @@ class ServiceRequestRepository {
     double? longitude,
   }) async {
     try {
-      final opts = await _authOptions();
       final response = await _dio.post('/service-requests', data: {
         'title': title,
         'description': description,
@@ -71,7 +54,7 @@ class ServiceRequestRepository {
         if (imageUrl != null) 'imageUrl': imageUrl,
         if (latitude != null) 'latitude': latitude,
         if (longitude != null) 'longitude': longitude,
-      }, options: opts);
+      });
       return Map<String, dynamic>.from(response.data as Map);
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'İlan oluşturulamadı'));
@@ -81,11 +64,7 @@ class ServiceRequestRepository {
   /// Phase 81: SR → Job dönüşümü. SR otomatik kapanır, yeni Job ID döner.
   Future<Map<String, dynamic>> convertToJob(String id) async {
     try {
-      final opts = await _authOptions();
-      final response = await _dio.post(
-        '/service-requests/$id/convert-to-job',
-        options: opts,
-      );
+      final response = await _dio.post('/service-requests/$id/convert-to-job');
       return Map<String, dynamic>.from(response.data as Map);
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Dönüşüm başarısız'));
@@ -94,8 +73,7 @@ class ServiceRequestRepository {
 
   Future<void> delete(String id) async {
     try {
-      final opts = await _authOptions();
-      await _dio.delete('/service-requests/$id', options: opts);
+      await _dio.delete('/service-requests/$id');
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'İlan silinemedi'));
     }
@@ -113,14 +91,12 @@ class ServiceRequestRepository {
   Future<Map<String, dynamic>> apply(
       String serviceRequestId, {String? message, double? price}) async {
     try {
-      final opts = await _authOptions();
       final response = await _dio.post(
         '/service-requests/$serviceRequestId/apply',
         data: {
           if (message != null && message.isNotEmpty) 'message': message,
           if (price != null) 'price': price,
         },
-        options: opts,
       );
       return Map<String, dynamic>.from(response.data as Map);
     } on DioException catch (e) {
@@ -130,10 +106,8 @@ class ServiceRequestRepository {
 
   Future<List<Map<String, dynamic>>> getApplications(String serviceRequestId) async {
     try {
-      final opts = await _authOptions();
       final response = await _dio.get(
         '/service-requests/$serviceRequestId/applications',
-        options: opts,
       );
       return List<Map<String, dynamic>>.from(response.data as List);
     } on DioException catch (e) {
@@ -143,11 +117,7 @@ class ServiceRequestRepository {
 
   Future<List<Map<String, dynamic>>> getMyApplications() async {
     try {
-      final opts = await _authOptions();
-      final response = await _dio.get(
-        '/service-requests/applications/my',
-        options: opts,
-      );
+      final response = await _dio.get('/service-requests/applications/my');
       return List<Map<String, dynamic>>.from(response.data as List);
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Başvurularınız yüklenemedi'));
@@ -157,11 +127,9 @@ class ServiceRequestRepository {
   Future<Map<String, dynamic>> updateApplicationStatus(
       String applicationId, String status) async {
     try {
-      final opts = await _authOptions();
       final response = await _dio.patch(
         '/service-requests/applications/$applicationId/status',
         data: {'status': status},
-        options: opts,
       );
       return Map<String, dynamic>.from(response.data as Map);
     } on DioException catch (e) {
@@ -171,16 +139,11 @@ class ServiceRequestRepository {
 
   Future<String> uploadJobPhoto(File file) async {
     try {
-      final token = await _token();
       final bytes = await file.readAsBytes();
       final formData = FormData.fromMap({
         'photos': MultipartFile.fromBytes(bytes, filename: 'photo.jpg'),
       });
-      final response = await _dio.post(
-        '/uploads/job-photos',
-        data: formData,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await _dio.post('/uploads/job-photos', data: formData);
       final urls = List<String>.from(response.data as List);
       return urls.first;
     } on DioException catch (e) {
@@ -190,16 +153,11 @@ class ServiceRequestRepository {
 
   Future<String> uploadIdentityPhoto(File file) async {
     try {
-      final token = await _token();
       final bytes = await file.readAsBytes();
       final formData = FormData.fromMap({
         'photo': MultipartFile.fromBytes(bytes, filename: 'kimlik.jpg'),
       });
-      final response = await _dio.post(
-        '/uploads/identity-photo',
-        data: formData,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await _dio.post('/uploads/identity-photo', data: formData);
       return response.data['url'] as String;
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Kimlik fotoğrafı yüklenemedi'));
@@ -208,16 +166,11 @@ class ServiceRequestRepository {
 
   Future<String> uploadDocument(File file) async {
     try {
-      final token = await _token();
       final bytes = await file.readAsBytes();
       final formData = FormData.fromMap({
         'photo': MultipartFile.fromBytes(bytes, filename: 'belge.jpg'),
       });
-      final response = await _dio.post(
-        '/uploads/document',
-        data: formData,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await _dio.post('/uploads/document', data: formData);
       return response.data['url'] as String;
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Belge yüklenemedi'));

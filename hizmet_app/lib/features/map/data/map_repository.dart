@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
+import '../../../core/services/secure_token_store.dart';
 
 class NearbyJob {
   final String id;
@@ -46,19 +46,13 @@ class NearbyJob {
 }
 
 final mapRepositoryProvider = Provider<MapRepository>((ref) {
-  final authRepo = ref.watch(authRepositoryProvider);
-  return MapRepository(authRepo);
+  return MapRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 class MapRepository {
-  final AuthRepository _authRepo;
   final Dio _dio;
 
-  MapRepository(this._authRepo)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 10),
-        ));
+  MapRepository({required Dio dio}) : _dio = dio;
 
   Future<List<NearbyJob>> getNearbyJobs({
     required double lat,
@@ -82,12 +76,13 @@ class MapRepository {
     required double lat,
     required double lng,
   }) async {
-    final token = await _authRepo.getToken();
-    if (token == null) return;
+    // P189/4 — preserve the "skip if not signed in" guard; read from
+    // SecureTokenStore (the source of truth) instead of legacy SharedPreferences.
+    final token = await SecureTokenStore().readToken();
+    if (token == null || token.isEmpty) return;
     await _dio.patch(
       '/users/me/location',
       data: {'latitude': lat, 'longitude': lng},
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
   }
 }

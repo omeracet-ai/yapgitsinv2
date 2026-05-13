@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
+import '../../../core/network/api_client_provider.dart';
 import '../../../core/services/in_app_notification_service.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/services/secure_token_store.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 
 /// Global, non-autoDispose unread count cache for the bottom-nav badge.
@@ -37,26 +37,20 @@ class UnreadCountNotifier extends StateNotifier<int> {
   Map<String, dynamic>? _latestNotif;
 
   Future<void> refresh() async {
-    final authRepo = _ref.read(authRepositoryProvider);
-    final token = await authRepo.getToken();
-    if (token == null) {
+    // P189/4 — preserve the "skip if signed out" guard; read from SecureTokenStore.
+    final token = await SecureTokenStore().readToken();
+    if (token == null || token.isEmpty) {
       if (mounted) state = 0;
       return;
     }
     try {
-      final dio = Dio(BaseOptions(
-        baseUrl: ApiConstants.baseUrl,
-        connectTimeout: const Duration(seconds: 6),
-      ));
-      final res = await dio.get(
-        '/notifications/unread-count',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final dio = _ref.read(apiClientProvider).dio;
+      final res = await dio.get('/notifications/unread-count');
       final count = (res.data['count'] as num?)?.toInt() ?? 0;
       // Phase 79 — when the count grows past what we last saw, fetch the
       // newest notification preview and surface it as a slide-in toast.
       if (_lastSeenCount != null && count > _lastSeenCount!) {
-        await _maybeShowToast(dio, token);
+        await _maybeShowToast(dio);
       }
       _lastSeenCount = count;
       if (mounted) state = count;
@@ -65,12 +59,9 @@ class UnreadCountNotifier extends StateNotifier<int> {
     }
   }
 
-  Future<void> _maybeShowToast(Dio dio, String token) async {
+  Future<void> _maybeShowToast(Dio dio) async {
     try {
-      final res = await dio.get(
-        '/notifications',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final res = await dio.get('/notifications');
       final list = List<Map<String, dynamic>>.from(res.data as List);
       if (list.isEmpty) return;
       final newest = list.first;

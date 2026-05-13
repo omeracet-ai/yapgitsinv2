@@ -7,12 +7,18 @@ import {
   Logger,
 } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import type { AuthUser } from './types/auth.types';
 
 /**
  * Global exception filter — captures unhandled exceptions to Sentry
  * (when SENTRY_DSN is set in production), then preserves default
  * NestJS HttpException response behavior.
+ *
+ * Phase 189/4:
+ * - 5xx + unknown → shipped to Sentry with breadcrumbs (method, path, user id).
+ * - 4xx user errors → never shipped (signal/noise).
+ * - Sensitive fields (auth header, password, tokens) stripped before send.
  */
 @Catch()
 export class SentryFilter implements ExceptionFilter {
@@ -21,6 +27,7 @@ export class SentryFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request & { user?: AuthUser }>();
 
     const isHttp = exception instanceof HttpException;
     const status = isHttp
@@ -33,7 +40,28 @@ export class SentryFilter implements ExceptionFilter {
       process.env.NODE_ENV === 'production' &&
       status >= 500
     ) {
-      Sentry.captureException(exception);
+      Sentry.withScope((scope) => {
+        // Breadcrumb: request method + path (no query/body — may contain PII).
+        scope.addBreadcrumb({
+          category: 'http',
+          message: `${request.method} ${request.path}`,
+          level: 'info',
+          data: {
+            method: request.method,
+            path: request.path,
+            statusCode: status,
+          },
+        });
+        // User context — only id + role from JWT, never email/phone.
+        if (request.user?.id) {
+          scope.setUser({
+            id: String(request.user.id),
+            role: request.user.role,
+          });
+        }
+        scope.setTag('http.status', String(status));
+        Sentry.captureException(exception);
+      });
     }
 
     if (isHttp) {

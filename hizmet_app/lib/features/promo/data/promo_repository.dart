@@ -1,10 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 final promoRepositoryProvider = Provider((ref) {
-  return PromoRepository(ref.watch(authRepositoryProvider));
+  return PromoRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 class PromoRedeemResult {
@@ -31,26 +30,15 @@ class PromoRedeemResult {
 }
 
 class PromoRepository {
-  final AuthRepository _auth;
   final Dio _dio;
 
-  PromoRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-        ));
-
-  Future<Options> _authOpts() async {
-    final t = await _auth.getToken();
-    return Options(headers: {'Authorization': 'Bearer $t'});
-  }
+  PromoRepository({required Dio dio}) : _dio = dio;
 
   Future<PromoRedeemResult> redeem(String code) async {
     try {
       final res = await _dio.post(
         '/promo/redeem',
         data: {'code': code.trim().toUpperCase()},
-        options: await _authOpts(),
       );
       return PromoRedeemResult.fromJson(
           Map<String, dynamic>.from(res.data as Map));

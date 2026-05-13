@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 /// Phase 136 — Booking escrow client.
 class EscrowStatus {
@@ -54,7 +53,7 @@ class Escrow {
 }
 
 final escrowRepositoryProvider = Provider((ref) {
-  return EscrowRepository(ref.watch(authRepositoryProvider));
+  return EscrowRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 final escrowByBookingProvider =
@@ -63,37 +62,24 @@ final escrowByBookingProvider =
 });
 
 class EscrowRepository {
-  final AuthRepository _auth;
   final Dio _dio;
 
-  EscrowRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-        ));
-
-  Future<Options> _opts() async {
-    final t = await _auth.getToken();
-    return Options(headers: {'Authorization': 'Bearer $t'});
-  }
+  EscrowRepository({required Dio dio}) : _dio = dio;
 
   Future<Escrow> hold(String bookingId, double amount) async {
     final res = await _dio.post('/escrow/hold',
-        data: {'bookingId': bookingId, 'amount': amount},
-        options: await _opts());
+        data: {'bookingId': bookingId, 'amount': amount});
     return Escrow.fromJson(Map<String, dynamic>.from(res.data as Map));
   }
 
   Future<Escrow> release(String bookingId) async {
-    final res = await _dio.post('/escrow/release/$bookingId',
-        options: await _opts());
+    final res = await _dio.post('/escrow/release/$bookingId');
     return Escrow.fromJson(Map<String, dynamic>.from(res.data as Map));
   }
 
   Future<Escrow?> getByBooking(String bookingId) async {
     try {
-      final res = await _dio.get('/escrow/booking/$bookingId',
-          options: await _opts());
+      final res = await _dio.get('/escrow/booking/$bookingId');
       return Escrow.fromJson(Map<String, dynamic>.from(res.data as Map));
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;

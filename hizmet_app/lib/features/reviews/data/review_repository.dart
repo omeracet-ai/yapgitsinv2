@@ -1,10 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 final reviewRepositoryProvider = Provider((ref) {
-  return ReviewRepository(ref.watch(authRepositoryProvider));
+  return ReviewRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 final receivedReviewsProvider =
@@ -13,14 +12,9 @@ final receivedReviewsProvider =
 });
 
 class ReviewRepository {
-  final AuthRepository _authRepository;
   final Dio _dio;
 
-  ReviewRepository(this._authRepository)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 5),
-        ));
+  ReviewRepository({required Dio dio}) : _dio = dio;
 
   Future<void> createReview({
     String? jobId,
@@ -29,7 +23,6 @@ class ReviewRepository {
     required String comment,
   }) async {
     try {
-      final token = await _authRepository.getToken();
       await _dio.post(
         '/reviews',
         data: {
@@ -38,9 +31,6 @@ class ReviewRepository {
           'rating': rating,
           'comment': comment,
         },
-        options: Options(headers: {
-          'Authorization': 'Bearer $token',
-        }),
       );
     } on DioException catch (e) {
       final status = e.response?.statusCode;
@@ -56,13 +46,9 @@ class ReviewRepository {
 
   Future<Map<String, dynamic>> replyToReview(String reviewId, String text) async {
     try {
-      final token = await _authRepository.getToken();
       final response = await _dio.post(
         '/reviews/$reviewId/reply',
         data: {'text': text},
-        options: Options(headers: {
-          'Authorization': 'Bearer $token',
-        }),
       );
       return Map<String, dynamic>.from(response.data as Map);
     } on DioException catch (e) {

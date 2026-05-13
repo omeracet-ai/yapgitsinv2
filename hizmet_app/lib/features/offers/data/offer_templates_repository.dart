@@ -1,10 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 final offerTemplatesRepositoryProvider = Provider((ref) {
-  return OfferTemplatesRepository(ref.watch(authRepositoryProvider));
+  return OfferTemplatesRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 final offerTemplatesProvider =
@@ -13,20 +12,9 @@ final offerTemplatesProvider =
 });
 
 class OfferTemplatesRepository {
-  final AuthRepository _authRepository;
   final Dio _dio;
 
-  OfferTemplatesRepository(this._authRepository)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 6),
-          receiveTimeout: const Duration(seconds: 6),
-        ));
-
-  Future<Options> _opts() async {
-    final token = await _authRepository.getToken();
-    return Options(headers: {'Authorization': 'Bearer $token'});
-  }
+  OfferTemplatesRepository({required Dio dio}) : _dio = dio;
 
   List<String> _parse(dynamic data) {
     if (data is Map && data['templates'] is List) {
@@ -38,8 +26,7 @@ class OfferTemplatesRepository {
 
   Future<List<String>> list() async {
     try {
-      final res = await _dio.get('/users/me/offer-templates',
-          options: await _opts());
+      final res = await _dio.get('/users/me/offer-templates');
       return _parse(res.data);
     } on DioException catch (e) {
       throw Exception(_msg(e, 'Şablonlar yüklenemedi'));
@@ -49,7 +36,7 @@ class OfferTemplatesRepository {
   Future<List<String>> add(String text) async {
     try {
       final res = await _dio.post('/users/me/offer-templates',
-          data: {'text': text}, options: await _opts());
+          data: {'text': text});
       return _parse(res.data);
     } on DioException catch (e) {
       throw Exception(_msg(e, 'Şablon eklenemedi'));
@@ -58,8 +45,7 @@ class OfferTemplatesRepository {
 
   Future<List<String>> remove(int index) async {
     try {
-      final res = await _dio.delete('/users/me/offer-templates/$index',
-          options: await _opts());
+      final res = await _dio.delete('/users/me/offer-templates/$index');
       return _parse(res.data);
     } on DioException catch (e) {
       throw Exception(_msg(e, 'Şablon silinemedi'));

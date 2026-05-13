@@ -1,27 +1,19 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 final photoRepositoryProvider = Provider((ref) {
-  return PhotoRepository(ref.watch(authRepositoryProvider));
+  return PhotoRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 class PhotoRepository {
-  final AuthRepository _authRepository;
   final Dio _dio;
 
-  PhotoRepository(this._authRepository)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 30),
-        ));
+  PhotoRepository({required Dio dio}) : _dio = dio;
 
   Future<List<String>> uploadJobPhotos(List<File> files) async {
     try {
-      final token = await _authRepository.getToken();
       final formData = FormData();
       for (final file in files) {
         formData.files.add(MapEntry(
@@ -29,11 +21,7 @@ class PhotoRepository {
           await MultipartFile.fromFile(file.path),
         ));
       }
-      final response = await _dio.post(
-        '/uploads/job-photos',
-        data: formData,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await _dio.post('/uploads/job-photos', data: formData);
       return List<String>.from(response.data as List);
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? 'Fotoğraflar yüklenemedi');
@@ -43,21 +31,12 @@ class PhotoRepository {
   /// Portfolio: yükle + users/me/portfolio'ya ekle. Yeni URL döner.
   Future<String> uploadPortfolioPhoto(File file) async {
     try {
-      final token = await _authRepository.getToken();
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(file.path),
       });
-      final upResp = await _dio.post(
-        '/uploads/portfolio',
-        data: formData,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final upResp = await _dio.post('/uploads/portfolio', data: formData);
       final url = (upResp.data as Map)['url'] as String;
-      await _dio.post(
-        '/users/me/portfolio',
-        data: {'url': url},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      await _dio.post('/users/me/portfolio', data: {'url': url});
       return url;
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? 'Portfolyo yüklenemedi');
@@ -66,12 +45,7 @@ class PhotoRepository {
 
   Future<void> removePortfolioPhoto(String url) async {
     try {
-      final token = await _authRepository.getToken();
-      await _dio.delete(
-        '/users/me/portfolio',
-        data: {'url': url},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      await _dio.delete('/users/me/portfolio', data: {'url': url});
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? 'Fotoğraf silinemedi');
     }
@@ -81,15 +55,10 @@ class PhotoRepository {
   /// URL döner; çağıran taraf PATCH /users/me ile profileImageUrl'i kaydetmeli.
   Future<String> uploadProfilePhoto(File file) async {
     try {
-      final token = await _authRepository.getToken();
       final formData = FormData.fromMap({
         'photo': await MultipartFile.fromFile(file.path),
       });
-      final resp = await _dio.post(
-        '/uploads/profile-photo',
-        data: formData,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final resp = await _dio.post('/uploads/profile-photo', data: formData);
       return (resp.data as Map)['url'] as String;
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? 'Profil fotoğrafı yüklenemedi');
@@ -99,21 +68,12 @@ class PhotoRepository {
   /// Phase 125: portfolio videosu yükle + users/me/portfolio-video'ya ekle.
   Future<String> uploadPortfolioVideo(File file) async {
     try {
-      final token = await _authRepository.getToken();
       final formData = FormData.fromMap({
         'video': await MultipartFile.fromFile(file.path),
       });
-      final upResp = await _dio.post(
-        '/uploads/portfolio-video',
-        data: formData,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final upResp = await _dio.post('/uploads/portfolio-video', data: formData);
       final url = (upResp.data as Map)['url'] as String;
-      await _dio.post(
-        '/users/me/portfolio-video',
-        data: {'url': url},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      await _dio.post('/users/me/portfolio-video', data: {'url': url});
       return url;
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? 'Video yüklenemedi');
@@ -122,12 +82,7 @@ class PhotoRepository {
 
   Future<void> removePortfolioVideo(String url) async {
     try {
-      final token = await _authRepository.getToken();
-      await _dio.delete(
-        '/users/me/portfolio-video',
-        data: {'url': url},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      await _dio.delete('/users/me/portfolio-video', data: {'url': url});
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? 'Video silinemedi');
     }
@@ -136,23 +91,17 @@ class PhotoRepository {
   /// Phase 152: tanıtım videosu yükle (60sec cap) + users/me/intro-video set.
   Future<Map<String, dynamic>> uploadIntroVideo(File file, {int? durationSeconds}) async {
     try {
-      final token = await _authRepository.getToken();
       final formData = FormData.fromMap({
         'video': await MultipartFile.fromFile(file.path),
         if (durationSeconds != null) 'duration': durationSeconds.toString(),
       });
-      final upResp = await _dio.post(
-        '/uploads/intro-video',
-        data: formData,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final upResp = await _dio.post('/uploads/intro-video', data: formData);
       final upMap = upResp.data as Map;
       final url = upMap['url'] as String;
       final dur = (upMap['duration'] as num?)?.toInt() ?? durationSeconds;
       final setResp = await _dio.post(
         '/users/me/intro-video',
         data: {'url': url, 'duration': dur},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       return Map<String, dynamic>.from(setResp.data as Map);
     } on DioException catch (e) {
@@ -162,11 +111,7 @@ class PhotoRepository {
 
   Future<void> removeIntroVideo() async {
     try {
-      final token = await _authRepository.getToken();
-      await _dio.delete(
-        '/users/me/intro-video',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      await _dio.delete('/users/me/intro-video');
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? 'Video silinemedi');
     }
@@ -174,7 +119,6 @@ class PhotoRepository {
 
   Future<List<String>> uploadJobVideos(List<File> files) async {
     try {
-      final token = await _authRepository.getToken();
       final formData = FormData();
       for (final file in files) {
         formData.files.add(MapEntry(
@@ -182,11 +126,7 @@ class PhotoRepository {
           await MultipartFile.fromFile(file.path),
         ));
       }
-      final response = await _dio.post(
-        '/uploads/job-video',
-        data: formData,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await _dio.post('/uploads/job-video', data: formData);
       return List<String>.from(response.data as List);
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? 'Videolar yüklenemedi');

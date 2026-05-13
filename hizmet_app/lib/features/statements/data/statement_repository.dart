@@ -1,11 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 final statementRepoProvider = Provider((ref) {
-  final authRepo = ref.watch(authRepositoryProvider);
-  return StatementRepository(authRepo);
+  return StatementRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 final statementProvider = FutureProvider.family
@@ -16,25 +15,16 @@ final statementProvider = FutureProvider.family
 });
 
 class StatementRepository {
-  final AuthRepository _authRepository;
   final Dio _dio;
 
-  StatementRepository(this._authRepository)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-        ));
+  StatementRepository({required Dio dio}) : _dio = dio;
 
   Future<Map<String, dynamic>> getMonthly(int year, int month) async {
     try {
-      final token = await _authRepository.getToken();
       final mm = month.toString().padLeft(2, '0');
       final response = await _dio.get(
         '/statements/me',
         queryParameters: {'year': year, 'month': mm},
-        options: Options(headers: {
-          if (token != null) 'Authorization': 'Bearer $token',
-        }),
       );
       return Map<String, dynamic>.from(response.data as Map);
     } on DioException catch (e) {

@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 class WorkerInsurance {
   final String? id;
@@ -57,27 +56,17 @@ class PublicInsurance {
 }
 
 final insuranceRepositoryProvider = Provider((ref) {
-  return InsuranceRepository(ref.watch(authRepositoryProvider));
+  return InsuranceRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 class InsuranceRepository {
-  final AuthRepository _auth;
   final Dio _dio;
 
-  InsuranceRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-        ));
-
-  Future<Options> _opts() async {
-    final t = await _auth.getToken();
-    return Options(headers: {'Authorization': 'Bearer $t'});
-  }
+  InsuranceRepository({required Dio dio}) : _dio = dio;
 
   Future<WorkerInsurance?> getMine() async {
     try {
-      final res = await _dio.get('/users/me/insurance', options: await _opts());
+      final res = await _dio.get('/users/me/insurance');
       if (res.data == null) return null;
       return WorkerInsurance.fromJson(
           Map<String, dynamic>.from(res.data as Map));
@@ -102,13 +91,12 @@ class InsuranceRepository {
         'expiresAt': expiresAt.toIso8601String(),
         if (documentUrl != null) 'documentUrl': documentUrl,
       },
-      options: await _opts(),
     );
     return WorkerInsurance.fromJson(Map<String, dynamic>.from(res.data as Map));
   }
 
   Future<void> remove() async {
-    await _dio.delete('/users/me/insurance', options: await _opts());
+    await _dio.delete('/users/me/insurance');
   }
 
   Future<PublicInsurance?> getPublic(String userId) async {

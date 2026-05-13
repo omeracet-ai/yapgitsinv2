@@ -11,7 +11,6 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 // ignore_for_file: depend_on_referenced_packages, avoid_dynamic_calls
 import 'package:firebase_core/firebase_core.dart';
@@ -19,6 +18,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../constants/api_constants.dart';
 import 'in_app_notification_service.dart';
+import 'secure_token_store.dart';
 
 class FcmService {
   FcmService._();
@@ -84,8 +84,9 @@ class FcmService {
   Future<void> _registerToken(String token) async {
     _lastToken = token;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final jwt = prefs.getString('jwt_token');
+      // P189/4 — singleton has no Ref scope; read auth token from
+      // SecureTokenStore (canonical) and attach Bearer manually.
+      final jwt = await SecureTokenStore().readToken();
       if (jwt == null || jwt.isEmpty) return;
       final dio = Dio();
       await dio.post(
@@ -104,8 +105,7 @@ class FcmService {
     final token = _lastToken;
     if (token == null) return;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final jwt = prefs.getString('jwt_token');
+      final jwt = await SecureTokenStore().readToken();
       if (jwt != null && jwt.isNotEmpty) {
         final dio = Dio();
         await dio.delete(

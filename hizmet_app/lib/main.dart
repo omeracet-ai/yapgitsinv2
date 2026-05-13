@@ -9,6 +9,7 @@ import 'core/theme/theme_mode_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/services/in_app_notification_service.dart';
 import 'core/services/chat_toast_hook.dart';
+import 'core/services/locale_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,7 @@ class YapgitsinApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
     // Phase 80 — bind real-time chat → toast hook (idempotent, auth-gated).
     ref.watch(chatToastHookProvider);
 
@@ -37,6 +39,7 @@ class YapgitsinApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
+      locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,

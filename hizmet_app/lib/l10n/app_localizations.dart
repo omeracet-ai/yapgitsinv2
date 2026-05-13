@@ -205,6 +205,216 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Tamam'**
   String get ok;
+
+  /// No description provided for @loginTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Giriş Yap'**
+  String get loginTitle;
+
+  /// No description provided for @loginEmailLabel.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta'**
+  String get loginEmailLabel;
+
+  /// No description provided for @loginPasswordLabel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şifre'**
+  String get loginPasswordLabel;
+
+  /// No description provided for @loginButton.
+  ///
+  /// In tr, this message translates to:
+  /// **'Giriş Yap'**
+  String get loginButton;
+
+  /// No description provided for @registerButton.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt Ol'**
+  String get registerButton;
+
+  /// No description provided for @forgotPassword.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şifremi unuttum'**
+  String get forgotPassword;
+
+  /// No description provided for @logout.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkış Yap'**
+  String get logout;
+
+  /// No description provided for @invalidCredentials.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta veya şifre hatalı'**
+  String get invalidCredentials;
+
+  /// No description provided for @confirm.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onayla'**
+  String get confirm;
+
+  /// No description provided for @back.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri'**
+  String get back;
+
+  /// No description provided for @next.
+  ///
+  /// In tr, this message translates to:
+  /// **'İleri'**
+  String get next;
+
+  /// No description provided for @done.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitti'**
+  String get done;
+
+  /// No description provided for @share.
+  ///
+  /// In tr, this message translates to:
+  /// **'Paylaş'**
+  String get share;
+
+  /// No description provided for @noJobsFound.
+  ///
+  /// In tr, this message translates to:
+  /// **'İlan bulunamadı'**
+  String get noJobsFound;
+
+  /// No description provided for @searchPlaceholder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ara…'**
+  String get searchPlaceholder;
+
+  /// No description provided for @filterButton.
+  ///
+  /// In tr, this message translates to:
+  /// **'Filtrele'**
+  String get filterButton;
+
+  /// No description provided for @sortButton.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sırala'**
+  String get sortButton;
+
+  /// No description provided for @seeAll.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümünü gör'**
+  String get seeAll;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In tr, this message translates to:
+  /// **'Profili Düzenle'**
+  String get editProfile;
+
+  /// No description provided for @myAddresses.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adreslerim'**
+  String get myAddresses;
+
+  /// No description provided for @myWallet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Cüzdanım'**
+  String get myWallet;
+
+  /// No description provided for @mySubscription.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aboneliğim'**
+  String get mySubscription;
+
+  /// No description provided for @notifications.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirimler'**
+  String get notifications;
+
+  /// No description provided for @privacy.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gizlilik'**
+  String get privacy;
+
+  /// No description provided for @support.
+  ///
+  /// In tr, this message translates to:
+  /// **'Destek'**
+  String get support;
+
+  /// No description provided for @networkError.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bağlantı hatası'**
+  String get networkError;
+
+  /// No description provided for @unauthorized.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yetkisiz erişim'**
+  String get unauthorized;
+
+  /// No description provided for @notFound.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bulunamadı'**
+  String get notFound;
+
+  /// No description provided for @serverError.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sunucu hatası'**
+  String get serverError;
+
+  /// No description provided for @languageSettingTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dil / Language'**
+  String get languageSettingTitle;
+
+  /// No description provided for @languageSheetTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dil Seçin'**
+  String get languageSheetTitle;
+
+  /// No description provided for @welcomeTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hoş Geldiniz!'**
+  String get welcomeTitle;
+
+  /// No description provided for @loginSubtitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devam etmek için giriş yapın.'**
+  String get loginSubtitle;
+
+  /// No description provided for @noAccountRegister.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabınız yok mu? Kayıt Olun'**
+  String get noAccountRegister;
+
+  /// No description provided for @emailPasswordEmpty.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta ve şifre boş olamaz'**
+  String get emailPasswordEmpty;
 }
 
 class _AppLocalizationsDelegate

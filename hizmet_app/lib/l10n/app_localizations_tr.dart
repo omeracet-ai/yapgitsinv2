@@ -61,4 +61,109 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ok => 'Tamam';
+
+  @override
+  String get loginTitle => 'Giriş Yap';
+
+  @override
+  String get loginEmailLabel => 'E-posta';
+
+  @override
+  String get loginPasswordLabel => 'Şifre';
+
+  @override
+  String get loginButton => 'Giriş Yap';
+
+  @override
+  String get registerButton => 'Kayıt Ol';
+
+  @override
+  String get forgotPassword => 'Şifremi unuttum';
+
+  @override
+  String get logout => 'Çıkış Yap';
+
+  @override
+  String get invalidCredentials => 'E-posta veya şifre hatalı';
+
+  @override
+  String get confirm => 'Onayla';
+
+  @override
+  String get back => 'Geri';
+
+  @override
+  String get next => 'İleri';
+
+  @override
+  String get done => 'Bitti';
+
+  @override
+  String get share => 'Paylaş';
+
+  @override
+  String get noJobsFound => 'İlan bulunamadı';
+
+  @override
+  String get searchPlaceholder => 'Ara…';
+
+  @override
+  String get filterButton => 'Filtrele';
+
+  @override
+  String get sortButton => 'Sırala';
+
+  @override
+  String get seeAll => 'Tümünü gör';
+
+  @override
+  String get editProfile => 'Profili Düzenle';
+
+  @override
+  String get myAddresses => 'Adreslerim';
+
+  @override
+  String get myWallet => 'Cüzdanım';
+
+  @override
+  String get mySubscription => 'Aboneliğim';
+
+  @override
+  String get notifications => 'Bildirimler';
+
+  @override
+  String get privacy => 'Gizlilik';
+
+  @override
+  String get support => 'Destek';
+
+  @override
+  String get networkError => 'Bağlantı hatası';
+
+  @override
+  String get unauthorized => 'Yetkisiz erişim';
+
+  @override
+  String get notFound => 'Bulunamadı';
+
+  @override
+  String get serverError => 'Sunucu hatası';
+
+  @override
+  String get languageSettingTitle => 'Dil / Language';
+
+  @override
+  String get languageSheetTitle => 'Dil Seçin';
+
+  @override
+  String get welcomeTitle => 'Hoş Geldiniz!';
+
+  @override
+  String get loginSubtitle => 'Devam etmek için giriş yapın.';
+
+  @override
+  String get noAccountRegister => 'Hesabınız yok mu? Kayıt Olun';
+
+  @override
+  String get emailPasswordEmpty => 'E-posta ve şifre boş olamaz';
 }

@@ -61,4 +61,109 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ok => 'OK';
+
+  @override
+  String get loginTitle => 'Log In';
+
+  @override
+  String get loginEmailLabel => 'Email';
+
+  @override
+  String get loginPasswordLabel => 'Password';
+
+  @override
+  String get loginButton => 'Log In';
+
+  @override
+  String get registerButton => 'Sign Up';
+
+  @override
+  String get forgotPassword => 'Forgot password';
+
+  @override
+  String get logout => 'Log Out';
+
+  @override
+  String get invalidCredentials => 'Invalid email or password';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String get noJobsFound => 'No listings found';
+
+  @override
+  String get searchPlaceholder => 'Search…';
+
+  @override
+  String get filterButton => 'Filter';
+
+  @override
+  String get sortButton => 'Sort';
+
+  @override
+  String get seeAll => 'See all';
+
+  @override
+  String get editProfile => 'Edit Profile';
+
+  @override
+  String get myAddresses => 'My Addresses';
+
+  @override
+  String get myWallet => 'My Wallet';
+
+  @override
+  String get mySubscription => 'My Subscription';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get privacy => 'Privacy';
+
+  @override
+  String get support => 'Support';
+
+  @override
+  String get networkError => 'Network error';
+
+  @override
+  String get unauthorized => 'Unauthorized';
+
+  @override
+  String get notFound => 'Not found';
+
+  @override
+  String get serverError => 'Server error';
+
+  @override
+  String get languageSettingTitle => 'Language / Dil';
+
+  @override
+  String get languageSheetTitle => 'Choose Language';
+
+  @override
+  String get welcomeTitle => 'Welcome!';
+
+  @override
+  String get loginSubtitle => 'Log in to continue.';
+
+  @override
+  String get noAccountRegister => 'Don\'t have an account? Sign Up';
+
+  @override
+  String get emailPasswordEmpty => 'Email and password cannot be empty';
 }

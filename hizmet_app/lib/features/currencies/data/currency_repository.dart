@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 class Currency {
   final String code;
@@ -28,7 +27,7 @@ class Currency {
 }
 
 final currencyRepositoryProvider = Provider<CurrencyRepository>((ref) {
-  return CurrencyRepository(ref.watch(authRepositoryProvider));
+  return CurrencyRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 final currenciesProvider = FutureProvider<List<Currency>>((ref) async {
@@ -38,14 +37,9 @@ final currenciesProvider = FutureProvider<List<Currency>>((ref) async {
 final preferredCurrencyProvider = StateProvider<String>((ref) => 'TRY');
 
 class CurrencyRepository {
-  final AuthRepository _auth;
   final Dio _dio;
 
-  CurrencyRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-        ));
+  CurrencyRepository({required Dio dio}) : _dio = dio;
 
   Future<List<Currency>> getCurrencies() async {
     final res = await _dio.get('/currencies');
@@ -55,11 +49,9 @@ class CurrencyRepository {
   }
 
   Future<String> setPreferredCurrency(String code) async {
-    final t = await _auth.getToken();
     final res = await _dio.patch(
       '/users/me/currency',
       data: {'code': code},
-      options: Options(headers: {'Authorization': 'Bearer $t'}),
     );
     return (res.data['preferredCurrency'] as String?) ?? code;
   }

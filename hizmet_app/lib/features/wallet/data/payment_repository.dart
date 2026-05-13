@@ -1,10 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 final paymentRepositoryProvider = Provider((ref) {
-  return PaymentRepository(ref.watch(authRepositoryProvider));
+  return PaymentRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 final earningsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
@@ -12,23 +11,13 @@ final earningsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
 });
 
 class PaymentRepository {
-  final AuthRepository _auth;
   final Dio _dio;
 
-  PaymentRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-        ));
-
-  Future<Options> _authOpts() async {
-    final t = await _auth.getToken();
-    return Options(headers: {'Authorization': 'Bearer $t'});
-  }
+  PaymentRepository({required Dio dio}) : _dio = dio;
 
   Future<Map<String, dynamic>> getEarnings() async {
     try {
-      final res = await _dio.get('/payments/earnings', options: await _authOpts());
+      final res = await _dio.get('/payments/earnings');
       return res.data as Map<String, dynamic>;
     } catch (e) {
       return {

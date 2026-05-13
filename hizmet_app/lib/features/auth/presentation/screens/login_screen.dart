@@ -5,6 +5,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/providers/navigation_provider.dart';
 import '../providers/auth_provider.dart';
+import '../../../../l10n/app_localizations.dart';
+// TODO(P190): migrate remaining strings to AppLocalizations
 
 class LoginScreen extends ConsumerStatefulWidget {
   final String? returnTo;
@@ -53,7 +55,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final password = _passwordController.text;
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('E-posta ve şifre boş olamaz')),
+        SnackBar(
+            content:
+                Text(AppLocalizations.of(context).emailPasswordEmpty)),
       );
       return;
     }
@@ -71,6 +75,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final isLoading = authState is AuthLoading;
+    final l = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -97,27 +102,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             children: [
               const SizedBox(height: 8),
               Text(
-                'Hoş Geldiniz!',
+                l.welcomeTitle,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
               ).animate().fade().slideX(begin: -0.1),
               const SizedBox(height: 8),
-              const Text(
-                'Devam etmek için giriş yapın.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+              Text(
+                l.loginSubtitle,
+                style: const TextStyle(
+                    color: AppColors.textSecondary, fontSize: 16),
               ).animate().fade(delay: 200.ms).slideX(begin: -0.1),
               const SizedBox(height: 48),
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 enabled: !isLoading,
-                decoration: const InputDecoration(
-                  labelText: 'E-posta',
+                decoration: InputDecoration(
+                  labelText: l.loginEmailLabel,
                   filled: true,
                   fillColor: Colors.white,
-                  prefixIcon: Icon(Icons.email_outlined),
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
               ).animate().fade(delay: 300.ms).slideY(begin: 0.1),
               const SizedBox(height: 16),
@@ -127,7 +133,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 enabled: !isLoading,
                 onSubmitted: (_) => isLoading ? null : _login(),
                 decoration: InputDecoration(
-                  labelText: 'Şifre',
+                  labelText: l.loginPasswordLabel,
                   filled: true,
                   fillColor: Colors.white,
                   prefixIcon: const Icon(Icons.lock_outline),
@@ -160,8 +166,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2.5),
                         )
-                      : const Text('Giriş Yap',
-                          style: TextStyle(
+                      : Text(l.loginButton,
+                          style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 16)),
@@ -171,14 +177,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Center(
                 child: TextButton(
                   onPressed: isLoading ? null : () => context.push('/forgot-password'),
-                  child: const Text('Şifremi unuttum'),
+                  child: Text(l.forgotPassword),
                 ),
               ).animate().fade(delay: 550.ms),
               const SizedBox(height: 8),
               Center(
                 child: TextButton(
                   onPressed: isLoading ? null : () => context.push('/kayit-ol'),
-                  child: const Text('Hesabınız yok mu? Kayıt Olun'),
+                  child: Text(l.noAccountRegister),
                 ),
               ).animate().fade(delay: 600.ms),
             ],

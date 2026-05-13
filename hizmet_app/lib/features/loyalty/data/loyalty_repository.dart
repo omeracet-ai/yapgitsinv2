@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 class LoyaltyInfo {
   final String referralCode;
@@ -28,7 +27,7 @@ class LoyaltyInfo {
 }
 
 final loyaltyRepositoryProvider = Provider((ref) {
-  return LoyaltyRepository(ref.watch(authRepositoryProvider));
+  return LoyaltyRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 final loyaltyProvider = FutureProvider<LoyaltyInfo>((ref) async {
@@ -36,31 +35,17 @@ final loyaltyProvider = FutureProvider<LoyaltyInfo>((ref) async {
 });
 
 class LoyaltyRepository {
-  final AuthRepository _auth;
   final Dio _dio;
 
-  LoyaltyRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-        ));
-
-  Future<Options> _opts() async {
-    final t = await _auth.getToken();
-    return Options(headers: {'Authorization': 'Bearer $t'});
-  }
+  LoyaltyRepository({required Dio dio}) : _dio = dio;
 
   Future<LoyaltyInfo> getMy() async {
-    final res = await _dio.get('/loyalty/my', options: await _opts());
+    final res = await _dio.get('/loyalty/my');
     return LoyaltyInfo.fromJson(Map<String, dynamic>.from(res.data as Map));
   }
 
   Future<Map<String, dynamic>> redeem(String code) async {
-    final res = await _dio.post(
-      '/loyalty/redeem',
-      data: {'code': code},
-      options: await _opts(),
-    );
+    final res = await _dio.post('/loyalty/redeem', data: {'code': code});
     return Map<String, dynamic>.from(res.data as Map);
   }
 }

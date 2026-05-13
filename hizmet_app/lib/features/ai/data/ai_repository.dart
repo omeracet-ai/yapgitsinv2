@@ -1,10 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 final aiRepositoryProvider = Provider((ref) {
-  return AiRepository(ref.watch(authRepositoryProvider));
+  return AiRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 class JobAssistantResult {
@@ -77,20 +76,9 @@ class PriceSuggestion {
 }
 
 class AiRepository {
-  final AuthRepository _auth;
-  late final Dio _dio;
+  final Dio _dio;
 
-  AiRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 60),
-          receiveTimeout: const Duration(seconds: 120),
-        ));
-
-  Future<Options> _authOptions() async {
-    final token = await _auth.getToken();
-    return Options(headers: {'Authorization': 'Bearer $token'});
-  }
+  AiRepository({required Dio dio}) : _dio = dio;
 
   /// Generates a job description only (lighter than jobAssistant).
   /// Backend: POST /ai/generate-job-description → { description }
@@ -107,7 +95,6 @@ class AiRepository {
           if (category != null) 'category': category,
           if (location != null) 'location': location,
         },
-        options: await _authOptions(),
       );
       return (resp.data as Map<String, dynamic>)['description'] as String? ?? '';
     } on DioException catch (e) {
@@ -131,7 +118,6 @@ class AiRepository {
           if (location != null) 'location': location,
           if (budgetHint != null) 'budgetHint': budgetHint,
         },
-        options: await _authOptions(),
       );
       return JobAssistantResult.fromJson(resp.data as Map<String, dynamic>);
     } on DioException catch (e) {
@@ -153,7 +139,6 @@ class AiRepository {
           'jobDetails': jobDetails,
           if (location != null) 'location': location,
         },
-        options: await _authOptions(),
       );
       return PricingAdvisorResult.fromJson(resp.data as Map<String, dynamic>);
     } on DioException catch (e) {
@@ -202,7 +187,6 @@ class AiRepository {
           'message': message,
           if (history.isNotEmpty) 'history': history,
         },
-        options: await _authOptions(),
       );
       return (resp.data as Map<String, dynamic>)['reply'] as String? ?? '';
     } on DioException catch (e) {
@@ -216,7 +200,6 @@ class AiRepository {
       final resp = await _dio.post(
         '/ai/summarize-reviews',
         data: {'reviews': reviews},
-        options: await _authOptions(),
       );
       return (resp.data as Map<String, dynamic>)['summary'] as String? ?? '';
     } on DioException catch (e) {
@@ -236,7 +219,6 @@ class AiRepository {
           'message': message,
           if (history.isNotEmpty) 'history': history,
         },
-        options: await _authOptions(),
       );
       return (resp.data as Map<String, dynamic>)['reply'] as String? ?? '';
     } on DioException catch (e) {
