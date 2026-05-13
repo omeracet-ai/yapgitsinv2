@@ -3,6 +3,7 @@ import { getCategories, getWorkers, slugify, unwrap, TR_CITIES } from '@/lib/api
 import { jsonLd, breadcrumbLD } from '@/lib/seo';
 import LeadForm from '@/components/LeadForm';
 import SearchBar from '@/components/SearchBar';
+import StatsBadge from '@/components/home/StatsBadge';
 import { getDict, localePath, type Locale, DEFAULT_LOCALE } from '@/i18n';
 
 const SEARCH_PLACEHOLDER: Record<string, string> = {
@@ -87,6 +88,9 @@ export default async function renderHome(L: Locale) {
           </div>
         </div>
       </section>
+
+      {/* STATS BADGE — Phase 176 — graceful (null if API offline) */}
+      <StatsBadge />
 
       {/* CATEGORIES — Airtasker tile grid: large icon, bold name, hover lift */}
       <section className="container mx-auto px-4 md:px-6 lg:px-8 py-14 md:py-20">
