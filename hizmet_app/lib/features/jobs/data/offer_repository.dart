@@ -1,10 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 final offerRepositoryProvider = Provider((ref) {
-  return OfferRepository(ref.watch(authRepositoryProvider));
+  return OfferRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 final jobOffersProvider =
@@ -13,30 +12,13 @@ final jobOffersProvider =
 });
 
 class OfferRepository {
-  final AuthRepository _authRepository;
   final Dio _dio;
 
-  OfferRepository(this._authRepository)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-          receiveTimeout: const Duration(seconds: 8),
-        ));
-
-  Future<Options> _authOpts() async {
-    final token = await _authRepository.getToken();
-    return Options(headers: {'Authorization': 'Bearer $token'});
-  }
+  OfferRepository({required Dio dio}) : _dio = dio;
 
   Future<List<Map<String, dynamic>>> getOffersForJob(String jobId) async {
     try {
-      final token = await _authRepository.getToken();
-      final res = await _dio.get(
-        '/jobs/$jobId/offers',
-        options: token != null
-            ? Options(headers: {'Authorization': 'Bearer $token'})
-            : null,
-      );
+      final res = await _dio.get('/jobs/$jobId/offers');
       return List<Map<String, dynamic>>.from(res.data as List);
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Teklifler yüklenemedi'));
@@ -54,7 +36,6 @@ class OfferRepository {
       final res = await _dio.post(
         '/jobs/$jobId/offers',
         data: body,
-        options: await _authOpts(),
       );
       return Map<String, dynamic>.from(res.data as Map);
     } on DioException catch (e) {
@@ -64,8 +45,7 @@ class OfferRepository {
 
   Future<void> acceptOffer(String jobId, String offerId) async {
     try {
-      await _dio.patch('/jobs/$jobId/offers/$offerId/accept',
-          options: await _authOpts());
+      await _dio.patch('/jobs/$jobId/offers/$offerId/accept');
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Teklif kabul edilemedi'));
     }
@@ -73,8 +53,7 @@ class OfferRepository {
 
   Future<void> rejectOffer(String jobId, String offerId) async {
     try {
-      await _dio.patch('/jobs/$jobId/offers/$offerId/reject',
-          options: await _authOpts());
+      await _dio.patch('/jobs/$jobId/offers/$offerId/reject');
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Teklif reddedilemedi'));
     }
@@ -82,10 +61,7 @@ class OfferRepository {
 
   Future<Map<String, dynamic>> withdrawOffer(String jobId, String offerId) async {
     try {
-      final res = await _dio.patch(
-        '/jobs/$jobId/offers/$offerId/withdraw',
-        options: await _authOpts(),
-      );
+      final res = await _dio.patch('/jobs/$jobId/offers/$offerId/withdraw');
       return Map<String, dynamic>.from(res.data as Map);
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Teklif geri çekilemedi'));
@@ -98,7 +74,6 @@ class OfferRepository {
       await _dio.patch(
         '/jobs/$jobId/offers/$offerId/counter',
         data: {'counterPrice': price, 'counterMessage': message},
-        options: await _authOpts(),
       );
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Pazarlık teklifi gönderilemedi'));
@@ -107,7 +82,7 @@ class OfferRepository {
 
   Future<void> updateJob(String jobId, Map<String, dynamic> data) async {
     try {
-      await _dio.patch('/jobs/$jobId', data: data, options: await _authOpts());
+      await _dio.patch('/jobs/$jobId', data: data);
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'İlan güncellenemedi'));
     }
@@ -115,7 +90,7 @@ class OfferRepository {
 
   Future<void> deleteJob(String jobId) async {
     try {
-      await _dio.delete('/jobs/$jobId', options: await _authOpts());
+      await _dio.delete('/jobs/$jobId');
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'İlan silinemedi'));
     }
@@ -145,10 +120,7 @@ class OfferRepository {
   /// Ustanın verdiği teklifler — GET /offers/my
   Future<List<Map<String, dynamic>>> getMyOffers() async {
     try {
-      final res = await _dio.get(
-        '/offers/my',
-        options: await _authOpts(),
-      );
+      final res = await _dio.get('/offers/my');
       return List<Map<String, dynamic>>.from(res.data['data'] as List);
     } on DioException catch (e) {
       final statusCode = e.response?.statusCode;

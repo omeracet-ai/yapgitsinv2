@@ -1,12 +1,10 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 final jobRepositoryProvider = Provider((ref) {
-  final authRepo = ref.watch(authRepositoryProvider);
-  return JobRepository(authRepo);
+  return JobRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 /// Tam detay: customer bilgisi dahil
@@ -16,14 +14,9 @@ final jobDetailProvider =
 });
 
 class JobRepository {
-  final AuthRepository _authRepository;
   final Dio _dio;
 
-  JobRepository(this._authRepository)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 5),
-        ));
+  JobRepository({required Dio dio}) : _dio = dio;
 
   Future<List<Map<String, dynamic>>> getJobs({String? category, String? q}) async {
     try {
@@ -39,14 +32,7 @@ class JobRepository {
 
   Future<Map<String, dynamic>> createJob(Map<String, dynamic> jobData) async {
     try {
-      final token = await _authRepository.getToken();
-      final response = await _dio.post(
-        '/jobs',
-        data: jobData,
-        options: Options(headers: {
-          'Authorization': 'Bearer $token',
-        }),
-      );
+      final response = await _dio.post('/jobs', data: jobData);
       return response.data;
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'İlan oluşturulamadı'));
@@ -65,13 +51,9 @@ class JobRepository {
   /// Müşterinin kendi ilanları
   Future<List<Map<String, dynamic>>> getMyJobs(String customerId) async {
     try {
-      final token = await _authRepository.getToken();
       final response = await _dio.get(
         '/jobs',
         queryParameters: {'customerId': customerId},
-        options: token != null
-            ? Options(headers: {'Authorization': 'Bearer $token'})
-            : null,
       );
       return List<Map<String, dynamic>>.from(response.data['data'] as List);
     } on DioException catch (e) {
@@ -90,11 +72,9 @@ class JobRepository {
 
   Future<void> postJobQuestion(String jobId, String text, {String? photoUrl}) async {
     try {
-      final token = await _authRepository.getToken();
       await _dio.post(
         '/jobs/$jobId/questions',
         data: {'text': text, if (photoUrl != null) 'photoUrl': photoUrl},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Soru gönderilemedi'));
@@ -104,11 +84,9 @@ class JobRepository {
   /// Boost a job — backend keser token ve featuredUntil set eder
   Future<Map<String, dynamic>> boostJob(String jobId, int days) async {
     try {
-      final token = await _authRepository.getToken();
       final response = await _dio.post(
         '/jobs/$jobId/boost',
         data: {'days': days},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
@@ -118,11 +96,9 @@ class JobRepository {
 
   Future<void> postQuestionReply(String jobId, String questionId, String text) async {
     try {
-      final token = await _authRepository.getToken();
       await _dio.post(
         '/jobs/$jobId/questions/$questionId/replies',
         data: {'text': text},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Yanıt gönderilemedi'));
@@ -132,7 +108,6 @@ class JobRepository {
   /// Tamamlama fotoğrafları yükle (atanan usta + in_progress/pending_completion)
   Future<List<String>> uploadCompletionPhotos(String jobId, List<File> files) async {
     try {
-      final token = await _authRepository.getToken();
       final form = FormData();
       for (final f in files) {
         form.files.add(MapEntry(
@@ -143,7 +118,6 @@ class JobRepository {
       final res = await _dio.post(
         '/uploads/completion-photos/$jobId',
         data: form,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       return List<String>.from((res.data['photos'] as List));
     } on DioException catch (e) {

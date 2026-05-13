@@ -28,6 +28,16 @@ export class AuthController {
     return this.authService.login(user);
   }
 
+  /**
+   * Phase P188/4 (Voldi-sec) — Refresh access+refresh tokens.
+   * 10 req/dk per IP — refresh shouldn't be hot.
+   */
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Post('refresh')
+  async refresh(@Body() body: { refreshToken: string }) {
+    return this.authService.refresh(body?.refreshToken);
+  }
+
   /** Admin girişi  –  username: "admin"  password: "admin" */
   @Throttle({ 'auth-login': { limit: 5, ttl: 60_000 } })
   @Post('admin/login')

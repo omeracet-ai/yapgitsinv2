@@ -1,10 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 final boostRepositoryProvider = Provider((ref) {
-  return BoostRepository(ref.watch(authRepositoryProvider));
+  return BoostRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 final boostPackagesProvider =
@@ -18,19 +17,9 @@ final myBoostsProvider =
 });
 
 class BoostRepository {
-  final AuthRepository _auth;
   final Dio _dio;
 
-  BoostRepository(this._auth)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 8),
-        ));
-
-  Future<Options> _authOpts() async {
-    final t = await _auth.getToken();
-    return Options(headers: {'Authorization': 'Bearer $t'});
-  }
+  BoostRepository({required Dio dio}) : _dio = dio;
 
   Future<List<Map<String, dynamic>>> getPackages() async {
     final res = await _dio.get('/boost/packages');
@@ -38,7 +27,7 @@ class BoostRepository {
   }
 
   Future<Map<String, List<Map<String, dynamic>>>> getMy() async {
-    final res = await _dio.get('/boost/my', options: await _authOpts());
+    final res = await _dio.get('/boost/my');
     final data = Map<String, dynamic>.from(res.data as Map);
     return {
       'active': List<Map<String, dynamic>>.from(data['active'] as List? ?? []),
@@ -50,7 +39,6 @@ class BoostRepository {
     final res = await _dio.post(
       '/boost/purchase',
       data: {'type': type},
-      options: await _authOpts(),
     );
     return Map<String, dynamic>.from(res.data as Map);
   }

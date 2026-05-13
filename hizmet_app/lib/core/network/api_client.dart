@@ -5,25 +5,25 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/api_constants.dart';
+import '../services/secure_token_store.dart';
 
 /// Central HTTP client for the app.
 ///
-/// Phase P187/5 (Voldi-sec): foundation only. The existing 231 Dio call sites
-/// are NOT migrated here — that lands in a later phase. This class wires up:
-///   1. A single `Dio` instance pointed at [ApiConstants.baseUrl].
-///   2. An auth interceptor that injects `Authorization: Bearer <token>` from
-///      the shared token store (key `auth_token`, same key used by
-///      `SecureTokenStore` — Voldi-sec-2 migrates the persistence layer to
-///      flutter_secure_storage in parallel; the key contract stays stable).
-///   3. A stub [RefreshTokenInterceptor] that handles 401s. The backend
-///      auth controller (`nestjs-backend/src/modules/auth/auth.controller.ts`)
-///      does NOT currently expose a `/auth/refresh` route, so on 401 we just
-///      log and bubble the error up. When the backend ships refresh, flip
-///      [_refreshEnabled] and the retry path activates.
+/// Phase P188/4 (Voldi-sec): refresh token interceptor LIVE.
+///   - Access token read from SecureTokenStore (auth_token), falling back to
+///     SharedPreferences `jwt_token` (legacy write-through key) and the
+///     ApiClient.kAuthTokenKey shim.
+///   - Refresh token read from SecureTokenStore (refresh_token).
+///   - On 401: POST /auth/refresh once with the refresh token. On success,
+///     persist the new pair to SecureTokenStore (+ write-through to SP for
+///     legacy call sites) and retry the original request once.
+///   - On refresh failure (network/401/missing token): clear the store and
+///     surface the original 401 — UI/router reacts on next protected call.
 class ApiClient {
-  ApiClient({Dio? dio, SharedPreferences? prefs})
+  ApiClient({Dio? dio, SharedPreferences? prefs, SecureTokenStore? tokenStore})
       : _dio = dio ?? Dio(),
-        _prefsOverride = prefs {
+        _prefsOverride = prefs,
+        _tokenStore = tokenStore ?? SecureTokenStore() {
     _dio.options
       ..baseUrl = ApiConstants.baseUrl
       ..connectTimeout = const Duration(seconds: 20)
@@ -35,7 +35,8 @@ class ApiClient {
     _dio.interceptors.add(_AuthInterceptor(_readAccessToken));
     _dio.interceptors.add(RefreshTokenInterceptor(
       dio: _dio,
-      readRefreshToken: _readRefreshToken,
+      tokenStore: _tokenStore,
+      writeAccessToken: _writeAccessToken,
     ));
   }
 
@@ -44,6 +45,7 @@ class ApiClient {
 
   final Dio _dio;
   final SharedPreferences? _prefsOverride;
+  final SecureTokenStore _tokenStore;
 
   Dio get dio => _dio;
 
@@ -51,15 +53,19 @@ class ApiClient {
       _prefsOverride ?? await SharedPreferences.getInstance();
 
   Future<String?> _readAccessToken() async {
+    // Prefer secure store; fall back to legacy SP keys for migration window.
+    final secure = await _tokenStore.readToken();
+    if (secure != null && secure.isNotEmpty) return secure;
     final p = await _prefs();
-    final t = p.getString(kAuthTokenKey);
+    final t = p.getString(kAuthTokenKey) ?? p.getString('jwt_token');
     return (t == null || t.isEmpty) ? null : t;
   }
 
-  Future<String?> _readRefreshToken() async {
+  Future<void> _writeAccessToken(String token) async {
+    await _tokenStore.writeToken(token);
     final p = await _prefs();
-    final t = p.getString(kRefreshTokenKey);
-    return (t == null || t.isEmpty) ? null : t;
+    await p.setString(kAuthTokenKey, token);
+    await p.setString('jwt_token', token); // legacy write-through
   }
 }
 
@@ -86,26 +92,24 @@ class _AuthInterceptor extends Interceptor {
   }
 }
 
-/// On a 401, attempts a single refresh + retry. Currently a stub: the backend
-/// does not expose a refresh route, so we log and surface the original 401.
-/// When the route lands, set [_refreshEnabled] = true and the retry path runs.
+/// On a 401, attempts a single refresh + retry against POST /auth/refresh.
+/// Backend ships the endpoint as of Phase P188/4.
 class RefreshTokenInterceptor extends Interceptor {
   RefreshTokenInterceptor({
     required Dio dio,
-    required Future<String?> Function() readRefreshToken,
+    required SecureTokenStore tokenStore,
+    required Future<void> Function(String) writeAccessToken,
   })  : _dio = dio,
-        _readRefreshToken = readRefreshToken;
+        _tokenStore = tokenStore,
+        _writeAccessToken = writeAccessToken;
 
-  // Flip to true once nestjs-backend ships POST /auth/refresh.
-  static const bool _refreshEnabled = false;
-
-  // Canonical route — checked against auth.controller.ts on 2026-05-13:
-  // controller has login / register / 2fa / forgot-password / etc., but no
-  // refresh endpoint. Update if backend uses a different path.
+  // P188/4: backend now exposes POST /auth/refresh — interceptor active.
+  static const bool _refreshEnabled = true;
   static const String _refreshPath = '/auth/refresh';
 
   final Dio _dio;
-  final Future<String?> Function() _readRefreshToken;
+  final SecureTokenStore _tokenStore;
+  final Future<void> Function(String) _writeAccessToken;
   bool _isRefreshing = false;
 
   @override
@@ -117,41 +121,79 @@ class RefreshTokenInterceptor extends Interceptor {
       handler.next(err);
       return;
     }
-    final refresh = await _readRefreshToken();
-    if (!_refreshEnabled || refresh == null) {
+    // Don't recurse on the refresh endpoint itself.
+    if (err.requestOptions.path.endsWith(_refreshPath)) {
+      await _forceLogout();
+      handler.next(err);
+      return;
+    }
+    if (!_refreshEnabled) {
+      handler.next(err);
+      return;
+    }
+    final refresh = await _tokenStore.readRefreshToken();
+    if (refresh == null || refresh.isEmpty) {
       if (kDebugMode) {
-        debugPrint(
-          '[ApiClient] 401 on ${err.requestOptions.uri} '
-          '(refresh ${_refreshEnabled ? "no token" : "disabled"})',
-        );
+        debugPrint('[ApiClient] 401 + no refresh token → force logout');
       }
+      await _forceLogout();
       handler.next(err);
       return;
     }
     if (_isRefreshing) {
+      // Another request is already refreshing — surface the 401; caller may retry.
       handler.next(err);
       return;
     }
     _isRefreshing = true;
     try {
-      final res = await _dio.post<Map<String, dynamic>>(
+      // Bare Dio so we don't recurse through our own interceptor stack on refresh.
+      final bare = Dio(BaseOptions(
+        baseUrl: _dio.options.baseUrl,
+        connectTimeout: _dio.options.connectTimeout,
+        receiveTimeout: _dio.options.receiveTimeout,
+        contentType: Headers.jsonContentType,
+      ));
+      final res = await bare.post<Map<String, dynamic>>(
         _refreshPath,
         data: {'refreshToken': refresh},
       );
-      final newToken = res.data?['accessToken'] as String?;
-      if (newToken == null || newToken.isEmpty) {
+      final newAccess = res.data?['accessToken'] as String?;
+      final newRefresh = res.data?['refreshToken'] as String?;
+      if (newAccess == null || newAccess.isEmpty) {
+        await _forceLogout();
         handler.next(err);
         return;
       }
+      await _writeAccessToken(newAccess);
+      if (newRefresh != null && newRefresh.isNotEmpty) {
+        await _tokenStore.writeRefreshToken(newRefresh);
+      }
+      // Retry original request once with the new access token.
       final retryOptions = err.requestOptions
-        ..headers['Authorization'] = 'Bearer $newToken';
+        ..headers['Authorization'] = 'Bearer $newAccess';
       final retried = await _dio.fetch<dynamic>(retryOptions);
       handler.resolve(retried);
     } on DioException catch (e) {
       if (kDebugMode) debugPrint('[ApiClient] refresh failed: $e');
+      // Refresh itself 401 (or any error) → force logout, bubble original 401.
+      if (e.response?.statusCode == 401) {
+        await _forceLogout();
+      }
       handler.next(err);
     } finally {
       _isRefreshing = false;
+    }
+  }
+
+  Future<void> _forceLogout() async {
+    try {
+      await _tokenStore.clear();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(ApiClient.kAuthTokenKey);
+      await prefs.remove('jwt_token');
+    } catch (_) {
+      // Best-effort — never throw from interceptor cleanup.
     }
   }
 }

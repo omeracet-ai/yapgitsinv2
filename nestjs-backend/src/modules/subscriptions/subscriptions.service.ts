@@ -15,6 +15,7 @@ import {
   UserSubscription,
   SubscriptionStatus,
 } from './user-subscription.entity';
+import { IyzipayService } from '../escrow/iyzipay.service';
 
 @Injectable()
 export class SubscriptionsService implements OnModuleInit {
@@ -25,6 +26,7 @@ export class SubscriptionsService implements OnModuleInit {
     private plansRepo: Repository<SubscriptionPlan>,
     @InjectRepository(UserSubscription)
     private subsRepo: Repository<UserSubscription>,
+    private readonly iyzipay: IyzipayService,
   ) {}
 
   async onModuleInit() {
@@ -122,13 +124,22 @@ export class SubscriptionsService implements OnModuleInit {
   }
 
   /**
-   * Abonelik başlat. Şu an: pending_payment kaydı oluşturup payment URL döner.
-   * Gerçek iyzipay başarı callback'i sonrası status=active olacak (placeholder).
+   * Abonelik başlat — Phase 188.
+   * pending_payment kaydı oluşturur, iyzipay Checkout Form initialize çağırır,
+   * hosted payment page URL + token döner. Flutter WebView'da bu URL açılır,
+   * iyzipay ödemeyi callbackUrl'a POST eder; ayrıca client confirmPayment(token)
+   * ile manuel doğrulatabilir (WebView navigation interception path).
    */
   async subscribe(
     userId: string,
     planKey: string,
-  ): Promise<{ subscriptionId: string; paymentUrl: string; plan: SubscriptionPlan }> {
+  ): Promise<{
+    subscriptionId: string;
+    paymentUrl: string;
+    paymentToken: string;
+    mock: boolean;
+    plan: SubscriptionPlan;
+  }> {
     const plan = await this.plansRepo.findOne({ where: { key: planKey, isActive: true } });
     if (!plan) throw new NotFoundException(`Plan bulunamadı: ${planKey}`);
 
@@ -145,19 +156,81 @@ export class SubscriptionsService implements OnModuleInit {
       expires.setMonth(expires.getMonth() + 1);
     }
 
+    // pending kayıt — confirm sonrası ACTIVE'e geçer
     const sub = this.subsRepo.create({
       userId,
       planId: plan.id,
-      status: SubscriptionStatus.ACTIVE, // sandbox: instant activation
+      status: SubscriptionStatus.PENDING_PAYMENT,
       startedAt: now,
       expiresAt: expires,
       paymentRef: null,
     });
     await this.subsRepo.save(sub);
 
-    // iyzipay placeholder URL — production'da PaymentsService.createCheckoutForm reuse edilir
-    const paymentUrl = `/iyzipay/subscribe?ref=${sub.id}&plan=${plan.key}`;
-    return { subscriptionId: sub.id, paymentUrl, plan };
+    // iyzipay Checkout Form initialize
+    const checkout = await this.iyzipay.createCheckoutForm({
+      refId: sub.id,
+      gross: Number(plan.price),
+      callbackUrl: IyzipayService.callbackUrl(),
+      itemName: `${plan.name} (Abonelik)`,
+    });
+
+    sub.paymentRef = checkout.token;
+    await this.subsRepo.save(sub);
+
+    const paymentUrl = checkout.paymentPageUrl ?? '';
+    return {
+      subscriptionId: sub.id,
+      paymentUrl,
+      paymentToken: checkout.token,
+      mock: checkout.mock,
+      plan,
+    };
+  }
+
+  /**
+   * Phase 188 — iyzipay başarı doğrulama. Flutter WebView callback URL'i
+   * yakalayınca veya iyzipay backend'e POST callback yapınca çağrılır.
+   * Sunucu iyzipay'i retrieveCheckout ile re-verify eder, sonra
+   * subscription ACTIVE olur.
+   */
+  async confirmPayment(
+    userId: string,
+    token: string,
+  ): Promise<{ subscriptionId: string; status: SubscriptionStatus; expiresAt: Date }> {
+    if (!token) throw new BadRequestException('token zorunlu');
+    const sub = await this.subsRepo.findOne({
+      where: { userId, paymentRef: token },
+      relations: ['plan'],
+    });
+    if (!sub) throw new NotFoundException('Abonelik kaydı bulunamadı');
+
+    if (sub.status === SubscriptionStatus.ACTIVE) {
+      return { subscriptionId: sub.id, status: sub.status, expiresAt: sub.expiresAt };
+    }
+
+    const verify = await this.iyzipay.retrieveCheckout(token);
+    if (verify.status !== 'SUCCESS') {
+      sub.status = SubscriptionStatus.EXPIRED;
+      await this.subsRepo.save(sub);
+      throw new BadRequestException('Ödeme doğrulanamadı');
+    }
+
+    sub.status = SubscriptionStatus.ACTIVE;
+    sub.startedAt = new Date();
+    const expires = new Date(sub.startedAt);
+    if (sub.plan?.period === SubscriptionPeriod.YEARLY) {
+      expires.setFullYear(expires.getFullYear() + 1);
+    } else {
+      expires.setMonth(expires.getMonth() + 1);
+    }
+    sub.expiresAt = expires;
+    await this.subsRepo.save(sub);
+
+    this.logger.log(
+      `Subscription ${sub.id} ACTIVE (user=${userId}, paymentId=${verify.paymentId})`,
+    );
+    return { subscriptionId: sub.id, status: sub.status, expiresAt: sub.expiresAt };
   }
 
   async cancel(

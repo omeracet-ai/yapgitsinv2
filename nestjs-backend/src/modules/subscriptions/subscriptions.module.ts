@@ -7,6 +7,7 @@ import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionsController } from './subscriptions.controller';
 import { CategorySubscriptionsService } from './category-subscriptions.service';
 import { CategorySubscriptionsController } from './category-subscriptions.controller';
+import { EscrowModule } from '../escrow/escrow.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { CategorySubscriptionsController } from './category-subscriptions.contro
       UserSubscription,
       CategorySubscription,
     ]),
+    EscrowModule,
   ],
   providers: [SubscriptionsService, CategorySubscriptionsService],
   controllers: [SubscriptionsController, CategorySubscriptionsController],

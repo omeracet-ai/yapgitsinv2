@@ -1,0 +1,22 @@
+{
+  "@@locale": "tr",
+  "appTitle": "Yapgitsin",
+  "@appTitle": {"description": "App display name"},
+  "tabYaptir": "Yaptır",
+  "tabYapgitsin": "Yapgitsin",
+  "tabIsIlanlari": "İş İlanları",
+  "tabBildirim": "Bildirim",
+  "tabProfil": "Profil",
+  "subTabHizmetIlanlari": "Hizmet İlanları",
+  "subTabFirsatlar": "Fırsatlar",
+  "subTabHarita": "Harita",
+  "subTabIslerim": "İşlerim",
+  "loading": "Yükleniyor…",
+  "errorGeneric": "Bir hata oluştu",
+  "retry": "Tekrar dene",
+  "save": "Kaydet",
+  "cancel": "İptal",
+  "delete": "Sil",
+  "edit": "Düzenle",
+  "ok": "Tamam"
+}

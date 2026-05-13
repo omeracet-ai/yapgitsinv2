@@ -1,0 +1,22 @@
+{
+  "@@locale": "en",
+  "appTitle": "Yapgitsin",
+  "@appTitle": {"description": "App display name"},
+  "tabYaptir": "Get It Done",
+  "tabYapgitsin": "Yapgitsin",
+  "tabIsIlanlari": "Job Listings",
+  "tabBildirim": "Notifications",
+  "tabProfil": "Profile",
+  "subTabHizmetIlanlari": "Service Listings",
+  "subTabFirsatlar": "Opportunities",
+  "subTabHarita": "Map",
+  "subTabIslerim": "My Jobs",
+  "loading": "Loading…",
+  "errorGeneric": "An error occurred",
+  "retry": "Retry",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  "ok": "OK"
+}

@@ -1,7 +1,28 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/network/api_client_provider.dart';
 import '../../auth/data/auth_repository.dart';
+
+/// Phase 188 — subscribe() response shape.
+class SubscribeResult {
+  final String subscriptionId;
+  final String paymentUrl;
+  final String paymentToken;
+  final bool mock;
+  SubscribeResult({
+    required this.subscriptionId,
+    required this.paymentUrl,
+    required this.paymentToken,
+    required this.mock,
+  });
+  factory SubscribeResult.fromJson(Map<String, dynamic> j) => SubscribeResult(
+        subscriptionId: (j['subscriptionId'] as String?) ?? '',
+        paymentUrl: (j['paymentUrl'] as String?) ?? '',
+        paymentToken: (j['paymentToken'] as String?) ?? '',
+        mock: (j['mock'] as bool?) ?? false,
+      );
+}
 
 class SubscriptionPlan {
   final String key;
@@ -58,7 +79,10 @@ class UserSubscription {
 }
 
 final subscriptionRepositoryProvider = Provider((ref) {
-  return SubscriptionRepository(ref.watch(authRepositoryProvider));
+  return SubscriptionRepository(
+    ref.watch(authRepositoryProvider),
+    ref.watch(apiClientProvider).dio,
+  );
 });
 
 final subscriptionPlansProvider = FutureProvider<List<SubscriptionPlan>>((ref) async {
@@ -72,9 +96,13 @@ final mySubscriptionProvider = FutureProvider<UserSubscription?>((ref) async {
 class SubscriptionRepository {
   final AuthRepository _auth;
   final Dio _dio;
+  // Legacy dio kept for getPlans/getMySubscription/cancel (manual Bearer).
+  // The Bearer-injecting apiClientProvider Dio is used for subscribe/confirm
+  // per P188/4 (Phase 188).
+  final Dio _legacyDio;
 
-  SubscriptionRepository(this._auth)
-      : _dio = Dio(BaseOptions(
+  SubscriptionRepository(this._auth, this._dio)
+      : _legacyDio = Dio(BaseOptions(
           baseUrl: ApiConstants.baseUrl,
           connectTimeout: const Duration(seconds: 8),
         ));
@@ -85,28 +113,37 @@ class SubscriptionRepository {
   }
 
   Future<List<SubscriptionPlan>> getPlans() async {
-    final res = await _dio.get('/subscriptions/plans', options: await _authOpts());
+    final res = await _legacyDio.get('/subscriptions/plans', options: await _authOpts());
     final list = (res.data as List).cast<Map<String, dynamic>>();
     return list.map(SubscriptionPlan.fromJson).toList();
   }
 
   Future<UserSubscription?> getMySubscription() async {
-    final res = await _dio.get('/subscriptions/my', options: await _authOpts());
+    final res = await _legacyDio.get('/subscriptions/my', options: await _authOpts());
     if (res.data == null) return null;
     return UserSubscription.fromJson(Map<String, dynamic>.from(res.data as Map));
   }
 
-  Future<String> subscribe(String planKey) async {
+  /// Phase 188 — start iyzipay Checkout Form, return URL + token for WebView.
+  Future<SubscribeResult> subscribe(String planKey) async {
     final res = await _dio.post(
       '/subscriptions/subscribe',
       data: {'planKey': planKey},
-      options: await _authOpts(),
     );
-    return (res.data['paymentUrl'] as String?) ?? '';
+    return SubscribeResult.fromJson(Map<String, dynamic>.from(res.data as Map));
+  }
+
+  /// Phase 188 — confirm iyzipay payment by token after WebView callback.
+  Future<Map<String, dynamic>> confirm(String token) async {
+    final res = await _dio.post(
+      '/subscriptions/confirm',
+      data: {'token': token},
+    );
+    return Map<String, dynamic>.from(res.data as Map);
   }
 
   Future<Map<String, dynamic>> cancel() async {
-    final res = await _dio.post('/subscriptions/cancel', options: await _authOpts());
+    final res = await _legacyDio.post('/subscriptions/cancel', options: await _authOpts());
     return Map<String, dynamic>.from(res.data as Map);
   }
 }

@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../core/constants/api_constants.dart';
+import '../../../core/network/api_client_provider.dart';
 
-final chatRepositoryProvider = Provider((ref) => ChatRepository());
+final chatRepositoryProvider = Provider((ref) {
+  return ChatRepository(dio: ref.read(apiClientProvider).dio);
+});
 
 class Conversation {
   final String peerId;
@@ -72,38 +74,33 @@ class PresenceState {
 class ChatRepository {
   final Dio _dio;
 
-  ChatRepository()
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 5),
-          receiveTimeout: const Duration(seconds: 10),
-        ));
+  ChatRepository({required Dio dio}) : _dio = dio;
+
+  /// Returns true if the user has a token. Preserved as a guard so we
+  /// short-circuit unauthenticated callers (matches pre-P188/4 behavior).
+  Future<bool> _hasToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final t = prefs.getString('jwt_token');
+    return t != null && t.isNotEmpty;
+  }
 
   /// Phase 78: query single-user presence.
   Future<PresenceState?> getPresence(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
-    if (token == null) return null;
-    final res = await _dio.get(
-      '/chat/presence/$userId',
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
-    );
+    if (!await _hasToken()) return null;
+    final res = await _dio.get('/chat/presence/$userId');
     return PresenceState.fromJson(Map<String, dynamic>.from(res.data as Map));
   }
 
   /// Phase 139: upload a chat attachment (image or document).
   /// Returns {url, type, name, size}.
   Future<Map<String, dynamic>?> uploadAttachment(String filePath) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
-    if (token == null) return null;
+    if (!await _hasToken()) return null;
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
     });
     final res = await _dio.post(
       '/uploads/chat-attachment',
       data: formData,
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
     return Map<String, dynamic>.from(res.data as Map);
   }
@@ -113,9 +110,7 @@ class ChatRepository {
     String filePath, {
     int? durationSec,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
-    if (token == null) return null;
+    if (!await _hasToken()) return null;
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
       if (durationSec != null) 'duration': durationSec.toString(),
@@ -123,7 +118,6 @@ class ChatRepository {
     final res = await _dio.post(
       '/uploads/chat-audio',
       data: formData,
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
     return Map<String, dynamic>.from(res.data as Map);
   }
@@ -132,26 +126,18 @@ class ChatRepository {
   /// Returns null if not signed in. Throws on backend error (e.g. 503 if
   /// ANTHROPIC_API_KEY is missing on backend).
   Future<String?> translateMessage(String messageId, String targetLang) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
-    if (token == null) return null;
+    if (!await _hasToken()) return null;
     final res = await _dio.post(
       '/chat/messages/$messageId/translate',
       data: {'targetLang': targetLang},
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
     final data = Map<String, dynamic>.from(res.data as Map);
     return data['translated'] as String?;
   }
 
   Future<List<Conversation>> getConversations() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
-    if (token == null) return [];
-    final res = await _dio.get(
-      '/chat/conversations',
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
-    );
+    if (!await _hasToken()) return [];
+    final res = await _dio.get('/chat/conversations');
     final list = res.data as List;
     return list
         .map((e) => Conversation.fromJson(Map<String, dynamic>.from(e as Map)))

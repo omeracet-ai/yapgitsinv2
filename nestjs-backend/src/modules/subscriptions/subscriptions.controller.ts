@@ -56,7 +56,21 @@ export class SubscriptionsController {
   ) {
     if (!body?.planKey) throw new BadRequestException('planKey zorunlu');
     const r = await this.subsService.subscribe(req.user.id, body.planKey);
-    return { paymentUrl: r.paymentUrl, subscriptionId: r.subscriptionId };
+    return {
+      subscriptionId: r.subscriptionId,
+      paymentUrl: r.paymentUrl,
+      paymentToken: r.paymentToken,
+      mock: r.mock,
+    };
+  }
+
+  @Post('confirm')
+  async confirm(
+    @Req() req: { user: { id: string } },
+    @Body() body: { token?: string },
+  ) {
+    if (!body?.token) throw new BadRequestException('token zorunlu');
+    return this.subsService.confirmPayment(req.user.id, body.token);
   }
 
   @Post('cancel')

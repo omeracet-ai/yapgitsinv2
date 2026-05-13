@@ -53,6 +53,20 @@ class AuthRepository {
     await prefs.setString('jwt_token', token);
   }
 
+  /// Phase P188/4 — Persist BOTH access + refresh tokens from a login response.
+  /// Refresh token only goes to secure storage (never SP) since it never had a
+  /// legacy SP key to write-through to.
+  Future<void> _persistTokensFromResponse(Map<String, dynamic> data) async {
+    final access = data['access_token'];
+    if (access is String && access.isNotEmpty) {
+      await _persistToken(access);
+    }
+    final refresh = data['refresh_token'];
+    if (refresh is String && refresh.isNotEmpty) {
+      await _secureTokenStore.writeRefreshToken(refresh);
+    }
+  }
+
   Future<Map<String, dynamic>> login(String emailOrPhone, String password) async {
     try {
       final response = await _dio.post('/auth/login', data: {
@@ -64,7 +78,8 @@ class AuthRepository {
         if (response.data['requires2FA'] == true) {
           return Map<String, dynamic>.from(response.data);
         }
-        await _persistToken(response.data['access_token']);
+        await _persistTokensFromResponse(
+            Map<String, dynamic>.from(response.data as Map));
         if (response.data['user'] != null) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('user_data', jsonEncode(response.data['user']));
@@ -84,7 +99,8 @@ class AuthRepository {
         'code': code,
       });
       if (response.statusCode == 200 || response.statusCode == 201) {
-        await _persistToken(response.data['access_token']);
+        await _persistTokensFromResponse(
+            Map<String, dynamic>.from(response.data as Map));
         if (response.data['user'] != null) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('user_data', jsonEncode(response.data['user']));
@@ -158,7 +174,8 @@ class AuthRepository {
         if (address != null && address.isNotEmpty) 'address': address,
       });
       if (response.statusCode == 200 || response.statusCode == 201) {
-        await _persistToken(response.data['access_token']);
+        await _persistTokensFromResponse(
+            Map<String, dynamic>.from(response.data as Map));
         if (response.data['user'] != null) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('user_data', jsonEncode(response.data['user']));

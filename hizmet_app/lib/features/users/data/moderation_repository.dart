@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../auth/data/auth_repository.dart';
+import '../../../core/network/api_client_provider.dart';
 
 /// Phase 46 — Block & Report API client.
 /// Endpoints:
@@ -9,30 +8,18 @@ import '../../auth/data/auth_repository.dart';
 ///   GET         /users/me/blocks
 ///   POST        /users/:userId/report
 final moderationRepositoryProvider = Provider((ref) {
-  return ModerationRepository(ref.watch(authRepositoryProvider));
+  return ModerationRepository(dio: ref.read(apiClientProvider).dio);
 });
 
 class ModerationRepository {
-  final AuthRepository _authRepository;
   final Dio _dio;
 
-  ModerationRepository(this._authRepository)
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 5),
-          receiveTimeout: const Duration(seconds: 10),
-        ));
-
-  Future<Options> _authOpts() async {
-    final token = await _authRepository.getToken();
-    return Options(headers: {'Authorization': 'Bearer $token'});
-  }
+  ModerationRepository({required Dio dio}) : _dio = dio;
 
   /// Returns true when block is now active.
   Future<bool> blockUser(String userId) async {
     try {
-      final r = await _dio.post('/users/me/blocks/$userId',
-          options: await _authOpts());
+      final r = await _dio.post('/users/me/blocks/$userId');
       return r.data is Map ? r.data['blocked'] == true : true;
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Engelleme başarısız');
@@ -42,8 +29,7 @@ class ModerationRepository {
   /// Returns false (no longer blocked) on success.
   Future<bool> unblockUser(String userId) async {
     try {
-      final r = await _dio.delete('/users/me/blocks/$userId',
-          options: await _authOpts());
+      final r = await _dio.delete('/users/me/blocks/$userId');
       return r.data is Map ? r.data['blocked'] == true : false;
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Kaldırılamadı');
@@ -52,7 +38,7 @@ class ModerationRepository {
 
   Future<List<Map<String, dynamic>>> getBlocks() async {
     try {
-      final r = await _dio.get('/users/me/blocks', options: await _authOpts());
+      final r = await _dio.get('/users/me/blocks');
       final data = r.data is Map ? r.data['data'] as List? : r.data as List?;
       return List<Map<String, dynamic>>.from(data ?? []);
     } on DioException catch (e) {
@@ -74,7 +60,6 @@ class ModerationRepository {
           if (description != null && description.isNotEmpty)
             'description': description,
         },
-        options: await _authOpts(),
       );
       return Map<String, dynamic>.from(r.data as Map);
     } on DioException catch (e) {

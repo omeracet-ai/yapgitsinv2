@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { UserRole } from '../users/user.entity';
+import { User, UserRole } from '../users/user.entity';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { Repository } from 'typeorm';
@@ -106,14 +106,15 @@ export class AuthService implements OnModuleInit {
     const existing = await this.usersService.findByPhone(phone);
     if (existing) {
       const { passwordHash: _ph, ...safe } = existing;
-      const payload = {
-        email: safe.email,
-        sub: safe.id,
-        role: safe.role,
+      const access_token = this.signAccessToken(safe as AuthUser);
+      const refresh_token = this.signRefreshToken({
+        id: safe.id,
         tenantId: safe.tenantId ?? null,
-      };
+        tokenVersion: existing.tokenVersion ?? 0,
+      });
       return {
-        access_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
+        access_token,
+        refresh_token,
         user: safe,
         isNewUser: false,
       };
@@ -282,6 +283,92 @@ export class AuthService implements OnModuleInit {
     return null;
   }
 
+  // ── Phase P188/4 — Refresh token rotation (Voldi-sec) ────────────────────
+  /** Refresh-token secret: dedicated env var, falls back to JWT_SECRET in dev. */
+  private getRefreshSecret(): string {
+    return (
+      process.env.JWT_REFRESH_SECRET ||
+      process.env.JWT_SECRET ||
+      ''
+    );
+  }
+
+  /** Sign a refresh token (separate secret + longer expiry + tokenVersion claim). */
+  private signRefreshToken(user: {
+    id: string;
+    tenantId?: string | null;
+    tokenVersion?: number;
+  }): string {
+    return this.jwtService.sign(
+      {
+        sub: user.id,
+        tenantId: user.tenantId ?? null,
+        tv: user.tokenVersion ?? 0,
+        typ: 'refresh',
+      },
+      { secret: this.getRefreshSecret(), expiresIn: '30d' },
+    );
+  }
+
+  /** Sign an access token (existing 30d expiry, default JWT_SECRET). */
+  private signAccessToken(user: AuthUser): string {
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      tenantId: user.tenantId ?? null,
+    };
+    return this.jwtService.sign(payload, { expiresIn: '30d' });
+  }
+
+  /**
+   * Verify a refresh token, rotate tokenVersion, issue a new pair.
+   * Throws UnauthorizedException on any failure (expired, bad sig, banned user,
+   * version mismatch — meaning the refresh token was already used or revoked).
+   */
+  async refresh(
+    refreshToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    if (!refreshToken || typeof refreshToken !== 'string') {
+      throw new UnauthorizedException('Refresh token gerekli');
+    }
+    let payload: { sub: string; tv?: number; typ?: string };
+    try {
+      payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: this.getRefreshSecret(),
+      });
+    } catch {
+      throw new UnauthorizedException('Geçersiz refresh token');
+    }
+    if (payload.typ !== 'refresh') {
+      throw new UnauthorizedException('Token tipi hatalı');
+    }
+    const user = await this.usersService.findById(payload.sub);
+    if (!user) throw new UnauthorizedException('Kullanıcı bulunamadı');
+    if (user.suspended) throw new UnauthorizedException('Hesap askıda');
+    if (user.deactivated) throw new UnauthorizedException('Hesap silindi');
+
+    const currentVersion = user.tokenVersion ?? 0;
+    const tokenVersion = payload.tv ?? 0;
+    if (tokenVersion !== currentVersion) {
+      // Reused / revoked refresh token.
+      throw new UnauthorizedException('Refresh token geçersiz (rotated)');
+    }
+
+    // Rotate: bump version (invalidates this refresh token going forward).
+    const nextVersion = currentVersion + 1;
+    await this.usersService.update(user.id, { tokenVersion: nextVersion });
+
+    const { passwordHash: _ph, ...safe } = user;
+    const accessToken = this.signAccessToken(safe as AuthUser);
+    const newRefreshToken = this.signRefreshToken({
+      id: user.id,
+      tenantId: user.tenantId ?? null,
+      tokenVersion: nextVersion,
+    });
+    return { accessToken, refreshToken: newRefreshToken };
+  }
+
   login(user: AuthUser) {
     if ((user as AuthUser & { twoFactorEnabled?: boolean }).twoFactorEnabled) {
       const tempToken = this.jwtService.sign(
@@ -290,14 +377,16 @@ export class AuthService implements OnModuleInit {
       );
       return { requires2FA: true, tempToken };
     }
-    const payload = {
-      email: user.email,
-      sub: user.id,
-      role: user.role,
+    const access_token = this.signAccessToken(user);
+    const refresh_token = this.signRefreshToken({
+      id: user.id,
       tenantId: user.tenantId ?? null,
-    };
+      tokenVersion:
+        (user as AuthUser & { tokenVersion?: number }).tokenVersion ?? 0,
+    });
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
+      access_token,
+      refresh_token,
       user,
     };
   }
@@ -319,14 +408,15 @@ export class AuthService implements OnModuleInit {
     if (!user) throw new UnauthorizedException('Kullanıcı bulunamadı');
     if (user.suspended) throw new ForbiddenException('Hesap askıda');
     const { passwordHash: _h, ...result } = user;
-    const tokenPayload = {
-      email: result.email,
-      sub: result.id,
-      role: result.role,
+    const access_token = this.signAccessToken(result as AuthUser);
+    const refresh_token = this.signRefreshToken({
+      id: result.id,
       tenantId: result.tenantId ?? null,
-    };
+      tokenVersion: (result as User).tokenVersion ?? 0,
+    });
     return {
-      access_token: this.jwtService.sign(tokenPayload, { expiresIn: '30d' }),
+      access_token,
+      refresh_token,
       user: result,
     };
   }
@@ -405,14 +495,15 @@ export class AuthService implements OnModuleInit {
     const { passwordHash: _hash2, ...result } = newUser;
     // Phase 121 — fire-and-forget welcome email
     void this.emailService.sendWelcome(newUser);
-    const payload = {
-      email: result.email,
-      sub: result.id,
-      role: result.role,
+    const access_token = this.signAccessToken(result as AuthUser);
+    const refresh_token = this.signRefreshToken({
+      id: result.id,
       tenantId: result.tenantId ?? null,
-    };
+      tokenVersion: (newUser as User).tokenVersion ?? 0,
+    });
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
+      access_token,
+      refresh_token,
       user: result,
     };
   }

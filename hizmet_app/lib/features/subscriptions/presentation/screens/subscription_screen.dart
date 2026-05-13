@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/subscription_repository.dart';
+import 'iyzipay_checkout_screen.dart';
 
 class SubscriptionScreen extends ConsumerWidget {
   const SubscriptionScreen({super.key});
@@ -67,21 +68,58 @@ class SubscriptionScreen extends ConsumerWidget {
   }
 
   Future<void> _subscribe(BuildContext context, WidgetRef ref, String planKey) async {
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    SubscribeResult result;
     try {
-      final url = await ref.read(subscriptionRepositoryProvider).subscribe(planKey);
+      result = await ref.read(subscriptionRepositoryProvider).subscribe(planKey);
+    } catch (e) {
       if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // close loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Hata: $e'), backgroundColor: AppColors.error),
+      );
+      return;
+    }
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop(); // close loading
+
+    if (result.paymentUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ödeme URL alınamadı'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    // Push WebView checkout. Returns true on confirmed payment, false on cancel.
+    final ok = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => IyzipayCheckoutScreen(
+          paymentUrl: result.paymentUrl,
+          paymentToken: result.paymentToken,
+        ),
+      ),
+    );
+
+    if (!context.mounted) return;
+    if (ok == true) {
       ref.invalidate(mySubscriptionProvider);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Abonelik başlatıldı. Ödeme: $url'),
+        const SnackBar(
+          content: Text('Abonelik aktif edildi'),
           backgroundColor: AppColors.success,
         ),
       );
-      // TODO: paymentUrl gerçek iyzipay olduğunda IyzicoPaymentScreen ile WebView aç
-    } catch (e) {
-      if (!context.mounted) return;
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hata: $e'), backgroundColor: AppColors.error),
+        const SnackBar(content: Text('Ödeme iptal edildi')),
       );
     }
   }

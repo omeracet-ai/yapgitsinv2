@@ -298,6 +298,13 @@ export class User {
   @Column({ type: 'varchar', length: 64, nullable: true, unique: true })
   calendarToken: string | null;
 
+  // ── Phase P188/4 — Refresh token rotation (Voldi-sec) ────────────────────
+  // Incremented every time a refresh token is consumed. Embedded in refresh JWT
+  // payload and verified on /auth/refresh — mismatch ⇒ rotated/reused token ⇒ 401.
+  // Default 0; safe to add to existing rows (backwards compatible).
+  @Column({ type: 'integer', default: 0 })
+  tokenVersion: number;
+
   @CreateDateColumn()
   createdAt: Date;
 
