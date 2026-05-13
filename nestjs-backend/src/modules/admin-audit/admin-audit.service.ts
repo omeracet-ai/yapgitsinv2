@@ -45,6 +45,55 @@ export class AdminAuditService {
     }
   }
 
+  /**
+   * Phase 182 — structured audit record. Fire-and-forget: never throws (audit
+   * failures must NEVER break the underlying admin action). Captures actor
+   * identity (id + denormalized email) plus request context (ip, UA).
+   */
+  async record(opts: {
+    actor: { id: string; email?: string | null } | null;
+    action: string;
+    targetType?: string | null;
+    targetId?: string | null;
+    payload?: Record<string, unknown> | null;
+    req?: { ip?: string; headers?: Record<string, unknown> } | null;
+  }): Promise<void> {
+    try {
+      let actorEmail: string | null = opts.actor?.email ?? null;
+      if (opts.actor?.id && !actorEmail) {
+        const u = await this.userRepo.findOne({
+          where: { id: opts.actor.id },
+          select: ['id', 'email'],
+        });
+        actorEmail = u?.email ?? null;
+      }
+      const ua = opts.req?.headers?.['user-agent'];
+      const fwd = opts.req?.headers?.['x-forwarded-for'];
+      const ip =
+        (typeof fwd === 'string' ? fwd.split(',')[0].trim() : null) ||
+        opts.req?.ip ||
+        null;
+      const entity = this.repo.create({
+        adminUserId: opts.actor?.id ?? null,
+        actorEmail,
+        action: opts.action,
+        targetType: opts.targetType ?? null,
+        targetId: opts.targetId ?? null,
+        payload: opts.payload ?? null,
+        ip: ip ? String(ip).slice(0, 64) : null,
+        userAgent: typeof ua === 'string' ? ua.slice(0, 512) : null,
+      });
+      await this.repo.save(entity);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      this.logger.warn(`[audit.record] failed: ${msg}`);
+    }
+  }
+
+  async findOne(id: string): Promise<AdminAuditLog | null> {
+    return this.repo.findOne({ where: { id } });
+  }
+
   async findFiltered(opts: {
     limit?: number;
     offset?: number;

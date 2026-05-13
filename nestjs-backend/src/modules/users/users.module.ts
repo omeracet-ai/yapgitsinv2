@@ -26,6 +26,10 @@ import { ChatMessage } from '../chat/chat-message.entity';
 import { TokenTransaction } from '../tokens/token-transaction.entity';
 import { Payment } from '../payments/payment.entity';
 import { PaymentEscrow } from '../escrow/payment-escrow.entity';
+import { JobLead } from '../leads/job-lead.entity';
+import { JobLeadResponse } from '../leads/job-lead-response.entity';
+import { DataExportController } from './data-export.controller';
+import { DataExportService } from './data-export.service';
 import { EarningsService } from './earnings.service';
 import { AiModule } from '../ai/ai.module';
 import { BoostModule } from '../boost/boost.module';
@@ -35,14 +39,14 @@ import { BoostModule } from '../boost/boost.module';
     TypeOrmModule.forFeature([
       User, FavoriteWorker, WorkerInsurance, WorkerCertification, DataDeletionRequest,
       Job, Review, Offer, Booking, Notification, ChatMessage, TokenTransaction,
-      Payment, PaymentEscrow,
+      Payment, PaymentEscrow, JobLead, JobLeadResponse,
     ]),
     AiModule,
     BoostModule,
     forwardRef(() => SubscriptionsModule),
   ],
-  controllers: [CalendarController, CalendarPublicController, UsersController, WalletController],
-  providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, WorkerCertificationService, DataPrivacyService, CalendarSyncService, CalendarService, WalletService],
+  controllers: [CalendarController, CalendarPublicController, UsersController, WalletController, DataExportController],
+  providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, WorkerCertificationService, DataPrivacyService, CalendarSyncService, CalendarService, WalletService, DataExportService],
   exports: [UsersService, WorkerInsuranceService, WorkerCertificationService, DataPrivacyService, CalendarSyncService],
 })
 export class UsersModule {}

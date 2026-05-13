@@ -77,9 +77,9 @@ class _MainShellState extends ConsumerState<MainShell>
     final unreadCount = ref.watch(unreadCountBadgeProvider);
 
     final List<Widget> pages = [
-      _HomeTab(onSeeAllRequests: () => _onItemTapped(1)),
-      const HizmetAlScreen(),
+      _HomeTab(onSeeAllRequests: () => _onItemTapped(2)),
       const MapScreen(),
+      const HizmetAlScreen(),
       const NotificationScreen(),
       const ProfileScreen(),
     ];
@@ -115,13 +115,13 @@ class _MainShellState extends ConsumerState<MainShell>
                 activeIcon: Icon(Icons.explore_rounded),
                 label: 'Keşfet'),
             const BottomNavigationBarItem(
-                icon: Icon(Icons.handyman_outlined),
-                activeIcon: Icon(Icons.handyman_rounded),
-                label: 'Yapgitsin'),
-            const BottomNavigationBarItem(
                 icon: Icon(Icons.map_outlined),
                 activeIcon: Icon(Icons.map_rounded),
                 label: 'Harita'),
+            const BottomNavigationBarItem(
+                icon: Icon(Icons.handyman_outlined),
+                activeIcon: Icon(Icons.handyman_rounded),
+                label: 'Yapgitsin'),
             BottomNavigationBarItem(
                 icon: _NotifIconWithBadge(
                   icon: isLoggedIn

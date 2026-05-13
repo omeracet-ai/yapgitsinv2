@@ -1,4 +1,6 @@
-import { Controller, Get, Patch, Post, Delete, Body, Param, Query, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Delete, Body, Param, Query, UseGuards, UseInterceptors, Req, Res, NotFoundException } from '@nestjs/common';
+import { Audit } from '../admin-audit/audit.decorator';
+import { AuditInterceptor } from '../admin-audit/audit.interceptor';
 import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminService } from './admin.service';
@@ -25,6 +27,7 @@ import type { AuthUser } from '../../common/types/auth.types';
 
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@UseInterceptors(AuditInterceptor)
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
@@ -44,26 +47,19 @@ export class AdminController {
     return this.certificationSvc.listPending();
   }
 
+  @Audit('certification.verify')
   @Patch('certifications/:id/verify')
   async verifyCertification(
     @Param('id') id: string,
     @Body() body: { verified: boolean; adminNote?: string },
     @Req() req: Request & { user: AuthUser },
   ) {
-    const result = await this.certificationSvc.setVerified(
+    return this.certificationSvc.setVerified(
       id,
       !!body.verified,
       req.user.id,
       body.adminNote,
     );
-    await this.adminAuditService.logAction(
-      req.user.id,
-      'certification.verify',
-      'worker_certification',
-      id,
-      body as unknown as Record<string, unknown>,
-    );
-    return result;
   }
 
   // ── Phase 124: KVKK data deletion request moderation ─────────────
@@ -147,21 +143,14 @@ export class AdminController {
     return { key, value };
   }
 
+  @Audit('setting.update')
   @Patch('settings/:key')
   async updateSetting(
     @Param('key') key: string,
     @Body() body: { value: string },
     @Req() req: Request & { user: AuthUser },
   ) {
-    const result = await this.systemSettings.set(key, body.value, req.user.id);
-    await this.adminAuditService.logAction(
-      req.user.id,
-      'setting.update',
-      'system_setting',
-      key,
-      { value: body.value },
-    );
-    return result;
+    return this.systemSettings.set(key, body.value, req.user.id);
   }
 
   @Get('audit-log')
@@ -224,6 +213,15 @@ export class AdminController {
     return this.adminAuditService.purgeOlderThan(body.olderThanDays, req.user.id);
   }
 
+  // Phase 182 — single audit-log entry lookup. Declared AFTER static
+  // `/audit-log/...` routes so they win path resolution.
+  @Get('audit-log/:id')
+  async getAuditLogEntry(@Param('id') id: string) {
+    const entry = await this.adminAuditService.findOne(id);
+    if (!entry) throw new NotFoundException('Audit log entry not found');
+    return entry;
+  }
+
   @Get('stats')
   getStats() {
     return this.adminService.getDashboardStats();
@@ -282,21 +280,14 @@ export class AdminController {
     return this.adminService.bulkUnfeatureWorkers(dto, req.user.id);
   }
 
+  @Audit('user.suspend')
   @Patch('users/:id/suspend')
   async suspendUser(
     @Param('id') id: string,
     @Body() dto: SuspendUserDto,
     @Req() req: Request & { user: AuthUser },
   ) {
-    const result = await this.adminService.suspendUser(id, dto, req.user.id);
-    await this.adminAuditService.logAction(
-      req.user.id,
-      dto.suspended ? 'user.suspend' : 'user.unsuspend',
-      'user',
-      id,
-      { reason: dto.reason ?? null },
-    );
-    return result;
+    return this.adminService.suspendUser(id, dto, req.user.id);
   }
 
   @Patch('users/:id/verify')
@@ -386,38 +377,22 @@ export class AdminController {
   }
 
   // ── Phase 137 — Manual badge grant/revoke ───────────────────────────
+  @Audit('user.badge.grant')
   @Post('users/:id/badges/grant')
   async grantManualBadge(
     @Param('id') id: string,
     @Body() body: { badgeKey: string },
-    @Req() req: Request & { user: AuthUser },
   ) {
-    const result = await this.adminService.grantManualBadge(id, body.badgeKey);
-    await this.adminAuditService.logAction(
-      req.user.id,
-      'user.badge.grant',
-      'user',
-      id,
-      { badgeKey: body.badgeKey },
-    );
-    return result;
+    return this.adminService.grantManualBadge(id, body.badgeKey);
   }
 
+  @Audit('user.badge.revoke')
   @Post('users/:id/badges/revoke')
   async revokeManualBadge(
     @Param('id') id: string,
     @Body() body: { badgeKey: string },
-    @Req() req: Request & { user: AuthUser },
   ) {
-    const result = await this.adminService.revokeManualBadge(id, body.badgeKey);
-    await this.adminAuditService.logAction(
-      req.user.id,
-      'user.badge.revoke',
-      'user',
-      id,
-      { badgeKey: body.badgeKey },
-    );
-    return result;
+    return this.adminService.revokeManualBadge(id, body.badgeKey);
   }
 
   /** Set tasker skills (granular tags beyond workerCategories). */
