@@ -134,12 +134,13 @@ async function bootstrap() {
   const rawOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
     : [];
+  const NATIVE_APP_SCHEMES = ['capacitor://', 'ionic://', 'ms-appx://', 'ms-appx-web://', 'file://'];
+  const isNativeAppScheme = (o: string) => NATIVE_APP_SCHEMES.some((s) => o.startsWith(s));
   if (isProd) {
+    // BOOT-time fast-fail on misconfig (these THROWs are intentional — before app.listen)
     if (rawOrigins.length === 0) {
       throw new Error('Production requires ALLOWED_ORIGINS env (comma-separated list)');
     }
-    const NATIVE_APP_SCHEMES = ['capacitor://', 'ionic://', 'ms-appx://', 'ms-appx-web://', 'file://'];
-    const isNativeAppScheme = (o: string) => NATIVE_APP_SCHEMES.some((s) => o.startsWith(s));
     const bad = rawOrigins.find(
       (o) =>
         !isNativeAppScheme(o) &&
@@ -151,11 +152,18 @@ async function bootstrap() {
       );
     }
   }
+  // Boot-time visibility: log resolved allowlist so env changes are debuggable.
+  console.log(
+    `[boot] CORS allowlist (prod=${isProd}): [${rawOrigins.join(', ')}] + native(${NATIVE_APP_SCHEMES.join(',')})`,
+  );
+  // Per-request origin check — MUST NEVER THROW (throw → 500 on OPTIONS preflight).
+  // Disallowed origin: cb(null, false) → Nest sends clean response without ACAO header,
+  // browser blocks on its end. No exception propagates into the request pipeline.
   const originFn = (
     origin: string | undefined,
     cb: (err: Error | null, allow?: boolean) => void,
   ) => {
-    // Native (Capacitor/mobile/curl) — origin yok
+    // Native (Capacitor/mobile/curl/server-to-server/file://) — origin yok
     if (!origin) return cb(null, true);
     if (!isProd) {
       // dev: localhost / 127.0.0.1 / capacitor / file her zaman serbest
@@ -164,7 +172,9 @@ async function bootstrap() {
       if (rawOrigins.length === 0) return cb(null, true);
     }
     if (rawOrigins.includes(origin)) return cb(null, true);
-    return cb(new Error(`CORS: origin "${origin}" not allowed`), false);
+    if (isNativeAppScheme(origin)) return cb(null, true);
+    // Disallowed — DO NOT throw. Clean rejection, no ACAO header.
+    return cb(null, false);
   };
   app.enableCors({
     origin: originFn,

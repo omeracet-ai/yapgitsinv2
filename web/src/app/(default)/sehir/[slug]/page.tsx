@@ -8,7 +8,7 @@ import {
   TR_CITIES,
   type Worker,
 } from '@/lib/api';
-import { jsonLd, breadcrumbLD, clip } from '@/lib/seo';
+import { jsonLd, breadcrumbLD, clip, siteUrl, alternateLinks, ogLocaleFor } from '@/lib/seo';
 import { WorkerCard } from '../../[kategori]/page';
 
 type Params = { slug: string };
@@ -35,8 +35,27 @@ export async function generateMetadata({
   if (!city) return { title: 'Şehir bulunamadı' };
 
   const title = `${city} Hizmet Ustaları`;
-  const desc = clip(`${city}'da tüm kategorilerde güvenilir, doğrulanmış ustalar.`, 158);
-  return { title, description: desc, openGraph: { title, description: desc } };
+  const desc = clip(
+    `${city}'da temizlik, tadilat, elektrik, tesisat ve daha fazlası için doğrulanmış ustalar. Yapgitsin ile hızlı teklif al, güvenle hizmet al.`,
+    158,
+  );
+  const url = siteUrl(`/sehir/${slug}`);
+  const ogLoc = ogLocaleFor('tr');
+  return {
+    title,
+    description: desc,
+    alternates: alternateLinks(`/sehir/${slug}`),
+    openGraph: {
+      title,
+      description: desc,
+      type: 'website',
+      url,
+      siteName: 'Yapgitsin',
+      locale: ogLoc.locale,
+      alternateLocale: ogLoc.alternateLocale,
+    },
+    twitter: { card: 'summary_large_image', title, description: desc },
+  };
 }
 
 export default async function CityPage({

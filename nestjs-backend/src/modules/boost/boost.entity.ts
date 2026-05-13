@@ -20,6 +20,7 @@ export enum BoostStatus {
 
 @Entity('worker_boosts')
 @Index(['userId', 'status'])
+@Index('idx_worker_boosts_status_expiresAt', ['status', 'expiresAt'])
 export class Boost {
   @PrimaryGeneratedColumn('uuid')
   id: string;

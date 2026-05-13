@@ -38,6 +38,18 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: ADMIN_SECURITY_HEADERS,
       },
+      // Hashed Next.js static assets — 1y immutable. Admin runs Next.js standalone
+      // under iisnode (web.config rewrites everything to server.js), so IIS
+      // <location> cache headers don't apply. Configure via next.config headers().
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
     ];
   },
 };

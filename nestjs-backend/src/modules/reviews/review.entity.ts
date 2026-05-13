@@ -5,11 +5,15 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Job } from '../jobs/job.entity';
 
 @Entity('reviews')
+@Index('idx_reviews_revieweeId_createdAt', ['revieweeId', 'createdAt'])
+@Index('idx_reviews_reviewerId', ['reviewerId'])
+@Index('idx_reviews_jobId', ['jobId'])
 export class Review {
   @PrimaryGeneratedColumn('uuid')
   id: string;

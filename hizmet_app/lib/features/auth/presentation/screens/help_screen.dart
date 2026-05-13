@@ -16,7 +16,7 @@ class _HelpScreenState extends State<HelpScreen> {
   static const _faqs = [
     (
       'Teklif nasıl veririm?',
-      'Keşfet ekranından bir ilanı seçin, "Teklif Ver" butonuna tıklayın, fiyatınızı ve mesajınızı girin. '
+      'Yaptır ekranından bir ilanı seçin, "Teklif Ver" butonuna tıklayın, fiyatınızı ve mesajınızı girin. '
       'Teklif müşteriye iletilir; kabul, ret veya pazarlık teklifi alabilirsiniz.',
     ),
     (

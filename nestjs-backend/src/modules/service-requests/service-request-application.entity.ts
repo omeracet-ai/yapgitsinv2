@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { ServiceRequest } from './service-request.entity';
 import { User } from '../users/user.entity';
@@ -17,6 +18,8 @@ export enum ApplicationStatus {
 }
 
 @Entity('service_request_applications')
+@Index('idx_sr_apps_serviceRequestId_status', ['serviceRequestId', 'status'])
+@Index('idx_sr_apps_userId_status', ['userId', 'status'])
 export class ServiceRequestApplication {
   @PrimaryGeneratedColumn('uuid')
   id: string;

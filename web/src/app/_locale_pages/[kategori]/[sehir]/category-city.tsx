@@ -9,7 +9,7 @@ import {
   FALLBACK_CATEGORY_SLUGS,
   type Worker,
 } from '@/lib/api';
-import { jsonLd, serviceLD, breadcrumbLD, faqPageLD, clip } from '@/lib/seo';
+import { jsonLd, serviceLD, breadcrumbLD, faqPageLD, clip, siteUrl, alternateLinks, ogLocaleFor } from '@/lib/seo';
 import CategorySeoContent from '@/components/CategorySeoContent';
 import WorkerListClient from '@/components/WorkerListClient';
 import { getCategoryContent } from '@/lib/category-content';
@@ -39,9 +39,39 @@ export async function buildCategoryCityMetadata(L: Locale, kategori: string, seh
   const dict = getDict(L);
   const { cat, city } = await resolve(kategori, sehir);
   if (!cat || !city) return { title: dict.common.not_found };
-  const title = `${city} ${cat.name} — ${dict.site.title}`;
-  const desc = clip(`${city} — ${cat.name}. ${dict.site.tagline}`, 158);
-  return { title, description: desc, openGraph: { title, description: desc } };
+  // Root layout adds "| Yapgitsin" via title template — don't duplicate.
+  const title =
+    L === 'tr'
+      ? `${city} ${cat.name} Hizmetleri`
+      : L === 'az'
+        ? `${city} ${cat.name}`
+        : `${cat.name} in ${city}`;
+  const desc = clip(
+    L === 'tr'
+      ? `${city}'da ${cat.name.toLowerCase()} için uzman ustalar. Yapgitsin ile hızlı teklif al, güvenle öde.`
+      : L === 'az'
+        ? `${city} şəhərində ${cat.name.toLowerCase()} üçün etibarlı ustalar. Yapgitsin ilə sürətli təklif al.`
+        : `Trusted ${cat.name.toLowerCase()} pros in ${city}. Get fast quotes and pay safely with Yapgitsin.`,
+    158,
+  );
+  const path = `/${kategori}/${sehir}`;
+  const url = siteUrl(localePath(L, path));
+  const ogLoc = ogLocaleFor(L);
+  return {
+    title,
+    description: desc,
+    alternates: alternateLinks(path),
+    openGraph: {
+      title,
+      description: desc,
+      type: 'website',
+      url,
+      siteName: 'Yapgitsin',
+      locale: ogLoc.locale,
+      alternateLocale: ogLoc.alternateLocale,
+    },
+    twitter: { card: 'summary_large_image', title, description: desc },
+  };
 }
 
 export default async function renderCategoryCity(L: Locale, kategori: string, sehir: string) {

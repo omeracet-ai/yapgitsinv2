@@ -61,7 +61,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         builder: (context, state) {
-          // '/?tab=0' veya sadece '/' geldiğinde Keşfet (index 0) sekmesini aç
+          // '/?tab=0' veya sadece '/' geldiğinde Yaptır (index 0) sekmesini aç
           final tabParam = state.uri.queryParameters['tab'];
           if (tabParam != null) {
             final tabIndex = int.tryParse(tabParam) ?? 0;
@@ -223,7 +223,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SuccessScreen(
           title: 'İlanınız Yayında!',
           message: 'İlanınız başarıyla yayınlandı. Şimdi ustalardan teklif bekleyebilirsiniz.',
-          btnText: "Keşfet'e Dön",
+          btnText: "Yaptır'a Dön",
           targetRoute: '/',
           targetTab: 0,
         ),

@@ -20,6 +20,8 @@ export enum BookingEscrowStatus {
  * Cancel → customer refund (Phase 128 cancel flow ile entegre).
  */
 @Entity('booking_escrows')
+@Index('idx_booking_escrows_workerId_status', ['workerId', 'status'])
+@Index('idx_booking_escrows_status', ['status'])
 export class BookingEscrow {
   @PrimaryGeneratedColumn('uuid')
   id: string;

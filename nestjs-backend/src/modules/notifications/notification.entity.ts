@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 
@@ -30,6 +31,7 @@ export enum NotificationType {
 }
 
 @Entity('notifications')
+@Index('idx_notifications_userId_isRead_createdAt', ['userId', 'isRead', 'createdAt'])
 export class Notification {
   @PrimaryGeneratedColumn('uuid')
   id: string;

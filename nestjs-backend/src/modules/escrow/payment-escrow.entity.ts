@@ -16,6 +16,9 @@ export enum EscrowStatus {
 }
 
 @Entity('payment_escrows')
+@Index('idx_payment_escrows_status', ['status'])
+@Index('idx_payment_escrows_taskerId_status', ['taskerId', 'status'])
+@Index('idx_payment_escrows_paymentStatus', ['paymentStatus'])
 export class PaymentEscrow {
   @PrimaryGeneratedColumn('uuid')
   id: string;

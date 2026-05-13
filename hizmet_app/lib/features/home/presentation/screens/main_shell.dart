@@ -77,9 +77,9 @@ class _MainShellState extends ConsumerState<MainShell>
     final unreadCount = ref.watch(unreadCountBadgeProvider);
 
     final List<Widget> pages = [
-      _HomeTab(onSeeAllRequests: () => _onItemTapped(2)),
-      const MapScreen(),
+      _HomeTab(onSeeAllRequests: () => _onItemTapped(1)),
       const HizmetAlScreen(),
+      const MapScreen(),
       const NotificationScreen(),
       const ProfileScreen(),
     ];
@@ -113,15 +113,15 @@ class _MainShellState extends ConsumerState<MainShell>
             const BottomNavigationBarItem(
                 icon: Icon(Icons.explore_outlined),
                 activeIcon: Icon(Icons.explore_rounded),
-                label: 'Keşfet'),
-            const BottomNavigationBarItem(
-                icon: Icon(Icons.map_outlined),
-                activeIcon: Icon(Icons.map_rounded),
-                label: 'Harita'),
+                label: 'Yaptır'),
             const BottomNavigationBarItem(
                 icon: Icon(Icons.handyman_outlined),
                 activeIcon: Icon(Icons.handyman_rounded),
                 label: 'Yapgitsin'),
+            const BottomNavigationBarItem(
+                icon: Icon(Icons.map_outlined),
+                activeIcon: Icon(Icons.map_rounded),
+                label: 'Harita'),
             BottomNavigationBarItem(
                 icon: _NotifIconWithBadge(
                   icon: isLoggedIn
@@ -146,7 +146,7 @@ class _MainShellState extends ConsumerState<MainShell>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Ana Sayfa (Keşfet) sekmesi
+// Ana Sayfa (Yaptır) sekmesi
 // ─────────────────────────────────────────────────────────────────────────────
 class _HomeTab extends ConsumerStatefulWidget {
   final VoidCallback onSeeAllRequests;

@@ -15,6 +15,9 @@ import { JobLeadResponse } from './job-lead-response.entity';
 export type JobLeadStatus = 'open' | 'in_progress' | 'closed' | 'expired';
 
 @Entity('leads')
+@Index('idx_leads_status_createdAt', ['status', 'createdAt'])
+@Index('idx_leads_customerId_status', ['customerId', 'status'])
+@Index('idx_leads_category_city_status', ['category', 'city', 'status'])
 export class JobLead {
   @PrimaryGeneratedColumn('uuid')
   id: string;

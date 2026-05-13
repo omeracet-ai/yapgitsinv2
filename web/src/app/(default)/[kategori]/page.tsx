@@ -10,7 +10,7 @@ import {
   FALLBACK_CATEGORY_SLUGS,
   type Worker,
 } from '@/lib/api';
-import { jsonLd, serviceLD, breadcrumbLD, faqPageLD, clip } from '@/lib/seo';
+import { jsonLd, serviceLD, breadcrumbLD, faqPageLD, clip, siteUrl, alternateLinks, ogLocaleFor } from '@/lib/seo';
 import LeadForm from '@/components/LeadForm';
 import CategorySeoContent from '@/components/CategorySeoContent';
 import { getCategoryContent } from '@/lib/category-content';
@@ -43,17 +43,29 @@ export async function generateMetadata({
   const { kategori } = await params;
   const cat = await findCategory(kategori);
   if (!cat) return { title: 'Kategori bulunamadı' };
-  const title = `${cat.name} Ustaları — Türkiye Geneli Hizmet`;
+  const title = `${cat.name} Hizmetleri`;
   const desc = clip(
-    `${cat.name} hizmeti için doğrulanmış, deneyimli ustaları Yapgitsin'de bulun. ${
-      cat.description || 'Hızlı teklif al, güvenle hizmet al.'
+    `Türkiye genelinde ${cat.name.toLowerCase()} için doğrulanmış uzman ustalar. ${
+      cat.description || 'Yapgitsin ile hızlı teklif al, güvenle ödeme yap.'
     }`,
     158,
   );
+  const url = siteUrl(`/${kategori}`);
+  const ogLoc = ogLocaleFor('tr');
   return {
     title,
     description: desc,
-    openGraph: { title, description: desc, type: 'website' },
+    alternates: alternateLinks(`/${kategori}`),
+    openGraph: {
+      title,
+      description: desc,
+      type: 'website',
+      url,
+      siteName: 'Yapgitsin',
+      locale: ogLoc.locale,
+      alternateLocale: ogLoc.alternateLocale,
+    },
+    twitter: { card: 'summary_large_image', title, description: desc },
   };
 }
 

@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Job } from '../jobs/job.entity';
 import { User } from '../users/user.entity';
@@ -19,6 +20,9 @@ export enum OfferStatus {
 }
 
 @Entity('offers')
+@Index('idx_offers_jobId_status', ['jobId', 'status'])
+@Index('idx_offers_userId_status_createdAt', ['userId', 'status', 'createdAt'])
+@Index('idx_offers_parentOfferId', ['parentOfferId'])
 export class Offer {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 
@@ -32,6 +33,8 @@ export enum RefundStatus {
 }
 
 @Entity('bookings')
+@Index('idx_bookings_workerId_status_createdAt', ['workerId', 'status', 'createdAt'])
+@Index('idx_bookings_customerId_status_createdAt', ['customerId', 'status', 'createdAt'])
 export class Booking {
   @PrimaryGeneratedColumn('uuid')
   id: string;

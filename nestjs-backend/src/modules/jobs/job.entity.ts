@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Category } from '../categories/category.entity';
@@ -45,6 +46,11 @@ export function isValidTransition(from: JobStatus, to: JobStatus): boolean {
 }
 
 @Entity('jobs')
+@Index('idx_jobs_status_createdAt', ['status', 'createdAt'])
+@Index('idx_jobs_customerId_status', ['customerId', 'status'])
+@Index('idx_jobs_categoryId_status_createdAt', ['categoryId', 'status', 'createdAt'])
+@Index('idx_jobs_featuredUntil', ['featuredUntil'])
+@Index('idx_jobs_geohash', ['geohash'])
 export class Job {
   @PrimaryGeneratedColumn('uuid')
   id: string;

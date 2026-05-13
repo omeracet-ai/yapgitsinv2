@@ -6,10 +6,15 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 
 @Entity('service_requests')
+@Index('idx_service_requests_status_createdAt', ['status', 'createdAt'])
+@Index('idx_service_requests_userId_status', ['userId', 'status'])
+@Index('idx_service_requests_categoryId_status', ['categoryId', 'status'])
+@Index('idx_service_requests_geohash', ['geohash'])
 export class ServiceRequest {
   @PrimaryGeneratedColumn('uuid')
   id: string;

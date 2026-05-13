@@ -25,6 +25,8 @@ export enum DisputeResolutionStatus {
 }
 
 @Entity('job_disputes')
+@Index('idx_job_disputes_jobId_status', ['jobId', 'resolutionStatus'])
+@Index('idx_job_disputes_status_raisedAt', ['resolutionStatus', 'raisedAt'])
 export class JobDispute {
   @PrimaryGeneratedColumn('uuid')
   id: string;
