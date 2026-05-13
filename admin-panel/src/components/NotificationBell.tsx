@@ -37,7 +37,7 @@ export function NotificationBell() {
   // Get auth token from localStorage
   const getToken = useCallback(() => {
     if (typeof window === 'undefined') return '';
-    return localStorage.getItem('adminToken') || '';
+    return localStorage.getItem('admin_token') || '';
   }, []);
 
   // Fetch notifications

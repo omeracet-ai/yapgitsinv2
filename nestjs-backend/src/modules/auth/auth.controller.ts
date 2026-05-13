@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Body,
+  HttpCode,
   UnauthorizedException,
   UseGuards,
   Req,
@@ -36,6 +37,18 @@ export class AuthController {
   @Post('refresh')
   async refresh(@Body() body: { refreshToken: string }) {
     return this.authService.refresh(body?.refreshToken);
+  }
+
+  /**
+   * Phase P191/4 (Voldi-sec) — Logout: bump tokenVersion to invalidate
+   * all outstanding access + refresh tokens for the current user.
+   * Returns 204 No Content.
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(204)
+  @Post('logout')
+  async logout(@Req() req: AuthenticatedRequest): Promise<void> {
+    await this.authService.bumpTokenVersion(req.user.id);
   }
 
   /** Admin girişi  –  username: "admin"  password: "admin" */
@@ -84,12 +97,16 @@ export class AuthController {
     return this.twoFactorService.disable(req.user.id, body.code);
   }
 
+  /** P191/5 — 10/dk per IP, 2FA brute-force koruma */
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('2fa/login-verify')
   loginVerify2fa(@Body() body: { tempToken: string; code: string }) {
     return this.authService.loginVerify2fa(body.tempToken, body.code);
   }
 
-  /** Şifre sıfırlama isteği — generic response (privacy) */
+  /** Şifre sıfırlama isteği — generic response (privacy)
+   *  P191/5 — 3/dk per IP, e-posta spam koruma */
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @Post('forgot-password')
   forgotPassword(@Body() body: { email: string }) {
     return this.authService.forgotPassword(body?.email);

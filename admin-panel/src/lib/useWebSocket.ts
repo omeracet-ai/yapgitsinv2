@@ -36,6 +36,9 @@ export function useWebSocket(options: UseWebSocketOptions) {
 
   const ws = useRef<WebSocket | null>(null);
   const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
+  // Ref-based scheduler: lets onclose call the latest `connect` without
+  // referencing it before declaration inside its own useCallback body.
+  const connectRef = useRef<(() => void) | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   const connect = useCallback(() => {
@@ -106,9 +109,10 @@ export function useWebSocket(options: UseWebSocketOptions) {
 
       ws.current.onclose = () => {
         setIsConnected(false);
-        // Auto-reconnect after 3 seconds
+        // Auto-reconnect after 3 seconds via ref so we always call the latest
+        // `connect` (avoids referencing `connect` inside its own definition).
         reconnectTimeout.current = setTimeout(() => {
-          connect();
+          connectRef.current?.();
         }, 3000);
       };
     } catch (e) {
@@ -172,6 +176,12 @@ export function useWebSocket(options: UseWebSocketOptions) {
     }
     setIsConnected(false);
   }, []);
+
+  // Keep ref pointed at the latest `connect` so onclose-scheduled reconnects
+  // always invoke the current closure.
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   useEffect(() => {
     connect();

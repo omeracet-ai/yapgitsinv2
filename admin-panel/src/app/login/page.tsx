@@ -92,9 +92,6 @@ export default function LoginPage() {
             {loading ? "Giriş yapılıyor…" : "Giriş Yap"}
           </button>
 
-          <p className="text-center text-xs text-gray-400">
-            Varsayılan: admin / admin
-          </p>
         </form>
       </div>
     </div>

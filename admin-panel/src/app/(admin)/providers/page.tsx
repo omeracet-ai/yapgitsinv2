@@ -1,7 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { api, type Provider } from "@/lib/api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { api, type Provider, type Paginated } from "@/lib/api";
+import { Pager } from "@/components/ui/Pager";
+
+const PAGE_LIMIT = 20;
+
+const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "",           label: "Tüm ustalar" },
+  { value: "verified",   label: "Doğrulanmış" },
+  { value: "unverified", label: "Doğrulanmamış" },
+];
 
 // Airtasker-style badges (UI tarafı). Manuel olanlar admin tarafından açılıp kapanır;
 // computed olanlar backend'den otomatik döner ve burada read-only olarak görünür.
@@ -20,7 +30,16 @@ const BADGE_META: Record<string, { label: string; emoji: string; manual: boolean
 const MANUAL_BADGE_IDS = Object.entries(BADGE_META).filter(([, m]) => m.manual).map(([id]) => id);
 
 export default function ProvidersPage() {
-  const [providers, setProviders] = useState<Provider[]>([]);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlPage = Math.max(1, Number(searchParams.get("page")) || 1);
+  const urlSearch = searchParams.get("search") ?? "";
+  const urlStatus = searchParams.get("status") ?? "";
+
+  const [paged, setPaged] = useState<Paginated<Provider>>({
+    items: [], total: 0, page: 1, limit: PAGE_LIMIT, totalPages: 1,
+  });
+  const providers = paged.items;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
@@ -31,22 +50,55 @@ export default function ProvidersPage() {
   const [skillsDraft, setSkillsDraft] = useState<string>("");
   const [savingSkills, setSavingSkills] = useState<string | null>(null);
   const [slotCount, setSlotCount] = useState(3);
+  const [searchInput, setSearchInput] = useState(urlSearch);
 
-  const load = async () => {
+  useEffect(() => { setSearchInput(urlSearch); }, [urlSearch]);
+
+  const updateUrl = useCallback((next: { page?: number; search?: string; status?: string }) => {
+    const sp = new URLSearchParams(searchParams.toString());
+    if (next.page !== undefined) {
+      if (next.page <= 1) sp.delete("page"); else sp.set("page", String(next.page));
+    }
+    if (next.search !== undefined) {
+      if (!next.search) sp.delete("search"); else sp.set("search", next.search);
+    }
+    if (next.status !== undefined) {
+      if (!next.status) sp.delete("status"); else sp.set("status", next.status);
+    }
+    router.replace(`?${sp.toString()}`, { scroll: false });
+  }, [router, searchParams]);
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (searchInput === urlSearch) return;
+    debounceRef.current = setTimeout(() => {
+      updateUrl({ search: searchInput, page: 1 });
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchInput, urlSearch, updateUrl]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
     try {
       setError(null);
-      const data = await api.providers();
-      setProviders(data);
-      const maxUsed = data.reduce((m, p) => Math.max(m, p.featuredOrder ?? 0), 0);
+      const data = await api.getProviders({
+        page: urlPage,
+        limit: PAGE_LIMIT,
+        search: urlSearch || undefined,
+        status: urlStatus || undefined,
+      });
+      setPaged(data);
+      const maxUsed = data.items.reduce((m, p) => Math.max(m, p.featuredOrder ?? 0), 0);
       setSlotCount(prev => Math.max(prev, maxUsed, 3));
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [urlPage, urlSearch, urlStatus]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const handleVerify = async (p: Provider, value: boolean) => {
     setToggling(p.id);
@@ -68,13 +120,14 @@ export default function ProvidersPage() {
       : [...current, badge];
     setSavingBadges(p.id);
     // Optimistic: keep computed badges, swap manual ones
-    setProviders((prev) =>
-      prev.map((x) =>
+    setPaged((prev) => ({
+      ...prev,
+      items: prev.items.map((x) =>
         x.id === p.id
           ? { ...x, badges: [...next, ...((x.badges ?? []).filter((b) => !MANUAL_BADGE_IDS.includes(b)))] }
           : x,
       ),
-    );
+    }));
     try {
       await api.setUserBadges(p.userId, next);
       await load();
@@ -109,7 +162,10 @@ export default function ProvidersPage() {
     if (!p.userId) return;
     const next = (p.workerSkills ?? []).filter((s) => s !== skill);
     setSavingSkills(p.id);
-    setProviders((prev) => prev.map((x) => (x.id === p.id ? { ...x, workerSkills: next } : x)));
+    setPaged((prev) => ({
+      ...prev,
+      items: prev.items.map((x) => (x.id === p.id ? { ...x, workerSkills: next } : x)),
+    }));
     try {
       await api.setUserSkills(p.userId, next);
     } catch (e) {
@@ -123,9 +179,10 @@ export default function ProvidersPage() {
   const handleFeatured = async (p: Provider, featuredOrder: number | null) => {
     setFeaturing(p.id);
     // Optimistic update
-    setProviders(prev =>
-      prev.map(x => x.id === p.id ? { ...x, featuredOrder } : x)
-    );
+    setPaged((prev) => ({
+      ...prev,
+      items: prev.items.map((x) => (x.id === p.id ? { ...x, featuredOrder } : x)),
+    }));
     try {
       await api.setProviderFeatured(p.id, featuredOrder);
     } catch (e) {
@@ -145,7 +202,26 @@ export default function ProvidersPage() {
     <div className="max-w-6xl">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold">Ustalar & Doğrulama</h2>
-        <span className="text-sm text-gray-400">{providers.length} usta</span>
+        <span className="text-sm text-gray-400">{paged.total} usta</span>
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <input
+          type="search"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="İşletme, ad, e-posta veya telefonda ara…"
+          className="flex-1 min-w-[240px] rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+        />
+        <select
+          value={urlStatus}
+          onChange={(e) => updateUrl({ status: e.target.value, page: 1 })}
+          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+        >
+          {STATUS_OPTIONS.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
       </div>
 
       {error && (
@@ -204,11 +280,8 @@ export default function ProvidersPage() {
         &quot;Öne Çıkan&quot; sütunundan usta için sıra seçin — uygulama ön sıraya alır. Slot sayısını yukarıdan ayarlayın.
       </div>
 
-      {loading ? (
-        <p className="text-gray-400 text-sm">Yükleniyor…</p>
-      ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="text-left px-4 py-3 font-medium text-gray-500">İşletme / Kullanıcı</th>
@@ -222,10 +295,21 @@ export default function ProvidersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {providers.length === 0 && (
-                <tr><td colSpan={8} className="text-center py-8 text-gray-400">Henüz usta yok.</td></tr>
+              {loading && (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={`sk-${i}`} className="animate-pulse">
+                    {Array.from({ length: 8 }).map((__, j) => (
+                      <td key={j} className="px-4 py-3"><div className="h-3 rounded bg-gray-100" /></td>
+                    ))}
+                  </tr>
+                ))
               )}
-              {providers.map(p => (
+              {!loading && providers.length === 0 && (
+                <tr><td colSpan={8} className="text-center py-8 text-gray-400">
+                  {urlSearch || urlStatus ? "Sonuç bulunamadı." : "Henüz usta yok."}
+                </td></tr>
+              )}
+              {!loading && providers.map(p => (
                 <tr key={p.id} className={`hover:bg-gray-50 transition-colors ${p.featuredOrder ? "bg-amber-50/30" : ""}`}>
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-800">
@@ -393,8 +477,12 @@ export default function ProvidersPage() {
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        <Pager
+          page={paged.page}
+          totalPages={paged.totalPages}
+          onChange={(p) => updateUrl({ page: p })}
+        />
+      </div>
     </div>
   );
 }

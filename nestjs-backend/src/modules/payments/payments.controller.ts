@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Res, Get, UseGuards, Req, Query, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { PaymentsService } from './payments.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -16,6 +17,8 @@ export class PaymentsController {
   ) {}
 
   // Phase 163: New Payment Intent API
+  // P191/5 — 10/min cap on payment intent creation (abuse + accidental retry storms).
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('create-intent')
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.CREATED)
@@ -73,6 +76,8 @@ export class PaymentsController {
   }
 
   // Legacy: Iyzipay Checkout Form
+  // P191/5 — 10/min cap (legacy initiate-equivalent).
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('create-session')
   async createSession(@Body() body: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -96,6 +101,8 @@ export class PaymentsController {
   // Phase 175: iyzipay Checkout Form callback — iyzipay POSTs { token } here
   // after the customer pays. We re-verify the token server-side (retrieveCheckout)
   // and only then move the escrow to a captured state. No auth: this is iyzipay → us.
+  // P191/5 — @SkipThrottle: provider callbacks must not be IP-throttled (token re-verify gates abuse).
+  @SkipThrottle()
   @Post('iyzipay/callback')
   @HttpCode(HttpStatus.OK)
   async iyzipayCallback(@Body() body: Record<string, string>) {
@@ -106,6 +113,8 @@ export class PaymentsController {
   }
 
   // Phase 163: Webhook for payment provider events
+  // P191/5 — @SkipThrottle: webhook is provider-originated, signature-validated.
+  @SkipThrottle()
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   async handleWebhook(@Body() event: any) {

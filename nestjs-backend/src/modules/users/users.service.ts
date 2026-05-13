@@ -348,6 +348,11 @@ export class UsersService {
     await this.repo.delete(id);
   }
 
+  /** Phase P191/4 (Voldi-sec) — bump tokenVersion to revoke all live JWTs. */
+  async incrementTokenVersion(id: string): Promise<void> {
+    await this.repo.increment({ id }, 'tokenVersion', 1);
+  }
+
   /** Phase 60 — Hesap kendini deaktive eder (KVKK soft-delete) */
   async deactivateAccount(
     userId: string,

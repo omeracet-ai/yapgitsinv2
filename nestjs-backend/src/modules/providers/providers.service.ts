@@ -1,9 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from "typeorm";
+import { Brackets, Repository } from "typeorm";
 import { Provider } from './provider.entity';
 import { User } from '../users/user.entity';
 import { computeBadges } from '../users/badges.util';
+import {
+  AdminListQueryDto,
+  buildPaginated,
+  normalizePaging,
+  PaginatedResult,
+} from '../admin/dto/admin-list-query.dto';
 
 /**
  * Airtasker-style "tasker" model: a tasker IS a user with workerCategories set.
@@ -68,6 +74,78 @@ export class ProvidersService {
         };
       }),
     );
+  }
+
+  /**
+   * P191/4 — Paginated provider listing. Same shape per item as findAll() but
+   * server-side paged + searchable (businessName / fullName / email) + status
+   * (`verified` | `unverified`).
+   */
+  async findAllPaged(
+    q: AdminListQueryDto,
+  ): Promise<PaginatedResult<Awaited<ReturnType<ProvidersService['findAll']>>[number]>> {
+    const { page, limit, skip, take } = normalizePaging(q);
+    const search = q.search?.trim();
+    const status = q.status?.trim();
+
+    const qb = this.usersRepo
+      .createQueryBuilder('u')
+      .where('u.workerCategories IS NOT NULL')
+      .andWhere("u.workerCategories != '[]'")
+      .andWhere("u.workerCategories != ''");
+
+    if (status === 'verified') qb.andWhere('u.identityVerified = :v', { v: true });
+    else if (status === 'unverified') qb.andWhere('u.identityVerified = :v', { v: false });
+
+    if (search) {
+      qb.andWhere(
+        new Brackets((b) => {
+          b.where('LOWER(u.fullName) LIKE LOWER(:s)', { s: `%${search}%` })
+            .orWhere('LOWER(u.email) LIKE LOWER(:s)', { s: `%${search}%` })
+            .orWhere('LOWER(u.phoneNumber) LIKE LOWER(:s)', { s: `%${search}%` });
+        }),
+      );
+    }
+
+    qb.orderBy('u.reputationScore', 'DESC').skip(skip).take(take);
+
+    const [workers, total] = await qb.getManyAndCount();
+
+    const items = await Promise.all(
+      workers.map(async (u) => {
+        const provider = await this.getOrCreateForUser(u);
+        return {
+          id: provider.id,
+          userId: u.id,
+          businessName: provider.businessName || u.fullName,
+          bio: provider.bio || u.workerBio || null,
+          isVerified: provider.isVerified,
+          featuredOrder: provider.featuredOrder,
+          documents: provider.documents,
+          createdAt: provider.createdAt,
+          updatedAt: provider.updatedAt,
+          averageRating: u.averageRating ?? 0,
+          totalReviews: u.totalReviews ?? 0,
+          identityVerified: u.identityVerified,
+          reputationScore: u.reputationScore ?? 0,
+          workerCategories: u.workerCategories ?? [],
+          workerSkills: u.workerSkills ?? [],
+          asWorkerSuccess: u.asWorkerSuccess ?? 0,
+          asWorkerTotal: u.asWorkerTotal ?? 0,
+          badges: computeBadges(u),
+          user: {
+            id: u.id,
+            fullName: u.fullName,
+            email: u.email,
+            phoneNumber: u.phoneNumber,
+            profileImageUrl: u.profileImageUrl,
+            city: u.city,
+          },
+        };
+      }),
+    );
+
+    return buildPaginated(items, total, page, limit);
   }
 
   /** Auto-create a provider row for a user if one doesn't exist yet. */

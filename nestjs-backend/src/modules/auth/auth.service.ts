@@ -4,7 +4,10 @@ import {
   BadRequestException,
   ForbiddenException,
   OnModuleInit,
+  Inject,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { User, UserRole } from '../users/user.entity';
@@ -35,7 +38,23 @@ export class AuthService implements OnModuleInit {
     @InjectRepository(SmsOtp)
     private smsOtpRepo: Repository<SmsOtp>,
     private smsService: SmsService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
+
+  /** Phase P191/4 — cache key for a user's current tokenVersion (60s TTL). */
+  static tokenVerCacheKey(userId: string): string {
+    return `user:tokenVer:${userId}`;
+  }
+
+  /**
+   * Phase P191/4 (Voldi-sec) — Bump tokenVersion for a user.
+   * Invalidates ALL outstanding access + refresh tokens. Cache busted so the
+   * next protected request re-reads from DB and observes the new version.
+   */
+  async bumpTokenVersion(userId: string): Promise<void> {
+    await this.usersService.incrementTokenVersion(userId);
+    await this.cacheManager.del(AuthService.tokenVerCacheKey(userId));
+  }
 
   // ── Phase 123 — SMS OTP ────────────────────────────────────────────────
   private normalizeTrPhone(phoneNumber: string): string {
@@ -311,12 +330,17 @@ export class AuthService implements OnModuleInit {
   }
 
   /** Sign an access token (existing 30d expiry, default JWT_SECRET). */
-  private signAccessToken(user: AuthUser): string {
+  private signAccessToken(
+    user: AuthUser & { tokenVersion?: number },
+  ): string {
     const payload = {
       email: user.email,
       sub: user.id,
       role: user.role,
       tenantId: user.tenantId ?? null,
+      // Phase P191/4 — included so JwtStrategy can compare against User.tokenVersion.
+      // Legacy tokens (no claim) default to 0 downstream.
+      tokenVersion: user.tokenVersion ?? 0,
     };
     return this.jwtService.sign(payload, { expiresIn: '30d' });
   }
@@ -360,12 +384,19 @@ export class AuthService implements OnModuleInit {
     await this.usersService.update(user.id, { tokenVersion: nextVersion });
 
     const { passwordHash: _ph, ...safe } = user;
-    const accessToken = this.signAccessToken(safe as AuthUser);
+    // Phase P191/4 — stamp the new access token with the bumped tokenVersion
+    // (the in-memory `safe` snapshot still has the OLD value).
+    const accessToken = this.signAccessToken({
+      ...(safe as AuthUser),
+      tokenVersion: nextVersion,
+    });
     const newRefreshToken = this.signRefreshToken({
       id: user.id,
       tenantId: user.tenantId ?? null,
       tokenVersion: nextVersion,
     });
+    // Bust tokenVersion cache so JwtStrategy sees the new value immediately.
+    await this.cacheManager.del(AuthService.tokenVerCacheKey(user.id));
     return { accessToken, refreshToken: newRefreshToken };
   }
 
@@ -438,6 +469,8 @@ export class AuthService implements OnModuleInit {
       sub: user.id,
       role: user.role,
       tenantId: user.tenantId ?? null,
+      // Phase P191/4 — token revocation for admin sessions too.
+      tokenVersion: user.tokenVersion ?? 0,
     };
     return {
       access_token: this.jwtService.sign(payload, { expiresIn: '8h' }),

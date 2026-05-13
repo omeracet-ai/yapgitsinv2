@@ -13,6 +13,7 @@ import { UpdateReportStatusDto } from '../user-blocks/dto/report-user.dto';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { SystemSettingsService } from '../system-settings/system-settings.service';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
+import { AdminListQueryDto } from './dto/admin-list-query.dto';
 import { BulkVerifyDto } from './dto/bulk-verify.dto';
 import { BulkFeatureDto, BulkUnfeatureDto } from './dto/bulk-feature.dto';
 import { SuspendUserDto } from './dto/suspend-user.dto';
@@ -232,9 +233,20 @@ export class AdminController {
     return this.adminService.getRevenue();
   }
 
+  // P191/4 — paginated admin jobs list.
+  // Back-compat: with no `page` param and a `limit`, falls back to legacy
+  // unpaginated array shape so existing clients (dashboard "recent jobs")
+  // don't break mid-deploy.
   @Get('jobs')
-  getRecentJobs(@Query('limit') limit?: string) {
-    return this.adminService.getRecentJobs(limit ? Number(limit) : 20);
+  getRecentJobs(@Query() query: AdminListQueryDto) {
+    const hasPaging =
+      query.page !== undefined ||
+      query.search !== undefined ||
+      query.status !== undefined;
+    if (!hasPaging) {
+      return this.adminService.getRecentJobs(query.limit ? Number(query.limit) : 20);
+    }
+    return this.adminService.getJobsPaged(query);
   }
 
   @Patch('jobs/:id/featured')
@@ -251,9 +263,19 @@ export class AdminController {
     return result;
   }
 
+  // P191/4 — paginated admin users list.
+  // Back-compat: returns flat array when called without paging params.
   @Get('users')
-  getUsers() {
-    return this.adminService.getAllUsers();
+  getUsers(@Query() query: AdminListQueryDto) {
+    const hasPaging =
+      query.page !== undefined ||
+      query.limit !== undefined ||
+      query.search !== undefined ||
+      query.status !== undefined;
+    if (!hasPaging) {
+      return this.adminService.getAllUsers();
+    }
+    return this.adminService.getUsersPaged(query);
   }
 
   @Post('users/bulk-verify')
@@ -337,9 +359,19 @@ export class AdminController {
     return result;
   }
 
+  // P191/4 — paginated admin providers list.
+  // Back-compat: returns flat array when called without paging params.
   @Get('providers')
-  getProviders() {
-    return this.providersService.findAll();
+  getProviders(@Query() query: AdminListQueryDto) {
+    const hasPaging =
+      query.page !== undefined ||
+      query.limit !== undefined ||
+      query.search !== undefined ||
+      query.status !== undefined;
+    if (!hasPaging) {
+      return this.providersService.findAll();
+    }
+    return this.providersService.findAllPaged(query);
   }
 
   @Patch('providers/:id/verify')

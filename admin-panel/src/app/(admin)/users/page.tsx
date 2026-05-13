@@ -1,7 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { api, type User } from "@/lib/api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { api, type User, type Paginated } from "@/lib/api";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
+import { useToast } from "@/components/ui/Toast";
+import { Pager } from "@/components/ui/Pager";
+
+const PAGE_LIMIT = 20;
+
+const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "",           label: "Tümü" },
+  { value: "verified",   label: "Kimliği doğrulanmış" },
+  { value: "unverified", label: "Doğrulanmamış" },
+  { value: "suspended",  label: "Askıda" },
+  { value: "worker",     label: "İşçi" },
+  { value: "customer",   label: "Müşteri" },
+  { value: "admin",      label: "Admin" },
+];
 
 const ROLE_MAP: Record<string, { label: string; cls: string }> = {
   admin:    { label: "Admin",    cls: "bg-red-100 text-red-700" },
@@ -18,12 +34,49 @@ const MANUAL_BADGES: { key: string; label: string; emoji: string }[] = [
 ];
 
 export default function UsersPage() {
-  const [users,    setUsers]    = useState<User[]>([]);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlPage = Math.max(1, Number(searchParams.get("page")) || 1);
+  const urlSearch = searchParams.get("search") ?? "";
+  const urlStatus = searchParams.get("status") ?? "";
+
+  const [data, setData] = useState<Paginated<User>>({
+    items: [], total: 0, page: 1, limit: PAGE_LIMIT, totalPages: 1,
+  });
+  const users = data.items;
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy,     setBusy]     = useState(false);
-  const [toast,    setToast]    = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  const toast = useToast();
+  const confirm = useConfirm();
+
+  useEffect(() => { setSearchInput(urlSearch); }, [urlSearch]);
+
+  const updateUrl = useCallback((next: { page?: number; search?: string; status?: string }) => {
+    const sp = new URLSearchParams(searchParams.toString());
+    if (next.page !== undefined) {
+      if (next.page <= 1) sp.delete("page"); else sp.set("page", String(next.page));
+    }
+    if (next.search !== undefined) {
+      if (!next.search) sp.delete("search"); else sp.set("search", next.search);
+    }
+    if (next.status !== undefined) {
+      if (!next.status) sp.delete("status"); else sp.set("status", next.status);
+    }
+    router.replace(`?${sp.toString()}`, { scroll: false });
+  }, [router, searchParams]);
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (searchInput === urlSearch) return;
+    debounceRef.current = setTimeout(() => {
+      updateUrl({ search: searchInput, page: 1 });
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchInput, urlSearch, updateUrl]);
   const [suspendTarget, setSuspendTarget] = useState<User | null>(null);
   const [suspendReason,  setSuspendReason]  = useState("");
   const [suspendBusy,    setSuspendBusy]    = useState(false);
@@ -50,60 +103,67 @@ export default function UsersPage() {
     try {
       for (const b of toGrant) await api.grantBadge(badgeTarget.id, b.key);
       for (const b of toRevoke) await api.revokeBadge(badgeTarget.id, b.key);
-      showToast(`${badgeTarget.fullName} rozetleri güncellendi`);
+      toast.success(`${badgeTarget.fullName} rozetleri güncellendi`);
       setBadgeTarget(null);
       load();
     } catch (e) {
-      window.alert(`Hata: ${(e as Error).message}`);
+      toast.error(`Hata: ${(e as Error).message}`);
     } finally {
       setBadgeBusy(false);
     }
   }
 
-  function showToast(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
-  }
-
   async function doSuspend() {
     if (!suspendTarget) return;
     const r = suspendReason.trim();
-    if (!r) { window.alert("Sebep zorunlu"); return; }
-    if (r.length > 500) { window.alert("Sebep 500 karakteri aşamaz"); return; }
+    if (!r) { toast.error("Sebep zorunlu"); return; }
+    if (r.length > 500) { toast.error("Sebep 500 karakteri aşamaz"); return; }
     setSuspendBusy(true);
     try {
       await api.suspendUser(suspendTarget.id, true, r);
-      showToast(`${suspendTarget.fullName} askıya alındı`);
+      toast.success(`${suspendTarget.fullName} askıya alındı`);
       setSuspendTarget(null);
       setSuspendReason("");
       load();
     } catch (e) {
-      window.alert(`Hata: ${(e as Error).message}`);
+      toast.error(`Hata: ${(e as Error).message}`);
     } finally {
       setSuspendBusy(false);
     }
   }
 
   async function doUnsuspend(u: User) {
-    if (!window.confirm(`${u.fullName} kullanıcısının askısı kaldırılsın mı?`)) return;
+    const ok = await confirm({
+      title: "Askıyı kaldır",
+      message: `${u.fullName} kullanıcısının askısı kaldırılsın mı?`,
+      confirmLabel: "Askıyı Kaldır",
+      cancelLabel: "İptal",
+      variant: "warning",
+    });
+    if (!ok) return;
     try {
       await api.suspendUser(u.id, false);
-      showToast(`${u.fullName} askıdan çıkarıldı`);
+      toast.success(`${u.fullName} askıdan çıkarıldı`);
       load();
     } catch (e) {
-      window.alert(`Hata: ${(e as Error).message}`);
+      toast.error(`Hata: ${(e as Error).message}`);
     }
   }
 
-  function load() {
+  const load = useCallback(() => {
     setLoading(true);
-    api.users()
-      .then(u => { setUsers(u); setSelected(new Set()); })
+    api.getUsers({
+      page: urlPage,
+      limit: PAGE_LIMIT,
+      search: urlSearch || undefined,
+      status: urlStatus || undefined,
+    })
+      .then(res => { setData(res); setSelected(new Set()); setError(null); })
       .catch(e => setError((e as Error).message))
       .finally(() => setLoading(false));
-  }
+  }, [urlPage, urlSearch, urlStatus]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const allSelected = users.length > 0 && selected.size === users.length;
 
@@ -122,14 +182,21 @@ export default function UsersPage() {
     if (selected.size === 0 || busy) return;
     const ids = Array.from(selected);
     const verb = identityVerified ? "doğrulanacak" : "doğrulaması kaldırılacak";
-    if (!window.confirm(`${ids.length} kullanıcı ${verb}. Devam edilsin mi?`)) return;
+    const ok = await confirm({
+      title: "Toplu doğrulama",
+      message: `${ids.length} kullanıcı ${verb}. Devam edilsin mi?`,
+      confirmLabel: "Devam",
+      cancelLabel: "İptal",
+      variant: identityVerified ? "info" : "warning",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const res = await api.bulkVerifyUsers(ids, identityVerified);
-      window.alert(`${res.updated} güncellendi, ${res.notFound.length} bulunamadı`);
+      toast.success(`${res.updated} güncellendi, ${res.notFound.length} bulunamadı`);
       load();
     } catch (e) {
-      window.alert(`Hata: ${(e as Error).message}`);
+      toast.error(`Hata: ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
@@ -140,15 +207,22 @@ export default function UsersPage() {
   async function bulkFeature(slot: 1 | 2 | 3) {
     if (selected.size === 0 || busy) return;
     const ids = Array.from(selected);
-    if (!window.confirm(`${ids.length} işçi slot ${slot}'e featured atanacak. Devam?`)) return;
+    const ok = await confirm({
+      title: "Featured ata",
+      message: `${ids.length} işçi slot ${slot}'e featured atanacak. Devam?`,
+      confirmLabel: `Slot ${slot}'e ata`,
+      cancelLabel: "İptal",
+      variant: "info",
+    });
+    if (!ok) return;
     setFeatureMenu(false);
     setBusy(true);
     try {
       const res = await api.bulkFeatureUsers(ids, slot);
-      window.alert(`${res.updated} güncellendi, ${res.notFound.length} bulunamadı`);
+      toast.success(`${res.updated} güncellendi, ${res.notFound.length} bulunamadı`);
       load();
     } catch (e) {
-      window.alert(`Hata: ${(e as Error).message}`);
+      toast.error(`Hata: ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
@@ -157,14 +231,21 @@ export default function UsersPage() {
   async function bulkUnfeature() {
     if (selected.size === 0 || busy) return;
     const ids = Array.from(selected);
-    if (!window.confirm(`${ids.length} işçinin featured'i kaldırılacak. Devam?`)) return;
+    const ok = await confirm({
+      title: "Featured kaldır",
+      message: `${ids.length} işçinin featured'i kaldırılacak. Devam?`,
+      confirmLabel: "Kaldır",
+      cancelLabel: "İptal",
+      variant: "warning",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const res = await api.bulkUnfeatureUsers(ids);
-      window.alert(`${res.updated} güncellendi, ${res.notFound.length} bulunamadı`);
+      toast.success(`${res.updated} güncellendi, ${res.notFound.length} bulunamadı`);
       load();
     } catch (e) {
-      window.alert(`Hata: ${(e as Error).message}`);
+      toast.error(`Hata: ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
@@ -172,11 +253,6 @@ export default function UsersPage() {
 
   return (
     <div className="max-w-5xl">
-      {toast && (
-        <div className="fixed top-4 right-4 z-50 rounded-lg bg-green-600 text-white px-4 py-2 text-sm shadow-lg">
-          {toast}
-        </div>
-      )}
       {badgeTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
@@ -256,7 +332,26 @@ export default function UsersPage() {
       )}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold">Kullanıcılar</h2>
-        <span className="text-sm text-gray-400">{users.length} kullanıcı</span>
+        <span className="text-sm text-gray-400">{data.total} kullanıcı</span>
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <input
+          type="search"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Ad, e-posta veya telefonda ara…"
+          className="flex-1 min-w-[240px] rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+        />
+        <select
+          value={urlStatus}
+          onChange={(e) => updateUrl({ status: e.target.value, page: 1 })}
+          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+        >
+          {STATUS_OPTIONS.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
       </div>
 
       {error && (
@@ -309,11 +404,8 @@ export default function UsersPage() {
         </div>
       )}
 
-      {loading ? (
-        <p className="text-gray-400 text-sm animate-pulse">Yükleniyor…</p>
-      ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="px-4 py-3 w-10">
@@ -336,10 +428,21 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {users.length === 0 && (
-                <tr><td colSpan={10} className="text-center py-8 text-gray-400">Henüz kullanıcı yok.</td></tr>
+              {loading && (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={`sk-${i}`} className="animate-pulse">
+                    {Array.from({ length: 10 }).map((__, j) => (
+                      <td key={j} className="px-4 py-3"><div className="h-3 rounded bg-gray-100" /></td>
+                    ))}
+                  </tr>
+                ))
               )}
-              {users.map(u => {
+              {!loading && users.length === 0 && (
+                <tr><td colSpan={10} className="text-center py-8 text-gray-400">
+                  {urlSearch || urlStatus ? "Sonuç bulunamadı." : "Henüz kullanıcı yok."}
+                </td></tr>
+              )}
+              {!loading && users.map(u => {
                 const role = ROLE_MAP[u.role] ?? { label: u.role, cls: "bg-gray-100 text-gray-600" };
                 const checked = selected.has(u.id);
                 return (
@@ -409,8 +512,12 @@ export default function UsersPage() {
               })}
             </tbody>
           </table>
-        </div>
-      )}
+        <Pager
+          page={data.page}
+          totalPages={data.totalPages}
+          onChange={(p) => updateUrl({ page: p })}
+        />
+      </div>
     </div>
   );
 }

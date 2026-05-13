@@ -1,7 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { SuspendUserDto } from './dto/suspend-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, IsNull, Between, MoreThan, In } from 'typeorm';
+import { Repository, Not, IsNull, Between, MoreThan, In, ILike, Raw } from 'typeorm';
+import {
+  AdminListQueryDto,
+  buildPaginated,
+  normalizePaging,
+  PaginatedResult,
+} from './dto/admin-list-query.dto';
 import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
 import { BulkVerifyDto } from './dto/bulk-verify.dto';
 import { BulkFeatureDto, BulkUnfeatureDto } from './dto/bulk-feature.dto';
@@ -543,6 +549,45 @@ export class AdminService {
     });
   }
 
+  /**
+   * P191/4 — Paginated admin jobs list with optional search (title/category/location)
+   * and status filter. Replaces full-array `getRecentJobs` for admin table view.
+   */
+  async getJobsPaged(q: AdminListQueryDto): Promise<PaginatedResult<Job>> {
+    const { page, limit, skip, take } = normalizePaging(q);
+    const search = q.search?.trim();
+    const status = q.status?.trim();
+
+    const where: Record<string, unknown>[] = [];
+    if (search) {
+      where.push({ title: ILike(`%${search}%`) });
+      where.push({ category: ILike(`%${search}%`) });
+      where.push({ location: ILike(`%${search}%`) });
+    }
+    let whereClause: unknown =
+      where.length > 0 ? where : undefined;
+    if (status) {
+      // Merge status into each OR branch, or use single object.
+      if (Array.isArray(whereClause)) {
+        whereClause = (whereClause as Record<string, unknown>[]).map((w) => ({
+          ...w,
+          status,
+        }));
+      } else {
+        whereClause = { status };
+      }
+    }
+
+    const [items, total] = await this.jobsRepo.findAndCount({
+      where: whereClause as never,
+      order: { createdAt: 'DESC' },
+      skip,
+      take,
+      relations: ['customer'],
+    });
+    return buildPaginated(items, total, page, limit);
+  }
+
   async getAllUsers() {
     return this.usersRepo.find({
       order: { createdAt: 'DESC' },
@@ -567,6 +612,71 @@ export class AdminService {
         'createdAt',
       ],
     });
+  }
+
+  /**
+   * P191/4 — Paginated admin users list with optional search (fullName/email/phone)
+   * and status filter (`suspended` | `verified` | `unverified` | `worker` | `customer`).
+   */
+  async getUsersPaged(q: AdminListQueryDto): Promise<PaginatedResult<User>> {
+    const { page, limit, skip, take } = normalizePaging(q);
+    const search = q.search?.trim();
+    const status = q.status?.trim();
+
+    const baseFilter: Record<string, unknown> = {};
+    if (status === 'suspended') baseFilter.suspended = true;
+    else if (status === 'verified') baseFilter.identityVerified = true;
+    else if (status === 'unverified') baseFilter.identityVerified = false;
+    else if (status === 'worker' || status === 'customer' || status === 'admin')
+      baseFilter.role = status as UserRole;
+
+    const orBranches: Record<string, unknown>[] = [];
+    if (search) {
+      orBranches.push({ ...baseFilter, fullName: ILike(`%${search}%`) });
+      orBranches.push({ ...baseFilter, email: ILike(`%${search}%`) });
+      orBranches.push({ ...baseFilter, phoneNumber: ILike(`%${search}%`) });
+    }
+
+    const where: unknown =
+      orBranches.length > 0
+        ? orBranches
+        : Object.keys(baseFilter).length > 0
+          ? baseFilter
+          : undefined;
+
+    const [items, total] = await this.usersRepo.findAndCount({
+      where: where as never,
+      order: { createdAt: 'DESC' },
+      skip,
+      take,
+      select: [
+        'id',
+        'fullName',
+        'email',
+        'phoneNumber',
+        'isPhoneVerified',
+        'identityVerified',
+        'role',
+        'city',
+        'workerCategories',
+        'workerSkills',
+        'badges',
+        'manualBadges',
+        'averageRating',
+        'totalReviews',
+        'asWorkerTotal',
+        'asWorkerSuccess',
+        'responseTimeMinutes',
+        'suspended',
+        'suspendedAt',
+        'suspendedReason',
+        'suspendedBy',
+        'createdAt',
+      ],
+    });
+    // Touch Raw import to keep tsc quiet if unused elsewhere
+    void Raw;
+    return buildPaginated(items, total, page, limit);
   }
 
   async getAllServiceRequests(limit = 50) {

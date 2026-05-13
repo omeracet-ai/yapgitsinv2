@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, type BlogPost } from "@/lib/api";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
+import { useToast } from "@/components/ui/Toast";
 
 export default function BlogListPage() {
   const [items, setItems] = useState<BlogPost[]>([]);
@@ -10,6 +12,8 @@ export default function BlogListPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "draft" | "published" | "archived">("all");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const confirm = useConfirm();
+  const toast = useToast();
 
   const load = async () => {
     try {
@@ -27,13 +31,21 @@ export default function BlogListPage() {
   useEffect(() => { load(); }, []);
 
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`"${title}" silinsin mi?`)) return;
+    const ok = await confirm({
+      title: "Yazıyı sil",
+      message: `"${title}" silinsin mi? Bu işlem geri alınamaz.`,
+      confirmLabel: "Sil",
+      cancelLabel: "İptal",
+      variant: "danger",
+    });
+    if (!ok) return;
     setBusyId(id);
     try {
       await api.blogDelete(id);
+      toast.success("Yazı silindi");
       await load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Silinemedi");
+      toast.error(e instanceof Error ? e.message : "Silinemedi");
     } finally {
       setBusyId(null);
     }

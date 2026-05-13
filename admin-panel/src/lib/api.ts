@@ -54,6 +54,31 @@ async function requestNoAuth<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// ── P191/4 — Server-side pagination helpers ──────────────────────────────
+export interface Paginated<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AdminListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}
+
+function buildAdminListQuery(p: AdminListParams): string {
+  const sp = new URLSearchParams();
+  if (p.page !== undefined) sp.set('page', String(p.page));
+  if (p.limit !== undefined) sp.set('limit', String(p.limit));
+  if (p.search) sp.set('search', p.search);
+  if (p.status) sp.set('status', p.status);
+  return sp.toString();
+}
+
 export const api = {
   // Health (no auth)
   getHealth: () => requestNoAuth<HealthStatus>('/health'),
@@ -64,6 +89,27 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     }),
+
+  // P191/2 — server-side logout (token blacklist). Safe to call even if backend
+  // hasn't deployed the endpoint yet: network/4xx errors are swallowed by caller.
+  adminLogout: async (): Promise<void> => {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`${BASE}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok && res.status !== 404) {
+        console.warn(`adminLogout: backend returned ${res.status}`);
+      }
+    } catch (err) {
+      console.warn('adminLogout: network error, continuing client-side logout', err);
+    }
+  },
 
   // Dashboard
   stats: () =>
@@ -96,8 +142,16 @@ export const api = {
   // Son İlanlar
   recentJobs: (limit = 20) => request<Job[]>(`/admin/jobs?limit=${limit}`),
 
+  // P191/4 — Paginated admin jobs list (search + status filter)
+  getJobs: (params: AdminListParams = {}) =>
+    request<Paginated<Job>>(`/admin/jobs?${buildAdminListQuery(params)}`),
+
   // Kullanıcılar
   users: () => request<User[]>('/admin/users'),
+
+  // P191/4 — Paginated admin users list (search + status filter)
+  getUsers: (params: AdminListParams = {}) =>
+    request<Paginated<User>>(`/admin/users?${buildAdminListQuery(params)}`),
   bulkVerifyUsers: (userIds: string[], identityVerified: boolean) =>
     request<BulkVerifyResult>('/admin/users/bulk-verify', {
       method: 'POST',
@@ -127,6 +181,9 @@ export const api = {
 
   // Sağlayıcılar & Mavi Tik
   providers:       ()                                    => request<Provider[]>('/admin/providers'),
+  // P191/4 — Paginated admin providers list (search + status filter)
+  getProviders: (params: AdminListParams = {}) =>
+    request<Paginated<Provider>>(`/admin/providers?${buildAdminListQuery(params)}`),
   setVerification: (id: string, isVerified: boolean)     =>
     request<Provider>(`/admin/providers/${id}/verify`, { method: 'PATCH', body: JSON.stringify({ isVerified }) }),
 

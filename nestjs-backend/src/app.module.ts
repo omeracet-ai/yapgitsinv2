@@ -114,14 +114,22 @@ import { AdminSeedModule } from './modules/admin-seed/admin-seed.module';
     }),
     // Phase 170 — Cache katmanı: REDIS_URL varsa Redis, yoksa in-memory (graceful fallback).
     CacheModule.registerAsync(cacheConfigAsync),
-    // Phase 170 — Named throttlers (route-bazlı override için).
-    //   default: 60 req / 60s (IP başına, global)
-    //   auth-login: 5 req / 60s (brute-force koruma)
-    //   auth-register: 3 req / 60min
+    // Phase 170 / P191/5 — Multi-tier named throttlers (burst-tolerant).
+    //   short:  10 req /  1s  — burst absorption (Flutter app + admin polls)
+    //   medium: 60 req / 10s  — sustained polling window
+    //   long:  200 req / 60s  — per-minute ceiling (still catches scripted abuse)
+    //   default: 60 req / 60s — legacy/compat tier still referenced by per-route @Throttle overrides
+    //   auth-login: 5 req / 60s — brute-force protection (override on /auth/login, /auth/admin/login, /auth/sms/request)
+    //   auth-register: 3 req / 60min — registration spam protection
     //   uploads: 10 req / 60s
-    // Decorator: @Throttle({ 'auth-login': { limit: 5, ttl: 60_000 } }) ile route override.
+    // Per-route override: @Throttle({ 'auth-login': { limit: 5, ttl: 60_000 } }).
+    // P191/5 raises burst tolerance: admin panel + Flutter were hitting 60/min on
+    // normal interceptor + WebSocket + chat refresh + notification poll cycles.
     ThrottlerModule.forRoot([
-      { name: 'default', ttl: 60_000, limit: 60 },
+      { name: 'short', ttl: 1_000, limit: 10 },
+      { name: 'medium', ttl: 10_000, limit: 60 },
+      { name: 'long', ttl: 60_000, limit: 200 },
+      { name: 'default', ttl: 60_000, limit: 200 },
       { name: 'auth-login', ttl: 60_000, limit: 5 },
       { name: 'auth-register', ttl: 3_600_000, limit: 3 },
       { name: 'uploads', ttl: 60_000, limit: 10 },

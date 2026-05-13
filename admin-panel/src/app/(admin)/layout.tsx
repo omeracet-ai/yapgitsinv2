@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import type { AdminUser } from "@/lib/api";
+import { api, type AdminUser } from "@/lib/api";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ConfirmDialogProvider } from "@/components/ui/ConfirmDialog";
+import { ToastProvider } from "@/components/ui/Toast";
 
 function isTokenValid(token: string): boolean {
   try {
@@ -60,7 +62,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setReady(true);
   }, [router]);
 
-  const logout = () => {
+  const logout = async () => {
+    await api.adminLogout().catch(() => { /* ignore — pairs with P191/2 backend */ });
     localStorage.removeItem("admin_token");
     localStorage.removeItem("admin_user");
     router.replace("/login");
@@ -76,6 +79,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!authed) return null;
 
   return (
+    <ToastProvider>
+      <ConfirmDialogProvider>
     <div className="flex h-full">
       {/* Sidebar */}
       <aside className="w-56 shrink-0 bg-slate-900 text-white flex flex-col">
@@ -138,5 +143,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
     </div>
+      </ConfirmDialogProvider>
+    </ToastProvider>
   );
 }

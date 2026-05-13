@@ -1,7 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import {
   HealthService,
@@ -17,7 +17,10 @@ export class HealthController {
   /**
    * Public /health — no auth, <50ms, no external calls.
    * For Cloudflare/uptime probes.
+   * P191/5 — @SkipThrottle: CF uptime monitor hits this every 30s and we
+   * don't want it competing with real traffic on the global tiers.
    */
+  @SkipThrottle()
   @Get()
   get(): Promise<HealthResponse> {
     return this.health.getHealth();
