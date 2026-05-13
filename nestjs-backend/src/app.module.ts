@@ -97,6 +97,7 @@ import { Payment } from './modules/payments/payment.entity';
 import { ReputationModule } from './modules/reputation/reputation.module';
 import { Reputation } from './modules/reputation/reputation.entity';
 import { Badge } from './modules/reputation/badge.entity';
+import { AdminSeedModule } from './modules/admin-seed/admin-seed.module';
 
 @Module({
   imports: [
@@ -277,6 +278,7 @@ import { Badge } from './modules/reputation/badge.entity';
     BlogModule,
     AnalyticsModule,
     ReputationModule,
+    AdminSeedModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],
