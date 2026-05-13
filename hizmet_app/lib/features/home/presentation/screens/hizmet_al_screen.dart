@@ -21,8 +21,8 @@ class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
 
   static const _tabs = [
     Tab(text: 'Hizmet İlanları'),
-    Tab(text: 'Harita'),
     Tab(text: 'Fırsatlar'),
+    Tab(text: 'Harita'),
     Tab(text: 'İşlerim'),
   ];
 
@@ -75,8 +75,8 @@ class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
         controller: _tabController,
         children: const [
           ServiceRequestBody(),
-          MapScreen(),
           JobOpportunitiesBody(),
+          MapScreen(),
           MyJobsBody(),
         ],
       ),
