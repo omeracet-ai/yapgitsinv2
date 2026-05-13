@@ -138,12 +138,16 @@ async function bootstrap() {
     if (rawOrigins.length === 0) {
       throw new Error('Production requires ALLOWED_ORIGINS env (comma-separated list)');
     }
+    const NATIVE_APP_SCHEMES = ['capacitor://', 'ionic://', 'ms-appx://', 'ms-appx-web://', 'file://'];
+    const isNativeAppScheme = (o: string) => NATIVE_APP_SCHEMES.some((s) => o.startsWith(s));
     const bad = rawOrigins.find(
-      (o) => o === '*' || o.startsWith('http://') || /localhost|127\.0\.0\.1/.test(o),
+      (o) =>
+        !isNativeAppScheme(o) &&
+        (o === '*' || o.startsWith('http://') || /localhost|127\.0\.0\.1/.test(o)),
     );
     if (bad) {
       throw new Error(
-        `Production ALLOWED_ORIGINS rejects "${bad}" (no *, http://, localhost, 127.0.0.1)`,
+        `Production ALLOWED_ORIGINS rejects "${bad}" (no *, http://, plain localhost, plain 127.0.0.1 — capacitor:// vb. native scheme'ler izinli)`,
       );
     }
   }
