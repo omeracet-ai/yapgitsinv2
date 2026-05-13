@@ -32,7 +32,7 @@ export default function WorkforcePage() {
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
           Canlı Bağlantı Aktif
         </div>
-        <div>API: yapgitsin.tr/backend</div>
+        <div>API: api.yapgitsin.tr</div>
         <div>Yeni üye polling: 15 sn</div>
       </div>
     </div>

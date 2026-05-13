@@ -15,13 +15,13 @@ import {
 import { EkipAgent, DeveloperAgent, MuduriyeManager } from './components/Agents';
 import { MonitorEkrani, Klavye, Pencere } from './components/OfficeProps';
 
-// API base — iframe içindeyse parent origin'i kullan, yoksa env veya prod default
+// API base — Phase 183: backend artık api.yapgitsin.tr subdomain'inde
 const API_BASE = (() => {
   const env = (import.meta as any).env?.VITE_API_URL as string | undefined;
   if (env) return env;
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    if (host.endsWith('yapgitsin.tr')) return `${window.location.protocol}//${host}/backend/main.js`;
+    if (host.endsWith('yapgitsin.tr')) return `${window.location.protocol}//api.yapgitsin.tr`;
   }
   return 'http://localhost:3001';
 })();

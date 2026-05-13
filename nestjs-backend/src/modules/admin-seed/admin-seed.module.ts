@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../users/user.entity';
 import { Booking } from '../bookings/booking.entity';
@@ -27,4 +27,14 @@ import { AdminSeedService } from './admin-seed.service';
   controllers: [AdminSeedController],
   providers: [AdminSeedService],
 })
-export class AdminSeedModule {}
+export class AdminSeedModule implements OnModuleInit {
+  private readonly logger = new Logger(AdminSeedModule.name);
+
+  onModuleInit(): void {
+    if (process.env.ALLOW_SEED === '1') {
+      this.logger.warn(
+        '[WARN] AdminSeedController is in BOOTSTRAP MODE (ALLOW_SEED=1). Disable after use.',
+      );
+    }
+  }
+}

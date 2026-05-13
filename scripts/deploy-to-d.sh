@@ -36,7 +36,7 @@ fi
 # Admin (Next.js standalone)
 echo "-> Admin build (standalone)"
 cd "$ROOT/admin-panel"
-npm run build > /dev/null
+NEXT_PUBLIC_API_URL=https://api.yapgitsin.tr npm run build > /dev/null
 mv /d/admin "/d/admin.bak.$BACKUP_TS" 2>/dev/null || true
 mkdir -p /d/admin
 if [ -d ".next/standalone" ]; then

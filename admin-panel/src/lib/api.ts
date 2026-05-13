@@ -1,3 +1,5 @@
+// Phase 183 — admin panel API artık api.yapgitsin.tr subdomain'inde (web/flutter ile paralel).
+// Dev için localhost:3001 fallback korunur.
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 function getToken(): string | null {

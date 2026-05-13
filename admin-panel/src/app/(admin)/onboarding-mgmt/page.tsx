@@ -13,7 +13,7 @@ const PRESETS = [
   { label: "Kırmızı", start: "#EF4444", end: "#991B1B" },
 ];
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"; // prod: https://api.yapgitsin.tr
 
 // ─── Boş slide formu ─────────────────────────────────────────────────────────
 const emptyForm = (): Partial<OnboardingSlide> => ({

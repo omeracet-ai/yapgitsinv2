@@ -11,7 +11,7 @@ const ADMIN_SECURITY_HEADERS = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",
-      "connect-src 'self' https://yapgitsin.tr wss://yapgitsin.tr",
+      "connect-src 'self' https://api.yapgitsin.tr wss://api.yapgitsin.tr https://yapgitsin.tr wss://yapgitsin.tr",
       "frame-src 'self' https://sandbox-api.iyzipay.com https://api.iyzipay.com",
       "frame-ancestors 'none'",
       "object-src 'none'",
