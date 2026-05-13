@@ -56,6 +56,11 @@ fi
 # Production env (also as .env so it loads even when NODE_ENV is unset)
 [ -f .env.production ] && cp .env.production /d/admin/.env.production
 [ -f .env.production ] && cp .env.production /d/admin/.env
+# iisnode named-pipe PORT fix: don't parseInt the PORT (it's a pipe path on Windows IIS).
+if [ -f /d/admin/server.js ]; then
+  sed -i 's/parseInt(process\.env\.PORT,\s*10)/(process.env.PORT)/g' /d/admin/server.js
+  echo "  (patched admin/server.js for iisnode named-pipe PORT)"
+fi
 
 # Web (static export)
 if [ -d "$ROOT/web" ]; then
