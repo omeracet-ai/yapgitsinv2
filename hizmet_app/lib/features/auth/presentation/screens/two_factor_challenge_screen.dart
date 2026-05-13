@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/providers/navigation_provider.dart';
 import '../providers/auth_provider.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class TwoFactorChallengeScreen extends ConsumerStatefulWidget {
   final String tempToken;
@@ -36,7 +37,7 @@ class _TwoFactorChallengeScreenState
     final code = _codeController.text.trim();
     if (code.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('6 haneli kodu giriniz')),
+        SnackBar(content: Text(AppLocalizations.of(context).twoFactorInvalid)),
       );
       return;
     }
@@ -63,12 +64,13 @@ class _TwoFactorChallengeScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('İki Adımlı Doğrulama'),
+        title: Text(l.twoFactorTitle),
       ),
       body: SafeArea(
         child: Padding(
@@ -79,14 +81,14 @@ class _TwoFactorChallengeScreenState
               const Icon(Icons.shield_outlined,
                   size: 64, color: AppColors.primary),
               const SizedBox(height: 16),
-              const Text(
-                'Doğrulama Kodu',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              Text(
+                l.twoFactorHeader,
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Authenticator uygulamanızdaki 6 haneli kodu giriniz.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+              Text(
+                l.twoFactorPrompt,
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
               ),
               const SizedBox(height: 32),
               TextField(
@@ -128,8 +130,8 @@ class _TwoFactorChallengeScreenState
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2.5),
                         )
-                      : const Text('Doğrula',
-                          style: TextStyle(
+                      : Text(l.twoFactorVerify,
+                          style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 16)),

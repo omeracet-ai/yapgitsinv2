@@ -7,7 +7,7 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
   return (
     <div className="has-bottom-nav">
       <Header locale={DEFAULT_LOCALE} />
-      <main className="flex-1">{children}</main>
+      <main id="main-content" className="flex-1">{children}</main>
       <Footer />
     </div>
   );

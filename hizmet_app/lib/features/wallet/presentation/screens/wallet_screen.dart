@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/intl_formatter.dart';
 import '../../../tokens/data/token_repository.dart';
 
 final _walletHistoryProvider =
@@ -241,8 +242,8 @@ class _TxCard extends StatelessWidget {
     if (createdAt.isNotEmpty) {
       final dt = DateTime.tryParse(createdAt)?.toLocal();
       if (dt != null) {
-        dateStr =
-            '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
+        // P190/4 — locale-aware via IntlFormatter.
+        dateStr = IntlFormatter.date(context, dt);
       }
     }
 

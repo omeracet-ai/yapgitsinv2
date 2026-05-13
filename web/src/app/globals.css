@@ -165,6 +165,34 @@ body {
   .fab { bottom: 1.5rem; }
 }
 
+/* ───────── Accessibility: skip-to-content link ───────── */
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -100px;
+  z-index: 100;
+  background: var(--primary);
+  color: #fff;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+  transition: top 150ms ease;
+}
+.skip-link:focus {
+  top: 0.5rem;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* ───────── Focus-visible — keyboard nav ───────── */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* ───────── Hide scrollbar (carousels) ───────── */
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }

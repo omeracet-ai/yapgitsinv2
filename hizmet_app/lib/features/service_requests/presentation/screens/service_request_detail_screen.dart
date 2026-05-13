@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/intl_formatter.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/service_request_repository.dart';
 
@@ -153,9 +154,8 @@ class _ServiceRequestDetailScreenState
     final imageUrl = item['imageUrl'] as String?;
     final createdAt =
         item['createdAt'] != null ? DateTime.tryParse(item['createdAt']) : null;
-    final dateStr = createdAt != null
-        ? '${createdAt.day}.${createdAt.month}.${createdAt.year}'
-        : '';
+    // P190/4 — IntlFormatter.date (locale-aware).
+    final dateStr = createdAt != null ? IntlFormatter.date(context, createdAt) : '';
 
     return Scaffold(
       backgroundColor: AppColors.background,

@@ -57,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PlausibleScript />
       </head>
       <body className="min-h-full flex flex-col bg-[var(--muted)] text-[var(--foreground)]">
+        <a href="#main-content" className="skip-link">İçeriğe geç</a>
         <ThemeProvider>
           {children}
           <SwRegister />

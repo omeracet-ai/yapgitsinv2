@@ -6,6 +6,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
+import '../../../../core/services/intl_formatter.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/data/auth_repository.dart';
 import '../../../calendar/presentation/calendar_screen.dart';
@@ -56,18 +58,19 @@ class NotificationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
+    final l = AppLocalizations.of(context);
 
     if (authState is! AuthAuthenticated) {
       return Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const Text('Bildirimler'),
+          title: Text(l.notificationsTitle),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
         ),
-        body: const Center(
-          child: Text('Bildirimleri görmek için giriş yapın.',
-              style: TextStyle(color: AppColors.textHint)),
+        body: Center(
+          child: Text(l.notificationsLoginPrompt,
+              style: const TextStyle(color: AppColors.textHint)),
         ),
       );
     }
@@ -77,7 +80,7 @@ class NotificationScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Bildirimler'),
+        title: Text(l.notificationsTitle),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         actions: [
@@ -98,8 +101,8 @@ class NotificationScreen extends ConsumerWidget {
                   ref.read(unreadCountBadgeProvider.notifier).reset();
                 },
                 icon: const Icon(Icons.done_all, color: Colors.white, size: 18),
-                label: const Text('Tümünü Oku',
-                    style: TextStyle(color: Colors.white, fontSize: 12)),
+                label: Text(l.notificationsMarkAllRead,
+                    style: const TextStyle(color: Colors.white, fontSize: 12)),
               );
             },
             orElse: () => const SizedBox.shrink(),
@@ -119,10 +122,10 @@ class NotificationScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Hata: $e')),
         data: (notifications) {
           if (notifications.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.notifications_off_outlined,
-              title: 'Bildirim yok',
-              message: 'Yeni gelişmeler burada görünecek.',
+              title: l.notificationsEmpty,
+              message: l.notificationsEmptyMessage,
             );
           }
           return RefreshIndicator(
@@ -221,7 +224,7 @@ class _NotifCard extends StatelessWidget {
     final isRead  = notif['isRead']  as bool?   ?? false;
     final refId   = notif['refId']   as String?;
     final createdAt = notif['createdAt'] as String? ?? '';
-    final timeStr = _formatTime(createdAt);
+    final timeStr = _formatTime(context, createdAt);
 
     final (icon, iconColor, bgColor) = switch (type) {
       'new_offer'         => (Icons.local_offer_rounded,   AppColors.primary,  AppColors.primaryLight),
@@ -305,15 +308,12 @@ class _NotifCard extends StatelessWidget {
     );
   }
 
-  String _formatTime(String iso) {
+  String _formatTime(BuildContext context, String iso) {
+    // P190/4 — IntlFormatter.relativeTime (locale-aware).
     if (iso.isEmpty) return '';
     try {
-      final dt   = DateTime.parse(iso).toLocal();
-      final diff = DateTime.now().difference(dt);
-      if (diff.inMinutes < 1)  return 'Az önce';
-      if (diff.inMinutes < 60) return '${diff.inMinutes} dk önce';
-      if (diff.inHours   < 24) return '${diff.inHours} saat önce';
-      return '${diff.inDays} gün önce';
+      final dt = DateTime.parse(iso).toLocal();
+      return IntlFormatter.relativeTime(context, dt);
     } catch (_) {
       return '';
     }

@@ -17,6 +17,7 @@ import '../../widgets/job_wizard_progress.dart';
 import '../../widgets/post_job_step1.dart';
 import '../../widgets/post_job_step2.dart';
 import '../../widgets/post_job_step3.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class PostJobScreen extends ConsumerStatefulWidget {
   /// Optional source job to clone (used by "🔁 Tekrar İlan Aç" feature).
@@ -135,23 +136,24 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             : ago.inDays < 1
                 ? '${ago.inHours} sa önce'
                 : '${ago.inDays} gün önce';
+    final l = AppLocalizations.of(context);
     final shouldRestore = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Taslak bulundu'),
+        title: Text(l.postJobDraftFound),
         content: Text(
             'Önceden kaydedilmiş bir ilan taslağınız var ($agoLabel). Devam etmek ister misiniz?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hayır, sıfırla'),
+            child: Text(l.postJobDraftDiscard),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white),
-            child: const Text('Devam et'),
+            child: Text(l.postJobDraftContinue),
           ),
         ],
       ),
@@ -265,7 +267,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     });
     _draftRestored = false;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Taslak silindi')),
+      SnackBar(content: Text(AppLocalizations.of(context).postJobDraftDeleted)),
     );
   }
 
@@ -289,15 +291,15 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         ),
         actions: [
           if (_showSavedToast)
-            const Padding(
-              padding: EdgeInsets.only(right: 4),
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
               child: Center(
                 child: Row(children: [
-                  Icon(Icons.cloud_done, size: 16, color: Colors.white),
-                  SizedBox(width: 4),
-                  Text('Taslak kaydedildi',
-                      style: TextStyle(fontSize: 12, color: Colors.white)),
-                  SizedBox(width: 8),
+                  const Icon(Icons.cloud_done, size: 16, color: Colors.white),
+                  const SizedBox(width: 4),
+                  Text(AppLocalizations.of(context).postJobDraftSaved,
+                      style: const TextStyle(fontSize: 12, color: Colors.white)),
+                  const SizedBox(width: 8),
                 ]),
               ),
             ),
@@ -356,7 +358,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: const Text('Geri'),
+                  child: Text(AppLocalizations.of(context).back),
                 ),
               ),
             if (_currentStep > 0) const SizedBox(width: 12),
@@ -378,7 +380,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white),
                       )
-                    : Text(isLastStep ? 'İlanı Yayınla' : 'İleri'),
+                    : Text(isLastStep ? AppLocalizations.of(context).postJobSubmit : AppLocalizations.of(context).next),
               ),
             ),
           ],
@@ -392,7 +394,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       // Step 1: kategori (dueDate opsiyonel — esnek default)
       if (_selectedCategory == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Lütfen bir kategori seçin')));
+            SnackBar(content: Text(AppLocalizations.of(context).postJobCategoryRequired)));
         return;
       }
       setState(() => _currentStep++);
@@ -400,12 +402,12 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       // Step 2: title + description (budget opsiyonel)
       if (_titleController.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('İş başlığı boş bırakılamaz')));
+            SnackBar(content: Text(AppLocalizations.of(context).postJobTitleRequired)));
         return;
       }
       if (_descController.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Açıklama boş bırakılamaz')));
+            SnackBar(content: Text(AppLocalizations.of(context).postJobDescriptionRequired)));
         return;
       }
       setState(() => _currentStep++);
@@ -413,7 +415,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       // Step 3: en az 1 fotoğraf zorunlu, sonra upload + submit
       if (_selectedPhotos.isEmpty && _uploadedPhotoUrls.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('En az 1 fotoğraf eklemelisiniz')),
+          SnackBar(content: Text(AppLocalizations.of(context).postJobPhotoRequired)),
         );
         return;
       }
@@ -451,8 +453,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Kategori seçin',
-            style: TextStyle(
+        Text(AppLocalizations.of(context).postJobCategorySelect,
+            style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
@@ -613,17 +615,17 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         TextFormField(
           controller: _titleController,
           onChanged: (_) => setState(() {}),
-          decoration: const InputDecoration(
-              labelText: 'İş Başlığı',
-              hintText: 'Örn: 3+1 Daire Boyatma'),
-          validator: (v) => v?.isEmpty ?? true ? 'Boş bırakılamaz' : null,
+          decoration: InputDecoration(
+              labelText: AppLocalizations.of(context).postJobTitle,
+              hintText: AppLocalizations.of(context).postJobTitleHint),
+          validator: (v) => v?.isEmpty ?? true ? AppLocalizations.of(context).fieldRequired : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _descController,
           maxLines: 4,
-          decoration: const InputDecoration(labelText: 'Açıklama'),
-          validator: (v) => v?.isEmpty ?? true ? 'Boş bırakılamaz' : null,
+          decoration: InputDecoration(labelText: AppLocalizations.of(context).postJobDescription),
+          validator: (v) => v?.isEmpty ?? true ? AppLocalizations.of(context).fieldRequired : null,
         ),
         const SizedBox(height: 6),
         Align(
@@ -683,10 +685,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         TextFormField(
           controller: _budgetController,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Tahmini Bütçe (₺)',
-            hintText: 'Opsiyonel',
-            prefixIcon: Icon(Icons.payments_outlined),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context).postJobBudget,
+            hintText: AppLocalizations.of(context).postJobBudgetHint,
+            prefixIcon: const Icon(Icons.payments_outlined),
           ),
         ),
       ],
@@ -866,8 +868,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         const SizedBox(height: 20),
         const Divider(),
         const SizedBox(height: 16),
-        const Text('Konum',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+        Text(AppLocalizations.of(context).postJobLocation,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
         const SizedBox(height: 10),
         Row(
@@ -877,10 +879,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               child: TextFormField(
                 controller: _locationController,
                 readOnly: true,
-                decoration: const InputDecoration(
-                  labelText: 'Konum',
-                  prefixIcon: Icon(Icons.location_on),
-                  hintText: 'Haritadan seçin veya yazın',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).postJobLocation,
+                  prefixIcon: const Icon(Icons.location_on),
+                  hintText: AppLocalizations.of(context).postJobLocationHint,
                 ),
               ),
             ),

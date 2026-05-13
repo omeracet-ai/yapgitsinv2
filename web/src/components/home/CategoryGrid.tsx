@@ -22,7 +22,7 @@ export default function CategoryGrid({
           </p>
         </div>
         <Link
-          href={`${localePrefix}/`}
+          href={`${localePrefix}/ara`}
           className="hidden sm:inline-flex items-center text-sm font-semibold text-[var(--primary)] hover:text-[var(--primary-dark)]"
         >
           Tümünü gör →

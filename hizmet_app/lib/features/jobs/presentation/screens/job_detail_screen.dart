@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/intl_formatter.dart';
 import '../../data/job_repository.dart';
 import '../../data/offer_repository.dart';
 import '../../../offers/widgets/offer_line_items_editor.dart';
@@ -347,9 +348,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     // Bütçe gösterimi
     String budgetStr;
     if (budgetMin != null && budgetMax != null && budgetMax > budgetMin) {
-      budgetStr = '${budgetMin.toInt()} – ${budgetMax.toInt()} ₺';
+      // P190/4 — IntlFormatter.currency.
+      budgetStr =
+          '${IntlFormatter.currency(context, budgetMin, decimalDigits: 0)} – ${IntlFormatter.currency(context, budgetMax, decimalDigits: 0)}';
     } else if (budgetMin != null) {
-      budgetStr = '${budgetMin.toInt()} ₺ ~';
+      budgetStr = '${IntlFormatter.currency(context, budgetMin, decimalDigits: 0)} ~';
     } else {
       budgetStr = widget.budget;
     }

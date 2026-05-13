@@ -14,6 +14,7 @@ import '../../widgets/date_divider.dart';
 import '../../widgets/typing_indicator.dart';
 import '../../widgets/voice_recorder_button.dart';
 import '../../../messaging/widgets/message_template_picker.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Phase 66: scaffold provider for peer-typing state.
 /// Phase 67 will wire WebSocket "typing" events to this.
@@ -283,10 +284,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final isTyping = ref.watch(chatTypingProvider);
     final presence = ref.watch(peerPresenceProvider(widget.peerId));
     final isOnline = presence?.isOnline ?? false;
+    final l = AppLocalizations.of(context);
     final subtitle = isTyping
-        ? 'yazıyor…'
+        ? l.chatTyping
         : isOnline
-            ? 'Çevrimiçi'
+            ? l.chatOnline
             : formatLastSeen(presence?.lastSeenAt);
     final renderItems = _buildRenderItems();
 
@@ -417,6 +419,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   }
 
   Widget _buildEmptyState() {
+    final l = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -431,14 +434,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 size: 40, color: AppColors.primary),
           ),
           const SizedBox(height: 14),
-          const Text('Henüz mesaj yok',
-              style: TextStyle(
+          Text(l.chatEmpty,
+              style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500)),
           const SizedBox(height: 4),
-          const Text('Merhaba diyerek başlayın!',
-              style:
-                  TextStyle(color: AppColors.textHint, fontSize: 13)),
+          Text(l.chatEmptyHint,
+              style: const TextStyle(color: AppColors.textHint, fontSize: 13)),
         ],
       ),
     );
@@ -467,8 +469,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 onPressed: _pickTemplate,
                 icon: const Icon(Icons.bookmark_outline,
                     size: 18, color: AppColors.primary),
-                label: const Text('Şablon',
-                    style: TextStyle(
+                label: Text(AppLocalizations.of(context).chatTemplate,
+                    style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 13,
                         fontWeight: FontWeight.w600)),
@@ -517,12 +519,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   minLines: 1,
                   textCapitalization: TextCapitalization.sentences,
                   onChanged: _onTextChanged,
-                  decoration: const InputDecoration(
-                    hintText: 'Mesaj yazın...',
-                    hintStyle: TextStyle(
+                  decoration: InputDecoration(
+                    hintText: AppLocalizations.of(context).chatTypeMessage,
+                    hintStyle: const TextStyle(
                         color: AppColors.textHint, fontSize: 14),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
+                    contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 10),
                   ),
                 ),
@@ -569,7 +571,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined,
                   color: AppColors.primary),
-              title: const Text('Fotoğraf'),
+              title: Text(AppLocalizations.of(context).chatAttachmentPhoto),
               onTap: () => Navigator.pop(ctx, 'image'),
             ),
             ListTile(

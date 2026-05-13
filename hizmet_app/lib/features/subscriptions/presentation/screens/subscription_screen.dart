@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/intl_formatter.dart';
 import '../../data/subscription_repository.dart';
 import 'iyzipay_checkout_screen.dart';
 
@@ -278,7 +279,8 @@ class _PlanCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '${plan.price.toInt()} ₺',
+                // P190/4 — IntlFormatter.currency.
+                IntlFormatter.currency(context, plan.price, decimalDigits: 0),
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/intl_formatter.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -12,6 +13,7 @@ import 'job_detail_screen.dart';
 import 'job_opportunities_screen.dart';
 import 'post_job_screen.dart';
 import '../providers/job_provider.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../widgets/boost_dialog.dart';
 
 // ─── Providers ────────────────────────────────────────────────────────────────
@@ -94,7 +96,7 @@ class _DualRoleView extends ConsumerWidget {
         backgroundColor: AppColors.background,
         appBar: showAppBar
             ? AppBar(
-                title: const Text('İşlerim'),
+                title: Text(AppLocalizations.of(context).myJobsTitle),
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 actions: [
@@ -229,7 +231,7 @@ class _WorkerTabContent extends ConsumerWidget {
                 builder: (_) => const JobOpportunitiesScreen(),
               )),
               icon: const Icon(Icons.search),
-              label: const Text('Fırsatları Keşfet'),
+              label: Text(AppLocalizations.of(context).myJobsExplore),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -311,7 +313,7 @@ class _CustomerJobsView extends ConsumerWidget {
         backgroundColor: AppColors.background,
         appBar: showAppBar
             ? AppBar(
-                title: const Text('İlanlarım'),
+                title: Text(AppLocalizations.of(context).myJobsListings),
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 actions: [
@@ -611,14 +613,14 @@ class _CustomerJobCard extends ConsumerWidget {
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
                         fontSize: 13)),
-                const Row(
+                Row(
                   children: [
-                    Text('Detayları Gör',
-                        style: TextStyle(
+                    Text(AppLocalizations.of(context).myJobsViewDetails,
+                        style: const TextStyle(
                             color: AppColors.primary,
                             fontSize: 12,
                             fontWeight: FontWeight.w600)),
-                    Icon(Icons.chevron_right,
+                    const Icon(Icons.chevron_right,
                         size: 16, color: AppColors.primary),
                   ],
                 ),
@@ -640,7 +642,7 @@ class _CustomerJobCard extends ConsumerWidget {
                     );
                   },
                   icon: const Text('🔁', style: TextStyle(fontSize: 14)),
-                  label: const Text('Tekrar İlan Aç'),
+                  label: Text(AppLocalizations.of(context).myJobsRepost),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -670,18 +672,18 @@ class _WorkerOfferCard extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Teklifi Geri Çek'),
+        title: Text(AppLocalizations.of(context).myJobsWithdrawOffer),
         content: const Text(
             'Bu teklifi geri çekiyorsun. 5 token iade alacaksın. Devam edilsin mi?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Vazgeç'),
+            child: Text(AppLocalizations.of(context).cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Geri Çek'),
+            child: Text(AppLocalizations.of(context).myJobsWithdraw),
           ),
         ],
       ),
@@ -835,7 +837,7 @@ class _WorkerOfferCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Karşı Teklif: ${counterPrice.toStringAsFixed(0)} ₺',
+                  Text('Karşı Teklif: ${IntlFormatter.currency(context, counterPrice, decimalDigits: 0)}',
                       style: TextStyle(
                           color: Colors.blue.shade700,
                           fontWeight: FontWeight.bold,
@@ -849,7 +851,7 @@ class _WorkerOfferCard extends ConsumerWidget {
             ),
           ],
           const SizedBox(height: 8),
-          Text('Teklifiniz: ${price.toStringAsFixed(0)} ₺',
+          Text('Teklifiniz: ${IntlFormatter.currency(context, price, decimalDigits: 0)}',
               style: const TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,
@@ -861,7 +863,7 @@ class _WorkerOfferCard extends ConsumerWidget {
               child: TextButton.icon(
                 onPressed: () => _withdraw(context, ref),
                 icon: const Icon(Icons.undo, size: 16),
-                label: const Text('Geri Çek'),
+                label: Text(AppLocalizations.of(context).myJobsWithdraw),
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.error,
                   padding: const EdgeInsets.symmetric(horizontal: 8),

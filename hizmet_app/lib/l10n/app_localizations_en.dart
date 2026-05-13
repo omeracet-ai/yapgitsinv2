@@ -166,4 +166,202 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emailPasswordEmpty => 'Email and password cannot be empty';
+
+  @override
+  String get postJobTitle => 'Job Title';
+
+  @override
+  String get postJobTitleHint => 'e.g. Paint a 2-bedroom flat';
+
+  @override
+  String get postJobDescription => 'Description';
+
+  @override
+  String get postJobBudget => 'Estimated Budget (₺)';
+
+  @override
+  String get postJobBudgetHint => 'Optional';
+
+  @override
+  String get postJobCategorySelect => 'Select a category';
+
+  @override
+  String get postJobCategoryRequired => 'Please select a category';
+
+  @override
+  String get postJobTitleRequired => 'Job title cannot be empty';
+
+  @override
+  String get postJobDescriptionRequired => 'Description cannot be empty';
+
+  @override
+  String get postJobPhotoRequired => 'Please add at least 1 photo';
+
+  @override
+  String get postJobSubmit => 'Publish Listing';
+
+  @override
+  String get postJobLocation => 'Location';
+
+  @override
+  String get postJobLocationHint => 'Pick from map or type';
+
+  @override
+  String get postJobDraftFound => 'Draft found';
+
+  @override
+  String get postJobDraftContinue => 'Continue';
+
+  @override
+  String get postJobDraftDiscard => 'No, reset';
+
+  @override
+  String get postJobDraftSaved => 'Draft saved';
+
+  @override
+  String get postJobDraftDeleted => 'Draft deleted';
+
+  @override
+  String get myJobsTitle => 'My Jobs';
+
+  @override
+  String get myJobsListings => 'My Listings';
+
+  @override
+  String get myJobsExplore => 'Explore Opportunities';
+
+  @override
+  String get myJobsViewDetails => 'View Details';
+
+  @override
+  String get myJobsRepost => 'Repost Listing';
+
+  @override
+  String get myJobsWithdrawOffer => 'Withdraw Offer';
+
+  @override
+  String get myJobsWithdraw => 'Withdraw';
+
+  @override
+  String get fieldRequired => 'Cannot be empty';
+
+  @override
+  String get emailInvalid => 'Invalid email';
+
+  @override
+  String get passwordTooShort => 'Password too short';
+
+  @override
+  String get phoneInvalid => 'Invalid phone number';
+
+  @override
+  String get registerTitle => 'Create Account';
+
+  @override
+  String get registerSubtitle => 'Enter your personal information.';
+
+  @override
+  String get registerFullName => 'Full Name *';
+
+  @override
+  String get registerEmailOptional => 'Email (optional)';
+
+  @override
+  String get registerPhone => 'Phone Number *';
+
+  @override
+  String get registerPassword => 'Password *';
+
+  @override
+  String get registerPersonalInfo => 'Personal Information';
+
+  @override
+  String get registerBirthDateOptional => 'Date of Birth (optional)';
+
+  @override
+  String get registerCityOptional => 'City (optional)';
+
+  @override
+  String get registerDistrictOptional => 'District (optional)';
+
+  @override
+  String get registerAddressOptional => 'Address (optional)';
+
+  @override
+  String get registerContinue => 'Continue →';
+
+  @override
+  String get registerRequiredFields =>
+      'Full name, phone and password are required.';
+
+  @override
+  String get twoFactorTitle => 'Two-Step Verification';
+
+  @override
+  String get twoFactorHeader => 'Verification Code';
+
+  @override
+  String get twoFactorPrompt =>
+      'Enter the 6-digit code from your authenticator app.';
+
+  @override
+  String get twoFactorVerify => 'Verify';
+
+  @override
+  String get twoFactorInvalid => 'Enter the 6-digit code';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsLoginPrompt => 'Log in to view notifications.';
+
+  @override
+  String get notificationsMarkAllRead => 'Mark All Read';
+
+  @override
+  String get notificationsEmpty => 'No notifications';
+
+  @override
+  String get notificationsEmptyMessage => 'New updates will appear here.';
+
+  @override
+  String get chatTitle => 'Messages';
+
+  @override
+  String get chatRefresh => 'Refresh';
+
+  @override
+  String get chatEmpty => 'No messages yet';
+
+  @override
+  String get chatEmptyHint => 'Say hello to get started!';
+
+  @override
+  String get chatTypeMessage => 'Type a message...';
+
+  @override
+  String get chatTemplate => 'Template';
+
+  @override
+  String get chatAttachmentPhoto => 'Photo';
+
+  @override
+  String get chatOnline => 'Online';
+
+  @override
+  String get chatTyping => 'typing…';
+
+  @override
+  String get chatLoadFailed => 'Could not load conversations';
+
+  @override
+  String get chatNoConversations => 'No messages yet';
+
+  @override
+  String get chatNoConversationsMessage =>
+      'Conversations will appear here when you make or receive an offer.';
+
+  @override
+  String get chatUnknownUser => 'User';
 }

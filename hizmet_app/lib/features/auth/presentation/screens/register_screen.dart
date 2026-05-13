@@ -7,12 +7,14 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/providers/navigation_provider.dart';
 import '../providers/auth_provider.dart';
 import '../../../service_requests/data/service_request_repository.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class RegisterScreen extends ConsumerWidget {
   const RegisterScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -29,12 +31,12 @@ class RegisterScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Hesap Oluştur',
+              Text(l.registerTitle,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
               const SizedBox(height: 8),
-              const Text('Kişisel bilgilerinizi girin.',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+              Text(l.registerSubtitle,
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 16)),
               const SizedBox(height: 28),
               const _RegisterForm(),
             ],
@@ -89,7 +91,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
     final phone = _phoneCtrl.text.trim();
     final pass  = _passCtrl.text;
     if (name.isEmpty || phone.isEmpty || pass.isEmpty) {
-      setState(() => _error = 'Ad soyad, telefon ve şifre zorunludur.');
+      setState(() => _error = AppLocalizations.of(context).registerRequiredFields);
       return;
     }
     setState(() { _loading = true; _error = null; });
@@ -173,23 +175,24 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
   }
 
   Widget _buildStep1() {
+    final l = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _field(_nameCtrl, 'Ad Soyad *', Icons.person_outline, TextInputType.name,
+        _field(_nameCtrl, l.registerFullName, Icons.person_outline, TextInputType.name,
             TextCapitalization.words),
         const SizedBox(height: 14),
-        _field(_emailCtrl, 'E-posta (opsiyonel)', Icons.email_outlined,
+        _field(_emailCtrl, l.registerEmailOptional, Icons.email_outlined,
             TextInputType.emailAddress, TextCapitalization.none),
         const SizedBox(height: 14),
-        _field(_phoneCtrl, 'Telefon Numarası *', Icons.phone_outlined,
+        _field(_phoneCtrl, l.registerPhone, Icons.phone_outlined,
             TextInputType.phone, TextCapitalization.none),
         const SizedBox(height: 14),
         TextField(
           controller: _passCtrl,
           obscureText: _obscurePass,
           decoration: InputDecoration(
-            labelText: 'Şifre *',
+            labelText: l.registerPassword,
             prefixIcon: const Icon(Icons.lock_outline),
             filled: true, fillColor: Colors.white,
             suffixIcon: IconButton(
@@ -200,9 +203,9 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         ),
         const SizedBox(height: 20),
         const Divider(),
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
-          child: Text('Kişisel Bilgiler', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(l.registerPersonalInfo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
         ),
 
         // Doğum tarihi
@@ -226,7 +229,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
               Text(
                 _birthDate != null
                     ? '${_birthDate!.day}.${_birthDate!.month}.${_birthDate!.year}'
-                    : 'Doğum Tarihi (opsiyonel)',
+                    : l.registerBirthDateOptional,
                 style: TextStyle(color: _birthDate != null ? AppColors.textPrimary : AppColors.textHint, fontSize: 16),
               ),
             ]),
@@ -255,18 +258,18 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         ),
         const SizedBox(height: 14),
 
-        _field(_cityCtrl, 'Şehir (opsiyonel)', Icons.location_city_outlined,
+        _field(_cityCtrl, l.registerCityOptional, Icons.location_city_outlined,
             TextInputType.text, TextCapitalization.words),
         const SizedBox(height: 14),
-        _field(_districtCtrl, 'İlçe (opsiyonel)', Icons.map_outlined,
+        _field(_districtCtrl, l.registerDistrictOptional, Icons.map_outlined,
             TextInputType.text, TextCapitalization.words),
         const SizedBox(height: 14),
         TextField(
           controller: _addressCtrl,
           maxLines: 2,
-          decoration: const InputDecoration(
-            labelText: 'Adres (opsiyonel)',
-            prefixIcon: Icon(Icons.home_outlined),
+          decoration: InputDecoration(
+            labelText: l.registerAddressOptional,
+            prefixIcon: const Icon(Icons.home_outlined),
             alignLabelWithHint: true,
             filled: true, fillColor: Colors.white,
           ),
@@ -312,7 +315,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
           ),
           child: _loading
               ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text('Devam Et →', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              : Text(l.registerContinue, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
         ),
       ],
     );

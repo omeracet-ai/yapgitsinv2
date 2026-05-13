@@ -15,6 +15,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
   await initializeDateFormatting('tr_TR', null);
+  await initializeDateFormatting('tr', null);
+  await initializeDateFormatting('en', null);
   runApp(
     const ProviderScope(
       child: YapgitsinApp(),

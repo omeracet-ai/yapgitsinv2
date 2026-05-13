@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/intl_formatter.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../data/saved_jobs_provider.dart';
@@ -67,12 +68,15 @@ class _SavedJobCard extends ConsumerWidget {
   final Map<String, dynamic> job;
   const _SavedJobCard({required this.job});
 
-  String _budget() {
+  String _budget(BuildContext context) {
+    // P190/4 — IntlFormatter.currency.
     final mn = job['budgetMin'];
     final mx = job['budgetMax'];
     if (mn == null && mx == null) return 'Pazarlık';
-    if (mn != null && mx != null) return '₺${mn.toString()} - ₺${mx.toString()}';
-    return '₺${(mn ?? mx).toString()}';
+    if (mn != null && mx != null) {
+      return '${IntlFormatter.currency(context, (mn as num), decimalDigits: 0)} - ${IntlFormatter.currency(context, (mx as num), decimalDigits: 0)}';
+    }
+    return IntlFormatter.currency(context, ((mn ?? mx) as num), decimalDigits: 0);
   }
 
   @override
@@ -93,7 +97,7 @@ class _SavedJobCard extends ConsumerWidget {
           title: title,
           description: desc,
           location: location,
-          budget: _budget(),
+          budget: _budget(context),
           category: category,
           postedAt: '',
           icon: Icons.work_outline_rounded,
@@ -171,7 +175,7 @@ class _SavedJobCard extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(_budget(),
+                        child: Text(_budget(context),
                             style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,

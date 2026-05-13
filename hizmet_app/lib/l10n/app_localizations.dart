@@ -415,6 +415,396 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'E-posta ve şifre boş olamaz'**
   String get emailPasswordEmpty;
+
+  /// No description provided for @postJobTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'İş Başlığı'**
+  String get postJobTitle;
+
+  /// No description provided for @postJobTitleHint.
+  ///
+  /// In tr, this message translates to:
+  /// **'Örn: 3+1 Daire Boyatma'**
+  String get postJobTitleHint;
+
+  /// No description provided for @postJobDescription.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama'**
+  String get postJobDescription;
+
+  /// No description provided for @postJobBudget.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahmini Bütçe (₺)'**
+  String get postJobBudget;
+
+  /// No description provided for @postJobBudgetHint.
+  ///
+  /// In tr, this message translates to:
+  /// **'Opsiyonel'**
+  String get postJobBudgetHint;
+
+  /// No description provided for @postJobCategorySelect.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategori seçin'**
+  String get postJobCategorySelect;
+
+  /// No description provided for @postJobCategoryRequired.
+  ///
+  /// In tr, this message translates to:
+  /// **'Lütfen bir kategori seçin'**
+  String get postJobCategoryRequired;
+
+  /// No description provided for @postJobTitleRequired.
+  ///
+  /// In tr, this message translates to:
+  /// **'İş başlığı boş bırakılamaz'**
+  String get postJobTitleRequired;
+
+  /// No description provided for @postJobDescriptionRequired.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama boş bırakılamaz'**
+  String get postJobDescriptionRequired;
+
+  /// No description provided for @postJobPhotoRequired.
+  ///
+  /// In tr, this message translates to:
+  /// **'En az 1 fotoğraf eklemelisiniz'**
+  String get postJobPhotoRequired;
+
+  /// No description provided for @postJobSubmit.
+  ///
+  /// In tr, this message translates to:
+  /// **'İlanı Yayınla'**
+  String get postJobSubmit;
+
+  /// No description provided for @postJobLocation.
+  ///
+  /// In tr, this message translates to:
+  /// **'Konum'**
+  String get postJobLocation;
+
+  /// No description provided for @postJobLocationHint.
+  ///
+  /// In tr, this message translates to:
+  /// **'Haritadan seçin veya yazın'**
+  String get postJobLocationHint;
+
+  /// No description provided for @postJobDraftFound.
+  ///
+  /// In tr, this message translates to:
+  /// **'Taslak bulundu'**
+  String get postJobDraftFound;
+
+  /// No description provided for @postJobDraftContinue.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devam et'**
+  String get postJobDraftContinue;
+
+  /// No description provided for @postJobDraftDiscard.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hayır, sıfırla'**
+  String get postJobDraftDiscard;
+
+  /// No description provided for @postJobDraftSaved.
+  ///
+  /// In tr, this message translates to:
+  /// **'Taslak kaydedildi'**
+  String get postJobDraftSaved;
+
+  /// No description provided for @postJobDraftDeleted.
+  ///
+  /// In tr, this message translates to:
+  /// **'Taslak silindi'**
+  String get postJobDraftDeleted;
+
+  /// No description provided for @myJobsTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşlerim'**
+  String get myJobsTitle;
+
+  /// No description provided for @myJobsListings.
+  ///
+  /// In tr, this message translates to:
+  /// **'İlanlarım'**
+  String get myJobsListings;
+
+  /// No description provided for @myJobsExplore.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fırsatları Keşfet'**
+  String get myJobsExplore;
+
+  /// No description provided for @myJobsViewDetails.
+  ///
+  /// In tr, this message translates to:
+  /// **'Detayları Gör'**
+  String get myJobsViewDetails;
+
+  /// No description provided for @myJobsRepost.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tekrar İlan Aç'**
+  String get myJobsRepost;
+
+  /// No description provided for @myJobsWithdrawOffer.
+  ///
+  /// In tr, this message translates to:
+  /// **'Teklifi Geri Çek'**
+  String get myJobsWithdrawOffer;
+
+  /// No description provided for @myJobsWithdraw.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri Çek'**
+  String get myJobsWithdraw;
+
+  /// No description provided for @fieldRequired.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş bırakılamaz'**
+  String get fieldRequired;
+
+  /// No description provided for @emailInvalid.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçersiz e-posta'**
+  String get emailInvalid;
+
+  /// No description provided for @passwordTooShort.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şifre çok kısa'**
+  String get passwordTooShort;
+
+  /// No description provided for @phoneInvalid.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçersiz telefon numarası'**
+  String get phoneInvalid;
+
+  /// No description provided for @registerTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesap Oluştur'**
+  String get registerTitle;
+
+  /// No description provided for @registerSubtitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişisel bilgilerinizi girin.'**
+  String get registerSubtitle;
+
+  /// No description provided for @registerFullName.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad Soyad *'**
+  String get registerFullName;
+
+  /// No description provided for @registerEmailOptional.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta (opsiyonel)'**
+  String get registerEmailOptional;
+
+  /// No description provided for @registerPhone.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefon Numarası *'**
+  String get registerPhone;
+
+  /// No description provided for @registerPassword.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şifre *'**
+  String get registerPassword;
+
+  /// No description provided for @registerPersonalInfo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişisel Bilgiler'**
+  String get registerPersonalInfo;
+
+  /// No description provided for @registerBirthDateOptional.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doğum Tarihi (opsiyonel)'**
+  String get registerBirthDateOptional;
+
+  /// No description provided for @registerCityOptional.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şehir (opsiyonel)'**
+  String get registerCityOptional;
+
+  /// No description provided for @registerDistrictOptional.
+  ///
+  /// In tr, this message translates to:
+  /// **'İlçe (opsiyonel)'**
+  String get registerDistrictOptional;
+
+  /// No description provided for @registerAddressOptional.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adres (opsiyonel)'**
+  String get registerAddressOptional;
+
+  /// No description provided for @registerContinue.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devam Et →'**
+  String get registerContinue;
+
+  /// No description provided for @registerRequiredFields.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad soyad, telefon ve şifre zorunludur.'**
+  String get registerRequiredFields;
+
+  /// No description provided for @twoFactorTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'İki Adımlı Doğrulama'**
+  String get twoFactorTitle;
+
+  /// No description provided for @twoFactorHeader.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doğrulama Kodu'**
+  String get twoFactorHeader;
+
+  /// No description provided for @twoFactorPrompt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Authenticator uygulamanızdaki 6 haneli kodu giriniz.'**
+  String get twoFactorPrompt;
+
+  /// No description provided for @twoFactorVerify.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doğrula'**
+  String get twoFactorVerify;
+
+  /// No description provided for @twoFactorInvalid.
+  ///
+  /// In tr, this message translates to:
+  /// **'6 haneli kodu giriniz'**
+  String get twoFactorInvalid;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirimler'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsLoginPrompt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirimleri görmek için giriş yapın.'**
+  String get notificationsLoginPrompt;
+
+  /// No description provided for @notificationsMarkAllRead.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümünü Oku'**
+  String get notificationsMarkAllRead;
+
+  /// No description provided for @notificationsEmpty.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirim yok'**
+  String get notificationsEmpty;
+
+  /// No description provided for @notificationsEmptyMessage.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni gelişmeler burada görünecek.'**
+  String get notificationsEmptyMessage;
+
+  /// No description provided for @chatTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mesajlar'**
+  String get chatTitle;
+
+  /// No description provided for @chatRefresh.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yenile'**
+  String get chatRefresh;
+
+  /// No description provided for @chatEmpty.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz mesaj yok'**
+  String get chatEmpty;
+
+  /// No description provided for @chatEmptyHint.
+  ///
+  /// In tr, this message translates to:
+  /// **'Merhaba diyerek başlayın!'**
+  String get chatEmptyHint;
+
+  /// No description provided for @chatTypeMessage.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mesaj yazın...'**
+  String get chatTypeMessage;
+
+  /// No description provided for @chatTemplate.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şablon'**
+  String get chatTemplate;
+
+  /// No description provided for @chatAttachmentPhoto.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf'**
+  String get chatAttachmentPhoto;
+
+  /// No description provided for @chatOnline.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çevrimiçi'**
+  String get chatOnline;
+
+  /// No description provided for @chatTyping.
+  ///
+  /// In tr, this message translates to:
+  /// **'yazıyor…'**
+  String get chatTyping;
+
+  /// No description provided for @chatLoadFailed.
+  ///
+  /// In tr, this message translates to:
+  /// **'Konuşmalar yüklenemedi'**
+  String get chatLoadFailed;
+
+  /// No description provided for @chatNoConversations.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz mesaj yok'**
+  String get chatNoConversations;
+
+  /// No description provided for @chatNoConversationsMessage.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bir ilana teklif verdiğinde veya teklif aldığında konuşmalar burada görünecek.'**
+  String get chatNoConversationsMessage;
+
+  /// No description provided for @chatUnknownUser.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kullanıcı'**
+  String get chatUnknownUser;
 }
 
 class _AppLocalizationsDelegate

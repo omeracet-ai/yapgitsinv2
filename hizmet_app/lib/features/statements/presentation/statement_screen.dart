@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/services/intl_formatter.dart';
 import '../data/statement_repository.dart';
 
 const _months = [
@@ -40,8 +41,8 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
   }
 
   String _fmt(num? v) {
-    if (v == null) return '0 ₺';
-    return '${v.toStringAsFixed(2)} ₺';
+    // P190/4 — locale-aware TRY currency via IntlFormatter.
+    return IntlFormatter.currency(context, v ?? 0);
   }
 
   Future<void> _downloadCsv() async {

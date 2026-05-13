@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/services/intl_formatter.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../data/chat_repository.dart';
 import '../../data/chat_service.dart';
 import '../../data/presence_provider.dart';
@@ -31,6 +33,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final asyncConvos = ref.watch(conversationsProvider);
     // Seed presence from server-side conversation snapshot whenever it arrives.
     asyncConvos.whenData((convos) {
@@ -40,15 +43,15 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Mesajlar',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(l.chatTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-            tooltip: 'Yenile',
+            tooltip: l.chatRefresh,
             onPressed: () => ref.invalidate(conversationsProvider),
           ),
         ],
@@ -65,7 +68,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
               const SizedBox(height: 80),
               EmptyState(
                 icon: Icons.error_outline,
-                title: 'Konuşmalar yüklenemedi',
+                title: l.chatLoadFailed,
                 message: e.toString(),
               ),
             ],
@@ -73,13 +76,12 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
           data: (convos) {
             if (convos.isEmpty) {
               return ListView(
-                children: const [
-                  SizedBox(height: 80),
+                children: [
+                  const SizedBox(height: 80),
                   EmptyState(
                     emoji: '💬',
-                    title: 'Henüz mesaj yok',
-                    message:
-                        'Bir ilana teklif verdiğinde veya teklif aldığında konuşmalar burada görünecek.',
+                    title: l.chatNoConversations,
+                    message: l.chatNoConversationsMessage,
                   ),
                 ],
               );
@@ -100,9 +102,9 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                 final lastSeen = live?.lastSeenAt ?? c.peerLastSeenAt;
                 return _buildChatItem(
                   context,
-                  name: c.peerName ?? 'Kullanıcı',
+                  name: c.peerName ?? l.chatUnknownUser,
                   lastMessage: preview,
-                  time: _formatTime(c.lastMessageAt),
+                  time: _formatTime(context, c.lastMessageAt),
                   unreadCount: c.unreadCount,
                   avatarColor: _avatarColor(index),
                   isOnline: online,
@@ -112,7 +114,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (_) => ChatDetailScreen(
-                          peerName: c.peerName ?? 'Kullanıcı',
+                          peerName: c.peerName ?? l.chatUnknownUser,
                           peerId: c.peerId,
                         ),
                       ),
@@ -127,17 +129,15 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     );
   }
 
-  String _formatTime(DateTime dt) {
+  String _formatTime(BuildContext context, DateTime dt) {
+    // P190/4 — locale-aware via IntlFormatter (time for today, relative otherwise).
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final mDay = DateTime(dt.year, dt.month, dt.day);
     if (mDay == today) {
-      return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      return IntlFormatter.time(context, dt);
     }
-    final diff = today.difference(mDay).inDays;
-    if (diff == 1) return 'Dün';
-    if (diff < 7) return '$diff gün';
-    return '${dt.day}.${dt.month}';
+    return IntlFormatter.relativeTime(context, dt);
   }
 
   Color _avatarColor(int index) {

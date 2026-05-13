@@ -23,7 +23,7 @@ export default async function Footer() {
               title="Yakında"
               className="inline-flex items-center gap-2 bg-black/90 rounded-2xl px-5 py-3 min-w-[150px] cursor-default select-none"
             >
-              <span className="text-2xl" aria-hidden></span>
+              <span className="text-2xl" aria-hidden>🍎</span>
               <div className="text-left leading-tight">
                 <div className="text-[10px] text-white/60 uppercase">Download on the</div>
                 <div className="text-base font-semibold">App Store</div>
