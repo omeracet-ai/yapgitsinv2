@@ -95,9 +95,9 @@ class _ProfileView extends ConsumerWidget {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-          // ── Hero header ──────────────────────────────────────────────────
+          // ── Hero header — full-bleed gradient, 40% screen height ─────────
           SliverAppBar(
-            expandedHeight: 220,
+            expandedHeight: MediaQuery.of(context).size.height * 0.40,
             pinned: true,
             backgroundColor: AppColors.primary,
             actions: [
@@ -119,42 +119,81 @@ class _ProfileView extends ConsumerWidget {
               ],
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.primary, AppColors.primaryDark],
+              collapseMode: CollapseMode.pin,
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Gradient background
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0xFF007DFE), Color(0xFF0056B3)],
+                      ),
+                    ),
                   ),
-                ),
-                child: SafeArea(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+                  // Bottom fade overlay for readability
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 100,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.35),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Content
+                  SafeArea(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                       const SizedBox(height: 16),
                       Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          CircleAvatar(
-                            radius: 46,
-                            backgroundColor: Colors.white24,
-                            backgroundImage:
-                                imgUrl != null ? NetworkImage(imgUrl) : null,
-                            child: imgUrl == null
-                                ? Text(
-                                    name.isNotEmpty ? name[0].toUpperCase() : '?',
-                                    style: const TextStyle(
-                                        fontSize: 36,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold))
-                                : null,
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 12,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: CircleAvatar(
+                              radius: 54,
+                              backgroundColor: Colors.white24,
+                              backgroundImage:
+                                  imgUrl != null ? NetworkImage(imgUrl) : null,
+                              child: imgUrl == null
+                                  ? Text(
+                                      name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                      style: const TextStyle(
+                                          fontSize: 40,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold))
+                                  : null,
+                            ),
                           ),
                           if (verified)
                             Positioned(
-                              bottom: 0,
-                              right: 0,
+                              bottom: 2,
+                              right: 2,
                               child: Container(
-                                padding: const EdgeInsets.all(2),
+                                padding: const EdgeInsets.all(3),
                                 decoration: const BoxDecoration(
                                   color: Colors.white,
                                   shape: BoxShape.circle,
@@ -165,12 +204,22 @@ class _ProfileView extends ConsumerWidget {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      Text(name,
-                          style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white)),
+                      const SizedBox(height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(name,
+                              style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                          if (verified) ...[
+                            const SizedBox(width: 6),
+                            const Icon(Icons.verified_rounded,
+                                color: Colors.white, size: 18),
+                          ],
+                        ],
+                      ),
                       if (city.isNotEmpty)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -187,12 +236,13 @@ class _ProfileView extends ConsumerWidget {
                         Text(_memberSince(since),
                             style: const TextStyle(
                                 fontSize: 11, color: Colors.white60)),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+                    ],        // Column children
+                    ),        // Column
+                  ),          // SafeArea
+                ],            // Stack children
+              ),              // Stack (background)
+            ),                // FlexibleSpaceBar
+          ),                  // SliverAppBar
 
           SliverToBoxAdapter(
             child: Column(
@@ -237,6 +287,33 @@ class _ProfileView extends ConsumerWidget {
                     ],
                   ),
                 ),
+
+                // ── Teklif Yap CTA (sadece usta profili + isSelf değil) ────────
+                if (isWorker && !isSelf) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: ElevatedButton.icon(
+                      onPressed: () => context.push('/ilan-ver'),
+                      icon: const Icon(Icons.handshake_outlined,
+                          color: Colors.white),
+                      label: const Text(
+                        'Teklif Yap',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        minimumSize: const Size(double.infinity, 52),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
 
                 const SizedBox(height: 8),
 

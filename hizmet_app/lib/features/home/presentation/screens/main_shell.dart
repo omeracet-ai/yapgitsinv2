@@ -12,6 +12,9 @@ import '../../../jobs/presentation/providers/job_provider.dart';
 import '../../../jobs/presentation/screens/job_list_screen.dart';
 import 'hizmet_al_screen.dart';
 import '../../../notifications/data/unread_count_provider.dart';
+import '../../../../core/widgets/category_card.dart';
+import '../../../../core/widgets/job_status_badge.dart';
+import '../../../../core/widgets/section_header.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -90,54 +93,64 @@ class _MainShellState extends ConsumerState<MainShell>
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
+              color: Colors.black.withValues(alpha: 0.10),
+              blurRadius: 16,
+              offset: const Offset(0, -3),
             ),
           ],
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: selectedIndex,
-          onTap: _onItemTapped,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textHint,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          elevation: 0,
-          selectedLabelStyle: const TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w600),
-          unselectedLabelStyle: const TextStyle(fontSize: 11),
-          items: [
-            const BottomNavigationBarItem(
-                icon: Icon(Icons.explore_outlined),
-                activeIcon: Icon(Icons.explore_rounded),
-                label: 'Yaptır'),
-            const BottomNavigationBarItem(
-                icon: Icon(Icons.handyman_outlined),
-                activeIcon: Icon(Icons.handyman_rounded),
-                label: 'Yapgitsin'),
-            const BottomNavigationBarItem(
-                icon: Icon(Icons.work_outline),
-                activeIcon: Icon(Icons.work_rounded),
-                label: 'İş İlanları'),
-            BottomNavigationBarItem(
-                icon: _NotifIconWithBadge(
-                  icon: isLoggedIn
-                      ? Icons.notifications_outlined
-                      : Icons.lock_outline_rounded,
-                  count: isLoggedIn ? unreadCount : 0,
-                ),
-                activeIcon: _NotifIconWithBadge(
-                  icon: Icons.notifications_rounded,
-                  count: isLoggedIn ? unreadCount : 0,
-                ),
-                label: 'Bildirimler'),
-            const BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline_rounded),
-                activeIcon: Icon(Icons.person_rounded),
-                label: 'Profil'),
-          ],
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+          child: BottomNavigationBar(
+            currentIndex: selectedIndex,
+            onTap: _onItemTapped,
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: AppColors.textHint,
+            showUnselectedLabels: true,
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.white,
+            elevation: 0,
+            selectedLabelStyle: const TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w700),
+            unselectedLabelStyle: const TextStyle(fontSize: 11),
+            items: [
+              const BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home_rounded),
+                  label: 'Ana Sayfa'),
+              const BottomNavigationBarItem(
+                  icon: Icon(Icons.search_outlined),
+                  activeIcon: Icon(Icons.search_rounded),
+                  label: 'Ara'),
+              const BottomNavigationBarItem(
+                  icon: Icon(Icons.work_outline_rounded),
+                  activeIcon: Icon(Icons.work_rounded),
+                  label: 'İşlerim'),
+              BottomNavigationBarItem(
+                  icon: _NotifIconWithBadge(
+                    icon: isLoggedIn
+                        ? Icons.notifications_outlined
+                        : Icons.lock_outline_rounded,
+                    count: isLoggedIn ? unreadCount : 0,
+                  ),
+                  activeIcon: _NotifIconWithBadge(
+                    icon: Icons.notifications_rounded,
+                    count: isLoggedIn ? unreadCount : 0,
+                  ),
+                  label: 'Mesajlar'),
+              const BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline_rounded),
+                  activeIcon: Icon(Icons.person_rounded),
+                  label: 'Profil'),
+            ],
+          ),
         ),
       ),
     );
@@ -181,202 +194,316 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
     final authState = ref.watch(authStateProvider);
     final userName = authState is AuthAuthenticated ? authState.displayName : null;
     final isLoggedIn = authState is AuthAuthenticated;
+    final jobsAsync = ref.watch(jobsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        elevation: 0,
-        toolbarHeight: 70,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              userName != null ? 'Merhaba, $userName 👋' : 'Hoş Geldiniz 👋',
-              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            const Text('Yapgitsin', style: TextStyle(color: Colors.white70, fontSize: 12)),
-          ],
-        ),
-        actions: [
-          if (!isLoggedIn)
-            TextButton.icon(
-              onPressed: () => context.push('/giris-yap'),
-              icon: const Icon(Icons.login, color: Colors.white, size: 18),
-              label: const Text('Giriş Yap', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          const SizedBox(width: 8),
-        ],
-      ),
       body: RefreshIndicator(
         color: AppColors.primary,
-        displacement: 50,
+        displacement: 80,
         onRefresh: () async {
           ref.invalidate(categoriesProvider);
           await ref.read(jobsProvider.notifier).fetchJobs();
         },
-        child: SingleChildScrollView(
+        child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHero(context, ref, isLoggedIn),
-              if (!isLoggedIn) _buildGuestBanner(context),
-              const SizedBox(height: 20),
-
-              // ── Kategoriler ───────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Kategoriler', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    if (_selectedCategory != null)
-                      GestureDetector(
-                        onTap: () => setState(() { _selectedCategory = null; _selectedGroup = null; }),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(_selectedCategory!, style: const TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600)),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.close, size: 15, color: AppColors.primary),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              ref.watch(categoriesProvider).when(
-                data: (cats) {
-                  // Grupları çıkar (sıralı, benzersiz)
-                  final groups = <String>[];
-                  for (final c in cats) {
-                    final g = c['group'] as String? ?? '';
-                    if (g.isNotEmpty && !groups.contains(g)) groups.add(g);
-                  }
-                  // Seçili gruba göre filtrele
-                  final visibleCats = _selectedGroup == null
-                      ? cats
-                      : cats.where((c) => c['group'] == _selectedGroup).toList();
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Grup filtre şeridi
-                      SizedBox(
-                        height: 34,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          children: [
-                            _GroupChip(
-                              label: 'Tümü',
-                              isActive: _selectedGroup == null,
-                              onTap: () => setState(() { _selectedGroup = null; _selectedCategory = null; }),
-                            ),
-                            ...groups.map((g) => _GroupChip(
-                              label: g,
-                              isActive: _selectedGroup == g,
-                              onTap: () => setState(() { _selectedGroup = _selectedGroup == g ? null : g; _selectedCategory = null; }),
-                            )),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      // Kategori kartları
-                      SizedBox(
-                        height: 120,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: visibleCats.length,
-                          itemBuilder: (_, i) {
-                            final cat   = visibleCats[i];
-                            final name  = cat['name']  as String? ?? '';
-                            final emoji = cat['icon']  as String? ?? '🔧';
-                            final isActive = _selectedCategory == name;
-                            return _CategoryItem(
-                              emoji: emoji, label: name, isActive: isActive,
-                              onTap: () => setState(() => _selectedCategory = isActive ? null : name),
-                            ).animate().fade().scale(delay: (i * 60).ms);
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-                loading: () => const SizedBox(height: 144, child: Center(child: CircularProgressIndicator())),
-                error: (_, __) => const SizedBox.shrink(),
-              ),
-
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHero(BuildContext context, WidgetRef ref, bool isLoggedIn) {
-    return Column(
-      children: [
-        Stack(
-          children: [
-            Container(
-              height: 60,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5))],
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  onSubmitted: _onSearch,
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: 'Hangi hizmete ihtiyacınız var?',
-                    prefixIcon: const Icon(Icons.search, color: AppColors.primary),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.arrow_forward_rounded,
-                          color: AppColors.primary),
-                      onPressed: () => _onSearch(_searchController.text),
+          slivers: [
+            // ── Hero SliverAppBar ──────────────────────────────────────
+            SliverAppBar(
+              expandedHeight: 200,
+              pinned: true,
+              backgroundColor: AppColors.primary,
+              elevation: 0,
+              flexibleSpace: FlexibleSpaceBar(
+                collapseMode: CollapseMode.pin,
+                background: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF007DFE), Color(0xFF0056B3)],
                     ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    userName != null
+                                        ? 'Merhaba, $userName'
+                                        : 'Hoş Geldiniz',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    'En iyi usta, en iyi hizmet',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (!isLoggedIn)
+                                GestureDetector(
+                                  onTap: () => context.push('/giris-yap'),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 7),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                          color: Colors.white.withValues(alpha: 0.5)),
+                                    ),
+                                    child: const Text(
+                                      'Giriş Yap',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // Search bar
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.12),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: TextField(
+                              controller: _searchController,
+                              onSubmitted: _onSearch,
+                              textInputAction: TextInputAction.search,
+                              decoration: InputDecoration(
+                                hintText: 'Hangi hizmete ihtiyacınız var?',
+                                hintStyle: const TextStyle(
+                                    color: AppColors.textHint, fontSize: 14),
+                                prefixIcon: const Icon(Icons.search,
+                                    color: AppColors.primary),
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.arrow_forward_rounded,
+                                      color: AppColors.primary),
+                                  onPressed: () =>
+                                      _onSearch(_searchController.text),
+                                ),
+                                border: InputBorder.none,
+                                contentPadding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
+              ),
+              title: const Text(
+                'Yapgitsin',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── İlan Ver butonu ──────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        if (isLoggedIn) {
+                          context.push('/ilan-ver');
+                        } else {
+                          context.push('/giris-yap',
+                              extra: {'returnTo': '/ilan-ver'});
+                        }
+                      },
+                      icon: const Icon(Icons.add_circle_outline,
+                          color: Colors.white),
+                      label: const Text('Hizmet İlanı Ver',
+                          style: TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2D3E50),
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+
+                  if (!isLoggedIn) _buildGuestBanner(context),
+
+                  const SizedBox(height: 24),
+
+                  // ── Popüler Kategoriler ──────────────────────────────
+                  SectionHeader(
+                    title: 'Popüler Kategoriler',
+                    actionLabel: _selectedCategory != null ? 'Temizle' : null,
+                    onAction: _selectedCategory != null
+                        ? () => setState(() {
+                              _selectedCategory = null;
+                              _selectedGroup = null;
+                            })
+                        : null,
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Group filter chips
+                  ref.watch(categoriesProvider).when(
+                    data: (cats) {
+                      final groups = <String>[];
+                      for (final c in cats) {
+                        final g = c['group'] as String? ?? '';
+                        if (g.isNotEmpty && !groups.contains(g)) {
+                          groups.add(g);
+                        }
+                      }
+                      final visibleCats = _selectedGroup == null
+                          ? cats
+                          : cats
+                              .where((c) => c['group'] == _selectedGroup)
+                              .toList();
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            height: 34,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              children: [
+                                _GroupChip(
+                                  label: 'Tümü',
+                                  isActive: _selectedGroup == null,
+                                  onTap: () => setState(() {
+                                    _selectedGroup = null;
+                                    _selectedCategory = null;
+                                  }),
+                                ),
+                                ...groups.map((g) => _GroupChip(
+                                      label: g,
+                                      isActive: _selectedGroup == g,
+                                      onTap: () => setState(() {
+                                        _selectedGroup =
+                                            _selectedGroup == g ? null : g;
+                                        _selectedCategory = null;
+                                      }),
+                                    )),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          // 2x2 fotoğraflı kategori grid (horizontal scroll)
+                          SizedBox(
+                            height: 130,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: visibleCats.length,
+                              itemBuilder: (_, i) {
+                                final cat = visibleCats[i];
+                                final catName =
+                                    cat['name'] as String? ?? '';
+                                final emoji =
+                                    cat['icon'] as String? ?? '🔧';
+                                final isActive =
+                                    _selectedCategory == catName;
+                                return SizedBox(
+                                  width: 100,
+                                  child: Padding(
+                                    padding:
+                                        const EdgeInsets.only(right: 10),
+                                    child: CategoryCard(
+                                      label: catName,
+                                      emoji: emoji,
+                                      isActive: isActive,
+                                      onTap: () => setState(() =>
+                                          _selectedCategory =
+                                              isActive ? null : catName),
+                                    ),
+                                  ),
+                                ).animate().fade().scale(
+                                    delay: (i * 50).ms);
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                    loading: () => const SizedBox(
+                        height: 164,
+                        child: Center(child: CircularProgressIndicator())),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ── Son İlanlar ──────────────────────────────────────
+                  SectionHeader(
+                    title: 'Son İlanlar',
+                    actionLabel: 'Tümünü Gör',
+                    onAction: widget.onSeeAllRequests,
+                  ),
+                  const SizedBox(height: 12),
+
+                  jobsAsync.when(
+                    data: (jobs) {
+                      final recent = jobs.take(5).toList();
+                      if (recent.isEmpty) return const SizedBox.shrink();
+                      return Column(
+                        children: recent.asMap().entries.map((e) {
+                          final job = e.value;
+                          return _RecentJobRow(job: job)
+                              .animate()
+                              .fade(delay: (e.key * 60).ms);
+                        }).toList(),
+                      );
+                    },
+                    loading: () => const SizedBox(
+                        height: 80,
+                        child: Center(child: CircularProgressIndicator())),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
+
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 14),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: ElevatedButton.icon(
-            onPressed: () {
-              if (isLoggedIn) { context.push('/ilan-ver'); }
-              else { context.push('/giris-yap', extra: {'returnTo': '/ilan-ver'}); }
-            },
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('Hizmet İlanı Ver', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.secondary,
-              minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -412,6 +539,91 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
 // ─────────────────────────────────────────────────────────────────────────────
 // Yardımcı widget'lar
 // ─────────────────────────────────────────────────────────────────────────────
+
+/// Recent job row for home screen — uses JobStatusBadge
+class _RecentJobRow extends StatelessWidget {
+  final Job job;
+  const _RecentJobRow({required this.job});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: job.color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(job.icon, color: job.color, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  job.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on_rounded,
+                        size: 11, color: AppColors.textHint),
+                    const SizedBox(width: 2),
+                    Expanded(
+                      child: Text(
+                        job.location,
+                        style: const TextStyle(
+                            fontSize: 11, color: AppColors.textHint),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                job.budget,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              JobStatusBadge.fromString(job.status ?? 'OPEN'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// Grup filtre chip'i (Tümü / Ev & Yaşam / Yapı & Tesisat ...)
 class _GroupChip extends StatelessWidget {
@@ -491,83 +703,6 @@ class _NotifIconWithBadge extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _CategoryItem extends StatelessWidget {
-  final String emoji;
-  final String label;
-  final VoidCallback onTap;
-  final bool isActive;
-
-  const _CategoryItem(
-      {required this.emoji,
-      required this.label,
-      required this.onTap,
-      this.isActive = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        width: 82,
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-        decoration: BoxDecoration(
-          color: isActive ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isActive
-                ? AppColors.primary
-                : AppColors.border,
-            width: isActive ? 2 : 1,
-          ),
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.25),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3)),
-                ]
-              : [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2)),
-                ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isActive
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(emoji, style: const TextStyle(fontSize: 22)),
-            ),
-            const SizedBox(height: 6),
-            Flexible(
-              child: Text(label,
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight:
-                          isActive ? FontWeight.bold : FontWeight.w500,
-                      color: isActive ? Colors.white : AppColors.textPrimary,
-                      height: 1.2),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

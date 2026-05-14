@@ -1,6 +1,23 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
+/// Design token constants — use across all screens.
+class AppRadius {
+  static const double small = 8;
+  static const double medium = 12;
+  static const double large = 20;
+  static const double xl = 28;
+}
+
+/// Standard card shadow.
+const kCardShadow = [
+  BoxShadow(
+    color: Colors.black12,
+    blurRadius: 8,
+    offset: Offset(0, 2),
+  ),
+];
+
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
