@@ -339,6 +339,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  broadcastHistory: () =>
+    request<{ title: string; body: string; createdAt: string; count: number }[]>(
+      '/admin/notifications/broadcast/history',
+    ),
 
   // Phase 158 — Blog CMS
   blogList: (page = 1, limit = 50) =>

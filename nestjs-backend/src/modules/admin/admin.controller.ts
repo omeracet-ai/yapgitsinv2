@@ -541,6 +541,11 @@ export class AdminController {
   }
 
   // ── Broadcast Notifications ────────────────────────────────────────────────
+  @Get('notifications/broadcast/history')
+  async broadcastHistory() {
+    return this.adminService.getBroadcastHistory();
+  }
+
   @Post('notifications/broadcast')
   async broadcastNotification(
     @Body() dto: BroadcastNotificationDto,

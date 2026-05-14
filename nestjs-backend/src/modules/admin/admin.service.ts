@@ -183,6 +183,27 @@ export class AdminService {
   }
 
   // ── Broadcast Notifications ───────────────────────────────────────────────
+
+  /** Phase 208 — last 10 system broadcast records (title, body, createdAt, count per title). */
+  async getBroadcastHistory(): Promise<
+    { title: string; body: string; createdAt: Date; count: number }[]
+  > {
+    // Distinct broadcast events: group by title+body, pick earliest createdAt per group, limit 10
+    const rows = await this.notificationRepo
+      .createQueryBuilder('n')
+      .select('n.title', 'title')
+      .addSelect('n.body', 'body')
+      .addSelect('MIN(n.createdAt)', 'createdAt')
+      .addSelect('COUNT(n.id)', 'count')
+      .where('n.type = :t', { t: 'system' })
+      .groupBy('n.title')
+      .addGroupBy('n.body')
+      .orderBy('MIN(n.createdAt)', 'DESC')
+      .limit(10)
+      .getRawMany<{ title: string; body: string; createdAt: Date; count: string }>();
+    return rows.map((r) => ({ ...r, count: Number(r.count) }));
+  }
+
   async broadcastNotification(
     dto: BroadcastNotificationDto,
   ): Promise<{ sent: number; segment: string }> {
