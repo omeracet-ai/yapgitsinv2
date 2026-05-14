@@ -32,10 +32,15 @@ export default function CertificationsPage() {
 
   useEffect(() => { void load(); }, [load]);
 
-  const decide = async (id: string, verified: boolean) => {
+  const decide = async (id: string, action: 'verify' | 'reject') => {
     setBusyId(id);
     try {
-      await api.verifyCertification(id, verified, notes[id]?.trim() || undefined);
+      const note = notes[id]?.trim() || undefined;
+      if (action === 'verify') {
+        await api.verifyCertification(id, note);
+      } else {
+        await api.rejectCertification(id, note);
+      }
       setItems((prev) => prev.filter((c) => c.id !== id));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -126,14 +131,14 @@ export default function CertificationsPage() {
 
               <div className="mt-3 flex gap-2 justify-end">
                 <button
-                  onClick={() => void decide(c.id, false)}
+                  onClick={() => void decide(c.id, 'reject')}
                   disabled={busyId === c.id}
                   className="px-4 py-1.5 text-sm bg-red-50 text-red-700 rounded-md hover:bg-red-100 disabled:opacity-50"
                 >
                   Reddet
                 </button>
                 <button
-                  onClick={() => void decide(c.id, true)}
+                  onClick={() => void decide(c.id, 'verify')}
                   disabled={busyId === c.id}
                   className="px-4 py-1.5 text-sm bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50"
                 >

@@ -52,15 +52,20 @@ export class AdminController {
   @Patch('certifications/:id/verify')
   async verifyCertification(
     @Param('id') id: string,
-    @Body() body: { verified: boolean; adminNote?: string },
+    @Body() body: { adminNote?: string },
     @Req() req: Request & { user: AuthUser },
   ) {
-    return this.certificationSvc.setVerified(
-      id,
-      !!body.verified,
-      req.user.id,
-      body.adminNote,
-    );
+    return this.certificationSvc.setVerified(id, true, req.user.id, body.adminNote);
+  }
+
+  @Audit('certification.reject')
+  @Patch('certifications/:id/reject')
+  async rejectCertification(
+    @Param('id') id: string,
+    @Body() body: { adminNote?: string },
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    return this.certificationSvc.setVerified(id, false, req.user.id, body.adminNote);
   }
 
   // ── Phase 124: KVKK data deletion request moderation ─────────────

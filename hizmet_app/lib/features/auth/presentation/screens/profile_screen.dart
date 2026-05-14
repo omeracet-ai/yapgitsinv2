@@ -27,6 +27,7 @@ import '../../../users/widgets/badge_row.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../core/services/locale_provider.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../certifications/data/certification_repository.dart';
 // TODO(P190): migrate remaining strings to AppLocalizations
 
 // ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
@@ -77,6 +78,7 @@ class ProfileScreen extends ConsumerWidget {
               _buildEmailVerification(context, ref, user),
               _buildStatsSection(ref),
               _buildBadgesSection(ref),
+              _buildCertificationsSection(ref),
               _buildPastPhotos(ref),
               _buildReviewsSection(ref),
               _buildMenuSection(context, ref),
@@ -741,6 +743,79 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  // ── Phase 159: Kendi sertifikaları (verified + pending) ──────────────────
+  Widget _buildCertificationsSection(WidgetRef ref) {
+    final auth = ref.watch(authStateProvider);
+    final user = auth is AuthAuthenticated ? auth.user : <String, dynamic>{};
+    final cats = user['workerCategories'];
+    final isWorker = cats is List && cats.isNotEmpty;
+    if (!isWorker) return const SizedBox.shrink();
+
+    final repo = ref.watch(certificationRepositoryProvider);
+    return FutureBuilder<List<WorkerCertification>>(
+      future: repo.listMine(),
+      builder: (context, snapshot) {
+        final certs = snapshot.data ?? const [];
+        final verified = certs.where((c) => c.verified).toList();
+        if (verified.isEmpty) return const SizedBox.shrink();
+        return Container(
+          margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE0E0E0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Sertifikalarım',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              ...verified.map((c) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        const Text('🪪', style: TextStyle(fontSize: 18)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(c.name,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600, fontSize: 14)),
+                              Text(c.issuer,
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Color(0xFF757575))),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF4CAF50).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text('Onaylı',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF2E7D32),
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                      ],
+                    ),
+                  )),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // ── Geçmiş İş Fotoğrafları (4 adet) ───────────────────────────────────────
   Widget _buildPastPhotos(WidgetRef ref) {
     final profileAsync = ref.watch(myPublicProfileProvider);
@@ -1291,6 +1366,9 @@ class ProfileScreen extends ConsumerWidget {
     final isWorker = cats is List && cats.isNotEmpty;
     if (!isWorker) return const [];
     return [
+      _menuItem(Icons.verified_outlined, '📜 Sertifikalarım', () {
+        context.push('/sertifikalarim');
+      }),
       _menuItem(Icons.note_alt_outlined, 'Teklif Şablonlarım', () {
         context.push('/teklif-sablonlarim');
       }),

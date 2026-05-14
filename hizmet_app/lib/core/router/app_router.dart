@@ -34,6 +34,7 @@ import '../../../features/notifications/presentation/screens/notification_prefer
 import '../../../features/bookings/presentation/screens/booking_create_screen.dart';
 import '../../../features/disputes/presentation/screens/my_disputes_screen.dart';
 import '../../../features/disputes/presentation/screens/dispute_create_screen.dart';
+import '../../../features/certifications/presentation/certifications_screen.dart';
 import '../providers/navigation_provider.dart';
 import '../widgets/success_screen.dart';
 
@@ -174,6 +175,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/teklif-sablonlarim',
         builder: (context, state) => const OfferTemplatesScreen(),
+      ),
+      GoRoute(
+        path: '/sertifikalarim',
+        builder: (context, state) => const CertificationsScreen(),
       ),
       GoRoute(
         path: '/mesaj-sablonlarim',
