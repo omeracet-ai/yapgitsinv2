@@ -1,41 +1,63 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// Secure token storage for auth credentials.
-///
-/// Backed by `flutter_secure_storage` (Keychain on iOS, EncryptedSharedPreferences
-/// on Android). Keys are coordinated with Voldi-sec-1 (ApiClient interceptor):
-///   - `auth_token`    → access token
-///   - `refresh_token` → refresh token
-///
-/// During the migration window (Phase 187/5) tokens may also exist in the
-/// legacy `SharedPreferences` store under the key `jwt_token` — see the
-/// one-shot migration shim in `auth_repository.dart`.
+/// Secure token storage — uses FlutterSecureStorage on mobile, SharedPreferences on web.
+/// flutter_secure_storage_web is not auto-registered in the Flutter web plugin
+/// registrant, so we fall back to SharedPreferences (localStorage) on web.
 class SecureTokenStore {
-  // NOTE: flutter_secure_storage 10.x deprecates
-  // `AndroidOptions(encryptedSharedPreferences: true)` — encryption is now the
-  // default and Jetpack Security's EncryptedSharedPreferences is being phased
-  // out for custom ciphers (auto-migrated on first access). Keeping the
-  // explicit option would emit a `deprecated_member_use` info from analyzer.
   SecureTokenStore({FlutterSecureStorage? storage})
       : _storage = storage ?? const FlutterSecureStorage();
 
   static const String _kAuthToken = 'auth_token';
   static const String _kRefreshToken = 'refresh_token';
+  static const String _kWebAuthToken = 'web_auth_token';
+  static const String _kWebRefreshToken = 'web_refresh_token';
 
   final FlutterSecureStorage _storage;
 
-  Future<void> writeToken(String token) =>
-      _storage.write(key: _kAuthToken, value: token);
+  Future<void> writeToken(String token) async {
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kWebAuthToken, token);
+    } else {
+      await _storage.write(key: _kAuthToken, value: token);
+    }
+  }
 
-  Future<String?> readToken() => _storage.read(key: _kAuthToken);
+  Future<String?> readToken() async {
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_kWebAuthToken);
+    }
+    return _storage.read(key: _kAuthToken);
+  }
 
-  Future<void> writeRefreshToken(String token) =>
-      _storage.write(key: _kRefreshToken, value: token);
+  Future<void> writeRefreshToken(String token) async {
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kWebRefreshToken, token);
+    } else {
+      await _storage.write(key: _kRefreshToken, value: token);
+    }
+  }
 
-  Future<String?> readRefreshToken() => _storage.read(key: _kRefreshToken);
+  Future<String?> readRefreshToken() async {
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_kWebRefreshToken);
+    }
+    return _storage.read(key: _kRefreshToken);
+  }
 
   Future<void> clear() async {
-    await _storage.delete(key: _kAuthToken);
-    await _storage.delete(key: _kRefreshToken);
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_kWebAuthToken);
+      await prefs.remove(_kWebRefreshToken);
+    } else {
+      await _storage.delete(key: _kAuthToken);
+      await _storage.delete(key: _kRefreshToken);
+    }
   }
 }
