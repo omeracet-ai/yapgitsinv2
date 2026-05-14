@@ -125,11 +125,11 @@ class _MainShellState extends ConsumerState<MainShell>
               const BottomNavigationBarItem(
                   icon: Icon(Icons.home_outlined),
                   activeIcon: Icon(Icons.home_rounded),
-                  label: 'Ana Sayfa'),
+                  label: 'Yaptır'),
               const BottomNavigationBarItem(
                   icon: Icon(Icons.search_outlined),
                   activeIcon: Icon(Icons.search_rounded),
-                  label: 'Ara'),
+                  label: 'Yapgitsin'),
               const BottomNavigationBarItem(
                   icon: Icon(Icons.work_outline_rounded),
                   activeIcon: Icon(Icons.work_rounded),
@@ -145,7 +145,7 @@ class _MainShellState extends ConsumerState<MainShell>
                     icon: Icons.notifications_rounded,
                     count: isLoggedIn ? unreadCount : 0,
                   ),
-                  label: 'Mesajlar'),
+                  label: 'Bildirimlerim'),
               const BottomNavigationBarItem(
                   icon: Icon(Icons.person_outline_rounded),
                   activeIcon: Icon(Icons.person_rounded),
