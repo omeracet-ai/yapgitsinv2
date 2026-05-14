@@ -15,6 +15,7 @@ import '../../../notifications/data/unread_count_provider.dart';
 import '../../../../core/widgets/category_card.dart';
 import '../../../../core/widgets/job_status_badge.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../ai/presentation/widgets/ai_recommendations_section.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -469,6 +470,9 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                   ),
 
                   const SizedBox(height: 24),
+
+                  // ── AI Önerileri (Phase 214) ─────────────────────────
+                  if (isLoggedIn) const AiRecommendationsSection(),
 
                   // ── Son İlanlar ──────────────────────────────────────
                   SectionHeader(

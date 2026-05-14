@@ -1,8 +1,9 @@
-import { Body, Controller, Post, UseGuards, Req } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
 import { AiService } from './ai.service';
 import { PricingService } from './pricing.service';
+import { RecommendationService } from './recommendation.service';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 import {
   AiChatDto,
@@ -51,7 +52,10 @@ export class AiPublicController {
 @Controller('ai')
 @UseGuards(AuthGuard('jwt'))
 export class AiController {
-  constructor(private readonly aiService: AiService) {}
+  constructor(
+    private readonly aiService: AiService,
+    private readonly recommendationService: RecommendationService,
+  ) {}
 
   // ─── Existing endpoints ───────────────────────────────────────────────────
 
@@ -113,6 +117,45 @@ export class AiController {
         dto.history,
         userRole,
       ),
+    };
+  }
+
+  // ─── Phase 214: AI Job Matching ──────────────────────────────────────────
+
+  /** Top 5 workers for a job (by Haiku ranking) */
+  @Get('recommend/workers/:jobId')
+  async recommendWorkers(@Param('jobId') jobId: string) {
+    const workers = await this.recommendationService.recommendWorkersForJob(jobId);
+    return {
+      workers: workers.map((w) => ({
+        id: w.id,
+        fullName: w.fullName,
+        averageRating: w.averageRating,
+        totalReviews: w.totalReviews,
+        asWorkerSuccess: w.asWorkerSuccess,
+        workerCategories: w.workerCategories,
+        workerBio: w.workerBio,
+        profileImageUrl: w.profileImageUrl,
+        city: w.city,
+      })),
+    };
+  }
+
+  /** Top 5 open jobs for a worker (by Haiku ranking) */
+  @Get('recommend/jobs/:workerId')
+  async recommendJobs(@Param('workerId') workerId: string) {
+    const jobs = await this.recommendationService.recommendJobsForWorker(workerId);
+    return {
+      jobs: jobs.map((j) => ({
+        id: j.id,
+        title: j.title,
+        category: j.category,
+        location: j.location,
+        budgetMinMinor: j.budgetMinMinor,
+        budgetMaxMinor: j.budgetMaxMinor,
+        status: j.status,
+        createdAt: j.createdAt,
+      })),
     };
   }
 }
