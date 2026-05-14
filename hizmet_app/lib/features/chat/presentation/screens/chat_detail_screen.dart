@@ -608,7 +608,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     setState(() => _isUploading = true);
     try {
       final repo = ref.read(chatRepositoryProvider);
-      final res = await repo.uploadAttachment(filePath);
+      final res = await repo.uploadAttachment(XFile(filePath));
       if (res == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -639,7 +639,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     setState(() => _isUploading = true);
     try {
       final repo = ref.read(chatRepositoryProvider);
-      final res = await repo.uploadAudio(filePath, durationSec: durationSec);
+      final res = await repo.uploadAudio(XFile(filePath), durationSec: durationSec);
       if (res == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

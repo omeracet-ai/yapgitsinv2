@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/network/api_client_provider.dart';
 
 class WorkerCertification {
@@ -125,9 +126,12 @@ class CertificationRepository {
   }
 
   /// Upload doc (pdf/jpg/png), returns URL.
-  Future<String> uploadDocument(String filePath) async {
+  Future<String> uploadDocument(XFile file) async {
     final form = FormData.fromMap({
-      'file': await MultipartFile.fromFile(filePath),
+      'file': MultipartFile.fromBytes(
+        await file.readAsBytes(),
+        filename: file.name,
+      ),
     });
     final res = await _dio.post('/uploads/certification', data: form);
     return ((res.data as Map)['url'] ?? '') as String;

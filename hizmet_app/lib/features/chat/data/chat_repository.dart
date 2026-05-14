@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/network/api_client_provider.dart';
 
@@ -93,10 +94,13 @@ class ChatRepository {
 
   /// Phase 139: upload a chat attachment (image or document).
   /// Returns {url, type, name, size}.
-  Future<Map<String, dynamic>?> uploadAttachment(String filePath) async {
+  Future<Map<String, dynamic>?> uploadAttachment(XFile file) async {
     if (!await _hasToken()) return null;
     final formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(filePath),
+      'file': MultipartFile.fromBytes(
+        await file.readAsBytes(),
+        filename: file.name,
+      ),
     });
     final res = await _dio.post(
       '/uploads/chat-attachment',
@@ -107,12 +111,15 @@ class ChatRepository {
 
   /// Phase 151: upload a chat voice note. Returns {url, type:'audio', name, size, duration?}.
   Future<Map<String, dynamic>?> uploadAudio(
-    String filePath, {
+    XFile file, {
     int? durationSec,
   }) async {
     if (!await _hasToken()) return null;
     final formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(filePath),
+      'file': MultipartFile.fromBytes(
+        await file.readAsBytes(),
+        filename: file.name,
+      ),
       if (durationSec != null) 'duration': durationSec.toString(),
     });
     final res = await _dio.post(

@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../certifications/data/certification_repository.dart';
@@ -219,7 +220,7 @@ class _AddCertificationSheetState
     setState(() => _busy = true);
     try {
       final repo = ref.read(certificationRepositoryProvider);
-      final url = await repo.uploadDocument(path);
+      final url = await repo.uploadDocument(XFile(path));
       setState(() {
         _docUrl = url;
         _docName = result?.files.single.name;
