@@ -20,7 +20,7 @@ export class HealthController {
    * P191/5 — @SkipThrottle: CF uptime monitor hits this every 30s and we
    * don't want it competing with real traffic on the global tiers.
    */
-  @SkipThrottle()
+  @SkipThrottle({ short: true, medium: true, long: true, default: true })
   @Get()
   get(): Promise<HealthResponse> {
     return this.health.getHealth();
