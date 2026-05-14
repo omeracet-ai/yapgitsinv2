@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminController = void 0;
 const common_1 = require("@nestjs/common");
+const throttler_1 = require("@nestjs/throttler");
 const audit_decorator_1 = require("../admin-audit/audit.decorator");
 const audit_interceptor_1 = require("../admin-audit/audit.interceptor");
 const passport_1 = require("@nestjs/passport");
@@ -757,6 +758,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "setUserLocation", null);
 exports.AdminController = AdminController = __decorate([
+    (0, throttler_1.SkipThrottle)(),
     (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), admin_guard_1.AdminGuard),
     (0, common_1.UseInterceptors)(audit_interceptor_1.AuditInterceptor),

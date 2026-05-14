@@ -1,4 +1,5 @@
 import { Controller, Get, Patch, Post, Delete, Body, Param, Query, UseGuards, UseInterceptors, Req, Res, NotFoundException } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { Audit } from '../admin-audit/audit.decorator';
 import { AuditInterceptor } from '../admin-audit/audit.interceptor';
 import type { Response } from 'express';
@@ -26,6 +27,7 @@ import { DataDeletionRequestStatus } from '../users/data-deletion-request.entity
 import type { Request } from 'express';
 import type { AuthUser } from '../../common/types/auth.types';
 
+@SkipThrottle()
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
 @UseInterceptors(AuditInterceptor)
