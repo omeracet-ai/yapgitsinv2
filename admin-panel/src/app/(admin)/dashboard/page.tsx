@@ -15,6 +15,13 @@ interface Stats {
   };
 }
 
+interface PublicStats {
+  totalJobs: number;
+  totalWorkers: number;
+  completedJobs: number;
+  totalCategories: number;
+}
+
 function SimpleChart({ data, label, color }: { data: any[], label: string, color: string }) {
   const max = Math.max(...data.map(d => d.count), 5);
   return (
@@ -50,14 +57,19 @@ const STATUS_LBL: Record<string, string> = {
 };
 
 export default function DashboardPage() {
-  const [stats, setStats]     = useState<Stats | null>(null);
-  const [jobs,  setJobs]      = useState<Job[]>([]);
-  const [error, setError]     = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats]           = useState<Stats | null>(null);
+  const [pubStats, setPubStats]     = useState<PublicStats | null>(null);
+  const [jobs,  setJobs]            = useState<Job[]>([]);
+  const [error, setError]           = useState<string | null>(null);
+  const [loading, setLoading]       = useState(true);
 
   useEffect(() => {
-    Promise.all([api.stats(), api.recentJobs(5)])
-      .then(([s, j]) => { setStats(s as Stats); setJobs(j); })
+    Promise.all([api.stats(), api.recentJobs(5), api.publicStats()])
+      .then(([s, j, ps]) => {
+        setStats(s as Stats);
+        setJobs(j);
+        setPubStats(ps as PublicStats);
+      })
       .catch(e => setError((e as Error).message))
       .finally(() => setLoading(false));
   }, []);
@@ -90,6 +102,29 @@ export default function DashboardPage() {
           ))}
         </div>
       </section>
+
+      {/* Marketplace İstatistikleri — Phase 206 */}
+      {pubStats && (
+        <section>
+          <h2 className="text-lg font-semibold mb-4">Marketplace Genel Durum</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: "Toplam İlan",        value: pubStats.totalJobs,        icon: "📋", cls: "bg-blue-50 border-blue-100" },
+              { label: "Aktif Usta",         value: pubStats.totalWorkers,     icon: "👷", cls: "bg-purple-50 border-purple-100" },
+              { label: "Tamamlanan İş",      value: pubStats.completedJobs,    icon: "✅", cls: "bg-green-50 border-green-100" },
+              { label: "Kategori",           value: pubStats.totalCategories,  icon: "🗂️", cls: "bg-orange-50 border-orange-100" },
+            ].map(c => (
+              <div key={c.label} className={`rounded-xl border p-5 ${c.cls} shadow-sm`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xl">{c.icon}</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{c.label}</span>
+                </div>
+                <p className="text-3xl font-bold text-gray-800">{c.value.toLocaleString('tr-TR')}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Grafikler */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -124,6 +124,15 @@ export const api = {
       };
     }>('/admin/stats'),
 
+  // Public marketplace stats (no auth) — Phase 206
+  publicStats: () =>
+    requestNoAuth<{
+      totalJobs: number;
+      totalWorkers: number;
+      completedJobs: number;
+      totalCategories: number;
+    }>('/stats/public'),
+
   // Gelir / Platform fee
   revenue: () =>
     request<{

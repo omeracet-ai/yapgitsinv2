@@ -1,16 +1,26 @@
 import Link from 'next/link';
 import SearchBar from '@/components/SearchBar';
+import MarketplaceStats from '@/components/home/MarketplaceStats';
 
 type SearchCat = { name: string; slug: string; icon?: string };
+
+export interface HeroStats {
+  totalJobs: number;
+  totalWorkers: number;
+  completedJobs: number;
+  totalCategories: number;
+}
 
 export default function Hero({
   searchCats,
   cities,
   localePrefix = '',
+  stats,
 }: {
   searchCats: SearchCat[];
   cities: string[];
   localePrefix?: string;
+  stats?: HeroStats;
 }) {
   return (
     <section className="relative overflow-hidden hero-gradient text-white">
@@ -50,6 +60,15 @@ export default function Hero({
               />
             </div>
           </div>
+
+          {stats && (
+            <MarketplaceStats
+              totalJobs={stats.totalJobs}
+              totalWorkers={stats.totalWorkers}
+              completedJobs={stats.completedJobs}
+              totalCategories={stats.totalCategories}
+            />
+          )}
 
           <div className="mt-6 flex flex-col sm:flex-row sm:justify-center gap-3">
             <Link href={`${localePrefix}/ilan`} className="btn-primary !bg-white !text-[var(--primary-dark)] !shadow-none hover:!bg-[var(--primary-soft)]">

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getCategories, getWorkers, slugify, unwrap } from '@/lib/api';
+import { getCategories, getWorkers, slugify, unwrap, getPublicStats } from '@/lib/api';
 import { jsonLd, breadcrumbLD } from '@/lib/seo';
 import LeadForm from '@/components/LeadForm';
 import Hero from '@/components/home/Hero';
@@ -11,9 +11,10 @@ import TrustBand from '@/components/home/TrustBand';
 export const revalidate = 3600;
 
 export default async function HomePage() {
-  const [cats, workersResp] = await Promise.all([
+  const [cats, workersResp, statsData] = await Promise.all([
     getCategories(),
     getWorkers({ limit: '8' }),
+    getPublicStats(),
   ]);
   const allCats = cats || [];
   const gridCats = allCats.slice(0, 12);
@@ -33,7 +34,7 @@ export default async function HomePage() {
         }}
       />
 
-      <Hero searchCats={searchCats} cities={[]} />
+      <Hero searchCats={searchCats} cities={[]} stats={statsData ?? undefined} />
 
       <CategoryGrid categories={gridCats} />
 

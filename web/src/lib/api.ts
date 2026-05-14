@@ -85,6 +85,16 @@ export type Job = {
 
 export type Paginated<T> = { data: T[]; total: number; page: number; limit: number; pages: number };
 
+export type PublicStats = {
+  totalJobs: number;
+  totalWorkers: number;
+  completedJobs: number;
+  totalCategories: number;
+};
+
+export const getPublicStats = () =>
+  api<PublicStats>('/stats/public', { revalidate: 3600 });
+
 export const getCategories = () => api<Category[]>('/categories');
 export const getCategory = (id: string) => api<Category>(`/categories/${id}`);
 export const getWorkers = (params: Record<string, string> = {}) => {
