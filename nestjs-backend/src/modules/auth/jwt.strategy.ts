@@ -19,7 +19,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // Fail fast at boot if JWT_SECRET is missing.
     getJwtSigningSecret();
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      // Phase 207 — also accept ?token= query param for browser-downloadable endpoints (e.g. .ics export)
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        (req) => req?.query?.token as string | null,
+      ]),
       ignoreExpiration: false,
       // Dual-secret verify: JWT_SECRET, then JWT_SECRET_PREVIOUS during rotation.
       secretOrKeyProvider: jwtSecretOrKeyProvider,

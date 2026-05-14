@@ -479,4 +479,59 @@ export class BookingsService {
       });
     }
   }
+
+  /** Phase 207 — Export worker's CONFIRMED+PENDING bookings as RFC 5545 .ics */
+  async exportIcs(workerId: string): Promise<string> {
+    const bookings = await this.repo.find({
+      where: [
+        { workerId, status: BookingStatus.CONFIRMED },
+        { workerId, status: BookingStatus.PENDING },
+      ],
+      relations: ['customer'],
+      order: { scheduledDate: 'ASC' },
+    });
+
+    const stamp = this._toIcsDate(new Date());
+
+    const events = bookings.map((b) => {
+      const start = this._bookingStartDate(b.scheduledDate, b.scheduledTime);
+      const dtStart = this._toIcsDate(start);
+      const customerName = b.customer?.fullName ?? 'Müşteri';
+      const summary = `İş: ${b.category}${b.subCategory ? ' / ' + b.subCategory : ''}`;
+      const desc = `Müşteri: ${customerName}\\nAdres: ${b.address}`;
+      return [
+        'BEGIN:VEVENT',
+        `UID:${b.id}@yapgitsin.tr`,
+        `DTSTAMP:${stamp}`,
+        `DTSTART:${dtStart}`,
+        'DURATION:PT2H',
+        `SUMMARY:${summary}`,
+        `DESCRIPTION:${desc}`,
+        'END:VEVENT',
+      ].join('\r\n');
+    });
+
+    return [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Yapgitsin//TR',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      ...events,
+      'END:VCALENDAR',
+    ].join('\r\n');
+  }
+
+  private _toIcsDate(d: Date): string {
+    return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  }
+
+  private _bookingStartDate(scheduledDate: string, scheduledTime: string | null): Date {
+    const [year, month, day] = scheduledDate.split('-').map(Number);
+    if (scheduledTime) {
+      const [hour, minute] = scheduledTime.split(':').map(Number);
+      return new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
+    }
+    return new Date(Date.UTC(year, month - 1, day, 9, 0, 0));
+  }
 }

@@ -7,8 +7,10 @@ import {
   Body,
   Query,
   Request,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { BookingsService } from './bookings.service';
 import { BookingStatus, CancellationReason } from './booking.entity';
@@ -45,6 +47,18 @@ export class BookingsController {
       scheduledTime: body.scheduledTime,
       customerNote: body.customerNote,
     });
+  }
+
+  /** GET /bookings/export/ics — Phase 207: worker calendar export */
+  @Get('export/ics')
+  async exportIcs(
+    @Request() req: AuthenticatedRequest,
+    @Res() res: Response,
+  ) {
+    const ics = await this.svc.exportIcs(req.user.id);
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="yapgitsin-takvim.ics"');
+    res.send(ics);
   }
 
   /** GET /bookings/my-as-customer?page=1&limit=20 */

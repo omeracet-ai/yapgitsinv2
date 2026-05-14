@@ -1,7 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../../../core/constants/api_constants.dart';
 import '../../data/calendar_sync_repository.dart';
 
 /// Phase 155 — Worker Calendar Sync screen.
@@ -116,6 +120,26 @@ class _CalendarSyncScreenState extends ConsumerState<CalendarSyncScreen> {
     );
   }
 
+  /// Phase 207 — Download/open worker's bookings as .ics export.
+  Future<void> _downloadIcs() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'auth_token');
+    final base = ApiConstants.baseUrl;
+    final exportUrl = '$base/bookings/export/ics${token != null ? '?token=$token' : ''}';
+    final uri = Uri.parse(exportUrl);
+    if (kIsWeb) {
+      await launchUrl(uri);
+    } else {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('İndirme açılamadı')),
+        );
+      }
+    }
+  }
+
   Widget _instructionTile(IconData icon, String title, String body) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -207,6 +231,12 @@ class _CalendarSyncScreenState extends ConsumerState<CalendarSyncScreen> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: _busy ? null : _downloadIcs,
+                icon: const Icon(Icons.download_rounded, size: 18),
+                label: const Text('Takvime Ekle (.ics İndir)'),
               ),
               const SizedBox(height: 24),
               const Text('Nasıl Eklenir?',
