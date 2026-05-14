@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { SuspendUserDto } from './dto/suspend-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, IsNull, Between, MoreThan, In, ILike, Raw } from 'typeorm';
+import { Repository, Not, IsNull, Between, MoreThan, In, ILike, Raw, DataSource } from 'typeorm';
 import {
   AdminListQueryDto,
   buildPaginated,
@@ -58,6 +58,7 @@ export class AdminService {
     @InjectRepository(Provider) private providersRepo: Repository<Provider>,
     private readonly promoService: PromoService,
     private readonly fcmService: FcmService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async bulkVerifyUsers(
@@ -809,5 +810,76 @@ export class AdminService {
     const next = (user.manualBadges ?? []).filter((b) => b !== badgeKey);
     await this.usersRepo.update(userId, { manualBadges: next });
     return { id: userId, manualBadges: next };
+  }
+
+  // ── Phase 213 — Analytics Overview ────────────────────────────────────────
+  async getAnalyticsOverview() {
+    const qr = this.dataSource.createQueryRunner();
+    await qr.connect();
+    try {
+      const [
+        dailyRegistrations,
+        dailyJobs,
+        revenueByDay,
+        topCategories,
+        workersByCity,
+      ] = await Promise.all([
+        // Son 30 gün günlük kullanıcı kaydı
+        qr.query(`
+          SELECT strftime('%Y-%m-%d', created_at) AS date, COUNT(*) AS count
+          FROM users
+          WHERE created_at >= date('now', '-29 days')
+          GROUP BY date
+          ORDER BY date ASC
+        `),
+        // Son 30 gün günlük ilan
+        qr.query(`
+          SELECT strftime('%Y-%m-%d', created_at) AS date, COUNT(*) AS count
+          FROM jobs
+          WHERE created_at >= date('now', '-29 days')
+          GROUP BY date
+          ORDER BY date ASC
+        `),
+        // Son 30 gün token satın alma (gelir)
+        qr.query(`
+          SELECT strftime('%Y-%m-%d', created_at) AS date,
+                 SUM(amount) AS tokensPurchased
+          FROM token_transactions
+          WHERE type = 'purchase'
+            AND created_at >= date('now', '-29 days')
+          GROUP BY date
+          ORDER BY date ASC
+        `),
+        // Top 5 kategori ilan sayısı
+        qr.query(`
+          SELECT category AS name, COUNT(*) AS jobCount
+          FROM jobs
+          WHERE category IS NOT NULL AND category != ''
+          GROUP BY category
+          ORDER BY jobCount DESC
+          LIMIT 5
+        `),
+        // Şehre göre usta dağılımı (top 10)
+        qr.query(`
+          SELECT u.city AS city, COUNT(*) AS count
+          FROM providers p
+          JOIN users u ON u.id = p.userId
+          WHERE u.city IS NOT NULL AND u.city != ''
+          GROUP BY u.city
+          ORDER BY count DESC
+          LIMIT 10
+        `),
+      ]);
+
+      return {
+        dailyRegistrations: dailyRegistrations.map((r: any) => ({ date: r.date, count: Number(r.count) })),
+        dailyJobs: dailyJobs.map((r: any) => ({ date: r.date, count: Number(r.count) })),
+        revenueByDay: revenueByDay.map((r: any) => ({ date: r.date, tokensPurchased: Number(r.tokensPurchased ?? 0) })),
+        topCategories: topCategories.map((r: any) => ({ name: r.name, jobCount: Number(r.jobCount) })),
+        workersByCity: workersByCity.map((r: any) => ({ city: r.city, count: Number(r.count) })),
+      };
+    } finally {
+      await qr.release();
+    }
   }
 }

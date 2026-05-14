@@ -611,4 +611,10 @@ export class AdminController {
     await this.adminAuditService.logAction(req.user.id, 'report.update', 'report', id, body as unknown as Record<string, unknown>);
     return result;
   }
+
+  // ── Phase 213 — Analytics Overview ────────────────────────────────────────
+  @Get('analytics/overview')
+  getAnalyticsOverview() {
+    return this.adminService.getAnalyticsOverview();
+  }
 }

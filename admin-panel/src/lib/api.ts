@@ -724,3 +724,16 @@ export const analyticsApi = {
     return request<RevenueAnalytics>('/analytics/revenue');
   },
 };
+
+// ── Phase 213 — Admin Analytics Overview ─────────────────────────────────────
+export interface AnalyticsOverview {
+  dailyRegistrations: Array<{ date: string; count: number }>;
+  dailyJobs: Array<{ date: string; count: number }>;
+  revenueByDay: Array<{ date: string; tokensPurchased: number }>;
+  topCategories: Array<{ name: string; jobCount: number }>;
+  workersByCity: Array<{ city: string; count: number }>;
+}
+
+export const adminAnalytics = {
+  overview: () => request<AnalyticsOverview>('/admin/analytics/overview'),
+};
