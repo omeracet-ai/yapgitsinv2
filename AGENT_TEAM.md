@@ -15,10 +15,17 @@ Yapgitsinv2 projesi için 4 specialized agent (paralel-bağlı, kalıcı). Tanı
 
 | Durum | Agent |
 |-------|-------|
-| "Yeni entity ekle, migration üret, query yavaş, index öner" | **db** |
-| "JWT denetle, OWASP audit, rate limit yetersiz, secret sızıntısı" | **security** |
-| "Yeni feature, ekran, endpoint, bileşen, test yaz" | **fullstack** |
-| "Docker patladı, port çakışması, sunucu yavaş, log incele" | **ops** |
+| "Yeni entity ekle, migration üret, query yavaş, index öner, pgvector" | **db** |
+| "JWT denetle, OWASP audit, rate limit, KVKK, secret sızıntısı" | **security** |
+| "Yeni feature, ekran, endpoint, Flutter web fix, XFile/dart:io" | **fullstack** |
+| "IIS/Plesk, web.config, port çakışması, sunucu yavaş, log" | **ops** |
+
+### Kritik Kurallar (P194-P199 öğrenildi)
+- Flutter web: `dart:io File` → `XFile + readAsBytes()`. Build geçse de runtime patlar. Tüm `fromFile` grep'le.
+- Her yeni Next.js build'de `_next/static/` chunk isimleri değişir → FileZilla Synchronize zorunlu.
+- NestJS `console.log` → `Logger` inject. Kod taraması periyodik yapılmalı.
+- Upload throttle: 10/dk çok düşük (5 fotoğraf = limit). Minimum 30/dk.
+- Dispatch öncesi "already done?" grep → no-op dispatch'ten kaçın.
 
 ## Dispatch Örneği
 
