@@ -1,0 +1,3 @@
+{
+  "/(admin)/promo-codes/page": "app/(admin)/promo-codes/page.js"
+}
