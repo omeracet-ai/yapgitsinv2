@@ -8,7 +8,7 @@ const ADMIN_SECURITY_HEADERS = [
     value: [
       "default-src 'self'",
       "img-src 'self' data: https: blob:",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",
       "connect-src 'self' https://api.yapgitsin.tr wss://api.yapgitsin.tr https://yapgitsin.tr wss://yapgitsin.tr",
