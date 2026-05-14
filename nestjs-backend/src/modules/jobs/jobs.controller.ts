@@ -10,7 +10,13 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  UploadedFiles,
+  UseInterceptors,
+  BadRequestException,
+  Req,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { AuthGuard } from '@nestjs/passport';
 import { JobsService } from './jobs.service';
 import { OffersService } from './offers.service';
@@ -274,5 +280,32 @@ export class JobsController {
     @Request() req: AuthenticatedRequest,
   ) {
     return this.jobsService.boost(id, body.days, req.user.id);
+  }
+
+  // ─── Phase 203: Bulk photo upload (max 5, 5MB each, 1200px/q80) ──────────────
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':id/photos/bulk')
+  @UseInterceptors(
+    FilesInterceptor('files', 5, {
+      storage: memoryStorage(),
+      fileFilter: (req: any, file: any, cb: any) => {
+        if (!file.mimetype.match(/^image\/(jpeg|jpg|png|webp)$/)) {
+          return cb(new BadRequestException('Sadece resim dosyaları yüklenebilir'), false);
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  uploadJobPhotosBulk(
+    @Param('id') id: string,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Req() req: AuthenticatedRequest,
+  ) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('En az 1 fotoğraf gerekli');
+    }
+    return this.jobsService.uploadPhotosBulk(id, files, req.user.id);
   }
 }

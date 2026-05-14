@@ -187,13 +187,25 @@ export default function JobsPage() {
               const isSaving = saving === j.id;
               return (
                 <tr key={j.id} className={`transition-colors ${j.featuredOrder ? "bg-amber-50 hover:bg-amber-100" : "hover:bg-gray-50"}`}>
-                  <td className="px-4 py-3 font-medium max-w-[180px]">
+                  <td className="px-4 py-3 font-medium max-w-[200px]">
                     <div className="flex items-center gap-1.5">
                       {j.featuredOrder && (
                         <span className="text-amber-400 text-xs font-bold">#{j.featuredOrder}</span>
                       )}
                       <span className="truncate">{j.title}</span>
                     </div>
+                    {j.photos && j.photos.length > 0 && (
+                      <div className="flex gap-1 mt-1.5 flex-wrap">
+                        {j.photos.slice(0, 5).map((url, idx) => (
+                          <img
+                            key={idx}
+                            src={url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_API_URL ?? ''}${url}`}
+                            alt={`Fotoğraf ${idx + 1}`}
+                            className="w-8 h-8 rounded object-cover border border-gray-200"
+                          />
+                        ))}
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-gray-600">{j.category}</td>
                   <td className="px-4 py-3 text-gray-600 max-w-[120px] truncate">{j.location}</td>

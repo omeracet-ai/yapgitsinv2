@@ -24,6 +24,10 @@ import { FraudDetectionService } from '../ai/fraud-detection.service';
 import { CategorySubscriptionsService } from '../subscriptions/category-subscriptions.service';
 import { encodeGeohash } from '../../common/geohash.util';
 import { tlToMinor } from '../../common/money.util';
+import { join } from 'path';
+import * as fs from 'fs';
+/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+const sharp = require('sharp');
 
 // Geçerli UUID — SQLite ve PostgreSQL uyumlu sabit seed kimliği
 const SEED_USER_ID = '00000000-0000-0000-0000-000000000001';
@@ -744,5 +748,59 @@ export class JobsService {
     await this._trackStatusChange(saved.id, saved.customerId, prevStatus, saved.status);
 
     return saved;
+  }
+
+  // ─── Phase 203: Bulk photo upload ────────────────────────────────────────────
+
+  /**
+   * POST /jobs/:id/photos/bulk
+   * İş sahibi veya kabul edilen usta max 5 fotoğraf yükler.
+   * Sharp: 1200px max width, quality 80, JPEG output.
+   */
+  async uploadPhotosBulk(
+    jobId: string,
+    files: Express.Multer.File[],
+    userId: string,
+  ): Promise<{ photos: string[] }> {
+    const job = await this.jobsRepository.findOne({ where: { id: jobId } });
+    if (!job) throw new NotFoundException('İlan bulunamadı');
+
+    // Yetki: iş sahibi veya kabul edilen usta
+    const isOwner = job.customerId === userId;
+    if (!isOwner) {
+      const accepted = await this.offersRepository.findOne({
+        where: { jobId, status: OfferStatus.ACCEPTED },
+      });
+      if (!accepted || accepted.userId !== userId) {
+        throw new ForbiddenException('Bu işlem için yetkiniz yok');
+      }
+    }
+
+    const current = job.photos ?? [];
+    if (current.length + files.length > 5) {
+      throw new BadRequestException(
+        `Toplam fotoğraf sayısı 5'i geçemez (mevcut: ${current.length})`,
+      );
+    }
+
+    const dir = join(process.cwd(), 'uploads', 'jobs');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    const newUrls: string[] = [];
+    for (const file of files) {
+      const baseName = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const filename = `${baseName}.jpg`;
+      const dest = join(dir, filename);
+      await sharp(file.buffer)
+        .resize({ width: 1200, withoutEnlargement: true })
+        .jpeg({ quality: 80 })
+        .toFile(dest);
+      newUrls.push(`/uploads/jobs/${filename}`);
+    }
+
+    job.photos = [...current, ...newUrls];
+    await this.jobsRepository.save(job);
+
+    return { photos: job.photos };
   }
 }

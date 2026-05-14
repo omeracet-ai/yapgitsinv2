@@ -12,6 +12,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/job_provider.dart';
 import '../../../reviews/presentation/screens/write_review_screen.dart';
 import '../widgets/completion_photos_section.dart';
+import '../widgets/job_photos_bulk_section.dart';
 import '../../widgets/job_photo_lightbox.dart';
 import '../widgets/job_questions_tab.dart';
 import '../widgets/job_video_player.dart';
@@ -247,6 +248,14 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   if (photos.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     _buildPhotosSection(photos),
+                  ],
+                  // Phase 203 — İlan sahibi fotoğraf ekleyebilir (max 5)
+                  if (widget.id != null && isOwner) ...[
+                    const SizedBox(height: 8),
+                    JobPhotosBulkSection(
+                      jobId: widget.id!,
+                      initialPhotos: photos,
+                    ),
                   ],
                   if (videos.isNotEmpty) ...[
                     const SizedBox(height: 8),

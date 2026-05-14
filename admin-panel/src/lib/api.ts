@@ -446,6 +446,7 @@ export interface Job {
   customerId: string;
   customer?: { id: string; fullName: string; email: string } | null;
   featuredOrder: number | null;
+  photos: string[] | null;
   createdAt: string;
   updatedAt: string;
 }

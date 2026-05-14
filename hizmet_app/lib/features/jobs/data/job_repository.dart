@@ -105,6 +105,23 @@ class JobRepository {
     }
   }
 
+  /// Phase 203 — İş ilanı bulk fotoğraf yükle (max 5, XFile → bytes, tek request)
+  Future<List<String>> uploadJobPhotosBulk(String jobId, List<XFile> photos) async {
+    try {
+      final form = FormData();
+      for (final f in photos) {
+        form.files.add(MapEntry(
+          'files',
+          MultipartFile.fromBytes(await f.readAsBytes(), filename: f.name),
+        ));
+      }
+      final res = await _dio.post('/jobs/$jobId/photos/bulk', data: form);
+      return List<String>.from((res.data['photos'] as List));
+    } on DioException catch (e) {
+      throw Exception(_dioMsg(e, 'Fotoğraflar yüklenemedi'));
+    }
+  }
+
   /// Tamamlama fotoğrafları yükle (atanan usta + in_progress/pending_completion)
   Future<List<String>> uploadCompletionPhotos(String jobId, List<XFile> files) async {
     try {
