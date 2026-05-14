@@ -2,7 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import * as fs from 'fs';
@@ -104,10 +105,14 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // DTO'da tanımlı olmayan alanları sil
-      forbidNonWhitelisted: false, // bilinmeyen alan gelirse hata yerine sessizce sil
+      forbidNonWhitelisted: true, // bilinmeyen alan gelirse 400 döndür (güvenlik)
       transform: true, // string → number dönüşümlerini otomatik yap
     }),
   );
+
+  // Phase 216 — Global ClassSerializerInterceptor: @Exclude() entity field'larını
+  // response'dan otomatik çıkarır (passwordHash, fcmTokens vb.)
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   // Swagger / OpenAPI dökümantasyonu — /api/docs adresinde
   const swaggerConfig = new DocumentBuilder()

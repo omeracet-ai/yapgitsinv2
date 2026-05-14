@@ -22,6 +22,7 @@ import { Job } from './modules/jobs/job.entity';
 import { Offer } from './modules/jobs/offer.entity';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { Review } from './modules/reviews/review.entity';
+import { ReviewHelpful } from './modules/reviews/review-helpful.entity';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { AiModule } from './modules/ai/ai.module';
 import { Category } from './modules/categories/category.entity';
@@ -118,8 +119,8 @@ import { StatsModule } from './modules/stats/stats.module';
     // Phase 170 / P191/5 — Multi-tier named throttlers (burst-tolerant).
     //   short:  10 req /  1s  — burst absorption (Flutter app + admin polls)
     //   medium: 60 req / 10s  — sustained polling window
-    //   long:  200 req / 60s  — per-minute ceiling (still catches scripted abuse)
-    //   default: 60 req / 60s — legacy/compat tier still referenced by per-route @Throttle overrides
+    //   long:  100 req / 60s  — per-minute ceiling (Phase 216: 200→100 production hardening)
+    //   default: 100 req / 60s — legacy/compat tier (Phase 216: 200→100 production hardening)
     //   auth-login: 5 req / 60s — brute-force protection (override on /auth/login, /auth/admin/login, /auth/sms/request)
     //   auth-register: 3 req / 60min — registration spam protection
     //   uploads: 10 req / 60s
@@ -129,8 +130,8 @@ import { StatsModule } from './modules/stats/stats.module';
     ThrottlerModule.forRoot([
       { name: 'short', ttl: 1_000, limit: 10 },
       { name: 'medium', ttl: 10_000, limit: 60 },
-      { name: 'long', ttl: 60_000, limit: 200 },
-      { name: 'default', ttl: 60_000, limit: 200 },
+      { name: 'long', ttl: 60_000, limit: 100 },
+      { name: 'default', ttl: 60_000, limit: 100 },
       { name: 'auth-login', ttl: 60_000, limit: 5 },
       { name: 'auth-register', ttl: 3_600_000, limit: 3 },
       { name: 'uploads', ttl: 60_000, limit: 10 },
@@ -150,6 +151,7 @@ import { StatsModule } from './modules/stats/stats.module';
           Job,
           Offer,
           Review,
+          ReviewHelpful,
           Category,
           TokenTransaction,
           ServiceRequest,

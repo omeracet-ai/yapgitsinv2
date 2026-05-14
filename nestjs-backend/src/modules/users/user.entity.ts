@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 
 export enum UserRole {
   USER = 'user',
@@ -30,6 +31,7 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
   email: string;
 
+  @Exclude()
   @Column({ type: 'varchar', nullable: true })
   passwordHash: string;
 
@@ -281,6 +283,7 @@ export class User {
 
   // ── Phase 113 — FCM push notifications ───────────────────────────────────
   // Multi-device support, max 5 tokens kept (oldest evicted on overflow)
+  @Exclude()
   @Column({ type: 'simple-json', nullable: true })
   fcmTokens: string[] | null;
 
