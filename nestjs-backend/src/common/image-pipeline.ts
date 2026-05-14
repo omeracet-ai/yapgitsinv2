@@ -69,11 +69,14 @@ export async function processImage(
     const webpName = `${baseName}-${size}.webp`;
     const avifName = `${baseName}-${size}.avif`;
 
-    await Promise.all([
-      sharp(resized).jpeg({ quality: jpegQ, mozjpeg: true }).toFile(join(baseDir, jpegName)),
-      sharp(resized).webp({ quality: webpQ }).toFile(join(baseDir, webpName)),
-      sharp(resized).avif({ quality: avifQ, effort: 4 }).toFile(join(baseDir, avifName)),
-    ]);
+    await sharp(resized).jpeg({ quality: jpegQ, mozjpeg: true }).toFile(join(baseDir, jpegName));
+    await sharp(resized).webp({ quality: webpQ }).toFile(join(baseDir, webpName));
+    // AVIF encoder requires libheif — not available on all servers; skip on failure.
+    try {
+      await sharp(resized).avif({ quality: avifQ, effort: 4 }).toFile(join(baseDir, avifName));
+    } catch {
+      // Server doesn't support AVIF — browser falls back to WebP/JPEG automatically.
+    }
 
     variants.push({ size, jpeg: jpegName, webp: webpName, avif: avifName });
   }

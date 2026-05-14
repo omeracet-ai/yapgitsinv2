@@ -20,8 +20,8 @@ export class AuthController {
     private twoFactorService: TwoFactorService,
   ) {}
 
-  /** Kullanıcı / işçi girişi — Phase 170: 5 req/dk per IP (brute-force koruma) */
-  @Throttle({ 'auth-login': { limit: 5, ttl: 60_000 } })
+  /** Kullanıcı / işçi girişi — Phase 170: 20 req/dk per IP (brute-force koruma) */
+  @Throttle({ 'auth-login': { limit: 20, ttl: 60_000 } })
   @Post('login')
   async login(@Body() body: { email: string; password: string }) {
     const user = await this.authService.validateUser(body.email, body.password);
@@ -52,7 +52,7 @@ export class AuthController {
   }
 
   /** Admin girişi  –  username: "admin"  password: "admin" */
-  @Throttle({ 'auth-login': { limit: 5, ttl: 60_000 } })
+  @Throttle({ 'auth-login': { limit: 20, ttl: 60_000 } })
   @Post('admin/login')
   adminLogin(@Body() body: { username: string; password: string }) {
     return this.authService.adminLogin(body.username, body.password);
@@ -131,8 +131,8 @@ export class AuthController {
     return this.authService.confirmEmailVerification(body?.token);
   }
 
-  /** Phase 123 — SMS OTP iste — Phase 170: 5 req/dk (sms cost koruma) */
-  @Throttle({ 'auth-login': { limit: 5, ttl: 60_000 } })
+  /** Phase 123 — SMS OTP iste — Phase 170: 10 req/dk (sms cost koruma) */
+  @Throttle({ 'auth-login': { limit: 10, ttl: 60_000 } })
   @Post('sms/request')
   requestSmsOtp(@Body() body: { phoneNumber: string }) {
     return this.authService.requestSmsOtp(body?.phoneNumber);

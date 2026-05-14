@@ -132,8 +132,8 @@ import { StatsModule } from './modules/stats/stats.module';
       { name: 'medium', ttl: 10_000, limit: 60 },
       { name: 'long', ttl: 60_000, limit: 100 },
       { name: 'default', ttl: 60_000, limit: 100 },
-      { name: 'auth-login', ttl: 60_000, limit: 5 },
-      { name: 'auth-register', ttl: 3_600_000, limit: 3 },
+      { name: 'auth-login', ttl: 60_000, limit: 20 },
+      { name: 'auth-register', ttl: 3_600_000, limit: 10 },
       { name: 'uploads', ttl: 60_000, limit: 10 },
     ]),
     TypeOrmModule.forRootAsync({

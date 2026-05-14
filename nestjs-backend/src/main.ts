@@ -101,6 +101,8 @@ async function bootstrap() {
   );
   console.log('[boot] helmet ready');
 
+  const isProd = process.env.NODE_ENV === 'production';
+
   // Global validation — tüm DTO dekoratörleri (class-validator) aktif hale gelir
   app.useGlobalPipes(
     new ValidationPipe({
@@ -114,45 +116,46 @@ async function bootstrap() {
   // response'dan otomatik çıkarır (passwordHash, fcmTokens vb.)
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
-  // Swagger / OpenAPI dökümantasyonu — /api/docs adresinde
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Yapgitsin API')
-    .setDescription(
-      'Yapgitsin v2 — Türkiye hizmet marketplace platformu REST API dökümantasyonu.\n\n' +
-      '**Auth:** JWT Bearer token ile kimlik doğrulama.\n\n' +
-      '**Test kullanıcıları:** fatma@test.com / mehmet@test.com (şifre: Test1234)',
-    )
-    .setVersion('2.0')
-    .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      'JWT-auth',
-    )
-    .addTag('Auth', 'Kimlik doğrulama — login, register, admin login')
-    .addTag('Users', 'Kullanıcı profili ve usta dizini')
-    .addTag('Jobs', 'İş ilanları ve teklifler')
-    .addTag('Service Requests', 'Hizmet talepleri ve başvurular')
-    .addTag('Bookings', 'Randevu yönetimi')
-    .addTag('Reviews', 'Değerlendirme ve puanlama')
-    .addTag('Categories', 'Hizmet kategorileri')
-    .addTag('Tokens', 'Token bakiyesi ve satın alma')
-    .addTag('Notifications', 'Bildirim yönetimi')
-    .addTag('Uploads', 'Dosya yükleme (fotoğraf)')
-    .addTag('AI', 'Yapay zeka özellikleri')
-    .addTag('Admin', 'Admin panel yönetimi')
-    .addTag('Chat', 'WebSocket sohbet')
-    .addTag('Payments', 'İyzipay ödeme entegrasyonu')
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document, {
-    customSiteTitle: 'Yapgitsin API Docs',
-    customCss: '.swagger-ui .topbar { background-color: #007DFE; }',
-  });
+  // Swagger / OpenAPI dökümantasyonu — /api/docs adresinde (dev-only)
+  if (!isProd) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Yapgitsin API')
+      .setDescription(
+        'Yapgitsin v2 — Türkiye hizmet marketplace platformu REST API dökümantasyonu.\n\n' +
+        '**Auth:** JWT Bearer token ile kimlik doğrulama.\n\n' +
+        '**Test kullanıcıları:** fatma@test.com / mehmet@test.com (şifre: Test1234)',
+      )
+      .setVersion('2.0')
+      .addBearerAuth(
+        { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+        'JWT-auth',
+      )
+      .addTag('Auth', 'Kimlik doğrulama — login, register, admin login')
+      .addTag('Users', 'Kullanıcı profili ve usta dizini')
+      .addTag('Jobs', 'İş ilanları ve teklifler')
+      .addTag('Service Requests', 'Hizmet talepleri ve başvurular')
+      .addTag('Bookings', 'Randevu yönetimi')
+      .addTag('Reviews', 'Değerlendirme ve puanlama')
+      .addTag('Categories', 'Hizmet kategorileri')
+      .addTag('Tokens', 'Token bakiyesi ve satın alma')
+      .addTag('Notifications', 'Bildirim yönetimi')
+      .addTag('Uploads', 'Dosya yükleme (fotoğraf)')
+      .addTag('AI', 'Yapay zeka özellikleri')
+      .addTag('Admin', 'Admin panel yönetimi')
+      .addTag('Chat', 'WebSocket sohbet')
+      .addTag('Payments', 'İyzipay ödeme entegrasyonu')
+      .build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, document, {
+      customSiteTitle: 'Yapgitsin API Docs',
+      customCss: '.swagger-ui .topbar { background-color: #007DFE; }',
+    });
+  }
 
   // CORS — Phase 170 hardening:
   //   - Production'da http:// ve localhost reject (boot fail)
   //   - Origin function: dev tüm localhost serbest, prod strict allowlist
   //   - Native (Capacitor / mobil) için origin=null/undefined kabul
-  const isProd = process.env.NODE_ENV === 'production';
   const rawOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
     : [];
@@ -213,6 +216,9 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
   app.useWebSocketAdapter(new IoAdapter(app.getHttpServer()));
+
+  // Cloudflare / reverse-proxy arkasında req.protocol = 'https' olsun.
+  app.set('trust proxy', 1);
 
   // uploads/jobs klasörünü oluştur (yoksa).
   // APP_ROOT kullan — iisnode altında process.cwd() = C:\Windows\System32\inetsrv (yazma izni yok).

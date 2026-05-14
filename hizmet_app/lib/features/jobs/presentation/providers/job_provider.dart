@@ -89,38 +89,38 @@ class Job {
   static IconData getIconForCategory(String? category) {
     switch (category?.toLowerCase()) {
       // Ev & Yaşam
-      case 'temizlik':              return Icons.cleaning_services;
-      case 'boya & badana':         return Icons.format_paint;
-      case 'bahçe & peyzaj':        return Icons.yard;
-      case 'nakliyat':              return Icons.local_shipping;
-      case 'mobilya montaj':        return Icons.chair;
-      case 'haşere kontrolü':       return Icons.pest_control;
-      case 'havuz & spa':           return Icons.pool;
-      case 'çilingir & kilit':      return Icons.lock;
+      case 'temizlik':              return Icons.cleaning_services_outlined;
+      case 'boya & badana':         return Icons.format_paint_outlined;
+      case 'bahçe & peyzaj':        return Icons.yard_outlined;
+      case 'nakliyat':              return Icons.local_shipping_outlined;
+      case 'mobilya montaj':        return Icons.chair_outlined;
+      case 'haşere kontrolü':       return Icons.pest_control_outlined;
+      case 'havuz & spa':           return Icons.pool_outlined;
+      case 'çilingir & kilit':      return Icons.lock_outline;
       // Yapı & Tesisat
-      case 'elektrikçi':            return Icons.electrical_services;
-      case 'tesisat':               return Icons.plumbing;
-      case 'klima & ısıtma':        return Icons.ac_unit;
-      case 'klima servis':          return Icons.ac_unit;
-      case 'zemin & parke':         return Icons.layers;
-      case 'çatı & yalıtım':       return Icons.roofing;
-      case 'marangoz & ahşap':      return Icons.carpenter;
-      case 'cam & doğrama':         return Icons.window;
-      case 'alçıpan & asma tavan':  return Icons.construction;
-      case 'güvenlik sistemleri':   return Icons.security;
+      case 'elektrikçi':            return Icons.electrical_services_outlined;
+      case 'tesisat':               return Icons.plumbing_outlined;
+      case 'klima & ısıtma':        return Icons.ac_unit_outlined;
+      case 'klima servis':          return Icons.ac_unit_outlined;
+      case 'zemin & parke':         return Icons.layers_outlined;
+      case 'çatı & yalıtım':       return Icons.roofing_outlined;
+      case 'marangoz & ahşap':      return Icons.carpenter_outlined;
+      case 'cam & doğrama':         return Icons.window_outlined;
+      case 'alçıpan & asma tavan':  return Icons.construction_outlined;
+      case 'güvenlik sistemleri':   return Icons.security_outlined;
       // Dijital & Teknik
-      case 'bilgisayar & it':       return Icons.computer;
-      case 'grafik & tasarım':      return Icons.palette;
-      case 'web & yazılım':         return Icons.language;
-      case 'fotoğraf & video':      return Icons.camera_alt;
+      case 'bilgisayar & it':       return Icons.computer_outlined;
+      case 'grafik & tasarım':      return Icons.palette_outlined;
+      case 'web & yazılım':         return Icons.language_outlined;
+      case 'fotoğraf & video':      return Icons.camera_alt_outlined;
       // Etkinlik & Yaşam
-      case 'düğün & organizasyon':  return Icons.celebration;
-      case 'özel ders & eğitim':    return Icons.school;
-      case 'sağlık & güzellik':     return Icons.spa;
-      case 'evcil hayvan':          return Icons.pets;
+      case 'düğün & organizasyon':  return Icons.celebration_outlined;
+      case 'özel ders & eğitim':    return Icons.school_outlined;
+      case 'sağlık & güzellik':     return Icons.spa_outlined;
+      case 'evcil hayvan':          return Icons.pets_outlined;
       // Araç & Taşıt
-      case 'araç & oto bakım':      return Icons.directions_car;
-      default:                       return Icons.build;
+      case 'araç & oto bakım':      return Icons.directions_car_outlined;
+      default:                       return Icons.build_outlined;
     }
   }
 

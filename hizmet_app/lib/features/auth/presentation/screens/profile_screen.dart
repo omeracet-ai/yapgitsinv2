@@ -1327,7 +1327,7 @@ class ProfileScreen extends ConsumerWidget {
                         Navigator.of(dialogCtx).pop();
                         await ref.read(authStateProvider.notifier).logout();
                         if (!context.mounted) return;
-                        context.go('/login');
+                        context.go('/giris-yap');
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Hesap silindi')),
                         );

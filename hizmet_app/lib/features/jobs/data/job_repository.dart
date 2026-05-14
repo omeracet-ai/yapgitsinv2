@@ -111,12 +111,12 @@ class JobRepository {
       final form = FormData();
       for (final f in photos) {
         form.files.add(MapEntry(
-          'files',
+          'photos',
           MultipartFile.fromBytes(await f.readAsBytes(), filename: f.name),
         ));
       }
-      final res = await _dio.post('/jobs/$jobId/photos/bulk', data: form);
-      return List<String>.from((res.data['photos'] as List));
+      final res = await _dio.post('/uploads/job-photos', data: form);
+      return List<String>.from(res.data as List);
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Fotoğraflar yüklenemedi'));
     }

@@ -143,6 +143,7 @@ class AddressesNotifier extends StateNotifier<List<SavedAddress>> {
   Future<void> setDefault(String id) async {
     state = state.map((a) => a.copyWith(isDefault: a.id == id)).toList();
     await _persist();
+    if (state.isEmpty) return;
     final def = state.firstWhere((a) => a.id == id, orElse: () => state.first);
     await _syncToProfile(def);
   }

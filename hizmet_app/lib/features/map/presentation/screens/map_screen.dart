@@ -537,7 +537,7 @@ class _MiniCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               ElevatedButton(
-                onPressed: () => context.push('/jobs/${job.id}'),
+                onPressed: () => context.push('/ilan/${job.id}'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(

@@ -103,7 +103,7 @@ export class UploadsController {
       // Phase 96: render JPEG/WebP/AVIF @ 1024/640/320 + legacy <name>.jpg
       await processImage(file.buffer, dir, baseName);
       urls.push(
-        `${req.protocol}://${req.get('host')}/uploads/jobs/${baseName}.jpg`,
+        `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/jobs/${baseName}.jpg`,
       );
     }
     return urls;
@@ -136,7 +136,7 @@ export class UploadsController {
       const dest = join(dir, filename);
       fs.writeFileSync(dest, file.buffer);
       urls.push(
-        `${req.protocol}://${req.get('host')}/uploads/jobs/${filename}`,
+        `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/jobs/${filename}`,
       );
     }
     return urls;
@@ -164,7 +164,7 @@ export class UploadsController {
     // Phase 96: render JPEG/WebP/AVIF @ 1024/640/320 + legacy <name>.jpg
     await processImage(file.buffer, dir, baseName);
     return {
-      url: `${req.protocol}://${req.get('host')}/uploads/portfolio/${folder}/${baseName}.jpg`,
+      url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/portfolio/${folder}/${baseName}.jpg`,
     };
   }
 
@@ -206,7 +206,7 @@ export class UploadsController {
     const dest = join(dir, filename);
     fs.writeFileSync(dest, file.buffer);
     return {
-      url: `${req.protocol}://${req.get('host')}/uploads/portfolio-videos/${folder}/${filename}`,
+      url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/portfolio-videos/${folder}/${filename}`,
     };
   }
 
@@ -251,7 +251,7 @@ export class UploadsController {
     const durationParsed = durationRaw ? parseInt(durationRaw, 10) : NaN;
     const duration = Number.isFinite(durationParsed) ? durationParsed : undefined;
     return {
-      url: `${req.protocol}://${req.get('host')}/uploads/intro-videos/${folder}/${filename}`,
+      url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/intro-videos/${folder}/${filename}`,
       duration,
     };
   }
@@ -284,7 +284,7 @@ export class UploadsController {
     });
 
     return {
-      url: `${req.protocol}://${req.get('host')}/uploads/profile/${folder}/${baseName}.jpg`,
+      url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/profile/${folder}/${baseName}.jpg`,
     };
   }
 
@@ -350,7 +350,7 @@ export class UploadsController {
       .toFile(dest);
 
     return {
-      url: `${req.protocol}://${req.get('host')}/uploads/identity/${folder}/kimlik.jpg`,
+      url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/identity/${folder}/kimlik.jpg`,
     };
   }
 
@@ -378,7 +378,7 @@ export class UploadsController {
       jpegQuality: 82,
     });
     return {
-      url: `${req.protocol}://${req.get('host')}/uploads/onboarding/${baseName}.jpg`,
+      url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/onboarding/${baseName}.jpg`,
     };
   }
 
@@ -450,7 +450,7 @@ export class UploadsController {
     }
 
     return {
-      url: `${req.protocol}://${req.get('host')}/uploads/chat-attachments/${folder}/${filename}`,
+      url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/chat-attachments/${folder}/${filename}`,
       type: isImage ? 'image' : 'document',
       name: file.originalname || filename,
       size: finalSize,
@@ -523,7 +523,7 @@ export class UploadsController {
     const duration = Number.isFinite(durationParsed) ? durationParsed : undefined;
 
     return {
-      url: `${req.protocol}://${req.get('host')}/uploads/chat-audio/${folder}/${filename}`,
+      url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/chat-audio/${folder}/${filename}`,
       type: 'audio',
       name: file.originalname || filename,
       size: file.size,
@@ -569,7 +569,7 @@ export class UploadsController {
     const dest = join(dir, filename);
     fs.writeFileSync(dest, file.buffer);
     return {
-      url: `${req.protocol}://${req.get('host')}/uploads/certifications/${folder}/${filename}`,
+      url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/certifications/${folder}/${filename}`,
       name: file.originalname || filename,
       size: file.size,
     };
@@ -602,7 +602,7 @@ export class UploadsController {
       .toFile(dest);
 
     return {
-      url: `${req.protocol}://${req.get('host')}/uploads/identity/${folder}/belge.jpg`,
+      url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/identity/${folder}/belge.jpg`,
     };
   }
 }

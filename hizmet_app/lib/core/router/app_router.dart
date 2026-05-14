@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../features/onboarding/data/onboarding_storage.dart';
@@ -5,6 +6,10 @@ import '../../../features/home/presentation/screens/main_shell.dart';
 import '../../../features/auth/presentation/screens/login_screen.dart';
 import '../../../features/auth/presentation/screens/register_screen.dart';
 import '../../../features/jobs/presentation/screens/post_job_screen.dart';
+import '../../../features/jobs/presentation/screens/job_detail_screen.dart';
+import '../../../features/jobs/data/job_repository.dart';
+import '../../../features/jobs/presentation/providers/job_provider.dart';
+import '../../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../../features/tokens/presentation/screens/token_screen.dart';
 import '../../../features/loyalty/presentation/screens/loyalty_screen.dart';
 import '../../../features/subscriptions/presentation/screens/subscription_screen.dart';
@@ -238,16 +243,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/ilan/:id',
         builder: (context, state) {
-          // Ilan detail placeholder — navigates to job detail via id
           final id = state.pathParameters['id']!;
-          return PostJobScreen(); // TODO: replace with IlanDetailScreen(id: id)
+          return _IlanDetailLoader(jobId: id);
         },
       ),
       GoRoute(
         path: '/chat/:roomId',
         builder: (context, state) {
           final roomId = state.pathParameters['roomId']!;
-          return AiChatScreen(); // TODO: replace with ChatRoomScreen(roomId: roomId)
+          return ChatDetailScreen(peerName: roomId, peerId: roomId);
         },
       ),
       GoRoute(
@@ -284,3 +288,41 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// Loader widget for /ilan/:id deep-link route.
+/// Fetches job data via [jobDetailProvider] and renders [JobDetailScreen].
+class _IlanDetailLoader extends ConsumerWidget {
+  final String jobId;
+  const _IlanDetailLoader({required this.jobId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(jobDetailProvider(jobId));
+    return async.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Scaffold(
+        appBar: AppBar(),
+        body: Center(child: Text('İlan yüklenemedi: $e')),
+      ),
+      data: (map) {
+        final job = Job.fromMap(map);
+        return JobDetailScreen(
+          id: job.id,
+          title: job.title,
+          description: job.description ?? job.desc,
+          location: job.location,
+          budget: job.budget,
+          category: job.category,
+          postedAt: job.time,
+          icon: Job.getIconForCategory(job.category),
+          color: Job.getColorForCategory(job.category),
+          isFeatured: job.isFeatured,
+          customerId: job.customerId,
+          photos: job.photos ?? const [],
+        );
+      },
+    );
+  }
+}
