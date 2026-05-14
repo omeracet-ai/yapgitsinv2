@@ -37,6 +37,9 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   images: { unoptimized: true },
 
+  // Next.js 16 Turbopack — webpack config devre dışı.
+  turbopack: {},
+
   // Dev server için aktif; prod static build'te no-op.
   async headers() {
     return [
