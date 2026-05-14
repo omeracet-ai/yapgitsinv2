@@ -17,6 +17,7 @@ export interface AuthUser {
   email: string;
   role: string;
   tenantId?: string | null;
+  city?: string;
 }
 
 export interface AuthenticatedRequest extends Request {

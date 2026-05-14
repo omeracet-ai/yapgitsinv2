@@ -732,10 +732,9 @@ export class JobsService {
     const commissionAmount = jobPrice * platformCommissionRate;
     const workerAmount = jobPrice - commissionAmount;
 
-    console.log(`[BANKA İŞLEMİ] İlan: ${job.id}`);
-    console.log(`- Müşteriden Çekilen Tutar: ${jobPrice} ₺`);
-    console.log(`- Platform Komisyonu (%10): ${commissionAmount.toFixed(2)} ₺`);
-    console.log(`- Ustaya Aktarılacak Tutar: ${workerAmount.toFixed(2)} ₺`);
+    this.logger.log(
+      `[BANKA İŞLEMİ] İlan=${job.id} müşteri=${jobPrice}₺ komisyon=${commissionAmount.toFixed(2)}₺ usta=${workerAmount.toFixed(2)}₺`,
+    );
     // -------------------------------------------------------
 
     const prevStatus = job.status;

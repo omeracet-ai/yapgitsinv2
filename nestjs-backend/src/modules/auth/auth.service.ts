@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   UnauthorizedException,
   BadRequestException,
   ForbiddenException,
@@ -27,6 +28,7 @@ import { MoreThan } from 'typeorm';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
@@ -263,7 +265,7 @@ export class AuthService implements OnModuleInit {
     const legacy = await this.usersService.findByEmail(legacyEmail);
     if (legacy) {
       await this.usersService.update(legacy.id, { email: adminEmail });
-      console.log('Admin email migrated: hizmet.app → yapgitsin.tr');
+      this.logger.log('Admin email migrated: hizmet.app → yapgitsin.tr');
       return;
     }
     const initialPassword =
@@ -277,7 +279,7 @@ export class AuthService implements OnModuleInit {
       role: UserRole.ADMIN,
       isPhoneVerified: true,
     });
-    console.log('Admin seeded');
+    this.logger.log('Admin seeded');
   }
 
   async validateUser(emailOrPhone: string, pass: string): Promise<AuthUser | null> {

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { SuspendUserDto } from './dto/suspend-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, IsNull, Between, MoreThan, In, ILike, Raw } from 'typeorm';
@@ -41,6 +41,7 @@ export interface FlaggedItem {
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
   constructor(
     @InjectRepository(Job) private jobsRepo: Repository<Job>,
     @InjectRepository(User) private usersRepo: Repository<User>,
@@ -484,8 +485,7 @@ export class AdminService {
       this.getChartData(),
     ]);
     if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      console.log(`[phase-175] getDashboardStats parallel ${Date.now() - t0}ms`);
+      this.logger.debug(`getDashboardStats parallel ${Date.now() - t0}ms`);
     }
 
     return {

@@ -23,15 +23,13 @@ import { processImage } from '../../common/image-pipeline';
 
 const sharp = require('sharp');
 
-function sanitizeName(name: string): string {
-  return (
-    name
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9À-ž-]/g, '')
-      .substring(0, 60) || 'user'
-  );
+function buildFileName(userId: string, city?: string): string {
+  const safe = (city ?? 'tr')
+    .toLowerCase()
+    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]/g, '-')
+    .substring(0, 20);
+  return `${userId.substring(0, 8)}_${safe}_${Date.now()}`;
 }
 
 const imageFilter = (req: any, file: any, cb: any) => {
@@ -159,8 +157,7 @@ export class UploadsController {
     @Req() req: any,
   ): Promise<{ url: string }> {
     if (!file) throw new BadRequestException('Fotoğraf seçilmedi');
-    const fullName: string = String(req.user?.fullName || 'user');
-    const folder = sanitizeName(fullName);
+    const folder = buildFileName(req.user.id, req.user.city);
     const dir = join(process.cwd(), 'uploads', 'portfolio', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const baseName = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -196,8 +193,7 @@ export class UploadsController {
     @Req() req: any,
   ): Promise<{ url: string }> {
     if (!file) throw new BadRequestException('Video seçilmedi');
-    const fullName: string = String(req.user?.fullName || 'user');
-    const folder = sanitizeName(fullName);
+    const folder = buildFileName(req.user.id, req.user.city);
     const dir = join(process.cwd(), 'uploads', 'portfolio-videos', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const extMap: Record<string, string> = {
@@ -239,8 +235,7 @@ export class UploadsController {
     @Req() req: any,
   ): Promise<{ url: string; duration?: number }> {
     if (!file) throw new BadRequestException('Video seçilmedi');
-    const fullName: string = String(req.user?.fullName || 'user');
-    const folder = sanitizeName(fullName);
+    const folder = buildFileName(req.user.id, req.user.city);
     const dir = join(process.cwd(), 'uploads', 'intro-videos', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const extMap: Record<string, string> = {
@@ -277,8 +272,7 @@ export class UploadsController {
   ): Promise<{ url: string }> {
     if (!file) throw new BadRequestException('Profil fotoğrafı seçilmedi');
 
-    const fullName: string = String(req.user?.fullName || 'user');
-    const folder = sanitizeName(fullName);
+    const folder = buildFileName(req.user.id, req.user.city);
     const dir = join(process.cwd(), 'uploads', 'profile', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
@@ -345,8 +339,7 @@ export class UploadsController {
   ): Promise<{ url: string }> {
     if (!file) throw new BadRequestException('Kimlik fotoğrafı zorunludur');
 
-    const fullName: string = String(req.user?.fullName || 'user');
-    const folder = sanitizeName(fullName);
+    const folder = buildFileName(req.user.id, req.user.city);
     const dir = join(process.cwd(), 'uploads', 'identity', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
@@ -424,8 +417,7 @@ export class UploadsController {
   ): Promise<{ url: string; type: 'image' | 'document'; name: string; size: number }> {
     if (!file) throw new BadRequestException('Dosya seçilmedi');
 
-    const fullName: string = String(req.user?.fullName || 'user');
-    const folder = sanitizeName(fullName);
+    const folder = buildFileName(req.user.id, req.user.city);
     const dir = join(process.cwd(), 'uploads', 'chat-attachments', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
@@ -506,8 +498,7 @@ export class UploadsController {
   }> {
     if (!file) throw new BadRequestException('Ses dosyası seçilmedi');
 
-    const fullName: string = String(req.user?.fullName || 'user');
-    const folder = sanitizeName(fullName);
+    const folder = buildFileName(req.user.id, req.user.city);
     const dir = join(process.cwd(), 'uploads', 'chat-audio', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
@@ -564,8 +555,7 @@ export class UploadsController {
     @Req() req: any,
   ): Promise<{ url: string; name: string; size: number }> {
     if (!file) throw new BadRequestException('Sertifika dosyası seçilmedi');
-    const fullName: string = String(req.user?.fullName || 'user');
-    const folder = sanitizeName(fullName);
+    const folder = buildFileName(req.user.id, req.user.city);
     const dir = join(process.cwd(), 'uploads', 'certifications', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const extMap: Record<string, string> = {
@@ -601,8 +591,7 @@ export class UploadsController {
   ): Promise<{ url: string }> {
     if (!file) throw new BadRequestException('Belge fotoğrafı seçilmedi');
 
-    const fullName: string = String(req.user?.fullName || 'user');
-    const folder = sanitizeName(fullName);
+    const folder = buildFileName(req.user.id, req.user.city);
     const dir = join(process.cwd(), 'uploads', 'identity', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 

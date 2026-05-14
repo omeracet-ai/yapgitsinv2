@@ -62,6 +62,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       // Phase 160 — multi-tenant. Fallback to null for legacy tokens (no claim) so
       // existing sessions stay valid; null = default tenant downstream.
       tenantId: payload.tenantId ?? null,
+      city: user.city ?? undefined,
     };
   }
 }
