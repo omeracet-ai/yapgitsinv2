@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -98,7 +99,7 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton>
       path = _filePath;
     }
     if (cancel || path == null) {
-      if (path != null) {
+      if (path != null && !kIsWeb) {
         try {
           await File(path).delete();
         } catch (e, st) {
@@ -109,10 +110,12 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton>
     }
     final secs = duration.inSeconds;
     if (secs < 1) {
-      try {
-        await File(path).delete();
-      } catch (e, st) {
-        debugPrint('voice_recorder_button._stop.shortDelete: $e\n$st');
+      if (!kIsWeb) {
+        try {
+          await File(path).delete();
+        } catch (e, st) {
+          debugPrint('voice_recorder_button._stop.shortDelete: $e\n$st');
+        }
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

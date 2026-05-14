@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -36,15 +37,18 @@ class _IntroVideoSectionState extends ConsumerState<IntroVideoSection> {
 
     // Client-side duration check (image_picker maxDuration trim'ler ama
     // bazı cihazlarda zorlama yok — çift kontrol).
+    // Web'de dart:io File kullanılamaz; duration check atlanır.
     int? durationSeconds;
-    final ctrl = VideoPlayerController.file(File(picked.path));
-    try {
-      await ctrl.initialize();
-      durationSeconds = ctrl.value.duration.inSeconds;
-    } catch (e, st) {
-      debugPrint('intro_video_section.pickVideo.initialize: $e\n$st');
-    } finally {
-      await ctrl.dispose();
+    if (!kIsWeb) {
+      final ctrl = VideoPlayerController.file(File(picked.path));
+      try {
+        await ctrl.initialize();
+        durationSeconds = ctrl.value.duration.inSeconds;
+      } catch (e, st) {
+        debugPrint('intro_video_section.pickVideo.initialize: $e\n$st');
+      } finally {
+        await ctrl.dispose();
+      }
     }
 
     if (durationSeconds != null && durationSeconds > 65) {

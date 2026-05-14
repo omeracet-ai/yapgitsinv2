@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
@@ -24,7 +24,7 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
   final ImagePicker _picker = ImagePicker();
   final Dio _dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
 
-  File? _selectedVideo;
+  XFile? _selectedVideo;
   bool _isUploading = false;
   double _uploadProgress = 0.0;
   String? _errorMessage;
@@ -40,8 +40,9 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
 
       if (xFile == null) return;
 
-      final file = File(xFile.path);
-      final sizeInMB = file.lengthSync() / (1024 * 1024);
+      // XFile.length() web-safe; dart:io File kullanmıyoruz.
+      final sizeBytes = await xFile.length();
+      final sizeInMB = sizeBytes / (1024 * 1024);
 
       // Max 50MB
       if (sizeInMB > 50) {
@@ -49,7 +50,7 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
         return;
       }
 
-      setState(() => _selectedVideo = file);
+      setState(() => _selectedVideo = xFile);
     } catch (e) {
       setState(() => _errorMessage = 'Video seçme hatası: $e');
     }
@@ -77,11 +78,20 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
         return;
       }
 
-      // MultipartFile oluştur
-      final multipartFile = await MultipartFile.fromFile(
-        _selectedVideo!.path,
-        filename: _selectedVideo!.path.split('/').last,
-      );
+      // MultipartFile oluştur — web'de fromBytes, mobilde fromFile
+      final filename = _selectedVideo!.name.isNotEmpty
+          ? _selectedVideo!.name
+          : _selectedVideo!.path.split('/').last;
+      final MultipartFile multipartFile;
+      if (kIsWeb) {
+        final bytes = await _selectedVideo!.readAsBytes();
+        multipartFile = MultipartFile.fromBytes(bytes, filename: filename);
+      } else {
+        multipartFile = await MultipartFile.fromFile(
+          _selectedVideo!.path,
+          filename: filename,
+        );
+      }
 
       // FormData oluştur
       final formData = FormData.fromMap({
@@ -279,7 +289,9 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _selectedVideo!.path.split('/').last,
+                      _selectedVideo!.name.isNotEmpty
+                          ? _selectedVideo!.name
+                          : _selectedVideo!.path.split('/').last,
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
@@ -288,11 +300,16 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      '${(_selectedVideo!.lengthSync() / (1024 * 1024)).toStringAsFixed(1)} MB',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
+                    FutureBuilder<int>(
+                      future: _selectedVideo!.length(),
+                      builder: (ctx, snap) => Text(
+                        snap.hasData
+                            ? '${(snap.data! / (1024 * 1024)).toStringAsFixed(1)} MB'
+                            : '...',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
                       ),
                     ),
                   ],

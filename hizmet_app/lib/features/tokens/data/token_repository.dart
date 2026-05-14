@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../../core/network/api_client_provider.dart';
@@ -35,6 +36,7 @@ class TokenRepository {
   }
 
   Future<String> downloadHistoryPdf({DateTime? from, DateTime? to}) async {
+    if (kIsWeb) throw UnsupportedError('PDF indirme web\'de desteklenmiyor');
     final qp = <String, dynamic>{};
     if (from != null) qp['from'] = from.toIso8601String();
     if (to != null) qp['to'] = to.toIso8601String();
