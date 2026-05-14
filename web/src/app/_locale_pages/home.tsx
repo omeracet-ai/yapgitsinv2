@@ -102,7 +102,7 @@ export default async function renderHome(L: Locale) {
           {categories.map((c) => (
             <Link
               key={c.id}
-              href={localePath(L, `/${slugify(c.name)}`)}
+              href={localePath(L, `/ilan?kategori=${slugify(c.name)}`)}
               className="group bg-white border border-[var(--border)] rounded-2xl p-5 md:p-6 hover:shadow-xl hover:shadow-blue-900/5 hover:border-[var(--primary)] hover:-translate-y-1 transition-all duration-200 text-center min-h-[140px] flex flex-col items-center justify-center"
             >
               <div className="text-4xl md:text-5xl mb-3 group-hover:scale-110 transition-transform">{c.icon}</div>
@@ -181,21 +181,6 @@ export default async function renderHome(L: Locale) {
         </div>
       </section>
 
-      {/* CITIES */}
-      <section className="container mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-20">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 md:mb-6 text-[var(--secondary)] text-center">{dict.common.popular_cities}</h2>
-        <div className="flex flex-wrap gap-2 justify-center">
-          {TR_CITIES.map((city) => (
-            <Link
-              key={city}
-              href={localePath(L, `/temizlik/${slugify(city)}`)}
-              className="bg-white border border-[var(--border)] px-4 py-2 rounded-full text-sm text-[var(--secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)] hover:shadow-sm min-h-[40px] inline-flex items-center transition-all"
-            >
-              {city}
-            </Link>
-          ))}
-        </div>
-      </section>
     </>
   );
 }

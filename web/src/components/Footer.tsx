@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { TR_CITIES, slugify, getCategories } from '@/lib/api';
+import { slugify, getCategories } from '@/lib/api';
 
 export default async function Footer() {
   const cats = (await getCategories()) || [];
@@ -46,7 +46,7 @@ export default async function Footer() {
       </div>
 
       {/* Link columns */}
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-12 md:py-14 grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-12 md:py-14 grid grid-cols-2 md:grid-cols-3 gap-8 text-sm">
         <div className="col-span-2 md:col-span-1">
           <div className="flex items-center gap-2 font-extrabold text-xl mb-4">
             <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-[var(--primary)] text-white text-sm">
@@ -75,21 +75,8 @@ export default async function Footer() {
           <ul className="space-y-2.5">
             {cats.slice(0, 6).map((c) => (
               <li key={c.id}>
-                <Link href={`/${slugify(c.name)}`} className="text-white/70 hover:text-white transition-colors">
+                <Link href={`/ilan?kategori=${slugify(c.name)}`} className="text-white/70 hover:text-white transition-colors">
                   {c.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div>
-          <h3 className="font-bold mb-4 text-base">Şehirler</h3>
-          <ul className="space-y-2.5">
-            {TR_CITIES.slice(0, 6).map((city) => (
-              <li key={city}>
-                <Link href={`/temizlik/${slugify(city)}`} className="text-white/70 hover:text-white transition-colors">
-                  {city}
                 </Link>
               </li>
             ))}

@@ -130,13 +130,16 @@ export default function MobileNav({
             >
               ＋ İlan Ver
             </Link>
-            <Link
-              href={`${localePrefix}/usta`}
+            <a
+              href="https://yapgitsin.tr/app?ref=usta-ol"
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => setOpen(false)}
-              className="flex items-center justify-center bg-[var(--muted)] text-[var(--secondary)] px-4 py-3 rounded-full font-semibold min-h-[48px] border border-[var(--border)]"
+              className="flex items-center justify-center gap-2 bg-[var(--muted)] text-[var(--secondary)] px-4 py-3 rounded-full font-semibold min-h-[48px] border border-[var(--border)]"
             >
               Usta Olarak Katıl
-            </Link>
+              <span className="text-[11px] font-normal text-[var(--primary)]">· Ücretsiz</span>
+            </a>
           </div>
         </nav>
       </aside>

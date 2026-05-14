@@ -33,7 +33,7 @@ export default function CategoryGrid({
         {categories.map((c) => (
           <Link
             key={c.id}
-            href={`${localePrefix}/${slugify(c.name)}`}
+            href={`${localePrefix}/ilan?kategori=${slugify(c.name)}`}
             className="card-soft group p-4 md:p-5 flex flex-col items-center text-center gap-2 md:gap-3 min-h-[120px] md:min-h-[140px] justify-center"
           >
             <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-[var(--primary-soft)] flex items-center justify-center text-2xl md:text-3xl group-hover:bg-[var(--primary-light)] transition-colors">

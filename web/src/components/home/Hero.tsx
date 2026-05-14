@@ -55,9 +55,14 @@ export default function Hero({
             <Link href={`${localePrefix}/ilan`} className="btn-primary !bg-white !text-[var(--primary-dark)] !shadow-none hover:!bg-[var(--primary-soft)]">
               Ücretsiz İlan Ver →
             </Link>
-            <Link href={`${localePrefix}/usta`} className="btn-ghost">
+            <a
+              href="https://yapgitsin.tr/app?ref=usta-ol"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-ghost"
+            >
               Usta Olarak Katıl
-            </Link>
+            </a>
           </div>
         </div>
       </div>

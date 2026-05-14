@@ -57,12 +57,15 @@ export default async function Header({ locale = DEFAULT_LOCALE }: { locale?: Loc
 
         {/* Desktop right side */}
         <div className="hidden md:flex items-center gap-2 lg:gap-3 flex-shrink-0">
-          <Link
-            href={localePath(locale, '/usta')}
-            className="text-sm font-semibold text-[var(--secondary)] hover:text-[var(--primary)] px-3 py-2"
+          <a
+            href="https://yapgitsin.tr/app?ref=usta-ol"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative group text-sm font-semibold text-[var(--secondary)] hover:text-[var(--primary)] px-3 py-2 flex flex-col items-center leading-tight"
           >
-            Usta Ol
-          </Link>
+            <span>Usta Ol</span>
+            <span className="text-[10px] font-normal text-[var(--primary)] leading-none">Ücretsiz kayıt</span>
+          </a>
           <Link
             href={localePath(locale, '/musteri')}
             className="text-sm font-semibold text-[var(--secondary)] hover:text-[var(--primary)] px-3 py-2"
