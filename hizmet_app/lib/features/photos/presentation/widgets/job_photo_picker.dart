@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' as io;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -6,8 +7,8 @@ import '../../../../core/theme/app_colors.dart';
 /// Fotoğraf seçtiren widget. Phase 157: bulk multi-pick (5 max), en az 1 zorunlu.
 class JobPhotoPicker extends StatefulWidget {
   static const int maxPhotos = 5;
-  final List<File> initialFiles;
-  final ValueChanged<List<File>> onChanged;
+  final List<XFile> initialFiles;
+  final ValueChanged<List<XFile>> onChanged;
 
   const JobPhotoPicker({
     super.key,
@@ -21,7 +22,7 @@ class JobPhotoPicker extends StatefulWidget {
 
 class _JobPhotoPickerState extends State<JobPhotoPicker> {
   final ImagePicker _picker = ImagePicker();
-  late List<File> _files;
+  late List<XFile> _files;
 
   @override
   void initState() {
@@ -38,9 +39,9 @@ class _JobPhotoPickerState extends State<JobPhotoPicker> {
     if (xFile == null) return;
     setState(() {
       if (index < _files.length) {
-        _files[index] = File(xFile.path);
+        _files[index] = xFile;
       } else {
-        _files.add(File(xFile.path));
+        _files.add(xFile);
       }
     });
     widget.onChanged(List.from(_files));
@@ -56,7 +57,7 @@ class _JobPhotoPickerState extends State<JobPhotoPicker> {
       limit: remaining,
     );
     if (xFiles.isEmpty) return;
-    final added = xFiles.take(remaining).map((x) => File(x.path)).toList();
+    final added = xFiles.take(remaining).toList();
     setState(() => _files.addAll(added));
     widget.onChanged(List.from(_files));
     if (xFiles.length > remaining && mounted) {
@@ -114,7 +115,7 @@ class _JobPhotoPickerState extends State<JobPhotoPicker> {
             // Mevcut fotoğraflar
             for (int i = 0; i < _files.length; i++)
               _SlotTile(
-                file: _files[i],
+                xfile: _files[i],
                 index: i + 1,
                 onTap: () => _pick(i),
                 onRemove: () => _remove(i),
@@ -122,7 +123,7 @@ class _JobPhotoPickerState extends State<JobPhotoPicker> {
             // "+" ekle butonu (sadece cap'e ulaşılmadıysa)
             if (_files.length < JobPhotoPicker.maxPhotos)
               _SlotTile(
-                file: null,
+                xfile: null,
                 index: _files.length + 1,
                 onTap: () => _pick(_files.length),
                 onRemove: null,
@@ -135,13 +136,13 @@ class _JobPhotoPickerState extends State<JobPhotoPicker> {
 }
 
 class _SlotTile extends StatelessWidget {
-  final File? file;
+  final XFile? xfile;
   final int index;
   final VoidCallback onTap;
   final VoidCallback? onRemove;
 
   const _SlotTile({
-    required this.file,
+    required this.xfile,
     required this.index,
     required this.onTap,
     this.onRemove,
@@ -156,19 +157,35 @@ class _SlotTile extends StatelessWidget {
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: file != null ? null : AppColors.background,
+            color: xfile != null ? null : AppColors.background,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: file != null ? AppColors.primary : AppColors.border,
-              width: file != null ? 2 : 1,
+              color: xfile != null ? AppColors.primary : AppColors.border,
+              width: xfile != null ? 2 : 1,
             ),
-            image: file != null
-                ? DecorationImage(image: FileImage(file!), fit: BoxFit.cover)
-                : null,
           ),
-          child: file != null
+          child: xfile != null
               ? Stack(
                   children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: kIsWeb
+                          ? Image.network(
+                              xfile!.path,
+                              fit: BoxFit.cover,
+                              width: 90,
+                              height: 90,
+                              errorBuilder: (_, __, ___) => const Center(
+                                child: Icon(Icons.image, color: AppColors.textHint),
+                              ),
+                            )
+                          : Image.file(
+                              io.File(xfile!.path),
+                              fit: BoxFit.cover,
+                              width: 90,
+                              height: 90,
+                            ),
+                    ),
                     if (onRemove != null)
                       Positioned(
                         top: 4,

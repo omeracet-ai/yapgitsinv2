@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io' as io;
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -33,8 +34,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
   DateTime? _birthDate;
 
   // ── Belgeler ───────────────────────────────────────────────────────────────
-  File? _newIdentityPhoto;
-  File? _newDocumentPhoto;
+  XFile? _newIdentityPhoto;
+  XFile? _newDocumentPhoto;
   String? _currentIdentityUrl;
   String? _currentDocumentUrl;
   bool _identityVerified = false;
@@ -139,12 +140,11 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     final picked = await ImagePicker().pickImage(
         source: ImageSource.gallery, imageQuality: 80, maxWidth: 1280);
     if (picked == null) return;
-    final file = File(picked.path);
     setState(() {
       if (isIdentity) {
-        _newIdentityPhoto = file;
+        _newIdentityPhoto = picked;
       } else {
-        _newDocumentPhoto = file;
+        _newDocumentPhoto = picked;
       }
     });
   }
@@ -540,7 +540,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     required String subtitle,
     required IconData icon,
     required String? currentUrl,
-    required File? newFile,
+    required XFile? newFile,
     required bool isVerified,
     required bool required,
     required VoidCallback onPick,
@@ -631,8 +631,11 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
               ),
               clipBehavior: Clip.antiAlias,
               child: hasFile
-                  ? Image.file(newFile,
-                      fit: BoxFit.cover, width: double.infinity)
+                  ? (kIsWeb
+                      ? Image.network(newFile!.path,
+                          fit: BoxFit.cover, width: double.infinity)
+                      : Image.file(io.File(newFile!.path),
+                          fit: BoxFit.cover, width: double.infinity))
                   : Image.network(currentUrl!,
                       fit: BoxFit.cover,
                       width: double.infinity,

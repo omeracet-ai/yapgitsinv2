@@ -60,7 +60,7 @@ class _IntroVideoSectionState extends ConsumerState<IntroVideoSection> {
     setState(() => _busy = true);
     try {
       final repo = ref.read(photoRepositoryProvider);
-      final result = await repo.uploadIntroVideo(File(picked.path),
+      final result = await repo.uploadIntroVideo(picked,
           durationSeconds: durationSeconds);
       if (!mounted) return;
       ref.read(authStateProvider.notifier).updateUserData({

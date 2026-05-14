@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/network/api_client_provider.dart';
 
 final serviceRequestRepositoryProvider = Provider(
@@ -137,7 +137,7 @@ class ServiceRequestRepository {
     }
   }
 
-  Future<String> uploadJobPhoto(File file) async {
+  Future<String> uploadJobPhoto(XFile file) async {
     try {
       final bytes = await file.readAsBytes();
       final formData = FormData.fromMap({
@@ -151,7 +151,7 @@ class ServiceRequestRepository {
     }
   }
 
-  Future<String> uploadIdentityPhoto(File file) async {
+  Future<String> uploadIdentityPhoto(XFile file) async {
     try {
       final bytes = await file.readAsBytes();
       final formData = FormData.fromMap({
@@ -164,7 +164,7 @@ class ServiceRequestRepository {
     }
   }
 
-  Future<String> uploadDocument(File file) async {
+  Future<String> uploadDocument(XFile file) async {
     try {
       final bytes = await file.readAsBytes();
       final formData = FormData.fromMap({

@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' as io;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -24,7 +25,7 @@ class _PostServiceRequestScreenState
 
   String? _selectedCategory;
   String? _selectedCategoryId;
-  File? _image;
+  XFile? _image;
   bool _loading = false;
   String? _error;
   double? _lat;
@@ -64,7 +65,7 @@ class _PostServiceRequestScreenState
       imageQuality: 70,
       maxWidth: 1280,
     );
-    if (picked != null) setState(() => _image = File(picked.path));
+    if (picked != null) setState(() => _image = picked);
   }
 
   Future<void> _submit() async {
@@ -271,8 +272,11 @@ class _PostServiceRequestScreenState
                   child: _image != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(11),
-                          child: Image.file(_image!,
-                              fit: BoxFit.cover, width: double.infinity),
+                          child: kIsWeb
+                              ? Image.network(_image!.path,
+                                  fit: BoxFit.cover, width: double.infinity)
+                              : Image.file(io.File(_image!.path),
+                                  fit: BoxFit.cover, width: double.infinity),
                         )
                       : const Column(
                           mainAxisAlignment: MainAxisAlignment.center,

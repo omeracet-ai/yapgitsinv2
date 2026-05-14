@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +41,7 @@ class _WorkerOnboardingScreenState
   final _cityCtrl = TextEditingController();
   final _districtCtrl = TextEditingController();
   int _radiusKm = 20;
-  File? _identityPhoto;
+  XFile? _identityPhoto;
 
   bool _saving = false;
   String? _error;

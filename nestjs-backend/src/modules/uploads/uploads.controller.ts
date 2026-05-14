@@ -56,7 +56,7 @@ const videoFilter = (req: any, file: any, cb: any) => {
 
 // Phase 170 — class-level throttle: 10 req/dk per IP (default tracker).
 // JWT subject bazlı tracker eklenmek istenirse custom ThrottlerGuard.getTracker override gerekir.
-@Throttle({ uploads: { limit: 10, ttl: 60_000 } })
+@Throttle({ uploads: { limit: 30, ttl: 60_000 } })
 @Controller('uploads')
 export class UploadsController {
   constructor(private readonly uploadsService: UploadsService) {}

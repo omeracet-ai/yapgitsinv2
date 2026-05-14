@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -45,8 +45,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   DateTime? _dueDate;
 
   // Fotoğraf & Video adımı için
-  List<File> _selectedPhotos = [];
-  List<File> _selectedVideos = [];
+  List<XFile> _selectedPhotos = [];
+  List<XFile> _selectedVideos = [];
   List<String> _uploadedPhotoUrls = [];
   List<String> _uploadedVideoUrls = [];
   bool _uploading = false;
@@ -255,8 +255,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     _templateNameController.clear();
     setState(() {
       _selectedCategory = null;
-      _selectedPhotos = [];
-      _selectedVideos = [];
+      _selectedPhotos = <XFile>[];
+      _selectedVideos = <XFile>[];
       _uploadedPhotoUrls = [];
       _uploadedVideoUrls = [];
       _lat = null;

@@ -1,12 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/media_utils.dart';
 
 /// Video seçtiren widget. [onChanged] ile üst widget'a iletir.
 class JobVideoPicker extends StatefulWidget {
-  final List<File> initialFiles;
-  final ValueChanged<List<File>> onChanged;
+  final List<XFile> initialFiles;
+  final ValueChanged<List<XFile>> onChanged;
 
   const JobVideoPicker({
     super.key,
@@ -20,7 +20,7 @@ class JobVideoPicker extends StatefulWidget {
 
 class _JobVideoPickerState extends State<JobVideoPicker> {
   final ImagePicker _picker = ImagePicker();
-  late List<File> _files;
+  late List<XFile> _files;
 
   @override
   void initState() {
@@ -34,11 +34,26 @@ class _JobVideoPickerState extends State<JobVideoPicker> {
       maxDuration: const Duration(minutes: 2),
     );
     if (xFile == null) return;
+
+    // 50MB boyut filtresi
+    final valid = await validateVideoSize(xFile);
+    if (!valid) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Video 50MB sınırını aşıyor. Lütfen daha küçük bir video seçin.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() {
       if (index < _files.length) {
-        _files[index] = File(xFile.path);
+        _files[index] = xFile;
       } else {
-        _files.add(File(xFile.path));
+        _files.add(xFile);
       }
     });
     widget.onChanged(List.from(_files));
@@ -66,7 +81,7 @@ class _JobVideoPickerState extends State<JobVideoPicker> {
         ),
         const SizedBox(height: 6),
         const Text(
-          'Opsiyonel. İşinizi anlatan kısa videolar ekleyebilirsiniz.',
+          'Opsiyonel. İşinizi anlatan kısa videolar ekleyebilirsiniz. (Max 50MB)',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 14),
@@ -77,7 +92,7 @@ class _JobVideoPickerState extends State<JobVideoPicker> {
             // Mevcut videolar
             for (int i = 0; i < _files.length; i++)
               _VideoSlotTile(
-                file: _files[i],
+                xfile: _files[i],
                 index: i + 1,
                 onTap: () => _pick(i),
                 onRemove: () => _remove(i),
@@ -85,7 +100,7 @@ class _JobVideoPickerState extends State<JobVideoPicker> {
             // "+" ekle butonu
             if (_files.length < 3) // Max 3 video limit
               _VideoSlotTile(
-                file: null,
+                xfile: null,
                 index: _files.length + 1,
                 onTap: () => _pick(_files.length),
                 onRemove: null,
@@ -98,13 +113,13 @@ class _JobVideoPickerState extends State<JobVideoPicker> {
 }
 
 class _VideoSlotTile extends StatelessWidget {
-  final File? file;
+  final XFile? xfile;
   final int index;
   final VoidCallback onTap;
   final VoidCallback? onRemove;
 
   const _VideoSlotTile({
-    required this.file,
+    required this.xfile,
     required this.index,
     required this.onTap,
     this.onRemove,
@@ -119,14 +134,14 @@ class _VideoSlotTile extends StatelessWidget {
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: file != null ? AppColors.primaryLight.withValues(alpha: 0.3) : AppColors.background,
+            color: xfile != null ? AppColors.primaryLight.withValues(alpha: 0.3) : AppColors.background,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: file != null ? AppColors.primary : AppColors.border,
-              width: file != null ? 2 : 1,
+              color: xfile != null ? AppColors.primary : AppColors.border,
+              width: xfile != null ? 2 : 1,
             ),
           ),
-          child: file != null
+          child: xfile != null
               ? Stack(
                   children: [
                     const Center(

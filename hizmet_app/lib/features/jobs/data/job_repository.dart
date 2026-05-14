@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/network/api_client_provider.dart';
 
 final jobRepositoryProvider = Provider((ref) {
@@ -106,13 +106,13 @@ class JobRepository {
   }
 
   /// Tamamlama fotoğrafları yükle (atanan usta + in_progress/pending_completion)
-  Future<List<String>> uploadCompletionPhotos(String jobId, List<File> files) async {
+  Future<List<String>> uploadCompletionPhotos(String jobId, List<XFile> files) async {
     try {
       final form = FormData();
       for (final f in files) {
         form.files.add(MapEntry(
           'photos',
-          await MultipartFile.fromFile(f.path),
+          MultipartFile.fromBytes(await f.readAsBytes(), filename: f.name),
         ));
       }
       final res = await _dio.post(

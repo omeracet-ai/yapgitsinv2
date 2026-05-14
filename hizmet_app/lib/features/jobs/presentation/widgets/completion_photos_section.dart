@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,8 +46,7 @@ class _CompletionPhotosSectionState
       final picker = ImagePicker();
       final picked = await picker.pickMultiImage(limit: remaining);
       if (picked.isEmpty) return;
-      final files =
-          picked.take(remaining).map((x) => File(x.path)).toList();
+      final files = picked.take(remaining).toList();
       setState(() => _uploading = true);
       final repo = ref.read(jobRepositoryProvider);
       final updated = await repo.uploadCompletionPhotos(widget.jobId, files);

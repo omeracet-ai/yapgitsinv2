@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -43,7 +42,7 @@ class _PortfolioGalleryState extends ConsumerState<PortfolioGallery> {
     setState(() => _busy = true);
     try {
       final repo = ref.read(photoRepositoryProvider);
-      await repo.uploadPortfolioPhoto(File(picked.path));
+      await repo.uploadPortfolioPhoto(picked);
       if (!mounted) return;
       ref.invalidate(publicProfileProvider(widget.userId));
       ScaffoldMessenger.of(context).showSnackBar(
@@ -76,7 +75,7 @@ class _PortfolioGalleryState extends ConsumerState<PortfolioGallery> {
     setState(() => _busyVideo = true);
     try {
       final repo = ref.read(photoRepositoryProvider);
-      await repo.uploadPortfolioVideo(File(picked.path));
+      await repo.uploadPortfolioVideo(picked);
       if (!mounted) return;
       ref.invalidate(publicProfileProvider(widget.userId));
       ScaffoldMessenger.of(context).showSnackBar(

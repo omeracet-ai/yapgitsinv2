@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' as io;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -71,8 +72,8 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
   bool   _registerAsWorker = false;
 
   // Adım 2: Kimlik fotoğrafı
-  File?  _identityPhoto;
-  File?  _documentPhoto;
+  XFile?  _identityPhoto;
+  XFile?  _documentPhoto;
 
   int    _step     = 0; // 0 = form, 1 = kimlik yükleme
   bool   _loading  = false;
@@ -117,12 +118,12 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
 
   Future<void> _pickIdentity() async {
     final p = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80, maxWidth: 1280);
-    if (p != null) setState(() => _identityPhoto = File(p.path));
+    if (p != null) setState(() => _identityPhoto = p);
   }
 
   Future<void> _pickDocument() async {
     final p = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80, maxWidth: 1280);
-    if (p != null) setState(() => _documentPhoto = File(p.path));
+    if (p != null) setState(() => _documentPhoto = p);
   }
 
   Future<void> _submitStep2() async {
@@ -429,7 +430,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
     );
   }
 
-  Widget _photoPickerTile({required String label, required IconData icon, required File? file, required VoidCallback onTap, required bool required}) {
+  Widget _photoPickerTile({required String label, required IconData icon, required XFile? file, required VoidCallback onTap, required bool required}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -445,7 +446,9 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         child: file != null
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(11),
-                child: Image.file(file, fit: BoxFit.cover, width: double.infinity))
+                child: kIsWeb
+                    ? Image.network(file!.path, fit: BoxFit.cover, width: double.infinity)
+                    : Image.file(io.File(file!.path), fit: BoxFit.cover, width: double.infinity))
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

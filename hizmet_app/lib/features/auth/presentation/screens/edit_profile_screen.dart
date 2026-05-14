@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io' as io;
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -51,7 +52,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _isWorker = false;
 
   // Identity
-  File? _newIdentityPhoto;
+  XFile? _newIdentityPhoto;
   String? _currentIdentityUrl;
   bool _identityVerified = false;
 
@@ -126,7 +127,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       final url = await ref
           .read(photoRepositoryProvider)
-          .uploadProfilePhoto(File(picked.path));
+          .uploadProfilePhoto(picked);
       // PATCH /users/me ile kalıcı olarak kaydet — _patch zaten authState + completion
       // refresh ediyor; setState 'photo' bitince UI yeni avatarı CircleAvatar'da gösterir.
       await _patch('photo', {'profileImageUrl': url});
@@ -212,7 +213,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final picked = await ImagePicker().pickImage(
         source: ImageSource.gallery, imageQuality: 80, maxWidth: 1280);
     if (picked == null) return;
-    setState(() => _newIdentityPhoto = File(picked.path));
+    setState(() => _newIdentityPhoto = picked);
   }
 
   Future<void> _saveIdentity() async {
@@ -655,8 +656,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         if (hasFile)
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.file(_newIdentityPhoto!,
-                height: 140, width: double.infinity, fit: BoxFit.cover),
+            child: kIsWeb
+                ? Image.network(_newIdentityPhoto!.path,
+                    height: 140, width: double.infinity, fit: BoxFit.cover)
+                : Image.file(io.File(_newIdentityPhoto!.path),
+                    height: 140, width: double.infinity, fit: BoxFit.cover),
           )
         else if (hasUrl)
           ClipRRect(

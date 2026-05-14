@@ -1,12 +1,13 @@
-import 'dart:io';
+import 'dart:io' as io;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../../core/theme/app_colors.dart';
 
 /// Phase 129 Step 5 — Kimlik fotoğrafı (zorunlu).
 class WorkerOnboardingStep5Identity extends StatelessWidget {
-  final File? identityPhoto;
-  final ValueChanged<File?> onChanged;
+  final XFile? identityPhoto;
+  final ValueChanged<XFile?> onChanged;
   const WorkerOnboardingStep5Identity({
     super.key,
     required this.identityPhoto,
@@ -16,7 +17,7 @@ class WorkerOnboardingStep5Identity extends StatelessWidget {
   Future<void> _pick() async {
     final p = await ImagePicker().pickImage(
         source: ImageSource.gallery, imageQuality: 80, maxWidth: 1280);
-    if (p != null) onChanged(File(p.path));
+    if (p != null) onChanged(p);
   }
 
   @override
@@ -50,8 +51,11 @@ class WorkerOnboardingStep5Identity extends StatelessWidget {
               child: identityPhoto != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(13),
-                      child: Image.file(identityPhoto!,
-                          fit: BoxFit.cover, width: double.infinity),
+                      child: kIsWeb
+                          ? Image.network(identityPhoto!.path,
+                              fit: BoxFit.cover, width: double.infinity)
+                          : Image.file(io.File(identityPhoto!.path),
+                              fit: BoxFit.cover, width: double.infinity),
                     )
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
