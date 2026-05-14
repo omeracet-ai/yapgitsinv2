@@ -737,6 +737,24 @@ let AdminService = class AdminService {
             await qr.release();
         }
     }
+    async setJobLocation(id, latitude, longitude) {
+        const job = await this.jobsRepo.findOne({ where: { id } });
+        if (!job)
+            throw new common_1.NotFoundException(`Job ${id} not found`);
+        job.latitude = latitude;
+        job.longitude = longitude;
+        await this.jobsRepo.save(job);
+        return { id };
+    }
+    async setUserLocation(id, latitude, longitude) {
+        const user = await this.usersRepo.findOne({ where: { id } });
+        if (!user)
+            throw new common_1.NotFoundException(`User ${id} not found`);
+        user.latitude = latitude;
+        user.longitude = longitude;
+        await this.usersRepo.save(user);
+        return { id };
+    }
 };
 exports.AdminService = AdminService;
 exports.AdminService = AdminService = AdminService_1 = __decorate([

@@ -185,4 +185,10 @@ export declare class AdminService {
         topCategories: any;
         workersByCity: any;
     }>;
+    setJobLocation(id: string, latitude: number, longitude: number): Promise<{
+        id: string;
+    }>;
+    setUserLocation(id: string, latitude: number, longitude: number): Promise<{
+        id: string;
+    }>;
 }

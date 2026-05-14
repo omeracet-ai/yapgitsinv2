@@ -305,6 +305,16 @@ let AdminController = class AdminController {
     getAnalyticsOverview() {
         return this.adminService.getAnalyticsOverview();
     }
+    async setJobLocation(id, body, req) {
+        const result = await this.adminService.setJobLocation(id, body.latitude, body.longitude);
+        await this.adminAuditService.logAction(req.user.id, 'job.location.update', 'job', id, body);
+        return result;
+    }
+    async setUserLocation(id, body, req) {
+        const result = await this.adminService.setUserLocation(id, body.latitude, body.longitude);
+        await this.adminAuditService.logAction(req.user.id, 'user.location.update', 'user', id, body);
+        return result;
+    }
 };
 exports.AdminController = AdminController;
 __decorate([
@@ -728,6 +738,24 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], AdminController.prototype, "getAnalyticsOverview", null);
+__decorate([
+    (0, common_1.Patch)('jobs/:id/location'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "setJobLocation", null);
+__decorate([
+    (0, common_1.Patch)('users/:id/location'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "setUserLocation", null);
 exports.AdminController = AdminController = __decorate([
     (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), admin_guard_1.AdminGuard),

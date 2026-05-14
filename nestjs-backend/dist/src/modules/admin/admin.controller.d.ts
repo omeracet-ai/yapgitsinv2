@@ -350,4 +350,20 @@ export declare class AdminController {
         topCategories: any;
         workersByCity: any;
     }>;
+    setJobLocation(id: string, body: {
+        latitude: number;
+        longitude: number;
+    }, req: Request & {
+        user: AuthUser;
+    }): Promise<{
+        id: string;
+    }>;
+    setUserLocation(id: string, body: {
+        latitude: number;
+        longitude: number;
+    }, req: Request & {
+        user: AuthUser;
+    }): Promise<{
+        id: string;
+    }>;
 }
