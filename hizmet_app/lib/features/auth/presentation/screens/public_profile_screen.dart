@@ -23,6 +23,17 @@ final publicProfileProvider =
   },
 );
 
+/// Phase 211 — public availability slots for a worker
+final publicAvailabilitySlotsProvider =
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+  (ref, userId) async {
+    final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
+    final resp = await dio.get('/users/$userId/availability');
+    final list = resp.data as List? ?? [];
+    return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  },
+);
+
 class PublicProfileScreen extends ConsumerWidget {
   final String userId;
   const PublicProfileScreen({super.key, required this.userId});
@@ -78,10 +89,8 @@ class _ProfileView extends ConsumerWidget {
                                 ?.cast<Map<String, dynamic>>() ?? [];
     final badges          = data['badges']            as List?;
     final isWorker        = workerCats.isNotEmpty;
-    final availRaw        = data['availabilitySchedule'];
-    final Map<String, bool>? availability = availRaw is Map
-        ? availRaw.map((k, v) => MapEntry(k.toString(), v == true))
-        : null;
+    // Phase 211 — slot-based availability
+    final availSlotsAsync = ref.watch(publicAvailabilitySlotsProvider(userId));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -399,14 +408,23 @@ class _ProfileView extends ConsumerWidget {
                   const SizedBox(height: 8),
                 ],
 
-                // ── Müsaitlik ────────────────────────────────────────────
-                if (availability != null && isWorker) ...[
-                  _section(
-                    title: 'Müsaitlik',
-                    child: AvailabilityChips(schedule: availability),
+                // ── Müsaitlik (Phase 211) ─────────────────────────────────
+                if (isWorker)
+                  availSlotsAsync.when(
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
+                    data: (slots) => slots.isEmpty
+                        ? const SizedBox.shrink()
+                        : Column(
+                            children: [
+                              _section(
+                                title: 'Müsaitlik',
+                                child: AvailabilityChips(slots: slots),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                          ),
                   ),
-                  const SizedBox(height: 8),
-                ],
 
                 // ── İstatistik detayı ─────────────────────────────────────
                 _section(

@@ -1039,15 +1039,8 @@ class ProfileScreen extends ConsumerWidget {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const CalendarScreen()));
           }),
-          _menuItem(Icons.event_available_outlined, 'Müsaitlik Programı', () {
-            final auth = ref.read(authStateProvider);
-            final user = auth is AuthAuthenticated ? auth.user : <String, dynamic>{};
-            final raw = user['availabilitySchedule'];
-            Map<String, bool>? initial;
-            if (raw is Map) {
-              initial = raw.map((k, v) => MapEntry(k.toString(), v == true));
-            }
-            AvailabilityEditorSheet.show(context, initial: initial);
+          _menuItem(Icons.event_available_outlined, 'Müsaitlik Takvimi', () {
+            AvailabilityEditorSheet.show(context);
           }),
           ..._buildWorkerOnlyItems(context, ref),
           ..._buildCustomerOnlyItems(context, ref),

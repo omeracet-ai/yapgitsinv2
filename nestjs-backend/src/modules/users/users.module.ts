@@ -33,6 +33,7 @@ import { DataExportService } from './data-export.service';
 import { EarningsService } from './earnings.service';
 import { AiModule } from '../ai/ai.module';
 import { BoostModule } from '../boost/boost.module';
+import { AvailabilityModule } from '../availability/availability.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { BoostModule } from '../boost/boost.module';
     ]),
     AiModule,
     BoostModule,
+    AvailabilityModule,
     forwardRef(() => SubscriptionsModule),
   ],
   controllers: [CalendarController, CalendarPublicController, UsersController, WalletController, DataExportController],

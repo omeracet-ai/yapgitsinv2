@@ -6,6 +6,23 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import { jsonLd, personLD, breadcrumbLD, clip, alternateLinks } from '@/lib/seo';
 import LeadForm from '@/components/LeadForm';
 
+// Phase 211 — fetch public availability slots for a worker
+async function getWorkerAvailability(id: string): Promise<{ dayOfWeek: number; startTime: string; endTime: string }[]> {
+  try {
+    const { API_URL } = process.env;
+    const base = API_URL || 'https://api.yapgitsin.tr';
+    const res = await fetch(`${base}/users/${id}/availability`, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+const DOW_LABELS: Record<number, string> = {
+  1: 'Pzt', 2: 'Sal', 3: 'Çar', 4: 'Per', 5: 'Cum', 6: 'Cmt', 0: 'Paz',
+};
+
 // Static export: pre-render top 100 worker profiles at build time.
 // If backend is unreachable during build, returns [] and no worker pages emit
 // (sitemap also skips them). Mobile/admin app remains the source of truth.
@@ -57,11 +74,15 @@ export default async function WorkerPage({
 }) {
   const { idSlug } = await params;
   const id = parseSlugId(idSlug);
-  const w = await getWorker(id);
+  const [w, availSlots] = await Promise.all([
+    getWorker(id),
+    getWorkerAvailability(id),
+  ]);
   if (!w) return notFound();
 
   const cats: string[] = w.workerCategories || [];
   const reviews: any[] = w.reviews || [];
+  const activeDows = new Set(availSlots.map((s) => s.dayOfWeek));
 
   return (
     <>
@@ -152,6 +173,35 @@ export default async function WorkerPage({
               <p className="text-gray-700 text-sm">
                 {w.hourlyRateMin || '—'} – {w.hourlyRateMax || '—'} TL / saat
               </p>
+            </div>
+          )}
+          {availSlots.length > 0 && (
+            <div className="bg-white border border-[var(--border)] rounded-xl p-5">
+              <h3 className="font-bold text-[var(--secondary)] mb-3">Müsaitlik</h3>
+              <div className="flex flex-wrap gap-2">
+                {([1, 2, 3, 4, 5, 6, 0] as const).map((dow) => {
+                  const on = activeDows.has(dow);
+                  const slot = availSlots.find((s) => s.dayOfWeek === dow);
+                  return (
+                    <div
+                      key={dow}
+                      title={on && slot ? `${slot.startTime} – ${slot.endTime}` : 'Müsait değil'}
+                      className={`flex flex-col items-center px-2 py-1 rounded-lg text-xs font-semibold border ${
+                        on
+                          ? 'bg-green-50 border-green-300 text-green-700'
+                          : 'bg-gray-100 border-gray-200 text-gray-400'
+                      }`}
+                    >
+                      <span>{DOW_LABELS[dow]}</span>
+                      {on && slot && (
+                        <span className="font-normal text-[10px] mt-0.5 text-green-600">
+                          {slot.startTime}–{slot.endTime}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </aside>

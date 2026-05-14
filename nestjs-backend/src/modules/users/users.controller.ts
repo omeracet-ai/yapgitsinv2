@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Patch,
+  Put,
   Post,
   Delete,
   Param,
@@ -32,6 +33,7 @@ import { EarningsService } from './earnings.service';
 import { WorkerInsuranceService } from './worker-insurance.service';
 import { WorkerCertificationService } from './worker-certification.service';
 import { CalendarSyncService } from './calendar-sync.service';
+import { AvailabilityService } from '../availability/availability.service';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
 import { Offer, OfferStatus } from '../jobs/offer.entity';
@@ -46,6 +48,7 @@ export class UsersController {
     private readonly insuranceSvc: WorkerInsuranceService,
     private readonly certificationSvc: WorkerCertificationService,
     private readonly calendarSyncSvc: CalendarSyncService,
+    private readonly availabilitySvc: AvailabilityService,
     private readonly adminAuditService: AdminAuditService,
     private readonly dataPrivacy: DataPrivacyService,
     @InjectRepository(Job) private jobsRepo: Repository<Job>,
@@ -680,6 +683,79 @@ export class UsersController {
   ) {
     const d = daysRaw ? parseInt(daysRaw, 10) : 30;
     return this.svc.getAvailabilitySlots(id, isNaN(d) ? 30 : d);
+  }
+
+  // ── Phase 211: Worker weekly availability time slots ─────────────────
+
+  /** GET /users/availability/my — ustanın kendi 7-gün slot listesi */
+  @UseGuards(AuthGuard('jwt'))
+  @Get('availability/my')
+  getMyAvailability(@Request() req: AuthenticatedRequest) {
+    return this.availabilitySvc.getSlots(req.user.id);
+  }
+
+  /**
+   * PUT /users/availability — toplu güncelleme (7 gün array).
+   * Body: [{ dayOfWeek: 0-6, startTime: 'HH:MM', endTime: 'HH:MM', isAvailable: bool }]
+   * isAvailable=false olan günler silinir; true olanlar upsert edilir.
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Put('availability')
+  async bulkUpdateAvailability(
+    @Request() req: AuthenticatedRequest,
+    @Body()
+    body: {
+      days: Array<{
+        dayOfWeek: number;
+        startTime: string;
+        endTime: string;
+        isAvailable: boolean;
+      }>;
+    },
+  ) {
+    const userId = req.user.id;
+    if (!Array.isArray(body?.days)) {
+      throw new BadRequestException('days array required');
+    }
+    // Mevcut slot'ları çek, sonra upsert/delete
+    const existing = await this.availabilitySvc.getSlots(userId);
+    const existingByDay = new Map(existing.map((s) => [s.dayOfWeek, s]));
+
+    const results: import('../availability/availability-slot.entity').AvailabilitySlot[] = [];
+    for (const d of body.days) {
+      if (d.dayOfWeek < 0 || d.dayOfWeek > 6) continue;
+      const existing_ = existingByDay.get(d.dayOfWeek);
+      if (!d.isAvailable) {
+        // Gün kapalıysa var olan slot'u sil
+        if (existing_) {
+          await this.availabilitySvc.removeSlot(existing_.id, userId);
+        }
+      } else {
+        // Gün açıksa upsert
+        if (existing_) {
+          const updated = await this.availabilitySvc.updateSlot(existing_.id, userId, {
+            startTime: d.startTime,
+            endTime: d.endTime,
+            isActive: true,
+          });
+          results.push(updated);
+        } else {
+          const created = await this.availabilitySvc.addSlot(userId, {
+            dayOfWeek: d.dayOfWeek,
+            startTime: d.startTime,
+            endTime: d.endTime,
+          });
+          results.push(created);
+        }
+      }
+    }
+    return results;
+  }
+
+  /** GET /users/:id/availability — public, belirli ustanın müsaitliği */
+  @Get(':id/availability')
+  getPublicAvailability(@Param('id') id: string) {
+    return this.availabilitySvc.getSlots(id);
   }
 
   /** Phase 133 — Public customer profile (no worker fields). */
