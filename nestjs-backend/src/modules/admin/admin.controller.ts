@@ -27,7 +27,7 @@ import { DataDeletionRequestStatus } from '../users/data-deletion-request.entity
 import type { Request } from 'express';
 import type { AuthUser } from '../../common/types/auth.types';
 
-@SkipThrottle()
+@SkipThrottle({ short: true, medium: true, long: true, default: true, 'auth-login': true, 'auth-register': true, uploads: true })
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
 @UseInterceptors(AuditInterceptor)
