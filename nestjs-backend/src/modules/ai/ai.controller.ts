@@ -158,4 +158,13 @@ export class AiController {
       })),
     };
   }
+
+  /** Phase 300: FlutterFlow Generic Assistant Proxy */
+  @Post('assistant')
+  async assistant(@Body() body: { message: string; context?: string }) {
+    const { message, context } = body;
+    const history = context ? [{ role: 'user' as const, content: context }] : [];
+    const result = await this.aiService.chat(message, history);
+    return { text: result };
+  }
 }
