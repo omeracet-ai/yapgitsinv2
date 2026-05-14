@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getCategories, getWorkers, slugify, unwrap, TR_CITIES } from '@/lib/api';
+import { getCategories, getWorkers, slugify, unwrap } from '@/lib/api';
 import { jsonLd, breadcrumbLD } from '@/lib/seo';
 import LeadForm from '@/components/LeadForm';
 import SearchBar from '@/components/SearchBar';
@@ -56,7 +56,7 @@ export default async function renderHome(L: Locale) {
           <div className="max-w-2xl mx-auto mb-6 bg-white rounded-2xl p-2 shadow-2xl ring-1 ring-black/5">
             <SearchBar
               cats={searchCats}
-              cities={[...TR_CITIES]}
+              cities={[]}
               localePrefix={localePrefix}
               placeholder={(dict as any).site?.hero_subtitle ? SEARCH_PLACEHOLDER[L] || SEARCH_PLACEHOLDER.tr : SEARCH_PLACEHOLDER.tr}
             />

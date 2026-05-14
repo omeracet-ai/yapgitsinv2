@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getCategories, getWorkers, slugify, unwrap, TR_CITIES } from '@/lib/api';
+import { getCategories, getWorkers, slugify, unwrap } from '@/lib/api';
 import { jsonLd, breadcrumbLD } from '@/lib/seo';
 import LeadForm from '@/components/LeadForm';
 import Hero from '@/components/home/Hero';
@@ -33,7 +33,7 @@ export default async function HomePage() {
         }}
       />
 
-      <Hero searchCats={searchCats} cities={[...TR_CITIES]} />
+      <Hero searchCats={searchCats} cities={[]} />
 
       <CategoryGrid categories={gridCats} />
 
@@ -51,24 +51,6 @@ export default async function HomePage() {
             title="Hızlı iletişim"
             subtitle="Aradığınız hizmeti yazın, doğru ustayla biz sizi buluşturalım."
           />
-        </div>
-      </section>
-
-      {/* Cities */}
-      <section className="container mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
-        <h2 className="h-section text-xl md:text-2xl text-[var(--secondary)] mb-5 md:mb-6">
-          Hizmet verdiğimiz şehirler
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {TR_CITIES.map((city) => (
-            <Link
-              key={city}
-              href={`/temizlik/${slugify(city)}`}
-              className="bg-white border border-[var(--border)] px-4 py-2 rounded-full text-sm text-[var(--secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors min-h-[40px] inline-flex items-center"
-            >
-              {city}
-            </Link>
-          ))}
         </div>
       </section>
 
