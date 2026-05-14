@@ -333,6 +333,18 @@ export const api = {
   updatePromoCode:  (id: string, data: Partial<PromoCode>) => request<PromoCode>(`/admin/promo-codes/${id}`, { method: 'PATCH',  body: JSON.stringify(data) }),
   deletePromoCode:  (id: string)                        => request<void>(`/admin/promo-codes/${id}`,        { method: 'DELETE' }),
 
+  // Harita — koordinat güncelleme
+  setJobLocation: (id: string, latitude: number, longitude: number) =>
+    request<{ id: string }>(`/admin/jobs/${id}/location`, {
+      method: 'PATCH',
+      body: JSON.stringify({ latitude, longitude }),
+    }),
+  setUserLocation: (id: string, latitude: number, longitude: number) =>
+    request<{ id: string }>(`/admin/users/${id}/location`, {
+      method: 'PATCH',
+      body: JSON.stringify({ latitude, longitude }),
+    }),
+
   // Broadcast notifications
   broadcastNotification: (data: { title: string; message: string; segment: 'all' | 'workers' | 'customers' | 'verified_workers' }) =>
     request<{ sent: number; segment: string }>('/admin/notifications/broadcast', {
@@ -453,6 +465,8 @@ export interface Job {
   description: string;
   category: string;
   location: string;
+  latitude: number | null;
+  longitude: number | null;
   budgetMin: number;
   budgetMax: number;
   status: 'open' | 'in_progress' | 'completed' | 'cancelled';
@@ -611,6 +625,9 @@ export interface User {
   suspendedReason?: string | null;
   suspendedAt?: string | null;
   manualBadges?: string[] | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  city?: string | null;
 }
 
 export interface BulkVerifyResult {

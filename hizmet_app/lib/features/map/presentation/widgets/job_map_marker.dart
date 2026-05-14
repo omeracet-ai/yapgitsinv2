@@ -17,6 +17,7 @@ class JobMapMarker extends StatelessWidget {
   });
 
   static const _blue = Color(0xFF007DFE);
+  static const _orange = Color(0xFFFF5E14);
 
   static IconData _iconFor(String category) {
     switch (category) {
@@ -37,8 +38,8 @@ class JobMapMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pillBg = isSelected ? _blue : Colors.white;
-    final iconColor = isSelected ? Colors.white : _blue;
+    final pillBg = isSelected ? _orange : Colors.white;
+    final iconColor = isSelected ? Colors.white : _orange;
     final textColor = isSelected ? Colors.white : const Color(0xFF1A1A2E);
     final priceLabel = (price != null && price!.isNotEmpty) ? '₺$price' : '?';
 
@@ -53,7 +54,7 @@ class JobMapMarker extends StatelessWidget {
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: _blue.withValues(alpha: 0.45),
+                  color: _orange.withValues(alpha: 0.45),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -83,25 +84,35 @@ class JobMapMarker extends StatelessWidget {
       ),
     );
 
-    // "Y" badge shown when selected
+    // "Y" Yapgitsin logo badge — always visible
     final badge = Positioned(
-      top: -3,
-      right: -3,
+      top: -4,
+      right: -4,
       child: Container(
-        width: 14,
-        height: 14,
+        width: 16,
+        height: 16,
         decoration: BoxDecoration(
-          color: _blue,
+          color: isSelected ? Colors.white : _orange,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 1),
+          border: Border.all(
+            color: isSelected ? _orange : Colors.white,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 3,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
         alignment: Alignment.center,
-        child: const Text(
+        child: Text(
           'Y',
           style: TextStyle(
-            fontSize: 7,
+            fontSize: 8,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: isSelected ? _orange : Colors.white,
             height: 1,
           ),
         ),
@@ -120,7 +131,7 @@ class JobMapMarker extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             pill,
-            if (isSelected) badge,
+            badge,
           ],
         ),
         tail,

@@ -882,4 +882,26 @@ export class AdminService {
       await qr.release();
     }
   }
+
+  // ── Harita Yönetimi — Koordinat güncelleme (Phase map-mgmt) ──────────────
+
+  async setJobLocation(id: string, latitude: number, longitude: number): Promise<{ id: string }> {
+    const job = await this.jobsRepo.findOne({ where: { id } });
+    if (!job) throw new NotFoundException(`Job ${id} not found`);
+    job.latitude  = latitude;
+    job.longitude = longitude;
+    // geohash auto-recompute is handled by entity BeforeUpdate hook if present,
+    // otherwise we just store raw coordinates for now.
+    await this.jobsRepo.save(job);
+    return { id };
+  }
+
+  async setUserLocation(id: string, latitude: number, longitude: number): Promise<{ id: string }> {
+    const user = await this.usersRepo.findOne({ where: { id } });
+    if (!user) throw new NotFoundException(`User ${id} not found`);
+    user.latitude  = latitude;
+    user.longitude = longitude;
+    await this.usersRepo.save(user);
+    return { id };
+  }
 }

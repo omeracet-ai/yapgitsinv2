@@ -617,4 +617,27 @@ export class AdminController {
   getAnalyticsOverview() {
     return this.adminService.getAnalyticsOverview();
   }
+
+  // ── Harita Yönetimi — Koordinat güncelleme ────────────────────────────────
+  @Patch('jobs/:id/location')
+  async setJobLocation(
+    @Param('id') id: string,
+    @Body() body: { latitude: number; longitude: number },
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.adminService.setJobLocation(id, body.latitude, body.longitude);
+    await this.adminAuditService.logAction(req.user.id, 'job.location.update', 'job', id, body as unknown as Record<string, unknown>);
+    return result;
+  }
+
+  @Patch('users/:id/location')
+  async setUserLocation(
+    @Param('id') id: string,
+    @Body() body: { latitude: number; longitude: number },
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const result = await this.adminService.setUserLocation(id, body.latitude, body.longitude);
+    await this.adminAuditService.logAction(req.user.id, 'user.location.update', 'user', id, body as unknown as Record<string, unknown>);
+    return result;
+  }
 }
