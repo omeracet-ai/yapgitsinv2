@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist } from 'next/font/google';
-import { jsonLd, alternateLinks, ogLocaleFor } from '@/lib/seo';
-import { localBusinessLD } from '@/lib/seo';
+import { jsonLd, alternateLinks, ogLocaleFor, localBusinessLD, websiteLD } from '@/lib/seo';
 import SwRegister from '@/components/SwRegister';
 import SentryInit from '@/components/SentryInit';
 import PlausibleScript from '@/components/PlausibleScript';
@@ -56,10 +55,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="tr" className={`${geistSans.variable} h-full antialiased`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: jsonLd(localBusinessLD()) }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(localBusinessLD()) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(websiteLD()) }} />
         <PlausibleScript />
       </head>
       <body className="min-h-full flex flex-col bg-[var(--muted)] text-[var(--foreground)]">

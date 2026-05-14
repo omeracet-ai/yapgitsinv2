@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getWorker, getWorkers, unwrap, parseSlugId, slugify, type Worker } from '@/lib/api';
-import { jsonLd, personLD, breadcrumbLD, clip } from '@/lib/seo';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import { jsonLd, personLD, breadcrumbLD, clip, alternateLinks } from '@/lib/seo';
 import LeadForm from '@/components/LeadForm';
 
 // Static export: pre-render top 100 worker profiles at build time.
@@ -39,6 +40,7 @@ export async function generateMetadata({
   return {
     title,
     description: desc,
+    alternates: alternateLinks(`/usta/${idSlug}`),
     openGraph: {
       title,
       description: desc,
@@ -79,6 +81,10 @@ export default async function WorkerPage({
           ),
         }}
       />
+
+      <div className="container mx-auto max-w-5xl px-4 md:px-6 pt-4">
+        <Breadcrumbs items={[{ label: 'Anasayfa', href: '/' }, { label: 'Ustalar', href: '/usta' }, { label: w.fullName }]} />
+      </div>
 
       <section className="bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] text-white">
         <div className="container mx-auto max-w-5xl px-4 md:px-6 lg:px-8 py-8 md:py-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 text-center sm:text-left">

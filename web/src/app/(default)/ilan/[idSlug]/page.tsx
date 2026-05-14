@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getJob, getJobs, unwrap, parseSlugId, slugify, type Job } from '@/lib/api';
-import { jsonLd, jobPostingLD, breadcrumbLD, clip } from '@/lib/seo';
+import { jsonLd, jobPostingLD, breadcrumbLD, clip, alternateLinks } from '@/lib/seo';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import LeadForm from '@/components/LeadForm';
 
 // Static export: pre-render top 100 open job listings at build time.
@@ -35,6 +36,7 @@ export async function generateMetadata({
   return {
     title,
     description: desc,
+    alternates: alternateLinks(`/ilan/${idSlug}`),
     openGraph: {
       title,
       description: desc,
@@ -73,10 +75,11 @@ export default async function JobPage({
 
       <section className="bg-white border-b border-[var(--border)]">
         <div className="container mx-auto max-w-4xl px-4 md:px-6 lg:px-8 py-6 md:py-8">
-          <nav className="text-xs text-gray-500 mb-3">
-            <Link href="/" className="hover:underline">Anasayfa</Link> /{' '}
-            <Link href={`/${slugify(job.category)}`} className="hover:underline">{job.category}</Link>
-          </nav>
+          <Breadcrumbs items={[
+            { label: 'Anasayfa', href: '/' },
+            { label: job.category, href: `/${slugify(job.category)}` },
+            { label: job.title },
+          ]} />
           <h1 className="text-2xl sm:text-3xl md:text-3xl font-bold text-[var(--secondary)] mb-3 leading-tight">
             {job.title}
           </h1>

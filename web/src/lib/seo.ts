@@ -45,6 +45,20 @@ export function jsonLd(data: object): string {
   return JSON.stringify(data).replace(/</g, '\\u003c');
 }
 
+export function websiteLD() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: NAME,
+    url: SITE,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${SITE}/ara?q={query}`,
+      'query-input': 'required name=query',
+    },
+  };
+}
+
 export function localBusinessLD() {
   return {
     '@context': 'https://schema.org',
