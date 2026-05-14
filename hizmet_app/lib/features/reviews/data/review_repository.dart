@@ -77,4 +77,18 @@ class ReviewRepository {
       return [];
     }
   }
+
+  /// Phase 212: "Faydalı" oyu gönder
+  Future<int> markHelpful(String reviewId) async {
+    try {
+      final response = await _dio.post('/reviews/$reviewId/helpful');
+      return (response.data as Map<String, dynamic>)['helpfulCount'] as int? ?? 0;
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 409) throw Exception('Bu yorumu zaten faydalı buldunuz.');
+      if (status == 403) throw Exception('Kendi yorumunuza oy veremezsiniz.');
+      final msg = e.response?.data?['message'];
+      throw Exception(msg ?? 'İstek başarısız ($status)');
+    }
+  }
 }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../reviews/presentation/screens/write_review_screen.dart';
+import '../../../reviews/data/review_repository.dart';
 import '../../../photos/presentation/widgets/job_photo_picker.dart';
 import '../../data/provider_repository.dart';
 
@@ -390,42 +391,19 @@ class _ProviderContent extends ConsumerWidget {
   Widget _reviewCard(Map<String, dynamic> review) {
     final reviewer = review['reviewer'] as Map<String, dynamic>?;
     final reviewerName = reviewer?['fullName'] as String? ?? 'Kullanıcı';
-    final rating  = (review['rating'] ?? 0) as int;
+    final rating = (review['rating'] ?? 0) as int;
     final comment = review['comment'] as String? ?? '';
+    final photos = (review['photos'] as List?)?.cast<String>() ?? [];
+    final helpfulCount = (review['helpfulCount'] ?? 0) as int;
+    final reviewId = review['id'] as String;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(reviewerName,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              Row(
-                children: List.generate(
-                    5,
-                    (i) => Icon(Icons.star,
-                        size: 14,
-                        color: i < rating ? Colors.amber : Colors.grey[300])),
-              ),
-            ],
-          ),
-          if (comment.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(comment,
-                style: const TextStyle(
-                    color: AppColors.textSecondary, fontSize: 13)),
-          ],
-        ],
-      ),
+    return _ReviewCardWidget(
+      reviewId: reviewId,
+      reviewerName: reviewerName,
+      rating: rating,
+      comment: comment,
+      photos: photos,
+      helpfulCount: helpfulCount,
     );
   }
 
@@ -451,3 +429,146 @@ class _ProviderContent extends ConsumerWidget {
   }
 }
 
+/// Phase 212: Review kartı — fotoğraf scroll + faydalı butonu
+class _ReviewCardWidget extends ConsumerStatefulWidget {
+  final String reviewId;
+  final String reviewerName;
+  final int rating;
+  final String comment;
+  final List<String> photos;
+  final int helpfulCount;
+
+  const _ReviewCardWidget({
+    required this.reviewId,
+    required this.reviewerName,
+    required this.rating,
+    required this.comment,
+    required this.photos,
+    required this.helpfulCount,
+  });
+
+  @override
+  ConsumerState<_ReviewCardWidget> createState() => _ReviewCardWidgetState();
+}
+
+class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
+  late int _helpfulCount;
+  bool _voted = false;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _helpfulCount = widget.helpfulCount;
+  }
+
+  Future<void> _onHelpful() async {
+    if (_voted || _loading) return;
+    setState(() => _loading = true);
+    try {
+      final repo = ref.read(reviewRepositoryProvider);
+      final count = await repo.markHelpful(widget.reviewId);
+      setState(() {
+        _helpfulCount = count;
+        _voted = true;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), duration: const Duration(seconds: 2)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(widget.reviewerName,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              Row(
+                children: List.generate(
+                    5,
+                    (i) => Icon(Icons.star,
+                        size: 14,
+                        color: i < widget.rating ? Colors.amber : Colors.grey[300])),
+              ),
+            ],
+          ),
+          if (widget.comment.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(widget.comment,
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          ],
+          // Phase 212: fotoğraf thumbnails
+          if (widget.photos.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 80,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: widget.photos.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 6),
+                itemBuilder: (_, i) => ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    widget.photos[i],
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 80,
+                      height: 80,
+                      color: AppColors.border,
+                      child: const Icon(Icons.broken_image, color: AppColors.textHint),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          // Phase 212: faydalı butonu
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: _onHelpful,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _loading
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Icon(
+                        _voted ? Icons.thumb_up : Icons.thumb_up_outlined,
+                        size: 16,
+                        color: _voted ? AppColors.primary : AppColors.textHint,
+                      ),
+                const SizedBox(width: 4),
+                Text(
+                  'Faydalı ($_helpfulCount)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _voted ? AppColors.primary : AppColors.textHint,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

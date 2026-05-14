@@ -58,6 +58,14 @@ export class Review {
   @Column({ type: 'datetime', nullable: true })
   repliedAt: Date | null;
 
+  /** Phase 212: review photos (max 3 URLs) */
+  @Column({ type: 'simple-json', nullable: true })
+  photos: string[] | null;
+
+  /** Phase 212: helpful votes count */
+  @Column({ type: 'integer', default: 0 })
+  helpfulCount: number;
+
   /** Phase 116: AI fraud-flag */
   @Column({ type: 'boolean', default: false })
   flagged: boolean;
