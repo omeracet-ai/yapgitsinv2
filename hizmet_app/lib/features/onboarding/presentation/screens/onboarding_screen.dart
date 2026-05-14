@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io' show Platform;
 import '../../../../core/constants/api_constants.dart';
 import '../../data/onboarding_storage.dart';
 
@@ -11,7 +10,7 @@ import '../../data/onboarding_storage.dart';
 class _Slide {
   final String title;
   final String body;
-  final String? emoji;
+  final IconData icon;
   final String? imageUrl;
   final Color gradientStart;
   final Color gradientEnd;
@@ -19,7 +18,7 @@ class _Slide {
   const _Slide({
     required this.title,
     required this.body,
-    this.emoji,
+    required this.icon,
     this.imageUrl,
     required this.gradientStart,
     required this.gradientEnd,
@@ -33,39 +32,36 @@ class _Slide {
   factory _Slide.fromJson(Map<String, dynamic> j) => _Slide(
         title: j['title'] as String? ?? '',
         body: j['body'] as String? ?? '',
-        emoji: j['emoji'] as String?,
+        icon: Icons.home_repair_service,
         imageUrl: j['imageUrl'] as String?,
         gradientStart: _hex((j['gradientStart'] as String?) ?? '#007DFE'),
         gradientEnd: _hex((j['gradientEnd'] as String?) ?? '#0056B3'),
       );
 }
 
-// ─── Fallback (API'ye ulaşamazsa) ────────────────────────────────────────────
+// ─── Fallback slides (task spec) ─────────────────────────────────────────────
 
 const _fallback = [
   _Slide(
-    title: 'Usta Bul,\nHizmet Al',
-    body: 'Temizlik, tadilat, tesisattan nakliyata kadar '
-        'binlerce doğrulanmış usta tek platformda.',
-    emoji: '🛠️',
+    title: 'Usta Bul',
+    body: 'Türkiye\'nin en iyi ustalarını keşfet',
+    icon: Icons.search,
     gradientStart: Color(0xFF007DFE),
     gradientEnd: Color(0xFF0056B3),
   ),
   _Slide(
-    title: 'Güvenli &\nHızlı',
-    body: 'Kimlik doğrulamalı ustalar, şeffaf fiyatlar '
-        've güvenli ödeme sistemi ile içiniz rahat.',
-    emoji: '🔒',
-    gradientStart: Color(0xFF2D3E50),
-    gradientEnd: Color(0xFF1a2530),
+    title: 'Teklif Al',
+    body: 'Ustalardan anlık teklif al, karşılaştır',
+    icon: Icons.request_quote,
+    gradientStart: Color(0xFF007DFE),
+    gradientEnd: Color(0xFF0056B3),
   ),
   _Slide(
-    title: 'İlan Ver,\nTeklif Al',
-    body: 'İhtiyacınızı ilan olarak paylaşın, uygun ustalar '
-        'size teklif getirsin — tamamen ücretsiz.',
-    emoji: '⭐',
-    gradientStart: Color(0xFF00C9A7),
-    gradientEnd: Color(0xFF008f75),
+    title: 'İş Bitir',
+    body: 'Güvenli ödeme, garantili hizmet',
+    icon: Icons.check_circle_outline,
+    gradientStart: Color(0xFF007DFE),
+    gradientEnd: Color(0xFF0056B3),
   ),
 ];
 
@@ -92,47 +88,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _fetchSlides() async {
     try {
-      debugPrint('Onboarding: Veriler çekiliyor... URL: ${ApiConstants.baseUrl}/onboarding-slides');
       final dio = Dio(BaseOptions(
         baseUrl: ApiConstants.baseUrl,
         connectTimeout: const Duration(seconds: 8),
         receiveTimeout: const Duration(seconds: 8),
       ));
       final res = await dio.get('/onboarding-slides');
-      
-      // Veri direkt liste mi yoksa 'data' alanı içinde mi?
+
       final List rawList;
       if (res.data is List) {
         rawList = res.data as List;
       } else if (res.data is Map && res.data['data'] is List) {
         rawList = res.data['data'] as List;
       } else {
-        throw Exception('Geçersiz veri formatı: ${res.data.runtimeType}');
+        throw Exception('Invalid format');
+      }
+
+      String? _fixUrl(String? img) {
+        if (img == null) return null;
+        // Android emulator: localhost → 10.0.2.2 (without dart:io Platform)
+        if (!kIsWeb) {
+          img = img.replaceFirst('localhost', '10.0.2.2');
+        }
+        return img;
       }
 
       final slides = rawList.map((e) {
         final j = e as Map<String, dynamic>;
-        // Emülatör erişimi için localhost -> 10.0.2.2 dönüşümü (Android ise)
-        String? img = j['imageUrl'] as String?;
-        if (img != null && !kIsWeb && Platform.isAndroid) {
-          img = img.replaceFirst('localhost', '10.0.2.2');
-        }
-        
-        return _Slide.fromJson({
-          ...j,
-          'imageUrl': img,
-        });
+        return _Slide.fromJson({...j, 'imageUrl': _fixUrl(j['imageUrl'] as String?)});
       }).where((s) => s.title.isNotEmpty).toList();
 
       if (slides.isNotEmpty && mounted) {
-        debugPrint('Onboarding: ${slides.length} slide başarıyla yüklendi.');
         setState(() => _slides = slides);
-      } else {
-        debugPrint('Onboarding: Backendden boş liste geldi, fallback kullanılıyor.');
       }
-    } catch (e, stack) {
-      debugPrint('Onboarding Error: $e');
-      debugPrint('Stack: $stack');
+    } catch (_) {
       // fallback kullan
     } finally {
       if (mounted) setState(() => _loadingSlides = false);
@@ -196,7 +185,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             right: 32,
             child: Column(
               children: [
-                // Dots
+                // Dot indicator
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
@@ -224,7 +213,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     onPressed: _next,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      foregroundColor: _slides[_page].gradientStart,
+                      foregroundColor: const Color(0xFF007DFE),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),
                       elevation: 0,
@@ -294,7 +283,7 @@ class _PageBody extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 34,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   height: 1.15,
                 ),
@@ -330,14 +319,14 @@ class _PageBody extends StatelessWidget {
         child: Image.network(
           slide.imageUrl!,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _emojiCircle(),
+          errorBuilder: (_, __, ___) => _iconCircle(),
         ),
       );
     }
-    return _emojiCircle();
+    return _iconCircle();
   }
 
-  Widget _emojiCircle() => Container(
+  Widget _iconCircle() => Container(
         width: 180,
         height: 180,
         decoration: BoxDecoration(
@@ -345,8 +334,7 @@ class _PageBody extends StatelessWidget {
           shape: BoxShape.circle,
         ),
         child: Center(
-          child: Text(slide.emoji ?? '✨',
-              style: const TextStyle(fontSize: 80)),
+          child: Icon(slide.icon, size: 80, color: Color(0xFF007DFE)),
         ),
       );
 }

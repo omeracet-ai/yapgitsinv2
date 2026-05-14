@@ -37,19 +37,16 @@ import '../../../features/disputes/presentation/screens/dispute_create_screen.da
 import '../../../features/certifications/presentation/certifications_screen.dart';
 import '../providers/navigation_provider.dart';
 import '../widgets/success_screen.dart';
+import '../widgets/splash_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/',
-    redirect: (context, state) async {
-      if (state.matchedLocation == '/') {
-        if (!await OnboardingStorage.hasSeenOnboarding()) {
-          return '/hos-geldiniz';
-        }
-      }
-      return null;
-    },
+    initialLocation: '/splash',
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/hos-geldiniz',
         builder: (context, state) => const OnboardingScreen(),
