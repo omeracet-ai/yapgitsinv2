@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
+import { UserId } from '../../common/types/branded';
 import { Booking, BookingStatus } from '../bookings/booking.entity';
 import { SemanticSearchService } from '../ai/semantic-search.service';
 import { BoostService } from '../boost/boost.service';
@@ -12,6 +13,7 @@ import {
   encodeGeohash,
   geohashNeighbors,
   equirectangular,
+  distKm,
   precisionForRadiusKm,
 } from '../../common/geohash.util';
 import { bayesianAverage, wilsonScore } from '../../common/rating.util';
@@ -246,20 +248,10 @@ export class UsersService {
       // Fetch all matching, post-filter + sort, then paginate
       const all = await qb.getMany();
       const radiusKm = Math.min(200, Math.max(1, opts.radiusKm ?? 20));
-      const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-        const R = 6371;
-        const toRad = (d: number) => (d * Math.PI) / 180;
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
-        const a =
-          Math.sin(dLat / 2) ** 2 +
-          Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-        return 2 * R * Math.asin(Math.sqrt(a));
-      };
 
       let withDist: (User & { distanceKm?: number })[] = all.map((u) => {
         if (hasGeo && u.latitude != null && u.longitude != null) {
-          const d = haversine(opts.lat!, opts.lng!, u.latitude, u.longitude);
+          const d = distKm(opts.lat!, opts.lng!, u.latitude, u.longitude);
           return Object.assign(u, { distanceKm: Math.round(d * 10) / 10 });
         }
         return Object.assign(u, { distanceKm: undefined });
@@ -349,7 +341,7 @@ export class UsersService {
   }
 
   /** Phase P191/4 (Voldi-sec) — bump tokenVersion to revoke all live JWTs. */
-  async incrementTokenVersion(id: string): Promise<void> {
+  async incrementTokenVersion(id: UserId): Promise<void> {
     await this.repo.increment({ id }, 'tokenVersion', 1);
   }
 
@@ -378,7 +370,7 @@ export class UsersService {
    * `averageRating` artık Bayesian-shrunk değer (UI/sıralama için).
    * `wilsonScore` = pozitif (>=4★) oranın güven aralığı alt sınırı (sıralama için).
    */
-  async recalcRating(userId: string, _newRating?: number): Promise<void> {
+  async recalcRating(userId: UserId, _newRating?: number): Promise<void> {
     const user = await this.repo.findOne({ where: { id: userId } });
     if (!user) return;
     const reviews = await this.reviewsRepo.find({

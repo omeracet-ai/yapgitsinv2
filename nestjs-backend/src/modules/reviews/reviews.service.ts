@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Review } from './review.entity';
 import { UsersService } from '../users/users.service';
 import { FraudDetectionService } from '../ai/fraud-detection.service';
+import { asUserId } from '../../common/types/branded';
 
 @Injectable()
 export class ReviewsService {
@@ -19,7 +20,7 @@ export class ReviewsService {
     const saved = await this.reviewsRepository.save(review);
     // Değerlendirilen kullanıcının puanını otomatik güncelle
     if (saved.revieweeId && typeof saved.rating === 'number') {
-      await this.usersService.recalcRating(saved.revieweeId, saved.rating);
+      await this.usersService.recalcRating(asUserId(saved.revieweeId), saved.rating);
     }
     // Phase 116: fire-and-forget fraud check
     if (saved.comment && saved.comment.trim().length > 0) {

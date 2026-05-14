@@ -16,6 +16,7 @@ import * as crypto from 'crypto';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuthUser } from '../../common/types/auth.types';
+import { asUserId } from '../../common/types/branded';
 import { TwoFactorService } from './two-factor.service';
 import { PasswordResetToken } from './password-reset-token.entity';
 import { EmailVerificationToken } from './email-verification-token.entity';
@@ -52,7 +53,7 @@ export class AuthService implements OnModuleInit {
    * next protected request re-reads from DB and observes the new version.
    */
   async bumpTokenVersion(userId: string): Promise<void> {
-    await this.usersService.incrementTokenVersion(userId);
+    await this.usersService.incrementTokenVersion(asUserId(userId));
     await this.cacheManager.del(AuthService.tokenVerCacheKey(userId));
   }
 

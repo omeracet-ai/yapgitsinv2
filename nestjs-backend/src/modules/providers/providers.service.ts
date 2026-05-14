@@ -10,6 +10,7 @@ import {
   normalizePaging,
   PaginatedResult,
 } from '../admin/dto/admin-list-query.dto';
+import { bayesianAvg } from '../../common/utils/rating';
 
 /**
  * Airtasker-style "tasker" model: a tasker IS a user with workerCategories set.
@@ -52,7 +53,7 @@ export class ProvidersService {
           createdAt: provider.createdAt,
           updatedAt: provider.updatedAt,
           // User-driven fields
-          averageRating: u.averageRating ?? 0,
+          averageRating: this.calcBayesianRating(u),
           totalReviews: u.totalReviews ?? 0,
           identityVerified: u.identityVerified,
           reputationScore: u.reputationScore ?? 0,
@@ -124,7 +125,7 @@ export class ProvidersService {
           documents: provider.documents,
           createdAt: provider.createdAt,
           updatedAt: provider.updatedAt,
-          averageRating: u.averageRating ?? 0,
+          averageRating: this.calcBayesianRating(u),
           totalReviews: u.totalReviews ?? 0,
           identityVerified: u.identityVerified,
           reputationScore: u.reputationScore ?? 0,
@@ -146,6 +147,16 @@ export class ProvidersService {
     );
 
     return buildPaginated(items, total, page, limit);
+  }
+
+  /** Bayesian-adjusted rating from raw average + count stored on User entity. */
+  private calcBayesianRating(user: User): number {
+    const avg = user.averageRating ?? 0;
+    const count = user.totalReviews ?? 0;
+    if (count === 0) return 0;
+    // Reconstruct sum-equivalent ratings array for bayesianAvg
+    const ratings = Array<number>(count).fill(avg);
+    return bayesianAvg(ratings, 4.0, 10);
   }
 
   /** Auto-create a provider row for a user if one doesn't exist yet. */

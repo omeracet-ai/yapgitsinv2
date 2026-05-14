@@ -185,6 +185,14 @@ export function haversine(
 }
 
 /**
+ * Smart dispatcher: equirectangular for <50km (~10x faster), Haversine otherwise.
+ */
+export const distKm = (lat1: number, lon1: number, lat2: number, lon2: number): number =>
+  Math.abs(lat2 - lat1) + Math.abs(lon2 - lon1) < 0.5
+    ? equirectangular(lat1, lon1, lat2, lon2)
+    : haversine(lat1, lon1, lat2, lon2);
+
+/**
  * Pick prefix length for a given radius (km).
  * Returns the geohash precision whose cell-size envelope covers the radius
  * with the 3x3 neighbor block.
