@@ -34,6 +34,7 @@ class FcmService {
   /// platform config).
   Future<void> init() async {
     if (_initialized) return;
+    if (kIsWeb) return; // Firebase web config not set up — skip silently.
     try {
       await Firebase.initializeApp();
       final messaging = FirebaseMessaging.instance;

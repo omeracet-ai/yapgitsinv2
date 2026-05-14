@@ -78,11 +78,15 @@ class AuthRepository {
         if (response.data['requires2FA'] == true) {
           return Map<String, dynamic>.from(response.data);
         }
-        await _persistTokensFromResponse(
-            Map<String, dynamic>.from(response.data as Map));
+        try {
+          await _persistTokensFromResponse(
+              Map<String, dynamic>.from(response.data as Map));
+        } catch (_) {}
         if (response.data['user'] != null) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('user_data', jsonEncode(response.data['user']));
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('user_data', jsonEncode(response.data['user']));
+          } catch (_) {}
         }
         return Map<String, dynamic>.from(response.data);
       }
