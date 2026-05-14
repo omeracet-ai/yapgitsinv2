@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,10 +36,13 @@ class _IntroVideoSectionState extends ConsumerState<IntroVideoSection> {
 
     // Client-side duration check (image_picker maxDuration trim'ler ama
     // bazı cihazlarda zorlama yok — çift kontrol).
-    // Web'de dart:io File kullanılamaz; duration check atlanır.
+    // dart:io File YASAK — networkUrl ile kontrol yapılamaz; duration check
+    // sunucu tarafında yapılır (uploads/intro-video endpoint 65sn reddeder).
     int? durationSeconds;
     if (!kIsWeb) {
-      final ctrl = VideoPlayerController.file(File(picked.path));
+      final ctrl = VideoPlayerController.networkUrl(
+        Uri.file(picked.path),
+      );
       try {
         await ctrl.initialize();
         durationSeconds = ctrl.value.duration.inSeconds;

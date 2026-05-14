@@ -123,6 +123,25 @@ export default async function renderWorker(L: Locale, idSlug: string) {
 
       <section className="container mx-auto max-w-5xl px-4 md:px-6 lg:px-8 py-6 md:py-8 grid md:grid-cols-3 gap-4 md:gap-6 pb-24 md:pb-8">
         <div className="md:col-span-2 space-y-6">
+          {w.introVideoUrl && (
+            <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden">
+              <div className="px-5 pt-4 pb-2 flex items-center gap-2">
+                <span className="text-[var(--primary)]">🎥</span>
+                <h2 className="font-bold text-[var(--secondary)] text-sm">Tanıtım Videosu</h2>
+                {w.introVideoDuration && (
+                  <span className="ml-auto text-xs text-gray-400">{w.introVideoDuration}sn</span>
+                )}
+              </div>
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+              <video
+                src={w.introVideoUrl}
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full max-h-[360px] object-contain bg-black"
+              />
+            </div>
+          )}
           {w.workerBio && (
             <div className="bg-white border border-[var(--border)] rounded-xl p-5">
               <h2 className="font-bold text-[var(--secondary)] mb-2">{dict.common.about}</h2>

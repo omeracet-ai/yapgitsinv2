@@ -64,6 +64,8 @@ export type Worker = {
   hourlyRateMin?: number;
   hourlyRateMax?: number;
   isAvailable?: boolean;
+  introVideoUrl?: string;
+  introVideoDuration?: number;
 };
 
 export type Job = {
