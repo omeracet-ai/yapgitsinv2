@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client_provider.dart';
 import '../../../core/services/in_app_notification_service.dart';
@@ -37,7 +36,6 @@ class UnreadCountNotifier extends StateNotifier<int> {
   Map<String, dynamic>? _latestNotif;
 
   Future<void> refresh() async {
-    // P189/4 — preserve the "skip if signed out" guard; read from SecureTokenStore.
     final token = await SecureTokenStore().readToken();
     if (token == null || token.isEmpty) {
       if (mounted) state = 0;
@@ -47,22 +45,22 @@ class UnreadCountNotifier extends StateNotifier<int> {
       final dio = _ref.read(apiClientProvider).dio;
       final res = await dio.get('/notifications/unread-count');
       final count = (res.data['count'] as num?)?.toInt() ?? 0;
-      // Phase 79 — when the count grows past what we last saw, fetch the
-      // newest notification preview and surface it as a slide-in toast.
       if (_lastSeenCount != null && count > _lastSeenCount!) {
         await _maybeShowToast(dio);
       }
       _lastSeenCount = count;
       if (mounted) state = count;
-    } catch (e, st) {
-      debugPrint('unread_count_provider.refresh: $e\n$st');
+    } catch (_) {
+      if (mounted) state = 0;
     }
   }
 
   Future<void> _maybeShowToast(Dio dio) async {
     try {
       final res = await dio.get('/notifications');
-      final list = List<Map<String, dynamic>>.from(res.data as List);
+      final raw = res.data;
+      if (raw is! List) return;
+      final list = List<Map<String, dynamic>>.from(raw);
       if (list.isEmpty) return;
       final newest = list.first;
       // Skip duplicate toast for the same notif id between polls.

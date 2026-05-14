@@ -25,8 +25,12 @@ class _Slide {
   });
 
   static Color _hex(String hex) {
-    final h = hex.replaceAll('#', '');
-    return Color(int.parse('FF$h', radix: 16));
+    try {
+      final h = hex.replaceAll('#', '').padLeft(6, '0').substring(0, 6);
+      return Color(int.parse('FF$h', radix: 16));
+    } catch (_) {
+      return const Color(0xFF007DFE);
+    }
   }
 
   factory _Slide.fromJson(Map<String, dynamic> j) => _Slide(

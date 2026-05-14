@@ -336,12 +336,15 @@ class AuthRepository {
   }
 
   Future<String?> getToken() async {
-    await _ensureTokenMigration();
-    final secure = await _secureTokenStore.readToken();
-    if (secure != null && secure.isNotEmpty) return secure;
-    // Fallback: read legacy SP key (covers cold path before migration ran).
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('jwt_token');
+    try {
+      await _ensureTokenMigration();
+      final secure = await _secureTokenStore.readToken();
+      if (secure != null && secure.isNotEmpty) return secure;
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('jwt_token');
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<Map<String, dynamic>?> getUserData() async {
