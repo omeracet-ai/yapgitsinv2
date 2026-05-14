@@ -328,7 +328,7 @@ export class AuthService implements OnModuleInit {
         tv: user.tokenVersion ?? 0,
         typ: 'refresh',
       },
-      { secret: this.getRefreshSecret(), expiresIn: '30d' },
+      { secret: this.getRefreshSecret(), expiresIn: '365d' },
     );
   }
 
@@ -345,7 +345,7 @@ export class AuthService implements OnModuleInit {
       // Legacy tokens (no claim) default to 0 downstream.
       tokenVersion: user.tokenVersion ?? 0,
     };
-    return this.jwtService.sign(payload, { expiresIn: '30d' });
+    return this.jwtService.sign(payload, { expiresIn: '365d' });
   }
 
   /**
@@ -476,7 +476,7 @@ export class AuthService implements OnModuleInit {
       tokenVersion: user.tokenVersion ?? 0,
     };
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '8h' }),
+      access_token: this.jwtService.sign(payload, { expiresIn: '365d' }),
       user: {
         id: user.id,
         fullName: user.fullName,
