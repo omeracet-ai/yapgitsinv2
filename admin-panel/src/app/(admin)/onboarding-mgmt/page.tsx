@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { api, OnboardingSlide } from "@/lib/api";
+import { useToast } from "@/components/ui/Toast";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 
 // ─── Renk önayarları ──────────────────────────────────────────────────────────
 const PRESETS = [
@@ -27,6 +30,8 @@ const emptyForm = (): Partial<OnboardingSlide> => ({
 });
 
 export default function OnboardingPage() {
+  const toast = useToast();
+  const confirm = useConfirm();
   const [slides, setSlides]       = useState<OnboardingSlide[]>([]);
   const [loading, setLoading]     = useState(true);
   const [err, setErr]             = useState<string | null>(null);
@@ -58,7 +63,7 @@ export default function OnboardingPage() {
       const { url } = await api.uploadOnboardingImage(file);
       setForm(f => ({ ...f, imageUrl: url }));
     } catch (e) {
-      alert("Görsel yükleme hatası: " + String(e));
+      toast.error("Görsel yükleme hatası: " + String(e));
     } finally {
       setUploading(false);
     }
@@ -67,7 +72,7 @@ export default function OnboardingPage() {
   // ── Kaydet ──────────────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!form.title?.trim() || !form.body?.trim()) {
-      alert("Başlık ve açıklama zorunludur.");
+      toast.error("Başlık ve açıklama zorunludur.");
       return;
     }
     setSaving(true);
@@ -83,7 +88,7 @@ export default function OnboardingPage() {
       setAdding(false);
       setForm(emptyForm());
     } catch (e) {
-      alert("Kaydetme hatası: " + String(e));
+      toast.error("Kaydetme hatası: " + String(e));
     } finally {
       setSaving(false);
     }
@@ -91,12 +96,19 @@ export default function OnboardingPage() {
 
   // ── Sil ─────────────────────────────────────────────────────────────────────
   const handleDelete = async (id: string) => {
-    if (!confirm("Bu slide silinsin mi?")) return;
+    const ok = await confirm({
+      title: "Slide Sil",
+      message: "Bu slide silinsin mi?",
+      confirmLabel: "Sil",
+      cancelLabel: "İptal",
+      variant: "danger",
+    });
+    if (!ok) return;
     try {
       await api.deleteOnboardingSlide(id);
       setSlides(s => s.filter(x => x.id !== id));
     } catch (e) {
-      alert("Silme hatası: " + String(e));
+      toast.error("Silme hatası: " + String(e));
     }
   };
 
@@ -110,7 +122,7 @@ export default function OnboardingPage() {
     try {
       await api.reorderOnboardingSlides(reordered.map(s => s.id));
     } catch (e) {
-      alert("Sıralama hatası: " + String(e));
+      toast.error("Sıralama hatası: " + String(e));
       load();
     }
   };
@@ -121,7 +133,7 @@ export default function OnboardingPage() {
       const updated = await api.updateOnboardingSlide(slide.id, { isActive: !slide.isActive });
       setSlides(s => s.map(x => (x.id === updated.id ? updated : x)));
     } catch (e) {
-      alert(String(e));
+      toast.error(String(e));
     }
   };
 
@@ -278,8 +290,7 @@ export default function OnboardingPage() {
                   style={{ background: `linear-gradient(135deg, ${form.gradientStart}, ${form.gradientEnd})` }}
                 >
                   {form.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={form.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+                    <Image src={form.imageUrl} alt="" fill className="object-cover opacity-40" />
                   ) : null}
                   <div className="relative z-10 text-center px-6">
                     <div className="text-5xl mb-3">{form.emoji || "🛠️"}</div>
@@ -323,9 +334,8 @@ export default function OnboardingPage() {
                   )}
                 </div>
                 {form.imageUrl && (
-                  <div className="mt-2 rounded-lg overflow-hidden h-24 bg-gray-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={form.imageUrl} alt="" className="w-full h-full object-cover" />
+                  <div className="mt-2 rounded-lg overflow-hidden h-24 bg-gray-100 relative">
+                    <Image src={form.imageUrl} alt="" fill className="object-cover" />
                   </div>
                 )}
               </div>
@@ -369,11 +379,9 @@ export default function OnboardingPage() {
                   style={{ background: `linear-gradient(135deg, ${slide.gradientStart}, ${slide.gradientEnd})` }}
                 >
                   {slide.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={slide.imageUrl}
-                         alt=""
-                         className="w-16 h-16 object-cover rounded-xl mb-1 opacity-90"
-                    />
+                    <div className="relative w-16 h-16 mb-1">
+                      <Image src={slide.imageUrl} alt="" fill className="object-cover rounded-xl opacity-90" />
+                    </div>
                   ) : (
                     <span className="text-4xl">{slide.emoji ?? "🛠️"}</span>
                   )}

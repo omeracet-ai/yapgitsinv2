@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { api, type AuditLog, type AuditLogStats } from "@/lib/api";
+import { useToast } from "@/components/ui/Toast";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 
 const LIMIT = 50;
 
@@ -60,6 +62,8 @@ function Field({
 }
 
 export default function AuditLogPage() {
+  const toast = useToast();
+  const confirm = useConfirm();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -102,12 +106,19 @@ export default function AuditLogPage() {
 
   async function handlePurge() {
     if (!purgePreview) return;
-    if (!window.confirm(`${purgePreview.wouldDelete} kayıt KALICI silinecek, emin misin?`)) return;
+    const ok = await confirm({
+      title: "Kayıtları Sil",
+      message: `${purgePreview.wouldDelete} kayıt KALICI silinecek, emin misin?`,
+      confirmLabel: "Sil",
+      cancelLabel: "İptal",
+      variant: "danger",
+    });
+    if (!ok) return;
     setPurgeLoading(true);
     setPurgeError(null);
     try {
       const res = await api.purgeAuditLog(purgeDays);
-      alert(`${res.deleted} kayıt silindi`);
+      toast.success(`${res.deleted} kayıt silindi`);
       setPurgeOpen(false);
       setRefetchTick((t) => t + 1);
     } catch (e) {

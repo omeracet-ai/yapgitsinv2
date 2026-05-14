@@ -193,10 +193,19 @@ async function bootstrap() {
     // Disallowed — DO NOT throw. Clean rejection, no ACAO header.
     return cb(null, false);
   };
+  // Phase 192/1 — OPTIONS preflight fix:
+  //   - allowedHeaders: Authorization + content-type + custom headers açık (preflight header match)
+  //   - exposedHeaders: admin panel'in okuduğu pagination headers
+  //   - preflightContinue: false → Express OPTIONS'ı NestJS pipeline'a taşımaz, 204 döner
+  //   - optionsSuccessStatus: 204 → bazı eski browser'lar 200 yerine 204 bekler
   app.enableCors({
     origin: originFn,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Authorization,Content-Type,Accept,X-Requested-With,sentry-trace,baggage',
+    exposedHeaders: 'X-Total-Count,Content-Range',
     credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
   app.useWebSocketAdapter(new IoAdapter(app.getHttpServer()));
 

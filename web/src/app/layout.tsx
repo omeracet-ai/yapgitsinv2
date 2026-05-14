@@ -12,7 +12,13 @@ import './globals.css';
 
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme')||'system';var m=window.matchMedia('(prefers-color-scheme: dark)').matches;var d=t==='dark'||(t==='system'&&m);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
 
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
+  preload: true,
+  weight: ['400', '500', '600', '700'],
+});
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://yapgitsin.tr';
 

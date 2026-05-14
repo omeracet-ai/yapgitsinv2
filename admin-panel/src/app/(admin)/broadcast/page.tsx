@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { api } from "@/lib/api";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 
 type Segment = "all" | "workers" | "customers" | "verified_workers";
 
@@ -16,6 +17,7 @@ const TITLE_MAX = 100;
 const MSG_MAX = 500;
 
 export default function BroadcastPage() {
+  const confirm = useConfirm();
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [segment, setSegment] = useState<Segment>("all");
@@ -27,7 +29,14 @@ export default function BroadcastPage() {
 
   async function handleSend() {
     if (!canSubmit) return;
-    if (!window.confirm(`Bu duyuru "${segmentLabel}" segmentine gidecek, emin misin?`)) return;
+    const ok = await confirm({
+      title: "Duyuru Gönder",
+      message: `Bu duyuru "${segmentLabel}" segmentine gidecek, emin misin?`,
+      confirmLabel: "Gönder",
+      cancelLabel: "İptal",
+      variant: "warning",
+    });
+    if (!ok) return;
     setLoading(true);
     setToast(null);
     try {
