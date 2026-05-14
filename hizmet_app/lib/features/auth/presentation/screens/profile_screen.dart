@@ -1363,6 +1363,9 @@ class ProfileScreen extends ConsumerWidget {
       _menuItem(Icons.verified_outlined, '📜 Sertifikalarım', () {
         context.push('/sertifikalarim');
       }),
+      _menuItem(Icons.photo_library_outlined, '🖼️ Portfolyom', () {
+        context.push('/portfolyo');
+      }),
       _menuItem(Icons.note_alt_outlined, 'Teklif Şablonlarım', () {
         context.push('/teklif-sablonlarim');
       }),

@@ -35,9 +35,14 @@ import '../../../features/bookings/presentation/screens/booking_create_screen.da
 import '../../../features/disputes/presentation/screens/my_disputes_screen.dart';
 import '../../../features/disputes/presentation/screens/dispute_create_screen.dart';
 import '../../../features/certifications/presentation/certifications_screen.dart';
+import '../../../features/photos/presentation/screens/portfolio_screen.dart';
+import '../../../features/map/presentation/screens/map_screen.dart';
 import '../providers/navigation_provider.dart';
 import '../widgets/success_screen.dart';
 import '../widgets/splash_screen.dart';
+import '../../../features/escrow/presentation/screens/payment_screen.dart';
+import '../../../features/escrow/presentation/screens/escrow_list_screen.dart';
+import '../../../features/promo/presentation/screens/promo_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -120,6 +125,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/jetonlar',
         builder: (context, state) => const TokenScreen(),
+      ),
+      GoRoute(
+        path: '/promo',
+        builder: (context, state) => const PromoScreen(),
       ),
       GoRoute(
         path: '/sadakat',
@@ -240,6 +249,27 @@ final routerProvider = Provider<GoRouter>((ref) {
           final roomId = state.pathParameters['roomId']!;
           return AiChatScreen(); // TODO: replace with ChatRoomScreen(roomId: roomId)
         },
+      ),
+      GoRoute(
+        path: '/harita',
+        builder: (context, state) => const MapScreen(),
+      ),
+      GoRoute(
+        path: '/odeme/:jobId',
+        builder: (context, state) {
+          final jobId = state.pathParameters['jobId']!;
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final amount = (extra['amount'] as num?)?.toDouble() ?? 0.0;
+          return PaymentScreen(jobId: jobId, amount: amount);
+        },
+      ),
+      GoRoute(
+        path: '/escrow-listesi',
+        builder: (context, state) => const EscrowListScreen(),
+      ),
+      GoRoute(
+        path: '/portfolyo',
+        builder: (context, state) => const PortfolioScreen(),
       ),
       GoRoute(
         path: '/ilan-basarili',

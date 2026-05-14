@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import '../../../reviews/widgets/review_reply_sheet.dart';
 import '../../widgets/portfolio_gallery.dart';
 import '../../widgets/intro_video_section.dart';
+import '../../../photos/presentation/widgets/portfolio_grid.dart';
 import '../../widgets/availability_editor_sheet.dart';
 import '../../widgets/review_summary_card.dart';
 import '../../../users/widgets/badge_row.dart';
@@ -624,6 +625,13 @@ class _ProfileView extends ConsumerWidget {
                             ]),
                           ))),
                 ],
+
+                // ── Phase 218: Portfolyo Grid (ID tabanlı, public) ───────
+                const SizedBox(height: 16),
+                _section(
+                  title: 'İş Örnekleri',
+                  child: PortfolioGrid(userId: userId),
+                ),
 
                 const SizedBox(height: 32),
               ],

@@ -45,6 +45,39 @@ export class PromoController {
     return this.svc.validate(code, uid(req), Number.isFinite(spendNum) ? spendNum : 0);
   }
 
+  @Get('promo/:code/validate')
+  @UseGuards(AuthGuard('jwt'))
+  async validateByPath(
+    @Param('code') code: string,
+    @Req() req: AuthedReq,
+  ) {
+    try {
+      const result = await this.svc.validate(code, uid(req), 0);
+      const promo = await this.svc.findOne(result.codeId);
+      return {
+        valid: true,
+        discount: result.discountValue,
+        type: result.discountType as 'percent' | 'fixed',
+        description: promo.description ?? '',
+      };
+    } catch {
+      return { valid: false, discount: 0, type: 'percent' as const, description: '' };
+    }
+  }
+
+  @Post('promo/:code/apply')
+  @UseGuards(AuthGuard('jwt'))
+  async applyByPath(
+    @Param('code') code: string,
+    @Req() req: AuthedReq,
+  ) {
+    const result = await this.svc.redeemByCode(code, uid(req));
+    return {
+      success: true,
+      tokensAdded: result.type === 'bonus_token' ? result.value : undefined,
+    };
+  }
+
   // Phase 126: effect-based redeem
   @Post('promo/redeem')
   @UseGuards(AuthGuard('jwt'))

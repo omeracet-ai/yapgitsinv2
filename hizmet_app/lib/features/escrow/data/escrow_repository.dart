@@ -86,4 +86,22 @@ class EscrowRepository {
       return null;
     }
   }
+
+  Future<Map<String, dynamic>> createEscrow(String jobId, double amount) async {
+    final res = await _dio.post(
+      '/escrow/create',
+      data: {'jobId': jobId, 'amount': amount},
+    );
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<void> releasePayment(String escrowId) async {
+    await _dio.post('/escrow/$escrowId/release');
+  }
+
+  Future<List<Map<String, dynamic>>> listMy() async {
+    final res = await _dio.get('/escrow/my');
+    final list = res.data as List;
+    return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
 }

@@ -306,11 +306,23 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                     color: AppColors.textHint, fontSize: 14),
                                 prefixIcon: const Icon(Icons.search,
                                     color: AppColors.primary),
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.arrow_forward_rounded,
-                                      color: AppColors.primary),
-                                  onPressed: () =>
-                                      _onSearch(_searchController.text),
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.map_outlined,
+                                          color: AppColors.primary),
+                                      tooltip: 'Haritada Gör',
+                                      onPressed: () =>
+                                          context.push('/harita'),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.arrow_forward_rounded,
+                                          color: AppColors.primary),
+                                      onPressed: () =>
+                                          _onSearch(_searchController.text),
+                                    ),
+                                  ],
                                 ),
                                 border: InputBorder.none,
                                 contentPadding:
