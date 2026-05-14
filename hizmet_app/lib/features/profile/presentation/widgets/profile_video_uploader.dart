@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
@@ -78,20 +77,12 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
         return;
       }
 
-      // MultipartFile oluştur — web'de fromBytes, mobilde fromFile
+      // MultipartFile — fromBytes kullan (web + mobil uyumlu, dart:io gerektirmez)
       final filename = _selectedVideo!.name.isNotEmpty
           ? _selectedVideo!.name
           : _selectedVideo!.path.split('/').last;
-      final MultipartFile multipartFile;
-      if (kIsWeb) {
-        final bytes = await _selectedVideo!.readAsBytes();
-        multipartFile = MultipartFile.fromBytes(bytes, filename: filename);
-      } else {
-        multipartFile = await MultipartFile.fromFile(
-          _selectedVideo!.path,
-          filename: filename,
-        );
-      }
+      final bytes = await _selectedVideo!.readAsBytes();
+      final multipartFile = MultipartFile.fromBytes(bytes, filename: filename);
 
       // FormData oluştur
       final formData = FormData.fromMap({
