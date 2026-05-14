@@ -10,9 +10,12 @@ type FormState = {
   content: string;
   excerpt: string;
   coverImageUrl: string;
+  category: string;
   tags: string;
   status: "draft" | "published" | "archived";
   publishedAt: string;
+  seoTitle: string;
+  seoDescription: string;
 };
 
 function fromPost(p?: BlogPost | null): FormState {
@@ -22,9 +25,12 @@ function fromPost(p?: BlogPost | null): FormState {
     content: p?.content ?? "",
     excerpt: p?.excerpt ?? "",
     coverImageUrl: p?.coverImageUrl ?? "",
+    category: p?.category ?? "",
     tags: (p?.tags ?? []).join(", "),
     status: p?.status ?? "draft",
     publishedAt: p?.publishedAt ? new Date(p.publishedAt).toISOString().slice(0, 16) : "",
+    seoTitle: p?.seoTitle ?? "",
+    seoDescription: p?.seoDescription ?? "",
   };
 }
 
@@ -56,9 +62,12 @@ export default function BlogForm({ initial }: { initial?: BlogPost | null }) {
         content: form.content,
         excerpt: form.excerpt.trim(),
         coverImageUrl: form.coverImageUrl.trim() || null,
+        category: form.category.trim() || null,
         tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
         status: form.status,
         publishedAt: form.publishedAt ? new Date(form.publishedAt).toISOString() : null,
+        seoTitle: form.seoTitle.trim() || null,
+        seoDescription: form.seoDescription.trim() || null,
       };
       if (initial) {
         await api.blogUpdate(initial.id, payload);
@@ -137,6 +146,16 @@ export default function BlogForm({ initial }: { initial?: BlogPost | null }) {
       </div>
 
       <div>
+        <label className="block text-sm font-medium mb-1">Kategori</label>
+        <input
+          value={form.category}
+          onChange={(e) => update({ category: e.target.value })}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+          placeholder="temizlik"
+        />
+      </div>
+
+      <div>
         <label className="block text-sm font-medium mb-1">Etiketler (virgülle ayır)</label>
         <input
           value={form.tags}
@@ -144,6 +163,33 @@ export default function BlogForm({ initial }: { initial?: BlogPost | null }) {
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
           placeholder="temizlik, ipucu, fiyat"
         />
+      </div>
+
+      <div className="border-t border-gray-200 pt-4">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">SEO (opsiyonel)</p>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium mb-1">SEO Başlığı (max 200)</label>
+            <input
+              value={form.seoTitle}
+              onChange={(e) => update({ seoTitle: e.target.value })}
+              maxLength={200}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              placeholder="Boş bırakılırsa yazı başlığı kullanılır"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">SEO Açıklaması (max 500)</label>
+            <textarea
+              rows={2}
+              maxLength={500}
+              value={form.seoDescription}
+              onChange={(e) => update({ seoDescription: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              placeholder="Boş bırakılırsa özet kullanılır"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

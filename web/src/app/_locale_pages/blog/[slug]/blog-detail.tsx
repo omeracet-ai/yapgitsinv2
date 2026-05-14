@@ -16,8 +16,8 @@ export async function getBlogStaticSlugs(): Promise<string[]> {
 export async function buildBlogDetailMetadata(L: Locale, slug: string): Promise<Metadata> {
   const post = await getBlogPost(slug);
   if (!post) return { title: L === 'en' ? 'Not found' : L === 'az' ? 'Tapılmadı' : 'Bulunamadı' };
-  const title = clip(post.title, 60);
-  const description = clip(post.excerpt || post.content, 158);
+  const title = clip(post.seoTitle || post.title, 60);
+  const description = clip(post.seoDescription || post.excerpt || post.content, 158);
   return {
     title,
     description,

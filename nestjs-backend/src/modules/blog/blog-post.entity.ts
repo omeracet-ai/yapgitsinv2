@@ -42,6 +42,9 @@ export class BlogPost {
   @Column({ type: 'varchar', nullable: true })
   authorId?: string | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  category?: string | null;
+
   @Column({ type: 'simple-json', nullable: true })
   tags?: string[] | null;
 
@@ -50,6 +53,12 @@ export class BlogPost {
 
   @Column({ type: 'datetime', nullable: true })
   publishedAt?: Date | null;
+
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  seoTitle?: string | null;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  seoDescription?: string | null;
 
   @CreateDateColumn()
   createdAt!: Date;

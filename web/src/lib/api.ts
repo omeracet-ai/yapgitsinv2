@@ -106,10 +106,13 @@ export type BlogPost = {
   content: string;
   excerpt: string;
   coverImageUrl?: string | null;
+  category?: string | null;
   authorId?: string | null;
   tags?: string[] | null;
   status: 'draft' | 'published' | 'archived';
   publishedAt?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   createdAt: string;
   updatedAt: string;
 };

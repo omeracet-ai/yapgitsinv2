@@ -94,6 +94,7 @@ export class BlogService {
       content: dto.content,
       excerpt: dto.excerpt ?? '',
       coverImageUrl: dto.coverImageUrl ?? null,
+      category: dto.category ?? null,
       authorId: dto.authorId ?? null,
       tags: dto.tags ?? [],
       status: dto.status ?? BlogPostStatus.DRAFT,
@@ -102,6 +103,8 @@ export class BlogService {
         : dto.status === BlogPostStatus.PUBLISHED
           ? new Date()
           : null,
+      seoTitle: dto.seoTitle ?? null,
+      seoDescription: dto.seoDescription ?? null,
     });
     return this.repo.save(entity);
   }
@@ -122,7 +125,10 @@ export class BlogService {
     if (dto.excerpt !== undefined) post.excerpt = dto.excerpt;
     if (dto.coverImageUrl !== undefined) post.coverImageUrl = dto.coverImageUrl;
     if (dto.authorId !== undefined) post.authorId = dto.authorId;
+    if (dto.category !== undefined) post.category = dto.category;
     if (dto.tags !== undefined) post.tags = dto.tags;
+    if (dto.seoTitle !== undefined) post.seoTitle = dto.seoTitle;
+    if (dto.seoDescription !== undefined) post.seoDescription = dto.seoDescription;
     if (dto.status !== undefined) {
       post.status = dto.status;
       if (dto.status === BlogPostStatus.PUBLISHED && !post.publishedAt) {

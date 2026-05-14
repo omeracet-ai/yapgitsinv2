@@ -201,10 +201,15 @@ export const api = {
       adminNote: string | null;
       createdAt: string;
     }>>('/admin/certifications'),
-  verifyCertification: (id: string, verified: boolean, adminNote?: string) =>
+  verifyCertification: (id: string, adminNote?: string) =>
     request<{ id: string; verified: boolean }>(`/admin/certifications/${id}/verify`, {
       method: 'PATCH',
-      body: JSON.stringify({ verified, adminNote }),
+      body: JSON.stringify({ adminNote }),
+    }),
+  rejectCertification: (id: string, adminNote?: string) =>
+    request<{ id: string; verified: boolean }>(`/admin/certifications/${id}/reject`, {
+      method: 'PATCH',
+      body: JSON.stringify({ adminNote }),
     }),
 
   // Öne Çıkan İlanlar
@@ -375,10 +380,13 @@ export interface BlogPost {
   content: string;
   excerpt: string;
   coverImageUrl?: string | null;
+  category?: string | null;
   authorId?: string | null;
   tags?: string[] | null;
   status: 'draft' | 'published' | 'archived';
   publishedAt?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   createdAt: string;
   updatedAt: string;
 }
