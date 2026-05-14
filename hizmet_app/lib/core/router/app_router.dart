@@ -220,6 +220,27 @@ final routerProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
+      // Phase 215 — Deep link routes (yapgitsin://usta/:id, yapgitsin://ilan/:id, yapgitsin://chat/:roomId)
+      GoRoute(
+        path: '/usta/:id',
+        builder: (context, state) =>
+            PublicProfileScreen(userId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/ilan/:id',
+        builder: (context, state) {
+          // Ilan detail placeholder — navigates to job detail via id
+          final id = state.pathParameters['id']!;
+          return PostJobScreen(); // TODO: replace with IlanDetailScreen(id: id)
+        },
+      ),
+      GoRoute(
+        path: '/chat/:roomId',
+        builder: (context, state) {
+          final roomId = state.pathParameters['roomId']!;
+          return AiChatScreen(); // TODO: replace with ChatRoomScreen(roomId: roomId)
+        },
+      ),
       GoRoute(
         path: '/ilan-basarili',
         builder: (context, state) => const SuccessScreen(
