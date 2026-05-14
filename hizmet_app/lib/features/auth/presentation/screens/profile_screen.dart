@@ -25,6 +25,7 @@ import '../../../profile/presentation/widgets/profile_video_uploader.dart';
 import '../../widgets/availability_editor_sheet.dart';
 import '../../../users/widgets/badge_row.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/services/locale_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../certifications/data/certification_repository.dart';
@@ -1602,6 +1603,22 @@ class ProfileScreen extends ConsumerWidget {
               onChanged: (v) async {
                 if (v == null) return;
                 await ref2.read(localeProvider.notifier).setLocale(loc);
+                // PATCH /users/me to persist preferredLang on backend
+                try {
+                  final prefs =
+                      await SharedPreferences.getInstance();
+                  final token = prefs.getString('jwt_token');
+                  final dio =
+                      Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
+                  await dio.patch(
+                    '/users/me',
+                    data: {'preferredLang': loc.languageCode},
+                    options: Options(
+                        headers: {'Authorization': 'Bearer $token'}),
+                  );
+                } catch (_) {
+                  // best-effort; local pref already saved
+                }
                 if (ctx.mounted) Navigator.pop(ctx);
               },
             );
@@ -1620,8 +1637,9 @@ class ProfileScreen extends ConsumerWidget {
                             fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                 ),
-                tile(const Locale('tr'), 'Türkçe'),
-                tile(const Locale('en'), 'English'),
+                tile(const Locale('tr'), '🇹🇷 Türkçe'),
+                tile(const Locale('en'), '🇬🇧 English'),
+                tile(const Locale('az'), '🇦🇿 Azərbaycan'),
                 const SizedBox(height: 8),
               ],
             ),

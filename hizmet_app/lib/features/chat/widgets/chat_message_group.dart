@@ -29,10 +29,14 @@ class ChatMessageBubble extends ConsumerStatefulWidget {
   final int? attachmentSize;
   final int? attachmentDuration;
 
+  // Phase 204: backend auto-translated text (null = not auto-translated)
+  final String? translatedText;
+
   const ChatMessageBubble({
     super.key,
     this.messageId,
     required this.text,
+    this.translatedText,
     required this.isMe,
     required this.showAvatar,
     required this.showTime,
@@ -57,6 +61,34 @@ class _ChatMessageBubbleState extends ConsumerState<ChatMessageBubble> {
   String? _translatedLang; // 'tr'|'en'|'az'
   bool _showTranslated = false;
   bool _loading = false;
+  // Phase 204: true when translation came from backend auto-translate
+  bool _isAutoTranslated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-populate with backend auto-translated text if available
+    if (widget.translatedText != null && widget.translatedText!.isNotEmpty) {
+      _translated = widget.translatedText;
+      _isAutoTranslated = true;
+      _showTranslated = true;
+    }
+  }
+
+  @override
+  void didUpdateWidget(ChatMessageBubble oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.translatedText != oldWidget.translatedText &&
+        widget.translatedText != null &&
+        widget.translatedText!.isNotEmpty &&
+        !_loading) {
+      setState(() {
+        _translated = widget.translatedText;
+        _isAutoTranslated = true;
+        _showTranslated = true;
+      });
+    }
+  }
 
   String get text => widget.text;
   bool get isMe => widget.isMe;
@@ -252,18 +284,27 @@ class _ChatMessageBubbleState extends ConsumerState<ChatMessageBubble> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.translate_rounded,
-                              size: 11,
-                              color: isMe
-                                  ? Colors.white.withValues(alpha: 0.7)
-                                  : Colors.grey.shade500,
+                            Text(
+                              // Phase 204: 🌐 for auto-translate, translate icon for manual
+                              _isAutoTranslated ? '🌐' : '',
+                              style: const TextStyle(fontSize: 10),
                             ),
+                            if (!_isAutoTranslated) ...[
+                              Icon(
+                                Icons.translate_rounded,
+                                size: 11,
+                                color: isMe
+                                    ? Colors.white.withValues(alpha: 0.7)
+                                    : Colors.grey.shade500,
+                              ),
+                            ],
                             const SizedBox(width: 3),
                             Text(
                               _showTranslated
                                   ? 'orijinali göster'
-                                  : '${_translatedLang?.toUpperCase() ?? ""}: çeviriyi göster',
+                                  : _isAutoTranslated
+                                      ? 'çeviriyi göster'
+                                      : '${_translatedLang?.toUpperCase() ?? ""}: çeviriyi göster',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontStyle: FontStyle.italic,

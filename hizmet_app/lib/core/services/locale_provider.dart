@@ -12,6 +12,7 @@ const Locale kDefaultLocale = Locale('tr');
 const List<Locale> kSupportedAppLocales = <Locale>[
   Locale('tr'),
   Locale('en'),
+  Locale('az'),
 ];
 
 class LocaleNotifier extends StateNotifier<Locale> {
@@ -44,6 +45,8 @@ class LocaleNotifier extends StateNotifier<Locale> {
     switch (code) {
       case 'en':
         return const Locale('en');
+      case 'az':
+        return const Locale('az');
       case 'tr':
         return const Locale('tr');
       default:
@@ -60,6 +63,8 @@ String localeLabel(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return 'English';
+    case 'az':
+      return 'Azərbaycan';
     case 'tr':
     default:
       return 'Türkçe';

@@ -70,6 +70,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             'id': id,
             'from': from,
             'message': data['message'],
+            'translatedText': data['translatedText'], // Phase 204: auto-translate
             'timestamp': DateTime.now(),
             'readAt': null,
             'attachmentUrl': data['attachmentUrl'],
@@ -261,6 +262,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         index: i,
         messageId: msg['id'] as String?,
         message: msg['message'] as String? ?? '',
+        translatedText: msg['translatedText'] as String?,
         from: from,
         timestamp: ts,
         readAt: msg['readAt'] as DateTime?,
@@ -384,6 +386,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           ChatMessageBubble(
                             messageId: item.messageId,
                             text: item.message,
+                            translatedText: item.translatedText,
                             isMe: isMe,
                             showAvatar: !isMe && item.showAvatar,
                             showTime: item.showTime,
@@ -680,6 +683,8 @@ class _RenderItem {
   final int index;
   final String? messageId;
   final String message;
+  // Phase 204: auto-translated text from backend (null = not translated)
+  final String? translatedText;
   final String from;
   final DateTime timestamp;
   final DateTime? readAt;
@@ -698,6 +703,7 @@ class _RenderItem {
     required this.index,
     this.messageId,
     required this.message,
+    this.translatedText,
     required this.from,
     required this.timestamp,
     this.readAt,
