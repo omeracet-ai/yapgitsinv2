@@ -455,8 +455,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                               isActive ? null : catName),
                                     ),
                                   ),
-                                ).animate().fade().scale(
-                                    delay: (i * 50).ms);
+                                ).animate().fade(delay: (i * 50).ms);
                               },
                             ),
                           ),
