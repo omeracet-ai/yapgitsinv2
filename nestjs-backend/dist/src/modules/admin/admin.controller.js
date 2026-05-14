@@ -758,7 +758,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "setUserLocation", null);
 exports.AdminController = AdminController = __decorate([
-    (0, throttler_1.SkipThrottle)(),
+    (0, throttler_1.SkipThrottle)({ short: true, medium: true, long: true, default: true, 'auth-login': true, 'auth-register': true, uploads: true }),
     (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), admin_guard_1.AdminGuard),
     (0, common_1.UseInterceptors)(audit_interceptor_1.AuditInterceptor),
