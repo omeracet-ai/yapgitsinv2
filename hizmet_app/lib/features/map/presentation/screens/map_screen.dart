@@ -434,6 +434,8 @@ class _MapView extends StatelessWidget {
       options: MapOptions(
         initialCenter: center,
         initialZoom: 14,
+        minZoom: 5,
+        maxZoom: 18,
         onTap: (_, __) => onMapTap(),
       ),
       children: [
