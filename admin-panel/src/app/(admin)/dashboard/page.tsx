@@ -3,6 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, type Job } from "@/lib/api";
+import {
+  LineChart, Line, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from "recharts";
+
+interface AnalyticsOverview {
+  dailyRegistrations: Array<{ date: string; count: number }>;
+  dailyJobs: Array<{ date: string; count: number }>;
+  topCategories: Array<{ name: string; jobCount: number }>;
+}
 
 interface Stats {
   totalJobs: number;
@@ -60,8 +70,16 @@ export default function DashboardPage() {
   const [stats, setStats]           = useState<Stats | null>(null);
   const [pubStats, setPubStats]     = useState<PublicStats | null>(null);
   const [jobs,  setJobs]            = useState<Job[]>([]);
+  const [analytics, setAnalytics]   = useState<AnalyticsOverview | null>(null);
   const [error, setError]           = useState<string | null>(null);
   const [loading, setLoading]       = useState(true);
+
+  async function fetchAnalytics() {
+    try {
+      const res = await fetch("/api/admin/analytics/overview", { credentials: "include" });
+      if (res.ok) setAnalytics(await res.json());
+    } catch { /* non-fatal */ }
+  }
 
   useEffect(() => {
     Promise.all([api.stats(), api.recentJobs(5), api.publicStats()])
@@ -72,6 +90,7 @@ export default function DashboardPage() {
       })
       .catch(e => setError((e as Error).message))
       .finally(() => setLoading(false));
+    fetchAnalytics();
   }, []);
 
   if (loading) return <p className="text-gray-400 text-sm animate-pulse">Yükleniyor…</p>;
@@ -126,23 +145,69 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* Grafikler */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {stats?.chartData && (
-          <>
-            <SimpleChart 
-              data={stats.chartData.jobsPerDay} 
-              label="Son 7 Gün: İlan Sayısı" 
-              color="bg-blue-500 group-hover:bg-blue-600" 
-            />
-            <SimpleChart 
-              data={stats.chartData.usersPerDay} 
-              label="Son 7 Gün: Yeni Kayıtlar" 
-              color="bg-emerald-500 group-hover:bg-emerald-600" 
-            />
-          </>
-        )}
-      </section>
+      {/* Recharts — Analytics Overview */}
+      {analytics && (
+        <section className="space-y-6">
+          <h2 className="text-lg font-semibold">Son 30 Gün Analitik</h2>
+
+          {/* LineChart: dailyRegistrations + dailyJobs */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">Günlük Kayıt & İlan Trendi</h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart
+                data={analytics.dailyRegistrations.map((r, i) => ({
+                  date: r.date,
+                  kayit: r.count,
+                  ilan: analytics.dailyJobs[i]?.count ?? 0,
+                }))}
+                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="kayit" name="Kayıt" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="ilan"  name="İlan"  stroke="#f97316" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* BarChart: topCategories */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">En Aktif Kategoriler</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={analytics.topCategories} margin={{ top: 5, right: 20, left: 0, bottom: 40 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-30} textAnchor="end" />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Bar dataKey="jobCount" name="İlan" fill="#6366f1" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      )}
+
+      {/* Eski SimpleChart grafikler (yoksa göster) */}
+      {!analytics && (
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {stats?.chartData && (
+            <>
+              <SimpleChart
+                data={stats.chartData.jobsPerDay}
+                label="Son 7 Gün: İlan Sayısı"
+                color="bg-blue-500 group-hover:bg-blue-600"
+              />
+              <SimpleChart
+                data={stats.chartData.usersPerDay}
+                label="Son 7 Gün: Yeni Kayıtlar"
+                color="bg-emerald-500 group-hover:bg-emerald-600"
+              />
+            </>
+          )}
+        </section>
+      )}
 
       {/* Son ilanlar */}
       <section>
