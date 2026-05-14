@@ -11,6 +11,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ServiceRequestsService } from './service-requests.service';
 import { ApplicationStatus } from './service-request-application.entity';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
@@ -20,6 +21,7 @@ export class ServiceRequestsController {
   constructor(private readonly svc: ServiceRequestsService) {}
 
   /** GET /service-requests?category=Temizlik  — herkese açık */
+  @SkipThrottle()
   @Get()
   findAll(@Query('category') category?: string) {
     return this.svc.findAll(category);

@@ -18,6 +18,7 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { AuthGuard } from '@nestjs/passport';
+import { SkipThrottle } from '@nestjs/throttler';
 import { JobsService } from './jobs.service';
 import { OffersService } from './offers.service';
 import { SavedJobsService } from './saved-jobs.service';
@@ -60,6 +61,7 @@ export class JobsController {
     return this.savedJobsService.unsaveJob(req.user.id, jobId);
   }
 
+  @SkipThrottle()
   @Get()
   findAll(
     @Query('category') category?: string,
