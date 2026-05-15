@@ -21,6 +21,15 @@ z.zip
 deploy_stage/admin/dev/
 filezilla-yapgitsin.xml
 .env.deploy
+
+# Firebase service account / private keys (NEVER commit)
+.secrets/
+**/yapgitsinv2-firebase-adminsdk-*.json
+**/firebase-adminsdk-*.json
+**/*-service-account.json
+**/*-service-account-*.json
+*.pem
+*.key
 agent-teams/release/
 agent-teams/dist/
 hizmet_app/build/
