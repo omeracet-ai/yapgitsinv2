@@ -42,7 +42,7 @@
 			<string>google-sign-in</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>REPLACE_WITH_REVERSED_CLIENT_ID</string>
+				<string>com.googleusercontent.apps.264858879848-b2ji4soue7n0rnpnq62ugnjuh4b6uu02</string>
 			</array>
 		</dict>
 	</array>
