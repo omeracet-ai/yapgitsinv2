@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.1+101 — 2026-05-15
+
+- Google Sign-In altyapısı (Firebase Auth Google provider enabled)
+- Apple Sign-In code scaffold (provider enable son adım, Apple Developer hazır olunca)
+- iOS Info.plist URL scheme bağlandı (REVERSED_CLIENT_ID)
+- Android google-services.json oauth_client refresh
+
 ## 1.5.0+100 — 2026-05-15
 
 Phase 158-220 konsolide release. Öne çıkan değişiklikler:
