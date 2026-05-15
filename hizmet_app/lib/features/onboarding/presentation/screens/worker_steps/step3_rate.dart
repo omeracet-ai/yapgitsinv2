@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../../core/theme/app_colors.dart';
 
-/// Phase 129 Step 3 — Saat ücreti (opsiyonel).
+/// Phase 129 Step 3 â€” Saat Ã¼creti (opsiyonel).
 class WorkerOnboardingStep3Rate extends StatelessWidget {
   final TextEditingController minCtrl;
   final TextEditingController maxCtrl;
@@ -19,11 +19,11 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('💰 Saatlik ücret aralığın',
+          const Text('ğŸ’° Saatlik Ã¼cret aralÄ±ÄŸÄ±n',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           const Text(
-              'Opsiyonel — istersen şimdi atla, profil ayarlarından sonra düzenle.',
+              'Opsiyonel â€” istersen ÅŸimdi atla, profil ayarlarÄ±ndan sonra dÃ¼zenle.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
           const SizedBox(height: 24),
           Row(
@@ -34,10 +34,9 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
-                    labelText: 'Min (₺/saat)',
+                    labelText: 'Min (â‚º/saat)',
                     prefixIcon: const Icon(Icons.south_outlined),
-                    filled: true,
-                    fillColor: Colors.white,
+                    
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -51,10 +50,9 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
-                    labelText: 'Max (₺/saat)',
+                    labelText: 'Max (â‚º/saat)',
                     prefixIcon: const Icon(Icons.north_outlined),
-                    filled: true,
-                    fillColor: Colors.white,
+                    
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -76,7 +74,7 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Piyasa ortalaması: 150–500 ₺/saat. Tecrübeli ustalar daha yüksek belirleyebilir.',
+                  'Piyasa ortalamasÄ±: 150â€“500 â‚º/saat. TecrÃ¼beli ustalar daha yÃ¼ksek belirleyebilir.',
                   style: TextStyle(fontSize: 12),
                 ),
               ),

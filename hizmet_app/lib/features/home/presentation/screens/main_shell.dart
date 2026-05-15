@@ -57,6 +57,15 @@ class _MainShellState extends ConsumerState<MainShell>
   void _onItemTapped(int index) {
     final authState = ref.read(authStateProvider);
     final isLoggedIn = authState is AuthAuthenticated;
+    // index 2 — "+" İlan Ver kısa yolu (tab değiştirmek yerine route push)
+    if (index == 2) {
+      if (isLoggedIn) {
+        context.push('/ilan-ver');
+      } else {
+        context.push('/giris-yap', extra: {'returnTo': '/ilan-ver'});
+      }
+      return;
+    }
     // Bildirimler (index 3) giriş gerektiriyor
     if (index == 3 && !isLoggedIn) {
       context.push('/giris-yap', extra: {'returnTo': '/'});
@@ -132,10 +141,35 @@ class _MainShellState extends ConsumerState<MainShell>
                   icon: Icon(Icons.search_outlined),
                   activeIcon: Icon(Icons.search_rounded),
                   label: 'Yapgitsin'),
-              const BottomNavigationBarItem(
-                  icon: Icon(Icons.work_outline_rounded),
-                  activeIcon: Icon(Icons.work_rounded),
-                  label: 'İşlerim'),
+              BottomNavigationBarItem(
+                  icon: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: AppColors.darkPrimary,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.darkPrimary.withOpacity(0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.add_rounded,
+                        color: Colors.black, size: 24),
+                  ),
+                  activeIcon: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: AppColors.darkPrimary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.add_rounded,
+                        color: Colors.black, size: 24),
+                  ),
+                  label: 'İlan Ver'),
               BottomNavigationBarItem(
                   icon: _NotifIconWithBadge(
                     icon: isLoggedIn
@@ -241,6 +275,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                 children: [
                                   // Brand row: Y logo + yapgitsin.
                                   Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Container(
                                         width: 28,
@@ -250,24 +285,28 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                           borderRadius:
                                               BorderRadius.circular(8),
                                         ),
-                                        child: Center(
-                                          child: Text(
-                                            'Y',
-                                            style: GoogleFonts.playfairDisplay(
-                                              color: Colors.black,
-                                              fontSize: 17,
-                                              fontWeight: FontWeight.w900,
-                                            ),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          'Y',
+                                          style: GoogleFonts.playfairDisplay(
+                                            color: Colors.black,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w900,
+                                            height: 1.0,
                                           ),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      Text(
-                                        'yapgitsin.',
-                                        style: GoogleFonts.inter(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w700,
+                                      Flexible(
+                                        child: Text(
+                                          'yapgitsin.',
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.inter(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            height: 1.0,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -375,37 +414,44 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                   ),
                 ),
               ),
-              title: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(7),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Y',
-                        style: GoogleFonts.playfairDisplay(
-                          color: Colors.black,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
+              title: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Y',
+                          style: GoogleFonts.playfairDisplay(
+                            color: Colors.black,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            height: 1.0,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'yapgitsin.',
-                    style: GoogleFonts.inter(
-                      color: AppColors.textPrimary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
+                    const SizedBox(width: 8),
+                    Text(
+                      'yapgitsin.',
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        height: 1.0,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 

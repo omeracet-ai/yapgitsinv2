@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -61,7 +61,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('İki adımlı doğrulama aktifleştirildi'),
+            content: Text('Ä°ki adÄ±mlÄ± doÄŸrulama aktifleÅŸtirildi'),
             backgroundColor: Colors.green),
       );
       Navigator.of(context).pop(true);
@@ -99,11 +99,11 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
       children: [
         const Icon(Icons.shield_outlined, size: 72, color: AppColors.primary),
         const SizedBox(height: 16),
-        const Text('İki Adımlı Doğrulama Kur',
+        const Text('Ä°ki AdÄ±mlÄ± DoÄŸrulama Kur',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         const Text(
-          'Hesabınıza ek güvenlik katmanı ekleyin. Google Authenticator, '
+          'HesabÄ±nÄ±za ek gÃ¼venlik katmanÄ± ekleyin. Google Authenticator, '
           'Authy veya 1Password gibi bir uygulama gerekecek.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
@@ -121,7 +121,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
             child: _busy
                 ? const CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2.5)
-                : const Text('Başlat',
+                : const Text('BaÅŸlat',
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -142,7 +142,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
         qrWidget = Image.memory(base64Decode(base64Part),
             width: 220, height: 220, fit: BoxFit.contain);
       } catch (_) {
-        qrWidget = const Text('QR yüklenemedi');
+        qrWidget = const Text('QR yÃ¼klenemedi');
       }
     }
 
@@ -150,11 +150,11 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text('QR Kodu Tarayın',
+          const Text('QR Kodu TarayÄ±n',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           const Text(
-            'Authenticator uygulamanızla aşağıdaki QR kodu tarayın.',
+            'Authenticator uygulamanÄ±zla aÅŸaÄŸÄ±daki QR kodu tarayÄ±n.',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             textAlign: TextAlign.center,
           ),
@@ -205,11 +205,11 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Doğrulama Kodu',
+        const Text('DoÄŸrulama Kodu',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         const Text(
-          'Authenticator uygulamanızdaki 6 haneli kodu girin.',
+          'Authenticator uygulamanÄ±zdaki 6 haneli kodu girin.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
         const SizedBox(height: 24),
@@ -226,10 +226,9 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
               letterSpacing: 8,
               fontWeight: FontWeight.bold),
           decoration: const InputDecoration(
-            filled: true,
-            fillColor: Colors.white,
+            
             counterText: '',
-            hintText: '······',
+            hintText: 'Â·Â·Â·Â·Â·Â·',
           ),
           onSubmitted: (_) => _busy ? null : _enable(),
         ),
@@ -247,7 +246,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
             child: _busy
                 ? const CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2.5)
-                : const Text('Aktifleştir',
+                : const Text('AktifleÅŸtir',
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

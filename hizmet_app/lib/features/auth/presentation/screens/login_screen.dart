@@ -78,6 +78,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         'tempToken': result['tempToken'] as String,
         'returnTo': widget.returnTo,
       });
+      return;
+    }
+    // Phase Mobile7 — Email doğrulama zorunlu
+    final user = result['user'] as Map<String, dynamic>?;
+    if (user != null && user['emailVerified'] == false) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('E-posta doğrulamanız gerekiyor.'),
+          backgroundColor: const Color(0xFF161B22),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+          ),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+      context.push('/verify-email');
     }
   }
 
@@ -131,8 +149,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 enabled: !isLoading,
                 decoration: InputDecoration(
                   labelText: l.loginEmailLabel,
-                  filled: true,
-                  fillColor: Colors.white,
                   prefixIcon: const Icon(Icons.email_outlined),
                 ),
               ).animate().fade(delay: 300.ms).slideY(begin: 0.1),
@@ -144,8 +160,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 onSubmitted: (_) => isLoading ? null : _login(),
                 decoration: InputDecoration(
                   labelText: l.loginPasswordLabel,
-                  filled: true,
-                  fillColor: Colors.white,
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(_obscurePassword

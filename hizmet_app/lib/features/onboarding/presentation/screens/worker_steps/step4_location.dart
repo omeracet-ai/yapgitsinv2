@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 
-/// Phase 129 Step 4 — Şehir/ilçe + servis radius slider.
+/// Phase 129 Step 4 â€” Åehir/ilÃ§e + servis radius slider.
 class WorkerOnboardingStep4Location extends StatelessWidget {
   final TextEditingController cityCtrl;
   final TextEditingController districtCtrl;
@@ -24,20 +24,19 @@ class WorkerOnboardingStep4Location extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('📍 Hizmet bölgen',
+          const Text('ğŸ“ Hizmet bÃ¶lgen',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          const Text('Müşteriler seni bu bölgede bulacak.',
+          const Text('MÃ¼ÅŸteriler seni bu bÃ¶lgede bulacak.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
           const SizedBox(height: 20),
           TextField(
             controller: cityCtrl,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              labelText: 'Şehir',
+              labelText: 'Åehir',
               prefixIcon: const Icon(Icons.location_city_outlined),
-              filled: true,
-              fillColor: Colors.white,
+              
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
@@ -47,16 +46,15 @@ class WorkerOnboardingStep4Location extends StatelessWidget {
             controller: districtCtrl,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              labelText: 'İlçe',
+              labelText: 'Ä°lÃ§e',
               prefixIcon: const Icon(Icons.map_outlined),
-              filled: true,
-              fillColor: Colors.white,
+              
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Servis Yarıçapı',
+          const Text('Servis YarÄ±Ã§apÄ±',
               style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Wrap(
@@ -72,7 +70,7 @@ class WorkerOnboardingStep4Location extends StatelessWidget {
             }).toList(),
           ),
           const SizedBox(height: 12),
-          Text('Seçili: $radiusKm km — bu mesafeye kadar iş tekliflerini alırsın.',
+          Text('SeÃ§ili: $radiusKm km â€” bu mesafeye kadar iÅŸ tekliflerini alÄ±rsÄ±n.',
               style: const TextStyle(
                   fontSize: 12, color: AppColors.textSecondary)),
         ],

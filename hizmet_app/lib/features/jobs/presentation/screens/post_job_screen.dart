@@ -491,44 +491,45 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
   Widget _buildCategoryGrid() {
     return ref.watch(categoriesProvider).when(
-          data: (cats) => Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: cats.map((cat) {
+          data: (cats) {
+            // Phase Mobile7 — chip grid → tek dropdown
+            final items = cats.map((cat) {
               final name = cat['name'] as String? ?? '';
               final emoji = cat['icon'] as String? ?? '🔧';
-              final isSelected = _selectedCategory == name;
-              return GestureDetector(
-                onTap: () {
-                  setState(() => _selectedCategory = name);
-                  _scheduleDraftSave();
-                },
-                child: Container(
-                  width: 80,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primaryLight : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: isSelected
-                            ? AppColors.primary
-                            : AppColors.border),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(emoji, style: const TextStyle(fontSize: 24)),
-                      const SizedBox(height: 4),
-                      Text(name,
-                          style: const TextStyle(fontSize: 10),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
-                    ],
-                  ),
+              return DropdownMenuItem<String>(
+                value: name,
+                child: Row(
+                  children: [
+                    Text(emoji, style: const TextStyle(fontSize: 18)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(name,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 14)),
+                    ),
+                  ],
                 ),
               );
-            }).toList(),
-          ),
+            }).toList();
+            final valueExists =
+                _selectedCategory != null &&
+                    cats.any((c) => c['name'] == _selectedCategory);
+            return DropdownButtonFormField<String>(
+              value: valueExists ? _selectedCategory : null,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Kategori Seç',
+                prefixIcon: Icon(Icons.category_outlined),
+              ),
+              items: items,
+              onChanged: (v) {
+                setState(() => _selectedCategory = v);
+                _scheduleDraftSave();
+              },
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Kategori seçin' : null,
+            );
+          },
           loading: () =>
               const Center(child: CircularProgressIndicator()),
           error: (_, __) =>

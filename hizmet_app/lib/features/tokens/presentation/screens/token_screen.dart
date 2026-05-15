@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/firebase_token_repository.dart';
 
@@ -16,56 +15,6 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
   String _paymentMethod = 'bank';
   int _selectedAmount = 50;
   bool _loading = false;
-  bool _pdfLoading = false;
-  DateTimeRange? _pdfRange;
-
-  Future<void> _downloadPdf() async {
-    setState(() => _pdfLoading = true);
-    try {
-      final path = await ref
-          .read(tokenRepositoryProvider)
-          .downloadHistoryPdf(from: _pdfRange?.start, to: _pdfRange?.end);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('PDF indirildi'),
-          backgroundColor: AppColors.success,
-          action: SnackBarAction(
-            label: 'Paylaş',
-            textColor: Colors.white,
-            onPressed: () {
-              SharePlus.instance.share(
-                ShareParams(
-                  files: [XFile(path)],
-                  text: 'Yapgitsin cüzdan geçmişi',
-                ),
-              );
-            },
-          ),
-        ),
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('PDF indirilemedi: ${e.toString()}'),
-          backgroundColor: AppColors.error,
-        ));
-      }
-    } finally {
-      if (mounted) setState(() => _pdfLoading = false);
-    }
-  }
-
-  Future<void> _pickPdfRange() async {
-    final now = DateTime.now();
-    final r = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(now.year - 3),
-      lastDate: now,
-      initialDateRange: _pdfRange,
-    );
-    if (r != null) setState(() => _pdfRange = r);
-  }
 
   final List<int> _presets = [10, 25, 50, 100, 250, 500];
 
@@ -163,49 +112,6 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _pdfLoading ? null : _downloadPdf,
-                    icon: _pdfLoading
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.picture_as_pdf, size: 18),
-                    label: const Text('PDF İndir'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  tooltip: 'Tarih aralığı',
-                  onPressed: _pdfLoading ? null : _pickPdfRange,
-                  icon: Icon(
-                    Icons.date_range,
-                    color: _pdfRange == null
-                        ? AppColors.textHint
-                        : AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-            if (_pdfRange != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '${_pdfRange!.start.toIso8601String().substring(0, 10)} → ${_pdfRange!.end.toIso8601String().substring(0, 10)}',
-                  style: const TextStyle(fontSize: 11, color: AppColors.textHint),
-                ),
-              ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),

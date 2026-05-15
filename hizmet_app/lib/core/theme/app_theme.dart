@@ -123,10 +123,14 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+          minimumSize: const Size(0, 52),
+          alignment: Alignment.center,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           textStyle: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.bold,
+            height: 1.1,
           ),
         ).copyWith(
           overlayColor: MaterialStateProperty.all(Colors.black.withOpacity(0.1)),
@@ -160,6 +164,12 @@ class AppTheme {
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         hintStyle: const TextStyle(color: AppColors.darkTextSecondary),
+        labelStyle: const TextStyle(color: AppColors.darkTextSecondary),
+      ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: AppColors.darkPrimary,
+        selectionColor: Color(0x554ADE80),
+        selectionHandleColor: AppColors.darkPrimary,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.darkBackground,

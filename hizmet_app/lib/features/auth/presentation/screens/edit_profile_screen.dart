@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io' as io;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -16,10 +16,10 @@ import '../../../insurance/data/insurance_repository.dart';
 import '../../widgets/intro_video_section.dart';
 import '../../widgets/certifications_section.dart';
 
-// Phase 62 — Sectioned Profile Edit UX
+// Phase 62 â€” Sectioned Profile Edit UX
 //
-// Mevcut PATCH /users/me akışı korunur. Bölümler bağımsız submit edebilir,
-// üstte profileCompletion (%X) chip + her bölümde missingFields highlight.
+// Mevcut PATCH /users/me akÄ±ÅŸÄ± korunur. BÃ¶lÃ¼mler baÄŸÄ±msÄ±z submit edebilir,
+// Ã¼stte profileCompletion (%X) chip + her bÃ¶lÃ¼mde missingFields highlight.
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -113,7 +113,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.dispose();
   }
 
-  // ── Phase 72: Profile photo pick + upload ─────────────────────────────────
+  // â”€â”€ Phase 72: Profile photo pick + upload â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Future<void> _pickAndUploadPhoto() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
@@ -128,8 +128,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final url = await ref
           .read(firebasePhotoRepositoryProvider)
           .uploadProfilePhoto(picked);
-      // PATCH /users/me ile kalıcı olarak kaydet — _patch zaten authState + completion
-      // refresh ediyor; setState 'photo' bitince UI yeni avatarı CircleAvatar'da gösterir.
+      // PATCH /users/me ile kalÄ±cÄ± olarak kaydet â€” _patch zaten authState + completion
+      // refresh ediyor; setState 'photo' bitince UI yeni avatarÄ± CircleAvatar'da gÃ¶sterir.
       await _patch('photo', {'profileImageUrl': url});
     } catch (e) {
       _snack(e.toString(), error: true);
@@ -137,7 +137,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
-  // ── Persistence ────────────────────────────────────────────────────────────
+  // â”€â”€ Persistence â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Future<void> _patch(String section, Map<String, dynamic> data) async {
     setState(() => _busySection = section);
     try {
@@ -154,9 +154,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           .read(authStateProvider.notifier)
           .updateUserData(Map<String, dynamic>.from(res.data as Map));
       ref.invalidate(profileCompletionProvider);
-      if (mounted) _snack('Bilgiler güncellendi ✓');
+      if (mounted) _snack('Bilgiler gÃ¼ncellendi âœ“');
     } on DioException catch (e) {
-      _snack(e.response?.data?['message']?.toString() ?? 'Güncelleme başarısız',
+      _snack(e.response?.data?['message']?.toString() ?? 'GÃ¼ncelleme baÅŸarÄ±sÄ±z',
           error: true);
     } catch (e) {
       _snack(e.toString(), error: true);
@@ -167,7 +167,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _savePersonal() async {
     if (_nameCtrl.text.trim().isEmpty) {
-      _snack('Ad soyad boş olamaz.', error: true);
+      _snack('Ad soyad boÅŸ olamaz.', error: true);
       return;
     }
     final bdStr = _birthDate != null
@@ -218,7 +218,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _saveIdentity() async {
     if (_newIdentityPhoto == null) {
-      _snack('Önce kimlik fotoğrafı seçin.', error: true);
+      _snack('Ã–nce kimlik fotoÄŸrafÄ± seÃ§in.', error: true);
       return;
     }
     setState(() => _busySection = 'identity');
@@ -242,7 +242,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     ));
   }
 
-  // ── UI ─────────────────────────────────────────────────────────────────────
+  // â”€â”€ UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   @override
   Widget build(BuildContext context) {
     final completion = ref.watch(profileCompletionProvider);
@@ -265,7 +265,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             pinned: true,
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
-            title: Text('Profilimi Düzenle'),
+            title: Text('Profilimi DÃ¼zenle'),
           ),
           SliverToBoxAdapter(
             child: _progressChip(percent, missing.length),
@@ -310,9 +310,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           Expanded(
             child: Text(
               percent >= 100
-                  ? 'Profil tamamlandı ✓'
-                  : 'Profilin %$percent tamamlandı'
-                      '${missingCount > 0 ? ' • $missingCount eksik alan' : ''}',
+                  ? 'Profil tamamlandÄ± âœ“'
+                  : 'Profilin %$percent tamamlandÄ±'
+                      '${missingCount > 0 ? ' â€¢ $missingCount eksik alan' : ''}',
               style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.w700,
@@ -340,7 +340,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  // ── Section: Profile Photo ────────────────────────────────────────────────
+  // â”€â”€ Section: Profile Photo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _photoSection(Set<String> missing) {
     final auth = ref.watch(authStateProvider);
     final url = auth is AuthAuthenticated
@@ -348,8 +348,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         : null;
     final isMissing = missing.contains('profileImageUrl');
     return _sectionCard(
-      icon: '📷',
-      title: 'Profil Fotoğrafı',
+      icon: 'ğŸ“·',
+      title: 'Profil FotoÄŸrafÄ±',
       isMissing: isMissing,
       missingFields: isMissing ? const ['profileImageUrl'] : const [],
       child: Row(children: [
@@ -370,14 +370,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Avatarını güncelle',
+              const Text('AvatarÄ±nÄ± gÃ¼ncelle',
                   style:
                       TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               const SizedBox(height: 4),
               Text(
                 isMissing
-                    ? 'Henüz fotoğraf eklemedin'
-                    : 'Profil fotoğrafı yüklü',
+                    ? 'HenÃ¼z fotoÄŸraf eklemedin'
+                    : 'Profil fotoÄŸrafÄ± yÃ¼klÃ¼',
                 style: TextStyle(
                   fontSize: 12,
                   color: isMissing ? AppColors.error : AppColors.textSecondary,
@@ -394,7 +394,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       )
                     : const Icon(Icons.photo_camera, size: 16),
                 label: Text(
-                  _busySection == 'photo' ? 'Yükleniyor…' : 'Fotoğraf Seç',
+                  _busySection == 'photo' ? 'YÃ¼kleniyorâ€¦' : 'FotoÄŸraf SeÃ§',
                   style: const TextStyle(fontSize: 12),
                 ),
                 style: OutlinedButton.styleFrom(
@@ -411,13 +411,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  // ── Section: Personal ─────────────────────────────────────────────────────
+  // â”€â”€ Section: Personal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _personalSection(Set<String> missing) {
     final fields = ['fullName', 'birthDate', 'gender'];
     final missingHere = fields.where(missing.contains).toList();
     return _sectionCard(
-      icon: '👤',
-      title: 'Kişisel Bilgiler',
+      icon: 'ğŸ‘¤',
+      title: 'KiÅŸisel Bilgiler',
       isMissing: missingHere.isNotEmpty,
       missingFields: missingHere,
       busy: _busySection == 'personal',
@@ -442,7 +442,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             Icons.cake_outlined,
             _birthDate != null
                 ? '${_birthDate!.day}.${_birthDate!.month}.${_birthDate!.year}'
-                : 'Doğum Tarihi',
+                : 'DoÄŸum Tarihi',
             hint: _birthDate == null,
             highlight: missing.contains('birthDate'),
           ),
@@ -458,7 +458,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               icon: const Icon(Icons.arrow_drop_down),
               items: const [
                 DropdownMenuItem(value: 'male', child: Text('Erkek')),
-                DropdownMenuItem(value: 'female', child: Text('Kadın')),
+                DropdownMenuItem(value: 'female', child: Text('KadÄ±n')),
                 DropdownMenuItem(
                     value: 'other', child: Text('Belirtmek istemiyorum')),
               ],
@@ -474,8 +474,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final fields = ['phoneNumber', 'email'];
     final missingHere = fields.where(missing.contains).toList();
     return _sectionCard(
-      icon: '📞',
-      title: 'İletişim',
+      icon: 'ğŸ“',
+      title: 'Ä°letiÅŸim',
       isMissing: missingHere.isNotEmpty,
       missingFields: missingHere,
       busy: _busySection == 'contact',
@@ -496,25 +496,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final fields = ['city', 'district', 'address'];
     final missingHere = fields.where(missing.contains).toList();
     return _sectionCard(
-      icon: '📍',
+      icon: 'ğŸ“',
       title: 'Adres',
       isMissing: missingHere.isNotEmpty,
       missingFields: missingHere,
       busy: _busySection == 'address',
       onSave: _saveAddress,
       child: Column(children: [
-        _field(_cityCtrl, 'Şehir', Icons.location_city_outlined,
+        _field(_cityCtrl, 'Åehir', Icons.location_city_outlined,
             TextInputType.text,
             highlight: missing.contains('city')),
         const SizedBox(height: 12),
-        _field(_districtCtrl, 'İlçe', Icons.map_outlined, TextInputType.text,
+        _field(_districtCtrl, 'Ä°lÃ§e', Icons.map_outlined, TextInputType.text,
             highlight: missing.contains('district')),
         const SizedBox(height: 12),
         TextField(
           controller: _addressCtrl,
           maxLines: 3,
           decoration: _inputDeco(
-            'Açık Adres',
+            'AÃ§Ä±k Adres',
             Icons.home_outlined,
             highlight: missing.contains('address'),
           ),
@@ -523,7 +523,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  // Phase 152 — Tanıtım Videosu (worker only, max 60sn)
+  // Phase 152 â€” TanÄ±tÄ±m Videosu (worker only, max 60sn)
   Widget _introVideoSection() {
     final user = ref.read(authStateProvider) is AuthAuthenticated
         ? (ref.read(authStateProvider) as AuthAuthenticated).user
@@ -531,13 +531,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final url = user['introVideoUrl'] as String?;
     final dur = (user['introVideoDuration'] as num?)?.toInt();
     return _sectionCard(
-      icon: '🎥',
-      title: 'Tanıtım Videosu',
+      icon: 'ğŸ¥',
+      title: 'TanÄ±tÄ±m Videosu',
       isMissing: false,
       missingFields: const [],
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text(
-          'Profilinizde öne çıkacak 60 saniyelik tanıtım videosu.',
+          'Profilinizde Ã¶ne Ã§Ä±kacak 60 saniyelik tanÄ±tÄ±m videosu.',
           style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 12),
@@ -559,7 +559,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     ];
     final missingHere = fields.where(missing.contains).toList();
     return _sectionCard(
-      icon: '🛠️',
+      icon: 'ğŸ› ï¸',
       title: 'Usta Bilgileri',
       isMissing: missingHere.isNotEmpty,
       missingFields: missingHere,
@@ -582,7 +582,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           )
         else
           Text(
-            'Hizmet kategorisi seçilmedi',
+            'Hizmet kategorisi seÃ§ilmedi',
             style: TextStyle(
               fontSize: 12,
               color: missing.contains('workerCategories')
@@ -596,7 +596,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           maxLines: 4,
           maxLength: 300,
           decoration: _inputDeco(
-            'Hakkında (workerBio)',
+            'HakkÄ±nda (workerBio)',
             Icons.work_outline,
             highlight: missing.contains('workerBio'),
           ),
@@ -604,13 +604,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         const SizedBox(height: 8),
         Row(children: [
           Expanded(
-            child: _field(_hourlyMinCtrl, 'Saatlik Min (₺)',
+            child: _field(_hourlyMinCtrl, 'Saatlik Min (â‚º)',
                 Icons.attach_money_outlined, TextInputType.number,
                 highlight: missing.contains('hourlyRateMin')),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: _field(_hourlyMaxCtrl, 'Saatlik Max (₺)',
+            child: _field(_hourlyMaxCtrl, 'Saatlik Max (â‚º)',
                 Icons.attach_money_outlined, TextInputType.number,
                 highlight: missing.contains('hourlyRateMax')),
           ),
@@ -618,10 +618,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         const SizedBox(height: 12),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('İş alıyorum (müsaitlik)',
+          title: const Text('Ä°ÅŸ alÄ±yorum (mÃ¼saitlik)',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
           subtitle: const Text(
-            'Açıkken arama sonuçlarında öne çıkarsın',
+            'AÃ§Ä±kken arama sonuÃ§larÄ±nda Ã¶ne Ã§Ä±karsÄ±n',
             style: TextStyle(fontSize: 11),
           ),
           value: _isAvailable,
@@ -638,20 +638,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final hasUrl = _currentIdentityUrl != null;
     final hasFile = _newIdentityPhoto != null;
     return _sectionCard(
-      icon: '🪪',
-      title: 'Kimlik Doğrulama',
+      icon: 'ğŸªª',
+      title: 'Kimlik DoÄŸrulama',
       isMissing: missingHere.isNotEmpty,
       missingFields: missingHere,
       busy: _busySection == 'identity',
-      saveLabel: hasFile ? 'Yükle' : null,
+      saveLabel: hasFile ? 'YÃ¼kle' : null,
       onSave: hasFile ? _saveIdentity : null,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         if (_identityVerified)
-          _statusPill('Onaylandı', Colors.green, Icons.verified)
+          _statusPill('OnaylandÄ±', Colors.green, Icons.verified)
         else if (hasUrl)
-          _statusPill('İnceleniyor', Colors.orange, Icons.hourglass_top)
+          _statusPill('Ä°nceleniyor', Colors.orange, Icons.hourglass_top)
         else
-          _statusPill('Doğrulanmadı', AppColors.error, Icons.warning_amber),
+          _statusPill('DoÄŸrulanmadÄ±', AppColors.error, Icons.warning_amber),
         const SizedBox(height: 12),
         if (hasFile)
           ClipRRect(
@@ -687,7 +687,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ? Icons.refresh_outlined
                   : Icons.add_photo_alternate_outlined,
               size: 16),
-          label: Text(hasUrl || hasFile ? 'Değiştir' : 'Fotoğraf Seç',
+          label: Text(hasUrl || hasFile ? 'DeÄŸiÅŸtir' : 'FotoÄŸraf SeÃ§',
               style: const TextStyle(fontSize: 13)),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.primary,
@@ -700,7 +700,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _sectionCard({
     required String icon,
     required String title,
@@ -745,8 +745,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
             ),
             _badge(isMissing
-                ? '✏️  ${missingFields.length} eksik'
-                : '✓ Eksiksiz',
+                ? 'âœï¸  ${missingFields.length} eksik'
+                : 'âœ“ Eksiksiz',
                 isMissing ? AppColors.error : AppColors.success),
           ]),
         ),
@@ -775,7 +775,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         height: 18,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
-                    : Text(saveLabel ?? 'Bu Bölümü Kaydet',
+                    : Text(saveLabel ?? 'Bu BÃ¶lÃ¼mÃ¼ Kaydet',
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 14)),
               ),
@@ -827,8 +827,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ? const Icon(Icons.priority_high, color: AppColors.error, size: 18)
           : null,
       alignLabelWithHint: true,
-      filled: true,
-      fillColor: Colors.white,
+      
       border: border,
       enabledBorder: border,
     );
@@ -871,7 +870,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget _insuranceSection() => _InsuranceSection(repo: ref.read(insuranceRepositoryProvider));
 
   Widget _certificationsSection() => _sectionCard(
-        icon: '📜',
+        icon: 'ğŸ“œ',
         title: 'Sertifikalar',
         isMissing: false,
         missingFields: const [],
@@ -888,7 +887,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
 }
 
-// Phase 119 — Worker insurance edit section
+// Phase 119 â€” Worker insurance edit section
 class _InsuranceSection extends StatefulWidget {
   final InsuranceRepository repo;
   const _InsuranceSection({required this.repo});
@@ -944,7 +943,7 @@ class _InsuranceSectionState extends State<_InsuranceSection> {
     final coverage = double.tryParse(_coverageCtrl.text.trim()) ?? 0;
     if (policy.isEmpty || provider.isEmpty || coverage <= 0 || _expiry == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tüm alanları doldurun')),
+        const SnackBar(content: Text('TÃ¼m alanlarÄ± doldurun')),
       );
       return;
     }
@@ -959,7 +958,7 @@ class _InsuranceSectionState extends State<_InsuranceSection> {
       if (!mounted) return;
       setState(() => _verified = ins.verified);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sigorta bilgisi kaydedildi (admin onayı bekleniyor)')),
+        const SnackBar(content: Text('Sigorta bilgisi kaydedildi (admin onayÄ± bekleniyor)')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -992,9 +991,9 @@ class _InsuranceSectionState extends State<_InsuranceSection> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
-              const Text('🛡️', style: TextStyle(fontSize: 20)),
+              const Text('ğŸ›¡ï¸', style: TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
-              const Text('Mesleki Sorumluluk Sigortası',
+              const Text('Mesleki Sorumluluk SigortasÄ±',
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
               const Spacer(),
               if (_verified)
@@ -1004,35 +1003,35 @@ class _InsuranceSectionState extends State<_InsuranceSection> {
                     color: AppColors.success.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text('Onaylı',
+                  child: const Text('OnaylÄ±',
                       style: TextStyle(color: AppColors.success, fontSize: 12)),
                 ),
             ]),
             const SizedBox(height: 12),
             TextField(
               controller: _policyCtrl,
-              decoration: const InputDecoration(labelText: 'Poliçe Numarası'),
+              decoration: const InputDecoration(labelText: 'PoliÃ§e NumarasÄ±'),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _providerCtrl,
-              decoration: const InputDecoration(labelText: 'Sigorta Şirketi'),
+              decoration: const InputDecoration(labelText: 'Sigorta Åirketi'),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _coverageCtrl,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                  labelText: 'Teminat Tutarı (₺)'),
+                  labelText: 'Teminat TutarÄ± (â‚º)'),
             ),
             const SizedBox(height: 8),
             InkWell(
               onTap: _pickDate,
               child: InputDecorator(
-                decoration: const InputDecoration(labelText: 'Bitiş Tarihi'),
+                decoration: const InputDecoration(labelText: 'BitiÅŸ Tarihi'),
                 child: Text(_expiry != null
                     ? '${_expiry!.day}.${_expiry!.month}.${_expiry!.year}'
-                    : 'Tarih seçin'),
+                    : 'Tarih seÃ§in'),
               ),
             ),
             const SizedBox(height: 12),

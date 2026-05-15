@@ -1,4 +1,4 @@
-import 'dart:io' as io;
+﻿import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,7 +78,7 @@ class _PostServiceRequestScreenState
         desc.isEmpty ||
         location.isEmpty) {
       setState(
-          () => _error = 'Kategori, başlık, açıklama ve konum zorunludur.');
+          () => _error = 'Kategori, baÅŸlÄ±k, aÃ§Ä±klama ve konum zorunludur.');
       return;
     }
 
@@ -122,7 +122,7 @@ class _PostServiceRequestScreenState
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Hizmet Al İlanı Ver',
+        title: const Text('Hizmet Al Ä°lanÄ± Ver',
             style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -143,8 +143,7 @@ class _PostServiceRequestScreenState
                   decoration: const InputDecoration(
                     labelText: 'Kategori *',
                     prefixIcon: Icon(Icons.category_outlined),
-                    filled: true,
-                    fillColor: Colors.white,
+                    
                   ),
                   items: cats.map((c) {
                     final name = c['name']?.toString() ?? '';
@@ -162,35 +161,33 @@ class _PostServiceRequestScreenState
               ),
               const SizedBox(height: 14),
 
-              // Başlık
+              // BaÅŸlÄ±k
               TextField(
                 controller: _titleCtrl,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
-                  labelText: 'Başlık *',
+                  labelText: 'BaÅŸlÄ±k *',
                   prefixIcon: Icon(Icons.title),
-                  filled: true,
-                  fillColor: Colors.white,
+                  
                 ),
               ),
               const SizedBox(height: 14),
 
-              // Açıklama
+              // AÃ§Ä±klama
               TextField(
                 controller: _descCtrl,
                 maxLines: 4,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
-                  labelText: 'Açıklama *',
+                  labelText: 'AÃ§Ä±klama *',
                   prefixIcon: Icon(Icons.description_outlined),
                   alignLabelWithHint: true,
-                  filled: true,
-                  fillColor: Colors.white,
+                  
                 ),
               ),
               const SizedBox(height: 14),
 
-              // Konum — harita picker
+              // Konum â€” harita picker
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -201,9 +198,8 @@ class _PostServiceRequestScreenState
                       decoration: const InputDecoration(
                         labelText: 'Konum *',
                         prefixIcon: Icon(Icons.location_on_outlined),
-                        hintText: 'Haritadan seçin',
-                        filled: true,
-                        fillColor: Colors.white,
+                        hintText: 'Haritadan seÃ§in',
+                        
                       ),
                     ),
                   ),
@@ -246,16 +242,15 @@ class _PostServiceRequestScreenState
                 controller: _addressCtrl,
                 maxLines: 2,
                 decoration: const InputDecoration(
-                  labelText: 'Detaylı Adres (opsiyonel)',
+                  labelText: 'DetaylÄ± Adres (opsiyonel)',
                   prefixIcon: Icon(Icons.home_outlined),
                   alignLabelWithHint: true,
-                  filled: true,
-                  fillColor: Colors.white,
+                  
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Fotoğraf
+              // FotoÄŸraf
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
@@ -284,7 +279,7 @@ class _PostServiceRequestScreenState
                             Icon(Icons.add_photo_alternate_outlined,
                                 size: 40, color: AppColors.textHint),
                             SizedBox(height: 8),
-                            Text('Fotoğraf Ekle (opsiyonel)',
+                            Text('FotoÄŸraf Ekle (opsiyonel)',
                                 style: TextStyle(color: AppColors.textHint)),
                           ],
                         ),
@@ -320,7 +315,7 @@ class _PostServiceRequestScreenState
                         width: 20,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                    : const Text('İlanı Yayınla',
+                    : const Text('Ä°lanÄ± YayÄ±nla',
                         style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
