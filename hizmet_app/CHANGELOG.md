@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.4+104 — 2026-05-15
+
+### Added
+- Android 13+ POST_NOTIFICATIONS permission (FCM bildirim göstermek için zorunlu)
+- WAKE_LOCK permission (FCM background için)
+- com.google.android.c2dm.permission.RECEIVE explicit
+
 ## 1.5.3+103 — 2026-05-15
 
 ### Changed

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../../features/onboarding/data/onboarding_storage.dart';
 import '../../../features/home/presentation/screens/main_shell.dart';
 import '../../../features/auth/presentation/screens/login_screen.dart';
@@ -49,9 +50,117 @@ import '../../../features/escrow/presentation/screens/payment_screen.dart';
 import '../../../features/escrow/presentation/screens/escrow_list_screen.dart';
 import '../../../features/promo/presentation/screens/promo_screen.dart';
 
+/// Public path'ler — auth gerektirmez. `startsWith` ile değil tam eşleşme veya
+/// prefix ile kontrol edilir (kategori listeleri vs. eklenirse buraya).
+const _publicPaths = <String>{
+  '/splash',
+  '/hos-geldiniz',
+  '/usta-baslangic',
+  '/',
+  '/giris-yap',
+  '/kayit-ol',
+  '/2fa-challenge',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+  '/destek',
+  '/harita',
+};
+
+/// Public prefix'ler — `/profil/:id`, `/musteri/:id`, `/usta/:id`, `/ilan/:id`
+/// deep link'leri logged-out kullanıcılar da görebilsin (paylaşım/sosyal).
+const _publicPrefixes = <String>[
+  '/profil/',
+  '/musteri/',
+  '/usta/',
+  '/ilan/',
+];
+
+/// Auth zorunlu prefix'ler. Match olmayan + public olmayan path'ler de
+/// güvenlik gereği protected sayılır (deny-by-default).
+const _protectedPrefixes = <String>[
+  '/ilan-ver',
+  '/jetonlar',
+  '/promo',
+  '/sadakat',
+  '/abonelik',
+  '/kategori-abonelikleri',
+  '/boost',
+  '/kazanclarim',
+  '/takvim-sync',
+  '/asistan',
+  '/sablonlarim',
+  '/teklif-sablonlarim',
+  '/sertifikalarim',
+  '/mesaj-sablonlarim',
+  '/aylik-beyan',
+  '/favorilerim',
+  '/engellenenler',
+  '/kaydedilen-isler',
+  '/bildirim-ayarlari',
+  '/randevu-olustur',
+  '/sikayetlerim',
+  '/sikayet-olustur',
+  '/chat',
+  '/odeme',
+  '/escrow-listesi',
+  '/portfolyo',
+  '/ilan-basarili',
+  '/2fa-setup',
+];
+
+// ignore: unused_element
+bool _isPublic(String loc) {
+  if (_publicPaths.contains(loc)) return true;
+  for (final p in _publicPrefixes) {
+    if (loc.startsWith(p)) return true;
+  }
+  return false;
+}
+
+bool _isProtected(String loc) {
+  for (final p in _protectedPrefixes) {
+    if (loc == p || loc.startsWith('$p/') || loc.startsWith('$p?')) return true;
+  }
+  return false;
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
+  // Auth state değiştiğinde router refresh — login/logout flicker'ı önler.
+  final refresh = _AuthRefreshNotifier();
+  ref.listen<AuthState>(authStateProvider, (_, __) => refresh.bump());
+  ref.onDispose(refresh.dispose);
+
   return GoRouter(
     initialLocation: '/splash',
+    refreshListenable: refresh,
+    redirect: (context, state) {
+      final authState = ref.read(authStateProvider);
+      // Auth henüz çözülmediyse splash'ta bırak — flicker'ı önler.
+      if (authState is AuthInitial || authState is AuthLoading) {
+        return null;
+      }
+      final isAuthed = authState is AuthAuthenticated;
+      final loc = state.matchedLocation;
+
+      // Auth bekleyen kullanıcı protected path'e gittiyse login'e yönlendir,
+      // dönüş hedefi query string'de saklanır.
+      if (!isAuthed && _isProtected(loc)) {
+        final returnTo = Uri.encodeComponent(loc);
+        return '/giris-yap?returnTo=$returnTo';
+      }
+
+      // Logged-in kullanıcı login/register/forgot sayfalarına gitmesin.
+      if (isAuthed &&
+          (loc == '/giris-yap' ||
+              loc == '/kayit-ol' ||
+              loc == '/forgot-password' ||
+              loc == '/2fa-challenge')) {
+        return '/';
+      }
+
+      return null; // no redirect
+    },
     routes: [
       GoRoute(
         path: '/splash',
@@ -288,6 +397,12 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// GoRouter refresh helper — Riverpod auth state değişimlerini
+/// `ChangeNotifier` API'sine bağlar.
+class _AuthRefreshNotifier extends ChangeNotifier {
+  void bump() => notifyListeners();
+}
 
 /// Loader widget for /ilan/:id deep-link route.
 /// Fetches job data via [jobDetailProvider] and renders [JobDetailScreen].
