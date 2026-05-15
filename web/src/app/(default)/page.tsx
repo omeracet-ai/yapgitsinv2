@@ -7,19 +7,16 @@ import CategoryGrid from '@/components/home/CategoryGrid';
 import PopularJobs from '@/components/home/PopularJobs';
 import HowItWorks from '@/components/home/HowItWorks';
 import TrustBand from '@/components/home/TrustBand';
-import JobsMapWrapper from '@/components/map/JobsMapWrapper';
 
 export const revalidate = 3600;
 
 export default async function HomePage() {
-  const [cats, workersResp, statsData] = await Promise.all([
+  const [cats, statsData] = await Promise.all([
     getCategories(),
-    getWorkers({ limit: '8' }),
     getPublicStats(),
   ]);
   const allCats = cats || [];
   const gridCats = allCats.slice(0, 12);
-  const workers = unwrap(workersResp).slice(0, 8);
   const searchCats = allCats.map((c) => ({
     name: c.name,
     slug: slugify(c.name),
@@ -39,24 +36,9 @@ export default async function HomePage() {
 
       <CategoryGrid categories={gridCats} />
 
-      <PopularJobs workers={workers} />
-
       <HowItWorks />
 
       <TrustBand />
-
-      {/* Active jobs map */}
-      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-14 md:py-20">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-            Türkiye Genelinde Aktif İlanlar
-          </h2>
-          <p className="mt-2 text-gray-500 text-sm md:text-base">
-            Haritadan size en yakın hizmet ilanlarını keşfedin
-          </p>
-        </div>
-        <JobsMapWrapper />
-      </section>
 
       {/* Quick lead form */}
       <section className="container mx-auto px-4 md:px-6 lg:px-8 py-14 md:py-20">
