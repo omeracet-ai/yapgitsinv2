@@ -487,6 +487,7 @@ class _MapView extends StatelessWidget {
                   category: j.category,
                   isSelected: isSelected,
                   price: price,
+                  isApprox: j.locationApprox,
                 ),
               ),
             );

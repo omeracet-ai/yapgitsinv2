@@ -9,6 +9,9 @@ export interface MapItem {
   label: string;
   latitude: number | null;
   longitude: number | null;
+  // Phase 152 — Yaklaşık konum (city-centroid backfill). Pin yarı saydam
+  // + dashed border ile gösterilir, popup'ta "Yaklaşık konum" notu.
+  locationApprox?: boolean;
 }
 
 interface Props {
@@ -20,7 +23,10 @@ interface Props {
   overlayLabel?: string;
 }
 
-function makeIcon(color: 'orange' | 'blue' | 'green' | 'purple') {
+function makeIcon(
+  color: 'orange' | 'blue' | 'green' | 'purple',
+  opts: { approx?: boolean } = {},
+) {
   const cfg: Record<string, [string, string]> = {
     orange: ['#f97316', '#c2410c'],
     blue:   ['#2563eb', '#1d4ed8'],
@@ -28,15 +34,32 @@ function makeIcon(color: 'orange' | 'blue' | 'green' | 'purple') {
     purple: ['#9333ea', '#7e22ce'],
   };
   const [bg, border] = cfg[color];
+  // Phase 152 — yaklaşık konum: opacity 0.55, dashed border, "~" rozeti.
+  const opacity = opts.approx ? 0.55 : 1;
+  const borderStyle = opts.approx ? 'dashed' : 'solid';
+  const approxBadge = opts.approx
+    ? `<div style="
+        position: absolute; top: -6px; left: -6px;
+        width: 14px; height: 14px;
+        background: #fff; color: #4b5563;
+        border: 1.5px solid #6b7280; border-radius: 50%;
+        font: bold 10px/14px system-ui, sans-serif;
+        text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+      " title="Yaklaşık konum">~</div>`
+    : '';
   return L.divIcon({
     className: '',
-    html: `<div style="
-      width: 18px; height: 18px;
-      background: ${bg};
-      border: 3px solid ${border};
-      border-radius: 50%;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-    "></div>`,
+    html: `<div style="position: relative;">
+      <div style="
+        width: 18px; height: 18px;
+        background: ${bg};
+        border: 3px ${borderStyle} ${border};
+        border-radius: 50%;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+        opacity: ${opacity};
+      "></div>
+      ${approxBadge}
+    </div>`,
     iconSize: [18, 18],
     iconAnchor: [9, 9],
     popupAnchor: [0, -12],
@@ -45,8 +68,11 @@ function makeIcon(color: 'orange' | 'blue' | 'green' | 'purple') {
 
 const icons = {
   orange: makeIcon('orange'),
+  orangeApprox: makeIcon('orange', { approx: true }),
   blue:   makeIcon('blue'),
+  blueApprox: makeIcon('blue', { approx: true }),
   green:  makeIcon('green'),
+  greenApprox: makeIcon('green', { approx: true }),
   purple: makeIcon('purple'),
 };
 
@@ -84,27 +110,41 @@ export default function AdminMap({
         <Marker
           key={`ov-${item.id}`}
           position={[item.latitude!, item.longitude!]}
-          icon={icons.green}
+          icon={item.locationApprox ? icons.greenApprox : icons.green}
           eventHandlers={{ click: () => onMarkerClick(item.id) }}
         >
           <Popup>
             <span className="text-xs text-green-700 font-semibold">{overlayLabel}</span>
             <br />{item.label}
+            {item.locationApprox && (
+              <><br /><span className="text-[10px] text-gray-500 italic">Yaklaşık konum (şehir merkezi)</span></>
+            )}
           </Popup>
         </Marker>
       ))}
 
       {/* Primary items — orange (normal) / blue (selected) */}
-      {primary.map(item => (
-        <Marker
-          key={item.id}
-          position={[item.latitude!, item.longitude!]}
-          icon={item.id === selectedId ? icons.blue : icons.orange}
-          eventHandlers={{ click: () => onMarkerClick(item.id) }}
-        >
-          <Popup>{item.label}</Popup>
-        </Marker>
-      ))}
+      {primary.map(item => {
+        const selected = item.id === selectedId;
+        const icon = selected
+          ? (item.locationApprox ? icons.blueApprox : icons.blue)
+          : (item.locationApprox ? icons.orangeApprox : icons.orange);
+        return (
+          <Marker
+            key={item.id}
+            position={[item.latitude!, item.longitude!]}
+            icon={icon}
+            eventHandlers={{ click: () => onMarkerClick(item.id) }}
+          >
+            <Popup>
+              {item.label}
+              {item.locationApprox && (
+                <><br /><span className="text-[10px] text-gray-500 italic">Yaklaşık konum (şehir merkezi)</span></>
+              )}
+            </Popup>
+          </Marker>
+        );
+      })}
     </MapContainer>
   );
 }

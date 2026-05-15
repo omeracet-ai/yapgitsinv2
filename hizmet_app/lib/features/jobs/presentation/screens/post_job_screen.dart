@@ -419,6 +419,27 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         );
         return;
       }
+      // Phase 152 — Konum zorunlu. Şehir merkezine düşen ilanları azaltmak
+      // için harita pin'i + okunabilir adres ikisi de zorunlu.
+      if (_lat == null || _lng == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Konum seçin — haritadan pin koyun veya "Konumumu Kullan" deyin.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+      if (_locationController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Adres alanı boş — haritadan konum seçmelisiniz.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
       setState(() => _uploading = true);
       try {
         if (_selectedPhotos.isNotEmpty) {
@@ -868,9 +889,24 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         const SizedBox(height: 20),
         const Divider(),
         const SizedBox(height: 16),
-        Text(AppLocalizations.of(context).postJobLocation,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary)),
+        Row(
+          children: [
+            Text(AppLocalizations.of(context).postJobLocation,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary)),
+            const SizedBox(width: 4),
+            const Text('*',
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.error)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Doğru ustaya hızlı ulaşmak için konum zorunlu — harita pin\'i veya "Konumumu Kullan".',
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+        ),
         const SizedBox(height: 10),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1006,13 +1042,15 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     final jobData = {
       'title': _titleController.text,
       'description': _descController.text,
-      'location': _locationController.text.isEmpty
-          ? 'Belirtilmedi'
-          : _locationController.text,
+      'location': _locationController.text,
       'budgetMin': double.tryParse(_budgetController.text) ?? 0,
       'category': _selectedCategory,
-      if (_lat != null) 'latitude': _lat,
-      if (_lng != null) 'longitude': _lng,
+      // Phase 152 — Konum zorunlu (step3'te garantilendi).
+      'latitude': _lat,
+      'longitude': _lng,
+      // Yeni ilanlar her zaman net pin'le geliyor → backfill bayrağı false.
+      'locationApprox': false,
+      'locationSource': 'user-pin',
       if (_uploadedPhotoUrls.isNotEmpty) 'photos': _uploadedPhotoUrls,
       if (_uploadedVideoUrls.isNotEmpty) 'videos': _uploadedVideoUrls,
       if (_dueDate != null)

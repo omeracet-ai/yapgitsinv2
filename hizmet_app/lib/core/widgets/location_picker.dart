@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/app_colors.dart';
 
@@ -89,6 +90,62 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       setState(() => _suggestions = []);
     } finally {
       setState(() => _searching = false);
+    }
+  }
+
+  // Phase 152 — "Konumumu Kullan": cihaz GPS'inden tek dokunuşla lat/lng.
+  // Permission akışı: servis kapalıysa uyar; reddedilirse açıklayıcı snackbar.
+  Future<void> _useMyLocation() async {
+    setState(() => _loading = true);
+    try {
+      final serviceOn = await Geolocator.isLocationServiceEnabled();
+      if (!serviceOn) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Konum servisi kapalı — cihaz ayarlarından açın.'),
+          ));
+        }
+        return;
+      }
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Konum izni kalıcı reddedildi. Ayarlar > Uygulama izinleri.'),
+          ));
+        }
+        return;
+      }
+      if (perm == LocationPermission.denied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Konum izni verilmedi.'),
+          ));
+        }
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      final here = LatLng(pos.latitude, pos.longitude);
+      setState(() => _selected = here);
+      _mapController.move(here, 15);
+      // Reverse geocode → adres
+      await _onMapTap(const TapPosition(Offset.zero, Offset.zero), here);
+    } catch (e, st) {
+      debugPrint('location_picker._useMyLocation: $e\n$st');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Konum alınamadı: $e'),
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -260,6 +317,24 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                     ),
                   ),
               ],
+            ),
+          ),
+
+          // Konumumu Kullan FAB (sağ alt — alt panelin üstünde)
+          Positioned(
+            right: 12,
+            bottom: 92,
+            child: FloatingActionButton.extended(
+              heroTag: 'use_my_location_fab',
+              onPressed: _loading ? null : _useMyLocation,
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.primary,
+              elevation: 4,
+              icon: const Icon(Icons.my_location, size: 18),
+              label: const Text(
+                'Konumumu Kullan',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
             ),
           ),
 

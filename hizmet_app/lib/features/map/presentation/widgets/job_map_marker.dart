@@ -8,12 +8,16 @@ class JobMapMarker extends StatelessWidget {
   final String category;
   final bool isSelected;
   final String? price; // e.g. "250" or null
+  // Phase 152 — Yaklaşık konum (city-centroid backfill). True ise pin yarı
+  // saydam ve sağ alt köşede "~" rozeti gösterilir.
+  final bool isApprox;
 
   const JobMapMarker({
     super.key,
     required this.category,
     this.isSelected = false,
     this.price,
+    this.isApprox = false,
   });
 
   static const _blue = Color(0xFF007DFE);
@@ -124,6 +128,42 @@ class JobMapMarker extends StatelessWidget {
       painter: _TailPainter(color: pillBg, hasBorder: !isSelected),
     );
 
+    // Yaklaşık konum ikinci rozeti (sol üst). Kullanıcının "burası tam değil,
+    // şehir merkezi" anlayabilmesi için sade bir "~" işareti.
+    final approxBadge = Positioned(
+      top: -4,
+      left: -4,
+      child: Tooltip(
+        message: 'Yaklaşık konum',
+        child: Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF6B7280), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: const Text(
+            '~',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF6B7280),
+              height: 1,
+            ),
+          ),
+        ),
+      ),
+    );
+
     Widget marker = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -132,6 +172,7 @@ class JobMapMarker extends StatelessWidget {
           children: [
             pill,
             badge,
+            if (isApprox) approxBadge,
           ],
         ),
         tail,
@@ -140,6 +181,12 @@ class JobMapMarker extends StatelessWidget {
 
     if (isSelected) {
       marker = Transform.scale(scale: 1.1, child: marker);
+    }
+
+    // Yaklaşık konum görsel ipucu: pin yarı saydam (alpha 0.7) — kullanıcı
+    // hassasiyet eksikliğini hemen sezsin.
+    if (isApprox && !isSelected) {
+      marker = Opacity(opacity: 0.7, child: marker);
     }
 
     return marker;

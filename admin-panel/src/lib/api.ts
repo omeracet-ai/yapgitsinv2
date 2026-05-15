@@ -476,6 +476,11 @@ export interface Job {
   photos: string[] | null;
   createdAt: string;
   updatedAt: string;
+  // Phase 152 — Yaklaşık konum bayrağı (Voldi-db backfill yazar).
+  // `locationApprox=true` → koordinat şehir merkezinden türetilmiş, harita
+  // pin'i yarı saydam + "~" rozeti ile gösterilir.
+  locationApprox?: boolean | null;
+  locationSource?: 'user-pin' | 'city-centroid' | 'geocode' | string | null;
 }
 
 export interface Category {

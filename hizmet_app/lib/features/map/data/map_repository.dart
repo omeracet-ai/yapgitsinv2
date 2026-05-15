@@ -14,6 +14,11 @@ class NearbyJob {
   final double? budgetMin;
   final double? budgetMax;
   final List<String> photos;
+  // Phase 152 — Yaklaşık konum bilgisi (Voldi-db backfill bayrağı).
+  // `locationApprox=true` → koordinat şehir merkezinden türetilmiş, kullanıcı
+  // tarafından net pin değil. UI'da yarı saydam + "~" rozeti gösterilir.
+  final bool locationApprox;
+  final String? locationSource; // 'user-pin' | 'city-centroid' | 'geocode' ...
 
   const NearbyJob({
     required this.id,
@@ -26,6 +31,8 @@ class NearbyJob {
     this.budgetMin,
     this.budgetMax,
     this.photos = const [],
+    this.locationApprox = false,
+    this.locationSource,
   });
 
   factory NearbyJob.fromJson(Map<String, dynamic> j) => NearbyJob(
@@ -42,6 +49,8 @@ class NearbyJob {
                 ?.map((e) => e.toString())
                 .toList() ??
             [],
+        locationApprox: j['locationApprox'] == true,
+        locationSource: j['locationSource'] as String?,
       );
 }
 

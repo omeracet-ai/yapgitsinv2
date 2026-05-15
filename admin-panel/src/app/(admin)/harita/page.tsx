@@ -79,7 +79,13 @@ export default function HaritaPage() {
   // Tab bazlı listeler (sol panel — düzenleme için)
   const editItems: MapItem[] =
     tab === "jobs"
-      ? jobs.map((j) => ({ id: j.id, label: `${j.title} — ${j.location}`, latitude: j.latitude ?? null, longitude: j.longitude ?? null }))
+      ? jobs.map((j) => ({
+          id: j.id,
+          label: `${j.title} — ${j.location}`,
+          latitude: j.latitude ?? null,
+          longitude: j.longitude ?? null,
+          locationApprox: j.locationApprox === true,
+        }))
       : users.map((u) => ({ id: u.id, label: u.fullName, latitude: u.latitude ?? null, longitude: u.longitude ?? null }));
 
   // Haritada gösterilecek primary + overlay katmanlar
@@ -88,6 +94,7 @@ export default function HaritaPage() {
     label: `${j.title} — ${j.location}`,
     latitude: j.latitude ?? null,
     longitude: j.longitude ?? null,
+    locationApprox: j.locationApprox === true,
   }));
   const userMapItems: MapItem[] = users.map((u) => ({
     id: u.id,
@@ -252,10 +259,18 @@ export default function HaritaPage() {
                       : "bg-yellow-50 hover:bg-yellow-100"
                     }`}
                   >
-                    <p className="text-sm font-medium text-gray-800 truncate">{item.label}</p>
+                    <p className="text-sm font-medium text-gray-800 truncate flex items-center gap-1">
+                      {item.label}
+                      {item.locationApprox && (
+                        <span
+                          title="Yaklaşık konum (şehir merkezi)"
+                          className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-100 border border-gray-400 text-gray-600 text-[10px] font-bold leading-none"
+                        >~</span>
+                      )}
+                    </p>
                     <p className={`text-xs mt-0.5 ${hasCoords ? "text-gray-400" : "text-yellow-600 font-medium"}`}>
                       {hasCoords
-                        ? `${item.latitude!.toFixed(4)}, ${item.longitude!.toFixed(4)}`
+                        ? `${item.latitude!.toFixed(4)}, ${item.longitude!.toFixed(4)}${item.locationApprox ? " · yaklaşık" : ""}`
                         : "Koordinat eksik"}
                     </p>
                   </button>
