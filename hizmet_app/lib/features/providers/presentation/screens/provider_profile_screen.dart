@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../reviews/presentation/screens/write_review_screen.dart';
-import '../../../reviews/data/review_repository.dart';
+import '../../../reviews/data/firebase_review_repository.dart';
 import '../../../photos/presentation/widgets/job_photo_picker.dart';
-import '../../data/provider_repository.dart';
+import '../../data/firebase_provider_repository.dart';
 
 class ProviderProfileScreen extends ConsumerWidget {
   final String providerId;
@@ -466,7 +466,7 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
     if (_voted || _loading) return;
     setState(() => _loading = true);
     try {
-      final repo = ref.read(reviewRepositoryProvider);
+      final repo = ref.read(firebaseReviewRepositoryProvider);
       final count = await repo.markHelpful(widget.reviewId);
       setState(() {
         _helpfulCount = count;

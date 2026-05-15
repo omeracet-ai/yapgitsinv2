@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../data/auth_repository.dart';
+import '../../data/firebase_auth_repository.dart';
 
 class ResetPasswordScreen extends ConsumerStatefulWidget {
   final String token;
@@ -34,7 +34,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     }
     setState(() => _loading = true);
     try {
-      final repo = ref.read(authRepositoryProvider);
+      final repo = ref.read(firebaseAuthRepositoryProvider);
       await repo.resetPassword(widget.token, _pw1.text);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

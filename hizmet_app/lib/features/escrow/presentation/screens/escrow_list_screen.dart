@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/escrow_repository.dart';
+import '../../data/firebase_escrow_repository.dart';
 import '../../../../core/theme/app_colors.dart';
 
 final _myEscrowsProvider =

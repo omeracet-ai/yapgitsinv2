@@ -5,7 +5,7 @@ import { Review } from './review.entity';
 import { ReviewHelpful } from './review-helpful.entity';
 import { UsersService } from '../users/users.service';
 import { FraudDetectionService } from '../ai/fraud-detection.service';
-import { asUserId } from '../../common/types/branded';
+import { asUserId } from '../../common/branded.types';
 
 @Injectable()
 export class ReviewsService {

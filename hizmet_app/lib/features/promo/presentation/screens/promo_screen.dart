@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../data/promo_repository.dart';
+import '../../data/firebase_promo_repository.dart';
 
 class PromoScreen extends ConsumerStatefulWidget {
   const PromoScreen({super.key});

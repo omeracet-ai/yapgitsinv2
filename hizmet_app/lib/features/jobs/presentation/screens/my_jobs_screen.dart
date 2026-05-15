@@ -6,8 +6,8 @@ import '../../../../core/services/intl_formatter.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../data/job_repository.dart';
-import '../../data/offer_repository.dart';
+import '../../data/firebase_job_repository.dart';
+import '../../data/firebase_offer_repository.dart';
 import '../../../tokens/data/token_repository.dart';
 import 'job_detail_screen.dart';
 import 'job_opportunities_screen.dart';
@@ -21,7 +21,7 @@ import '../widgets/boost_dialog.dart';
 final myJobsProvider =
     FutureProvider.family<List<Map<String, dynamic>>, String>(
         (ref, customerId) {
-  return ref.watch(jobRepositoryProvider).getMyJobs(customerId);
+  return ref.watch(firebaseJobRepositoryProvider).getMyJobs(customerId);
 });
 
 final myOffersProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {

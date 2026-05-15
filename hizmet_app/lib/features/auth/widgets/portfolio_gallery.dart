@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../photos/data/photo_repository.dart';
+import '../../photos/data/firebase_photo_repository.dart';
 import '../presentation/screens/public_profile_screen.dart';
 
 /// Worker portfolio galerisi (Phase 43 fotoğraf + Phase 125 video).
@@ -41,7 +41,7 @@ class _PortfolioGalleryState extends ConsumerState<PortfolioGallery> {
     if (picked == null) return;
     setState(() => _busy = true);
     try {
-      final repo = ref.read(photoRepositoryProvider);
+      final repo = ref.read(firebasePhotoRepositoryProvider);
       await repo.uploadPortfolioPhoto(picked);
       if (!mounted) return;
       ref.invalidate(publicProfileProvider(widget.userId));
@@ -74,7 +74,7 @@ class _PortfolioGalleryState extends ConsumerState<PortfolioGallery> {
     if (picked == null) return;
     setState(() => _busyVideo = true);
     try {
-      final repo = ref.read(photoRepositoryProvider);
+      final repo = ref.read(firebasePhotoRepositoryProvider);
       await repo.uploadPortfolioVideo(picked);
       if (!mounted) return;
       ref.invalidate(publicProfileProvider(widget.userId));
@@ -95,7 +95,7 @@ class _PortfolioGalleryState extends ConsumerState<PortfolioGallery> {
     final ok = await _confirm('Bu fotoğraf portfolyodan kaldırılsın mı?');
     if (ok != true) return;
     try {
-      final repo = ref.read(photoRepositoryProvider);
+      final repo = ref.read(firebasePhotoRepositoryProvider);
       await repo.removePortfolioPhoto(url);
       if (!mounted) return;
       ref.invalidate(publicProfileProvider(widget.userId));
@@ -111,7 +111,7 @@ class _PortfolioGalleryState extends ConsumerState<PortfolioGallery> {
     final ok = await _confirm('Bu video portfolyodan kaldırılsın mı?');
     if (ok != true) return;
     try {
-      final repo = ref.read(photoRepositoryProvider);
+      final repo = ref.read(firebasePhotoRepositoryProvider);
       await repo.removePortfolioVideo(url);
       if (!mounted) return;
       ref.invalidate(publicProfileProvider(widget.userId));

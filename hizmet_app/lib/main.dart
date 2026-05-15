@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -14,6 +16,7 @@ import 'core/services/locale_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeDateFormatting('tr_TR', null);
   await initializeDateFormatting('tr', null);
   await initializeDateFormatting('en', null);

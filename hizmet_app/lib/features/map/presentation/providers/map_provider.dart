@@ -10,7 +10,10 @@ import '../../data/map_repository.dart';
 class MapState {
   final LatLng? userLocation;
   final List<NearbyJob> jobs;
+  // Phase 178 — Yakındaki ustalar (mavi pin layer).
+  final List<NearbyWorker> workers;
   final String? selectedJobId;
+  final String? selectedWorkerId;
   final String activeFilter;
   final bool showList;
   final bool locationLoading;
@@ -19,7 +22,9 @@ class MapState {
   const MapState({
     this.userLocation,
     this.jobs = const [],
+    this.workers = const [],
     this.selectedJobId,
+    this.selectedWorkerId,
     this.activeFilter = 'all',
     this.showList = false,
     this.locationLoading = true,
@@ -29,8 +34,11 @@ class MapState {
   MapState copyWith({
     LatLng? userLocation,
     List<NearbyJob>? jobs,
+    List<NearbyWorker>? workers,
     String? selectedJobId,
     bool clearSelectedJob = false,
+    String? selectedWorkerId,
+    bool clearSelectedWorker = false,
     String? activeFilter,
     bool? showList,
     bool? locationLoading,
@@ -40,8 +48,12 @@ class MapState {
       MapState(
         userLocation: userLocation ?? this.userLocation,
         jobs: jobs ?? this.jobs,
+        workers: workers ?? this.workers,
         selectedJobId:
             clearSelectedJob ? null : (selectedJobId ?? this.selectedJobId),
+        selectedWorkerId: clearSelectedWorker
+            ? null
+            : (selectedWorkerId ?? this.selectedWorkerId),
         activeFilter: activeFilter ?? this.activeFilter,
         showList: showList ?? this.showList,
         locationLoading: locationLoading ?? this.locationLoading,
@@ -88,7 +100,7 @@ class MapNotifier extends StateNotifier<MapState> {
         locationLoading: false,
         error: 'Konum izni reddedildi. İstanbul merkezi gösteriliyor.',
       );
-      await _loadNearbyJobs(istanbul);
+      await _loadNearby(istanbul);
       return;
     }
 
@@ -101,7 +113,7 @@ class MapNotifier extends StateNotifier<MapState> {
       );
       final loc = LatLng(pos.latitude, pos.longitude);
       state = state.copyWith(userLocation: loc, locationLoading: false);
-      await _loadNearbyJobs(loc);
+      await _loadNearby(loc);
       _startLocationTimer();
     } catch (_) {
       const istanbul = LatLng(41.0082, 28.9784);
@@ -110,7 +122,7 @@ class MapNotifier extends StateNotifier<MapState> {
         locationLoading: false,
         error: 'Konum alınamadı. İstanbul merkezi gösteriliyor.',
       );
-      await _loadNearbyJobs(istanbul);
+      await _loadNearby(istanbul);
     }
   }
 
@@ -127,38 +139,70 @@ class MapNotifier extends StateNotifier<MapState> {
     });
   }
 
-  Future<void> _loadNearbyJobs(LatLng loc) async {
-    try {
-      final category =
-          state.activeFilter == 'all' ? null : state.activeFilter;
-      final jobs = await _repo.getNearbyJobs(
-        lat: loc.latitude,
-        lng: loc.longitude,
-        radiusKm: _defaultRadiusKm,
-        category: category,
-      );
-      state = state.copyWith(jobs: jobs);
-    } catch (_) {
-      state = state.copyWith(error: 'İlanlar yüklenemedi. Tekrar deneyin.');
+  Future<void> _loadNearby(LatLng loc) async {
+    final category = state.activeFilter == 'all' ? null : state.activeFilter;
+    // Phase 178 — jobs ve workers paralel çek. Biri başarısız olsa diğeri
+    // gösterilebilsin diye `Future.wait` yerine ayrı try/catch.
+    final jobsFuture = _repo
+        .getNearbyJobs(
+          lat: loc.latitude,
+          lng: loc.longitude,
+          radiusKm: _defaultRadiusKm,
+          category: category,
+        )
+        .then<List<NearbyJob>?>((v) => v)
+        .catchError((Object _) => null);
+    final workersFuture = _repo
+        .getNearbyWorkers(
+          lat: loc.latitude,
+          lon: loc.longitude,
+          radiusKm: _defaultRadiusKm,
+          category: category,
+          limit: 100,
+        )
+        .then<List<NearbyWorker>?>((v) => v)
+        .catchError((Object _) => null);
+    final results = await Future.wait([jobsFuture, workersFuture]);
+    final jobs = results[0] as List<NearbyJob>?;
+    final workers = results[1] as List<NearbyWorker>?;
+    if (jobs == null && workers == null) {
+      state = state.copyWith(error: 'Veriler yüklenemedi. Tekrar deneyin.');
+      return;
     }
+    state = state.copyWith(
+      jobs: jobs ?? state.jobs,
+      workers: workers ?? state.workers,
+      clearError: true,
+    );
   }
 
   void selectJob(String? jobId) => state = state.copyWith(
         selectedJobId: jobId,
         clearSelectedJob: jobId == null,
+        clearSelectedWorker: true,
+      );
+
+  void selectWorker(String? workerId) => state = state.copyWith(
+        selectedWorkerId: workerId,
+        clearSelectedWorker: workerId == null,
+        clearSelectedJob: true,
       );
 
   void setFilter(String filter) {
-    state = state.copyWith(activeFilter: filter, clearSelectedJob: true);
+    state = state.copyWith(
+      activeFilter: filter,
+      clearSelectedJob: true,
+      clearSelectedWorker: true,
+    );
     final loc = state.userLocation;
-    if (loc != null) _loadNearbyJobs(loc);
+    if (loc != null) _loadNearby(loc);
   }
 
   void toggleView() => state = state.copyWith(showList: !state.showList);
 
   Future<void> refresh() async {
     final loc = state.userLocation;
-    if (loc != null) await _loadNearbyJobs(loc);
+    if (loc != null) await _loadNearby(loc);
   }
 }
 

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../calendar/data/booking_repository.dart';
+import '../../calendar/data/firebase_booking_repository.dart';
 
 /// Phase 135 — Inline TableCalendar with worker availability slots.
 /// Disables: past dates, weeklyAvailable=false, fullyBooked=true.
@@ -38,7 +38,7 @@ class _BookingStep2DateTimeState extends ConsumerState<BookingStep2DateTime> {
   }
 
   Future<void> _loadSlots() async {
-    final repo = ref.read(bookingRepositoryProvider);
+    final repo = ref.read(firebaseBookingRepositoryProvider);
     final list = await repo.getAvailabilitySlots(widget.workerId, days: 60);
     if (!mounted) return;
     setState(() {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../data/auth_repository.dart';
+import '../../data/firebase_auth_repository.dart';
 
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   final String token;
@@ -32,7 +32,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       return;
     }
     try {
-      await ref.read(authRepositoryProvider).confirmEmailVerification(widget.token);
+      await ref.read(firebaseAuthRepositoryProvider).confirmEmailVerification(widget.token);
       if (!mounted) return;
       setState(() {
         _loading = false;

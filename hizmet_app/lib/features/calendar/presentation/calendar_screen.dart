@@ -4,7 +4,7 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../../core/models/booking_model.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/list_skeleton.dart';
-import '../data/booking_repository.dart';
+import '../data/firebase_booking_repository.dart';
 import '../../escrow/widgets/escrow_status_badge.dart';
 
 enum _ViewMode { list, calendar }

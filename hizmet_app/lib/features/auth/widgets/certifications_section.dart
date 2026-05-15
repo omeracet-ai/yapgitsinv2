@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../certifications/data/certification_repository.dart';
+import '../../certifications/data/firebase_certification_repository.dart';
 
 /// Phase 159 — EditProfile worker certifications section.
 class CertificationsSection extends ConsumerStatefulWidget {
@@ -28,7 +28,7 @@ class _CertificationsSectionState
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final repo = ref.read(certificationRepositoryProvider);
+    final repo = ref.read(firebaseCertificationRepositoryProvider);
     final list = await repo.listMine();
     if (!mounted) return;
     setState(() {
@@ -38,7 +38,7 @@ class _CertificationsSectionState
   }
 
   Future<void> _delete(String id) async {
-    final repo = ref.read(certificationRepositoryProvider);
+    final repo = ref.read(firebaseCertificationRepositoryProvider);
     try {
       await repo.remove(id);
       await _load();
@@ -219,7 +219,7 @@ class _AddCertificationSheetState
     if (path == null) return;
     setState(() => _busy = true);
     try {
-      final repo = ref.read(certificationRepositoryProvider);
+      final repo = ref.read(firebaseCertificationRepositoryProvider);
       final url = await repo.uploadDocument(XFile(path));
       setState(() {
         _docUrl = url;
@@ -246,7 +246,7 @@ class _AddCertificationSheetState
     }
     setState(() => _busy = true);
     try {
-      final repo = ref.read(certificationRepositoryProvider);
+      final repo = ref.read(firebaseCertificationRepositoryProvider);
       await repo.create(
         name: name,
         issuer: issuer,

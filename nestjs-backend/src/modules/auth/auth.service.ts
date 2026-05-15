@@ -17,7 +17,7 @@ import * as crypto from 'crypto';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuthUser } from '../../common/types/auth.types';
-import { asUserId } from '../../common/types/branded';
+import { asUserId } from '../../common/branded.types';
 import { TwoFactorService } from './two-factor.service';
 import { PasswordResetToken } from './password-reset-token.entity';
 import { EmailVerificationToken } from './email-verification-token.entity';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../reviews/data/review_repository.dart';
+import '../../../reviews/data/firebase_review_repository.dart';
 
 class WriteReviewSheet extends ConsumerStatefulWidget {
   final String revieweeId;
@@ -36,7 +36,7 @@ class _WriteReviewSheetState extends ConsumerState<WriteReviewSheet> {
   Future<void> _submit() async {
     setState(() { _loading = true; _error = null; });
     try {
-      await ref.read(reviewRepositoryProvider).createReview(
+      await ref.read(firebaseReviewRepositoryProvider).createReview(
         jobId:      widget.jobId,
         revieweeId: widget.revieweeId,
         rating:     _rating,

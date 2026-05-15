@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
-import { UserId } from '../../common/types/branded';
+import { UserId } from '../../common/branded.types';
 import { Booking, BookingStatus } from '../bookings/booking.entity';
 import { SemanticSearchService } from '../ai/semantic-search.service';
 import { BoostService } from '../boost/boost.service';

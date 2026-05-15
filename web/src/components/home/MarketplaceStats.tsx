@@ -30,7 +30,7 @@ export default function MarketplaceStats({
           className="rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20 px-4 py-5 text-center"
         >
           <p className="text-3xl font-extrabold text-white leading-none">
-            {s.value.toLocaleString('tr-TR')}
+            {(s.value ?? 0).toLocaleString('tr-TR')}
             {s.suffix}
           </p>
           <p className="mt-1.5 text-xs text-white/75 font-medium">{s.label}</p>

@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../hizmet_db.sqlite"
+}
+
+enum UserRole {
+  CLIENT
+  PROVIDER
+  ADMIN
+}
+
+enum JobStatus {
+  OPEN
+  PENDING_OFFERS
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  firstName     String?
+  lastName      String?
+  phone         String?
+  avatarUrl     String?
+  role          UserRole  @default(CLIENT)
+  isVerified    Boolean   @default(false)
+  balance       Float     @default(0)
+
+  jobs          Job[]     @relation("ClientJobs")
+  offers        Offer[]   @relation("ProviderOffers")
+  receivedReviews Review[] @relation("ReceivedReviews")
+  givenReviews  Review[]  @relation("GivenReviews")
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Job {
+  id            String    @id @default(uuid())
+  title         String
+  description   String
+  category      String
+  status        JobStatus @default(OPEN)
+  budget        Float?
+  location      String?
+  lat           Float?
+  lng           Float?
+
+  clientId      String
+  client        User      @relation("ClientJobs", fields: [clientId], references: [id])
+  offers        Offer[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Offer {
+  id            String      @id @default(uuid())
+  amount        Float
+  message       String?
+  status        OfferStatus @default(PENDING)
+
+  jobId         String
+  job           Job         @relation(fields: [jobId], references: [id])
+  providerId    String
+  provider      User        @relation("ProviderOffers", fields: [providerId], references: [id])
+
+  createdAt     DateTime    @default(now())
+}
+
+model Review {
+  id            String    @id @default(uuid())
+  rating        Int
+  comment       String?
+
+  fromUserId    String
+  fromUser      User      @relation("GivenReviews", fields: [fromUserId], references: [id])
+  toUserId      String
+  toUser        User      @relation("ReceivedReviews", fields: [toUserId], references: [id])
+
+  createdAt     DateTime  @default(now())
+}

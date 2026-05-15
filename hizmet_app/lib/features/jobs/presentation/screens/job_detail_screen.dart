@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/intl_formatter.dart';
-import '../../data/job_repository.dart';
-import '../../data/offer_repository.dart';
+import '../../data/firebase_job_repository.dart';
+import '../../data/firebase_offer_repository.dart';
 import '../../../offers/widgets/offer_line_items_editor.dart';
 import '../../../offers/widgets/offer_template_picker.dart';
 import '../../../offers/widgets/offer_line_items_view.dart';
@@ -1127,7 +1127,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       loading: _actionLoading,
                       onTap: () => _doAction(() async {
                         await ref
-                            .read(offerRepositoryProvider)
+                            .read(firebaseOfferRepositoryProvider)
                             .acceptOffer(widget.id!, offerId);
                         _showSnack('Teklif kabul edildi!');
                         ref.read(jobsProvider.notifier).fetchJobs();
@@ -1156,7 +1156,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       loading: _actionLoading,
                       onTap: () => _doAction(() async {
                         await ref
-                            .read(offerRepositoryProvider)
+                            .read(firebaseOfferRepositoryProvider)
                             .rejectOffer(widget.id!, offerId);
                         _showSnack('Teklif reddedildi.');
                       }),
@@ -1362,7 +1362,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   'Kalemler toplamı: ₺${sum.toStringAsFixed(2)} — fiyat: ₺${price.toStringAsFixed(2)}. Devam etmek için fiyatı eşitle.');
             }
           }
-          await ref.read(offerRepositoryProvider).createOffer(
+          await ref.read(firebaseOfferRepositoryProvider).createOffer(
                 widget.id!,
                 price,
                 msgCtrl.text,
@@ -1394,7 +1394,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         msgLabel: 'Kısa notunuz',
         onSubmit: () async {
           if (widget.id == null || priceCtrl.text.isEmpty) return;
-          await ref.read(offerRepositoryProvider).counterOffer(
+          await ref.read(firebaseOfferRepositoryProvider).counterOffer(
                 widget.id!,
                 offerId,
                 double.parse(priceCtrl.text),
@@ -1535,7 +1535,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                         await _doAction(() async {
                           final bMin = double.tryParse(budgetMinCtrl.text);
                           final bMax = double.tryParse(budgetMaxCtrl.text);
-                          await ref.read(offerRepositoryProvider).updateJob(
+                          await ref.read(firebaseOfferRepositoryProvider).updateJob(
                             widget.id!,
                             {
                               'title':       titleCtrl.text.trim(),
@@ -1607,7 +1607,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
               if (widget.id == null) return;
               await _doAction(() async {
                 await ref
-                    .read(offerRepositoryProvider)
+                    .read(firebaseOfferRepositoryProvider)
                     .deleteJob(widget.id!);
                 _showSnack('İlan kaldırıldı.');
                 ref.read(jobsProvider.notifier).fetchJobs();

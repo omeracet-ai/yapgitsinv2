@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../data/auth_repository.dart';
+import '../../data/firebase_auth_repository.dart';
 
 class TwoFactorSetupScreen extends ConsumerStatefulWidget {
   const TwoFactorSetupScreen({super.key});
@@ -29,7 +29,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
   Future<void> _start() async {
     setState(() => _busy = true);
     try {
-      final repo = ref.read(authRepositoryProvider);
+      final repo = ref.read(firebaseAuthRepositoryProvider);
       final data = await repo.setup2FA();
       setState(() {
         _secret = data['secret'] as String?;
@@ -56,7 +56,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
     }
     setState(() => _busy = true);
     try {
-      final repo = ref.read(authRepositoryProvider);
+      final repo = ref.read(firebaseAuthRepositoryProvider);
       await repo.enable2FA(code);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/intl_formatter.dart';
-import '../../../tokens/data/token_repository.dart';
+import '../../../tokens/data/firebase_token_repository.dart';
 
 final _walletHistoryProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {

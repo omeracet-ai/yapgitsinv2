@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/auth_repository.dart';
+import '../../data/firebase_auth_repository.dart';
 import '../../../../l10n/app_localizations.dart';
 // TODO(P190): migrate remaining strings to AppLocalizations
 
@@ -35,7 +35,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       _error = null;
     });
     try {
-      final repo = ref.read(authRepositoryProvider);
+      final repo = ref.read(firebaseAuthRepositoryProvider);
       final res = await repo.forgotPassword(_emailCtrl.text.trim());
       setState(() {
         _message = (res['message'] as String?) ??

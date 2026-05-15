@@ -32,7 +32,6 @@ const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
-  // Static export for FTP / shared hosting deploy.
   output: "export",
   trailingSlash: true,
   images: { unoptimized: true },

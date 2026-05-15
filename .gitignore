@@ -2,6 +2,7 @@ node_modules/
 dist/
 .next/
 build/
+_archive/
 *.log
 .env
 .env.local

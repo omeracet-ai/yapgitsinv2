@@ -7,6 +7,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../providers/map_provider.dart';
 import '../../data/map_repository.dart';
 import '../widgets/job_map_marker.dart';
+import '../widgets/worker_map_marker.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -64,7 +65,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   state: state,
                   mapController: _mapController,
                   onPinTap: (j) => notifier.selectJob(j.id),
-                  onMapTap: () => notifier.selectJob(null),
+                  onWorkerTap: (w) {
+                    notifier.selectWorker(w.id);
+                    // Phase 178 — Direkt usta profiline yönlendir.
+                    context.push('/usta/${w.id}');
+                  },
+                  onMapTap: () {
+                    notifier.selectJob(null);
+                    notifier.selectWorker(null);
+                  },
                 ),
 
                 // ── Floating search bar + category chips overlay ──
@@ -416,12 +425,14 @@ class _MapView extends StatelessWidget {
   final MapState state;
   final MapController mapController;
   final void Function(NearbyJob) onPinTap;
+  final void Function(NearbyWorker) onWorkerTap;
   final VoidCallback onMapTap;
 
   const _MapView({
     required this.state,
     required this.mapController,
     required this.onPinTap,
+    required this.onWorkerTap,
     required this.onMapTap,
   });
 
@@ -488,6 +499,32 @@ class _MapView extends StatelessWidget {
                   isSelected: isSelected,
                   price: price,
                   isApprox: j.locationApprox,
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        // Phase 178 — Yakındaki ustalar (mavi pill). Jobs üstüne çizilir;
+        // seçili usta turuncu jobs'tan ayırt edilebilir.
+        MarkerLayer(
+          markers: state.workers
+              .where((w) => w.latitude != null && w.longitude != null)
+              .map((w) {
+            final isSelected = w.id == state.selectedWorkerId;
+            final width = isSelected ? 96.0 : 84.0;
+            final height = isSelected ? 46.0 : 38.0;
+            return Marker(
+              point: LatLng(w.latitude!, w.longitude!),
+              width: width,
+              height: height,
+              child: GestureDetector(
+                onTap: () => onWorkerTap(w),
+                child: WorkerMapMarker(
+                  name: w.name,
+                  rating: w.rating,
+                  isSelected: isSelected,
+                  isVerified: w.identityVerified,
+                  isApprox: w.locationApprox,
                 ),
               ),
             );

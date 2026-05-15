@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
-import '../data/token_repository.dart';
+import '../data/firebase_token_repository.dart';
 
 class GiftTokensSheet extends ConsumerStatefulWidget {
   final String recipientId;

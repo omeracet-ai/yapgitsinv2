@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../photos/data/photo_repository.dart';
+import '../../photos/data/firebase_photo_repository.dart';
 import '../presentation/providers/auth_provider.dart';
 
 /// Phase 152 — Worker tanıtım videosu (60sec cap).
@@ -65,7 +65,7 @@ class _IntroVideoSectionState extends ConsumerState<IntroVideoSection> {
 
     setState(() => _busy = true);
     try {
-      final repo = ref.read(photoRepositoryProvider);
+      final repo = ref.read(firebasePhotoRepositoryProvider);
       final result = await repo.uploadIntroVideo(picked,
           durationSeconds: durationSeconds);
       if (!mounted) return;
@@ -107,7 +107,7 @@ class _IntroVideoSectionState extends ConsumerState<IntroVideoSection> {
     );
     if (ok != true) return;
     try {
-      final repo = ref.read(photoRepositoryProvider);
+      final repo = ref.read(firebasePhotoRepositoryProvider);
       await repo.removeIntroVideo();
       if (!mounted) return;
       ref.read(authStateProvider.notifier).updateUserData({

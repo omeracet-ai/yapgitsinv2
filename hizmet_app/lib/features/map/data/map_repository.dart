@@ -54,6 +54,72 @@ class NearbyJob {
       );
 }
 
+// ── Phase 178 — Workers nearby ───────────────────────────────────────────────
+// Map ekranında turuncu jobs pin'lerine ek olarak mavi worker pin'leri için
+// kullanılır. Backend: `GET /users/workers/nearby` (Phase 177 geohash index).
+class NearbyWorker {
+  final String id;
+  final String? name;
+  final String? avatarUrl;
+  final double? rating;
+  final List<String> categories;
+  final double? latitude;
+  final double? longitude;
+  final double distanceKm;
+  final bool identityVerified;
+  // User entity'sinde locationApprox alanı yok (Phase 177). İleride backfill
+  // bayrağı eklenirse buraya bağlanır; şimdilik default false.
+  final bool locationApprox;
+
+  const NearbyWorker({
+    required this.id,
+    this.name,
+    this.avatarUrl,
+    this.rating,
+    this.categories = const [],
+    this.latitude,
+    this.longitude,
+    this.distanceKm = 0,
+    this.identityVerified = false,
+    this.locationApprox = false,
+  });
+
+  factory NearbyWorker.fromJson(Map<String, dynamic> j) {
+    final cats = j['workerCategories'];
+    List<String> catList = const [];
+    if (cats is List) {
+      catList = cats.map((e) => e.toString()).toList();
+    } else if (cats is String && cats.isNotEmpty) {
+      // SQLite bazen JSON string olarak döndürür.
+      try {
+        final parsed = (cats.startsWith('[') ? cats : '[$cats]');
+        // Basit parse: [..] → virgüllü split fallback. JSON kararlı geliyor
+        // üretimde; burada hatasız davranmak yeterli.
+        catList = parsed
+            .replaceAll(RegExp(r'[\[\]"]'), '')
+            .split(',')
+            .where((s) => s.trim().isNotEmpty)
+            .map((s) => s.trim())
+            .toList();
+      } catch (_) {
+        catList = const [];
+      }
+    }
+    return NearbyWorker(
+      id: j['id'] as String,
+      name: j['fullName'] as String?,
+      avatarUrl: j['profileImageUrl'] as String?,
+      rating: (j['averageRating'] as num?)?.toDouble(),
+      categories: catList,
+      latitude: (j['latitude'] as num?)?.toDouble(),
+      longitude: (j['longitude'] as num?)?.toDouble(),
+      distanceKm: (j['distanceKm'] as num?)?.toDouble() ?? 0,
+      identityVerified: j['identityVerified'] == true,
+      locationApprox: j['locationApprox'] == true,
+    );
+  }
+}
+
 final mapRepositoryProvider = Provider<MapRepository>((ref) {
   return MapRepository(dio: ref.read(apiClientProvider).dio);
 });
@@ -78,6 +144,36 @@ class MapRepository {
     final list = response.data as List<dynamic>;
     return list
         .map((e) => NearbyJob.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // Phase 178 — Yakındaki ustalar. Backend parametre adları: `lat`, `lon`
+  // (lng değil), `radius` (radiusKm değil). Response: `{data, total, page,
+  // limit, pages}`.
+  Future<List<NearbyWorker>> getNearbyWorkers({
+    required double lat,
+    required double lon,
+    double radiusKm = 500,
+    String? category,
+    bool? verifiedOnly,
+    int? page,
+    int? limit,
+  }) async {
+    final response = await _dio.get('/users/workers/nearby', queryParameters: {
+      'lat': lat,
+      'lon': lon,
+      'radius': radiusKm,
+      if (category != null) 'category': category,
+      if (verifiedOnly == true) 'verifiedOnly': 'true',
+      if (page != null) 'page': page,
+      if (limit != null) 'limit': limit,
+    });
+    final body = response.data;
+    final list = (body is Map<String, dynamic>)
+        ? (body['data'] as List<dynamic>? ?? const [])
+        : (body as List<dynamic>);
+    return list
+        .map((e) => NearbyWorker.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 

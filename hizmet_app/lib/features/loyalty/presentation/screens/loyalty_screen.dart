@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../data/loyalty_repository.dart';
+import '../../data/firebase_loyalty_repository.dart';
 
 class LoyaltyScreen extends ConsumerStatefulWidget {
   const LoyaltyScreen({super.key});
