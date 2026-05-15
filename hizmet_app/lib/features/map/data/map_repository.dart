@@ -132,7 +132,7 @@ class MapRepository {
   Future<List<NearbyJob>> getNearbyJobs({
     required double lat,
     required double lng,
-    double radiusKm = 20,
+    double radiusKm = 500,
     String? category,
   }) async {
     final response = await _dio.get('/jobs/nearby', queryParameters: {
