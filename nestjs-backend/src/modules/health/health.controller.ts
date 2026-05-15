@@ -7,6 +7,7 @@ import {
   HealthService,
   HealthResponse,
   DeepHealthResponse,
+  DbHealthDetail,
 } from './health.service';
 
 @ApiTags('health')
@@ -36,5 +37,18 @@ export class HealthController {
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   getDeep(): Promise<DeepHealthResponse> {
     return this.health.getDeepHealth();
+  }
+
+  /**
+   * P222 — /health/db — admin-only DB hardening report.
+   * Returns WAL mode, FK status, busy timeout, index counts, on-disk size.
+   * Use this after deploy to verify PRAGMA boot hardening took effect.
+   */
+  @Get('db')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @ApiBearerAuth('JWT-auth')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  getDb(): Promise<DbHealthDetail> {
+    return this.health.getDbHealth();
   }
 }

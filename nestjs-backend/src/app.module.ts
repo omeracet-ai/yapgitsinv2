@@ -141,11 +141,15 @@ import { MaintenanceModule } from './modules/maintenance/maintenance.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const dbType = configService.get<string>('DB_TYPE') || 'postgres';
-        const isProd = process.env.NODE_ENV === 'production';
-        // In prod: synchronize OFF, run pending migrations on boot.
-        // In dev: keep current synchronize behavior (auto schema from entities).
-        const synchronize = !isProd;
-        const migrationsRun = isProd;
+        const nodeEnv = process.env.NODE_ENV;
+        const isProd = nodeEnv === 'production';
+        const isDev = nodeEnv === 'development';
+        // P222 — Strict opt-in: synchronize requires ALLOW_SCHEMA_SYNC=true OR NODE_ENV=development.
+        // If NODE_ENV is unset/missing, default to SECURE (synchronize OFF, run migrations).
+        // This prevents accidental schema rewrites in prod when env vars are missing.
+        const allowSync = isDev || process.env.ALLOW_SCHEMA_SYNC === 'true';
+        const synchronize = allowSync;
+        const migrationsRun = !allowSync;
         const migrations = [`${__dirname}/migrations/*{.js,.ts}`];
         const entities = [
           User,
@@ -232,7 +236,7 @@ import { MaintenanceModule } from './modules/maintenance/maintenance.module';
             charset: 'utf8mb4_unicode_ci',
             entities,
             migrations,
-            synchronize: isProd ? false : configService.get<string>('DB_SYNCHRONIZE') !== 'false',
+            synchronize: allowSync && configService.get<string>('DB_SYNCHRONIZE') !== 'false',
             migrationsRun,
           };
         }

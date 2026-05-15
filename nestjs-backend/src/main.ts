@@ -2,8 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
+import { ValidationPipe, ClassSerializerInterceptor, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { DataSource } from 'typeorm';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import * as fs from 'fs';
@@ -54,6 +55,22 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   console.log('[boot] Nest app created');
   app.useGlobalFilters(new SentryFilter());
+
+  // P222 — SQLite production hardening: PRAGMA at boot (WAL + busy_timeout + FK + sync).
+  // Without WAL, concurrent reader+writer SERIALIZE → 5s+ admin endpoint stalls under load.
+  try {
+    const dataSource = app.get(DataSource);
+    const dbType = dataSource.options.type;
+    if (dbType === 'sqlite' || dbType === 'better-sqlite3') {
+      await dataSource.query('PRAGMA journal_mode = WAL');
+      await dataSource.query('PRAGMA busy_timeout = 5000');
+      await dataSource.query('PRAGMA foreign_keys = ON');
+      await dataSource.query('PRAGMA synchronous = NORMAL');
+      Logger.log('[bootstrap] SQLite PRAGMA hardening applied (WAL + busy=5s + FK=on + sync=NORMAL)', 'Bootstrap');
+    }
+  } catch (e) {
+    console.warn('[boot] SQLite PRAGMA hardening failed (non-fatal):', e instanceof Error ? e.message : e);
+  }
 
   // Phase 131/170 — Helmet: HTTP güvenlik header'ları
   // - HSTS: 1 yıl, alt domainler dahil, preload-ready

@@ -35,6 +35,17 @@ export class MaintenanceController {
    * workerCategories + isAvailable + homeGeohash + serviceRadiusKm so the
    * /users/workers/nearby endpoint produces map pins.
    */
+  /**
+   * POST /admin/maintenance/ensure-indexes
+   * Idempotent — creates 8 hot-path indexes on jobs/users (IF NOT EXISTS).
+   * Run after deploy or whenever query latency regresses on those tables.
+   */
+  @Audit('maintenance.ensure_indexes')
+  @Post('ensure-indexes')
+  async ensureIndexes() {
+    return this.maintenance.ensureIndexes();
+  }
+
   @Audit('maintenance.seed_demo_workers')
   @Post('seed-demo-workers')
   async seedDemoWorkers(

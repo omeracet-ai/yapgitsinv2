@@ -419,6 +419,54 @@ export class MaintenanceService {
    * whose workerCategories is empty/null and role='user', assigns 1-3 random
    * categories + homeGeohash@6 + serviceRadiusKm=30 + isAvailable=true.
    */
+  /**
+   * P222 — Ensure performance-critical indexes exist on hot tables.
+   * Idempotent via IF NOT EXISTS — safe to call repeatedly. Run after deploy
+   * or whenever a missing-index regression is suspected. SQLite-only paths.
+   */
+  async ensureIndexes() {
+    const start = Date.now();
+    const driver = this.ds.options.type;
+    if (driver !== 'sqlite' && driver !== 'better-sqlite3') {
+      throw new Error(
+        `ensure-indexes currently supports SQLite only; active driver=${driver}`,
+      );
+    }
+    const queries = [
+      "CREATE INDEX IF NOT EXISTS idx_jobs_status_createdAt ON jobs(status, createdAt)",
+      "CREATE INDEX IF NOT EXISTS idx_jobs_customerId_status ON jobs(customerId, status)",
+      "CREATE INDEX IF NOT EXISTS idx_jobs_categoryId_status_createdAt ON jobs(categoryId, status, createdAt)",
+      "CREATE INDEX IF NOT EXISTS idx_jobs_featuredUntil ON jobs(featuredUntil)",
+      "CREATE INDEX IF NOT EXISTS idx_jobs_geohash ON jobs(geohash)",
+      "CREATE INDEX IF NOT EXISTS idx_users_homeGeohash ON users(homeGeohash)",
+      "CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)",
+      "CREATE INDEX IF NOT EXISTS idx_users_isAvailable ON users(isAvailable)",
+    ];
+    const results: Array<{ query: string; status?: string; error?: string }> = [];
+    for (const q of queries) {
+      try {
+        await this.ds.query(q);
+        results.push({ query: q.substring(0, 80), status: 'ok' });
+      } catch (e) {
+        results.push({
+          query: q.substring(0, 80),
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }
+    const ok = results.filter((r) => r.status === 'ok').length;
+    this.logger.log(
+      `ensure-indexes done ok=${ok}/${results.length} ms=${Date.now() - start}`,
+    );
+    return {
+      mode: 'ensure-indexes',
+      count: results.length,
+      ok,
+      results,
+      durationMs: Date.now() - start,
+    };
+  }
+
   async seedDemoWorkers(opts: { count: number; dryRun: boolean }) {
     const start = Date.now();
     const count = Math.max(1, Math.min(opts.count | 0 || 5, 50));

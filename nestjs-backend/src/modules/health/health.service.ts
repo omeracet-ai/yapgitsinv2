@@ -42,7 +42,20 @@ export interface DeepHealthResponse extends HealthResponse {
     iyzipay: { status: CheckStatus; latencyMs: number; error?: string };
     smtp: { status: CheckStatus; error?: string };
     fcm: { status: CheckStatus; error?: string };
+    db?: DbHealthDetail;
   };
+}
+
+export interface DbHealthDetail {
+  driver: string;
+  journalMode?: string;
+  foreignKeys?: boolean;
+  busyTimeoutMs?: number;
+  synchronous?: number;
+  jobsIndexCount?: number;
+  usersIndexCount?: number;
+  dbSizeBytes?: number;
+  error?: string;
 }
 
 @Injectable()
@@ -81,6 +94,55 @@ export class HealthService {
     } catch {
       return redisConfigured ? 'down' : 'memory-fallback';
     }
+  }
+
+  /**
+   * P222 — DB hardening visibility. Reports WAL mode, FK enforcement,
+   * busy timeout, index counts, on-disk size. SQLite-only fields are skipped
+   * when driver is postgres/mysql.
+   */
+  async getDbHealth(): Promise<DbHealthDetail> {
+    const driver = String(this.dataSource.options.type);
+    const out: DbHealthDetail = { driver };
+    try {
+      if (driver === 'sqlite' || driver === 'better-sqlite3') {
+        const jm: Array<{ journal_mode: string }> = await this.dataSource.query(
+          'PRAGMA journal_mode',
+        );
+        const fk: Array<{ foreign_keys: number }> = await this.dataSource.query(
+          'PRAGMA foreign_keys',
+        );
+        const bt: Array<{ timeout: number }> = await this.dataSource.query(
+          'PRAGMA busy_timeout',
+        );
+        const sy: Array<{ synchronous: number }> = await this.dataSource.query(
+          'PRAGMA synchronous',
+        );
+        const jobsIdx: Array<{ c: number }> = await this.dataSource.query(
+          "SELECT COUNT(*) c FROM sqlite_master WHERE type='index' AND tbl_name='jobs'",
+        );
+        const usersIdx: Array<{ c: number }> = await this.dataSource.query(
+          "SELECT COUNT(*) c FROM sqlite_master WHERE type='index' AND tbl_name='users'",
+        );
+        const pc: Array<{ page_count: number }> = await this.dataSource.query(
+          'PRAGMA page_count',
+        );
+        const ps: Array<{ page_size: number }> = await this.dataSource.query(
+          'PRAGMA page_size',
+        );
+        out.journalMode = jm[0]?.journal_mode;
+        out.foreignKeys = Number(fk[0]?.foreign_keys) === 1;
+        out.busyTimeoutMs = Number(bt[0]?.timeout);
+        out.synchronous = Number(sy[0]?.synchronous);
+        out.jobsIndexCount = Number(jobsIdx[0]?.c ?? 0);
+        out.usersIndexCount = Number(usersIdx[0]?.c ?? 0);
+        out.dbSizeBytes =
+          Number(pc[0]?.page_count ?? 0) * Number(ps[0]?.page_size ?? 0);
+      }
+    } catch (e) {
+      out.error = e instanceof Error ? e.message : String(e);
+    }
+    return out;
   }
 
   private checkIyzipay(): CheckStatus {
@@ -173,9 +235,11 @@ export class HealthService {
         ? { status: 'configured' }
         : { status: 'missing' };
 
+    const db = await this.getDbHealth();
+
     return {
       ...shallow,
-      deep: { iyzipay: iyzipayDeep, smtp, fcm },
+      deep: { iyzipay: iyzipayDeep, smtp, fcm, db },
     };
   }
 }
