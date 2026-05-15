@@ -18,6 +18,7 @@ export enum PaymentMethod {
   BANK = 'bank',
   CRYPTO = 'crypto',
   SYSTEM = 'system',
+  IYZIPAY = 'iyzipay',
 }
 export enum TxStatus {
   PENDING = 'pending',

@@ -35,6 +35,25 @@ class TokenRepository {
     );
   }
 
+  /// Phase 195 — Jeton paket katalogu (server-side single source of truth).
+  /// Frontend fiyatları/jeton miktarlarını HARDCODE ETMEZ.
+  Future<List<Map<String, dynamic>>> fetchPackages() async {
+    final res = await _dio.get('/tokens/packages');
+    final raw = (res.data as Map)['packages'] as List<dynamic>;
+    return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  /// Phase 195 — iyzipay checkout başlat. Döner: { token, paymentPageUrl, mock, package }
+  /// Kullanıcı paymentPageUrl'i WebView'da açar, ödeme sonrası iyzipay backend'e
+  /// callback POST eder ve bakiye otomatik kredilenir.
+  Future<Map<String, dynamic>> createIyzipayCheckout(String packageId) async {
+    final res = await _dio.post(
+      '/tokens/checkout',
+      data: {'packageId': packageId},
+    );
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
   Future<String> downloadHistoryPdf({DateTime? from, DateTime? to}) async {
     if (kIsWeb) throw UnsupportedError('PDF indirme web\'de desteklenmiyor');
     final qp = <String, dynamic>{};
