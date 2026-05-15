@@ -5,10 +5,12 @@ import { getDict, localePath, type Locale } from '@/i18n';
 export type LegalKey = 'kvkk' | 'kullanim-kosullari' | 'gizlilik-politikasi' | 'cerez-politikasi';
 
 type Section = { h: string; p: string[] };
-type LegalDoc = { title: string; intro: string; sections: Section[]; contactLine: string; updatedLabel: string; reviewBanner: string };
+type LegalDoc = { title: string; intro: string; sections: Section[]; contactLine: string; updatedLabel: string; reviewBanner?: string };
 
-const LAST_UPDATED = '2026-05-08';
+const LAST_UPDATED = '2026-05-15';
 const LEGAL_EMAIL = 'legal@yapgitsin.tr';
+const PRIVACY_EMAIL = 'privacy@yapgitsin.tr';
+const SUPPORT_EMAIL = 'destek@yapgitsin.tr';
 
 const CONTENT: Record<Locale, Record<LegalKey, LegalDoc>> = {
   tr: {
@@ -26,39 +28,86 @@ const CONTENT: Record<Locale, Record<LegalKey, LegalDoc>> = {
       ],
       contactLine: 'Sorularınız için: ' + LEGAL_EMAIL,
       updatedLabel: 'Son Güncelleme',
-      reviewBanner: 'Bu metin avukat onayı sürecindedir; nihai versiyon yakında yayınlanacaktır.',
     },
     'kullanim-kosullari': {
       title: 'Kullanım Koşulları',
-      intro: 'Yapgitsin platformunu kullanırken aşağıdaki koşulları kabul etmiş sayılırsınız.',
+      intro: 'Yapgitsin platformunu (web ve mobil uygulama) kullanırken aşağıdaki koşulları kabul etmiş sayılırsınız. Lütfen dikkatlice okuyunuz.',
       sections: [
-        { h: 'Hizmet Tanımı', p: ['Yapgitsin, müşterileri ve hizmet sağlayıcıları (ustaları) buluşturan bir teknoloji platformudur.', 'Platform, taraflar arasındaki sözleşme ilişkisinin tarafı değildir.'] },
-        { h: 'Hesap ve Üyelik', p: ['Hesap açılışında doğru ve güncel bilgi vermekle yükümlüsünüz.', 'Hesap güvenliğinden bizzat sorumlusunuz.'] },
-        { h: 'Kullanıcı Yükümlülükleri', p: ['Yasalara, ahlaka ve Yapgitsin politikalarına uygun davranılması gerekir.', 'Sahte ilan, dolandırıcılık veya taciz tespit edilmesi halinde hesap kapatılır.'] },
-        { h: 'Ödeme ve Token Sistemi', p: ['Teklif verme işlemleri token bakiyesi tüketir. Token satın alımları iade edilemez.'] },
-        { h: 'Sorumluluk Sınırlaması', p: ['Yapgitsin, taraflar arasında sunulan hizmetlerin kalitesinden doğrudan sorumlu değildir.', 'Maddi ve manevi zararlar için yasal sınırlar dahilinde sorumluluk üstlenir.'] },
-        { h: 'Fesih', p: ['Yapgitsin, koşulları ihlal eden hesapları herhangi bir zamanda askıya alabilir veya kapatabilir.'] },
-        { h: 'Uygulanacak Hukuk', p: ['İşbu koşullar Türkiye Cumhuriyeti hukukuna tabidir. İstanbul Mahkemeleri ve İcra Daireleri yetkilidir.'] },
+        { h: '1. Hizmetin Tanımı', p: ['Yapgitsin, hizmet arayan müşterileri ve hizmet veren ustaları (servis sağlayıcıları) buluşturan bir teknoloji platformudur.', 'Platform; tarafların arasındaki hizmet sözleşmesinin tarafı değildir, yalnızca aracılık eder.'] },
+        { h: '2. Üyelik Koşulları', p: ['Üye olabilmek için 18 yaşını doldurmuş olmanız gerekir. Üyelik sırasında doğru, güncel ve eksiksiz bilgi vermekle yükümlüsünüz.', 'Hesabınızın güvenliği (şifre, Google oturumu) tamamen sizin sorumluluğunuzdadır.'] },
+        { h: '3. Kullanıcı Yükümlülükleri', p: [
+          'Türkiye Cumhuriyeti yasalarına, genel ahlak kurallarına ve Yapgitsin politikalarına uyacaksınız.',
+          'Sahte ilan, dolandırıcılık, taciz, nefret söylemi, telif hakkı ihlali veya yanıltıcı içerik yayınlamak yasaktır.',
+          'Platform dışı iletişim yoluyla komisyon kaçırma girişimi tespit edilirse hesap askıya alınır.',
+        ] },
+        { h: '4. İçerik Politikası', p: ['İlan başlıkları, açıklamaları, yüklenen fotoğraflar ve mesajlar; yasalara uygun, gerçek ve hizmetle ilgili olmalıdır. Yapgitsin uygunsuz içeriği önceden bildirim yapmaksızın kaldırma hakkını saklı tutar.'] },
+        { h: '5. Ödeme, Komisyon ve Token Sistemi', p: [
+          'Ustalar müşterilere teklif vermek için token bakiyesi kullanır. Token satın alımları, dijital içerik olarak kabul edildiğinden 6502 sayılı Tüketicinin Korunması Hakkında Kanun madde 15/1-ğ uyarınca cayma hakkı dışındadır; kullanılmamış tokenlar için iade talepleri istisnai olarak değerlendirilir.',
+          'Yapgitsin, gerçekleşen iş üzerinden komisyon alabilir; oranlar uygulama içinde duyurulur.',
+        ] },
+        { h: '6. Anlaşmazlık Çözümü', p: ['Müşteri ile usta arasındaki anlaşmazlıklarda Yapgitsin destek ekibi taraflar arasında arabuluculuk yapar. Çözüm sağlanamadığında resmi mercilere başvuru hakkı saklıdır.'] },
+        { h: '7. Hesabın Askıya Alınması ve Kapatılması', p: ['Koşullara aykırı kullanım, sahtecilik veya tekrar eden şikayet halinde Yapgitsin hesabınızı askıya alabilir veya kapatabilir. Siz de istediğiniz zaman hesabınızı silebilirsiniz.'] },
+        { h: '8. Sorumluluk Sınırlaması', p: ['Yapgitsin, taraflar arasında verilen hizmetin kalitesi, zamanında tamamlanması veya sonuçlarından doğrudan sorumlu değildir. Platformun kesintisiz çalışacağı garanti edilmez.', 'Sorumluluk, yürürlükteki hukukun izin verdiği azami sınırlar dahilinde geçerlidir.'] },
+        { h: '9. Fikri Mülkiyet', p: ['Yapgitsin markası, logosu, yazılım kodu ve tasarımı Yapgitsin\'e aittir. Kullanıcı tarafından yüklenen içeriklerin kullanım hakları kullanıcıya ait olmakla birlikte, platformda yayınlanması için Yapgitsin\'e gayri münhasır kullanım lisansı verilmiş sayılır.'] },
+        { h: '10. Geçerli Hukuk ve Yetki', p: ['İşbu koşullar Türkiye Cumhuriyeti hukukuna tabidir. Uyuşmazlıklarda İstanbul Anadolu Mahkemeleri ve İcra Daireleri yetkilidir.'] },
+        { h: '11. Koşullarda Değişiklik', p: ['Yapgitsin bu koşulları gerektiğinde güncelleyebilir; önemli değişiklikler uygulama içi bildirim veya e-posta ile duyurulur.'] },
+        { h: '12. İletişim', p: ['Sorularınız için: ' + SUPPORT_EMAIL] },
       ],
-      contactLine: 'Sorularınız için: ' + LEGAL_EMAIL,
+      contactLine: 'Sorularınız için: ' + SUPPORT_EMAIL,
       updatedLabel: 'Son Güncelleme',
-      reviewBanner: 'Bu metin avukat onayı sürecindedir; nihai versiyon yakında yayınlanacaktır.',
     },
     'gizlilik-politikasi': {
       title: 'Gizlilik Politikası',
-      intro: 'Yapgitsin olarak kullanıcı gizliliğini ön planda tutuyoruz. Bu politika, hangi verileri topladığımızı ve nasıl koruduğumuzu açıklar.',
+      intro: 'Yapgitsin olarak kullanıcı gizliliğini ön planda tutuyoruz. Bu politika; web sitemiz (yapgitsin.tr) ve mobil uygulamamız üzerinden hangi verileri topladığımızı, nasıl işlediğimizi, kimlerle paylaştığımızı ve haklarınızı açıklar.',
       sections: [
-        { h: 'Toplanan Bilgiler', p: ['Hesap bilgileri, profil verileri, kullanım istatistikleri, cihaz bilgileri ve konum verileri.'] },
-        { h: 'Bilgi Kullanımı', p: ['Hizmet sunumu, kişiselleştirme, güvenlik ve dolandırıcılık önleme amaçlı kullanılır.'] },
-        { h: 'Üçüncü Taraf Paylaşımı', p: ['Verileriniz yalnızca yasal yükümlülükler veya hizmet sağlayıcılarımız (ödeme, hosting) ile sınırlı paylaşılır.'] },
-        { h: 'Veri Güvenliği', p: ['SSL/TLS şifreleme, bcrypt parola hash, JWT oturum yönetimi ve sınırlı erişim politikaları uygulanır.'] },
-        { h: 'Çocukların Gizliliği', p: ['Platform 18 yaş altı kullanıcılara yönelik değildir.'] },
-        { h: 'Kullanıcı Hakları', p: ['Verilerinize erişme, düzeltme, silme talepleri için bizimle iletişime geçebilirsiniz.'] },
-        { h: 'Politika Değişiklikleri', p: ['Bu politika güncellenebilir; önemli değişiklikler kullanıcılara bildirilir.'] },
+        { h: '1. Veri Sorumlusu', p: ['Yapgitsin Bilişim Hizmetleri — bu politika kapsamında veri sorumlusudur.', 'İletişim: ' + PRIVACY_EMAIL] },
+        { h: '2. Topladığımız Veriler', p: [
+          'Hesap bilgileri: e-posta, parola hash, ad-soyad, telefon (opsiyonel). Google ile giriş yaparsanız: Google görünen adı, profil fotoğrafı, e-posta adresi.',
+          'Profil verileri: usta veya müşteri profili; biyografi, hizmet kategorisi, deneyim, portföy fotoğrafları.',
+          'İlan içeriği: ilan başlığı, açıklama, kategori, fotoğraflar, bütçe aralığı.',
+          'Konum: ilan oluştururken cihazın Geolocator API\'si üzerinden alınan enlem/boylam. Hassasiyetinizi korumak için konumunuz harita üzerinde yaklaşık (locationApprox) olarak gösterilir.',
+          'Cihaz bilgisi: Firebase Cloud Messaging push bildirim tokenı, cihaz dili, işletim sistemi sürümü, uygulama sürümü.',
+          'Mesajlaşma: kullanıcılar arası sohbet metinleri ve gönderim zaman damgaları.',
+          'İşlem kayıtları: token satın alma kayıtları, komisyon işlemleri (kart bilgileri ödeme sağlayıcısında tutulur, biz saklamayız).',
+          'Web kullanımı: çerezler aracılığıyla sayfa görüntülemeleri ve arama sorguları (detaylar Çerez Politikası\'nda).',
+        ] },
+        { h: '3. Veri İşleme Amaçları', p: [
+          'Hesap oluşturma ve kimlik doğrulama (Firebase Auth).',
+          'Müşteri-usta eşleştirmesi, ilan listeleme, arama sonuçlarının kişiselleştirilmesi.',
+          'Ödeme ve token işlemlerinin gerçekleştirilmesi.',
+          'Anlık bildirim gönderimi (yeni teklif, mesaj, ödeme onayı) — FCM aracılığıyla.',
+          'Müşteri destek hizmetleri ve şikayetlerin çözümü.',
+          'Güvenlik, dolandırıcılık ve kötüye kullanım tespiti.',
+          'Yasal yükümlülüklerin yerine getirilmesi.',
+        ] },
+        { h: '4. Veri Saklama Süresi', p: [
+          'Kişisel verileriniz hesabınız aktif olduğu sürece saklanır.',
+          'Hesabınızı sildiğinizde profil verileriniz silinir; ancak mali ve ticari işlem kayıtları (token alımı, komisyon faturaları) Vergi Usul Kanunu ve Türk Borçlar Kanunu uyarınca 10 yıl süreyle saklanır.',
+          'Mesajlaşma kayıtları, uyuşmazlık çözüm süresi (genel zamanaşımı 2-10 yıl) sonunda silinir.',
+        ] },
+        { h: '5. Üçüncü Taraflar ve Veri Aktarımı', p: [
+          'Firebase / Google Cloud (Google LLC): Auth, Firestore, Cloud Messaging, Storage, Hosting — altyapı sağlayıcısı. Veriler Google sunucularında işlenir; uluslararası aktarım söz konusudur.',
+          'Ödeme sağlayıcısı: token satın alımları için kart işlemleri PCI-DSS uyumlu sağlayıcı üzerinden yapılır; biz kart numarası saklamayız.',
+          'Push bildirim: Firebase Cloud Messaging (Google) ve Apple Push Notification Service.',
+          'Yasal merciler: mahkeme, savcılık veya yetkili kurumların talebi üzerine yasal sınırlar dahilinde paylaşım yapılır.',
+          'Reklam veya satış amacıyla üçüncü taraflarla veri paylaşmıyoruz.',
+        ] },
+        { h: '6. Çerezler', p: ['Web sitemizde oturum çerezleri (Firebase Auth), tercih çerezleri ve sınırlı analitik çerez kullanılmaktadır. Detay için Çerez Politikası sayfamızı inceleyebilirsiniz.'] },
+        { h: '7. KVKK Kapsamındaki Haklarınız', p: [
+          'KVKK madde 11 uyarınca: verilerinizin işlenip işlenmediğini öğrenme, işlenmişse bilgi talep etme, işleme amacını öğrenme, yurt içi/yurt dışı aktarıldığı tarafları bilme, eksik/yanlış işlenmişse düzeltilmesini isteme, silinmesini veya anonimleştirilmesini isteme, düzeltme/silme işlemlerinin aktarılan taraflara bildirilmesini isteme, otomatik analiz sonucu aleyhinize çıkan sonuca itiraz etme, zarar uğramanız halinde tazminat talep etme haklarına sahipsiniz.',
+          'Bu hakları kullanmak için ' + PRIVACY_EMAIL + ' adresine başvurabilirsiniz; başvurunuz en geç 30 gün içinde sonuçlandırılır.',
+        ] },
+        { h: '8. Çocukların Verisi', p: ['Platform 18 yaş altı bireyler için tasarlanmamıştır; bilerek 18 yaş altı kişilerin verisini toplamayız. Yanlışlıkla toplandığını tespit edersek ilgili veriyi sileriz.'] },
+        { h: '9. Veri Güvenliği', p: [
+          'Tüm iletişim TLS/HTTPS üzerinden şifrelenir. Parolalar bcrypt ile hash\'lenir.',
+          'Oturum yönetimi JWT tabanlıdır; en az ayrıcalık prensibi uygulanır.',
+          'Veri tabanı yedeklemeleri şifreli olarak saklanır. Erişim loglanır ve sınırlandırılmıştır.',
+        ] },
+        { h: '10. Politika Değişiklikleri', p: ['Bu politika güncellenebilir. Önemli değişiklikler uygulama içi bildirim veya e-posta ile size duyurulur. Politikanın güncel versiyonu daima bu sayfada yayınlanır.'] },
+        { h: '11. İletişim', p: ['Gizlilik soruları ve KVKK başvuruları: ' + PRIVACY_EMAIL, 'Genel destek: ' + SUPPORT_EMAIL] },
       ],
-      contactLine: 'Gizlilik soruları için: ' + LEGAL_EMAIL,
+      contactLine: 'Gizlilik soruları için: ' + PRIVACY_EMAIL,
       updatedLabel: 'Son Güncelleme',
-      reviewBanner: 'Bu metin avukat onayı sürecindedir; nihai versiyon yakında yayınlanacaktır.',
     },
     'cerez-politikasi': {
       title: 'Çerez Politikası',
@@ -73,7 +122,6 @@ const CONTENT: Record<Locale, Record<LegalKey, LegalDoc>> = {
       ],
       contactLine: 'Çerez soruları için: ' + LEGAL_EMAIL,
       updatedLabel: 'Son Güncelleme',
-      reviewBanner: 'Bu metin avukat onayı sürecindedir; nihai versiyon yakında yayınlanacaktır.',
     },
   },
   en: {
@@ -91,7 +139,6 @@ const CONTENT: Record<Locale, Record<LegalKey, LegalDoc>> = {
       ],
       contactLine: 'Questions: ' + LEGAL_EMAIL,
       updatedLabel: 'Last Updated',
-      reviewBanner: 'This document is pending lawyer review; the final version will be published soon.',
     },
     'kullanim-kosullari': {
       title: 'Terms of Use',
@@ -107,7 +154,6 @@ const CONTENT: Record<Locale, Record<LegalKey, LegalDoc>> = {
       ],
       contactLine: 'Questions: ' + LEGAL_EMAIL,
       updatedLabel: 'Last Updated',
-      reviewBanner: 'This document is pending lawyer review; the final version will be published soon.',
     },
     'gizlilik-politikasi': {
       title: 'Privacy Policy',
@@ -123,7 +169,6 @@ const CONTENT: Record<Locale, Record<LegalKey, LegalDoc>> = {
       ],
       contactLine: 'Privacy questions: ' + LEGAL_EMAIL,
       updatedLabel: 'Last Updated',
-      reviewBanner: 'This document is pending lawyer review; the final version will be published soon.',
     },
     'cerez-politikasi': {
       title: 'Cookie Policy',
@@ -138,7 +183,6 @@ const CONTENT: Record<Locale, Record<LegalKey, LegalDoc>> = {
       ],
       contactLine: 'Cookie questions: ' + LEGAL_EMAIL,
       updatedLabel: 'Last Updated',
-      reviewBanner: 'This document is pending lawyer review; the final version will be published soon.',
     },
   },
   az: {
@@ -156,7 +200,6 @@ const CONTENT: Record<Locale, Record<LegalKey, LegalDoc>> = {
       ],
       contactLine: 'Suallar üçün: ' + LEGAL_EMAIL,
       updatedLabel: 'Son Yenilənmə',
-      reviewBanner: 'Bu sənəd hüquqşünas baxışındadır; yekun versiya tezliklə dərc olunacaq.',
     },
     'kullanim-kosullari': {
       title: 'İstifadə Şərtləri',
@@ -172,7 +215,6 @@ const CONTENT: Record<Locale, Record<LegalKey, LegalDoc>> = {
       ],
       contactLine: 'Suallar üçün: ' + LEGAL_EMAIL,
       updatedLabel: 'Son Yenilənmə',
-      reviewBanner: 'Bu sənəd hüquqşünas baxışındadır; yekun versiya tezliklə dərc olunacaq.',
     },
     'gizlilik-politikasi': {
       title: 'Məxfilik Siyasəti',
@@ -188,7 +230,6 @@ const CONTENT: Record<Locale, Record<LegalKey, LegalDoc>> = {
       ],
       contactLine: 'Məxfilik sualları: ' + LEGAL_EMAIL,
       updatedLabel: 'Son Yenilənmə',
-      reviewBanner: 'Bu sənəd hüquqşünas baxışındadır; yekun versiya tezliklə dərc olunacaq.',
     },
     'cerez-politikasi': {
       title: 'Kuki Siyasəti',
@@ -203,7 +244,6 @@ const CONTENT: Record<Locale, Record<LegalKey, LegalDoc>> = {
       ],
       contactLine: 'Kuki sualları: ' + LEGAL_EMAIL,
       updatedLabel: 'Son Yenilənmə',
-      reviewBanner: 'Bu sənəd hüquqşünas baxışındadır; yekun versiya tezliklə dərc olunacaq.',
     },
   },
 };
@@ -235,10 +275,12 @@ export default function renderLegal(L: Locale, key: LegalKey) {
           <span>{doc.title}</span>
         </nav>
         <h1 className="text-2xl md:text-3xl font-bold text-[var(--secondary)] mb-2">{doc.title}</h1>
-        <p className="text-xs text-gray-500 mb-4">{doc.updatedLabel}: {LAST_UPDATED}</p>
-        <div className="bg-amber-50 border border-amber-200 text-amber-900 text-sm rounded-lg px-4 py-3 mb-6">
-          {doc.reviewBanner}
-        </div>
+        <p className="text-xs text-gray-500 mb-6">{doc.updatedLabel}: {LAST_UPDATED}</p>
+        {doc.reviewBanner ? (
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 text-sm rounded-lg px-4 py-3 mb-6">
+            {doc.reviewBanner}
+          </div>
+        ) : null}
         <p className="text-base text-gray-700 leading-relaxed mb-8">{doc.intro}</p>
         <div className="space-y-7">
           {doc.sections.map((s, i) => (
