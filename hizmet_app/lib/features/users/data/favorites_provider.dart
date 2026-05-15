@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'firebase_favorites_repository.dart';
+import 'favorites_repository.dart';
 
 /// Holds the set of favorited workerIds for the current user.
 /// Loaded lazily from the favorites list on first read; updated optimistically
 /// by [toggle] which also calls the backend.
 class FavoritesNotifier extends StateNotifier<Set<String>> {
-  final FirebaseFavoritesRepository _repo;
+  final FavoritesRepository _repo;
   bool _loaded = false;
 
   FavoritesNotifier(this._repo) : super(<String>{});
@@ -65,13 +65,13 @@ class FavoritesNotifier extends StateNotifier<Set<String>> {
 
 final favoritesProvider =
     StateNotifierProvider<FavoritesNotifier, Set<String>>((ref) {
-  return FavoritesNotifier(ref.watch(firebaseFavoritesRepositoryProvider));
+  return FavoritesNotifier(ref.watch(favoritesRepositoryProvider));
 });
 
 /// Full favorite worker objects — list view.
 final myFavoritesListProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final repo = ref.watch(firebaseFavoritesRepositoryProvider);
+  final repo = ref.watch(favoritesRepositoryProvider);
   final list = await repo.getMyFavorites();
   // also seed the id-set notifier so heart icons across app stay in sync
   Future.microtask(() {

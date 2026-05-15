@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/firebase_currency_repository.dart';
+import '../data/currency_repository.dart';
 
 /// Bottom sheet — para birimi seçici.
 /// Açılışta /currencies'i çeker, seçim yapılınca PATCH /users/me/currency.

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
-import '../data/firebase_review_repository.dart';
+import '../data/review_repository.dart';
 
 /// Bottom sheet for the reviewee to post or edit a reply to a review.
 /// Returns `true` from `showModalBottomSheet` if the reply was saved.
@@ -41,7 +41,7 @@ class _ReviewReplySheetState extends ConsumerState<ReviewReplySheet> {
     setState(() => _submitting = true);
     try {
       await ref
-          .read(firebaseReviewRepositoryProvider)
+          .read(reviewRepositoryProvider)
           .replyToReview(widget.reviewId, text);
       if (!mounted) return;
       Navigator.of(context).pop(true);

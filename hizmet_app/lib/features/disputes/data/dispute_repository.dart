@@ -43,4 +43,13 @@ class DisputeRepository {
       throw Exception(e.response?.data['message'] ?? 'Şikayetler yüklenemedi');
     }
   }
+
+  Future<Map<String, dynamic>> getDetail(String id) async {
+    try {
+      final r = await _dio.get('/disputes/$id');
+      return Map<String, dynamic>.from(r.data as Map);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Şikayet bulunamadı');
+    }
+  }
 }

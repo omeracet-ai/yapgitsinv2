@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../calendar/data/firebase_booking_repository.dart';
+import '../../../calendar/data/booking_repository.dart';
 import '../../widgets/booking_step1_service.dart';
 import '../../widgets/booking_step2_datetime.dart';
 import '../../widgets/booking_step3_address.dart';
@@ -62,7 +62,7 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
     if (!_step3Valid || _submitting) return;
     setState(() => _submitting = true);
     try {
-      final repo = ref.read(firebaseBookingRepositoryProvider);
+      final repo = ref.read(bookingRepositoryProvider);
       await repo.createBooking(
         workerId: widget.workerId,
         category: _category!,

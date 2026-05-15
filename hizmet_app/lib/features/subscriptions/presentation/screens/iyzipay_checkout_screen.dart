@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../data/firebase_subscription_repository.dart';
+import '../../data/subscription_repository.dart';
 
 /// Phase 188 — Iyzipay hosted Checkout Form WebView.
 ///

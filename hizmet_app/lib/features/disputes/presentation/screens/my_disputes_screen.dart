@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/firebase_dispute_repository.dart';
+import '../../data/dispute_repository.dart';
 
 final _myDisputesProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {

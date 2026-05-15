@@ -11,7 +11,7 @@ import '../../../../core/constants/api_constants.dart';
 import '../providers/auth_provider.dart';
 import '../../../service_requests/data/service_request_repository.dart';
 import '../../../profile/widgets/profile_completion_card.dart';
-import '../../../photos/data/firebase_photo_repository.dart';
+import '../../../photos/data/photo_repository.dart';
 import '../../../insurance/data/insurance_repository.dart';
 import '../../widgets/intro_video_section.dart';
 import '../../widgets/certifications_section.dart';
@@ -126,7 +126,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     setState(() => _busySection = 'photo');
     try {
       final url = await ref
-          .read(firebasePhotoRepositoryProvider)
+          .read(photoRepositoryProvider)
           .uploadProfilePhoto(picked);
       // PATCH /users/me ile kalÄ±cÄ± olarak kaydet â€” _patch zaten authState + completion
       // refresh ediyor; setState 'photo' bitince UI yeni avatarÄ± CircleAvatar'da gÃ¶sterir.

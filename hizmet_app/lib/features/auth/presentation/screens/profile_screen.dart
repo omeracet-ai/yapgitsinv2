@@ -27,7 +27,7 @@ import '../../../../core/theme/theme_mode_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/services/locale_provider.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../certifications/data/firebase_certification_repository.dart';
+import '../../../certifications/data/certification_repository.dart';
 // TODO(P190): migrate remaining strings to AppLocalizations
 
 // ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
@@ -751,7 +751,7 @@ class ProfileScreen extends ConsumerWidget {
     final isWorker = cats is List && cats.isNotEmpty;
     if (!isWorker) return const SizedBox.shrink();
 
-    final repo = ref.watch(firebaseCertificationRepositoryProvider);
+    final repo = ref.watch(certificationRepositoryProvider);
     return FutureBuilder<List<WorkerCertification>>(
       future: repo.listMine(),
       builder: (context, snapshot) {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import '../data/firebase_certification_repository.dart';
+import '../data/certification_repository.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class CertificationsScreen extends ConsumerStatefulWidget {
@@ -26,7 +26,7 @@ class _CertificationsScreenState extends ConsumerState<CertificationsScreen> {
   Future<void> _load() async {
     setState(() { _loading = true; _error = null; });
     try {
-      final repo = ref.read(firebaseCertificationRepositoryProvider);
+      final repo = ref.read(certificationRepositoryProvider);
       final list = await repo.listMine();
       setState(() => _certs = list);
     } catch (e) {
@@ -196,7 +196,7 @@ class _AddCertSheetState extends ConsumerState<_AddCertSheet> {
     }
     setState(() { _uploading = true; _error = null; });
     try {
-      final repo = ref.read(firebaseCertificationRepositoryProvider);
+      final repo = ref.read(certificationRepositoryProvider);
       String? docUrl;
       if (_docFile != null) {
         docUrl = await repo.uploadDocument(_docFile!);

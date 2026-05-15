@@ -2,15 +2,25 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:math';
 import 'package:crypto/crypto.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import '../network/api_client.dart';
+
 class FirebaseAuthService {
+  FirebaseAuthService({ApiClient? apiClient})
+      : _api = apiClient ?? ApiClient();
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  // Firestore retained only for flows whose backend bridge is not yet wired
+  // (social sign-in user provisioning). All other writes go through REST.
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final ApiClient _api;
+  Dio get _dio => _api.dio;
 
   User? get currentUser => _auth.currentUser;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -32,19 +42,20 @@ class FirebaseAuthService {
     );
     await cred.user?.updateDisplayName(fullName);
 
-    // Firestore'a kullanıcı profili yaz
-    await _db.collection('users').doc(cred.user!.uid).set({
-      'uid': cred.user!.uid,
-      'email': email,
-      'displayName': fullName,
-      'phone': phone ?? '',
-      'city': city ?? '',
-      'role': 'client',
-      'isVerified': false,
-      'isActive': true,
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    // Profil bilgilerini backend'e yaz (PATCH /users/me).
+    // Auth interceptor Bearer header'ı otomatik ekler; backend kullanıcıyı
+    // ilk korumalı çağrıda provision eder.
+    try {
+      await _dio.patch<dynamic>('/users/me', data: {
+        'fullName': fullName,
+        if (phone != null && phone.isNotEmpty) 'phoneNumber': phone,
+        if (city != null && city.isNotEmpty) 'city': city,
+      });
+    } on DioException {
+      // Backend henüz JWT'yi tanımıyorsa sessizce geç — sonraki çağrılarda
+      // /users/me PATCH tekrar denenebilir. Hata profile_screen tarafında
+      // gösterilir.
+    }
 
     return cred;
   }
@@ -64,7 +75,11 @@ class FirebaseAuthService {
       password: password,
     );
     await user.reauthenticateWithCredential(cred);
-    await _db.collection('users').doc(user.uid).delete();
+    try {
+      await _dio.delete<dynamic>('/users/me');
+    } on DioException {
+      // Backend silme başarısız olsa bile Firebase kullanıcısını silmeye devam et.
+    }
     await user.delete();
   }
 
@@ -74,17 +89,22 @@ class FirebaseAuthService {
   Future<Map<String, dynamic>?> getUserProfile() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
-    final doc = await _db.collection('users').doc(uid).get();
-    return doc.data();
+    try {
+      final res = await _dio.get<dynamic>('/users/me');
+      final data = res.data;
+      if (data is Map<String, dynamic>) return data;
+      if (data is Map) return Map<String, dynamic>.from(data);
+      return null;
+    } on DioException {
+      return null;
+    }
   }
 
   Future<void> updateUserProfile(Map<String, dynamic> data) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
-    await _db.collection('users').doc(uid).update({
-      ...data,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    // Backend `updatedAt`'i kendi yönetir; payload'ı dokunmadan PATCH'le.
+    await _dio.patch<dynamic>('/users/me', data: data);
   }
 
   // ────────────────────────────────────────────────────────────────────────
@@ -190,6 +210,9 @@ class FirebaseAuthService {
     String? fallbackEmail,
   }) async {
     if (user == null) return;
+    // TODO(backend): social sign-in (Google/Apple) için Firebase token →
+    // backend JWT köprü endpoint'i (örn. POST /auth/firebase) eklenince
+    // bu Firestore yazımı PATCH /users/me'ye taşınacak. Şimdilik korunuyor.
     final ref = _db.collection('users').doc(user.uid);
     final snap = await ref.get();
     final now = FieldValue.serverTimestamp();
