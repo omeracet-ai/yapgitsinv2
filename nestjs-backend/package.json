@@ -24,7 +24,9 @@
     "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/data-source.ts",
     "migration:show": "npm run typeorm -- migration:show -d src/data-source.ts",
-    "openapi:export": "ts-node --transpile-only -r tsconfig-paths/register scripts/export-openapi.ts"
+    "openapi:export": "ts-node --transpile-only -r tsconfig-paths/register scripts/export-openapi.ts",
+    "backfill:coords:dry": "node scripts/backfill-coords.js",
+    "backfill:coords:apply": "node scripts/backfill-coords.js --apply"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",
@@ -64,7 +66,8 @@
     "sharp": "^0.34.5",
     "socket.io": "^4.8.3",
     "sqlite3": "^5.1.7",
-    "typeorm": "^0.3.28"
+    "typeorm": "^0.3.28",
+    "@prisma/client": "^6.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -97,7 +100,8 @@
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
     "webpack": "^5.106.2",
-    "webpack-cli": "^7.0.2"
+    "webpack-cli": "^7.0.2",
+    "prisma": "^6.0.0"
   },
   "jest": {
     "moduleFileExtensions": [

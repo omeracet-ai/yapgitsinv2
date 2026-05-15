@@ -16,6 +16,13 @@ mv /d/backend "/d/backend.bak.$BACKUP_TS" 2>/dev/null || true
 mkdir -p /d/backend
 cp -r dist/* /d/backend/
 cp package.json package-lock.json /d/backend/
+# Phase 184: scripts/ klasörünü deploy et (Plesk Node.js panel "Run script"
+# package.json scripts listesinden seçim için scripts/*.js dosyaları gerekli:
+# backfill:coords:dry, backfill:coords:apply vb.)
+if [ -d scripts ]; then
+  mkdir -p /d/backend/scripts
+  cp -r scripts/* /d/backend/scripts/
+fi
 # Phase 166: IIS + iisnode bridge
 [ -f web.config ] && cp web.config /d/backend/web.config
 # Static placeholder (iisnode yokken /backend/ -> 200)
