@@ -10,6 +10,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
@@ -33,6 +34,13 @@ export class PromoController {
     private readonly svc: PromoService,
     private readonly audit: AdminAuditService,
   ) {}
+
+  /** Phase 153: Public — aktif promo listesi (kod metni HARİÇ) */
+  @SkipThrottle()
+  @Get('promo/list')
+  listPublic() {
+    return this.svc.listPublic();
+  }
 
   @Get('promo/validate/:code')
   @UseGuards(AuthGuard('jwt'))

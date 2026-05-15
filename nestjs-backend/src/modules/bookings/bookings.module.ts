@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Booking } from './booking.entity';
 import { BookingsService } from './bookings.service';
 import { BookingsController } from './bookings.controller';
+import { BookingsPublicController } from './bookings-public.controller';
 import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AvailabilityModule } from '../availability/availability.module';
@@ -20,7 +21,7 @@ import { EscrowModule } from '../escrow/escrow.module';
     EscrowModule,
   ],
   providers: [BookingsService],
-  controllers: [BookingsController],
+  controllers: [BookingsController, BookingsPublicController],
   exports: [BookingsService],
 })
 export class BookingsModule {}

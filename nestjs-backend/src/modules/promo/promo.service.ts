@@ -71,6 +71,35 @@ export class PromoService {
     private readonly dataSource: DataSource,
   ) {}
 
+  /** Phase 153: Public — aktif promolar, kod metni hariç */
+  async listPublic(): Promise<Array<{
+    id: string;
+    title: string | null;
+    description: string | null;
+    discountType: PromoDiscountType;
+    discountValue: number;
+    validUntil: Date | null;
+    minPurchase: number | null;
+  }>> {
+    const now = new Date();
+    const rows = await this.promoRepo
+      .createQueryBuilder('p')
+      .where('p.isActive = :a', { a: true })
+      .andWhere('(p.validUntil IS NULL OR p.validUntil > :now)', { now })
+      .orderBy('p.createdAt', 'DESC')
+      .limit(50)
+      .getMany();
+    return rows.map((p) => ({
+      id: p.id,
+      title: p.description ?? null,
+      description: p.description ?? null,
+      discountType: p.discountType,
+      discountValue: Number(p.discountValue),
+      validUntil: p.validUntil,
+      minPurchase: p.minSpend != null ? Number(p.minSpend) : null,
+    }));
+  }
+
   private computeDiscount(promo: PromoCode, spend: number): number {
     if (promo.discountType === PromoDiscountType.PERCENT) {
       const pct = Math.max(0, Math.min(promo.discountValue, 100));

@@ -4,11 +4,13 @@ import {
   Get,
   Body,
   Param,
+  Query,
   UseGuards,
   Request,
   UseInterceptors,
   UploadedFiles,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { AuthGuard } from '@nestjs/passport';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ReviewsService } from './reviews.service';
@@ -18,6 +20,14 @@ import type { AuthenticatedRequest } from '../../common/types/auth.types';
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
+
+  /** Phase 153: Public — son N review (anasayfa için) */
+  @SkipThrottle()
+  @Get('recent')
+  async recent(@Query('limit') limit?: string) {
+    const n = Math.min(50, Math.max(1, Number(limit) || 10));
+    return this.reviewsService.findRecent(n);
+  }
 
   @UseGuards(AuthGuard('jwt'))
   @Post()

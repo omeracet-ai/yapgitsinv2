@@ -45,6 +45,34 @@ export class ReviewsService {
     return saved;
   }
 
+  /** Phase 153: Public — en yeni N review, reviewer+reviewee join (fullName+profileImageUrl) */
+  async findRecent(limit: number): Promise<Array<{
+    id: string;
+    rating: number;
+    comment: string | null;
+    createdAt: Date;
+    reviewer: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
+    reviewee: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
+  }>> {
+    const rows = await this.reviewsRepository.find({
+      relations: ['reviewer', 'reviewee'],
+      order: { createdAt: 'DESC' },
+      take: Math.min(50, Math.max(1, limit)),
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      rating: r.rating,
+      comment: r.comment ?? null,
+      createdAt: r.createdAt,
+      reviewer: r.reviewer
+        ? { id: r.reviewer.id, fullName: r.reviewer.fullName ?? null, profileImageUrl: r.reviewer.profileImageUrl ?? null }
+        : null,
+      reviewee: r.reviewee
+        ? { id: r.reviewee.id, fullName: r.reviewee.fullName ?? null, profileImageUrl: r.reviewee.profileImageUrl ?? null }
+        : null,
+    }));
+  }
+
   async findByReviewee(revieweeId: string): Promise<Review[]> {
     return this.reviewsRepository.find({
       where: { revieweeId },

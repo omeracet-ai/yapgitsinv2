@@ -433,6 +433,44 @@ export class BookingsService {
   }
 
   /** Tek randevu detayı */
+  /** Phase 153: Public — userId'nin verilen tarih için saat slotları.
+   * weeklyAvailable=false ise [] döner. Schedule null = her gün açık.
+   * Slotlar 09:00..17:00, mevcut rezervasyonlar available=false. */
+  async getAvailabilityForDate(
+    userId: string,
+    dateStr: string,
+  ): Promise<Array<{ time: string; available: boolean }>> {
+    const user = await this.usersService.findById(userId);
+    if (!user) return [];
+    const dateMatch = /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
+    if (!dateMatch) return [];
+    const sched = user.availabilitySchedule;
+    if (sched) {
+      const d = new Date(`${dateStr}T00:00:00Z`);
+      const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+      const dow = dayKeys[d.getUTCDay()];
+      if (sched[dow] !== true) return [];
+    }
+    const taken = await this.repo
+      .createQueryBuilder('b')
+      .select('b.scheduledTime', 'time')
+      .where('b.workerId = :uid', { uid: userId })
+      .andWhere('b.scheduledDate = :d', { d: dateStr })
+      .andWhere('b.status IN (:...st)', {
+        st: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS],
+      })
+      .getRawMany<{ time: string | null }>();
+    const takenSet = new Set(
+      taken.map((r) => (r.time ?? '').slice(0, 5)).filter((s) => s.length > 0),
+    );
+    const slots: Array<{ time: string; available: boolean }> = [];
+    for (let h = 9; h <= 17; h++) {
+      const t = `${String(h).padStart(2, '0')}:00`;
+      slots.push({ time: t, available: !takenSet.has(t) });
+    }
+    return slots;
+  }
+
   async findOne(id: string, actorId: string): Promise<Booking> {
     const b = await this.repo.findOne({
       where: { id },
