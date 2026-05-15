@@ -55,6 +55,135 @@ const ALIASES: Record<string, string> = {
   'istanbul-anadolu': 'istanbul',
 };
 
+/**
+ * District (ilçe) → City (şehir) mapping for fallback lookup when user/job
+ * "city" field actually contains a district name (kadikoy, cankaya, bornova...).
+ * Keys must be in normalizeCity() output form (lowercase, ASCII, no diacritics).
+ */
+const DISTRICT_TO_CITY: Record<string, string> = {
+  // İstanbul (39 ilçe)
+  adalar: 'istanbul', arnavutkoy: 'istanbul', atasehir: 'istanbul',
+  avcilar: 'istanbul', bagcilar: 'istanbul', bahcelievler: 'istanbul',
+  bakirkoy: 'istanbul', basaksehir: 'istanbul', bayrampasa: 'istanbul',
+  besiktas: 'istanbul', beykoz: 'istanbul', beylikduzu: 'istanbul',
+  beyoglu: 'istanbul', buyukcekmece: 'istanbul', catalca: 'istanbul',
+  cekmekoy: 'istanbul', esenler: 'istanbul', esenyurt: 'istanbul',
+  eyupsultan: 'istanbul', fatih: 'istanbul', gaziosmanpasa: 'istanbul',
+  gungoren: 'istanbul', kadikoy: 'istanbul', kagithane: 'istanbul',
+  kartal: 'istanbul', kucukcekmece: 'istanbul', maltepe: 'istanbul',
+  pendik: 'istanbul', sancaktepe: 'istanbul', sariyer: 'istanbul',
+  sile: 'istanbul', silivri: 'istanbul', sisli: 'istanbul',
+  sultanbeyli: 'istanbul', sultangazi: 'istanbul', tuzla: 'istanbul',
+  umraniye: 'istanbul', uskudar: 'istanbul', zeytinburnu: 'istanbul',
+
+  // Ankara
+  cankaya: 'ankara', kecioren: 'ankara', mamak: 'ankara',
+  yenimahalle: 'ankara', sincan: 'ankara', etimesgut: 'ankara',
+  altindag: 'ankara', pursaklar: 'ankara', golbasi: 'ankara',
+  polatli: 'ankara', kazan: 'ankara', beypazari: 'ankara',
+
+  // İzmir
+  bornova: 'izmir', karsiyaka: 'izmir', konak: 'izmir',
+  buca: 'izmir', cigli: 'izmir', gaziemir: 'izmir',
+  karabaglar: 'izmir', narlidere: 'izmir', balcova: 'izmir',
+  guzelbahce: 'izmir', urla: 'izmir', cesme: 'izmir',
+  aliaga: 'izmir', menemen: 'izmir', foca: 'izmir',
+  menderes: 'izmir', odemis: 'izmir', tire: 'izmir',
+  torbali: 'izmir', bergama: 'izmir', dikili: 'izmir',
+
+  // Bursa
+  nilufer: 'bursa', osmangazi: 'bursa', yildirim: 'bursa',
+  gemlik: 'bursa', mudanya: 'bursa', inegol: 'bursa',
+  iznik: 'bursa', orhangazi: 'bursa', kestel: 'bursa',
+
+  // Antalya
+  muratpasa: 'antalya', konyaalti: 'antalya', kepez: 'antalya',
+  aksu: 'antalya', 'doseme-alti': 'antalya', dosemealti: 'antalya',
+  serik: 'antalya', manavgat: 'antalya', alanya: 'antalya',
+  kemer: 'antalya', kas: 'antalya', kumluca: 'antalya',
+  finike: 'antalya', gazipasa: 'antalya', demre: 'antalya',
+
+  // Adana
+  seyhan: 'adana', yuregir: 'adana', cukurova: 'adana',
+  saricam: 'adana', karatas: 'adana', ceyhan: 'adana',
+
+  // Konya
+  selcuklu: 'konya', meram: 'konya', karatay: 'konya',
+  beysehir: 'konya', eregli: 'konya', aksehir: 'konya',
+
+  // Gaziantep
+  sahinbey: 'gaziantep', sehitkamil: 'gaziantep', nizip: 'gaziantep',
+
+  // Kocaeli
+  izmit: 'kocaeli', gebze: 'kocaeli', darica: 'kocaeli',
+
+  // Mersin
+  tarsus: 'mersin', erdemli: 'mersin',
+
+  // Diyarbakır
+  baglar: 'diyarbakir',
+
+  // Hatay
+  antakya: 'hatay', iskenderun: 'hatay',
+
+  // Manisa
+  turgutlu: 'manisa', akhisar: 'manisa', salihli: 'manisa',
+
+  // Kayseri
+  kocasinan: 'kayseri', melikgazi: 'kayseri',
+
+  // Samsun
+  ilkadim: 'samsun', atakum: 'samsun', canik: 'samsun',
+
+  // Balıkesir
+  altieylul: 'balikesir', karesi: 'balikesir', edremit: 'balikesir',
+
+  // Kahramanmaraş
+  onikisubat: 'kahramanmaras', dulkadiroglu: 'kahramanmaras',
+
+  // Aydın
+  efeler: 'aydin', kusadasi: 'aydin', nazilli: 'aydin', didim: 'aydin',
+
+  // Tekirdağ
+  corlu: 'tekirdag', cerkezkoy: 'tekirdag', suleymanpasa: 'tekirdag',
+
+  // Sakarya
+  adapazari: 'sakarya', serdivan: 'sakarya',
+
+  // Denizli
+  pamukkale: 'denizli', merkezefendi: 'denizli',
+
+  // Muğla
+  bodrum: 'mugla', marmaris: 'mugla', fethiye: 'mugla', datca: 'mugla',
+
+  // Eskişehir
+  tepebasi: 'eskisehir', odunpazari: 'eskisehir',
+
+  // Trabzon
+  ortahisar: 'trabzon', akcaabat: 'trabzon',
+
+  // Erzurum
+  palandoken: 'erzurum', yakutiye: 'erzurum',
+
+  // Malatya
+  battalgazi: 'malatya', yesilyurt: 'malatya',
+};
+
+/**
+ * Placeholder values that should be skipped (counted as no-city) instead of
+ * landing in the unknown bucket.
+ */
+const PLACEHOLDER_CITY_KEYS = new Set<string>([
+  'belirtilmedi',
+  'bilinmiyor',
+  'bos',
+  'yok',
+  'na',
+  'null',
+  'undefined',
+  '-',
+]);
+
 function normalizeCity(raw: unknown): string | null {
   if (!raw || typeof raw !== 'string') return null;
   const first = raw.split(/[,/|]/)[0].trim();
@@ -146,13 +275,28 @@ export class MaintenanceService {
         continue;
       }
       const key = normalizeCity(r.city);
-      const coords = key ? CITY_CENTROIDS[key] : null;
-      if (!coords || !key) {
-        const k = key || `<empty:${r.city}>`;
-        unknown.set(k, (unknown.get(k) || 0) + 1);
+      if (!key) {
+        unknown.set(`<empty:${r.city}>`, (unknown.get(`<empty:${r.city}>`) || 0) + 1);
         continue;
       }
-      toUpdate.push({ id: r.id, lat: coords[0], lng: coords[1], key });
+      if (PLACEHOLDER_CITY_KEYS.has(key)) {
+        skippedNoCity++;
+        continue;
+      }
+      // 2-pass lookup: city first, then ilçe→şehir fallback.
+      const cityKey = CITY_CENTROIDS[key]
+        ? key
+        : DISTRICT_TO_CITY[key];
+      const coords = cityKey ? CITY_CENTROIDS[cityKey] : null;
+      if (!coords || !cityKey) {
+        unknown.set(key, (unknown.get(key) || 0) + 1);
+        continue;
+      }
+      const sourceKey =
+        cityKey === key
+          ? `city_centroid:${cityKey}`
+          : `district_to_city:${key}->${cityKey}`;
+      toUpdate.push({ id: r.id, lat: coords[0], lng: coords[1], key: sourceKey });
     }
 
     let updated = 0;
@@ -163,7 +307,7 @@ export class MaintenanceService {
         await this.ds.query(sql, [
           u.lat,
           u.lng,
-          `city_centroid:${u.key}`,
+          u.key,
           u.id,
         ]);
         updated++;
