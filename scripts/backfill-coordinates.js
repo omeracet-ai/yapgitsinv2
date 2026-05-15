@@ -25,9 +25,49 @@ const backendNM = path.resolve(__dirname, '../nestjs-backend/node_modules');
 if (!Module.globalPaths.includes(backendNM)) Module.globalPaths.push(backendNM);
 const sqlite3 = require(path.join(backendNM, 'sqlite3'));
 
+// CLI args: --db=<path> | --db <path>, --apply, --help
+function getArg(name) {
+  const eq = process.argv.find(a => a.startsWith(`--${name}=`));
+  if (eq) return eq.split('=').slice(1).join('=');
+  const idx = process.argv.indexOf(`--${name}`);
+  return idx >= 0 ? process.argv[idx + 1] : null;
+}
+
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`Usage: node backfill-coordinates.js [--db=<path>] [--apply]
+
+Options:
+  --db=<path>      SQLite DB path (default: ../nestjs-backend/hizmet_db.sqlite)
+                   Env: YAPGITSIN_DB_PATH or DB_PATH
+  --apply          Actually write (default: dry-run)
+  --help           Show this message
+
+Examples:
+  # Local dry-run
+  node scripts/backfill-coordinates.js
+
+  # Prod apply (Plesk Windows)
+  node scripts/backfill-coordinates.js --db=D:\\backend\\hizmet_db.sqlite --apply
+
+  # Prod apply with env
+  YAPGITSIN_DB_PATH=/var/www/vhosts/yapgitsin.tr/backend/hizmet_db.sqlite \\
+    node scripts/backfill-coordinates.js --apply
+`);
+  process.exit(0);
+}
+
 const APPLY = process.argv.includes('--apply');
 const DRY = !APPLY;
-const dbPath = path.resolve(__dirname, '../nestjs-backend/hizmet_db.sqlite');
+const dbPath = getArg('db')
+  || process.env.YAPGITSIN_DB_PATH
+  || process.env.DB_PATH
+  || path.resolve(__dirname, '../nestjs-backend/hizmet_db.sqlite');
+
+console.log(`[backfill-geo] dbPath: ${dbPath}`);
+if (!require('fs').existsSync(dbPath)) {
+  console.error(`[backfill-geo] DB file not found: ${dbPath}`);
+  process.exit(1);
+}
 
 // Turkish city centroids — official admin-center coordinates, no jitter.
 const CITY_CENTROIDS = {
