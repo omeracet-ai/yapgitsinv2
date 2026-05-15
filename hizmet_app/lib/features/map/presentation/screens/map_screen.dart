@@ -18,6 +18,49 @@ class MapScreen extends ConsumerStatefulWidget {
 
 class _MapScreenState extends ConsumerState<MapScreen> {
   final _mapController = MapController();
+  bool _hasInitialFit = false;
+
+  // Phase 180 — fitBounds helper. Tüm pin'leri + kullanıcı konumunu kapsayan
+  // LatLngBounds döndürür. Boş listede null.
+  LatLngBounds? _boundsFromPoints(List<LatLng> points) {
+    if (points.isEmpty) return null;
+    double minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+    for (final p in points) {
+      if (p.latitude < minLat) minLat = p.latitude;
+      if (p.latitude > maxLat) maxLat = p.latitude;
+      if (p.longitude < minLng) minLng = p.longitude;
+      if (p.longitude > maxLng) maxLng = p.longitude;
+    }
+    return LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng));
+  }
+
+  void _maybeFitInitial(MapState s) {
+    if (_hasInitialFit) return;
+    final points = <LatLng>[
+      for (final j in s.jobs)
+        if (j.latitude != null && j.longitude != null)
+          LatLng(j.latitude!, j.longitude!),
+      for (final w in s.workers)
+        if (w.latitude != null && w.longitude != null)
+          LatLng(w.latitude!, w.longitude!),
+      if (s.userLocation != null) s.userLocation!,
+    ];
+    if (points.isEmpty) return; // hiç pin yok → default zoom
+    _hasInitialFit = true;
+    if (points.length == 1) {
+      // Tek pin → orta-zoom
+      _mapController.move(points.first, 13);
+      return;
+    }
+    final bounds = _boundsFromPoints(points);
+    if (bounds == null) return;
+    _mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: bounds,
+        padding: const EdgeInsets.all(50),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -46,8 +89,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final state = ref.watch(mapProvider);
     final notifier = ref.read(mapProvider.notifier);
 
-    ref.listen(mapProvider.select((s) => s.userLocation), (_, loc) {
-      if (loc != null) _mapController.move(loc, 14.0);
+    // Phase 180 — İlk açılışta tüm pin'leri + user'ı kapsayan fitBounds.
+    // Jobs/workers/userLocation herhangi biri değiştiğinde bir kez tetiklenir.
+    ref.listen(mapProvider, (_, next) {
+      if (!_hasInitialFit) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _maybeFitInitial(next);
+        });
+      }
     });
 
     final selectedJob = state.selectedJobId != null && state.jobs.isNotEmpty
