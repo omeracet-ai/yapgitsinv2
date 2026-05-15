@@ -147,6 +147,19 @@ class MapNotifier extends StateNotifier<MapState> {
           timeLimit: Duration(seconds: 10),
         ),
       );
+      // Phase 179 — Null island guard. Web playground / emulator bazen
+      // (0,0) döndürüyor; bu Atlantik ortası → 0 sonuç. İstanbul'a düş.
+      final isNullIsland = pos.latitude.abs() < 0.01 && pos.longitude.abs() < 0.01;
+      if (isNullIsland) {
+        const istanbul = LatLng(41.0082, 28.9784);
+        state = state.copyWith(
+          userLocation: istanbul,
+          locationLoading: false,
+          error: 'Konum (0,0) algılandı. İstanbul merkezi gösteriliyor.',
+        );
+        await _loadNearby(istanbul);
+        return;
+      }
       final loc = LatLng(pos.latitude, pos.longitude);
       state = state.copyWith(userLocation: loc, locationLoading: false);
       await _loadNearby(loc);
