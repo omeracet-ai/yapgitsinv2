@@ -22,7 +22,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(mapProvider.notifier).init());
+    // Phase 179 — Post-frame callback + try/catch. Microtask içinde provider
+    // init throw ederse uncaught error olarak swallow oluyordu; artık explicit
+    // logger + UI fallback'i provider tarafında garanti.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      try {
+        await ref.read(mapProvider.notifier).init();
+      } catch (e, st) {
+        debugPrint('map_screen.init error: $e\n$st');
+      }
+    });
   }
 
   @override
