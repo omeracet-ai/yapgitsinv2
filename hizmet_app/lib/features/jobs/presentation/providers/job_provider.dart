@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/firebase_job_repository.dart';
+import '../../data/job_repository.dart';
 
 class JobStatus {
   // ignore: constant_identifier_names
@@ -179,11 +179,11 @@ class Job {
 }
 
 final jobsProvider = StateNotifierProvider<JobNotifier, AsyncValue<List<Job>>>((ref) {
-  return JobNotifier(ref.watch(firebaseJobRepositoryProvider));
+  return JobNotifier(ref.watch(jobRepositoryProvider));
 });
 
 class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
-  final FirebaseJobRepository _repository;
+  final JobRepository _repository;
   List<Job> _allJobs = [];
   String? _currentCategory;
 
@@ -195,7 +195,7 @@ class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
     _currentCategory = category;
     state = const AsyncValue.loading();
     try {
-      final jobsData = await _repository.getJobs(category: category, q: q);
+      final jobsData = await _repository.getJobs(category: category, q: q, status: 'open');
       _allJobs = jobsData.map((m) => Job.fromMap(m)).toList();
       state = AsyncValue.data(_allJobs);
     } catch (e, st) {
