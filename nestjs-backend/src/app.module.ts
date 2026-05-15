@@ -100,6 +100,7 @@ import { Reputation } from './modules/reputation/reputation.entity';
 import { Badge } from './modules/reputation/badge.entity';
 import { AdminSeedModule } from './modules/admin-seed/admin-seed.module';
 import { StatsModule } from './modules/stats/stats.module';
+import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 
 @Module({
   imports: [
@@ -291,6 +292,7 @@ import { StatsModule } from './modules/stats/stats.module';
     ReputationModule,
     AdminSeedModule,
     StatsModule,
+    MaintenanceModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],
