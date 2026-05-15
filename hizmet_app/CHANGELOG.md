@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.5.3+103 — 2026-05-15
+
+### Changed
+- Premium Dark Soft theme (vibrant green #4ADE80 + dark BG #0C1117)
+- Playfair Display serif headings
+- Inter sans body
+- Pill button radius 28
+- Card radius 16
+- All hardcoded #FF5E14 spillover → AppColors.primary
+
+### Added
+- OnlineCountBadge widget
+- Brand identity: lowercase "yapgitsin." + green Y logo
+- Map fitBounds: tüm pinleri kapsayacak otomatik zoom
+
+### Fixed
+- Map fetch trigger silent fail (permission)
+- Null-island (0,0) → İstanbul fallback
+- Chat /chat/* → /messages/* route hizalama
+- Saved jobs anon retry storm
+
 ## 1.5.2+102 — 2026-05-15
 
 ### Fixed
