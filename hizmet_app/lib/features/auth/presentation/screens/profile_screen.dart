@@ -4,14 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../wallet/presentation/screens/wallet_screen.dart' deferred as wallet_lib;
-import '../../../../core/widgets/deferred_screen_loader.dart';
+import '../../../wallet/presentation/screens/wallet_screen.dart';
 import '../../../tokens/data/token_repository.dart';
 import '../../../currencies/presentation/currency_picker_sheet.dart';
 import '../../../subscriptions/data/subscription_repository.dart';
 import '../../../promo/widgets/promo_redeem_sheet.dart';
 import '../providers/auth_provider.dart';
-import '../../data/auth_repository.dart';
+import '../../data/firebase_auth_repository.dart';
 import 'personal_info_screen.dart';
 import 'edit_profile_screen.dart';
 import 'addresses_screen.dart';
@@ -28,7 +27,7 @@ import '../../../../core/theme/theme_mode_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/services/locale_provider.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../certifications/data/certification_repository.dart';
+import '../../../certifications/data/firebase_certification_repository.dart';
 // TODO(P190): migrate remaining strings to AppLocalizations
 
 // ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
@@ -414,7 +413,7 @@ class ProfileScreen extends ConsumerWidget {
       BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final res = await ref.read(authRepositoryProvider).requestEmailVerification();
+      final res = await ref.read(firebaseAuthRepositoryProvider).requestEmailVerification();
       final url = res['verifyUrl'] as String?;
       if (!context.mounted) return;
       if (url == null || url.isEmpty) {
@@ -752,7 +751,7 @@ class ProfileScreen extends ConsumerWidget {
     final isWorker = cats is List && cats.isNotEmpty;
     if (!isWorker) return const SizedBox.shrink();
 
-    final repo = ref.watch(certificationRepositoryProvider);
+    final repo = ref.watch(firebaseCertificationRepositoryProvider);
     return FutureBuilder<List<WorkerCertification>>(
       future: repo.listMine(),
       builder: (context, snapshot) {
@@ -1029,10 +1028,7 @@ class ProfileScreen extends ConsumerWidget {
               AppLocalizations.of(context).myWallet, () {
             Navigator.push(context,
                 MaterialPageRoute(
-                  builder: (_) => DeferredScreenLoader(
-                    loader: wallet_lib.loadLibrary,
-                    builder: () => wallet_lib.WalletScreen(),
-                  ),
+                  builder: (_) => const WalletScreen(),
                 ));
           }),
           _menuItem(Icons.calendar_month_outlined, 'İş Takvimi', () {
@@ -1143,7 +1139,7 @@ class ProfileScreen extends ConsumerWidget {
       const SnackBar(content: Text('Verileriniz hazırlanıyor...')),
     );
     try {
-      final body = await ref.read(authRepositoryProvider).downloadDataExport();
+      final body = await ref.read(firebaseAuthRepositoryProvider).downloadDataExport();
       if (!context.mounted) return;
       messenger.showSnackBar(
         SnackBar(
@@ -1220,7 +1216,7 @@ class ProfileScreen extends ConsumerWidget {
                       });
                       try {
                         await ref
-                            .read(authRepositoryProvider)
+                            .read(firebaseAuthRepositoryProvider)
                             .requestDataDeletion(reasonCtrl.text.trim());
                         if (!ctx.mounted) return;
                         Navigator.of(dialogCtx).pop();
@@ -1322,7 +1318,7 @@ class ProfileScreen extends ConsumerWidget {
                         errorText = null;
                       });
                       try {
-                        await ref.read(authRepositoryProvider).deleteAccount(pw);
+                        await ref.read(firebaseAuthRepositoryProvider).deleteAccount(pw);
                         if (!ctx.mounted) return;
                         Navigator.of(dialogCtx).pop();
                         await ref.read(authStateProvider.notifier).logout();
@@ -1474,7 +1470,7 @@ class ProfileScreen extends ConsumerWidget {
     if (code.length != 6) return;
 
     try {
-      await ref.read(authRepositoryProvider).disable2FA(code);
+      await ref.read(firebaseAuthRepositoryProvider).disable2FA(code);
       ref.read(authStateProvider.notifier)
           .updateUserData({'twoFactorEnabled': false});
       if (context.mounted) {

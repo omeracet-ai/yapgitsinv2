@@ -177,8 +177,16 @@ class _ServiceRequestDetailScreenState
                 height: 200,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    Container(height: 200, color: AppColors.background),
+                // Phase 152 — Brand-tinted placeholder for 404 / imageless backfill.
+                errorBuilder: (_, __, ___) => Container(
+                  height: 200,
+                  width: double.infinity,
+                  color: const Color(0xFFFF5E14).withValues(alpha: 0.08),
+                  child: const Center(
+                    child: Icon(Icons.image_not_supported_outlined,
+                        size: 40, color: Color(0xFFFF5E14)),
+                  ),
+                ),
               )
             else
               Container(

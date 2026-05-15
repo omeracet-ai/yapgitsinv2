@@ -55,6 +55,10 @@ class MapNotifier extends StateNotifier<MapState> {
   final MapRepository _repo;
   Timer? _locationTimer;
 
+  // Phase 152 — Backfill verisi (city-centroid) Türkiye geneline yayılıyor;
+  // 20km'lik default kullanıcı görmüyor. Geniş tut, distanceKm zaten sıralıyor.
+  static const double _defaultRadiusKm = 500.0;
+
   MapNotifier(this._repo) : super(const MapState());
 
   @override
@@ -130,6 +134,7 @@ class MapNotifier extends StateNotifier<MapState> {
       final jobs = await _repo.getNearbyJobs(
         lat: loc.latitude,
         lng: loc.longitude,
+        radiusKm: _defaultRadiusKm,
         category: category,
       );
       state = state.copyWith(jobs: jobs);
@@ -160,6 +165,8 @@ class MapNotifier extends StateNotifier<MapState> {
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 final mapProvider = StateNotifierProvider<MapNotifier, MapState>((ref) {
+  // Phase 152 — REST /jobs/nearby kullanılır. Eski Firebase repo ölü veri
+  // (Firestore boş, gerçek backfill SQLite/NestJS tarafında).
   final repo = ref.watch(mapRepositoryProvider);
   return MapNotifier(repo);
 });

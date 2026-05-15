@@ -195,8 +195,15 @@ class _FeaturedCard extends StatelessWidget {
                   height: 80,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      Container(height: 80, color: AppColors.background)),
+                  errorBuilder: (_, __, ___) => Container(
+                        height: 80,
+                        width: double.infinity,
+                        color: const Color(0xFFFF5E14).withValues(alpha: 0.08),
+                        child: const Center(
+                          child: Icon(Icons.image_not_supported_outlined,
+                              size: 24, color: Color(0xFFFF5E14)),
+                        ),
+                      )),
             )
           else
             Container(
@@ -319,7 +326,20 @@ class _RequestCard extends StatelessWidget {
                         height: 150,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                        // Phase 152 — Backfill imageless; 404'lerde turuncu
+                        // marka renkli placeholder göster, kırık icon yok.
+                        errorBuilder: (_, __, ___) => Container(
+                              height: 150,
+                              width: double.infinity,
+                              color: const Color(0xFFFF5E14).withValues(alpha: 0.08),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  size: 32,
+                                  color: Color(0xFFFF5E14),
+                                ),
+                              ),
+                            )),
                   ),
                   if (category.isNotEmpty)
                     Positioned(
