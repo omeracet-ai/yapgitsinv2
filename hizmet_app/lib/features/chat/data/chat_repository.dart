@@ -88,7 +88,7 @@ class ChatRepository {
   /// Phase 78: query single-user presence.
   Future<PresenceState?> getPresence(String userId) async {
     if (!await _hasToken()) return null;
-    final res = await _dio.get('/chat/presence/$userId');
+    final res = await _dio.get('/messages/presence/$userId');
     return PresenceState.fromJson(Map<String, dynamic>.from(res.data as Map));
   }
 
@@ -135,7 +135,7 @@ class ChatRepository {
   Future<String?> translateMessage(String messageId, String targetLang) async {
     if (!await _hasToken()) return null;
     final res = await _dio.post(
-      '/chat/messages/$messageId/translate',
+      '/messages/$messageId/translate',
       data: {'targetLang': targetLang},
     );
     final data = Map<String, dynamic>.from(res.data as Map);
@@ -144,7 +144,7 @@ class ChatRepository {
 
   Future<List<Conversation>> getConversations() async {
     if (!await _hasToken()) return [];
-    final res = await _dio.get('/chat/conversations');
+    final res = await _dio.get('/messages/conversations');
     final list = res.data as List;
     return list
         .map((e) => Conversation.fromJson(Map<String, dynamic>.from(e as Map)))

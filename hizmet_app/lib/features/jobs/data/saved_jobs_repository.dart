@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/network/api_client_provider.dart';
 
 final savedJobsRepositoryProvider = Provider((ref) {
@@ -11,8 +12,17 @@ class SavedJobsRepository {
 
   SavedJobsRepository({required Dio dio}) : _dio = dio;
 
+  /// Phase 152: anon-guard — /jobs/saved requires auth; calling it without a
+  /// JWT triggers a 401 → retry storm → 429 throttle. Short-circuit early.
+  Future<bool> _hasToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final t = prefs.getString('jwt_token');
+    return t != null && t.isNotEmpty;
+  }
+
   /// POST → { saved: true, jobId }
   Future<bool> saveJob(String jobId) async {
+    if (!await _hasToken()) return false;
     try {
       final r = await _dio.post('/jobs/saved/$jobId');
       return r.data['saved'] == true;
@@ -23,6 +33,7 @@ class SavedJobsRepository {
 
   /// DELETE → { saved: false, jobId }
   Future<bool> unsaveJob(String jobId) async {
+    if (!await _hasToken()) return false;
     try {
       final r = await _dio.delete('/jobs/saved/$jobId');
       return r.data['saved'] == true;
@@ -32,6 +43,7 @@ class SavedJobsRepository {
   }
 
   Future<List<Map<String, dynamic>>> getMySavedJobs() async {
+    if (!await _hasToken()) return const [];
     try {
       final r = await _dio.get('/jobs/saved');
       final data = r.data is Map ? r.data['data'] as List? : r.data as List?;
