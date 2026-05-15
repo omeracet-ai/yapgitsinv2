@@ -76,7 +76,7 @@ export default function DashboardPage() {
 
   async function fetchAnalytics() {
     try {
-      const res = await fetch("/api/admin/analytics/overview", { credentials: "include" });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/analytics/overview`, { credentials: "include" });
       if (res.ok) setAnalytics(await res.json());
     } catch { /* non-fatal */ }
   }
@@ -138,7 +138,7 @@ export default function DashboardPage() {
                   <span className="text-xl">{c.icon}</span>
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{c.label}</span>
                 </div>
-                <p className="text-3xl font-bold text-gray-800">{c.value.toLocaleString('tr-TR')}</p>
+                <p className="text-3xl font-bold text-gray-800">{(c.value ?? 0).toLocaleString('tr-TR')}</p>
               </div>
             ))}
           </div>

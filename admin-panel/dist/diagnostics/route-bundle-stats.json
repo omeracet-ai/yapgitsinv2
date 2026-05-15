@@ -1,12 +1,12 @@
 [
   {
     "route": "/dashboard",
-    "firstLoadUncompressedJsBytes": 919858,
+    "firstLoadUncompressedJsBytes": 919879,
     "firstLoadChunkPaths": [
       "dist\\static\\chunks\\0~ai1ps1pyr.a.js",
       "dist\\static\\chunks\\0n4z.7yu76je-.js",
       "dist\\static\\chunks\\01v589i2qr2pg.js",
-      "dist\\static\\chunks\\13c41i9jv~d10.js",
+      "dist\\static\\chunks\\0ijs58ozh49vy.js",
       "dist\\static\\chunks\\0yb2wil16uz6h.js",
       "dist\\static\\chunks\\0l5wi14d1qnu7.js",
       "dist\\static\\chunks\\10~x95jhs6ns3.js",
@@ -71,6 +71,22 @@
       "dist\\static\\chunks\\0n4z.7yu76je-.js",
       "dist\\static\\chunks\\01v589i2qr2pg.js",
       "dist\\static\\chunks\\0m7~xcaoc101v.js",
+      "dist\\static\\chunks\\0yb2wil16uz6h.js",
+      "dist\\static\\chunks\\0l5wi14d1qnu7.js",
+      "dist\\static\\chunks\\10~x95jhs6ns3.js",
+      "dist\\static\\chunks\\00nlt7x_9mi4z.js",
+      "dist\\static\\chunks\\07uz2g0_38qia.js",
+      "dist\\static\\chunks\\turbopack-0zny4m_wo72q-.js"
+    ]
+  },
+  {
+    "route": "/harita",
+    "firstLoadUncompressedJsBytes": 552817,
+    "firstLoadChunkPaths": [
+      "dist\\static\\chunks\\0~ai1ps1pyr.a.js",
+      "dist\\static\\chunks\\0n4z.7yu76je-.js",
+      "dist\\static\\chunks\\01v589i2qr2pg.js",
+      "dist\\static\\chunks\\0c1g~ol7p~n1b.js",
       "dist\\static\\chunks\\0yb2wil16uz6h.js",
       "dist\\static\\chunks\\0l5wi14d1qnu7.js",
       "dist\\static\\chunks\\10~x95jhs6ns3.js",
@@ -150,22 +166,6 @@
       "dist\\static\\chunks\\0n4z.7yu76je-.js",
       "dist\\static\\chunks\\01v589i2qr2pg.js",
       "dist\\static\\chunks\\0dmy1-xvp588t.js",
-      "dist\\static\\chunks\\0yb2wil16uz6h.js",
-      "dist\\static\\chunks\\0l5wi14d1qnu7.js",
-      "dist\\static\\chunks\\10~x95jhs6ns3.js",
-      "dist\\static\\chunks\\00nlt7x_9mi4z.js",
-      "dist\\static\\chunks\\07uz2g0_38qia.js",
-      "dist\\static\\chunks\\turbopack-0zny4m_wo72q-.js"
-    ]
-  },
-  {
-    "route": "/harita",
-    "firstLoadUncompressedJsBytes": 550993,
-    "firstLoadChunkPaths": [
-      "dist\\static\\chunks\\0~ai1ps1pyr.a.js",
-      "dist\\static\\chunks\\0n4z.7yu76je-.js",
-      "dist\\static\\chunks\\01v589i2qr2pg.js",
-      "dist\\static\\chunks\\06_i.5c_0o_~p.js",
       "dist\\static\\chunks\\0yb2wil16uz6h.js",
       "dist\\static\\chunks\\0l5wi14d1qnu7.js",
       "dist\\static\\chunks\\10~x95jhs6ns3.js",

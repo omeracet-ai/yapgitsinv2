@@ -34,20 +34,26 @@ if [ ! -d /d/backend/_test ]; then
 fi
 
 # Admin (Next.js standalone)
+# next.config.ts has `distDir: "dist"` (FTP dot-dir workaround); build output is
+# dist/standalone/ (not .next/standalone/). scripts/postbuild-iis.js already
+# copies static + public + writes web.config + patches server.js inside
+# dist/standalone/, so we just mirror that tree to /d/admin.
 echo "-> Admin build (standalone)"
 cd "$ROOT/admin-panel"
 NEXT_PUBLIC_API_URL=https://api.yapgitsin.tr npm run build > /dev/null
 mv /d/admin "/d/admin.bak.$BACKUP_TS" 2>/dev/null || true
 mkdir -p /d/admin
-if [ -d ".next/standalone" ]; then
+if [ -d "dist/standalone" ]; then
+  cp -r dist/standalone/. /d/admin/
+elif [ -d ".next/standalone" ]; then
+  # Legacy fallback (pre-Phase 182 distDir change)
   cp -r .next/standalone/. /d/admin/
   mkdir -p /d/admin/.next
   cp -r .next/static /d/admin/.next/
   [ -d public ] && cp -r public /d/admin/ || true
 else
-  echo "WARN: standalone missing, falling back to full .next"
-  cp -r .next /d/admin/
-  [ -d public ] && cp -r public /d/admin/ || true
+  echo "ERROR: neither dist/standalone nor .next/standalone exists — admin build failed"
+  exit 1
 fi
 # Phase 166: IIS + iisnode bridge (overwrite any standalone-bundled web.config)
 [ -f web.config ] && cp web.config /d/admin/web.config

@@ -30,6 +30,9 @@ const ADMIN_SECURITY_HEADERS = [
 const nextConfig: NextConfig = {
   // Standalone build for IIS+iisnode hosting (server.js entry, minimal node_modules)
   output: "standalone",
+  // FTP dot-directory workaround: .next/ → dist/ (non-dot, FileZilla compatible).
+  // URL path /_next/static/ is unchanged; only the filesystem output dir changes.
+  distDir: "dist",
   // Phase 178 — admin artık admin.yapgitsin.tr subdomain'inde, basePath kaldırıldı.
 
   async headers() {
