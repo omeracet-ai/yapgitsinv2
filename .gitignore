@@ -30,6 +30,14 @@ filezilla-yapgitsin.xml
 **/*-service-account-*.json
 *.pem
 *.key
+
+# Android signing keystore (NEVER commit)
+**/key.properties
+**/*.jks
+**/*.keystore
+**/upload-keystore.*
+hizmet_app/android/key.properties
+hizmet_app/android/app/upload-keystore.jks
 agent-teams/release/
 agent-teams/dist/
 hizmet_app/build/
