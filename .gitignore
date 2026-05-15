@@ -63,3 +63,6 @@ web/.next/
 /web.config.fix
 /web.config.smart
 /web.config.spa
+
+# Play Console assets (manuel upload)
+.play-console-assets/
