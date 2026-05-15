@@ -79,6 +79,14 @@ dependencies:
   cloud_firestore: ^5.0.0
   firebase_storage: ^12.0.0
 
+  # Phase 191 — Social Sign-In (Google + Apple)
+  # NOTE: Firebase Console > Authentication > Sign-in method must be enabled
+  # (Google + Apple providers) before these will return real credentials.
+  # Code is wired and ready; flip the switch in Firebase to activate.
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.2
+  crypto: ^3.0.3
+
 
 
 

@@ -30,6 +30,21 @@
 				<string>yapgitsin</string>
 			</array>
 		</dict>
+		<!-- Phase 191 — Google Sign-In URL scheme.
+		     REPLACE the placeholder below with REVERSED_CLIENT_ID from
+		     ios/Runner/GoogleService-Info.plist (download from Firebase
+		     Console > Project settings > add iOS app).
+		     Format: com.googleusercontent.apps.<NNNNNNNNNNNN>-<hash> -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>google-sign-in</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>REPLACE_WITH_REVERSED_CLIENT_ID</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>

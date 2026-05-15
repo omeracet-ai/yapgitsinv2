@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../../core/services/firebase_auth_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/providers/navigation_provider.dart';
 import '../providers/auth_provider.dart';
@@ -48,6 +49,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loginWithGoogle() async {
+    await ref.read(authStateProvider.notifier).signInWithGoogle();
+    // Navigation handled by listenManual on AuthAuthenticated.
+  }
+
+  Future<void> _loginWithApple() async {
+    await ref.read(authStateProvider.notifier).signInWithApple();
   }
 
   Future<void> _login() async {
@@ -187,8 +197,104 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Text(l.noAccountRegister),
                 ),
               ).animate().fade(delay: 600.ms),
+              const SizedBox(height: 16),
+              // ─────────────────────────────────────────────────────────
+              // Phase 191 — Social Sign-In divider + buttons
+              // ─────────────────────────────────────────────────────────
+              Row(
+                children: [
+                  const Expanded(child: Divider(color: Color(0xFFE0E0E0))),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      'veya',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  const Expanded(child: Divider(color: Color(0xFFE0E0E0))),
+                ],
+              ).animate().fade(delay: 650.ms),
+              const SizedBox(height: 16),
+              // Google
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton.icon(
+                  onPressed: isLoading ? null : _loginWithGoogle,
+                  icon: const _GoogleGlyph(),
+                  label: const Text(
+                    'Google ile devam et',
+                    style: TextStyle(
+                      color: Color(0xFF1F1F1F),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: Color(0xFFDADCE0)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ).animate().fade(delay: 700.ms).slideY(begin: 0.1),
+              if (FirebaseAuthService.isAppleSignInAvailable) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: isLoading ? null : _loginWithApple,
+                    icon: const Icon(Icons.apple, color: Colors.white, size: 22),
+                    label: const Text(
+                      'Apple ile devam et',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ).animate().fade(delay: 750.ms).slideY(begin: 0.1),
+              ],
+              const SizedBox(height: 24),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Minimal Google "G" glyph painted inline so we don't ship an asset for it.
+/// Four-color paint approximated as a single colored "G" — kept neutral so
+/// the OutlinedButton.icon slot stays brand-safe until a real SVG lands.
+class _GoogleGlyph extends StatelessWidget {
+  const _GoogleGlyph();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 22,
+      height: 22,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(shape: BoxShape.circle),
+      child: const Text(
+        'G',
+        style: TextStyle(
+          fontFamily: 'Roboto',
+          fontWeight: FontWeight.w700,
+          fontSize: 18,
+          color: Color(0xFF4285F4), // Google blue
+          height: 1.0,
         ),
       ),
     );

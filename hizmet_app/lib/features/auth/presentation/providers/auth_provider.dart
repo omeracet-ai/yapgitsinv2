@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/auth_repository.dart';
+import '../../data/firebase_auth_repository.dart';
 import '../../../../core/services/fcm_service.dart';
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(ref.watch(authRepositoryProvider));
+  return AuthNotifier(ref.watch(firebaseAuthRepositoryProvider));
 });
 
 abstract class AuthState { const AuthState(); }
@@ -13,7 +13,8 @@ class AuthLoading extends AuthState {}
 class AuthAuthenticated extends AuthState {
   final Map<String, dynamic> user;
   const AuthAuthenticated(this.user);
-  String get displayName => (user['fullName'] ?? 'Kullanıcı') as String;
+  String get displayName =>
+      (user['displayName'] ?? user['fullName'] ?? 'Kullanıcı') as String;
 }
 class AuthUnauthenticated extends AuthState {}
 class AuthError extends AuthState {
@@ -22,50 +23,44 @@ class AuthError extends AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthRepository _repository;
-  AuthNotifier(this._repository) : super(AuthInitial()) { _checkToken(); }
+  final FirebaseAuthRepository _repository;
+  StreamSubscription<dynamic>? _authSub;
 
-  Future<void> _checkToken() async {
-    final token = await _repository.getToken();
-    if (token != null) {
-      final userData = await _repository.getUserData();
-      state = AuthAuthenticated(userData ?? {'fullName': 'Kullanıcı'});
-      // Phase 113 — re-sync FCM token for the already-logged-in user.
-      unawaited(FcmService.instance.init());
-    } else {
-      state = AuthUnauthenticated();
-    }
+  AuthNotifier(this._repository) : super(AuthInitial()) {
+    // Firebase Auth state stream — otomatik login/logout takibi
+    _authSub = _repository.authStateChanges.listen((user) async {
+      if (user == null) {
+        state = AuthUnauthenticated();
+      } else {
+        final profile = await _repository.getUserProfile();
+        state = AuthAuthenticated(profile ?? {
+          'uid': user.uid,
+          'email': user.email,
+          'displayName': user.displayName ?? 'Kullanıcı',
+        });
+        unawaited(FcmService.instance.init());
+      }
+    });
   }
 
-  /// Returns map containing either {'requires2FA': true, 'tempToken': ...}
-  /// or sets AuthAuthenticated and returns the response.
-  Future<Map<String, dynamic>> login(String emailOrPhone, String password) async {
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
+  }
+
+  Future<Map<String, dynamic>> login(String email, String password) async {
     state = AuthLoading();
     try {
-      final data = await _repository.login(emailOrPhone, password);
-      if (data['requires2FA'] == true) {
-        // 2FA gerekli — state'i unauthenticated yap ki listener tetiklenmesin
-        state = AuthUnauthenticated();
-        return data;
-      }
-      state = AuthAuthenticated(data['user'] as Map<String, dynamic>? ?? {'fullName': emailOrPhone});
+      final data = await _repository.login(email, password);
+      state = AuthAuthenticated(
+        data['user'] as Map<String, dynamic>? ?? {'displayName': email},
+      );
       unawaited(FcmService.instance.init());
       return data;
     } catch (e) {
-      state = AuthError(e.toString());
+      state = AuthError(e.toString().replaceFirst('Exception: ', ''));
       return {};
-    }
-  }
-
-  Future<void> verify2FALogin(String tempToken, String code) async {
-    state = AuthLoading();
-    try {
-      final data = await _repository.verify2FALogin(tempToken, code);
-      state = AuthAuthenticated(data['user'] as Map<String, dynamic>? ?? {'fullName': 'Kullanıcı'});
-      unawaited(FcmService.instance.init());
-    } catch (e) {
-      state = AuthError(e.toString());
-      rethrow;
     }
   }
 
@@ -74,9 +69,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String phoneNumber,
     required String password,
     String? email,
+    String? city,
+    // Eski parametreler — Firebase'de kullanılmıyor ama çağrı arayüzü korunuyor
     String? birthDate,
     String? gender,
-    String? city,
     String? district,
     String? address,
   }) async {
@@ -84,20 +80,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final data = await _repository.register(
         fullName: fullName,
-        phoneNumber: phoneNumber,
+        email: email ?? '',
         password: password,
-        email: email,
-        birthDate: birthDate,
-        gender: gender,
+        phoneNumber: phoneNumber,
         city: city,
-        district: district,
-        address: address,
       );
-      state = AuthAuthenticated(data['user'] as Map<String, dynamic>? ?? {'fullName': fullName});
+      state = AuthAuthenticated(
+        data['user'] as Map<String, dynamic>? ?? {'displayName': fullName},
+      );
       unawaited(FcmService.instance.init());
       return data;
     } catch (e) {
-      state = AuthError(e.toString());
+      state = AuthError(e.toString().replaceFirst('Exception: ', ''));
       rethrow;
     }
   }
@@ -110,9 +104,57 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    // Phase 113 — drop FCM device token before clearing JWT.
     await FcmService.instance.unregister();
     await _repository.logout();
     state = AuthUnauthenticated();
+  }
+
+  // Eski NestJS 2FA metodları — Firebase'de kullanılmıyor, no-op kalıyor
+  Future<void> verify2FALogin(String tempToken, String code) async {}
+
+  /// Google ile giriş — başarılı olunca authStateChanges stream'i
+  /// state'i AuthAuthenticated'a çevirir, burada sadece loading + hata.
+  Future<Map<String, dynamic>> signInWithGoogle() async {
+    state = AuthLoading();
+    try {
+      final data = await _repository.signInWithGoogle();
+      // authStateChanges listener will flip state — but for return-value
+      // consumers (router redirect) set it here too.
+      state = AuthAuthenticated(
+        data['user'] as Map<String, dynamic>? ?? const {},
+      );
+      unawaited(FcmService.instance.init());
+      return data;
+    } catch (e) {
+      final msg = e.toString();
+      if (msg.contains('sign_in_canceled')) {
+        // Silent cancel — restore previous state.
+        state = AuthUnauthenticated();
+        return {};
+      }
+      state = AuthError(msg.replaceFirst('Exception: ', ''));
+      return {};
+    }
+  }
+
+  /// Apple ile giriş — Google ile aynı kontrat.
+  Future<Map<String, dynamic>> signInWithApple() async {
+    state = AuthLoading();
+    try {
+      final data = await _repository.signInWithApple();
+      state = AuthAuthenticated(
+        data['user'] as Map<String, dynamic>? ?? const {},
+      );
+      unawaited(FcmService.instance.init());
+      return data;
+    } catch (e) {
+      final msg = e.toString();
+      if (msg.contains('sign_in_canceled')) {
+        state = AuthUnauthenticated();
+        return {};
+      }
+      state = AuthError(msg.replaceFirst('Exception: ', ''));
+      return {};
+    }
   }
 }
