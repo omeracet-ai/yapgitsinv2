@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.5.2+102 — 2026-05-15
+
+### Fixed
+- Chat module 404: /chat/* endpoints fixed → /messages/* (mesajlar sekmesi)
+- Saved jobs anon retry storm: anon kullanıcıda backend çağrı yok
+
+### Added
+- Map: worker pin layer (mavi #0EA5E9, person_pin)
+- Map: jobs+workers paralel fetch (Future.wait)
+
+### Changed
+- Map default radius 500 km (Türkiye geneli)
+
 ## 1.5.1+101 — 2026-05-15
 
 - Google Sign-In altyapısı (Firebase Auth Google provider enabled)

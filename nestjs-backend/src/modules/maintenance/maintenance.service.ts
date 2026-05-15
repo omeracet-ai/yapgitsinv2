@@ -1,6 +1,25 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { encodeGeohash } from '../../common/geohash.util';
+
+const DEMO_WORKER_CATEGORIES = [
+  'Tesisat',
+  'Elektrik',
+  'Temizlik',
+  'Nakliyat',
+  'Tadilat',
+  'Boyacı',
+  'Marangoz',
+  'Bahçıvan',
+  'Klima',
+  'Beyaz Eşya',
+  'Çatı',
+  'Cam Balkon',
+  'Mobilya Montaj',
+  'Halı Yıkama',
+  'İlaçlama',
+];
 
 /**
  * Voldi-fs / Phase 218 — Admin maintenance: city-centroid coordinate backfill.
@@ -389,6 +408,157 @@ export class MaintenanceService {
 
     this.logger.log(
       `backfill-coords done jobs.matched=${jobsResult.matched} users.matched=${usersResult.matched} apply=${apply} ms=${result.durationMs}`,
+    );
+    return result;
+  }
+
+  /**
+   * Phase — Demo worker seed.
+   * Promotes existing customer rows (with coordinates already) to worker so the
+   * /users/workers/nearby map endpoint returns pins. Picks coord-backed users
+   * whose workerCategories is empty/null and role='user', assigns 1-3 random
+   * categories + homeGeohash@6 + serviceRadiusKm=30 + isAvailable=true.
+   */
+  async seedDemoWorkers(opts: { count: number; dryRun: boolean }) {
+    const start = Date.now();
+    const count = Math.max(1, Math.min(opts.count | 0 || 5, 50));
+    const isSqlite =
+      this.ds.options.type === 'sqlite' ||
+      this.ds.options.type === 'better-sqlite3';
+
+    // Pull larger candidate pool (2x) then random-pick.
+    const limitParam = Math.min(count * 4, 200);
+    const candidates: Array<{
+      id: string | number;
+      email: string | null;
+      fullName: string | null;
+      latitude: number;
+      longitude: number;
+      city: string | null;
+    }> = await this.ds.query(
+      `SELECT id, email, fullName, latitude, longitude, city
+       FROM users
+       WHERE latitude IS NOT NULL
+         AND longitude IS NOT NULL
+         AND NOT (latitude = 0 AND longitude = 0)
+         AND (workerCategories IS NULL OR workerCategories = '' OR workerCategories = '[]')
+         AND (role = 'user' OR role IS NULL)
+       LIMIT ${limitParam}`,
+    );
+
+    // Fisher-Yates shuffle, take first N.
+    const pool = [...candidates];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const selected = pool.slice(0, count);
+
+    const promoted: Array<{
+      id: string | number;
+      email: string | null;
+      fullName: string | null;
+      city: string | null;
+      coords: [number, number];
+      assigned_skills: string[];
+      geohash: string;
+    }> = [];
+
+    if (selected.length && !opts.dryRun) {
+      const runner = this.ds.createQueryRunner();
+      await runner.connect();
+      try {
+        await runner.startTransaction();
+        for (const u of selected) {
+          const skillCount = 1 + Math.floor(Math.random() * 3); // 1..3
+          const skills = [...DEMO_WORKER_CATEGORIES]
+            .sort(() => Math.random() - 0.5)
+            .slice(0, skillCount);
+          const geohash = encodeGeohash(
+            Number(u.latitude),
+            Number(u.longitude),
+            6,
+          );
+          const availableSet = isSqlite
+            ? `isAvailable = 1`
+            : `isAvailable = TRUE`;
+          await runner.query(
+            `UPDATE users SET
+               workerCategories = ?,
+               ${availableSet},
+               homeGeohash = ?,
+               serviceRadiusKm = 30
+             WHERE id = ?`,
+            [JSON.stringify(skills), geohash, u.id],
+          );
+          promoted.push({
+            id: u.id,
+            email: u.email,
+            fullName: u.fullName,
+            city: u.city,
+            coords: [Number(u.latitude), Number(u.longitude)],
+            assigned_skills: skills,
+            geohash,
+          });
+        }
+        await runner.commitTransaction();
+      } catch (e) {
+        if (runner.isTransactionActive) {
+          try {
+            await runner.rollbackTransaction();
+          } catch {
+            /* swallow */
+          }
+        }
+        throw e;
+      } finally {
+        await runner.release();
+      }
+    } else {
+      // dry-run: still compute plan
+      for (const u of selected) {
+        const skillCount = 1 + Math.floor(Math.random() * 3);
+        const skills = [...DEMO_WORKER_CATEGORIES]
+          .sort(() => Math.random() - 0.5)
+          .slice(0, skillCount);
+        const geohash = encodeGeohash(
+          Number(u.latitude),
+          Number(u.longitude),
+          6,
+        );
+        promoted.push({
+          id: u.id,
+          email: u.email,
+          fullName: u.fullName,
+          city: u.city,
+          coords: [Number(u.latitude), Number(u.longitude)],
+          assigned_skills: skills,
+          geohash,
+        });
+      }
+    }
+
+    const total: Array<{ c: number }> = await this.ds.query(
+      `SELECT COUNT(*) c FROM users
+       WHERE workerCategories IS NOT NULL
+         AND workerCategories != ''
+         AND workerCategories != '[]'
+         AND isAvailable = 1
+         AND homeGeohash IS NOT NULL`,
+    );
+
+    const result = {
+      mode: opts.dryRun ? 'dry-run' : 'apply',
+      count_requested: count,
+      candidates_available: candidates.length,
+      promoted: promoted.length,
+      total_demo_workers_after: Number(total[0]?.c ?? 0),
+      workers: promoted,
+      durationMs: Date.now() - start,
+    };
+
+    this.logger.log(
+      `seed-demo-workers done mode=${result.mode} promoted=${promoted.length}/${count} pool=${candidates.length} ms=${result.durationMs}`,
     );
     return result;
   }

@@ -26,4 +26,23 @@ export class MaintenanceController {
     const apply = !!body?.apply;
     return this.maintenance.backfillCoordinates(apply);
   }
+
+  /**
+   * POST /admin/maintenance/seed-demo-workers
+   * Body: { count?: number = 5, dryRun?: boolean = false }
+   *
+   * Promotes N existing coordinate-backed customer rows to "worker" by setting
+   * workerCategories + isAvailable + homeGeohash + serviceRadiusKm so the
+   * /users/workers/nearby endpoint produces map pins.
+   */
+  @Audit('maintenance.seed_demo_workers')
+  @Post('seed-demo-workers')
+  async seedDemoWorkers(
+    @Body() body: { count?: number; dryRun?: boolean } | undefined,
+  ) {
+    return this.maintenance.seedDemoWorkers({
+      count: body?.count ?? 5,
+      dryRun: body?.dryRun ?? false,
+    });
+  }
 }
