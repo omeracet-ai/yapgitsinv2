@@ -56,4 +56,22 @@ export class MaintenanceController {
       dryRun: body?.dryRun ?? false,
     });
   }
+
+  /**
+   * POST /admin/maintenance/seed-demo-jobs
+   * Body: { count?: number = 15, dryRun?: boolean = false }
+   *
+   * Creates N realistic demo jobs (status=open) owned by coordinate-backed
+   * users so the public listing page looks populated pre-launch.
+   */
+  @Audit('maintenance.seed_demo_jobs')
+  @Post('seed-demo-jobs')
+  async seedDemoJobs(
+    @Body() body: { count?: number; dryRun?: boolean } | undefined,
+  ) {
+    return this.maintenance.seedDemoJobs({
+      count: body?.count ?? 15,
+      dryRun: body?.dryRun ?? false,
+    });
+  }
 }

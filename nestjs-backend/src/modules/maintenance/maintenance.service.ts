@@ -1,7 +1,34 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { randomUUID } from 'crypto';
 import { encodeGeohash } from '../../common/geohash.util';
+
+interface JobTemplate {
+  title: string;
+  desc: string;
+  cat: string;
+  minPrice: number;
+  maxPrice: number;
+}
+
+const JOB_TEMPLATES: JobTemplate[] = [
+  { title: 'Aylık Ev Temizliği', desc: 'Standart 2+1 daire derin temizlik, mutfak+banyo dahil.', cat: 'Temizlik', minPrice: 300, maxPrice: 700 },
+  { title: 'Klima Bakım', desc: 'Salon ve yatak odası klimaları için yıllık bakım.', cat: 'Klima', minPrice: 400, maxPrice: 900 },
+  { title: 'Mobilya Montaj', desc: 'IKEA gardırop + yatak başlığı + komodin kurulumu.', cat: 'Mobilya Montaj', minPrice: 500, maxPrice: 1200 },
+  { title: 'Boya Yenileme', desc: 'Salon ve hol için iki kat boya, açık renk.', cat: 'Boya & Badana', minPrice: 800, maxPrice: 2500 },
+  { title: 'Tesisat Tamiri', desc: 'Mutfak lavabo tıkanıklığı + sızıntı kontrolü.', cat: 'Tesisat', minPrice: 200, maxPrice: 500 },
+  { title: 'Elektrik Pano', desc: 'Mutfak prizleri çalışmıyor, pano kontrol gerek.', cat: 'Elektrik', minPrice: 250, maxPrice: 600 },
+  { title: 'Ev Taşıma', desc: '2+1 daire şehir içi taşıma, 3 saatlik iş tahmini.', cat: 'Nakliyat', minPrice: 1500, maxPrice: 3000 },
+  { title: 'Bahçe Düzenleme', desc: 'Çim biçme + çit budama + sulama sistemi kontrol.', cat: 'Bahçıvanlık', minPrice: 400, maxPrice: 1000 },
+  { title: 'Mutfak Dolabı Yenileme', desc: 'Eski dolapları söküp yenilerini montaj.', cat: 'Tadilat', minPrice: 3000, maxPrice: 8000 },
+  { title: 'Cam Balkon Onarım', desc: 'Salon cam balkonun açılır kapanır mekanizması bozuk.', cat: 'Cam Balkon', minPrice: 500, maxPrice: 1500 },
+  { title: 'Halı Yıkama', desc: '4 oda halıları + makine halıları yerinde yıkama.', cat: 'Halı Yıkama', minPrice: 300, maxPrice: 700 },
+  { title: 'Marangoz İşleri', desc: 'Kapı kasası tamir + raf montaj + dolap kapağı.', cat: 'Marangoz', minPrice: 400, maxPrice: 1000 },
+  { title: 'Çatı Aktarımı', desc: 'Müstakil ev çatısı kontrol, gerekli kiremit aktarma.', cat: 'Çatı', minPrice: 1500, maxPrice: 4000 },
+  { title: 'Beyaz Eşya Servis', desc: 'Buzdolabı çalışmıyor, kompresör kontrol gerek.', cat: 'Beyaz Eşya', minPrice: 300, maxPrice: 800 },
+  { title: 'Asansör Bakım', desc: 'Apartman asansörü düzensiz çalışıyor, kontrol gerek.', cat: 'Tesisat', minPrice: 800, maxPrice: 2000 },
+];
 
 const DEMO_WORKER_CATEGORIES = [
   'Tesisat',
@@ -607,6 +634,182 @@ export class MaintenanceService {
 
     this.logger.log(
       `seed-demo-workers done mode=${result.mode} promoted=${promoted.length}/${count} pool=${candidates.length} ms=${result.durationMs}`,
+    );
+    return result;
+  }
+
+  /**
+   * Phase — Demo job seed.
+   * Creates N realistic demo jobs (status=open) owned by users that already
+   * have coordinates + city, so the public job listing page is populated
+   * pre-launch instead of looking empty. Uses owner's city + coords + geohash.
+   *
+   * Important schema details (Job entity):
+   *  - `category` denormalized varchar (no FK required)
+   *  - `customerId` required varchar(36)
+   *  - both legacy `budgetMin/budgetMax` (float, deprecated) AND
+   *    `budgetMinMinor/budgetMaxMinor` (integer kuruş) are populated so
+   *    Phase 174 minor-unit readers and legacy float readers both work.
+   *  - `geohash` precision 6 to match idx_jobs_geohash usage.
+   *  - `photos` simple-json column → store as JSON string.
+   *  - `location_approx` + `location_source` columns are added by the
+   *    backfill-coords endpoint; tolerate their absence here (best-effort
+   *    via PRAGMA check) so a fresh DB doesn't fail.
+   */
+  async seedDemoJobs(opts: { count: number; dryRun: boolean }) {
+    const start = Date.now();
+    const isSqlite =
+      this.ds.options.type === 'sqlite' ||
+      this.ds.options.type === 'better-sqlite3';
+    if (!isSqlite) {
+      throw new Error(
+        `seed-demo-jobs currently supports SQLite only; active driver=${this.ds.options.type}`,
+      );
+    }
+
+    const count = Math.max(1, Math.min(opts.count | 0 || 15, 50));
+
+    // Owner pool: users with coordinates + city, role=user|null (not admin/worker-only).
+    const owners: Array<{
+      id: string;
+      fullName: string | null;
+      latitude: number;
+      longitude: number;
+      city: string | null;
+    }> = await this.ds.query(
+      `SELECT id, fullName, latitude, longitude, city
+       FROM users
+       WHERE latitude IS NOT NULL
+         AND longitude IS NOT NULL
+         AND NOT (latitude = 0 AND longitude = 0)
+         AND city IS NOT NULL
+         AND city != ''
+         AND (role = 'user' OR role IS NULL)
+       LIMIT 200`,
+    );
+
+    if (owners.length === 0) {
+      return {
+        mode: opts.dryRun ? 'dry-run' : 'apply',
+        error: 'No users with coordinates+city available — run backfill-coords first',
+        count_requested: count,
+        candidates_owner_pool: 0,
+        created: 0,
+        jobs: [],
+        durationMs: Date.now() - start,
+      };
+    }
+
+    // Check optional columns once.
+    const hasLocationApprox = await this.columnExists('jobs', 'location_approx');
+    const hasLocationSource = await this.columnExists('jobs', 'location_source');
+
+    const created: Array<{
+      id: string;
+      title: string;
+      ownerId: string;
+      ownerName: string | null;
+      city: string | null;
+      category: string;
+      budget: string;
+      geohash: string;
+    }> = [];
+
+    const runner = this.ds.createQueryRunner();
+    await runner.connect();
+    try {
+      if (!opts.dryRun) await runner.startTransaction();
+
+      for (let i = 0; i < count; i++) {
+        const template = JOB_TEMPLATES[i % JOB_TEMPLATES.length];
+        const owner = owners[Math.floor(Math.random() * owners.length)];
+        const id = randomUUID();
+        const now = new Date().toISOString();
+        const minPrice = template.minPrice + Math.floor(Math.random() * 100);
+        const maxPrice = template.maxPrice + Math.floor(Math.random() * 200);
+        const minMinor = minPrice * 100; // TL → kuruş
+        const maxMinor = maxPrice * 100;
+        const geohash = encodeGeohash(
+          Number(owner.latitude),
+          Number(owner.longitude),
+          6,
+        );
+
+        if (!opts.dryRun) {
+          // Build column list dynamically so optional location_* columns are
+          // only included if they exist on this DB.
+          const cols = [
+            'id', 'title', 'description', 'location', 'latitude', 'longitude',
+            'geohash', 'category', 'status', 'budgetMin', 'budgetMax',
+            'budgetMinMinor', 'budgetMaxMinor', 'customerId',
+            'createdAt', 'updatedAt', 'photos', 'isQrVerified', 'flagged',
+          ];
+          const vals: unknown[] = [
+            id, template.title, template.desc, owner.city,
+            owner.latitude, owner.longitude,
+            geohash, template.cat, 'open', minPrice, maxPrice,
+            minMinor, maxMinor, owner.id,
+            now, now, '[]', 0, 0,
+          ];
+          if (hasLocationApprox) {
+            cols.push('location_approx');
+            vals.push(1);
+          }
+          if (hasLocationSource) {
+            cols.push('location_source');
+            vals.push('demo-seed');
+          }
+          const placeholders = cols.map(() => '?').join(', ');
+          const sql = `INSERT INTO jobs (${cols.join(', ')}) VALUES (${placeholders})`;
+          await runner.query(sql, vals);
+        }
+
+        created.push({
+          id,
+          title: template.title,
+          ownerId: owner.id,
+          ownerName: owner.fullName,
+          city: owner.city,
+          category: template.cat,
+          budget: `${minPrice}-${maxPrice} TL`,
+          geohash,
+        });
+      }
+
+      if (!opts.dryRun) await runner.commitTransaction();
+    } catch (e) {
+      if (!opts.dryRun && runner.isTransactionActive) {
+        try {
+          await runner.rollbackTransaction();
+        } catch {
+          /* swallow */
+        }
+      }
+      throw e;
+    } finally {
+      await runner.release();
+    }
+
+    const totalOpen: Array<{ c: number }> = await this.ds.query(
+      `SELECT COUNT(*) c FROM jobs WHERE status = 'open'`,
+    );
+
+    const result = {
+      mode: opts.dryRun ? 'dry-run' : 'apply',
+      count_requested: count,
+      candidates_owner_pool: owners.length,
+      created: created.length,
+      total_open_jobs_after: Number(totalOpen[0]?.c ?? 0),
+      schema: {
+        location_approx_present: hasLocationApprox,
+        location_source_present: hasLocationSource,
+      },
+      jobs: created,
+      durationMs: Date.now() - start,
+    };
+
+    this.logger.log(
+      `seed-demo-jobs done mode=${result.mode} created=${created.length}/${count} pool=${owners.length} ms=${result.durationMs}`,
     );
     return result;
   }
