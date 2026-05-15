@@ -12,6 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { CACHE_MANAGER, CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { Cache } from 'cache-manager';
 import { CategoriesService } from './categories.service';
 import { CategorySearchService } from './category-search.service';
@@ -32,6 +33,7 @@ export class CategoriesController {
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
+  @SkipThrottle()
   @Get()
   @CacheKey(CATEGORIES_LIST_KEY)
   @CacheTTL(CATEGORIES_LIST_TTL)
@@ -44,6 +46,7 @@ export class CategoriesController {
    * Örn: /categories/search?q=boyaci → "Boya & Badana"
    * Phase 170 — sonuçlar q+limit bazında 1 dk cache'lenir (CacheInterceptor default key = url).
    */
+  @SkipThrottle()
   @Get('search')
   @CacheTTL(CATEGORY_SEARCH_TTL)
   search(@Query('q') q: string, @Query('limit') limit?: string): Category[] {
