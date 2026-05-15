@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_colors.dart';
 import '../../features/onboarding/data/onboarding_storage.dart';
 
-/// Uygulama açılışında gösterilen splash ekranı.
-/// 1.5 saniye sonra onboarding durumuna göre yönlendirir.
+/// Premium Dark Soft splash — "Y" yeşil rounded + "yapgitsin." lowercase.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -15,15 +16,17 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animCtrl;
   late final Animation<double> _scaleAnim;
+  late final Animation<double> _fadeAnim;
 
   @override
   void initState() {
     super.initState();
     _animCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 700),
     );
     _scaleAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutBack);
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeIn);
     _animCtrl.forward();
     _navigate();
   }
@@ -49,53 +52,86 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF007DFE),
-      body: Center(
-        child: ScaleTransition(
-          scale: _scaleAnim,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          // Subtle green radial glow
+          Center(
+            child: Container(
+              width: 320,
+              height: 320,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.primary.withOpacity(0.15),
+                    AppColors.primary.withOpacity(0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Center(
+            child: ScaleTransition(
+              scale: _scaleAnim,
+              child: FadeTransition(
+                opacity: _fadeAnim,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // "Y" rounded square logo (temp1.jpg style)
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.30),
+                            blurRadius: 32,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Y',
+                          style: GoogleFonts.playfairDisplay(
+                            color: Colors.black,
+                            fontSize: 46,
+                            fontWeight: FontWeight.w900,
+                            height: 1.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'yapgitsin.',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textPrimary,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'PREMIUM HİZMET PLATFORMU',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textMuted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 2.5,
+                      ),
                     ),
                   ],
                 ),
-                child: const Center(
-                  child: Icon(Icons.home_repair_service,
-                      size: 52, color: Color(0xFF007DFE)),
-                ),
               ),
-              const SizedBox(height: 24),
-              const Text(
-                'Yapgitsin',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Güvenilir Hizmet Platformu',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

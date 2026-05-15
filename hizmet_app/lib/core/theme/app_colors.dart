@@ -1,44 +1,63 @@
 import 'package:flutter/material.dart';
 
+/// Premium Dark Soft — Phase 221 palette.
+///
+/// Tüm renkler tek noktadan; legacy isimler yeşil + dark surface'e
+/// remap edildi, böylece eski referanslar otomatik upgrade olur.
 class AppColors {
-  // Primary Brand Colors (Airtasker/Hipages style Blue)
-  static const Color primary = Color(0xFF007DFE);
-  static const Color primaryDark = Color(0xFF0056B3);
-  static const Color primaryLight = Color(0xFFE5F2FF);
+  // ── Brand (vibrant green) ──────────────────────────────────────────────
+  static const Color primary       = Color(0xFF4ADE80);
+  static const Color primaryDark   = Color(0xFF22C55E);
+  static const Color primaryLight  = Color(0xFFDCFCE7);
+  static Color get   primaryGlow   => primary.withOpacity(0.15);
 
-  static const Color secondary = Color(0xFF2D3E50);
-  static const Color accent = Color(0xFFFFA000);
+  static const Color secondary     = Color(0xFF161B22);
+  static const Color accent        = Color(0xFF4ADE80);
 
-  // Background Colors (light — varsayılanlar geriye dönük uyumluluk için kalıyor)
-  static const Color background = Color(0xFFF8F9FA);
-  static const Color surface = Colors.white;
+  // ── Background (deep dark) ─────────────────────────────────────────────
+  static const Color background       = Color(0xFF0C1117);
+  static const Color surface          = Color(0xFF161B22);
+  static const Color surfaceElevated  = Color(0xFF1C2128);
+  static const Color border           = Color(0xFF30363D);
 
-  // Text Colors
-  static const Color textPrimary = Color(0xFF1A1A2E);
-  static const Color textSecondary = Color(0xFF6B7280);
-  static const Color textHint = Color(0xFFA1AAB2);
+  // ── Text ───────────────────────────────────────────────────────────────
+  static const Color textPrimary   = Color(0xFFFFFFFF);
+  static const Color textSecondary = Color(0xFF9CA3AF);
+  static const Color textMuted     = Color(0xFF6B7280);
+  static const Color textHint      = Color(0xFF6B7280);
 
-  // Status Colors
-  static const Color success = Color(0xFF00C9A7);
-  static const Color warning = Color(0xFFFFC107);
-  static const Color error = Color(0xFFDE4437);
+  // ── Accents ────────────────────────────────────────────────────────────
+  static const Color accentYellow  = Color(0xFFFCD34D);
+  static const Color verifiedBlue  = Color(0xFF60A5FA);
+  static const Color verifiedGreen = Color(0xFF22C55E);
 
-  // Borders and Dividers
-  static const Color border = Color(0xFFE7EAF3);
+  // ── Status ─────────────────────────────────────────────────────────────
+  static const Color success       = Color(0xFF4ADE80);
+  static const Color warning       = Color(0xFFFCD34D);
+  static const Color error         = Color(0xFFEF4444);
 
-  // ── Light theme tokens ──
-  static const Color lightBackground = Color(0xFFF8F9FA);
-  static const Color lightSurface = Colors.white;
-  static const Color lightText = Color(0xFF1A1A1A);
-  static const Color lightTextSecondary = Color(0xFF77838F);
-  static const Color lightBorder = Color(0xFFE7EAF3);
+  static const Color statusOpen    = Color(0xFF4ADE80);
+  static const Color statusPending = Color(0xFFFCD34D);
+  static const Color statusClosed  = Color(0xFF6B7280);
+  static const Color statusError   = Color(0xFFEF4444);
 
-  // ── Dark theme tokens ──
-  static const Color darkBackground = Color(0xFF121212);
-  static const Color darkSurface = Color(0xFF1E1E1E);
-  static const Color darkSurfaceElevated = Color(0xFF262626);
-  static const Color darkText = Color(0xFFE0E0E0);
-  static const Color darkTextSecondary = Color(0xFFA0A0A0);
-  static const Color darkBorder = Color(0xFF2E2E2E);
-  static const Color darkPrimary = Color(0xFF3D9CFF);
+  // ── Light theme tokens (Legacy support — sadeleştirildi) ───────────────
+  static const Color lightBackground     = Color(0xFFF8F9FA);
+  static const Color lightSurface        = Colors.white;
+  static const Color lightText           = Color(0xFF1A1A1A);
+  static const Color lightTextSecondary  = Color(0xFF77838F);
+  static const Color lightBorder         = Color(0xFFE7EAF3);
+
+  // ── Dark theme tokens (current premium palette) ────────────────────────
+  static const Color darkBackground       = Color(0xFF0C1117);
+  static const Color darkSurface          = Color(0xFF161B22);
+  static const Color darkSurfaceElevated  = Color(0xFF1C2128);
+  static const Color darkText             = Color(0xFFFFFFFF);
+  static const Color darkTextSecondary    = Color(0xFF9CA3AF);
+  static const Color darkBorder           = Color(0xFF30363D);
+  static const Color darkPrimary          = Color(0xFF4ADE80);
+
+  // ── Legacy orange (deprecated — eski referanslar yeşile yönlendirilir) ─
+  @Deprecated('Eski turuncu marka kapatıldı; AppColors.primary kullanın.')
+  static const Color legacyOrange = primary;
 }

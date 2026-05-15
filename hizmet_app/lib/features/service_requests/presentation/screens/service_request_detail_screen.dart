@@ -181,10 +181,10 @@ class _ServiceRequestDetailScreenState
                 errorBuilder: (_, __, ___) => Container(
                   height: 200,
                   width: double.infinity,
-                  color: const Color(0xFFFF5E14).withValues(alpha: 0.08),
+                  color: AppColors.primary.withValues(alpha: 0.08),
                   child: const Center(
                     child: Icon(Icons.image_not_supported_outlined,
-                        size: 40, color: Color(0xFFFF5E14)),
+                        size: 40, color: AppColors.primary),
                   ),
                 ),
               )

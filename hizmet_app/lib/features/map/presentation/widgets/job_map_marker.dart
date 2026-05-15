@@ -20,6 +20,7 @@ class JobMapMarker extends StatelessWidget {
     this.isApprox = false,
   });
 
+  // Map marker palette — local-only (brand artık yeşil; harita için kontrast).
   static const _blue = Color(0xFF007DFE);
   static const _orange = Color(0xFFFF5E14);
 

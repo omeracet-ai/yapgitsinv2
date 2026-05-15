@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/job_status_badge.dart';
 import '../../data/onboarding_storage.dart';
+
 
 // ─── Model ────────────────────────────────────────────────────────────────────
 
@@ -29,7 +33,7 @@ class _Slide {
       final h = hex.replaceAll('#', '').padLeft(6, '0').substring(0, 6);
       return Color(int.parse('FF$h', radix: 16));
     } catch (_) {
-      return const Color(0xFF007DFE);
+      return AppColors.primary;
     }
   }
 
@@ -38,36 +42,37 @@ class _Slide {
         body: j['body'] as String? ?? '',
         icon: Icons.home_repair_service,
         imageUrl: j['imageUrl'] as String?,
-        gradientStart: _hex((j['gradientStart'] as String?) ?? '#007DFE'),
-        gradientEnd: _hex((j['gradientEnd'] as String?) ?? '#0056B3'),
+        gradientStart: _hex((j['gradientStart'] as String?) ?? '#0C1117'),
+        gradientEnd: _hex((j['gradientEnd'] as String?) ?? '#161B22'),
       );
 }
 
-// ─── Fallback slides (task spec) ─────────────────────────────────────────────
+// ─── Fallback slides (Match temp1.jpg) ─────────────────────────────────────────────
 
 const _fallback = [
   _Slide(
-    title: 'Usta Bul',
-    body: 'Türkiye\'nin en iyi ustalarını keşfet',
+    title: 'Bir işin mi var?\nBu gece\nbiri yapsın.',
+    body: 'Türkiye, Azerbaycan, Kıbrıs ve Özbekistan\'da binlerce güvenilir profesyonele saniyeler içinde ulaş.',
+    icon: Icons.flash_on,
+    gradientStart: Color(0xFF0C1117),
+    gradientEnd: Color(0xFF161B22),
+  ),
+  _Slide(
+    title: 'Usta bul,\nteklif al,\nrahat et.',
+    body: 'İşini yayınla, dakikalar içinde en uygun teklifleri değerlendirmeye başla.',
     icon: Icons.search,
-    gradientStart: Color(0xFF007DFE),
-    gradientEnd: Color(0xFF0056B3),
+    gradientStart: Color(0xFF0C1117),
+    gradientEnd: Color(0xFF161B22),
   ),
   _Slide(
-    title: 'Teklif Al',
-    body: 'Ustalardan anlık teklif al, karşılaştır',
-    icon: Icons.request_quote,
-    gradientStart: Color(0xFF007DFE),
-    gradientEnd: Color(0xFF0056B3),
-  ),
-  _Slide(
-    title: 'İş Bitir',
-    body: 'Güvenli ödeme, garantili hizmet',
-    icon: Icons.check_circle_outline,
-    gradientStart: Color(0xFF007DFE),
-    gradientEnd: Color(0xFF0056B3),
+    title: 'Paran emanette,\nrahat ol,\nödeme güvenli.',
+    body: 'İş bitmeden paran güvende kalsın. Memnuniyet garantisi ile ödemeni onayla.',
+    icon: Icons.security,
+    gradientStart: Color(0xFF0C1117),
+    gradientEnd: Color(0xFF161B22),
   ),
 ];
+
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -156,37 +161,83 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     if (_loadingSlides) {
       return const Scaffold(
-        backgroundColor: Color(0xFF007DFE),
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+        backgroundColor: AppColors.background,
+        body: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           PageView.builder(
             controller: _ctrl,
             onPageChanged: (i) => setState(() => _page = i),
             itemCount: _slides.length,
-            itemBuilder: (_, i) => _PageBody(slide: _slides[i]),
+            itemBuilder: (_, i) => _PageBody(
+              slide: _slides[i],
+              isFirst: i == 0,
+            ),
           ),
 
-          // Skip
+          // Top bar — Y logo + Skip
           Positioned(
-            top: MediaQuery.of(context).padding.top + 12,
+            top: MediaQuery.of(context).padding.top + 14,
+            left: 20,
             right: 20,
-            child: TextButton(
-              onPressed: _finish,
-              child: const Text('Geç',
-                  style: TextStyle(color: Colors.white70, fontSize: 14)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Y',
+                          style: GoogleFonts.playfairDisplay(
+                            color: Colors.black,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'yapgitsin.',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                TextButton(
+                  onPressed: _finish,
+                  child: Text(
+                    'Geç',
+                    style: GoogleFonts.inter(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
           // Bottom controls
           Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + 32,
-            left: 32,
-            right: 32,
+            bottom: MediaQuery.of(context).padding.bottom + 24,
+            left: 24,
+            right: 24,
             child: Column(
               children: [
                 // Dot indicator
@@ -201,54 +252,92 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       height: 8,
                       decoration: BoxDecoration(
                         color: i == _page
-                            ? Colors.white
-                            : Colors.white.withValues(alpha: 0.35),
+                            ? AppColors.primary
+                            : AppColors.border,
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
+                // Primary CTA — Hemen başla (pill 28)
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
                     onPressed: _next,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF007DFE),
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                          borderRadius: BorderRadius.circular(28)),
                       elevation: 0,
                     ),
-                    child: Text(
-                      _page == _slides.length - 1 ? 'Başla' : 'Devam Et',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _page == _slides.length - 1 ? 'Hemen başla' : 'Devam Et',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward_rounded,
+                            color: Colors.black, size: 20),
+                      ],
                     ),
                   ),
                 ),
-                if (_page == _slides.length - 1) ...[
-                  const SizedBox(height: 14),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Zaten hesabın var mı?  ',
-                          style: TextStyle(color: Colors.white70, fontSize: 13)),
-                      GestureDetector(
-                        onTap: () => context.push('/giris-yap'),
-                        child: const Text('Giriş Yap',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                decoration: TextDecoration.underline,
-                                decorationColor: Colors.white)),
+                const SizedBox(height: 12),
+                // Secondary — Tasker olarak gel (outlined)
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: OutlinedButton(
+                    onPressed: () => context.push('/giris-yap',
+                        extra: {'returnTo': '/profil/usta-ol'}),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textPrimary,
+                      backgroundColor: AppColors.surface,
+                      side: const BorderSide(
+                          color: AppColors.border, width: 1),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28)),
+                    ),
+                    child: Text(
+                      'Tasker olarak gel',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
                       ),
-                    ],
+                    ),
                   ),
-                ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Hesabın var mı? ',
+                        style: GoogleFonts.inter(
+                            color: AppColors.textSecondary, fontSize: 13)),
+                    GestureDetector(
+                      onTap: () => context.push('/giris-yap'),
+                      child: Text(
+                        'Giriş yap',
+                        style: GoogleFonts.inter(
+                          color: AppColors.textPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -262,83 +351,91 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
 class _PageBody extends StatelessWidget {
   final _Slide slide;
-  const _PageBody({required this.slide});
+  final bool isFirst;
+  const _PageBody({required this.slide, this.isFirst = false});
+
+  /// Render title with italic Playfair accent on the middle phrase.
+  /// Splits at `\n` and italicizes the second line (e.g. "Bu gece").
+  Widget _buildTitle(BuildContext context) {
+    final parts = slide.title.split('\n');
+    if (parts.length < 2) {
+      return Text(
+        slide.title,
+        textAlign: TextAlign.left,
+        style: GoogleFonts.playfairDisplay(
+          color: AppColors.textPrimary,
+          fontSize: 38,
+          fontWeight: FontWeight.w800,
+          height: 1.05,
+          letterSpacing: -0.5,
+        ),
+      );
+    }
+    // 3-line title: line1, italic-accent, line3 (fallback to line2)
+    final line1 = parts[0];
+    final accent = parts[1];
+    final line3 = parts.length > 2 ? parts[2] : null;
+    return RichText(
+      textAlign: TextAlign.left,
+      text: TextSpan(
+        style: GoogleFonts.playfairDisplay(
+          color: AppColors.textPrimary,
+          fontSize: 38,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+          letterSpacing: -0.5,
+        ),
+        children: [
+          TextSpan(text: '$line1\n'),
+          TextSpan(
+            text: accent,
+            style: GoogleFonts.playfairDisplay(
+              color: AppColors.primary,
+              fontSize: 38,
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.w700,
+              height: 1.1,
+            ),
+          ),
+          if (line3 != null) TextSpan(text: '\n$line3'),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [slide.gradientStart, slide.gradientEnd],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
+      color: AppColors.background,
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Spacer(flex: 2),
-              _illustration(),
-              const Spacer(flex: 2),
-              Text(
-                slide.title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  height: 1.15,
-                ),
-              ),
+              const SizedBox(height: 64),
+              const Spacer(flex: 3),
+              if (isFirst) ...[
+                const OnlineCountBadge(text: '12.483 usta şu an çevrimiçi'),
+                const SizedBox(height: 24),
+              ],
+              _buildTitle(context),
               const SizedBox(height: 20),
               Text(
                 slide.body,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 16,
+                textAlign: TextAlign.left,
+                style: GoogleFonts.inter(
+                  color: AppColors.textSecondary,
+                  fontSize: 15,
                   height: 1.55,
                 ),
               ),
-              const Spacer(flex: 3),
+              const Spacer(flex: 4),
+              const SizedBox(height: 200),
             ],
           ),
         ),
       ),
     );
   }
-
-  Widget _illustration() {
-    if (slide.imageUrl != null) {
-      return Container(
-        width: 200,
-        height: 200,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.12),
-          shape: BoxShape.circle,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Image.network(
-          slide.imageUrl!,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _iconCircle(),
-        ),
-      );
-    }
-    return _iconCircle();
-  }
-
-  Widget _iconCircle() => Container(
-        width: 180,
-        height: 180,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
-          shape: BoxShape.circle,
-        ),
-        child: Center(
-          child: Icon(slide.icon, size: 80, color: Color(0xFF007DFE)),
-        ),
-      );
 }

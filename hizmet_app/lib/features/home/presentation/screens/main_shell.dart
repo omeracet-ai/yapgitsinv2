@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/providers/navigation_provider.dart';
 import '../../../auth/presentation/screens/profile_screen.dart';
 import '../../../notifications/presentation/screens/notification_screen.dart';
@@ -91,35 +93,35 @@ class _MainShellState extends ConsumerState<MainShell>
       body: IndexedStack(index: selectedIndex, children: pages),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.darkSurface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
-              blurRadius: 16,
-              offset: const Offset(0, -3),
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
             ),
           ],
           borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+            topLeft: Radius.circular(AppRadius.xl),
+            topRight: Radius.circular(AppRadius.xl),
           ),
         ),
         child: ClipRRect(
           borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+            topLeft: Radius.circular(AppRadius.xl),
+            topRight: Radius.circular(AppRadius.xl),
           ),
           child: BottomNavigationBar(
             currentIndex: selectedIndex,
             onTap: _onItemTapped,
-            selectedItemColor: AppColors.primary,
-            unselectedItemColor: AppColors.textHint,
+            selectedItemColor: AppColors.darkPrimary,
+            unselectedItemColor: AppColors.darkTextSecondary,
             showUnselectedLabels: true,
             type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.darkSurface,
             elevation: 0,
             selectedLabelStyle: const TextStyle(
-                fontSize: 11, fontWeight: FontWeight.w700),
+                fontSize: 11, fontWeight: FontWeight.bold),
             unselectedLabelStyle: const TextStyle(fontSize: 11),
             items: [
               const BottomNavigationBarItem(
@@ -213,7 +215,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
             SliverAppBar(
               expandedHeight: 200,
               pinned: true,
-              backgroundColor: AppColors.primary,
+              backgroundColor: AppColors.background,
               elevation: 0,
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.pin,
@@ -222,7 +224,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xFF007DFE), Color(0xFF0056B3)],
+                      colors: [Color(0xFF0C1117), Color(0xFF161B22)],
                     ),
                   ),
                   child: SafeArea(
@@ -237,23 +239,58 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // Brand row: Y logo + yapgitsin.
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            'Y',
+                                            style: GoogleFonts.playfairDisplay(
+                                              color: Colors.black,
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'yapgitsin.',
+                                        style: GoogleFonts.inter(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
                                   Text(
                                     userName != null
                                         ? 'Merhaba, $userName'
                                         : 'Hoş Geldiniz',
-                                    style: const TextStyle(
-                                      color: Colors.white70,
+                                    style: GoogleFonts.inter(
+                                      color: AppColors.textSecondary,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  const Text(
+                                  Text(
                                     'En iyi usta, en iyi hizmet',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
+                                    style: GoogleFonts.playfairDisplay(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.5,
                                     ),
                                   ),
                                 ],
@@ -286,12 +323,13 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                           // Search bar
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
+                              color: AppColors.darkSurfaceElevated,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.darkBorder),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.12),
-                                  blurRadius: 10,
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
                               ],
@@ -300,12 +338,13 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                               controller: _searchController,
                               onSubmitted: _onSearch,
                               textInputAction: TextInputAction.search,
+                              style: const TextStyle(color: AppColors.darkText),
                               decoration: InputDecoration(
                                 hintText: 'Hangi hizmete ihtiyacınız var?',
                                 hintStyle: const TextStyle(
-                                    color: AppColors.textHint, fontSize: 14),
+                                    color: AppColors.darkTextSecondary, fontSize: 14),
                                 prefixIcon: const Icon(Icons.search,
-                                    color: AppColors.primary),
+                                    color: AppColors.darkPrimary),
                                 suffixIcon: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -336,9 +375,37 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                   ),
                 ),
               ),
-              title: const Text(
-                'Yapgitsin',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Y',
+                        style: GoogleFonts.playfairDisplay(
+                          color: Colors.black,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'yapgitsin.',
+                    style: GoogleFonts.inter(
+                      color: AppColors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -364,10 +431,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                           style: TextStyle(
                               color: Colors.white, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2D3E50),
-                        minimumSize: const Size(double.infinity, 50),
+                        backgroundColor: AppColors.darkSurfaceElevated,
+                        foregroundColor: AppColors.darkPrimary,
+                        minimumSize: const Size(double.infinity, 56),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: AppColors.darkBorder)),
                         elevation: 0,
                       ),
                     ),
@@ -564,13 +633,11 @@ class _RecentJobRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
-        ],
+        border: Border.all(color: AppColors.darkBorder, width: 1),
       ),
       child: Row(
         children: [
@@ -654,24 +721,29 @@ class _GroupChip extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          color: isActive ? AppColors.darkPrimary : AppColors.darkSurfaceElevated,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
-            color: isActive ? AppColors.primary : AppColors.border,
+            color: isActive ? AppColors.darkPrimary : AppColors.darkBorder,
             width: 1.5,
           ),
           boxShadow: isActive
-              ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 6, offset: const Offset(0, 2))]
+              ? [
+                  BoxShadow(
+                      color: AppColors.darkPrimary.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2))
+                ]
               : [],
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isActive ? Colors.white : AppColors.textSecondary,
+            fontWeight: FontWeight.bold,
+            color: isActive ? Colors.black : AppColors.darkTextSecondary,
           ),
         ),
       ),

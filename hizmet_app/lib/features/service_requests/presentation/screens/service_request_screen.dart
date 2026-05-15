@@ -198,10 +198,10 @@ class _FeaturedCard extends StatelessWidget {
                   errorBuilder: (_, __, ___) => Container(
                         height: 80,
                         width: double.infinity,
-                        color: const Color(0xFFFF5E14).withValues(alpha: 0.08),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         child: const Center(
                           child: Icon(Icons.image_not_supported_outlined,
-                              size: 24, color: Color(0xFFFF5E14)),
+                              size: 24, color: AppColors.primary),
                         ),
                       )),
             )
@@ -331,12 +331,12 @@ class _RequestCard extends StatelessWidget {
                         errorBuilder: (_, __, ___) => Container(
                               height: 150,
                               width: double.infinity,
-                              color: const Color(0xFFFF5E14).withValues(alpha: 0.08),
+                              color: AppColors.primary.withValues(alpha: 0.08),
                               child: const Center(
                                 child: Icon(
                                   Icons.image_not_supported_outlined,
                                   size: 32,
-                                  color: Color(0xFFFF5E14),
+                                  color: AppColors.primary,
                                 ),
                               ),
                             )),
