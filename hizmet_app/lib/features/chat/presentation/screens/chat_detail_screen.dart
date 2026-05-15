@@ -123,7 +123,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       if (reason != 'contact_block') return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: Colors.orange.shade700,
+          backgroundColor: AppColors.warning,
           content: Text(
             'Mesajınız filtrelendi: iletişim bilgisi içeriyor (${detectedTypes.join(", ")}). '
             'Lütfen sistem içi mesajlaşmayı kullanın.',

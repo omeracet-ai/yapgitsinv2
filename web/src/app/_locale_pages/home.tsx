@@ -66,7 +66,7 @@ export default async function renderHome(L: Locale) {
           <div className="flex flex-col sm:flex-row sm:justify-center gap-3 mb-10">
             <Link
               href={localePath(L, '/temizlik')}
-              className="bg-[var(--accent)] hover:brightness-110 text-white px-7 py-3.5 rounded-xl font-semibold text-base min-h-[52px] inline-flex items-center justify-center shadow-lg shadow-orange-900/20 transition"
+              className="bg-[var(--accent)] hover:brightness-110 text-white px-7 py-3.5 rounded-xl font-semibold text-base min-h-[52px] inline-flex items-center justify-center shadow-lg shadow-purple-900/30 transition"
             >
               {(dict.site as any).cta_post_job || dict.nav.find_service}
             </Link>

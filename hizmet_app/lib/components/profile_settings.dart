@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme/app_colors.dart';
 
 class ProfileSettings extends StatelessWidget {
   @override
@@ -7,7 +8,7 @@ class ProfileSettings extends StatelessWidget {
       children: [
         // Para birimi kaldırıldı, dil seçeneği aktif edildi.
         ListTile(
-          leading: Icon(Icons.language_outlined, color: Colors.blue),
+          leading: Icon(Icons.language_outlined, color: AppColors.verifiedBlue),
           title: Text('Dil / Language'),
           trailing: DropdownButton<String>(
             value: 'TR',
@@ -21,7 +22,7 @@ class ProfileSettings extends StatelessWidget {
         ),
         // Tema Değiştirici
         ListTile(
-          leading: Icon(Icons.brightness_4_outlined, color: Colors.orange),
+          leading: Icon(Icons.brightness_4_outlined, color: AppColors.primary),
           title: Text('Tema / Theme'),
           trailing: Switch(
             value: Theme.of(context).brightness == Brightness.dark,

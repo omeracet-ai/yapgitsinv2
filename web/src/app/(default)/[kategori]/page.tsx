@@ -108,7 +108,7 @@ export default async function CategoryPage({
         }}
       />
 
-      <section className="bg-gradient-to-br from-[var(--primary)] via-orange-400 to-yellow-300 text-white">
+      <section className="bg-gradient-to-br from-[var(--primary)] via-[var(--primary-dark)] to-[var(--surface)] text-white">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14">
           <nav className="text-xs text-white/80 mb-4">
             <Link href="/" className="hover:text-white hover:underline">
