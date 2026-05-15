@@ -23,6 +23,11 @@ if [ -d scripts ]; then
   mkdir -p /d/backend/scripts
   cp -r scripts/* /d/backend/scripts/
 fi
+# Phase 184: Plesk Node.js panel "Run script" dropdown cache sorunu için
+# standalone .bat wrapper'ları (RDP / Plesk File Manager'dan çift tık).
+for bat in backfill-dry.bat backfill-apply.bat; do
+  [ -f "$bat" ] && cp "$bat" /d/backend/"$bat"
+done
 # Phase 166: IIS + iisnode bridge
 [ -f web.config ] && cp web.config /d/backend/web.config
 # Static placeholder (iisnode yokken /backend/ -> 200)
