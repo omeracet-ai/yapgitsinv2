@@ -29,6 +29,13 @@ export class ReviewsController {
     return this.reviewsService.findRecent(n);
   }
 
+  /** Phase 236: Diagnostic probe — DB'ye dokunmaz, sadece JSON döner */
+  @SkipThrottle()
+  @Get('__diag/phase236')
+  diagPhase236() {
+    return { ok: true, phase: 236, ts: new Date().toISOString() };
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @Post()
   async create(

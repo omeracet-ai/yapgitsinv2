@@ -63,6 +63,7 @@ export class ReviewsService {
     reviewer: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
     reviewee: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
   }>> {
+    this.logger.warn(`[PHASE236-PROBE] findRecent called with limit=${limit}`);
     const take = Math.min(50, Math.max(1, limit));
     try {
       const rows = await this.reviewsRepository
