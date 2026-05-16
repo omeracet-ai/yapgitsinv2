@@ -9,36 +9,47 @@ import { plainToInstance } from 'class-transformer';
 import { CreateReviewDto } from './dto/create-review.dto';
 
 describe('CreateReviewDto (mass-assignment regression)', () => {
-  it('strips unknown fields (flagged, fraudScore, helpfulCount, reviewerId)', () => {
-    // plainToInstance + class-validator whitelist davranışı:
-    // tanımlı alanlar enstanslara map'lenir; bilinmeyenler NestJS
-    // ValidationPipe whitelist:true ile strip edilir.
+  it('DTO sınıfı sadece whitelist alanlarını taşır (mass-assignment surface contract)', async () => {
+    // forbidNonWhitelisted davranışını manuel taklit ediyoruz: gelen
+    // payload'da tanımlı olmayan alan varsa validation hata verir.
+    // NestJS global ValidationPipe whitelist:true + forbidNonWhitelisted:true
+    // production'da bu alanları strip eder; sınıf üyesi olarak da yok.
+    const sample = new CreateReviewDto();
+    const allowedKeys = new Set([
+      'rating',
+      'comment',
+      'jobId',
+      'revieweeId',
+      'photos',
+    ]);
+    for (const k of Object.keys(sample)) {
+      expect(allowedKeys.has(k)).toBe(true);
+    }
+    expect((sample as Record<string, unknown>).flagged).toBeUndefined();
+    expect((sample as Record<string, unknown>).fraudScore).toBeUndefined();
+    expect((sample as Record<string, unknown>).helpfulCount).toBeUndefined();
+    expect((sample as Record<string, unknown>).reviewerId).toBeUndefined();
+
+    // Whitelist davranışını programatik doğrula: forbidNonWhitelisted hata verir.
     const dto = plainToInstance(CreateReviewDto, {
       rating: 5,
-      comment: 'iyi',
-      jobId: '11111111-1111-1111-1111-111111111111',
-      revieweeId: '22222222-2222-2222-2222-222222222222',
+      jobId: 'a1b2c3d4-e5f6-4a8b-9c0d-1e2f3a4b5c6d',
+      revieweeId: 'b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e',
       flagged: true,
-      fraudScore: 0,
-      helpfulCount: 999,
       reviewerId: 'attacker-uuid',
     } as unknown as object);
-    const keys = Object.keys(dto);
-    expect(keys).toContain('rating');
-    expect(keys).toContain('jobId');
-    expect(keys).toContain('revieweeId');
-    // mass-assignment alanları DTO sınıfına yansımaz
-    expect(keys).not.toContain('flagged');
-    expect(keys).not.toContain('fraudScore');
-    expect(keys).not.toContain('helpfulCount');
-    expect(keys).not.toContain('reviewerId');
+    const errors = await validate(dto, {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+    expect(errors.length).toBeGreaterThan(0);
   });
 
   it('rejects rating > 5', async () => {
     const dto = plainToInstance(CreateReviewDto, {
       rating: 99,
-      jobId: '11111111-1111-1111-1111-111111111111',
-      revieweeId: '22222222-2222-2222-2222-222222222222',
+      jobId: 'a1b2c3d4-e5f6-4a8b-9c0d-1e2f3a4b5c6d',
+      revieweeId: 'b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e',
     });
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
@@ -59,8 +70,8 @@ describe('CreateReviewDto (mass-assignment regression)', () => {
     const dto = plainToInstance(CreateReviewDto, {
       rating: 5,
       comment: 'tşk',
-      jobId: '11111111-1111-1111-1111-111111111111',
-      revieweeId: '22222222-2222-2222-2222-222222222222',
+      jobId: 'a1b2c3d4-e5f6-4a8b-9c0d-1e2f3a4b5c6d',
+      revieweeId: 'b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e',
     });
     const errors = await validate(dto);
     expect(errors).toHaveLength(0);
@@ -70,8 +81,8 @@ describe('CreateReviewDto (mass-assignment regression)', () => {
     const dto = plainToInstance(CreateReviewDto, {
       rating: 5,
       comment: 'a'.repeat(2001),
-      jobId: '11111111-1111-1111-1111-111111111111',
-      revieweeId: '22222222-2222-2222-2222-222222222222',
+      jobId: 'a1b2c3d4-e5f6-4a8b-9c0d-1e2f3a4b5c6d',
+      revieweeId: 'b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e',
     });
     const errors = await validate(dto);
     expect(errors.some((e) => e.property === 'comment')).toBe(true);
