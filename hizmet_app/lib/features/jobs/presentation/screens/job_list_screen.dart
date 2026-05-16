@@ -64,8 +64,8 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
       appBar: _showAppBar
           ? AppBar(
               title: const Text('İş İlanları'),
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.background,
+              foregroundColor: AppColors.textPrimary,
             )
           : null,
       body: Column(
@@ -97,9 +97,9 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
           context.push(isLoggedIn ? '/ilan-ver' : '/giris-yap');
         },
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: Colors.black,
         icon: const Icon(Icons.add),
-        label: const Text('İlan Ver'),
+        label: const Text('İlan Ver', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }

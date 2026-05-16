@@ -188,11 +188,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           width: 22,
                           height: 22,
                           child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2.5),
+                              color: Colors.black, strokeWidth: 2.5),
                         )
                       : Text(l.loginButton,
                           style: const TextStyle(
-                              color: Colors.white,
+                              color: Colors.black,
                               fontWeight: FontWeight.bold,
                               fontSize: 16)),
                 ),
@@ -217,7 +217,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // ─────────────────────────────────────────────────────────
               Row(
                 children: [
-                  const Expanded(child: Divider(color: Color(0xFFE0E0E0))),
+                  const Expanded(child: Divider(color: AppColors.border)),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
@@ -228,7 +228,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                   ),
-                  const Expanded(child: Divider(color: Color(0xFFE0E0E0))),
+                  const Expanded(child: Divider(color: AppColors.border)),
                 ],
               ).animate().fade(delay: 650.ms),
               const SizedBox(height: 16),

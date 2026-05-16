@@ -66,8 +66,8 @@ class NotificationScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(l.notificationsTitle),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.textPrimary,
         actions: [
           notifAsync.maybeWhen(
             data: (notifs) {
@@ -85,15 +85,21 @@ class NotificationScreen extends ConsumerWidget {
                   ref.invalidate(notificationsProvider);
                   ref.read(unreadCountBadgeProvider.notifier).reset();
                 },
-                icon: const Icon(Icons.done_all, color: Colors.white, size: 18),
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(48, 48),
+                  foregroundColor: AppColors.primary,
+                ),
+                icon: const Icon(Icons.done_all, size: 18),
                 label: Text(l.notificationsMarkAllRead,
-                    style: const TextStyle(color: Colors.white, fontSize: 12)),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
               );
             },
             orElse: () => const SizedBox.shrink(),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            tooltip: 'Yenile',
+            icon: const Icon(Icons.refresh),
+            color: AppColors.textPrimary,
             onPressed: () => ref.invalidate(notificationsProvider),
           ),
         ],
@@ -234,10 +240,10 @@ class _NotifCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isRead ? Colors.white : AppColors.primaryLight.withValues(alpha: 0.4),
+          color: isRead ? AppColors.surface : AppColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isRead ? Colors.grey.shade100 : AppColors.primary.withValues(alpha: 0.3),
+            color: isRead ? AppColors.border : AppColors.primary.withValues(alpha: 0.4),
           ),
         ),
         child: Row(

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/services/secure_token_store.dart';
+import '../../../../core/network/api_client_provider.dart';
 
 /// ProfileVideoUploader — profil videosu yükler
-/// Tek video seçer, API'ye POST eder, başarı sonrası temizlenir
-class ProfileVideoUploader extends StatefulWidget {
+/// Tek video seçer, API'ye POST eder, başarı sonrası temizlenir.
+///
+/// Phase 248+ — Raw Dio yerine [ApiClient] (Riverpod) üzerinden gidiyor:
+/// JWT enjeksiyonu + 401 refresh interceptor merkezi.
+class ProfileVideoUploader extends ConsumerStatefulWidget {
   final VoidCallback? onUploadSuccess;
 
   const ProfileVideoUploader({
@@ -16,12 +19,12 @@ class ProfileVideoUploader extends StatefulWidget {
   });
 
   @override
-  State<ProfileVideoUploader> createState() => _ProfileVideoUploaderState();
+  ConsumerState<ProfileVideoUploader> createState() =>
+      _ProfileVideoUploaderState();
 }
 
-class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
+class _ProfileVideoUploaderState extends ConsumerState<ProfileVideoUploader> {
   final ImagePicker _picker = ImagePicker();
-  final Dio _dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
 
   XFile? _selectedVideo;
   bool _isUploading = false;
@@ -65,17 +68,6 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
         _uploadProgress = 0.0;
       });
 
-      // Phase 244 — JWT token'ı SecureTokenStore'dan al.
-      final token = await SecureTokenStore().readToken();
-
-      if (token == null || token.isEmpty) {
-        setState(() {
-          _isUploading = false;
-          _errorMessage = 'Oturum süresi doldu. Lütfen giriş yapın.';
-        });
-        return;
-      }
-
       // MultipartFile — fromBytes kullan (web + mobil uyumlu, dart:io gerektirmez)
       final filename = _selectedVideo!.name.isNotEmpty
           ? _selectedVideo!.name
@@ -88,12 +80,12 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
         'video': multipartFile,
       });
 
-      // Upload yap
-      final response = await _dio.post(
+      // Upload — ApiClient.dio JWT + 401-refresh interceptor'ı çalıştırır.
+      final dio = ref.read(apiClientProvider).dio;
+      final response = await dio.post(
         '/uploads/profile-video',
         data: formData,
         options: Options(
-          headers: {'Authorization': 'Bearer $token'},
           validateStatus: (status) => status != null && status < 500,
         ),
         onSendProgress: (sent, total) {
