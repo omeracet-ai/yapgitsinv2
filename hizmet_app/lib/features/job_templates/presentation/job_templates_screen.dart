@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/list_skeleton.dart';
 import '../data/job_template_repository.dart';
 
 class JobTemplatesScreen extends ConsumerWidget {
@@ -19,7 +20,7 @@ class JobTemplatesScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
       ),
       body: tplAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListSkeleton(itemCount: 5, itemBuilder: (_) => const NotificationSkeleton()),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),

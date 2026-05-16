@@ -336,7 +336,7 @@ class _CustomerJobsView extends ConsumerWidget {
               )
             : null,
         body: jobsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => ListSkeleton(itemCount: 6, itemBuilder: (_) => const JobCardSkeleton()),
           error: (e, _) => Center(child: Text('Hata: $e')),
           data: (jobs) => TabBarView(
             children: [

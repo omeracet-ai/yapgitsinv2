@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../data/certification_repository.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 
 class CertificationsScreen extends ConsumerStatefulWidget {
   const CertificationsScreen({super.key});
@@ -71,7 +72,7 @@ class _CertificationsScreenState extends ConsumerState<CertificationsScreen> {
         label: const Text('Sertifika Ekle'),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? ListSkeleton(itemCount: 4, itemBuilder: (_) => const NotificationSkeleton())
           : _error != null
               ? Center(
                   child: Padding(

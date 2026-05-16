@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../data/category_subscription_repository.dart';
 
 /// Phase 143 — Kategori abonelikleri yönetim ekranı.
@@ -19,7 +20,7 @@ class CategorySubscriptionsScreen extends ConsumerWidget {
         title: const Text('🔔 Kategori Abonelikleri'),
       ),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListSkeleton(itemCount: 5, itemBuilder: (_) => const NotificationSkeleton()),
         error: (e, _) => Center(child: Text('Hata: $e')),
         data: (subs) {
           if (subs.isEmpty) {

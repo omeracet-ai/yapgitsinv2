@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/intl_formatter.dart';
+import '../../../core/widgets/list_skeleton.dart';
 import '../data/statement_repository.dart';
 
 const _months = [
@@ -73,7 +74,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
           _buildPeriodPicker(),
           Expanded(
             child: asyncData.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => ListSkeleton(itemCount: 5, itemBuilder: (_) => const NotificationSkeleton()),
               error: (e, _) => Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),

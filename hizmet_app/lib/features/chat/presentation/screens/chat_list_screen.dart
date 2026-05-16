@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/chat_repository.dart';
@@ -62,7 +63,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
           await ref.read(conversationsProvider.future);
         },
         child: asyncConvos.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => ListSkeleton(itemCount: 8, itemBuilder: (_) => const NotificationSkeleton()),
           error: (e, _) => ListView(
             children: [
               const SizedBox(height: 80),

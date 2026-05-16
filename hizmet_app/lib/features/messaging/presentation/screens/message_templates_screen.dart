@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../data/message_templates_provider.dart';
 import '../../data/message_templates_repository.dart';
 
@@ -137,7 +138,7 @@ class _MessageTemplatesScreenState
           Expanded(
             child: async.when(
               loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+                  ListSkeleton(itemCount: 5, itemBuilder: (_) => const NotificationSkeleton()),
               error: (e, _) => Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),

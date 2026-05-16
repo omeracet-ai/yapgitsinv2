@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../../profile/data/user_profile_repository.dart';
 import '../../../users/widgets/user_action_menu.dart';
 import '../../../tokens/widgets/gift_tokens_sheet.dart';
@@ -39,8 +40,8 @@ class PublicProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(publicProfileProvider(userId));
     return profileAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => Scaffold(
+        body: ListSkeleton(itemCount: 4, itemBuilder: (_) => const ProviderCardSkeleton()),
       ),
       error: (e, _) => Scaffold(
         appBar: AppBar(title: const Text('Profil')),

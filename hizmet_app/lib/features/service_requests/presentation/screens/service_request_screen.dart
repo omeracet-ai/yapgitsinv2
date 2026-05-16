@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/service_request_repository.dart';
 import 'post_service_request_screen.dart';
@@ -94,7 +95,7 @@ class _ServiceRequestScaffold extends StatelessWidget {
             )
           : null,
       body: requestsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListSkeleton(itemCount: 6, itemBuilder: (_) => const JobCardSkeleton()),
         error: (e, _) => Center(child: Text('Hata: $e')),
         data: (requests) {
           if (requests.isEmpty) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../data/blocked_users_provider.dart';
 
 class BlockedUsersScreen extends ConsumerWidget {
@@ -18,7 +19,7 @@ class BlockedUsersScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
       ),
       body: blocksAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListSkeleton(itemCount: 5, itemBuilder: (_) => const ProviderCardSkeleton()),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),

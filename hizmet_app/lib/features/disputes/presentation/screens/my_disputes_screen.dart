@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/dispute_repository.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 
 final _myDisputesProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
@@ -46,7 +47,7 @@ class MyDisputesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Şikayetlerim')),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListSkeleton(itemCount: 5, itemBuilder: (_) => const NotificationSkeleton()),
         error: (e, _) => Center(child: Text('Hata: $e')),
         data: (list) {
           if (list.isEmpty) {

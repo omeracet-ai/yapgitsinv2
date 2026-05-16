@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../data/notification_prefs_provider.dart';
 
 class NotificationPreferencesScreen extends ConsumerWidget {
@@ -33,7 +34,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
         elevation: 0,
       ),
       body: state.loading
-          ? const Center(child: CircularProgressIndicator())
+          ? ListSkeleton(itemCount: 5, itemBuilder: (_) => const NotificationSkeleton())
           : ListView(
               padding: const EdgeInsets.symmetric(vertical: 16),
               children: [

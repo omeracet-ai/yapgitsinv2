@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../../tokens/data/token_repository.dart';
 import '../../data/boost_repository.dart';
 
@@ -64,7 +65,7 @@ class BoostScreen extends ConsumerWidget {
                     _packageCard(context, ref, p, balanceAsync.value ?? 0),
                 ],
               ),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => Column(children: [for (var i = 0; i < 3; i++) const Padding(padding: EdgeInsets.only(bottom: 12), child: NotificationSkeleton())]),
               error: (e, _) => Text('Paketler yüklenemedi: $e'),
             ),
           ],

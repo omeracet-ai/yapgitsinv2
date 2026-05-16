@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/escrow_repository.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 
 final _myEscrowsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
@@ -66,7 +67,7 @@ class EscrowListScreen extends ConsumerWidget {
       ),
       backgroundColor: AppColors.background,
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListSkeleton(itemCount: 5, itemBuilder: (_) => const NotificationSkeleton()),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(32),

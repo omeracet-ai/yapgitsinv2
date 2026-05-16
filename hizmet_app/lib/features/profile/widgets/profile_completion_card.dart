@@ -55,7 +55,7 @@ class ProfileCompletionCard extends ConsumerWidget {
   Color _barColor(int percent) {
     if (percent >= 100) return AppColors.success;
     if (percent >= 80) return AppColors.primary;
-    if (percent >= 50) return const Color(0xFFFFA000);
+    if (percent >= 50) return AppColors.warning;
     return AppColors.error;
   }
 
@@ -115,7 +115,7 @@ class ProfileCompletionCard extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withValues(alpha: 0.3)),
           boxShadow: [

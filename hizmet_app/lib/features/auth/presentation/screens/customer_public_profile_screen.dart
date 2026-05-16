@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../data/customer_profile_repository.dart';
 
 /// Phase 133 — Customer public profile screen (no worker fields).
@@ -14,7 +15,7 @@ class CustomerPublicProfileScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Müşteri Profili')),
       body: asyncData.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListSkeleton(itemCount: 4, itemBuilder: (_) => const ProviderCardSkeleton()),
         error: (e, _) => Center(child: Text('Hata: $e')),
         data: (d) => _Body(data: d),
       ),

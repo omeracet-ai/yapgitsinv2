@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/offer_repository.dart';
 import '../providers/job_provider.dart';
@@ -96,7 +97,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
           // ── İlan listesi ─────────────────────────────────────────────────
           Expanded(
             child: jobsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => ListSkeleton(itemCount: 6, itemBuilder: (_) => const JobCardSkeleton()),
               error: (e, _) => Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

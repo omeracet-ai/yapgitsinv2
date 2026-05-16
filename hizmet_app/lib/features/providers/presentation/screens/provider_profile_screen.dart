@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../reviews/presentation/screens/write_review_screen.dart';
 import '../../../reviews/data/review_repository.dart';
@@ -19,7 +20,7 @@ class ProviderProfileScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: providerAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListSkeleton(itemCount: 4, itemBuilder: (_) => const ProviderCardSkeleton()),
         error: (e, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

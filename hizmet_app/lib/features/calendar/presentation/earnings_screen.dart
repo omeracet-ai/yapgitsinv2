@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/widgets/list_skeleton.dart';
 import '../../wallet/data/payment_repository.dart';
 
 class EarningsScreen extends ConsumerWidget {
@@ -69,7 +70,7 @@ class EarningsScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListSkeleton(itemCount: 5, itemBuilder: (_) => const NotificationSkeleton()),
         error: (e, st) => Center(child: Text('Hata oluştu: $e')),
       ),
     );
