@@ -3,6 +3,10 @@
 process.env.NODE_ENV = 'test';
 process.env.DB_TYPE = 'sqlite';
 process.env.DB_DATABASE = ':memory:';
+// Phase 228 — Force TypeORM synchronize for the in-memory SQLite e2e DB.
+// Migrations target Postgres and fail on SQLite; synchronize builds schema from
+// entity decorators which is exactly what the in-memory fixture needs.
+process.env.ALLOW_SCHEMA_SYNC = 'true';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'e2e-test-secret';
 // Dual-secret rotation window: tokens signed with the previous key must still verify.
 process.env.JWT_SECRET_PREVIOUS = process.env.JWT_SECRET_PREVIOUS || 'e2e-test-secret-prev';
