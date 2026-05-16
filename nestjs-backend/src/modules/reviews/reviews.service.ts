@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review } from './review.entity';
@@ -9,6 +9,8 @@ import { asUserId } from '../../common/branded.types';
 
 @Injectable()
 export class ReviewsService {
+  private readonly logger = new Logger(ReviewsService.name);
+
   constructor(
     @InjectRepository(Review)
     private reviewsRepository: Repository<Review>,
@@ -45,7 +47,14 @@ export class ReviewsService {
     return saved;
   }
 
-  /** Phase 153: Public — en yeni N review, reviewer+reviewee join (fullName+profileImageUrl) */
+  /** Phase 153/235: Public — en yeni N review, reviewer+reviewee join (fullName+profileImageUrl).
+   *
+   * Phase 235 defensive rewrite: minimal SELECT via QueryBuilder so missing optional
+   * columns (e.g. photos/helpfulCount/flagged) in stale prod schemas do not 500 the
+   * endpoint. LEFT JOIN tolerates NULL FK rows. Wrapped in try/catch so any unexpected
+   * runtime fault degrades gracefully to an empty list instead of a 500 on a public,
+   * homepage-critical path.
+   */
   async findRecent(limit: number): Promise<Array<{
     id: string;
     rating: number;
@@ -54,23 +63,56 @@ export class ReviewsService {
     reviewer: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
     reviewee: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
   }>> {
-    const rows = await this.reviewsRepository.find({
-      relations: ['reviewer', 'reviewee'],
-      order: { createdAt: 'DESC' },
-      take: Math.min(50, Math.max(1, limit)),
-    });
-    return rows.map((r) => ({
-      id: r.id,
-      rating: r.rating,
-      comment: r.comment ?? null,
-      createdAt: r.createdAt,
-      reviewer: r.reviewer
-        ? { id: r.reviewer.id, fullName: r.reviewer.fullName ?? null, profileImageUrl: r.reviewer.profileImageUrl ?? null }
-        : null,
-      reviewee: r.reviewee
-        ? { id: r.reviewee.id, fullName: r.reviewee.fullName ?? null, profileImageUrl: r.reviewee.profileImageUrl ?? null }
-        : null,
-    }));
+    const take = Math.min(50, Math.max(1, limit));
+    try {
+      const rows = await this.reviewsRepository
+        .createQueryBuilder('r')
+        .select([
+          'r.id',
+          'r.rating',
+          'r.comment',
+          'r.createdAt',
+          'r.reviewerId',
+          'r.revieweeId',
+        ])
+        .leftJoin('r.reviewer', 'reviewer')
+        .addSelect(['reviewer.id', 'reviewer.fullName', 'reviewer.profileImageUrl'])
+        .leftJoin('r.reviewee', 'reviewee')
+        .addSelect(['reviewee.id', 'reviewee.fullName', 'reviewee.profileImageUrl'])
+        .orderBy('r.createdAt', 'DESC')
+        .take(take)
+        .getMany();
+
+      return rows.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        comment: r.comment ?? null,
+        createdAt: r.createdAt,
+        reviewer: r.reviewer
+          ? {
+              id: r.reviewer.id,
+              fullName: r.reviewer.fullName ?? null,
+              profileImageUrl: r.reviewer.profileImageUrl ?? null,
+            }
+          : null,
+        reviewee: r.reviewee
+          ? {
+              id: r.reviewee.id,
+              fullName: r.reviewee.fullName ?? null,
+              profileImageUrl: r.reviewee.profileImageUrl ?? null,
+            }
+          : null,
+      }));
+    } catch (err) {
+      const e = err as Error;
+      this.logger.error(
+        `findRecent(${take}) failed: ${e?.message ?? String(err)}`,
+        e?.stack,
+      );
+      // Public homepage endpoint — never 500. Return empty list and surface the
+      // root cause in logs (iisnode stderr in prod).
+      return [];
+    }
   }
 
   async findByReviewee(revieweeId: string): Promise<Review[]> {
