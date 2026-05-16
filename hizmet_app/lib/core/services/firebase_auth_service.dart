@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -16,9 +15,6 @@ class FirebaseAuthService {
       : _api = apiClient ?? ApiClient();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  // Firestore retained only for flows whose backend bridge is not yet wired
-  // (social sign-in user provisioning). All other writes go through REST.
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
   final ApiClient _api;
   Dio get _dio => _api.dio;
 
@@ -110,9 +106,11 @@ class FirebaseAuthService {
   // ────────────────────────────────────────────────────────────────────────
   // Phase 191 — Google + Apple Sign-In
   // ────────────────────────────────────────────────────────────────────────
-  // The Firestore "users" doc is created on first sign-in (idempotent) so the
-  // rest of the app (chat, ratings, ustaprofile) finds a profile regardless of
-  // which provider the user came in with.
+  // Phase 225: Firestore yazımı kaldırıldı. Backend Firebase token → JWT
+  // bridge endpoint'i (örn. POST /auth/firebase) eklenince _ensureUserDoc
+  // PATCH /users/me ile gerçek profil oluşturacak. Şimdilik best-effort
+  // PATCH denenir; JWT yoksa sessizce geçilir (mevcut davranışla eşdeğer
+  // — Firestore yazımının okuyucusu zaten yoktu).
 
   /// Google Sign-In → Firebase credential.
   /// Throws [FirebaseAuthException] on Firebase errors and a generic
@@ -210,33 +208,21 @@ class FirebaseAuthService {
     String? fallbackEmail,
   }) async {
     if (user == null) return;
-    // TODO(backend): social sign-in (Google/Apple) için Firebase token →
-    // backend JWT köprü endpoint'i (örn. POST /auth/firebase) eklenince
-    // bu Firestore yazımı PATCH /users/me'ye taşınacak. Şimdilik korunuyor.
-    final ref = _db.collection('users').doc(user.uid);
-    final snap = await ref.get();
-    final now = FieldValue.serverTimestamp();
-    if (!snap.exists) {
-      await ref.set({
-        'uid': user.uid,
-        'email': user.email ?? fallbackEmail ?? '',
-        'displayName':
-            user.displayName ?? fallbackName ?? (user.email ?? 'Kullanıcı'),
-        'phone': user.phoneNumber ?? '',
-        'city': '',
-        'role': 'client',
-        'isVerified': user.emailVerified,
-        'isActive': true,
-        'authProvider': providerLabel,
-        'createdAt': now,
-        'updatedAt': now,
+    // TODO(backend Phase 226+): Firebase token → JWT bridge endpoint
+    // (POST /auth/firebase) eklenmeden bu PATCH 401 alır ve sessizce
+    // geçilir. Bridge geldiğinde sosyal sign-in kullanıcısı backend'de
+    // gerçekten provision olur.
+    final fullName =
+        user.displayName ?? fallbackName ?? (user.email ?? 'Kullanıcı');
+    final email = user.email ?? fallbackEmail ?? '';
+    try {
+      await _dio.patch<dynamic>('/users/me', data: {
+        'fullName': fullName,
+        if (email.isNotEmpty) 'email': email,
+        if ((user.phoneNumber ?? '').isNotEmpty) 'phoneNumber': user.phoneNumber,
       });
-    } else {
-      // Refresh provider + last seen on every sign-in.
-      await ref.update({
-        'authProvider': providerLabel,
-        'updatedAt': now,
-      });
+    } on DioException {
+      // JWT yok / backend henüz Firebase token tanımıyor → sessiz geç.
     }
   }
 
