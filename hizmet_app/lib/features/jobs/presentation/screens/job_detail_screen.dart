@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../data/firebase_job_repository.dart';
-import '../../data/firebase_offer_repository.dart';
+import '../../data/offer_repository.dart';
 import '../../../offers/widgets/offer_line_items_editor.dart';
 import '../../../offers/widgets/offer_template_picker.dart';
 import '../../../offers/widgets/offer_line_items_view.dart';
