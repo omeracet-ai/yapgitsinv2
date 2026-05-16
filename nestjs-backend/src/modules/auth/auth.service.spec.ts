@@ -2,6 +2,7 @@ import { asUserId } from '../../common/branded.types';
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   UnauthorizedException,
@@ -123,6 +124,13 @@ describe('AuthService.loginWithFirebase (Phase 227)', () => {
         { provide: getRepositoryToken(SmsOtp), useValue: repoMock() },
         { provide: getRepositoryToken(IpOtpLockout), useValue: repoMock() },
         { provide: CACHE_MANAGER, useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() } },
+        {
+          provide: DataSource,
+          useValue: {
+            options: { type: 'sqlite' },
+            query: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

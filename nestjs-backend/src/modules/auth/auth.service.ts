@@ -14,8 +14,8 @@ import { JwtService } from '@nestjs/jwt';
 import { User, UserRole } from '../users/user.entity';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { AuthUser } from '../../common/types/auth.types';
 import { asUserId } from '../../common/branded.types';
 import { TwoFactorService } from './two-factor.service';
@@ -62,6 +62,7 @@ export class AuthService implements OnModuleInit {
     private ipLockoutRepo: Repository<IpOtpLockout>,
     private smsService: SmsService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   /** Phase P191/4 — cache key for a user's current tokenVersion (60s TTL). */
@@ -149,43 +150,122 @@ export class AuthService implements OnModuleInit {
     return row;
   }
 
-  /** Phase 231 — Verify failure: increment per-IP counter, maybe lock. */
+  /**
+   * Phase 232 (Voldi-sec) — Atomic per-IP failure increment.
+   *
+   * Race condition fix: Phase 231'in `findOne + save` pattern'i lost-update'e
+   * açıktı (iki paralel fail aynı row'u +1'e set edebilirdi). Burada tek
+   * raw UPSERT ile atomik increment + window roll yapıyoruz:
+   *
+   *   INSERT (ip, attempts=1, windowStartedAt=now, ...)
+   *   ON CONFLICT(ip) DO UPDATE SET
+   *     attempts = CASE WHEN windowStartedAt < windowCutoff THEN 1
+   *                     ELSE attempts + 1 END,
+   *     windowStartedAt = CASE WHEN windowStartedAt < windowCutoff THEN now
+   *                             ELSE windowStartedAt END,
+   *     lockedUntil = CASE WHEN windowStartedAt < windowCutoff THEN NULL
+   *                        ELSE lockedUntil END,
+   *     updatedAt = now
+   *
+   * SQLite + Postgres aynı sözdizimi (ON CONFLICT). MySQL için ON DUPLICATE KEY.
+   * Lockout transition (attempts >= THRESHOLD → set lockedUntil) ayrı bir
+   * UPDATE — worst case iki paralel fail aynı lockedUntil'i set eder, sonuç
+   * idempotent.
+   */
   private async recordIpFailure(ip: string): Promise<void> {
     if (!ip || ip === 'unknown') return;
     const now = new Date();
-    let row = await this.ipLockoutRepo.findOne({ where: { ip } });
-    if (!row) {
-      row = this.ipLockoutRepo.create({
-        ip,
-        attempts: 1,
-        windowStartedAt: now,
-        lockedUntil: null,
-      });
+    const windowCutoff = new Date(now.getTime() - IP_LOCKOUT_WINDOW_MS);
+    const driver = this.dataSource.options.type;
+    // Raw query'lerde Date binding'i tüm driver'larda tutarlı olsun diye
+    // ISO string'e çeviriyoruz (SQLite native binding aksi halde NaN üretir).
+    const nowIso = now.toISOString();
+    const cutoffIso = windowCutoff.toISOString();
+
+    if (driver === 'mysql' || driver === 'mariadb') {
+      // MySQL ON DUPLICATE KEY UPDATE — VALUES() ile new attempts oku zor;
+      // bu yüzden alttaki dialect SQL'le ayrı dallandık.
+      await this.dataSource.query(
+        `INSERT INTO ip_otp_lockouts (ip, attempts, windowStartedAt, lockedUntil, createdAt, updatedAt)
+         VALUES (?, 1, ?, NULL, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           attempts = IF(windowStartedAt < ?, 1, attempts + 1),
+           windowStartedAt = IF(windowStartedAt < ?, ?, windowStartedAt),
+           lockedUntil = IF(windowStartedAt < ?, NULL, lockedUntil),
+           updatedAt = ?`,
+        [
+          ip,
+          nowIso,
+          nowIso,
+          nowIso,
+          cutoffIso,
+          cutoffIso,
+          nowIso,
+          cutoffIso,
+          nowIso,
+        ],
+      );
     } else {
-      // Pencere bitmişse sıfırla
-      if (row.windowStartedAt.getTime() + IP_LOCKOUT_WINDOW_MS <= now.getTime()) {
-        row.attempts = 1;
-        row.windowStartedAt = now;
-        row.lockedUntil = null;
-      } else {
-        row.attempts += 1;
-      }
-      if (row.attempts >= IP_LOCKOUT_THRESHOLD) {
-        row.lockedUntil = new Date(now.getTime() + IP_LOCKOUT_DURATION_MS);
-      }
+      // SQLite + Postgres: ON CONFLICT
+      // Param placeholder: SQLite ?, Postgres $1.$2... — TypeORM driver
+      // her ikisinde de '?' kabul edip otomatik dönüştürür raw query'lerde
+      // (postgres driver `?` → `$n` çevirisi yapar).
+      await this.dataSource.query(
+        `INSERT INTO ip_otp_lockouts ("ip", "attempts", "windowStartedAt", "lockedUntil", "createdAt", "updatedAt")
+         VALUES (?, 1, ?, NULL, ?, ?)
+         ON CONFLICT ("ip") DO UPDATE SET
+           "attempts" = CASE WHEN ip_otp_lockouts."windowStartedAt" < ?
+                              THEN 1
+                              ELSE ip_otp_lockouts."attempts" + 1 END,
+           "windowStartedAt" = CASE WHEN ip_otp_lockouts."windowStartedAt" < ?
+                                     THEN ?
+                                     ELSE ip_otp_lockouts."windowStartedAt" END,
+           "lockedUntil" = CASE WHEN ip_otp_lockouts."windowStartedAt" < ?
+                                 THEN NULL
+                                 ELSE ip_otp_lockouts."lockedUntil" END,
+           "updatedAt" = ?`,
+        [
+          ip,
+          nowIso,
+          nowIso,
+          nowIso,
+          cutoffIso,
+          cutoffIso,
+          nowIso,
+          cutoffIso,
+          nowIso,
+        ],
+      );
     }
-    await this.ipLockoutRepo.save(row);
+
+    // Threshold check — atomik increment'ten sonra fresh oku, gerekirse kilitle.
+    const fresh = await this.ipLockoutRepo.findOne({ where: { ip } });
+    if (
+      fresh &&
+      fresh.attempts >= IP_LOCKOUT_THRESHOLD &&
+      (!fresh.lockedUntil || fresh.lockedUntil.getTime() <= now.getTime())
+    ) {
+      await this.ipLockoutRepo.update(
+        { ip },
+        { lockedUntil: new Date(now.getTime() + IP_LOCKOUT_DURATION_MS) },
+      );
+    }
   }
 
-  /** Phase 231 — Meşru başarı → sayaç sıfırla. */
+  /**
+   * Phase 231 — Meşru başarı → sayaç sıfırla.
+   * Phase 232: tek atomik UPDATE'e dönüştürüldü (findOne+save → update).
+   */
   private async resetIpCounter(ip: string): Promise<void> {
     if (!ip || ip === 'unknown') return;
-    const row = await this.ipLockoutRepo.findOne({ where: { ip } });
-    if (!row) return;
-    row.attempts = 0;
-    row.lockedUntil = null;
-    row.windowStartedAt = new Date();
-    await this.ipLockoutRepo.save(row);
+    await this.ipLockoutRepo.update(
+      { ip },
+      {
+        attempts: 0,
+        lockedUntil: null,
+        windowStartedAt: new Date(),
+      },
+    );
   }
 
   async verifySmsOtp(phoneNumber: string, code: string, sourceIp = 'unknown') {

@@ -26,12 +26,14 @@ import { AppModule } from '../src/app.module';
 import { AuthService } from '../src/modules/auth/auth.service';
 import { SmsOtp } from '../src/modules/auth/sms-otp.entity';
 import { IpOtpLockout } from '../src/modules/auth/ip-otp-lockout.entity';
+import { IpOtpLockoutCleanupService } from '../src/modules/auth/ip-otp-lockout-cleanup.service';
 
 describe('DB-level per-IP OTP lockout (e2e — Phase 231)', () => {
   let app: INestApplication;
   let auth: AuthService;
   let smsRepo: Repository<SmsOtp>;
   let lockoutRepo: Repository<IpOtpLockout>;
+  let cleanup: IpOtpLockoutCleanupService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -42,6 +44,7 @@ describe('DB-level per-IP OTP lockout (e2e — Phase 231)', () => {
     auth = app.get(AuthService);
     smsRepo = app.get(getRepositoryToken(SmsOtp));
     lockoutRepo = app.get(getRepositoryToken(IpOtpLockout));
+    cleanup = app.get(IpOtpLockoutCleanupService);
   });
 
   afterAll(async () => {
@@ -180,5 +183,59 @@ describe('DB-level per-IP OTP lockout (e2e — Phase 231)', () => {
     // After success, counter+lockout cleared
     expect(row?.attempts).toBe(0);
     expect(row?.lockedUntil).toBeNull();
+  });
+
+  /**
+   * Phase 232 — Cleanup cron: idle row sil, kilitli row koru.
+   */
+  it('5. cleanup cron removes idle rows, preserves locked ones (Phase 232)', async () => {
+    const idleIp = `10.232.${Math.floor(Math.random() * 250) + 1}.10`;
+    const lockedIp = `10.232.${Math.floor(Math.random() * 250) + 1}.20`;
+    const freshIdleIp = `10.232.${Math.floor(Math.random() * 250) + 1}.30`;
+    const veryOldFakeDate = new Date(Date.now() - 48 * 60 * 60_000); // 48h ago
+
+    // 1) Idle (24h+) ve kilitsiz — silinmeli
+    await lockoutRepo.save(
+      lockoutRepo.create({
+        ip: idleIp,
+        attempts: 3,
+        windowStartedAt: veryOldFakeDate,
+        lockedUntil: null,
+      }),
+    );
+    // updatedAt'i geriye al (TypeORM UpdateDateColumn auto, manuel update gerek)
+    await lockoutRepo.query(
+      `UPDATE ip_otp_lockouts SET "updatedAt" = ? WHERE "ip" = ?`,
+      [veryOldFakeDate.toISOString(), idleIp],
+    );
+
+    // 2) Halen kilitli — korunmalı
+    await lockoutRepo.save(
+      lockoutRepo.create({
+        ip: lockedIp,
+        attempts: 20,
+        windowStartedAt: veryOldFakeDate,
+        lockedUntil: new Date(Date.now() + 60 * 60_000), // 1h ahead
+      }),
+    );
+
+    // 3) Yeni (idle değil) — korunmalı
+    await lockoutRepo.save(
+      lockoutRepo.create({
+        ip: freshIdleIp,
+        attempts: 2,
+        windowStartedAt: new Date(),
+        lockedUntil: null,
+      }),
+    );
+
+    const removed = await cleanup.runNow();
+    expect(removed).toBeGreaterThanOrEqual(1);
+
+    expect(await lockoutRepo.findOne({ where: { ip: idleIp } })).toBeNull();
+    expect(await lockoutRepo.findOne({ where: { ip: lockedIp } })).toBeTruthy();
+    expect(
+      await lockoutRepo.findOne({ where: { ip: freshIdleIp } }),
+    ).toBeTruthy();
   });
 });

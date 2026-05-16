@@ -13,6 +13,7 @@ import { SmsOtp } from './sms-otp.entity';
 import { IpOtpLockout } from './ip-otp-lockout.entity';
 import { SmsModule } from '../sms/sms.module';
 import { getJwtSigningSecret } from './jwt-secrets';
+import { IpOtpLockoutCleanupService } from './ip-otp-lockout-cleanup.service';
 
 @Module({
   imports: [
@@ -31,8 +32,13 @@ import { getJwtSigningSecret } from './jwt-secrets';
       useFactory: () => ({ secret: getJwtSigningSecret() }),
     }),
   ],
-  providers: [AuthService, JwtStrategy, TwoFactorService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    TwoFactorService,
+    IpOtpLockoutCleanupService,
+  ],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, IpOtpLockoutCleanupService],
 })
 export class AuthModule {}
