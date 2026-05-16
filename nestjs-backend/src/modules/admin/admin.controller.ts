@@ -1,5 +1,7 @@
 import { Controller, Get, Patch, Post, Delete, Body, Param, Query, UseGuards, UseInterceptors, Req, Res, NotFoundException } from '@nestjs/common';
-import { SkipThrottle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { EmailService } from '../email/email.service';
+import { EmailTestDto } from './dto/email-test.dto';
 import { Audit } from '../admin-audit/audit.decorator';
 import { AuditInterceptor } from '../admin-audit/audit.interceptor';
 import type { Response } from 'express';
@@ -53,7 +55,27 @@ export class AdminController {
     private readonly insuranceSvc: WorkerInsuranceService,
     private readonly certificationSvc: WorkerCertificationService,
     private readonly dataPrivacy: DataPrivacyService,
+    private readonly emailService: EmailService,
   ) {}
+
+  // ── Phase 246 — SMTP diagnostic ───────────────────────────────────
+  @Audit('email.test')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('email-test')
+  async emailTest(@Body() body: EmailTestDto) {
+    const host = process.env.SMTP_HOST ?? '';
+    const port = process.env.SMTP_PORT ?? '587';
+    const transporterLabel = `${host}:${port}`;
+    const stamp = new Date().toISOString();
+    const html = `<p><b>Yapgitsin SMTP diagnostic</b></p>
+       <p>Timestamp: ${stamp}</p>
+       <p>Transporter: <code>${transporterLabel}</code></p>
+       <p style="color:#6b7280">Bu mesaj bir tanılama gönderimidir — başka anlamı yoktur.</p>`;
+    const text = `Yapgitsin SMTP diagnostic\nTimestamp: ${stamp}\nTransporter: ${transporterLabel}\nBu bir tanılama gönderimidir.`;
+    const result = await this.emailService.sendRaw(body.to, 'Yapgitsin SMTP test', html, text);
+    if (result.ok) return { sent: true, transporter: result.transporter };
+    return { sent: false, reason: result.error, transporter: result.transporter };
+  }
 
   // ── Phase 159: Worker certifications verify queue ─────────────────
   @Get('certifications')

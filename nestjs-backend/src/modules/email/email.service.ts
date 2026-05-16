@@ -80,6 +80,36 @@ export class EmailService implements OnModuleInit {
     this.logger.log(`Email enabled — ${host}:${port} (secure=${secure})`);
   }
 
+  /** Phase 246 — diagnostic raw send. Returns result instead of swallowing. */
+  async sendRaw(
+    to: string,
+    subject: string,
+    html: string,
+    text?: string,
+  ): Promise<{ ok: boolean; error?: string; transporter?: string }> {
+    const host = process.env.SMTP_HOST ?? '';
+    const port = process.env.SMTP_PORT ?? '587';
+    const transporterLabel = `${host}:${port}`;
+    if (!this.transporter) {
+      return { ok: false, error: 'transporter not configured (SMTP_HOST missing)', transporter: transporterLabel };
+    }
+    if (!to) return { ok: false, error: 'recipient empty', transporter: transporterLabel };
+    try {
+      await this.transporter.sendMail({
+        from: this.from,
+        to,
+        subject,
+        html,
+        text: text ?? htmlToText(html),
+      });
+      return { ok: true, transporter: transporterLabel };
+    } catch (err) {
+      const msg = (err as Error).message;
+      this.logger.error(`sendRaw failed to ${to}: ${msg}`);
+      return { ok: false, error: msg, transporter: transporterLabel };
+    }
+  }
+
   async send(to: string, subject: string, html: string, text?: string): Promise<void> {
     if (!this.transporter) return;
     if (!to) return;
