@@ -35,7 +35,6 @@ class AppTheme {
         primary: AppColors.primary,
         secondary: AppColors.primary,
         surface: AppColors.lightSurface,
-        background: AppColors.lightBackground,
         error: AppColors.error,
         onPrimary: Colors.black,
         onSurface: AppColors.lightText,
@@ -91,7 +90,7 @@ class AppTheme {
             height: 1.1,
           ),
         ).copyWith(
-          overlayColor: MaterialStateProperty.all(Colors.white.withOpacity(0.1)),
+          overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.1)),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -237,7 +236,6 @@ class AppTheme {
         primary: AppColors.darkPrimary,
         secondary: AppColors.darkPrimary,
         surface: AppColors.darkSurface,
-        background: AppColors.darkBackground,
         error: AppColors.error,
         onPrimary: Colors.black,
         onSurface: AppColors.darkText,
@@ -291,7 +289,7 @@ class AppTheme {
             height: 1.1,
           ),
         ).copyWith(
-          overlayColor: MaterialStateProperty.all(Colors.black.withOpacity(0.1)),
+          overlayColor: WidgetStateProperty.all(Colors.black.withValues(alpha: 0.1)),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(

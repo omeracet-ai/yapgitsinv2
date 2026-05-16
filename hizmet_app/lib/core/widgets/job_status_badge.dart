@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
 enum JobStatus { open, inProgress, completed, cancelled }
 
-/// Premium Dark Soft status pill — temp3.jpg style.
-/// Yeşil/sarı/gri/kırmızı renk mapping; soft tint + ince border.
+/// Premium Dark Soft status pill â€” temp3.jpg style.
+/// YeÅŸil/sarÄ±/gri/kÄ±rmÄ±zÄ± renk mapping; soft tint + ince border.
 class JobStatusBadge extends StatelessWidget {
   final JobStatus status;
   final double fontSize;
@@ -17,11 +17,11 @@ class JobStatusBadge extends StatelessWidget {
 
   factory JobStatusBadge.fromString(String? raw, {double fontSize = 11}) {
     final s = switch ((raw ?? '').toUpperCase()) {
-      'OPEN' || 'AÇIK' || 'YENİ' => JobStatus.open,
-      'IN_PROGRESS' || 'ASSIGNED' || 'ATANDI' || 'BEKLİYOR' =>
+      'OPEN' || 'AÃ‡IK' || 'YENÄ°' => JobStatus.open,
+      'IN_PROGRESS' || 'ASSIGNED' || 'ATANDI' || 'BEKLÄ°YOR' =>
         JobStatus.inProgress,
       'COMPLETED' || 'TAMAMLANDI' => JobStatus.completed,
-      'CANCELLED' || 'İPTAL' => JobStatus.cancelled,
+      'CANCELLED' || 'Ä°PTAL' => JobStatus.cancelled,
       _ => JobStatus.open,
     };
     return JobStatusBadge(status: s, fontSize: fontSize);
@@ -30,10 +30,10 @@ class JobStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      JobStatus.open       => ('YENİ',       AppColors.statusOpen),
-      JobStatus.inProgress => ('BEKLİYOR',   AppColors.statusPending),
+      JobStatus.open       => ('YENÄ°',       AppColors.statusOpen),
+      JobStatus.inProgress => ('BEKLÄ°YOR',   AppColors.statusPending),
       JobStatus.completed  => ('TAMAMLANDI', AppColors.statusClosed),
-      JobStatus.cancelled  => ('İPTAL',      AppColors.statusError),
+      JobStatus.cancelled  => ('Ä°PTAL',      AppColors.statusError),
     };
 
     return Container(
@@ -42,9 +42,9 @@ class JobStatusBadge extends StatelessWidget {
         vertical: fontSize * 0.4,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: color.withOpacity(0.30), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.30), width: 1),
       ),
       child: Text(
         label,
@@ -59,7 +59,7 @@ class JobStatusBadge extends StatelessWidget {
   }
 }
 
-/// Çevrimiçi rozeti (temp1.jpg "● 12.483 usta şu an çevrimiçi" stili).
+/// Ã‡evrimiÃ§i rozeti (temp1.jpg "â— 12.483 usta ÅŸu an Ã§evrimiÃ§i" stili).
 class OnlineCountBadge extends StatelessWidget {
   final String text;
   const OnlineCountBadge({super.key, required this.text});
@@ -69,9 +69,9 @@ class OnlineCountBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.12),
+        color: AppColors.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.primary.withOpacity(0.30)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.30)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

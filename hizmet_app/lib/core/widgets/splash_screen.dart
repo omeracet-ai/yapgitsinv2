@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../../features/onboarding/data/onboarding_storage.dart';
 
-/// Premium Dark Soft splash — "Y" yeşil rounded + "yapgitsin." lowercase.
+/// Premium Dark Soft splash â€” "Y" yeÅŸil rounded + "yapgitsin." lowercase.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -64,8 +64,8 @@ class _SplashScreenState extends State<SplashScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.primary.withOpacity(0.15),
-                    AppColors.primary.withOpacity(0.0),
+                    AppColors.primary.withValues(alpha: 0.15),
+                    AppColors.primary.withValues(alpha: 0.0),
                   ],
                 ),
               ),
@@ -88,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen>
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.30),
+                            color: AppColors.primary.withValues(alpha: 0.30),
                             blurRadius: 32,
                             spreadRadius: 2,
                           ),
@@ -118,7 +118,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'PREMIUM HİZMET PLATFORMU',
+                      'PREMIUM HÄ°ZMET PLATFORMU',
                       style: GoogleFonts.inter(
                         color: AppColors.textMuted,
                         fontSize: 10,
