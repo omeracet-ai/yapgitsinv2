@@ -11,6 +11,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
+import { FirebaseLoginDto } from './dto/firebase-login.dto';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @Controller('auth')
@@ -42,8 +43,8 @@ export class AuthController {
    */
   @Throttle({ 'auth-login': { limit: 20, ttl: 60_000 } })
   @Post('firebase')
-  async firebaseLogin(@Body() body: { idToken: string }) {
-    return this.authService.loginWithFirebase(body?.idToken);
+  async firebaseLogin(@Body() dto: FirebaseLoginDto) {
+    return this.authService.loginWithFirebase(dto.idToken);
   }
 
   /**

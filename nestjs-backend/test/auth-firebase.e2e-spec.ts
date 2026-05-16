@@ -6,7 +6,7 @@
  *
  * Cases:
  *   1. 200 happy path (new user)            — provider, tokens, no passwordHash
- *   2. 401 missing idToken (empty body)     — controller forwards undefined → service throws
+ *   2. 400 missing/empty idToken            — ValidationPipe (Phase 229B FirebaseLoginDto)
  *   3. 401 invalid token                    — verifyIdToken rejects
  *   4. 401 firebase creds missing           — FIREBASE_SERVICE_ACCOUNT_JSON unset
  *   5. 403 suspended user                   — existing user.suspended=true
@@ -14,6 +14,7 @@
  *   7. Content-Type non-JSON                — body sent as text/plain → 400/401
  *   8. Email link path                      — existing email user gets firebaseUid set, same id
  *   9. New user creation                    — placeholder phone "firebase:<uid>"
+ *  10. 400 wrong type / oversized           — Phase 229B IsString + MaxLength(4096) guard
  */
 
 // ── firebase-admin virtual mock (must come BEFORE module imports) ───────────
@@ -129,21 +130,24 @@ describe('POST /auth/firebase (e2e — Phase 228)', () => {
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  it('2. missing idToken → 401 (service rejects undefined)', async () => {
+  it('2. missing/empty idToken → 400 (Phase 229B FirebaseLoginDto)', async () => {
+    // Empty string fails @IsNotEmpty
     const r1 = await http()
       .post('/auth/firebase')
       .set('X-Forwarded-For', nextIp())
       .send({ idToken: '' })
-      .expect(401);
-    expect(r1.body.message).toMatch(/Firebase ID token gerekli/);
+      .expect(400);
+    expect(JSON.stringify(r1.body)).toMatch(/idToken/);
 
+    // Missing key fails @IsString + @IsNotEmpty
     const r2 = await http()
       .post('/auth/firebase')
       .set('X-Forwarded-For', nextIp())
       .send({})
-      .expect(401);
-    expect(r2.body.message).toMatch(/Firebase ID token gerekli/);
+      .expect(400);
+    expect(JSON.stringify(r2.body)).toMatch(/idToken/);
 
+    // ValidationPipe rejects before service is touched.
     expect(verifyIdTokenMock).not.toHaveBeenCalled();
   });
 
@@ -222,16 +226,19 @@ describe('POST /auth/firebase (e2e — Phase 228)', () => {
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  it('6. throttle: rapid same-IP requests eventually return 429', async () => {
+  it('6. throttle: /auth/firebase honors auth-login bucket (20/min per IP)', async () => {
     // Use a dedicated, RFC5737 IP so this test's bucket is fully isolated.
     const ip = `192.0.2.${(Date.now() % 250) + 1}`;
     // Make verifyIdToken always reject — we only care about throttle, not 200s.
     verifyIdTokenMock.mockRejectedValue(new Error('throttle-probe'));
 
-    // Fire 21 requests. The effective per-route limit is min of all named
-    // throttlers (auth-login:20 + auth-register:10 + others); we just assert
-    // SOME request in the burst returns 429 and earlier ones do not, proving
-    // the global ThrottlerGuard is wired in front of /auth/firebase.
+    // Phase 229A: effective per-route limit on /auth/firebase is `auth-login`
+    // (20/60s) — the most-restrictive of all named buckets after we neutered
+    // the global auth-register/auth-login/uploads ceilings.
+    //
+    // Assertions:
+    //   - First 20 requests must NOT be 429 (bucket capacity)
+    //   - The 21st request MUST be 429 (bucket exhausted)
     const statuses: number[] = [];
     for (let i = 0; i < 21; i++) {
       const r = await http()
@@ -241,10 +248,10 @@ describe('POST /auth/firebase (e2e — Phase 228)', () => {
       statuses.push(r.status);
     }
 
-    expect(statuses[0]).not.toBe(429);
-    expect(statuses.some((s) => s === 429)).toBe(true);
-    // Last request must be throttled (well past every configured limit).
-    expect(statuses[statuses.length - 1]).toBe(429);
+    // First 20 must be below the limit — none should be 429.
+    expect(statuses.slice(0, 20).every((s) => s !== 429)).toBe(true);
+    // The 21st request crosses the auth-login cap → exact 429.
+    expect(statuses[20]).toBe(429);
   });
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -334,5 +341,27 @@ describe('POST /auth/firebase (e2e — Phase 228)', () => {
     const row = await repo.findOne({ where: { firebaseUid: uid } });
     expect(row).toBeTruthy();
     expect(row!.phoneNumber.startsWith('firebase:')).toBe(true);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  it('10. wrong type / oversized idToken → 400 (Phase 229B validation)', async () => {
+    // number instead of string → @IsString fail
+    const r1 = await http()
+      .post('/auth/firebase')
+      .set('X-Forwarded-For', nextIp())
+      .send({ idToken: 12345 })
+      .expect(400);
+    expect(JSON.stringify(r1.body)).toMatch(/idToken/);
+
+    // 5000-char string → @MaxLength(4096) fail
+    const r2 = await http()
+      .post('/auth/firebase')
+      .set('X-Forwarded-For', nextIp())
+      .send({ idToken: 'x'.repeat(5000) })
+      .expect(400);
+    expect(JSON.stringify(r2.body)).toMatch(/idToken/);
+
+    // verifyIdToken must NOT have been called — guard happens at pipe level.
+    expect(verifyIdTokenMock).not.toHaveBeenCalled();
   });
 });
