@@ -5,7 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 const _prefsKey = 'theme_mode';
 
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier() : super(ThemeMode.system) {
+  // LIGHT_THEME_INCOMPLETE: forced to dark until app_theme.dart lightTheme is fleshed out. Remove this guard + restore ThemeMode.system when lightTheme covers inputDecoration/card/appBar/divider.
+  ThemeModeNotifier() : super(ThemeMode.dark) {
     _load();
   }
 
@@ -46,8 +47,11 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
         return ThemeMode.light;
       case 'dark':
         return ThemeMode.dark;
-      default:
+      case 'system':
         return ThemeMode.system;
+      default:
+        // LIGHT_THEME_INCOMPLETE: no saved pref → dark (not system) until lightTheme is complete.
+        return ThemeMode.dark;
     }
   }
 }
