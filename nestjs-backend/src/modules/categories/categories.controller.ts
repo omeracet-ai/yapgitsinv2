@@ -54,6 +54,18 @@ export class CategoriesController {
     return this.searchSvc.searchCategories(q ?? '', lim);
   }
 
+  /**
+   * Phase 238B — Kategori ağacı (group bazlı hiyerarşi).
+   * NOT: Bu route MUTLAKA @Get(':id')'den ÖNCE tanımlı olmalı,
+   * aksi halde Nest 'tree' kelimesini id parametresi olarak yorumlar.
+   */
+  @SkipThrottle()
+  @Get('tree')
+  @CacheTTL(CATEGORIES_LIST_TTL)
+  tree() {
+    return this.svc.findTree();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.svc.findOne(id);

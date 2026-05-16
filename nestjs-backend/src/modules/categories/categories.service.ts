@@ -217,6 +217,26 @@ export class CategoriesService implements OnModuleInit {
     });
   }
 
+  /**
+   * Phase 238B — Kategori ağacı: group alanına göre 2 seviyeli hiyerarşi.
+   * { group, children: Category[] }[]
+   */
+  async findTree(): Promise<
+    { group: string; children: Category[] }[]
+  > {
+    const cats = await this.findAll();
+    const map = new Map<string, Category[]>();
+    for (const c of cats) {
+      const g = c.group ?? 'Diğer';
+      if (!map.has(g)) map.set(g, []);
+      map.get(g)!.push(c);
+    }
+    return Array.from(map.entries()).map(([group, children]) => ({
+      group,
+      children,
+    }));
+  }
+
   /** Admin: tüm kategoriler (aktif + pasif) */
   findAllIncludingInactive(): Promise<Category[]> {
     return this.repo.find({

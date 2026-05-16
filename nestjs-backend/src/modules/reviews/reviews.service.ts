@@ -116,20 +116,126 @@ export class ReviewsService {
     }
   }
 
-  async findByReviewee(revieweeId: string): Promise<Review[]> {
-    return this.reviewsRepository.find({
-      where: { revieweeId },
-      relations: ['reviewer'],
-      order: { createdAt: 'DESC' },
-    });
+  /** Phase 238A defensive guard: prod schemas may lack optional columns
+   * (replyText/repliedAt/photos/helpfulCount/flagged/flagReason/fraudScore/deletedAt)
+   * or contain NULL FK rows. Minimal SELECT + LEFT JOIN + try/catch → never 500.
+   * Returns the same minimal projection shape used by findRecent for app/web parity.
+   */
+  async findByReviewee(revieweeId: string): Promise<Array<{
+    id: string;
+    rating: number;
+    comment: string | null;
+    createdAt: Date;
+    reviewer: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
+    reviewee: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
+  }>> {
+    try {
+      const rows = await this.reviewsRepository
+        .createQueryBuilder('r')
+        .select([
+          'r.id',
+          'r.rating',
+          'r.comment',
+          'r.createdAt',
+          'r.reviewerId',
+          'r.revieweeId',
+        ])
+        .leftJoin('r.reviewer', 'reviewer')
+        .addSelect(['reviewer.id', 'reviewer.fullName', 'reviewer.profileImageUrl'])
+        .leftJoin('r.reviewee', 'reviewee')
+        .addSelect(['reviewee.id', 'reviewee.fullName', 'reviewee.profileImageUrl'])
+        .where('r.revieweeId = :revieweeId', { revieweeId })
+        .orderBy('r.createdAt', 'DESC')
+        .take(100)
+        .getMany();
+
+      return rows.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        comment: r.comment ?? null,
+        createdAt: r.createdAt,
+        reviewer: r.reviewer
+          ? {
+              id: r.reviewer.id,
+              fullName: r.reviewer.fullName ?? null,
+              profileImageUrl: r.reviewer.profileImageUrl ?? null,
+            }
+          : null,
+        reviewee: r.reviewee
+          ? {
+              id: r.reviewee.id,
+              fullName: r.reviewee.fullName ?? null,
+              profileImageUrl: r.reviewee.profileImageUrl ?? null,
+            }
+          : null,
+      }));
+    } catch (err) {
+      const e = err as Error;
+      this.logger.error(
+        `findByReviewee(${revieweeId}) failed: ${e?.message ?? String(err)}`,
+        e?.stack,
+      );
+      return [];
+    }
   }
 
-  async findByJob(jobId: string): Promise<Review[]> {
-    return this.reviewsRepository.find({
-      where: { jobId },
-      relations: ['reviewer', 'reviewee'],
-      order: { createdAt: 'DESC' },
-    });
+  /** Phase 238A defensive guard (see findByReviewee). */
+  async findByJob(jobId: string): Promise<Array<{
+    id: string;
+    rating: number;
+    comment: string | null;
+    createdAt: Date;
+    reviewer: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
+    reviewee: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
+  }>> {
+    try {
+      const rows = await this.reviewsRepository
+        .createQueryBuilder('r')
+        .select([
+          'r.id',
+          'r.rating',
+          'r.comment',
+          'r.createdAt',
+          'r.reviewerId',
+          'r.revieweeId',
+        ])
+        .leftJoin('r.reviewer', 'reviewer')
+        .addSelect(['reviewer.id', 'reviewer.fullName', 'reviewer.profileImageUrl'])
+        .leftJoin('r.reviewee', 'reviewee')
+        .addSelect(['reviewee.id', 'reviewee.fullName', 'reviewee.profileImageUrl'])
+        .where('r.jobId = :jobId', { jobId })
+        .orderBy('r.createdAt', 'DESC')
+        .take(100)
+        .getMany();
+
+      return rows.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        comment: r.comment ?? null,
+        createdAt: r.createdAt,
+        reviewer: r.reviewer
+          ? {
+              id: r.reviewer.id,
+              fullName: r.reviewer.fullName ?? null,
+              profileImageUrl: r.reviewer.profileImageUrl ?? null,
+            }
+          : null,
+        reviewee: r.reviewee
+          ? {
+              id: r.reviewee.id,
+              fullName: r.reviewee.fullName ?? null,
+              profileImageUrl: r.reviewee.profileImageUrl ?? null,
+            }
+          : null,
+      }));
+    } catch (err) {
+      const e = err as Error;
+      this.logger.error(
+        `findByJob(${jobId}) failed: ${e?.message ?? String(err)}`,
+        e?.stack,
+      );
+      return [];
+    }
   }
 
   /** Phase 212: review'a fotoğraf ekle (max 3, sadece review sahibi) */
