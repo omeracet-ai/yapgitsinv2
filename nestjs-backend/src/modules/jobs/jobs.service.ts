@@ -173,34 +173,45 @@ export class JobsService {
     const limit = filters?.limit ?? 20;
     const page = filters?.page ?? 1;
 
-    const query = this.jobsRepository.createQueryBuilder('job');
+    // Phase 243 — defensive guard: public homepage feed must never 500 on
+    // stale-schema / NULL-relation / migration-drift conditions in prod.
+    try {
+      const query = this.jobsRepository.createQueryBuilder('job');
 
-    if (filters?.category) {
-      query.andWhere('job.category = :category', { category: filters.category });
-    }
-    if (filters?.status) {
-      query.andWhere('job.status = :status', { status: filters.status });
-    }
-    if (filters?.customerId) {
-      query.andWhere('job.customerId = :customerId', { customerId: filters.customerId });
-    }
-    if (filters?.q && filters.q.trim().length > 0) {
-      const q = `%${filters.q.trim().toLowerCase()}%`;
-      query.andWhere(
-        '(LOWER(job.title) LIKE :q OR LOWER(job.description) LIKE :q)',
-        { q },
+      if (filters?.category) {
+        query.andWhere('job.category = :category', { category: filters.category });
+      }
+      if (filters?.status) {
+        query.andWhere('job.status = :status', { status: filters.status });
+      }
+      if (filters?.customerId) {
+        query.andWhere('job.customerId = :customerId', { customerId: filters.customerId });
+      }
+      if (filters?.q && filters.q.trim().length > 0) {
+        const q = `%${filters.q.trim().toLowerCase()}%`;
+        query.andWhere(
+          '(LOWER(job.title) LIKE :q OR LOWER(job.description) LIKE :q)',
+          { q },
+        );
+      }
+
+      query
+        .orderBy('CASE WHEN job.featuredOrder IS NOT NULL THEN 0 ELSE 1 END', 'ASC')
+        .addOrderBy('job.featuredOrder', 'ASC')
+        .addOrderBy('job.createdAt', 'DESC')
+        .skip((page - 1) * limit)
+        .take(limit);
+
+      const [data, total] = await query.getManyAndCount();
+      return { data, total, page, limit, pages: Math.ceil(total / limit) };
+    } catch (err) {
+      const e = err as Error;
+      this.logger.error(
+        `findAll(${JSON.stringify(filters ?? {})}) failed: ${e?.message ?? String(err)}`,
+        e?.stack,
       );
+      return { data: [], total: 0, page, limit, pages: 0 };
     }
-
-    query
-      .orderBy('CASE WHEN job.featuredOrder IS NOT NULL THEN 0 ELSE 1 END', 'ASC')
-      .addOrderBy('job.featuredOrder', 'ASC')
-      .addOrderBy('job.createdAt', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit);
-
-    const [data, total] = await query.getManyAndCount();
-    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   async setFeaturedOrder(
@@ -626,34 +637,55 @@ export class JobsService {
     radiusKm: number = 20,
     category?: string,
   ): Promise<(Job & { distanceKm: number })[]> {
-    // SQLite positional params — dataSource.query() uses ? placeholders
-    const haversine = `(6371 * acos(
-      cos(radians(?)) * cos(radians(j.latitude)) *
-      cos(radians(j.longitude) - radians(?)) +
-      sin(radians(?)) * sin(radians(j.latitude))
-    ))`;
-
-    let sql = `
-      SELECT j.*, ${haversine} AS distanceKm
-      FROM jobs j
-      WHERE j.latitude IS NOT NULL
-        AND j.longitude IS NOT NULL
-        AND j.status = 'open'
-        AND ${haversine} <= ?
-    `;
-
-    // lat, lng appear twice (distance calc + WHERE), radiusKm at end
-    const params: unknown[] = [lat, lng, lat, lat, lng, lat, radiusKm];
-
-    if (category) {
-      sql += ` AND LOWER(j.category) = LOWER(?)`;
-      params.push(category);
+    // Phase 243 — defensive guard: invalid coordinates or stale schema must
+    // degrade to empty list rather than 500 on this public geo endpoint.
+    if (
+      lat == null ||
+      lng == null ||
+      typeof lat !== 'number' ||
+      typeof lng !== 'number' ||
+      isNaN(lat) ||
+      isNaN(lng)
+    ) {
+      return [];
     }
+    try {
+      // SQLite positional params — dataSource.query() uses ? placeholders
+      const haversine = `(6371 * acos(
+        cos(radians(?)) * cos(radians(j.latitude)) *
+        cos(radians(j.longitude) - radians(?)) +
+        sin(radians(?)) * sin(radians(j.latitude))
+      ))`;
 
-    sql += ` ORDER BY distanceKm ASC LIMIT 50`;
+      let sql = `
+        SELECT j.*, ${haversine} AS distanceKm
+        FROM jobs j
+        WHERE j.latitude IS NOT NULL
+          AND j.longitude IS NOT NULL
+          AND j.status = 'open'
+          AND ${haversine} <= ?
+      `;
 
-    const rows = await this.dataSource.query(sql, params);
-    return rows as (Job & { distanceKm: number })[];
+      // lat, lng appear twice (distance calc + WHERE), radiusKm at end
+      const params: unknown[] = [lat, lng, lat, lat, lng, lat, radiusKm];
+
+      if (category) {
+        sql += ` AND LOWER(j.category) = LOWER(?)`;
+        params.push(category);
+      }
+
+      sql += ` ORDER BY distanceKm ASC LIMIT 50`;
+
+      const rows = await this.dataSource.query(sql, params);
+      return rows as (Job & { distanceKm: number })[];
+    } catch (err) {
+      const e = err as Error;
+      this.logger.error(
+        `findNearby(lat=${lat},lng=${lng},r=${radiusKm},cat=${category ?? ''}) failed: ${e?.message ?? String(err)}`,
+        e?.stack,
+      );
+      return [];
+    }
   }
 
   async remove(id: string, requesterId?: string): Promise<void> {

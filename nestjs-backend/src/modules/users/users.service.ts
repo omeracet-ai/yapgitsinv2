@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, UnauthorizedException, forwardRef } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -30,6 +30,8 @@ export type StatField =
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(User)
     private repo: Repository<User>,
@@ -179,9 +181,13 @@ export class UsersService {
     const page = Math.max(1, opts.page ?? 1);
     const limit = Math.min(100, Math.max(1, opts.limit ?? 20));
 
-    const qb = this.repo
-      .createQueryBuilder('u')
-      .where("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'");
+    // Phase 243 — defensive guard: public worker directory must never 500 on
+    // schema-drift / missing-column / NULL-relation. Inner IIFE keeps original
+    // control flow intact; any unexpected throw degrades to empty page.
+    try {
+      const qb = this.repo
+        .createQueryBuilder('u')
+        .where("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'");
 
     // availableOnly default true to preserve existing behavior unless explicitly false
     if (opts.availableOnly !== false) {
@@ -312,6 +318,20 @@ export class UsersService {
 
     const [data, total] = await qb.getManyAndCount();
     return { data, total, page, limit, pages: Math.ceil(total / limit) || 0 };
+    } catch (err) {
+      const e = err as Error;
+      this.logger.error(
+        `findWorkersAdvanced(${JSON.stringify({
+          category: opts.category,
+          city: opts.city,
+          sortBy: opts.sortBy,
+          page,
+          limit,
+        })}) failed: ${e?.message ?? String(err)}`,
+        e?.stack,
+      );
+      return { data: [], total: 0, page, limit, pages: 0 };
+    }
   }
 
   create(userData: Partial<User>): Promise<User> {
@@ -463,6 +483,18 @@ export class UsersService {
     const radiusKm = Math.min(200, Math.max(1, opts.radiusKm ?? 20));
     const page = Math.max(1, opts.page ?? 1);
     const limit = Math.min(100, Math.max(1, opts.limit ?? 20));
+    // Phase 243 — defensive coord guard
+    if (
+      opts.lat == null ||
+      opts.lon == null ||
+      typeof opts.lat !== 'number' ||
+      typeof opts.lon !== 'number' ||
+      isNaN(opts.lat) ||
+      isNaN(opts.lon)
+    ) {
+      return { data: [], total: 0, page, limit, pages: 0 };
+    }
+    try {
     const precision = precisionForRadiusKm(radiusKm);
     const center = encodeGeohash(opts.lat, opts.lon, precision);
     if (!center) {
@@ -507,6 +539,14 @@ export class UsersService {
     const total = annotated.length;
     const slice = annotated.slice((page - 1) * limit, (page - 1) * limit + limit);
     return { data: slice, total, page, limit, pages: Math.ceil(total / limit) || 0 };
+    } catch (err) {
+      const e = err as Error;
+      this.logger.error(
+        `findNearbyWorkers(lat=${opts.lat},lon=${opts.lon},r=${radiusKm}) failed: ${e?.message ?? String(err)}`,
+        e?.stack,
+      );
+      return { data: [], total: 0, page, limit, pages: 0 };
+    }
   }
 
   /** Phase 48: Profil doluluk yüzdesi — equal-weight 10 (müşteri) / 15 (usta) alan */

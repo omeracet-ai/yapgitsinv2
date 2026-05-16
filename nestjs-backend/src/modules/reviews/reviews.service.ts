@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Review } from './review.entity';
 import { ReviewHelpful } from './review-helpful.entity';
 import { UsersService } from '../users/users.service';
@@ -18,6 +18,7 @@ export class ReviewsService {
     private helpfulRepository: Repository<ReviewHelpful>,
     private usersService: UsersService,
     private fraudDetection: FraudDetectionService,
+    private dataSource: DataSource,
   ) {}
 
   async create(data: Partial<Review>): Promise<Review> {
@@ -238,16 +239,38 @@ export class ReviewsService {
     }
   }
 
-  /** Phase 212: review'a fotoğraf ekle (max 3, sadece review sahibi) */
+  /** Phase 212: review'a fotoğraf ekle (max 3, sadece review sahibi)
+   *  Phase 243 (Voldi-db): transaction + pessimistic_write lock — paralel addPhotos
+   *  çağrılarında 3 limit'in race ile aşılmasını engeller. SQLite'da pessimistic
+   *  lock no-op'tur ama transaction serialization yine de yarış penceresini kapatır.
+   *  Postgres/MySQL prod'da gerçek satır kilidi devreye girer. */
   async addPhotos(reviewId: string, userId: string, photoUrls: string[]): Promise<Review> {
-    const review = await this.reviewsRepository.findOne({ where: { id: reviewId } });
-    if (!review) throw new NotFoundException('Review bulunamadı');
-    if (review.reviewerId !== userId) throw new ForbiddenException('Sadece review sahibi fotoğraf ekleyebilir');
-    const existing = review.photos || [];
-    const merged = [...existing, ...photoUrls].slice(0, 3);
-    if (merged.length > 3) throw new BadRequestException('Maksimum 3 fotoğraf eklenebilir');
-    review.photos = merged;
-    return this.reviewsRepository.save(review);
+    return this.dataSource.transaction(async (manager) => {
+      // SQLite lock-mode'u desteklemez; driver throw ederse plain read'e düş.
+      // Postgres/MySQL prod'da gerçek satır kilidi devreye girer.
+      let review: Review | null;
+      try {
+        review = await manager.findOne(Review, {
+          where: { id: reviewId },
+          lock: { mode: 'pessimistic_write' },
+        });
+      } catch {
+        review = await manager.findOne(Review, {
+          where: { id: reviewId },
+        });
+      }
+      if (!review) throw new NotFoundException('Review bulunamadı');
+      if (review.reviewerId !== userId) {
+        throw new ForbiddenException('Sadece review sahibi fotoğraf ekleyebilir');
+      }
+      const existing = review.photos || [];
+      const merged = [...existing, ...photoUrls];
+      if (merged.length > 3) {
+        throw new BadRequestException('Maksimum 3 fotoğraf eklenebilir');
+      }
+      review.photos = merged;
+      return manager.save(review);
+    });
   }
 
   /** Phase 212: "faydalı" oyu ekle (kendi reviewine oy veremez, tekrar oy engeli)
