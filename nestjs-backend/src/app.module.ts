@@ -117,25 +117,46 @@ import { MaintenanceModule } from './modules/maintenance/maintenance.module';
     }),
     // Phase 170 — Cache katmanı: REDIS_URL varsa Redis, yoksa in-memory (graceful fallback).
     CacheModule.registerAsync(cacheConfigAsync),
-    // Phase 170 / P191/5 — Multi-tier named throttlers (burst-tolerant).
-    //   short:  10 req /  1s  — burst absorption (Flutter app + admin polls)
-    //   medium: 60 req / 10s  — sustained polling window
-    //   long:  100 req / 60s  — per-minute ceiling (Phase 216: 200→100 production hardening)
-    //   default: 100 req / 60s — legacy/compat tier (Phase 216: 200→100 production hardening)
-    //   auth-login: 5 req / 60s — brute-force protection (override on /auth/login, /auth/admin/login, /auth/sms/request)
-    //   auth-register: 3 req / 60min — registration spam protection
-    //   uploads: 10 req / 60s
-    // Per-route override: @Throttle({ 'auth-login': { limit: 5, ttl: 60_000 } }).
-    // P191/5 raises burst tolerance: admin panel + Flutter were hitting 60/min on
-    // normal interceptor + WebSocket + chat refresh + notification poll cycles.
+    // Phase 170 / P191/5 / 229A — Multi-tier named throttlers (burst-tolerant).
+    //
+    // NestJS Throttler v6 semantics: EVERY named definition listed in forRoot()
+    // is evaluated on EVERY route. `@Throttle({ name: {...} })` only OVERRIDES
+    // that single bucket for that route — it does NOT disable the others.
+    // The most-restrictive bucket wins.
+    //
+    // Phase 229A fix (Voldi-sec): pre-fix the global `auth-register` (10/3600s),
+    // `auth-login` (20/60s) and `uploads` (10/60s) buckets were silently capping
+    // ALL routes app-wide — e.g. /auth/firebase was actually 10 req/hour per IP,
+    // because `auth-register` applies even though the decorator only overrides
+    // `auth-login`. Google sign-in would lock out after 10 fails. Same problem
+    // for any user hitting > 10 uploads/min on any non-upload route.
+    //
+    // New design — generic tiers carry real limits; auth/upload buckets exist
+    // ONLY as "named slots" route decorators can sharpen. Their forRoot caps
+    // are effectively unbounded so they never act as a global ceiling.
+    //
+    //   short:   100 req /   1s  — burst absorption (Flutter app + admin polls)
+    //   medium:  400 req /  10s  — sustained polling window
+    //   long:    600 req /  60s  — per-minute ceiling
+    //   default: 600 req /  60s  — legacy/compat tier
+    //   auth-login:    EFFECTIVELY DISABLED globally — route override required
+    //   auth-register: EFFECTIVELY DISABLED globally — route override required
+    //   uploads:       EFFECTIVELY DISABLED globally — route override required
+    //
+    // Active overrides (see controllers):
+    //   /auth/login, /auth/firebase, /auth/admin/login → auth-login: 20/60s
+    //   /auth/sms/request                              → auth-login: 10/60s
+    //   /auth/register                                 → auth-register: 3/3600s
+    //   /uploads/*                                     → uploads: 30/60s
     ThrottlerModule.forRoot([
       { name: 'short', ttl: 1_000, limit: 100 },
       { name: 'medium', ttl: 10_000, limit: 400 },
       { name: 'long', ttl: 60_000, limit: 600 },
       { name: 'default', ttl: 60_000, limit: 600 },
-      { name: 'auth-login', ttl: 60_000, limit: 20 },
-      { name: 'auth-register', ttl: 3_600_000, limit: 10 },
-      { name: 'uploads', ttl: 60_000, limit: 10 },
+      // Phase 229A: these three are no-op globals — route decorators set real limits.
+      { name: 'auth-login', ttl: 60_000, limit: 1_000_000 },
+      { name: 'auth-register', ttl: 60_000, limit: 1_000_000 },
+      { name: 'uploads', ttl: 60_000, limit: 1_000_000 },
     ]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
