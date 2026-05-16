@@ -11,8 +11,8 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { OffersService } from './offers.service';
-import { OfferStatus } from './offer.entity';
 import { CreateOfferDto, CounterOfferDto } from './dto/offer.dto';
+import { UpdateOfferStatusDto } from './dto/update-offer-status.dto';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 /** GET /offers/my — işçinin kendi teklifleri, iş detaylarıyla */
@@ -104,7 +104,10 @@ export class OffersController {
 
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body() body: { status: OfferStatus }) {
-    return this.offersService.updateStatus(id, body.status);
+  updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateOfferStatusDto,
+  ) {
+    return this.offersService.updateStatus(id, dto.status);
   }
 }

@@ -13,7 +13,10 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { SkipThrottle } from '@nestjs/throttler';
 import { ServiceRequestsService } from './service-requests.service';
-import { ApplicationStatus } from './service-request-application.entity';
+import { CreateServiceRequestDto } from './dto/create-service-request.dto';
+import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
+import { ApplyServiceRequestDto } from './dto/apply-service-request.dto';
+import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @Controller('service-requests')
@@ -45,31 +48,19 @@ export class ServiceRequestsController {
   @Post()
   create(
     @Request() req: AuthenticatedRequest,
-    @Body()
-    body: {
-      title?: string;
-      description?: string;
-      category?: string;
-      categoryId?: string;
-      location?: string;
-      address?: string;
-      imageUrl?: string;
-      price?: number;
-      latitude?: number;
-      longitude?: number;
-    },
+    @Body() dto: CreateServiceRequestDto,
   ) {
     return this.svc.create(req.user.id, {
-      title: body.title,
-      description: body.description,
-      category: body.category,
-      categoryId: body.categoryId,
-      location: body.location,
-      address: body.address,
-      imageUrl: body.imageUrl,
-      price: body.price,
-      latitude: body.latitude ?? null,
-      longitude: body.longitude ?? null,
+      title: dto.title,
+      description: dto.description,
+      category: dto.category,
+      categoryId: dto.categoryId,
+      location: dto.location,
+      address: dto.address,
+      imageUrl: dto.imageUrl,
+      price: dto.price,
+      latitude: dto.latitude ?? null,
+      longitude: dto.longitude ?? null,
     });
   }
 
@@ -79,9 +70,9 @@ export class ServiceRequestsController {
   update(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
-    @Body() body: Record<string, unknown>,
+    @Body() dto: UpdateServiceRequestDto,
   ) {
-    return this.svc.update(id, req.user.id, body);
+    return this.svc.update(id, req.user.id, dto);
   }
 
   /** DELETE /service-requests/:id */
@@ -116,9 +107,9 @@ export class ServiceRequestsController {
   apply(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
-    @Body() body: { message?: string; price?: number },
+    @Body() dto: ApplyServiceRequestDto,
   ) {
-    return this.svc.createApplication(id, req.user.id, body);
+    return this.svc.createApplication(id, req.user.id, dto);
   }
 
   /** GET /service-requests/:id/applications — ilan sahibi başvuruları görür */
@@ -134,8 +125,8 @@ export class ServiceRequestsController {
   updateAppStatus(
     @Param('appId') appId: string,
     @Request() req: AuthenticatedRequest,
-    @Body() body: { status: ApplicationStatus },
+    @Body() dto: UpdateApplicationStatusDto,
   ) {
-    return this.svc.updateApplicationStatus(appId, req.user.id, body.status);
+    return this.svc.updateApplicationStatus(appId, req.user.id, dto.status);
   }
 }

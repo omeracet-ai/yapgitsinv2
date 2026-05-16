@@ -81,7 +81,7 @@ describe('Auth refresh (e2e)', () => {
     expect(r2.body.refreshToken).toBeDefined();
   });
 
-  it('rejects an invalid / malformed refresh token with 401', async () => {
+  it('rejects an invalid / malformed refresh token with 401, missing body with 400', async () => {
     // Use a distinct X-Forwarded-For so we don't share the IP throttle bucket
     // with the previous test (refresh route is 10/min per IP).
     await http()
@@ -89,10 +89,12 @@ describe('Auth refresh (e2e)', () => {
       .set('X-Forwarded-For', '10.99.0.1')
       .send({ refreshToken: 'not-a-real-jwt' })
       .expect(401);
+    // Phase 244 (Voldi-fs) — DTO now rejects empty body at the ValidationPipe
+    // layer before the service runs; previously this returned 401 via service-level guard.
     await http()
       .post('/auth/refresh')
       .set('X-Forwarded-For', '10.99.0.2')
       .send({})
-      .expect(401);
+      .expect(400);
   });
 });

@@ -23,6 +23,7 @@ import { JobsService } from './jobs.service';
 import { OffersService } from './offers.service';
 import { SavedJobsService } from './saved-jobs.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
+import { BoostJobDto } from './dto/boost-job.dto';
 import { JobStatus } from './job.entity';
 import { OfferStatus } from './offer.entity';
 import { DisputeType } from '../disputes/job-dispute.entity';
@@ -278,10 +279,10 @@ export class JobsController {
   @Post(':id/boost')
   boost(
     @Param('id') id: string,
-    @Body() body: { days: number },
+    @Body() dto: BoostJobDto,
     @Request() req: AuthenticatedRequest,
   ) {
-    return this.jobsService.boost(id, body.days, req.user.id);
+    return this.jobsService.boost(id, dto.days, req.user.id);
   }
 
   // ─── Phase 203: Bulk photo upload (max 5, 5MB each, 1200px/q80) ──────────────
