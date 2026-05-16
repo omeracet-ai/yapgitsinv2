@@ -156,7 +156,17 @@ export class AuthController {
     return this.authService.requestSmsOtp(body?.phoneNumber);
   }
 
-  /** Phase 123 — SMS OTP doğrula */
+  /**
+   * Phase 123 — SMS OTP doğrula
+   * Phase 230 — Throttle: 5 attempts / 15dk per IP (OTP brute-force koruması).
+   * Industry standard (AWS Cognito, Auth0). DB-level: 5 attempts/OTP cap +
+   * 5dk expiry + used flag zaten var (sms-otp.entity attempts/expiresAt/used).
+   * HTTP throttle ek katman: bir saldırgan farklı phoneNumber'lar üzerinden
+   * rate-bypass yapamasın.
+   * `auth-login` bucket'ı route-level override ediliyor (Phase 229A neutered
+   * slot — yeni bucket eklemek gereksiz; limit/ttl decorator'da ezilir).
+   */
+  @Throttle({ 'auth-login': { limit: 5, ttl: 15 * 60_000 } })
   @Post('sms/verify')
   verifySmsOtp(@Body() body: { phoneNumber: string; code: string }) {
     return this.authService.verifySmsOtp(body?.phoneNumber, body?.code);
