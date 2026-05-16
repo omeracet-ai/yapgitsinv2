@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { api, type Job } from "@/lib/api";
+import { api, adminAnalytics, type Job } from "@/lib/api";
 import {
   LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 
-interface AnalyticsOverview {
+interface DashboardAnalyticsOverview {
   dailyRegistrations: Array<{ date: string; count: number }>;
   dailyJobs: Array<{ date: string; count: number }>;
   topCategories: Array<{ name: string; jobCount: number }>;
@@ -70,14 +70,14 @@ export default function DashboardPage() {
   const [stats, setStats]           = useState<Stats | null>(null);
   const [pubStats, setPubStats]     = useState<PublicStats | null>(null);
   const [jobs,  setJobs]            = useState<Job[]>([]);
-  const [analytics, setAnalytics]   = useState<AnalyticsOverview | null>(null);
+  const [analytics, setAnalytics]   = useState<DashboardAnalyticsOverview | null>(null);
   const [error, setError]           = useState<string | null>(null);
   const [loading, setLoading]       = useState(true);
 
   async function fetchAnalytics() {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/analytics/overview`, { credentials: "include" });
-      if (res.ok) setAnalytics(await res.json());
+      const data = await adminAnalytics.overview();
+      setAnalytics(data as DashboardAnalyticsOverview);
     } catch { /* non-fatal */ }
   }
 

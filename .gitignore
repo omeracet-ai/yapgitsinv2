@@ -67,3 +67,9 @@ web/.next/
 
 # Play Console assets (manuel upload)
 .play-console-assets/
+
+# Production deploy artifacts (security)
+/httpdocs/
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm

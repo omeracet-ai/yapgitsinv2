@@ -748,7 +748,7 @@ export const analyticsApi = {
 };
 
 // ── Phase 213 — Admin Analytics Overview ─────────────────────────────────────
-export interface AnalyticsOverview {
+export interface AdminAnalyticsOverview {
   dailyRegistrations: Array<{ date: string; count: number }>;
   dailyJobs: Array<{ date: string; count: number }>;
   revenueByDay: Array<{ date: string; tokensPurchased: number }>;
@@ -757,5 +757,5 @@ export interface AnalyticsOverview {
 }
 
 export const adminAnalytics = {
-  overview: () => request<AnalyticsOverview>('/admin/analytics/overview'),
+  overview: () => request<AdminAnalyticsOverview>('/admin/analytics/overview'),
 };
