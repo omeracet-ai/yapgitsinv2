@@ -16,7 +16,7 @@ const SECURITY_HEADERS = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://plausible.io",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' data: https://fonts.gstatic.com",
-      "connect-src 'self' https://yapgitsin.tr wss://yapgitsin.tr https://plausible.io",
+      "connect-src 'self' https://yapgitsin.tr wss://yapgitsin.tr https://api.yapgitsin.tr wss://api.yapgitsin.tr https://plausible.io",
       "frame-src 'self' https://sandbox-api.iyzipay.com https://api.iyzipay.com",
       "object-src 'none'",
       "base-uri 'self'",

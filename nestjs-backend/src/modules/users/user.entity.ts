@@ -233,6 +233,7 @@ export class User {
   @Column({ type: 'boolean', default: false })
   twoFactorEnabled: boolean;
 
+  @Exclude()
   @Column({ type: 'varchar', length: 64, nullable: true })
   twoFactorSecret: string | null;
 
@@ -298,6 +299,7 @@ export class User {
   referredByUserId: string | null;
 
   // ── Phase 155/179 — Worker calendar ICS feed (Google/Apple/Outlook subscribe) ──
+  @Exclude()
   @Column({ type: 'varchar', length: 64, nullable: true, unique: true })
   calendarToken: string | null;
 
@@ -305,6 +307,7 @@ export class User {
   // Set on first successful POST /auth/firebase call. Unique so two backend
   // users cannot map to the same Firebase uid. Nullable to keep legacy
   // email/password and SMS users intact.
+  @Exclude()
   @Column({ type: 'varchar', length: 128, nullable: true, unique: true })
   firebaseUid: string | null;
 
@@ -312,6 +315,7 @@ export class User {
   // Incremented every time a refresh token is consumed. Embedded in refresh JWT
   // payload and verified on /auth/refresh — mismatch ⇒ rotated/reused token ⇒ 401.
   // Default 0; safe to add to existing rows (backwards compatible).
+  @Exclude()
   @Column({ type: 'integer', default: 0 })
   tokenVersion: number;
 

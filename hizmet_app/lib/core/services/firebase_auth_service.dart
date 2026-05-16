@@ -202,6 +202,63 @@ class FirebaseAuthService {
     return Platform.isIOS || Platform.isMacOS;
   }
 
+  /// Phase 240D — Public bridge: Firebase ID token → backend JWT pair.
+  /// Persists tokens to [SecureTokenStore] so subsequent Bearer calls succeed.
+  /// Returns the bridge response (`access_token`, `refresh_token`, `user`).
+  ///
+  /// Throws Exception('social_bridge_no_idtoken' | 'social_bridge_no_token' |
+  /// 'social_bridge_failed:<code>') on failure and signs the user out so no
+  /// half-logged-in state lingers.
+  Future<Map<String, dynamic>> bridgeToBackend() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('social_bridge_no_idtoken');
+    }
+
+    String? idToken;
+    try {
+      idToken = await user.getIdToken(true);
+    } catch (_) {
+      idToken = null;
+    }
+
+    if (idToken == null || idToken.isEmpty) {
+      await _auth.signOut();
+      throw Exception('social_bridge_no_idtoken');
+    }
+
+    try {
+      final res = await _dio.post<dynamic>(
+        '/auth/firebase',
+        data: {'idToken': idToken},
+        // Don't send any stale Bearer — bridge accepts the Firebase token
+        // in the body, not the header.
+        options: Options(headers: {'Authorization': ''}),
+      );
+      final data = res.data;
+      if (data is! Map) {
+        await _auth.signOut();
+        throw Exception('social_bridge_no_token');
+      }
+      final access = data['access_token'];
+      final refresh = data['refresh_token'];
+      if (access is! String || access.isEmpty) {
+        await _auth.signOut();
+        throw Exception('social_bridge_no_token');
+      }
+      final store = SecureTokenStore();
+      await store.writeToken(access);
+      if (refresh is String && refresh.isNotEmpty) {
+        await store.writeRefreshToken(refresh);
+      }
+      return Map<String, dynamic>.from(data);
+    } on DioException catch (e) {
+      await _auth.signOut();
+      final code = e.response?.statusCode;
+      throw Exception('social_bridge_failed:${code ?? 'network'}');
+    }
+  }
+
   Future<void> _ensureUserDoc(
     User? user, {
     required String providerLabel,
@@ -210,65 +267,11 @@ class FirebaseAuthService {
   }) async {
     if (user == null) return;
 
-    // Phase 226 — Firebase ID token → backend JWT bridge.
-    // 1) get a fresh Firebase ID token (force refresh = catch token-revoked)
-    // 2) POST /auth/firebase → backend verifies & issues its own JWT pair
-    // 3) persist tokens so the next /users/me PATCH carries the correct
-    //    backend Bearer (not the Firebase ID token).
-    String? idToken;
-    try {
-      idToken = await user.getIdToken(true);
-    } catch (_) {
-      // Token alınamadıysa eski davranışa düş (sessiz PATCH).
-      idToken = null;
-    }
+    // Phase 226 → 240D — Bridge artık public method üzerinden.
+    await bridgeToBackend();
 
-    if (idToken != null && idToken.isNotEmpty) {
-      try {
-        final res = await _dio.post<dynamic>(
-          '/auth/firebase',
-          data: {'idToken': idToken},
-          // Don't send any stale Bearer — bridge accepts the Firebase token
-          // in the body, not the header.
-          options: Options(headers: {'Authorization': ''}),
-        );
-        final data = res.data;
-        bool tokenStored = false;
-        if (data is Map) {
-          final access = data['access_token'];
-          final refresh = data['refresh_token'];
-          if (access is String && access.isNotEmpty) {
-            final store = SecureTokenStore();
-            await store.writeToken(access);
-            if (refresh is String && refresh.isNotEmpty) {
-              await store.writeRefreshToken(refresh);
-            }
-            tokenStored = true;
-          }
-        }
-        if (!tokenStored) {
-          // Bridge 200 döndü ama token yok — yarım giriş, görünür hata yap.
-          await _auth.signOut();
-          throw Exception('social_bridge_no_token');
-        }
-      } on DioException catch (e) {
-        // Phase 233 — bridge fail görünür hata.
-        // 401/5xx veya network: yarım giriş kalmasın, Firebase oturumunu
-        // temizle ve üst katmana fırlat. Üst katman (login ekranı) kullanıcıya
-        // mesaj gösterir.
-        await _auth.signOut();
-        final code = e.response?.statusCode;
-        throw Exception('social_bridge_failed:${code ?? 'network'}');
-      }
-    } else {
-      // Firebase ID token alınamadıysa backend JWT mümkün değil; yarım
-      // girişe izin verme.
-      await _auth.signOut();
-      throw Exception('social_bridge_no_idtoken');
-    }
-
-    // Profile PATCH — şimdi backend JWT'si ile (varsa) çağrılır; yoksa
-    // mevcut sessiz-fail davranışı korunur.
+    // Profile PATCH — backend JWT'si artık SecureTokenStore'da; interceptor
+    // Bearer header'ı ekleyecek.
     final fullName =
         user.displayName ?? fallbackName ?? (user.email ?? 'Kullanıcı');
     final email = user.email ?? fallbackEmail ?? '';

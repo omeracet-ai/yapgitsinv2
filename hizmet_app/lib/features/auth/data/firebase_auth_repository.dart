@@ -18,10 +18,17 @@ class FirebaseAuthRepository {
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       final cred = await _service.signInWithEmail(email, password);
-      final token = await cred.user?.getIdToken() ?? '';
-      final profile = await _service.getUserProfile();
+      // Phase 240D — Bridge Firebase ID token → backend JWT pair and persist
+      // to SecureTokenStore so protected REST calls succeed.
+      final bridge = await _service.bridgeToBackend();
+      final bridgeUser = bridge['user'];
+      final profileFromBridge =
+          bridgeUser is Map ? Map<String, dynamic>.from(bridgeUser) : null;
+      final profile = profileFromBridge ?? await _service.getUserProfile();
       return {
-        'access_token': token,
+        'access_token': bridge['access_token'],
+        if (bridge['refresh_token'] != null)
+          'refresh_token': bridge['refresh_token'],
         'user': {
           'id': cred.user?.uid,
           'email': cred.user?.email,
@@ -32,6 +39,16 @@ class FirebaseAuthRepository {
       };
     } on FirebaseAuthException catch (e) {
       throw Exception(_mapFirebaseError(e.code));
+    } catch (e) {
+      // Phase 240D — bridge fail görünür Türkçe hata.
+      final msg = e.toString();
+      if (msg.contains('social_bridge_failed') ||
+          msg.contains('social_bridge_no_token') ||
+          msg.contains('social_bridge_no_idtoken')) {
+        throw Exception(
+            'Giriş şu an tamamlanamadı. Lütfen birazdan tekrar deneyin.');
+      }
+      rethrow;
     }
   }
 
@@ -50,9 +67,12 @@ class FirebaseAuthRepository {
         phone: phoneNumber,
         city: city,
       );
-      final token = await cred.user?.getIdToken() ?? '';
+      // Phase 240D — Bridge to backend JWT after Firebase register.
+      final bridge = await _service.bridgeToBackend();
       return {
-        'access_token': token,
+        'access_token': bridge['access_token'],
+        if (bridge['refresh_token'] != null)
+          'refresh_token': bridge['refresh_token'],
         'user': {
           'id': cred.user?.uid,
           'email': cred.user?.email,
@@ -62,6 +82,15 @@ class FirebaseAuthRepository {
       };
     } on FirebaseAuthException catch (e) {
       throw Exception(_mapFirebaseError(e.code));
+    } catch (e) {
+      final msg = e.toString();
+      if (msg.contains('social_bridge_failed') ||
+          msg.contains('social_bridge_no_token') ||
+          msg.contains('social_bridge_no_idtoken')) {
+        throw Exception(
+            'Kayıt tamamlandı ancak giriş yapılamadı. Lütfen tekrar giriş yapın.');
+      }
+      rethrow;
     }
   }
 

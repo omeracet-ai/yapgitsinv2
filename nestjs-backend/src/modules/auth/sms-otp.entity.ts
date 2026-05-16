@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   Index,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 
 /**
  * Phase 123 — SMS OTP storage
@@ -18,6 +19,7 @@ export class SmsOtp {
   @Column({ type: 'varchar', length: 20 })
   phoneNumber!: string;
 
+  @Exclude()
   @Column({ type: 'varchar', length: 6 })
   code!: string;
 

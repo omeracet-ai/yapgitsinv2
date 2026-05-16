@@ -105,7 +105,8 @@ export class AuthService implements OnModuleInit {
       throw new BadRequestException('Çok fazla istek. Lütfen daha sonra deneyin.');
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    // Phase 240B (Voldi-fs): CSPRNG OTP — Math.random predictable, crypto.randomInt değil.
+    const code = crypto.randomInt(100000, 1000000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
     await this.smsOtpRepo.save(
       this.smsOtpRepo.create({ phoneNumber: phone, code, expiresAt }),

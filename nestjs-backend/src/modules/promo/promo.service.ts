@@ -286,8 +286,8 @@ export class PromoService {
       const val = promo.effectValue ?? promo.discountValue ?? 0;
 
       if (effect === PromoEffectType.BONUS_TOKEN) {
-        user.tokenBalance = Number(user.tokenBalance ?? 0) + val;
-        await userRepo.save(user);
+        // Phase 240C (Voldi-fs): atomic increment — paralel redeem = lost-update fix.
+        await userRepo.increment({ id: userId }, 'tokenBalance', val);
         result = {
           type: PromoEffectType.BONUS_TOKEN,
           value: val,

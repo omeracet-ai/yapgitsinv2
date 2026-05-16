@@ -250,7 +250,8 @@ export class ReviewsService {
     return this.reviewsRepository.save(review);
   }
 
-  /** Phase 212: "faydalı" oyu ekle (kendi reviewine oy veremez, tekrar oy engeli) */
+  /** Phase 212: "faydalı" oyu ekle (kendi reviewine oy veremez, tekrar oy engeli)
+   *  Phase 240B (Voldi-fs): atomic increment — paralel oy = lost-update fix. */
   async markHelpful(reviewId: string, userId: string): Promise<{ helpfulCount: number }> {
     const review = await this.reviewsRepository.findOne({ where: { id: reviewId } });
     if (!review) throw new NotFoundException('Review bulunamadı');
@@ -258,9 +259,15 @@ export class ReviewsService {
     const existing = await this.helpfulRepository.findOne({ where: { reviewId, userId } });
     if (existing) throw new ConflictException('Bu yorumu zaten faydalı buldunuz');
     await this.helpfulRepository.save(this.helpfulRepository.create({ reviewId, userId }));
-    const newCount = (review.helpfulCount || 0) + 1;
-    await this.reviewsRepository.update(reviewId, { helpfulCount: newCount });
-    return { helpfulCount: newCount };
+    const incResult = await this.reviewsRepository.increment({ id: reviewId }, 'helpfulCount', 1);
+    if (!incResult.affected) {
+      throw new NotFoundException('Review bulunamadı');
+    }
+    const fresh = await this.reviewsRepository.findOne({
+      where: { id: reviewId },
+      select: ['id', 'helpfulCount'],
+    });
+    return { helpfulCount: fresh?.helpfulCount ?? (review.helpfulCount || 0) + 1 };
   }
 
   /** Phase 42: revieweeId yoruma cevap yazar (idempotent edit) */

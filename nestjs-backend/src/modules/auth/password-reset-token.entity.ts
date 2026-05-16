@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   Index,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 
 @Entity('password_reset_tokens')
 export class PasswordResetToken {
@@ -15,6 +16,7 @@ export class PasswordResetToken {
   @Column({ type: 'varchar', length: 36 })
   userId: string;
 
+  @Exclude()
   @Column({ type: 'varchar', length: 128, unique: true })
   tokenHash: string;
 

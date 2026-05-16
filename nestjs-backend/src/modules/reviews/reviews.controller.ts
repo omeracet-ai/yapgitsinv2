@@ -15,6 +15,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ReviewsService } from './reviews.service';
 import { ReplyReviewDto } from './dto/reply-review.dto';
+import { CreateReviewDto } from './dto/create-review.dto';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 @Controller('reviews')
@@ -36,13 +37,14 @@ export class ReviewsController {
     return { ok: true, phase: 236, ts: new Date().toISOString() };
   }
 
+  /** Phase 240B (Voldi-fs): CreateReviewDto + server-side reviewerId — mass-assignment fix. */
   @UseGuards(AuthGuard('jwt'))
   @Post()
   async create(
-    @Body() data: Record<string, unknown>,
+    @Body() dto: CreateReviewDto,
     @Request() req: AuthenticatedRequest,
   ) {
-    return this.reviewsService.create({ ...data, reviewerId: req.user.id });
+    return this.reviewsService.create({ ...dto, reviewerId: req.user.id });
   }
 
   @Get('user/:id')
