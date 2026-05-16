@@ -107,7 +107,15 @@ class FirebaseAuthRepository {
       throw Exception(_mapFirebaseError(e.code));
     } catch (e) {
       // Re-throw cancellation as a structured marker so UI can stay silent.
-      if (e.toString().contains('sign_in_canceled')) rethrow;
+      final msg = e.toString();
+      if (msg.contains('sign_in_canceled')) rethrow;
+      // Phase 233 — sosyal sign-in bridge fail görünür hata.
+      if (msg.contains('social_bridge_failed') ||
+          msg.contains('social_bridge_no_token') ||
+          msg.contains('social_bridge_no_idtoken')) {
+        throw Exception(
+            'Sosyal giriş şu an kullanılamıyor. Lütfen e-posta ile giriş yapın.');
+      }
       throw Exception('Google ile giriş başarısız: $e');
     }
   }
@@ -136,6 +144,13 @@ class FirebaseAuthRepository {
       final msg = e.toString();
       if (msg.contains('canceled') || msg.contains('cancelled')) {
         throw Exception('sign_in_canceled');
+      }
+      // Phase 233 — sosyal sign-in bridge fail görünür hata.
+      if (msg.contains('social_bridge_failed') ||
+          msg.contains('social_bridge_no_token') ||
+          msg.contains('social_bridge_no_idtoken')) {
+        throw Exception(
+            'Sosyal giriş şu an kullanılamıyor. Lütfen e-posta ile giriş yapın.');
       }
       throw Exception('Apple ile giriş başarısız: $e');
     }

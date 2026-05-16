@@ -233,6 +233,7 @@ class FirebaseAuthService {
           options: Options(headers: {'Authorization': ''}),
         );
         final data = res.data;
+        bool tokenStored = false;
         if (data is Map) {
           final access = data['access_token'];
           final refresh = data['refresh_token'];
@@ -242,13 +243,28 @@ class FirebaseAuthService {
             if (refresh is String && refresh.isNotEmpty) {
               await store.writeRefreshToken(refresh);
             }
+            tokenStored = true;
           }
         }
-      } on DioException {
-        // Bridge yoksa veya token reddedildiyse PATCH'a düş — eskiden olduğu
-        // gibi 401 alır, sessizce geçer. Kullanıcı en azından Firebase
-        // tarafında giriş yapmış olur.
+        if (!tokenStored) {
+          // Bridge 200 döndü ama token yok — yarım giriş, görünür hata yap.
+          await _auth.signOut();
+          throw Exception('social_bridge_no_token');
+        }
+      } on DioException catch (e) {
+        // Phase 233 — bridge fail görünür hata.
+        // 401/5xx veya network: yarım giriş kalmasın, Firebase oturumunu
+        // temizle ve üst katmana fırlat. Üst katman (login ekranı) kullanıcıya
+        // mesaj gösterir.
+        await _auth.signOut();
+        final code = e.response?.statusCode;
+        throw Exception('social_bridge_failed:${code ?? 'network'}');
       }
+    } else {
+      // Firebase ID token alınamadıysa backend JWT mümkün değil; yarım
+      // girişe izin verme.
+      await _auth.signOut();
+      throw Exception('social_bridge_no_idtoken');
     }
 
     // Profile PATCH — şimdi backend JWT'si ile (varsa) çağrılır; yoksa
