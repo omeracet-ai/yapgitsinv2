@@ -295,20 +295,20 @@ class ProfileScreen extends ConsumerWidget {
     final String subtitle;
 
     if (isVerified) {
-      bgColor = Colors.green.shade50;
-      borderColor = Colors.green.shade300;
+      bgColor = AppColors.verifiedGreen.withValues(alpha: 0.12);
+      borderColor = AppColors.verifiedGreen;
       icon = Icons.verified_user;
       title = 'Kimlik Doğrulandı';
       subtitle = 'Hesabınız onaylıdır.';
     } else if (hasIdentity) {
-      bgColor = Colors.orange.shade50;
-      borderColor = Colors.orange.shade300;
+      bgColor = AppColors.warning.withValues(alpha: 0.12);
+      borderColor = AppColors.warning;
       icon = Icons.hourglass_empty;
       title = 'Kimlik İnceleniyor';
       subtitle = 'Doğrulama süreci devam ediyor.';
     } else {
-      bgColor = Colors.red.shade50;
-      borderColor = Colors.red.shade300;
+      bgColor = AppColors.error.withValues(alpha: 0.12);
+      borderColor = AppColors.error;
       icon = Icons.warning_amber_outlined;
       title = 'Kimlik Yüklenmedi';
       subtitle = 'Güven için kimlik fotoğrafı yükleyin.';
@@ -367,16 +367,16 @@ class ProfileScreen extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade50,
+                      color: AppColors.verifiedGreen.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.check_circle,
-                          color: Colors.green, size: 14),
-                      const SizedBox(width: 4),
+                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.check_circle,
+                          color: AppColors.verifiedGreen, size: 14),
+                      SizedBox(width: 4),
                       Text('Doğrulanmış',
                           style: TextStyle(
-                              color: Colors.green.shade700,
+                              color: AppColors.verifiedGreen,
                               fontSize: 12,
                               fontWeight: FontWeight.w600)),
                     ]),
@@ -386,12 +386,12 @@ class ProfileScreen extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.amber.shade50,
+                      color: AppColors.warning.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text('Doğrulanmadı',
+                    child: const Text('Doğrulanmadı',
                         style: TextStyle(
-                            color: Colors.amber.shade800,
+                            color: AppColors.warning,
                             fontSize: 12,
                             fontWeight: FontWeight.w600)),
                   ),
@@ -536,7 +536,7 @@ class ProfileScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-              colors: [AppColors.accent, Color(0xFFFFB800)],
+              colors: [AppColors.accent, AppColors.warning],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight),
           borderRadius: BorderRadius.circular(14),
@@ -610,7 +610,7 @@ class ProfileScreen extends ConsumerWidget {
                   Expanded(
                     child: _statCard(
                       icon: Icons.shopping_bag_outlined,
-                      color: Colors.blue,
+                      color: AppColors.verifiedBlue,
                       title: 'Hizmet Alan',
                       total: cTotal,
                       success: cSuccess,
@@ -621,7 +621,7 @@ class ProfileScreen extends ConsumerWidget {
                   Expanded(
                     child: _statCard(
                       icon: Icons.handyman_outlined,
-                      color: Colors.green,
+                      color: AppColors.verifiedGreen,
                       title: 'Hizmet Veren',
                       total: wTotal,
                       success: wSuccess,
@@ -669,18 +669,18 @@ class ProfileScreen extends ConsumerWidget {
           const Text('başarı oranı',
               style: TextStyle(fontSize: 11, color: AppColors.textHint)),
           const SizedBox(height: 10),
-          _statRow('Toplam', total, Colors.grey.shade700),
+          _statRow('Toplam', total, AppColors.textSecondary),
           const SizedBox(height: 2),
-          _statRow('Başarılı', success, Colors.green.shade600),
+          _statRow('Başarılı', success, AppColors.verifiedGreen),
           const SizedBox(height: 2),
-          _statRow('Başarısız', fail, Colors.red.shade400),
+          _statRow('Başarısız', fail, AppColors.error),
           if (total > 0) ...[
             const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: total > 0 ? success / total : 0,
-                backgroundColor: Colors.red.shade100,
+                backgroundColor: AppColors.error.withValues(alpha: 0.15),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
                 minHeight: 6,
               ),
@@ -788,7 +788,7 @@ class ProfileScreen extends ConsumerWidget {
                                       fontWeight: FontWeight.w600, fontSize: 14)),
                               Text(c.issuer,
                                   style: const TextStyle(
-                                      fontSize: 12, color: Color(0xFF757575))),
+                                      fontSize: 12, color: AppColors.textSecondary)),
                             ],
                           ),
                         ),
@@ -796,13 +796,13 @@ class ProfileScreen extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF4CAF50).withValues(alpha: 0.12),
+                            color: AppColors.verifiedGreen.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text('Onaylı',
                               style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF2E7D32),
+                                  color: AppColors.verifiedGreen,
                                   fontWeight: FontWeight.w600)),
                         ),
                       ],
@@ -869,14 +869,14 @@ class ProfileScreen extends ConsumerWidget {
         url,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => Container(
-          color: Colors.grey.shade200,
+          color: AppColors.surfaceElevated,
           child: const Icon(Icons.image_not_supported_outlined,
               color: AppColors.textHint),
         ),
         loadingBuilder: (_, child, progress) {
           if (progress == null) return child;
           return Container(
-            color: Colors.grey.shade100,
+            color: AppColors.surface,
             child:
                 const Center(child: CircularProgressIndicator(strokeWidth: 2)),
           );
@@ -1106,7 +1106,7 @@ class ProfileScreen extends ConsumerWidget {
           const Divider(height: 1, indent: 50),
           _menuItem(Icons.logout, AppLocalizations.of(context).logout,
               () => ref.read(authStateProvider.notifier).logout(),
-              color: Colors.redAccent),
+              color: AppColors.error),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
@@ -1396,7 +1396,7 @@ class ProfileScreen extends ConsumerWidget {
     return ListTile(
       leading: Icon(
         enabled ? Icons.verified_user : Icons.security_outlined,
-        color: enabled ? Colors.green : AppColors.textPrimary,
+        color: enabled ? AppColors.verifiedGreen : AppColors.textPrimary,
         size: 22,
       ),
       title: const Text('İki Adımlı Doğrulama',
@@ -1408,7 +1408,7 @@ class ProfileScreen extends ConsumerWidget {
         enabled ? 'Açık' : 'Kapalı',
         style: TextStyle(
             fontSize: 12,
-            color: enabled ? Colors.green : AppColors.textHint,
+            color: enabled ? AppColors.verifiedGreen : AppColors.textHint,
             fontWeight: FontWeight.w600),
       ),
       trailing:
@@ -1459,7 +1459,7 @@ class ProfileScreen extends ConsumerWidget {
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Devre Dışı Bırak',
-                  style: TextStyle(color: Colors.red))),
+                  style: TextStyle(color: AppColors.error))),
         ],
       ),
     );
@@ -1476,13 +1476,13 @@ class ProfileScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('2FA devre dışı bırakıldı'),
-              backgroundColor: Colors.green),
+              backgroundColor: AppColors.verifiedGreen),
         );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
         );
       }
     }
