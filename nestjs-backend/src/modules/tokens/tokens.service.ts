@@ -188,16 +188,31 @@ export class TokensService {
         where: { id: dto.recipientId },
       });
       if (!recipient) throw new NotFoundException('Alıcı bulunamadı');
-      if (sender.tokenBalance < amount) {
+
+      // Phase 242 (Voldi-fs) — atomic conditional decrement.
+      // Transaction içinde olsak da TypeORM `manager.save(sender)` snapshot-based
+      // UPDATE yapar (SET tokenBalance = X), bu lost-update'e açıktır eğer
+      // isolation level READ COMMITTED ise. Atomik UPDATE ile check + decrement
+      // tek statement: affected=0 → rollback.
+      const senderResult = await manager
+        .createQueryBuilder()
+        .update(User)
+        .set({ tokenBalance: () => 'tokenBalance - :amount' })
+        .where('id = :id AND tokenBalance >= :amount', {
+          id: senderId,
+          amount,
+        })
+        .execute();
+      if (!senderResult.affected) {
         throw new BadRequestException(
           `Yetersiz bakiye. Gerekli: ${amount}, Mevcut: ${sender.tokenBalance}`,
         );
       }
+      await manager.increment(User, { id: recipient.id }, 'tokenBalance', amount);
 
+      // Local snapshot'ları balance reporting için güncelle.
       sender.tokenBalance = sender.tokenBalance - amount;
       recipient.tokenBalance = recipient.tokenBalance + amount;
-      await manager.save(User, sender);
-      await manager.save(User, recipient);
 
       // Phase 174c — Integer minor sync
       const amountMinor = tlToMinor(amount) ?? 0;
@@ -284,14 +299,28 @@ export class TokensService {
     amount: number,
     description: string,
   ): Promise<void> {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
-    if (!user || user.tokenBalance < amount) {
+    if (amount <= 0) throw new BadRequestException('Geçersiz miktar');
+
+    // Phase 242 (Voldi-fs) — atomic conditional decrement.
+    // Eski pattern: findOne → balance check → decrement (check-then-decrement race
+    // negatif bakiyeye yol açar: 2 paralel spend(100), bakiye=150 → ikisi de
+    // check geçer, ikisi de decrement → bakiye=-50).
+    // Tek UPDATE: SET tokenBalance = tokenBalance - :amount WHERE tokenBalance >= :amount.
+    // affected=0 → yetersiz bakiye throw.
+    const result = await this.userRepo
+      .createQueryBuilder()
+      .update(User)
+      .set({ tokenBalance: () => 'tokenBalance - :amount' })
+      .where('id = :id AND tokenBalance >= :amount', { id: userId, amount })
+      .execute();
+
+    if (!result.affected) {
+      // Either user yok, or bakiye yetersiz — current balance'ı raporla.
+      const user = await this.userRepo.findOne({ where: { id: userId } });
       throw new BadRequestException(
         `Yetersiz token bakiyesi. Gerekli: ${amount}, Mevcut: ${user?.tokenBalance ?? 0}`,
       );
     }
-
-    await this.userRepo.decrement({ id: userId }, 'tokenBalance', amount);
 
     await this.txRepo.save(
       this.txRepo.create({

@@ -96,21 +96,28 @@ export class AuthService implements OnModuleInit {
   async requestSmsOtp(phoneNumber: string) {
     const phone = this.normalizeTrPhone(phoneNumber);
 
-    // Rate limit: son 1 saatte 3 istek
+    // Phase 242 (Voldi-fs) — atomic rate-limit: INSERT-then-count race fix.
+    // Önce yeni row'u oluştur, sonra son 1 saatteki count > 3 ise rollback + throw.
+    // Bu, "count + save" non-atomic pattern'in lost-update race'ini kapatır:
+    // 5 paralel istek aynı anda count=2 görür ve hepsi save eder (toplam 7).
+    // Bu yeni pattern'de: tüm 5 INSERT olur ama count check her birinde >3 görür
+    // ve fazla olanı sileriz (FIFO: en yeniyi sil).
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const recentCount = await this.smsOtpRepo.count({
-      where: { phoneNumber: phone, createdAt: MoreThan(oneHourAgo) },
-    });
-    if (recentCount >= 3) {
-      throw new BadRequestException('Çok fazla istek. Lütfen daha sonra deneyin.');
-    }
-
     // Phase 240B (Voldi-fs): CSPRNG OTP — Math.random predictable, crypto.randomInt değil.
     const code = crypto.randomInt(100000, 1000000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    await this.smsOtpRepo.save(
+    const inserted = await this.smsOtpRepo.save(
       this.smsOtpRepo.create({ phoneNumber: phone, code, expiresAt }),
     );
+
+    const recentCount = await this.smsOtpRepo.count({
+      where: { phoneNumber: phone, createdAt: MoreThan(oneHourAgo) },
+    });
+    if (recentCount > 3) {
+      // Bu request rate-limit'i aştı → kendi insert'ümüzü sil ve throw.
+      await this.smsOtpRepo.delete({ id: inserted.id });
+      throw new BadRequestException('Çok fazla istek. Lütfen daha sonra deneyin.');
+    }
 
     await this.smsService.sendSms(
       phone,
@@ -299,9 +306,17 @@ export class AuthService implements OnModuleInit {
       throw new BadRequestException('Çok fazla deneme');
     }
     if (otp.code !== code) {
-      otp.attempts += 1;
-      await this.smsOtpRepo.save(otp);
+      // Phase 242 (Voldi-fs) — atomic increment ile lost-update race fix.
+      // Eski pattern `otp.attempts += 1; save(otp)` paralel yanlış denemelerde
+      // aynı snapshot'tan başlayıp aynı değeri yazıyordu (10 paralel fail → 1 inc).
+      // increment() tek UPDATE SET attempts = attempts + 1 atomik.
+      await this.smsOtpRepo.increment({ id: otp.id }, 'attempts', 1);
       await this.recordIpFailure(sourceIp);
+      // Fresh re-fetch — cap check de atomik. 5'i geçtiyse "Çok fazla deneme".
+      const fresh = await this.smsOtpRepo.findOne({ where: { id: otp.id } });
+      if (fresh && fresh.attempts >= 5) {
+        throw new BadRequestException('Çok fazla deneme');
+      }
       throw new BadRequestException('Yanlış kod');
     }
 

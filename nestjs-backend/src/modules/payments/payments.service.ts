@@ -420,21 +420,54 @@ export class PaymentsService {
   }
 
   // Webhook handler for payment provider events
+  // Phase 242 (Voldi-fs) — idempotency guard: aynı externalTransactionId ile
+  // gelen webhook replay'i çift kez process etmemeli (Iyzipay/Stripe at-least-once
+  // delivery yapar; sağlayıcı network timeout'larında aynı eventi tekrar gönderir).
+  // Strateji: COMPLETED status'üne ulaşmış payment için aynı externalTransactionId
+  // ile gelen "payment.completed" eventini logla ve skip et. payments tablosunda
+  // externalTransactionId UNIQUE constraint (yeni migration) bunu DB-level garanti
+  // olarak da pekiştirir.
   async handlePaymentWebhook(event: any) {
     const { type, data } = event;
 
     if (type === 'payment.completed') {
       const { paymentIntentId, externalTransactionId } = data;
+
+      // Idempotency: bu externalTransactionId ile zaten COMPLETED payment var mı?
+      if (externalTransactionId) {
+        const existing = await this.paymentRepository.findOne({
+          where: {
+            externalTransactionId,
+            status: PaymentStatus.COMPLETED,
+          },
+        });
+        if (existing) {
+          this.logger.warn(
+            `Webhook replay ignored for externalTransactionId=${externalTransactionId} (payment ${existing.id} already COMPLETED)`,
+          );
+          return existing;
+        }
+      }
+
       const payment = await this.paymentRepository.findOne({
         where: { paymentIntentId },
       });
 
       if (payment) {
+        // Bu paymentIntent zaten COMPLETED ise de skip (paymentIntentId-based replay).
+        if (payment.status === PaymentStatus.COMPLETED) {
+          this.logger.warn(
+            `Webhook replay ignored for paymentIntentId=${paymentIntentId} (payment ${payment.id} already COMPLETED)`,
+          );
+          return payment;
+        }
         payment.status = PaymentStatus.COMPLETED;
         payment.externalTransactionId = externalTransactionId;
         payment.completedAt = new Date();
         await this.paymentRepository.save(payment);
+        return payment;
       }
+      return null;
     } else if (type === 'payment.failed') {
       const { paymentIntentId, error } = data;
       const payment = await this.paymentRepository.findOne({
@@ -442,10 +475,23 @@ export class PaymentsService {
       });
 
       if (payment) {
+        // Terminal state'leri overwrite etme.
+        if (
+          payment.status === PaymentStatus.COMPLETED ||
+          payment.status === PaymentStatus.FAILED
+        ) {
+          this.logger.warn(
+            `Webhook replay ignored for failed paymentIntentId=${paymentIntentId} (status=${payment.status})`,
+          );
+          return payment;
+        }
         payment.status = PaymentStatus.FAILED;
         payment.errorMessage = error;
         await this.paymentRepository.save(payment);
+        return payment;
       }
+      return null;
     }
+    return null;
   }
 }
