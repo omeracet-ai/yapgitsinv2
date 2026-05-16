@@ -10,12 +10,18 @@ import { TwoFactorService } from './two-factor.service';
 import { PasswordResetToken } from './password-reset-token.entity';
 import { EmailVerificationToken } from './email-verification-token.entity';
 import { SmsOtp } from './sms-otp.entity';
+import { IpOtpLockout } from './ip-otp-lockout.entity';
 import { SmsModule } from '../sms/sms.module';
 import { getJwtSigningSecret } from './jwt-secrets';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PasswordResetToken, EmailVerificationToken, SmsOtp]),
+    TypeOrmModule.forFeature([
+      PasswordResetToken,
+      EmailVerificationToken,
+      SmsOtp,
+      IpOtpLockout,
+    ]),
     SmsModule,
     UsersModule,
     PassportModule,

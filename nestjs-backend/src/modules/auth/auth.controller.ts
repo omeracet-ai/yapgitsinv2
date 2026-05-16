@@ -168,7 +168,25 @@ export class AuthController {
    */
   @Throttle({ 'auth-login': { limit: 5, ttl: 15 * 60_000 } })
   @Post('sms/verify')
-  verifySmsOtp(@Body() body: { phoneNumber: string; code: string }) {
-    return this.authService.verifySmsOtp(body?.phoneNumber, body?.code);
+  verifySmsOtp(
+    @Body() body: { phoneNumber: string; code: string },
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.authService.verifySmsOtp(body?.phoneNumber, body?.code, this.resolveIp(req));
+  }
+
+  /**
+   * Phase 231 — Resolve client IP using the same pattern as UserOrIpThrottlerGuard:
+   * X-Forwarded-For first (split on comma, trim), fall back to req.ip, then 'unknown'.
+   * Used for DB-level per-IP OTP lockout.
+   */
+  private resolveIp(req: AuthenticatedRequest): string {
+    const headers = (req?.headers ?? {}) as Record<string, string | string[] | undefined>;
+    const xff = headers['x-forwarded-for'];
+    const xffStr = Array.isArray(xff) ? xff[0] : xff;
+    const fromXff = xffStr?.split(',')[0]?.trim();
+    if (fromXff) return fromXff;
+    const ip = (req as unknown as { ip?: string }).ip;
+    return typeof ip === 'string' && ip.length > 0 ? ip : 'unknown';
   }
 }

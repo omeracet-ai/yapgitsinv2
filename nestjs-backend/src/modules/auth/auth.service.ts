@@ -23,8 +23,18 @@ import { PasswordResetToken } from './password-reset-token.entity';
 import { EmailVerificationToken } from './email-verification-token.entity';
 import { EmailService } from '../email/email.service';
 import { SmsOtp } from './sms-otp.entity';
+import { IpOtpLockout } from './ip-otp-lockout.entity';
 import { SmsService } from '../sms/sms.service';
 import { MoreThan } from 'typeorm';
+
+/**
+ * Phase 231 (Voldi-sec) — DB per-IP OTP lockout thresholds.
+ * 15 fails / 15dk → 30dk lock. 3 distinct phones × 5 fails = 15 covers the
+ * multi-phone bypass against the per-OTP cap.
+ */
+const IP_LOCKOUT_WINDOW_MS = 15 * 60_000;
+const IP_LOCKOUT_THRESHOLD = 15;
+const IP_LOCKOUT_DURATION_MS = 30 * 60_000;
 
 // Phase 226 — Firebase Admin SDK type (lazy require below to avoid hard dep
 // failure in dev environments without service-account creds).
@@ -48,6 +58,8 @@ export class AuthService implements OnModuleInit {
     private emailService: EmailService,
     @InjectRepository(SmsOtp)
     private smsOtpRepo: Repository<SmsOtp>,
+    @InjectRepository(IpOtpLockout)
+    private ipLockoutRepo: Repository<IpOtpLockout>,
     private smsService: SmsService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
@@ -106,7 +118,80 @@ export class AuthService implements OnModuleInit {
     return { success: true, expiresInSec: 300 };
   }
 
-  async verifySmsOtp(phoneNumber: string, code: string) {
+  /**
+   * Phase 231 (Voldi-sec) — Check + maybe-block by per-IP DB lockout.
+   * Throws ForbiddenException if currently locked. Otherwise rolls the window
+   * if expired (so successive 15-min periods get fresh budgets).
+   */
+  private async assertIpNotLocked(ip: string): Promise<IpOtpLockout | null> {
+    if (!ip || ip === 'unknown') return null;
+    const row = await this.ipLockoutRepo.findOne({ where: { ip } });
+    if (!row) return null;
+    const now = Date.now();
+    if (row.lockedUntil && row.lockedUntil.getTime() > now) {
+      throw new ForbiddenException(
+        'Çok fazla başarısız OTP denemesi. Lütfen daha sonra tekrar deneyin.',
+      );
+    }
+    // Lockout süresi dolmuş → temizle (sıfırla)
+    if (row.lockedUntil && row.lockedUntil.getTime() <= now) {
+      row.lockedUntil = null;
+      row.attempts = 0;
+      row.windowStartedAt = new Date(now);
+      await this.ipLockoutRepo.save(row);
+    }
+    // Rolling window expired → reset counter
+    if (row.windowStartedAt.getTime() + IP_LOCKOUT_WINDOW_MS <= now) {
+      row.attempts = 0;
+      row.windowStartedAt = new Date(now);
+      await this.ipLockoutRepo.save(row);
+    }
+    return row;
+  }
+
+  /** Phase 231 — Verify failure: increment per-IP counter, maybe lock. */
+  private async recordIpFailure(ip: string): Promise<void> {
+    if (!ip || ip === 'unknown') return;
+    const now = new Date();
+    let row = await this.ipLockoutRepo.findOne({ where: { ip } });
+    if (!row) {
+      row = this.ipLockoutRepo.create({
+        ip,
+        attempts: 1,
+        windowStartedAt: now,
+        lockedUntil: null,
+      });
+    } else {
+      // Pencere bitmişse sıfırla
+      if (row.windowStartedAt.getTime() + IP_LOCKOUT_WINDOW_MS <= now.getTime()) {
+        row.attempts = 1;
+        row.windowStartedAt = now;
+        row.lockedUntil = null;
+      } else {
+        row.attempts += 1;
+      }
+      if (row.attempts >= IP_LOCKOUT_THRESHOLD) {
+        row.lockedUntil = new Date(now.getTime() + IP_LOCKOUT_DURATION_MS);
+      }
+    }
+    await this.ipLockoutRepo.save(row);
+  }
+
+  /** Phase 231 — Meşru başarı → sayaç sıfırla. */
+  private async resetIpCounter(ip: string): Promise<void> {
+    if (!ip || ip === 'unknown') return;
+    const row = await this.ipLockoutRepo.findOne({ where: { ip } });
+    if (!row) return;
+    row.attempts = 0;
+    row.lockedUntil = null;
+    row.windowStartedAt = new Date();
+    await this.ipLockoutRepo.save(row);
+  }
+
+  async verifySmsOtp(phoneNumber: string, code: string, sourceIp = 'unknown') {
+    // Phase 231 — DB-level per-IP lockout (defence-in-depth III)
+    await this.assertIpNotLocked(sourceIp);
+
     const phone = this.normalizeTrPhone(phoneNumber);
     if (!code || !/^\d{6}$/.test(code)) {
       throw new BadRequestException('Geçersiz kod formatı');
@@ -116,22 +201,33 @@ export class AuthService implements OnModuleInit {
       where: { phoneNumber: phone },
       order: { createdAt: 'DESC' },
     });
-    if (!otp) throw new BadRequestException('Kod bulunamadı');
-    if (otp.used) throw new BadRequestException('Kod zaten kullanıldı');
+    if (!otp) {
+      await this.recordIpFailure(sourceIp);
+      throw new BadRequestException('Kod bulunamadı');
+    }
+    if (otp.used) {
+      await this.recordIpFailure(sourceIp);
+      throw new BadRequestException('Kod zaten kullanıldı');
+    }
     if (otp.expiresAt.getTime() < Date.now()) {
+      await this.recordIpFailure(sourceIp);
       throw new BadRequestException('Kod süresi doldu');
     }
     if (otp.attempts >= 5) {
+      await this.recordIpFailure(sourceIp);
       throw new BadRequestException('Çok fazla deneme');
     }
     if (otp.code !== code) {
       otp.attempts += 1;
       await this.smsOtpRepo.save(otp);
+      await this.recordIpFailure(sourceIp);
       throw new BadRequestException('Yanlış kod');
     }
 
     otp.used = true;
     await this.smsOtpRepo.save(otp);
+    // Phase 231 — Meşru başarı → IP counter sıfırla
+    await this.resetIpCounter(sourceIp);
 
     const existing = await this.usersService.findByPhone(phone);
     if (existing) {

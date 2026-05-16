@@ -16,6 +16,7 @@ import { SmsService } from '../sms/sms.service';
 import { PasswordResetToken } from './password-reset-token.entity';
 import { EmailVerificationToken } from './email-verification-token.entity';
 import { SmsOtp } from './sms-otp.entity';
+import { IpOtpLockout } from './ip-otp-lockout.entity';
 import { UserRole } from '../users/user.entity';
 
 // ── Phase 227 — firebase-admin tam mock ─────────────────────────────────────
@@ -120,6 +121,7 @@ describe('AuthService.loginWithFirebase (Phase 227)', () => {
         { provide: getRepositoryToken(PasswordResetToken), useValue: repoMock() },
         { provide: getRepositoryToken(EmailVerificationToken), useValue: repoMock() },
         { provide: getRepositoryToken(SmsOtp), useValue: repoMock() },
+        { provide: getRepositoryToken(IpOtpLockout), useValue: repoMock() },
         { provide: CACHE_MANAGER, useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() } },
       ],
     }).compile();
