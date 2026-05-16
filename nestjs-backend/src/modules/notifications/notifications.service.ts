@@ -62,7 +62,7 @@ export class NotificationsService {
           <p style="margin-top:24px"><a href="https://yapgitsin.tr" style="background:#007DFE;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Uygulamayı Aç</a></p>
         </div>
         <div style="padding:16px 24px;background:#F8F9FA;color:#6b7280;font-size:12px">
-          destek@yapgitsin.tr · <a href="https://yapgitsin.tr/unsubscribe" style="color:#007DFE">Abonelikten çık</a>
+          support@yapgitsin.tr · <a href="https://yapgitsin.tr/unsubscribe" style="color:#007DFE">Abonelikten çık</a>
         </div>
       </div></body>`;
     void this.email.send(user.email, `${title} — Yapgitsin`, html);

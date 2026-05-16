@@ -48,7 +48,7 @@ class _HelpScreenState extends State<HelpScreen> {
     ),
     (
       'Hesabımı nasıl silerim?',
-      'Hesap silme işlemi için destek@yapgitsin.tr adresine e-posta gönderiniz. '
+      'Hesap silme işlemi için support@yapgitsin.tr adresine e-posta gönderiniz. '
       'Talebiniz 5 iş günü içinde işleme alınır.',
     ),
     (
@@ -114,9 +114,9 @@ class _HelpScreenState extends State<HelpScreen> {
                   Expanded(child: _contactCard(
                     icon: Icons.email_outlined,
                     label: 'E-posta',
-                    sub: 'destek@yapgitsin.tr',
+                    sub: 'support@yapgitsin.tr',
                     color: Colors.blue,
-                    onTap: () => _launchUrl('mailto:destek@yapgitsin.tr'),
+                    onTap: () => _launchUrl('mailto:support@yapgitsin.tr'),
                   )),
                   const SizedBox(width: 12),
                   Expanded(child: _contactCard(

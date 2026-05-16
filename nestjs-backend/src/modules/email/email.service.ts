@@ -48,7 +48,7 @@ function shell(title: string, bodyHtml: string): string {
     <div style="padding:24px;font-size:15px;line-height:1.55">${bodyHtml}</div>
     <div style="padding:16px 24px;background:#F8F9FA;color:#6b7280;font-size:12px;border-top:1px solid #e5e7eb">
       Bu mesaj Yapgitsin tarafından otomatik olarak gönderildi.<br/>
-      İletişim: <a href="mailto:destek@yapgitsin.tr" style="color:${BRAND}">destek@yapgitsin.tr</a> &nbsp;·&nbsp;
+      İletişim: <a href="mailto:support@yapgitsin.tr" style="color:${BRAND}">support@yapgitsin.tr</a> &nbsp;·&nbsp;
       <a href="https://yapgitsin.tr/unsubscribe" style="color:${BRAND}">Abonelikten çık</a>
     </div>
   </div></body></html>`;

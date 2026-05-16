@@ -30,7 +30,7 @@ const FAQ: Record<string, string> = {
     'Ödeme doğrudan müşteri ile usta arasında yapılır. Platform şu an ödeme aracılığı yapmamaktadır.',
   ilan: 'İlan vermek ücretsizdir. Ustalar ilanınızı görür ve teklif verebilir. En fazla 20 fotoğraf ekleyebilirsiniz.',
   şikayet:
-    'Sorun yaşarsanız değerlendirme bırakabilirsiniz. Ciddi sorunlar için destek@yapgitsin.tr adresine yazabilirsiniz.',
+    'Sorun yaşarsanız değerlendirme bırakabilirsiniz. Ciddi sorunlar için support@yapgitsin.tr adresine yazabilirsiniz.',
   'öne çıkarma':
     'İlanınızı veya profilinizi ücretli olarak öne çıkarabilirsiniz. Detaylar için ayarlar > premium bölümüne bakın.',
 };
@@ -242,7 +242,7 @@ faqs uzunluğu 3-5 arası olsun. SSS uzun-kuyruk SEO odaklı: fiyat, süre, gara
         return {
           answer:
             FAQ[topic] ??
-            'Bu konuda bilgi bulunamadı. destek@yapgitsin.tr adresine yazabilirsiniz.',
+            'Bu konuda bilgi bulunamadı. support@yapgitsin.tr adresine yazabilirsiniz.',
         };
       }
 
@@ -252,7 +252,7 @@ faqs uzunluğu 3-5 arası olsun. SSS uzun-kuyruk SEO odaklı: fiyat, süre, gara
           tokenCostPerOffer: 5,
           startingTokens: 100,
           maxPhotosPerJob: 20,
-          supportEmail: 'destek@yapgitsin.tr',
+          supportEmail: 'support@yapgitsin.tr',
         };
 
       default:
