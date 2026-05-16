@@ -7,7 +7,7 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/job_repository.dart';
-import '../../data/firebase_offer_repository.dart';
+import '../../data/offer_repository.dart';
 import '../../../tokens/data/token_repository.dart';
 import 'job_detail_screen.dart';
 import 'job_opportunities_screen.dart';
