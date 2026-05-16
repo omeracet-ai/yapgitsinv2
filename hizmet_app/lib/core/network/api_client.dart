@@ -9,21 +9,22 @@ import '../services/secure_token_store.dart';
 
 /// Central HTTP client for the app.
 ///
-/// Phase P188/4 (Voldi-sec): refresh token interceptor LIVE.
-///   - Access token read from SecureTokenStore (auth_token), falling back to
-///     SharedPreferences `jwt_token` (legacy write-through key) and the
-///     ApiClient.kAuthTokenKey shim.
-///   - Refresh token read from SecureTokenStore (refresh_token).
+/// Phase 244: SP `jwt_token` legacy yolu kaldırıldı — SecureTokenStore tek kaynak.
+///   - Access + refresh token sadece SecureTokenStore'dan okunur/yazılır.
 ///   - On 401: POST /auth/refresh once with the refresh token. On success,
-///     persist the new pair to SecureTokenStore (+ write-through to SP for
-///     legacy call sites) and retry the original request once.
+///     persist the new pair to SecureTokenStore and retry the original
+///     request once.
 ///   - On refresh failure (network/401/missing token): clear the store and
 ///     surface the original 401 — UI/router reacts on next protected call.
 class ApiClient {
+  /// [prefs] is accepted for legacy test compatibility but no longer used;
+  /// all token I/O goes through [SecureTokenStore] as of Phase 244.
   ApiClient({Dio? dio, SharedPreferences? prefs, SecureTokenStore? tokenStore})
       : _dio = dio ?? Dio(),
-        _prefsOverride = prefs,
         _tokenStore = tokenStore ?? SecureTokenStore() {
+    // Accept the legacy [prefs] arg without using it.
+    // ignore: unused_local_variable
+    final legacyPrefs = prefs;
     _dio.options
       ..baseUrl = ApiConstants.baseUrl
       ..connectTimeout = const Duration(seconds: 20)
@@ -44,28 +45,17 @@ class ApiClient {
   static const String kRefreshTokenKey = 'refresh_token';
 
   final Dio _dio;
-  final SharedPreferences? _prefsOverride;
   final SecureTokenStore _tokenStore;
 
   Dio get dio => _dio;
 
-  Future<SharedPreferences> _prefs() async =>
-      _prefsOverride ?? await SharedPreferences.getInstance();
-
   Future<String?> _readAccessToken() async {
-    // Prefer secure store; fall back to legacy SP keys for migration window.
     final secure = await _tokenStore.readToken();
-    if (secure != null && secure.isNotEmpty) return secure;
-    final p = await _prefs();
-    final t = p.getString(kAuthTokenKey) ?? p.getString('jwt_token');
-    return (t == null || t.isEmpty) ? null : t;
+    return (secure == null || secure.isEmpty) ? null : secure;
   }
 
   Future<void> _writeAccessToken(String token) async {
     await _tokenStore.writeToken(token);
-    final p = await _prefs();
-    await p.setString(kAuthTokenKey, token);
-    await p.setString('jwt_token', token); // legacy write-through
   }
 }
 
@@ -189,9 +179,6 @@ class RefreshTokenInterceptor extends Interceptor {
   Future<void> _forceLogout() async {
     try {
       await _tokenStore.clear();
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(ApiClient.kAuthTokenKey);
-      await prefs.remove('jwt_token');
     } catch (_) {
       // Best-effort — never throw from interceptor cleanup.
     }

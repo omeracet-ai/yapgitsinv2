@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/services/secure_token_store.dart';
 import '../providers/auth_provider.dart';
 import '../../../service_requests/data/service_request_repository.dart';
 
@@ -96,8 +97,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     }
     setState(() => _loading = true);
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('jwt_token');
+      final token = await SecureTokenStore().readToken();
       final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
       final bdStr = _birthDate != null
           ? '${_birthDate!.year}-${_birthDate!.month.toString().padLeft(2, '0')}-${_birthDate!.day.toString().padLeft(2, '0')}'
@@ -122,6 +122,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
         },
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
+      final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_data', jsonEncode(res.data));
       ref
           .read(authStateProvider.notifier)
@@ -176,8 +177,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
       }
 
       // KullanÄ±cÄ± profilini gÃ¼ncelle
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('jwt_token');
+      final token = await SecureTokenStore().readToken();
       final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
       final res = await dio.patch(
         '/users/me',
@@ -187,6 +187,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
         },
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
+      final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_data', jsonEncode(res.data));
       ref
           .read(authStateProvider.notifier)

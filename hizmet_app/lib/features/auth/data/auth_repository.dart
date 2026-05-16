@@ -11,10 +11,6 @@ class AuthRepository {
   final Dio _dio;
   final SecureTokenStore _secureTokenStore;
 
-  /// Tracks whether the one-shot SharedPreferences → SecureStorage migration
-  /// has run for this app process. Idempotent across calls.
-  static bool _migrationChecked = false;
-
   AuthRepository({SecureTokenStore? secureTokenStore})
       : _secureTokenStore = secureTokenStore ?? SecureTokenStore(),
         _dio = Dio(BaseOptions(
@@ -23,34 +19,11 @@ class AuthRepository {
           receiveTimeout: const Duration(seconds: 10),
         ));
 
-  /// One-shot migration (Phase 187/5): if the secure store has no token but
-  /// the legacy SharedPreferences store does, copy it over. Uses a
-  /// write-through pattern — the SP entry is intentionally NOT removed so
-  /// Voldi-sec-1's ApiClient interceptor (which still reads SP directly)
-  /// keeps working until its own migration lands.
-  Future<void> _ensureTokenMigration() async {
-    if (_migrationChecked) return;
-    _migrationChecked = true;
-    try {
-      final secure = await _secureTokenStore.readToken();
-      if (secure != null && secure.isNotEmpty) return;
-      final prefs = await SharedPreferences.getInstance();
-      final legacy = prefs.getString('jwt_token');
-      if (legacy != null && legacy.isNotEmpty) {
-        await _secureTokenStore.writeToken(legacy);
-        // Write-through: keep SP value for Voldi-sec-1 interceptor compat.
-      }
-    } catch (_) {
-      // Best-effort migration; never block auth flows on shim failure.
-    }
-  }
-
-  /// Persist the access token to both secure storage (primary) and the legacy
-  /// SharedPreferences `jwt_token` key (write-through, for Voldi-sec-1 compat).
+  /// Phase 244 — Access token sadece SecureTokenStore'a yazılır.
+  /// Legacy SharedPreferences `jwt_token` yazımı kaldırıldı; one-shot
+  /// migration `main.dart::_migrateLegacyJwt` tarafından startup'ta yapıldı.
   Future<void> _persistToken(String token) async {
     await _secureTokenStore.writeToken(token);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('jwt_token', token);
   }
 
   /// Phase P188/4 — Persist BOTH access + refresh tokens from a login response.
@@ -271,7 +244,6 @@ class AuthRepository {
   Future<void> logout() async {
     await _secureTokenStore.clear();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('jwt_token');
     await prefs.remove('user_data');
   }
 
@@ -341,11 +313,7 @@ class AuthRepository {
 
   Future<String?> getToken() async {
     try {
-      await _ensureTokenMigration();
-      final secure = await _secureTokenStore.readToken();
-      if (secure != null && secure.isNotEmpty) return secure;
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('jwt_token');
+      return await _secureTokenStore.readToken();
     } catch (_) {
       return null;
     }

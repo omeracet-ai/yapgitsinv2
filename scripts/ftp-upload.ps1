@@ -10,9 +10,57 @@
 
 $ErrorActionPreference = "Stop"
 
-# Plesk self-signed cert kabul + TLS 1.2/1.3
-[System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+# =============================================================================
+# TLS Server Certificate Pinning (MITM protection on hostile networks)
+# =============================================================================
+# SECURITY: We pin the FTPS server certificate by SHA1 thumbprint instead of
+# blindly trusting any cert. If the cert on the wire does not match the pin,
+# the upload aborts immediately (loudly).
+#
+# HOW TO UPDATE THE PIN (when Plesk rotates the cert):
+#   1. From a TRUSTED network (e.g., your home connection):
+#      openssl s_client -connect ftp.yapgitsin.tr:21 -starttls ftp `
+#        -servername ftp.yapgitsin.tr </dev/null 2>$null `
+#        | openssl x509 -noout -fingerprint -sha1
+#   2. Strip colons, uppercase the hex, paste into $EXPECTED_THUMBPRINT below.
+#   3. Verify out-of-band with Plesk admin before committing.
+#   4. Commit: "ftp-upload.ps1: rotate TLS pin (cert expiry YYYY-MM-DD)".
+#
+# Emergency override (NOT RECOMMENDED, trusted network only):
+#   $env:FTP_TLS_PIN_DISABLE = "1"
+# -----------------------------------------------------------------------------
+$EXPECTED_THUMBPRINT = "REPLACE_WITH_40_CHAR_SHA1_THUMBPRINT_UPPERCASE_NO_COLONS"
+
 try { [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 } catch {}
+
+[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {
+  param($senderObj, $cert, $chain, $sslPolicyErrors)
+
+  if ($env:FTP_TLS_PIN_DISABLE -eq "1") {
+    Write-Warning "FTP_TLS_PIN_DISABLE=1 — TLS pin BYPASSED. MITM risk; trusted networks only."
+    return $true
+  }
+
+  if (-not $cert) {
+    Write-Error "TLS PIN FAIL: server presented no certificate"
+    return $false
+  }
+
+  $actual = ([System.Security.Cryptography.X509Certificates.X509Certificate2]$cert).Thumbprint.ToUpper()
+  $expected = $EXPECTED_THUMBPRINT.ToUpper()
+
+  if ($expected -eq "REPLACE_WITH_40_CHAR_SHA1_THUMBPRINT_UPPERCASE_NO_COLONS") {
+    Write-Error "TLS PIN FAIL: `$EXPECTED_THUMBPRINT not configured. See header comment."
+    return $false
+  }
+
+  if ($actual -ne $expected) {
+    Write-Error "TLS PIN FAIL: thumbprint mismatch (possible MITM). expected=$expected actual=$actual"
+    return $false
+  }
+
+  return $true
+}
 
 # .env.deploy parse
 $envFile = Join-Path $PSScriptRoot "..\.env.deploy"

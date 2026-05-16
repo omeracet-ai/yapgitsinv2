@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/network/api_client_provider.dart';
+import '../../../core/services/secure_token_store.dart';
 
 final chatRepositoryProvider = Provider((ref) {
   return ChatRepository(dio: ref.read(apiClientProvider).dio);
@@ -80,8 +80,7 @@ class ChatRepository {
   /// Returns true if the user has a token. Preserved as a guard so we
   /// short-circuit unauthenticated callers (matches pre-P188/4 behavior).
   Future<bool> _hasToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final t = prefs.getString('jwt_token');
+    final t = await SecureTokenStore().readToken();
     return t != null && t.isNotEmpty;
   }
 

@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/network/api_client_provider.dart';
+import '../../../core/services/secure_token_store.dart';
 
 final savedJobsRepositoryProvider = Provider((ref) {
   return SavedJobsRepository(dio: ref.read(apiClientProvider).dio);
@@ -15,8 +15,7 @@ class SavedJobsRepository {
   /// Phase 152: anon-guard — /jobs/saved requires auth; calling it without a
   /// JWT triggers a 401 → retry storm → 429 throttle. Short-circuit early.
   Future<bool> _hasToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final t = prefs.getString('jwt_token');
+    final t = await SecureTokenStore().readToken();
     return t != null && t.isNotEmpty;
   }
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/services/secure_token_store.dart';
 
 /// ProfileVideoUploader — profil videosu yükler
 /// Tek video seçer, API'ye POST eder, başarı sonrası temizlenir
@@ -65,11 +65,10 @@ class _ProfileVideoUploaderState extends State<ProfileVideoUploader> {
         _uploadProgress = 0.0;
       });
 
-      // JWT token'ı SharedPreferences'tan al
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('jwt_token');
+      // Phase 244 — JWT token'ı SecureTokenStore'dan al.
+      final token = await SecureTokenStore().readToken();
 
-      if (token == null) {
+      if (token == null || token.isEmpty) {
         setState(() {
           _isUploading = false;
           _errorMessage = 'Oturum süresi doldu. Lütfen giriş yapın.';

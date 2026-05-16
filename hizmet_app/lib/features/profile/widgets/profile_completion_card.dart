@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/services/secure_token_store.dart';
 
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -39,9 +39,8 @@ final profileCompletionProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final auth = ref.watch(authStateProvider);
   if (auth is! AuthAuthenticated) return {};
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('jwt_token');
-  if (token == null) return {};
+  final token = await SecureTokenStore().readToken();
+  if (token == null || token.isEmpty) return {};
   final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
   try {
     final resp = await dio.get(

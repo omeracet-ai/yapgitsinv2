@@ -133,14 +133,23 @@ class FirebaseAuthRepository {
     }
   }
 
+  /// Phase 244 — Backend `POST /auth/forgot-password` (Firebase yolu kaldırıldı,
+  /// REST tek kaynak). Backend her zaman generic mesaj döner (enumeration koruması).
   Future<Map<String, dynamic>> forgotPassword(String email) async {
     try {
-      await _service.sendPasswordResetEmail(email);
+      final res = await _dio.post<dynamic>(
+        '/auth/forgot-password',
+        data: {'email': email},
+      );
+      final data = res.data;
+      if (data is Map) return Map<String, dynamic>.from(data);
       return {
-        'message': 'Eğer bu e-posta sistemde kayıtlıysa sıfırlama bağlantısı gönderildi.',
+        'message':
+            'Eğer bu e-posta sistemde kayıtlıysa sıfırlama bağlantısı gönderildi.',
       };
-    } on FirebaseAuthException catch (e) {
-      throw Exception(_mapFirebaseError(e.code));
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(e,
+          fallback: 'Şifre sıfırlama isteği gönderilemedi.'));
     }
   }
 
@@ -327,15 +336,17 @@ class FirebaseAuthRepository {
     }
   }
 
-  /// Resets password using a token (oobCode) via Firebase Auth.
+  /// Phase 244 — Backend `POST /auth/reset-password` (Firebase confirmPasswordReset
+  /// kaldırıldı; sıfırlama token'ı backend tarafından üretilip e-postayla gönderiliyor).
   Future<void> resetPassword(String token, String newPassword) async {
     try {
-      await FirebaseAuth.instance.confirmPasswordReset(
-        code: token,
-        newPassword: newPassword,
+      await _dio.post<dynamic>(
+        '/auth/reset-password',
+        data: {'token': token, 'newPassword': newPassword},
       );
-    } on FirebaseAuthException catch (e) {
-      throw Exception(_mapFirebaseError(e.code));
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(e,
+          fallback: 'Şifre sıfırlanamadı. Lütfen tekrar deneyin.'));
     }
   }
 

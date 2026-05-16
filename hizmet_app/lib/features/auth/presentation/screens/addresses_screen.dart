@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/services/secure_token_store.dart';
 import '../providers/auth_provider.dart';
 
 // ── Model ─────────────────────────────────────────────────────────────────────
@@ -150,9 +151,8 @@ class AddressesNotifier extends StateNotifier<List<SavedAddress>> {
 
   Future<void> _syncToProfile(SavedAddress addr) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('jwt_token');
-      if (token == null) return;
+      final token = await SecureTokenStore().readToken();
+      if (token == null || token.isEmpty) return;
       final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
       await dio.patch(
         '/users/me',

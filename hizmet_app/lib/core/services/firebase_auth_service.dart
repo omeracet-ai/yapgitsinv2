@@ -62,9 +62,6 @@ class FirebaseAuthService {
     return cred;
   }
 
-  Future<void> sendPasswordResetEmail(String email) =>
-      _auth.sendPasswordResetEmail(email: email);
-
   Future<void> sendEmailVerification() =>
       _auth.currentUser!.sendEmailVerification();
 

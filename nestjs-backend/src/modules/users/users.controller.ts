@@ -22,6 +22,17 @@ import type { Response } from 'express';
 import { AddOfferTemplateDto } from './dto/add-offer-template.dto';
 import { AddMessageTemplateDto } from './dto/add-message-template.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
+import { UpdateNotificationPreferencesDto } from './dto/update-notification-preferences.dto';
+import { UpdateAvailabilityDto } from './dto/update-availability.dto';
+import { UpdateLocationDto } from './dto/update-location.dto';
+import { UpdateMeDto } from './dto/update-me.dto';
+import { FcmTokenDto } from './dto/fcm-token.dto';
+import { UpsertInsuranceBodyDto } from './dto/upsert-insurance.dto';
+import { AddCertificationDto } from './dto/add-certification.dto';
+import { DataDeleteRequestDto } from './dto/data-delete-request.dto';
+import { PortfolioUrlDto } from './dto/portfolio-url.dto';
+import { IntroVideoDto } from './dto/intro-video.dto';
+import { BulkAvailabilityDto } from './dto/bulk-availability.dto';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { DataPrivacyService } from './data-privacy.service';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -138,15 +149,7 @@ export class UsersController {
   @Patch('me/notification-preferences')
   updateNotificationPreferences(
     @Request() req: AuthenticatedRequest,
-    @Body() body: {
-      preferences?: Partial<{
-        booking: boolean;
-        offer: boolean;
-        review: boolean;
-        message: boolean;
-        system: boolean;
-      }> | null;
-    },
+    @Body() body: UpdateNotificationPreferencesDto,
   ) {
     return this.svc.updateNotificationPreferences(
       req.user.id,
@@ -209,7 +212,7 @@ export class UsersController {
   @Patch('me/availability')
   updateAvailability(
     @Request() req: AuthenticatedRequest,
-    @Body() body: { schedule?: Record<string, unknown> | null },
+    @Body() body: UpdateAvailabilityDto,
   ) {
     return this.svc.updateAvailability(req.user.id, body?.schedule ?? null);
   }
@@ -218,7 +221,7 @@ export class UsersController {
   @Patch('me/location')
   async updateLocation(
     @Request() req: AuthenticatedRequest,
-    @Body() body: { latitude: number; longitude: number },
+    @Body() body: UpdateLocationDto,
   ) {
     await this.svc.updateLocation(req.user.id, body.latitude, body.longitude);
     return { ok: true };
@@ -228,28 +231,7 @@ export class UsersController {
   @Patch('me')
   async updateMe(
     @Request() req: AuthenticatedRequest,
-    @Body()
-    body: {
-      fullName?: string;
-      email?: string;
-      phoneNumber?: string;
-      birthDate?: string;
-      gender?: string;
-      city?: string;
-      district?: string;
-      address?: string;
-      identityPhotoUrl?: string;
-      documentPhotoUrl?: string;
-      profileImageUrl?: string;
-      profileVideoUrl?: string;
-      workerCategories?: string[];
-      workerSkills?: string[];
-      workerBio?: string;
-      hourlyRateMin?: number;
-      hourlyRateMax?: number;
-      serviceRadiusKm?: number;
-      isAvailable?: boolean;
-    },
+    @Body() body: UpdateMeDto,
   ) {
     // Tasker can manage their own skills — sanitize like admin endpoint does
     if (body.workerSkills) {
@@ -275,7 +257,7 @@ export class UsersController {
   @Post('me/fcm-token')
   async registerFcmToken(
     @Request() req: AuthenticatedRequest,
-    @Body() body: { token?: string },
+    @Body() body: FcmTokenDto,
   ) {
     const tokens = await this.svc.addFcmToken(req.user.id, body?.token ?? '');
     return { tokens };
@@ -285,7 +267,7 @@ export class UsersController {
   @Delete('me/fcm-token')
   async unregisterFcmToken(
     @Request() req: AuthenticatedRequest,
-    @Body() body: { token?: string },
+    @Body() body: FcmTokenDto,
   ) {
     const tokens = await this.svc.removeFcmToken(req.user.id, body?.token ?? '');
     return { tokens };
@@ -303,13 +285,7 @@ export class UsersController {
   @Post('me/insurance')
   async upsertMyInsurance(
     @Request() req: AuthenticatedRequest,
-    @Body() body: {
-      policyNumber: string;
-      provider: string;
-      coverageAmount: number;
-      expiresAt: string;
-      documentUrl?: string | null;
-    },
+    @Body() body: UpsertInsuranceBodyDto,
   ) {
     return this.insuranceSvc.upsert(req.user.id, body);
   }
@@ -331,13 +307,7 @@ export class UsersController {
   @Post('me/certifications')
   async addMyCertification(
     @Request() req: AuthenticatedRequest,
-    @Body() body: {
-      name: string;
-      issuer: string;
-      issuedAt: string;
-      expiresAt?: string | null;
-      documentUrl?: string | null;
-    },
+    @Body() body: AddCertificationDto,
   ) {
     return this.certificationSvc.create(req.user.id, body);
   }
@@ -387,7 +357,7 @@ export class UsersController {
   @Post('me/data-delete-request')
   async requestDataDeletion(
     @Request() req: AuthenticatedRequest,
-    @Body() body: { reason?: string },
+    @Body() body: DataDeleteRequestDto,
   ) {
     const reason = (body?.reason || '').trim() || null;
     const result = await this.dataPrivacy.createDeletionRequest(req.user.id, reason);
@@ -424,7 +394,7 @@ export class UsersController {
   @Post('me/portfolio')
   async addPortfolioPhoto(
     @Request() req: AuthenticatedRequest,
-    @Body() body: { url: string },
+    @Body() body: PortfolioUrlDto,
   ) {
     const url = (body?.url || '').trim();
     if (!url) throw new BadRequestException('url gerekli');
@@ -444,7 +414,7 @@ export class UsersController {
   @Delete('me/portfolio')
   async removePortfolioPhoto(
     @Request() req: AuthenticatedRequest,
-    @Body() body: { url: string },
+    @Body() body: PortfolioUrlDto,
   ) {
     const url = (body?.url || '').trim();
     const user = await this.svc.findById(req.user.id);
@@ -460,7 +430,7 @@ export class UsersController {
   @Post('me/portfolio-video')
   async addPortfolioVideo(
     @Request() req: AuthenticatedRequest,
-    @Body() body: { url: string },
+    @Body() body: PortfolioUrlDto,
   ) {
     const url = (body?.url || '').trim();
     if (!url) throw new BadRequestException('url gerekli');
@@ -480,7 +450,7 @@ export class UsersController {
   @Delete('me/portfolio-video')
   async removePortfolioVideo(
     @Request() req: AuthenticatedRequest,
-    @Body() body: { url: string },
+    @Body() body: PortfolioUrlDto,
   ) {
     const url = (body?.url || '').trim();
     const user = await this.svc.findById(req.user.id);
@@ -496,7 +466,7 @@ export class UsersController {
   @Post('me/intro-video')
   async setIntroVideo(
     @Request() req: AuthenticatedRequest,
-    @Body() body: { url: string; duration?: number | null },
+    @Body() body: IntroVideoDto,
   ) {
     const url = (body?.url || '').trim();
     if (!url) throw new BadRequestException('url gerekli');
@@ -703,15 +673,7 @@ export class UsersController {
   @Put('availability')
   async bulkUpdateAvailability(
     @Request() req: AuthenticatedRequest,
-    @Body()
-    body: {
-      days: Array<{
-        dayOfWeek: number;
-        startTime: string;
-        endTime: string;
-        isAvailable: boolean;
-      }>;
-    },
+    @Body() body: BulkAvailabilityDto,
   ) {
     const userId = req.user.id;
     if (!Array.isArray(body?.days)) {

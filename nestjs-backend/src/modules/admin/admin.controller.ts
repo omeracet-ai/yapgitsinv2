@@ -19,6 +19,17 @@ import { BulkVerifyDto } from './dto/bulk-verify.dto';
 import { BulkFeatureDto, BulkUnfeatureDto } from './dto/bulk-feature.dto';
 import { SuspendUserDto } from './dto/suspend-user.dto';
 import { PurgeAuditLogDto } from './dto/purge-audit-log.dto';
+import { AdminNoteDto } from './dto/admin-note.dto';
+import { DataDeletionActionDto } from './dto/data-deletion-action.dto';
+import { VerifyFlagDto, IdentityVerifiedDto, IsVerifiedDto } from './dto/verify-flag.dto';
+import { SettingValueDto } from './dto/setting-value.dto';
+import { FeaturedOrderDto } from './dto/featured-order.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
+import { UserBadgesDto, BadgeKeyDto } from './dto/user-badges.dto';
+import { UserSkillsDto } from './dto/user-skills.dto';
+import { ModerationActionDto } from './dto/moderation-action.dto';
+import { UpdateReportDto } from './dto/update-report.dto';
+import { GeoLocationDto } from './dto/geo-location.dto';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { WorkerInsuranceService } from '../users/worker-insurance.service';
 import { WorkerCertificationService } from '../users/worker-certification.service';
@@ -54,7 +65,7 @@ export class AdminController {
   @Patch('certifications/:id/verify')
   async verifyCertification(
     @Param('id') id: string,
-    @Body() body: { adminNote?: string },
+    @Body() body: AdminNoteDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     return this.certificationSvc.setVerified(id, true, req.user.id, body.adminNote);
@@ -64,7 +75,7 @@ export class AdminController {
   @Patch('certifications/:id/reject')
   async rejectCertification(
     @Param('id') id: string,
-    @Body() body: { adminNote?: string },
+    @Body() body: AdminNoteDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     return this.certificationSvc.setVerified(id, false, req.user.id, body.adminNote);
@@ -83,7 +94,7 @@ export class AdminController {
   @Patch('data-deletion-requests/:id')
   async moderateDataDeletionRequest(
     @Param('id') id: string,
-    @Body() body: { action: 'approve' | 'reject'; adminNote?: string },
+    @Body() body: DataDeletionActionDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     if (body.action !== 'approve' && body.action !== 'reject') {
@@ -125,7 +136,7 @@ export class AdminController {
   @Patch('users/:id/insurance/verify')
   async verifyInsurance(
     @Param('id') id: string,
-    @Body() body: { verified: boolean },
+    @Body() body: VerifyFlagDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.insuranceSvc.setVerified(id, !!body.verified, req.user.id);
@@ -155,7 +166,7 @@ export class AdminController {
   @Patch('settings/:key')
   async updateSetting(
     @Param('key') key: string,
-    @Body() body: { value: string },
+    @Body() body: SettingValueDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     return this.systemSettings.set(key, body.value, req.user.id);
@@ -259,7 +270,7 @@ export class AdminController {
   @Patch('jobs/:id/featured')
   async setJobFeatured(
     @Param('id') id: string,
-    @Body() body: { featuredOrder: number | null },
+    @Body() body: FeaturedOrderDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.setJobFeaturedOrder(
@@ -322,7 +333,7 @@ export class AdminController {
   @Patch('users/:id/verify')
   async verifyUser(
     @Param('id') id: string,
-    @Body() body: { identityVerified: boolean },
+    @Body() body: IdentityVerifiedDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.verifyUser(id, body.identityVerified);
@@ -338,7 +349,7 @@ export class AdminController {
   @Patch('service-requests/:id/featured')
   async setServiceRequestFeatured(
     @Param('id') id: string,
-    @Body() body: { featuredOrder: number | null },
+    @Body() body: FeaturedOrderDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.setServiceRequestFeaturedOrder(
@@ -358,7 +369,7 @@ export class AdminController {
   @Patch('categories/:id')
   async updateCategory(
     @Param('id') id: string,
-    @Body() body: Partial<Category>,
+    @Body() body: UpdateCategoryDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.categoriesService.update(id, body);
@@ -384,7 +395,7 @@ export class AdminController {
   @Patch('providers/:id/verify')
   async verifyProvider(
     @Param('id') id: string,
-    @Body() body: { isVerified: boolean },
+    @Body() body: IsVerifiedDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.providersService.setVerified(id, body.isVerified);
@@ -395,7 +406,7 @@ export class AdminController {
   @Patch('providers/:id/featured')
   async setProviderFeatured(
     @Param('id') id: string,
-    @Body() body: { featuredOrder: number | null },
+    @Body() body: FeaturedOrderDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.providersService.setFeaturedOrder(id, body.featuredOrder ?? null);
@@ -407,7 +418,7 @@ export class AdminController {
   @Patch('users/:id/badges')
   async setUserBadges(
     @Param('id') id: string,
-    @Body() body: { badges: string[] },
+    @Body() body: UserBadgesDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.setUserBadges(id, body.badges);
@@ -420,7 +431,7 @@ export class AdminController {
   @Post('users/:id/badges/grant')
   async grantManualBadge(
     @Param('id') id: string,
-    @Body() body: { badgeKey: string },
+    @Body() body: BadgeKeyDto,
   ) {
     return this.adminService.grantManualBadge(id, body.badgeKey);
   }
@@ -429,7 +440,7 @@ export class AdminController {
   @Post('users/:id/badges/revoke')
   async revokeManualBadge(
     @Param('id') id: string,
-    @Body() body: { badgeKey: string },
+    @Body() body: BadgeKeyDto,
   ) {
     return this.adminService.revokeManualBadge(id, body.badgeKey);
   }
@@ -438,7 +449,7 @@ export class AdminController {
   @Patch('users/:id/skills')
   async setUserSkills(
     @Param('id') id: string,
-    @Body() body: { skills: string[] },
+    @Body() body: UserSkillsDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.setUserSkills(id, body.skills);
@@ -508,7 +519,7 @@ export class AdminController {
   async moderateItem(
     @Param('type') type: 'job' | 'review' | 'chat',
     @Param('id') id: string,
-    @Body() body: { action: 'approve' | 'remove' | 'ban_user' },
+    @Body() body: ModerationActionDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.moderateItem(type, id, body.action);
@@ -602,7 +613,7 @@ export class AdminController {
   @Patch('reports/:id')
   async updateReport(
     @Param('id') id: string,
-    @Body() body: { status: UserReportStatus; adminNote?: string },
+    @Body() body: UpdateReportDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.userBlocksService.updateReportStatus(
@@ -624,7 +635,7 @@ export class AdminController {
   @Patch('jobs/:id/location')
   async setJobLocation(
     @Param('id') id: string,
-    @Body() body: { latitude: number; longitude: number },
+    @Body() body: GeoLocationDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.setJobLocation(id, body.latitude, body.longitude);
@@ -635,7 +646,7 @@ export class AdminController {
   @Patch('users/:id/location')
   async setUserLocation(
     @Param('id') id: string,
-    @Body() body: { latitude: number; longitude: number },
+    @Body() body: GeoLocationDto,
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.setUserLocation(id, body.latitude, body.longitude);

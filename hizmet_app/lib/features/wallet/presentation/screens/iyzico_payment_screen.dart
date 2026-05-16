@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:dio/dio.dart';
-import '../../../../core/constants/api_constants.dart';
+import '../../data/payment_repository.dart';
 
-class IyzicoPaymentScreen extends StatefulWidget {
+class IyzicoPaymentScreen extends ConsumerStatefulWidget {
   final double amount;
 
   const IyzicoPaymentScreen({super.key, required this.amount});
 
   @override
-  State<IyzicoPaymentScreen> createState() => _IyzicoPaymentScreenState();
+  ConsumerState<IyzicoPaymentScreen> createState() => _IyzicoPaymentScreenState();
 }
 
-class _IyzicoPaymentScreenState extends State<IyzicoPaymentScreen> {
+class _IyzicoPaymentScreenState extends ConsumerState<IyzicoPaymentScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
   String? _htmlContent;
@@ -25,27 +25,19 @@ class _IyzicoPaymentScreenState extends State<IyzicoPaymentScreen> {
 
   Future<void> _fetchPaymentForm() async {
     try {
-      final dio = Dio();
-      final response = await dio.post('${ApiConstants.baseUrl}/payments/create-session', data: {
-        'price': widget.amount.toString(),
-        'paidPrice': widget.amount.toString(),
-        'basketId': 'B${DateTime.now().millisecondsSinceEpoch}',
-        'user': {
-          'id': 'U123',
-          'name': 'Yapgitsin',
-          'surname': 'User',
-          'email': 'user@hizmetapp.com',
-        },
-      });
+      // Phase 244 — raw Dio() yerine PaymentRepository.createSession().
+      final data = await ref
+          .read(paymentRepositoryProvider)
+          .createSession(amount: widget.amount);
 
-      if (response.data['status'] == 'success') {
+      if (data['status'] == 'success') {
         setState(() {
-          _htmlContent = response.data['checkoutFormContent'];
+          _htmlContent = data['checkoutFormContent'] as String?;
           _isLoading = false;
           _setupController();
         });
       } else {
-        throw Exception(response.data['errorMessage'] ?? 'Payment initialization failed');
+        throw Exception(data['errorMessage'] ?? 'Payment initialization failed');
       }
     } catch (e) {
       if (mounted) {
