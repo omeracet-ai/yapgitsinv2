@@ -21,50 +21,208 @@ const kCardShadow = [
 
 class AppTheme {
   static ThemeData get lightTheme {
+    // Light-mode local tokens (project palette is dark-first; AppColors.light*
+    // covers the basics, these fill the gaps without bloating AppColors).
+    const lightSurfaceElevated = Color(0xFFF1F3F5);
+
+    final baseTextTheme = GoogleFonts.interTextTheme();
+    final serifTextTheme = GoogleFonts.playfairDisplayTextTheme();
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        brightness: Brightness.light,
+      colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
+        secondary: AppColors.primary,
         surface: AppColors.lightSurface,
+        background: AppColors.lightBackground,
         error: AppColors.error,
+        onPrimary: Colors.black,
+        onSurface: AppColors.lightText,
       ),
       scaffoldBackgroundColor: AppColors.lightBackground,
-      textTheme: GoogleFonts.interTextTheme(const TextTheme(
-        headlineLarge: TextStyle(
-          fontSize: 28,
+      textTheme: baseTextTheme.copyWith(
+        headlineLarge: serifTextTheme.headlineLarge?.copyWith(
+          fontSize: 32,
           fontWeight: FontWeight.bold,
-          color: AppColors.textPrimary,
+          color: AppColors.lightText,
+          letterSpacing: -0.5,
         ),
-        headlineMedium: TextStyle(
-          fontSize: 24,
+        headlineMedium: serifTextTheme.headlineMedium?.copyWith(
+          fontSize: 26,
           fontWeight: FontWeight.bold,
-          color: AppColors.textPrimary,
+          color: AppColors.lightText,
         ),
-        titleLarge: TextStyle(
-          fontSize: 18,
+        titleLarge: baseTextTheme.titleLarge?.copyWith(
+          fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: AppColors.lightText,
         ),
-      )),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.black,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.medium),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+        bodyLarge: baseTextTheme.bodyLarge?.copyWith(
+          fontSize: 16,
+          color: AppColors.lightText,
+        ),
+        bodyMedium: baseTextTheme.bodyMedium?.copyWith(
+          fontSize: 14,
+          color: AppColors.lightTextSecondary,
+        ),
+        bodySmall: baseTextTheme.bodySmall?.copyWith(
+          fontSize: 12,
+          color: AppColors.lightTextSecondary,
         ),
       ),
-      // ... rest of light theme kept similar ...
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          // Brand green on white = ~1.7:1 contrast (WCAG fail).
+          // Use black bg + white fg for primary CTA in light mode.
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+          minimumSize: const Size(0, 52),
+          alignment: Alignment.center,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            height: 1.1,
+          ),
+        ).copyWith(
+          overlayColor: MaterialStateProperty.all(Colors.white.withOpacity(0.1)),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.lightText,
+          side: const BorderSide(color: AppColors.lightBorder, width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+          backgroundColor: AppColors.lightSurface,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.lightText,
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: lightSurfaceElevated,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: const BorderSide(color: AppColors.lightBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: const BorderSide(color: AppColors.lightBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        hintStyle: const TextStyle(color: AppColors.lightTextSecondary),
+        labelStyle: const TextStyle(color: AppColors.lightTextSecondary),
+      ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: AppColors.primary,
+        selectionColor: Color(0x554ADE80),
+        selectionHandleColor: AppColors.primary,
+      ),
+      appBarTheme: const AppBarTheme(
+        // White bg + BLACK title/icons (brand green on white is WCAG fail).
+        backgroundColor: AppColors.lightSurface,
+        foregroundColor: AppColors.lightText,
+        elevation: 0,
+        centerTitle: false,
+        iconTheme: IconThemeData(color: AppColors.lightText),
+        titleTextStyle: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: AppColors.lightText,
+        ),
+      ),
+      iconTheme: const IconThemeData(color: AppColors.lightText),
+      cardTheme: CardThemeData(
+        color: AppColors.lightSurface,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          side: const BorderSide(color: AppColors.lightBorder, width: 1),
+        ),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        selectedItemColor: AppColors.lightText,
+        unselectedItemColor: AppColors.lightTextSecondary,
+        backgroundColor: AppColors.lightSurface,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+        selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        unselectedLabelStyle: TextStyle(fontSize: 12),
+      ),
+      dividerColor: AppColors.lightBorder,
+      dividerTheme: const DividerThemeData(
+        color: AppColors.lightBorder,
+        thickness: 1,
+        space: 1,
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: lightSurfaceElevated,
+        disabledColor: AppColors.lightBackground,
+        selectedColor: AppColors.primary,
+        secondarySelectedColor: AppColors.primary,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        labelStyle: const TextStyle(color: AppColors.lightText),
+        secondaryLabelStyle: const TextStyle(color: Colors.black),
+        brightness: Brightness.light,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          side: const BorderSide(color: AppColors.lightBorder),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.lightText,
+        contentTextStyle: const TextStyle(color: Colors.white),
+        actionTextColor: AppColors.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+        ),
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: AppColors.lightText,
+        unselectedLabelColor: AppColors.lightTextSecondary,
+        indicatorColor: AppColors.primary,
+        labelStyle: TextStyle(fontWeight: FontWeight.w600),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.lightSurface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.large),
+        ),
+        titleTextStyle: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: AppColors.lightText,
+        ),
+        contentTextStyle: const TextStyle(
+          fontSize: 14,
+          color: AppColors.lightText,
+        ),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        elevation: 2,
+      ),
     );
   }
 
