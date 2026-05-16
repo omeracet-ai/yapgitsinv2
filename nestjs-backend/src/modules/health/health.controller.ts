@@ -10,6 +10,45 @@ import {
   DbHealthDetail,
 } from './health.service';
 
+// Cached at module load — read package.json version once, then re-use.
+// Resolved relative to APP_ROOT to survive iisnode's quirky cwd.
+import { join } from 'path';
+import { APP_ROOT } from '../../common/paths';
+let PKG_VERSION: string | undefined;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  PKG_VERSION = require(join(APP_ROOT, 'package.json')).version;
+} catch {
+  PKG_VERSION = undefined;
+}
+
+interface HealthzResponse {
+  status: 'ok';
+  uptime: number;
+  timestamp: string;
+  version?: string;
+}
+
+/**
+ * Kubernetes-style /healthz liveness probe.
+ * Public, throttler-skipped, zero DI, <50ms. Separate from `/health` so
+ * uptime monitors hit a route that cannot regress when health.service grows.
+ */
+@ApiTags('health')
+@Controller('healthz')
+export class HealthzController {
+  @SkipThrottle({ short: true, medium: true, long: true, default: true })
+  @Get()
+  get(): HealthzResponse {
+    return {
+      status: 'ok',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      version: PKG_VERSION,
+    };
+  }
+}
+
 @ApiTags('health')
 @Controller('health')
 export class HealthController {
