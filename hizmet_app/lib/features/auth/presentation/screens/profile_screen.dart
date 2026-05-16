@@ -15,8 +15,7 @@ import 'personal_info_screen.dart';
 import 'edit_profile_screen.dart';
 import 'addresses_screen.dart';
 import 'help_screen.dart';
-import '../../../../core/constants/api_constants.dart';
-import 'package:dio/dio.dart';
+import '../../../../core/network/api_client_provider.dart';
 import '../../../calendar/presentation/calendar_screen.dart';
 import '../../../calendar/presentation/earnings_screen.dart';
 import '../../../profile/widgets/profile_completion_card.dart';
@@ -24,19 +23,19 @@ import '../../../profile/presentation/widgets/profile_video_uploader.dart';
 import '../../widgets/availability_editor_sheet.dart';
 import '../../../users/widgets/badge_row.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/services/locale_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../certifications/data/certification_repository.dart';
 // TODO(P190): migrate remaining strings to AppLocalizations
 
 // ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
+// Phase 241 — Ham `Dio` kaldırıldı; AuthInterceptor'lı [ApiClient] kullanılır.
 final myPublicProfileProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final auth = ref.watch(authStateProvider);
   if (auth is! AuthAuthenticated) return {};
   final userId = auth.user['id'] as String;
-  final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
+  final dio = ref.read(apiClientProvider).dio;
   final resp = await dio.get('/users/$userId/profile');
   return Map<String, dynamic>.from(resp.data as Map);
 });
@@ -1595,19 +1594,16 @@ class ProfileScreen extends ConsumerWidget {
               onChanged: (v) async {
                 if (v == null) return;
                 await ref2.read(localeProvider.notifier).setLocale(loc);
-                // PATCH /users/me to persist preferredLang on backend
+                // PATCH /users/me to persist preferredLang on backend.
+                // Phase 241 — Ham Dio kaldırıldı; AuthInterceptor Bearer ekler.
                 try {
-                  final prefs =
-                      await SharedPreferences.getInstance();
-                  final token = prefs.getString('jwt_token');
-                  final dio =
-                      Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
-                  await dio.patch(
-                    '/users/me',
-                    data: {'preferredLang': loc.languageCode},
-                    options: Options(
-                        headers: {'Authorization': 'Bearer $token'}),
-                  );
+                  await ref2
+                      .read(apiClientProvider)
+                      .dio
+                      .patch<dynamic>(
+                        '/users/me',
+                        data: {'preferredLang': loc.languageCode},
+                      );
                 } catch (_) {
                   // best-effort; local pref already saved
                 }

@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb, debugPrint;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
@@ -48,10 +48,15 @@ class FirebaseAuthService {
         if (phone != null && phone.isNotEmpty) 'phoneNumber': phone,
         if (city != null && city.isNotEmpty) 'city': city,
       });
-    } on DioException {
-      // Backend henüz JWT'yi tanımıyorsa sessizce geç — sonraki çağrılarda
-      // /users/me PATCH tekrar denenebilir. Hata profile_screen tarafında
-      // gösterilir.
+    } on DioException catch (e) {
+      // Phase 241 — Sessiz yutum yerine telemetri için log bırak.
+      // Backend henüz JWT'yi tanımıyorsa sonraki çağrılarda
+      // /users/me PATCH tekrar denenebilir.
+      if (kDebugMode) {
+        debugPrint(
+            '[FirebaseAuthService] registerWithEmail PATCH /users/me failed: '
+            '${e.response?.statusCode} ${e.message}');
+      }
     }
 
     return cred;
@@ -281,8 +286,14 @@ class FirebaseAuthService {
         if (email.isNotEmpty) 'email': email,
         if ((user.phoneNumber ?? '').isNotEmpty) 'phoneNumber': user.phoneNumber,
       });
-    } on DioException {
-      // JWT yok / backend henüz Firebase token tanımıyor → sessiz geç.
+    } on DioException catch (e) {
+      // Phase 241 — Sessiz yutum yerine telemetri için log bırak.
+      // JWT yok / backend henüz Firebase token tanımıyorsa best-effort.
+      if (kDebugMode) {
+        debugPrint(
+            '[FirebaseAuthService] _ensureUserDoc PATCH /users/me failed '
+            '(provider=$providerLabel): ${e.response?.statusCode} ${e.message}');
+      }
     }
   }
 

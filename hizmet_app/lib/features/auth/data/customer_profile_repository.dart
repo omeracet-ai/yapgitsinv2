@@ -1,19 +1,20 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_client_provider.dart';
 
 /// Phase 133 — Public customer profile (no worker fields).
-final customerProfileRepositoryProvider =
-    Provider((ref) => CustomerProfileRepository());
+/// Phase 241 — Ham `Dio` kaldırıldı; merkezi [ApiClient] kullanılır
+/// (AuthInterceptor + RefreshTokenInterceptor zincirini alır).
+final customerProfileRepositoryProvider = Provider(
+  (ref) => CustomerProfileRepository(ref.read(apiClientProvider)),
+);
 
 class CustomerProfileRepository {
-  final Dio _dio;
-  CustomerProfileRepository()
-      : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 5),
-          receiveTimeout: const Duration(seconds: 10),
-        ));
+  CustomerProfileRepository(this._api);
+
+  final ApiClient _api;
+  Dio get _dio => _api.dio;
 
   Future<Map<String, dynamic>> fetch(String userId) async {
     final resp = await _dio.get('/users/$userId/customer-profile');

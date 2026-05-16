@@ -1,16 +1,55 @@
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_client_provider.dart';
 import '../../../core/services/firebase_auth_service.dart';
 
 final firebaseAuthServiceProvider = Provider((_) => FirebaseAuthService());
 
-final firebaseAuthRepositoryProvider =
-    Provider((ref) => FirebaseAuthRepository(ref.read(firebaseAuthServiceProvider)));
+final firebaseAuthRepositoryProvider = Provider(
+  (ref) => FirebaseAuthRepository(
+    ref.read(firebaseAuthServiceProvider),
+    ref.read(apiClientProvider),
+  ),
+);
 
 class FirebaseAuthRepository {
-  FirebaseAuthRepository(this._service);
+  FirebaseAuthRepository(this._service, this._api);
 
   final FirebaseAuthService _service;
+  final ApiClient _api;
+  Dio get _dio => _api.dio;
+
+  /// Phase 241 — DioException → Türkçe kullanıcı mesajı.
+  String _mapDioError(DioException e, {String fallback = 'Sunucuya erişilemedi.'}) {
+    final code = e.response?.statusCode;
+    final body = e.response?.data;
+    if (body is Map) {
+      final msg = body['message'] ?? body['error'];
+      if (msg is String && msg.isNotEmpty) return msg;
+    }
+    switch (code) {
+      case 400:
+        return 'Geçersiz istek.';
+      case 401:
+        return 'Oturumunuz sona erdi. Lütfen tekrar giriş yapın.';
+      case 403:
+        return 'Bu işlem için yetkiniz yok.';
+      case 404:
+        return 'Kayıt bulunamadı.';
+      case 409:
+        return 'İşlem çakışması (409).';
+      case 429:
+        return 'Çok fazla deneme. Lütfen bekleyin.';
+      case 500:
+      case 502:
+      case 503:
+        return 'Sunucu hatası. Lütfen daha sonra tekrar deneyin.';
+      default:
+        return fallback;
+    }
+  }
 
   User? get currentUser => _service.currentUser;
   Stream<User?> get authStateChanges => _service.authStateChanges;
@@ -185,8 +224,23 @@ class FirebaseAuthRepository {
     }
   }
 
+  /// Phase 241 — Backend `DELETE /users/me` önce çağrılır. Backend silme
+  /// başarısız olursa Firebase silme abort edilir (orphan veri kalmasın).
+  /// `_service.deleteAccount` reauth + Firebase delete'i yapar; bu metod
+  /// sadece sıralamayı garanti eder.
   Future<void> deleteAccount(String password) async {
     try {
+      // Backend silme dene — başarısız olursa ABORT.
+      try {
+        await _dio.delete<dynamic>('/users/me');
+      } on DioException catch (e) {
+        // 404 → backend kayıt zaten yok, Firebase silmeye devam edebiliriz.
+        if (e.response?.statusCode != 404) {
+          throw Exception(_mapDioError(e,
+              fallback: 'Hesap silme şu an tamamlanamadı. Lütfen tekrar deneyin.'));
+        }
+      }
+      // Backend OK → Firebase reauth + delete.
       await _service.deleteAccount(password);
     } on FirebaseAuthException catch (e) {
       throw Exception(_mapFirebaseError(e.code));
@@ -210,40 +264,67 @@ class FirebaseAuthRepository {
     }
   }
 
-  /// Returns user profile data as a JSON string (KVKK data export stub).
+  /// Phase 241 — KVKK Madde 11 veri ihracı. Backend `GET /users/me/data-export`
+  /// JSON döner; serialize edilmiş string olarak iletilir.
   Future<String> downloadDataExport() async {
-    final profile = await _service.getUserProfile();
-    final user = _service.currentUser;
-    final data = {
-      'uid': user?.uid,
-      'email': user?.email,
-      'displayName': user?.displayName,
-      'emailVerified': user?.emailVerified,
-      ...?profile,
-    };
-    return data.toString();
+    try {
+      final res = await _dio.get<dynamic>('/users/me/data-export');
+      final data = res.data;
+      if (data is String) return data;
+      // Map/List → JSON string
+      return data.toString();
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(e,
+          fallback: 'Veri ihracı şu an alınamadı. Lütfen tekrar deneyin.'));
+    }
   }
 
-  /// Queues a data deletion request (KVKK Madde 11 stub).
+  /// Phase 241 — KVKK Madde 11 veri silme talebi. Backend
+  /// `POST /users/me/data-delete-request` ile kuyruğa alınır.
   Future<void> requestDataDeletion(String reason) async {
-    // Stub: log the request; actual deletion handled server-side.
-    return;
+    try {
+      await _dio.post<dynamic>(
+        '/users/me/data-delete-request',
+        data: {'reason': reason},
+      );
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(e,
+          fallback: 'Silme talebi şu an gönderilemedi. Lütfen tekrar deneyin.'));
+    }
   }
 
-  /// Disables two-factor authentication (stub).
-  Future<void> disable2FA(String code) async {
-    // Stub: 2FA disable handled server-side.
-    return;
-  }
-
-  /// Returns 2FA setup data (secret + QR code URL) — stub.
+  /// Phase 241 — 2FA setup. Backend `POST /auth/2fa/setup` →
+  /// `{secret, qrCodeUrl}` döner.
   Future<Map<String, dynamic>> setup2FA() async {
-    return {'secret': '', 'qrDataUrl': ''};
+    try {
+      final res = await _dio.post<dynamic>('/auth/2fa/setup');
+      final data = res.data;
+      if (data is Map) return Map<String, dynamic>.from(data);
+      return {'secret': '', 'qrDataUrl': ''};
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(e,
+          fallback: '2FA kurulum başlatılamadı. Lütfen tekrar deneyin.'));
+    }
   }
 
-  /// Enables 2FA with a TOTP code — stub.
+  /// Phase 241 — 2FA enable. Backend `POST /auth/2fa/enable {code}`.
   Future<void> enable2FA(String code) async {
-    return;
+    try {
+      await _dio.post<dynamic>('/auth/2fa/enable', data: {'code': code});
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(e,
+          fallback: '2FA etkinleştirilemedi. Kodu kontrol edip tekrar deneyin.'));
+    }
+  }
+
+  /// Phase 241 — 2FA disable. Backend `POST /auth/2fa/disable {code}`.
+  Future<void> disable2FA(String code) async {
+    try {
+      await _dio.post<dynamic>('/auth/2fa/disable', data: {'code': code});
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(e,
+          fallback: '2FA devre dışı bırakılamadı. Kodu kontrol edip tekrar deneyin.'));
+    }
   }
 
   /// Resets password using a token (oobCode) via Firebase Auth.
