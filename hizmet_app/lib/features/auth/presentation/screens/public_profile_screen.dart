@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/api_constants.dart';
-import 'package:dio/dio.dart';
+import '../../../profile/data/user_profile_repository.dart';
 import '../../../users/widgets/user_action_menu.dart';
 import '../../../tokens/widgets/gift_tokens_sheet.dart';
 import '../providers/auth_provider.dart';
@@ -18,9 +17,7 @@ import 'package:go_router/go_router.dart';
 final publicProfileProvider =
     FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
   (ref, userId) async {
-    final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
-    final resp = await dio.get('/users/$userId/profile');
-    return Map<String, dynamic>.from(resp.data as Map);
+    return ref.read(userProfileRepositoryProvider).getPublicProfile(userId);
   },
 );
 
@@ -28,10 +25,9 @@ final publicProfileProvider =
 final publicAvailabilitySlotsProvider =
     FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
   (ref, userId) async {
-    final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
-    final resp = await dio.get('/users/$userId/availability');
-    final list = resp.data as List? ?? [];
-    return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    return ref
+        .read(userProfileRepositoryProvider)
+        .getPublicAvailability(userId);
   },
 );
 

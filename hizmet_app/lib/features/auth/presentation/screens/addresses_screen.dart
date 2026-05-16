@@ -1,11 +1,9 @@
 import 'dart:convert';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/services/secure_token_store.dart';
+import '../../../profile/data/user_profile_repository.dart';
 import '../providers/auth_provider.dart';
 
 // ── Model ─────────────────────────────────────────────────────────────────────
@@ -151,18 +149,11 @@ class AddressesNotifier extends StateNotifier<List<SavedAddress>> {
 
   Future<void> _syncToProfile(SavedAddress addr) async {
     try {
-      final token = await SecureTokenStore().readToken();
-      if (token == null || token.isEmpty) return;
-      final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
-      await dio.patch(
-        '/users/me',
-        data: {
-          'city': addr.city,
-          'district': addr.district,
-          'address': addr.address
-        },
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      await _ref.read(userProfileRepositoryProvider).patchMe({
+        'city': addr.city,
+        'district': addr.district,
+        'address': addr.address,
+      });
     } catch (e, st) {
       debugPrint('addresses_screen._syncToProfile: $e\n$st');
     }

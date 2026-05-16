@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../data/payment_repository.dart';
+import '../../domain/buyer_info.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class IyzicoPaymentScreen extends ConsumerStatefulWidget {
   final double amount;
 
-  const IyzicoPaymentScreen({super.key, required this.amount});
+  /// Phase 248 — opsiyonel buyer payload. Null geçilirse screen önce
+  /// `authStateProvider`'dan currentUser'ı BuyerInfo'ya map etmeyi dener;
+  /// auth state Authenticated değilse `user` field'ı tamamen omit edilir
+  /// (backend fallback devreye girer — Phase 245).
+  final BuyerInfo? buyer;
+
+  const IyzicoPaymentScreen({super.key, required this.amount, this.buyer});
 
   @override
   ConsumerState<IyzicoPaymentScreen> createState() => _IyzicoPaymentScreenState();
@@ -25,10 +33,21 @@ class _IyzicoPaymentScreenState extends ConsumerState<IyzicoPaymentScreen> {
 
   Future<void> _fetchPaymentForm() async {
     try {
+      // Phase 248 — buyer çözümü: explicit param > authStateProvider > null.
+      // TODO(phase-248-wire): call-site'lar BuyerInfo'yu explicit geçmeye
+      // başlayınca bu otomatik auth-state fallback'i kaldırılabilir.
+      BuyerInfo? buyer = widget.buyer;
+      if (buyer == null) {
+        final auth = ref.read(authStateProvider);
+        if (auth is AuthAuthenticated) {
+          buyer = BuyerInfo.fromAuthUser(auth.user);
+        }
+      }
+
       // Phase 244 — raw Dio() yerine PaymentRepository.createSession().
       final data = await ref
           .read(paymentRepositoryProvider)
-          .createSession(amount: widget.amount);
+          .createSession(amount: widget.amount, buyer: buyer);
 
       if (data['status'] == 'success') {
         setState(() {

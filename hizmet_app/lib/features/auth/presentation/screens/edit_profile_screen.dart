@@ -8,9 +8,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/api_constants.dart';
-import '../../../../core/services/secure_token_store.dart';
 import '../providers/auth_provider.dart';
 import '../../../service_requests/data/service_request_repository.dart';
+import '../../../profile/data/user_profile_repository.dart';
 import '../../../profile/widgets/profile_completion_card.dart';
 import '../../../photos/data/photo_repository.dart';
 import '../../../insurance/data/insurance_repository.dart';
@@ -142,18 +142,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Future<void> _patch(String section, Map<String, dynamic> data) async {
     setState(() => _busySection = section);
     try {
-      final token = await SecureTokenStore().readToken();
-      final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
-      final res = await dio.patch(
-        '/users/me',
-        data: data,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final updated =
+          await ref.read(userProfileRepositoryProvider).patchMe(data);
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_data', jsonEncode(res.data));
-      ref
-          .read(authStateProvider.notifier)
-          .updateUserData(Map<String, dynamic>.from(res.data as Map));
+      await prefs.setString('user_data', jsonEncode(updated));
+      ref.read(authStateProvider.notifier).updateUserData(updated);
       ref.invalidate(profileCompletionProvider);
       if (mounted) _snack('Bilgiler gÃ¼ncellendi âœ“');
     } on DioException catch (e) {

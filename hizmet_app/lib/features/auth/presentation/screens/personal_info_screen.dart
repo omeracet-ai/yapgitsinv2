@@ -7,9 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/services/secure_token_store.dart';
 import '../providers/auth_provider.dart';
+import '../../../profile/data/user_profile_repository.dart';
 import '../../../service_requests/data/service_request_repository.dart';
 
 class PersonalInfoScreen extends ConsumerStatefulWidget {
@@ -97,36 +96,27 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     }
     setState(() => _loading = true);
     try {
-      final token = await SecureTokenStore().readToken();
-      final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
       final bdStr = _birthDate != null
           ? '${_birthDate!.year}-${_birthDate!.month.toString().padLeft(2, '0')}-${_birthDate!.day.toString().padLeft(2, '0')}'
           : null;
-      final res = await dio.patch(
-        '/users/me',
-        data: {
-          'fullName': _nameCtrl.text.trim(),
-          if (_emailCtrl.text.trim().isNotEmpty)
-            'email': _emailCtrl.text.trim(),
-          if (_phoneCtrl.text.trim().isNotEmpty)
-            'phoneNumber': _phoneCtrl.text.trim(),
-          if (_cityCtrl.text.trim().isNotEmpty) 'city': _cityCtrl.text.trim(),
-          if (_districtCtrl.text.trim().isNotEmpty)
-            'district': _districtCtrl.text.trim(),
-          if (_addressCtrl.text.trim().isNotEmpty)
-            'address': _addressCtrl.text.trim(),
-          if (_bioCtrl.text.trim().isNotEmpty)
-            'workerBio': _bioCtrl.text.trim(),
-          'gender': _gender,
-          if (bdStr != null) 'birthDate': bdStr,
-        },
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final updated =
+          await ref.read(userProfileRepositoryProvider).patchMe({
+        'fullName': _nameCtrl.text.trim(),
+        if (_emailCtrl.text.trim().isNotEmpty) 'email': _emailCtrl.text.trim(),
+        if (_phoneCtrl.text.trim().isNotEmpty)
+          'phoneNumber': _phoneCtrl.text.trim(),
+        if (_cityCtrl.text.trim().isNotEmpty) 'city': _cityCtrl.text.trim(),
+        if (_districtCtrl.text.trim().isNotEmpty)
+          'district': _districtCtrl.text.trim(),
+        if (_addressCtrl.text.trim().isNotEmpty)
+          'address': _addressCtrl.text.trim(),
+        if (_bioCtrl.text.trim().isNotEmpty) 'workerBio': _bioCtrl.text.trim(),
+        'gender': _gender,
+        if (bdStr != null) 'birthDate': bdStr,
+      });
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_data', jsonEncode(res.data));
-      ref
-          .read(authStateProvider.notifier)
-          .updateUserData(Map<String, dynamic>.from(res.data as Map));
+      await prefs.setString('user_data', jsonEncode(updated));
+      ref.read(authStateProvider.notifier).updateUserData(updated);
       if (mounted) _snack('Bilgiler gÃ¼ncellendi âœ“');
     } on DioException catch (e) {
       _snack(e.response?.data?['message'] ?? 'GÃ¼ncelleme baÅŸarÄ±sÄ±z',
@@ -177,21 +167,13 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
       }
 
       // KullanÄ±cÄ± profilini gÃ¼ncelle
-      final token = await SecureTokenStore().readToken();
-      final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
-      final res = await dio.patch(
-        '/users/me',
-        data: {
-          if (idUrl != null) 'identityPhotoUrl': idUrl,
-          if (docUrl != null) 'documentPhotoUrl': docUrl,
-        },
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final updated = await ref.read(userProfileRepositoryProvider).patchMe({
+        if (idUrl != null) 'identityPhotoUrl': idUrl,
+        if (docUrl != null) 'documentPhotoUrl': docUrl,
+      });
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_data', jsonEncode(res.data));
-      ref
-          .read(authStateProvider.notifier)
-          .updateUserData(Map<String, dynamic>.from(res.data as Map));
+      await prefs.setString('user_data', jsonEncode(updated));
+      ref.read(authStateProvider.notifier).updateUserData(updated);
       if (mounted) _snack('Belgeler yÃ¼klendi âœ“');
     } catch (e) {
       _snack(e.toString().replaceFirst('Exception: ', ''), error: true);

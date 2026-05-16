@@ -1,50 +1,35 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../auth/data/auth_repository.dart';
 import '../../../calendar/presentation/calendar_screen.dart';
 import '../../../jobs/presentation/screens/job_detail_screen.dart';
+import '../../data/notification_repository.dart';
 import '../../data/unread_count_provider.dart';
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 final notificationsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final authRepo = ref.watch(authRepositoryProvider);
-  final token = await authRepo.getToken();
-  if (token == null) return [];
-  final dio = Dio(BaseOptions(
-    baseUrl: ApiConstants.baseUrl,
-    connectTimeout: const Duration(seconds: 8),
-  ));
+  final auth = ref.watch(authStateProvider);
+  if (auth is! AuthAuthenticated) return [];
   try {
-    final res = await dio.get(
-      '/notifications',
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
-    );
-    return List<Map<String, dynamic>>.from(res.data as List);
+    return await ref.read(notificationRepositoryProvider).list();
   } catch (_) {
     return [];
   }
 });
 
 final unreadCountProvider = FutureProvider.autoDispose<int>((ref) async {
-  final authRepo = ref.watch(authRepositoryProvider);
-  final token = await authRepo.getToken();
-  if (token == null) return 0;
-  final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
+  final auth = ref.watch(authStateProvider);
+  if (auth is! AuthAuthenticated) return 0;
   try {
-    final res = await dio.get('/notifications/unread-count',
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
-    return (res.data['count'] as num?)?.toInt() ?? 0;
+    return await ref.read(notificationRepositoryProvider).unreadCount();
   } catch (_) {
     return 0;
   }
@@ -90,13 +75,13 @@ class NotificationScreen extends ConsumerWidget {
               if (unread == 0) return const SizedBox.shrink();
               return TextButton.icon(
                 onPressed: () async {
-                  final authRepo = ref.read(authRepositoryProvider);
-                  final token = await authRepo.getToken();
-                  if (token == null) return;
-                  await Dio(BaseOptions(baseUrl: ApiConstants.baseUrl)).patch(
-                    '/notifications/read-all',
-                    options: Options(headers: {'Authorization': 'Bearer $token'}),
-                  );
+                  try {
+                    await ref
+                        .read(notificationRepositoryProvider)
+                        .markAllRead();
+                  } catch (_) {
+                    return;
+                  }
                   ref.invalidate(notificationsProvider);
                   ref.read(unreadCountBadgeProvider.notifier).reset();
                 },
@@ -137,16 +122,16 @@ class NotificationScreen extends ConsumerWidget {
               itemBuilder: (context, i) => _NotifCard(
                 notif: notifications[i],
                 onRead: () async {
-                  final authRepo = ref.read(authRepositoryProvider);
-                  final token = await authRepo.getToken();
-                  if (token == null) return;
                   final id = notifications[i]['id'] as String?;
                   if (id == null) return;
                   final wasUnread = notifications[i]['isRead'] == false;
-                  await Dio(BaseOptions(baseUrl: ApiConstants.baseUrl)).patch(
-                    '/notifications/$id/read',
-                    options: Options(headers: {'Authorization': 'Bearer $token'}),
-                  );
+                  try {
+                    await ref
+                        .read(notificationRepositoryProvider)
+                        .markRead(id);
+                  } catch (_) {
+                    return;
+                  }
                   ref.invalidate(notificationsProvider);
                   if (wasUnread) {
                     ref.read(unreadCountBadgeProvider.notifier).decrement();

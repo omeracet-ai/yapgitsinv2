@@ -6,10 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/services/secure_token_store.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../profile/data/user_profile_repository.dart';
 import '../../../profile/widgets/profile_completion_card.dart';
 import '../../../service_requests/data/service_request_repository.dart';
 import 'worker_steps/step1_categories.dart';
@@ -129,8 +128,6 @@ class _WorkerOnboardingScreenState
       final idUrl = await repo.uploadIdentityPhoto(_identityPhoto!);
 
       // 2. PATCH /users/me toplu
-      final token = await SecureTokenStore().readToken();
-      final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
       final min = double.tryParse(_minCtrl.text.trim().replaceAll(',', '.'));
       final max = double.tryParse(_maxCtrl.text.trim().replaceAll(',', '.'));
       final body = <String, dynamic>{
@@ -145,18 +142,13 @@ class _WorkerOnboardingScreenState
         'identityPhotoUrl': idUrl,
         'isAvailable': true,
       };
-      final res = await dio.patch(
-        '/users/me',
-        data: body,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final updated =
+          await ref.read(userProfileRepositoryProvider).patchMe(body);
 
       // 3. Cache + auth state + completion invalidate
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_data', jsonEncode(res.data));
-      ref
-          .read(authStateProvider.notifier)
-          .updateUserData(Map<String, dynamic>.from(res.data as Map));
+      await prefs.setString('user_data', jsonEncode(updated));
+      ref.read(authStateProvider.notifier).updateUserData(updated);
       ref.invalidate(profileCompletionProvider);
 
       if (!mounted) return;
