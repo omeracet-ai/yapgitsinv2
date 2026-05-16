@@ -13,6 +13,13 @@ import { Offer, OfferStatus } from './offer.entity';
 import { UsersService } from '../users/users.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
 import { TokensService } from '../tokens/tokens.service';
+// Phase 245 — boost atomic transaction için doğrudan entity importları.
+import { User } from '../users/user.entity';
+import {
+  TokenTransaction,
+  TxType,
+  TxStatus,
+} from '../tokens/token-transaction.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
 import { EscrowService } from '../escrow/escrow.service';
@@ -82,27 +89,78 @@ export class JobsService {
     }
   }
 
+  /**
+   * Phase 245 (Voldi-sec) — boost atomic transaction.
+   *
+   * Eski pattern:
+   *   1. tokensService.spend(userId, cost) → User.tokenBalance UPDATE + tx log
+   *      (kendi içinde atomik decrement)
+   *   2. MAX(featuredOrder) sorgu
+   *   3. job.featuredOrder = N+1; jobsRepository.save(job)
+   *
+   * Risk: 1 başarılı, 3 patladı (DB hatası, schema drift, network) → token
+   * gitmiş, boost yok. PARA AKIŞI KAYBI. Audit P2 ama kullanıcı geri ödeme
+   * talebi → support yükü + güven kaybı, P1'e yükseltildi.
+   *
+   * Fix: dataSource.transaction içinde inline atomic decrement (TokenTransaction
+   * log + Job update aynı transaction'da). Save fail → rollback → token iade.
+   * Phase 242 atomic decrement pattern'i takip eder (TokensService.spend ile aynı
+   * UPDATE shape — manager üzerinden çalışır).
+   */
   async boost(jobId: string, days: number, userId: string): Promise<Job> {
-    const job = await this.jobsRepository.findOne({ where: { id: jobId } });
-    if (!job) throw new NotFoundException('İlan bulunamadı');
-    if (job.customerId !== userId) {
-      throw new ForbiddenException('Bu ilan size ait değil');
-    }
     if (!BOOST_ALLOWED_DAYS.includes(days as (typeof BOOST_ALLOWED_DAYS)[number])) {
       throw new BadRequestException('Geçersiz süre — 3, 7 veya 14 gün');
     }
     const cost = days * BOOST_TOKEN_COST_PER_DAY;
-    await this.tokensService.spend(userId, cost, `İlan boost (${days} gün)`);
 
-    const maxRow = await this.jobsRepository
-      .createQueryBuilder('job')
-      .select('MAX(job.featuredOrder)', 'max')
-      .getRawOne<{ max: number | null }>();
-    const nextOrder = (maxRow?.max ?? 0) + 1;
+    return this.dataSource.transaction(async (manager) => {
+      // 1. Ownership + existence kontrolü transaction içinde (race korumalı).
+      const job = await manager.findOne(Job, { where: { id: jobId } });
+      if (!job) throw new NotFoundException('İlan bulunamadı');
+      if (job.customerId !== userId) {
+        throw new ForbiddenException('Bu ilan size ait değil');
+      }
 
-    job.featuredOrder = nextOrder;
-    job.featuredUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    return this.jobsRepository.save(job);
+      // 2. Atomic conditional decrement — Phase 242 pattern.
+      // affected=0 → yetersiz bakiye → BadRequestException → rollback.
+      const tokenResult = await manager
+        .createQueryBuilder()
+        .update(User)
+        .set({ tokenBalance: () => 'tokenBalance - :cost' })
+        .where('id = :id AND tokenBalance >= :cost', { id: userId, cost })
+        .execute();
+      if (!tokenResult.affected) {
+        const u = await manager.findOne(User, { where: { id: userId } });
+        throw new BadRequestException(
+          `Yetersiz token bakiyesi. Gerekli: ${cost}, Mevcut: ${u?.tokenBalance ?? 0}`,
+        );
+      }
+
+      // 3. TokenTransaction log — transaction içinde, rollback'e dahil.
+      await manager.save(
+        manager.create(TokenTransaction, {
+          userId,
+          type: TxType.SPEND,
+          amount: cost,
+          amountMinor: cost * 100,
+          description: `İlan boost (${days} gün)`,
+          status: TxStatus.COMPLETED,
+          paymentMethod: null,
+          paymentRef: null,
+        }),
+      );
+
+      // 4. featuredOrder = MAX+1 transaction içinde, job UPDATE'i ile beraber.
+      const maxRow = await manager
+        .createQueryBuilder(Job, 'job')
+        .select('MAX(job.featuredOrder)', 'max')
+        .getRawOne<{ max: number | null }>();
+      const nextOrder = (maxRow?.max ?? 0) + 1;
+
+      job.featuredOrder = nextOrder;
+      job.featuredUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      return manager.save(Job, job);
+    });
   }
 
   async onModuleInit() {

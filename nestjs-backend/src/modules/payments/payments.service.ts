@@ -339,8 +339,10 @@ export class PaymentsService {
     price: string;
     paidPrice: string;
     basketId: string;
-    user: any;
+    user?: any;
   }) {
+    // Phase 245 — user opsiyonel; alt alanlar zaten fallback'li.
+    data = { ...data, user: data.user ?? {} };
     if (!this.iyzipay) {
       throw new InternalServerErrorException('Iyzipay not configured');
     }
