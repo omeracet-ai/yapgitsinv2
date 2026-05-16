@@ -26,9 +26,17 @@ import { SmsOtp } from './sms-otp.entity';
 import { SmsService } from '../sms/sms.service';
 import { MoreThan } from 'typeorm';
 
+// Phase 226 — Firebase Admin SDK type (lazy require below to avoid hard dep
+// failure in dev environments without service-account creds).
+type FirebaseAdmin = typeof import('firebase-admin');
+
 @Injectable()
 export class AuthService implements OnModuleInit {
   private readonly logger = new Logger(AuthService.name);
+  /** Phase 226 — Firebase Admin handle. null while disabled or before init. */
+  private firebaseAdmin: FirebaseAdmin | null = null;
+  /** Phase 226 — true once initializeApp succeeded for this process. */
+  private firebaseReady = false;
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
@@ -255,7 +263,141 @@ export class AuthService implements OnModuleInit {
     return { success: true };
   }
 
+  // ── Phase 226 — Firebase Admin lazy init (shared with FcmService env) ────
+  private initFirebaseAdmin(): void {
+    if (this.firebaseReady) return;
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    if (!raw) {
+      this.logger.log(
+        'Firebase bridge disabled (FIREBASE_SERVICE_ACCOUNT_JSON not set)',
+      );
+      return;
+    }
+    try {
+      let jsonStr = raw.trim();
+      if (!jsonStr.startsWith('{')) {
+        jsonStr = Buffer.from(jsonStr, 'base64').toString('utf8');
+      }
+      const credentials = JSON.parse(jsonStr) as Record<string, unknown>;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const admin = require('firebase-admin') as FirebaseAdmin;
+      if (!admin.apps.length) {
+        admin.initializeApp({
+          credential: admin.credential.cert(
+            credentials as unknown as import('firebase-admin').ServiceAccount,
+          ),
+          projectId: process.env.FIREBASE_PROJECT_ID,
+        });
+      }
+      this.firebaseAdmin = admin;
+      this.firebaseReady = true;
+      this.logger.log('Firebase Admin initialized (auth bridge ready)');
+    } catch (err) {
+      this.logger.warn(
+        `Firebase Admin init failed — /auth/firebase will 503: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * Phase 226 — Verify a Firebase ID token and issue backend JWTs.
+   *
+   * Flow:
+   *  1. Verify token via firebase-admin (signature, expiry, audience).
+   *  2. Look up the user: first by firebaseUid, then fall back to email
+   *     (for email/password users adopting social sign-in for the same
+   *     address — we link by writing firebaseUid onto the existing row).
+   *  3. If no match, create a new user with a placeholder phoneNumber
+   *     (firebase: prefix, unique by uid) — user can add real phone later.
+   *  4. Issue access + refresh tokens matching /auth/login response shape.
+   *
+   * Errors map to UnauthorizedException (401) with a stable, non-leaky
+   * Turkish message; the original cause is logged server-side.
+   */
+  async loginWithFirebase(idToken: string) {
+    if (!idToken || typeof idToken !== 'string') {
+      throw new UnauthorizedException('Firebase ID token gerekli');
+    }
+    if (!this.firebaseReady) {
+      // Try once more — env may have been set after boot in some hosts.
+      this.initFirebaseAdmin();
+    }
+    if (!this.firebaseReady || !this.firebaseAdmin) {
+      throw new UnauthorizedException('Sosyal giriş geçici olarak kullanılamıyor');
+    }
+
+    let decoded: import('firebase-admin').auth.DecodedIdToken;
+    try {
+      decoded = await this.firebaseAdmin.auth().verifyIdToken(idToken, true);
+    } catch (err) {
+      this.logger.warn(`Firebase token verify failed: ${(err as Error).message}`);
+      throw new UnauthorizedException('Firebase token geçersiz');
+    }
+
+    const fbUid = decoded.uid;
+    const fbEmail = (decoded.email || '').toLowerCase() || null;
+    const fbName =
+      (decoded.name as string | undefined) ||
+      (fbEmail ? fbEmail.split('@')[0] : 'Kullanıcı');
+    const emailVerifiedFromToken = decoded.email_verified === true;
+
+    // 1) uid match
+    let user = await this.usersService.findByFirebaseUid(fbUid);
+
+    // 2) link by email if email/password user existed first
+    if (!user && fbEmail) {
+      const byEmail = await this.usersService.findByEmail(fbEmail);
+      if (byEmail) {
+        await this.usersService.update(byEmail.id, {
+          firebaseUid: fbUid,
+          // Promote emailVerified if Firebase confirmed it.
+          emailVerified: byEmail.emailVerified || emailVerifiedFromToken,
+        });
+        user = await this.usersService.findById(byEmail.id);
+      }
+    }
+
+    // 3) create
+    if (!user) {
+      // Placeholder phone — phoneNumber is unique + NOT NULL, so synthesize
+      // a deterministic non-collidable value tied to the Firebase uid.
+      // User can replace it via PATCH /users/me later. The `firebase:` prefix
+      // is filtered out of SMS / display logic by length+format checks.
+      const placeholderPhone = `firebase:${fbUid}`.slice(0, 20);
+      user = await this.usersService.create({
+        fullName: fbName,
+        email: fbEmail ?? undefined,
+        phoneNumber: placeholderPhone,
+        passwordHash: null as unknown as string, // social-only user, no password
+        firebaseUid: fbUid,
+        emailVerified: emailVerifiedFromToken,
+        role: UserRole.USER,
+        isPhoneVerified: false,
+      });
+    }
+
+    if (user.suspended) throw new ForbiddenException('Hesap askıda');
+    if (user.deactivated) throw new ForbiddenException('Hesap silindi');
+
+    const { passwordHash: _ph, ...safe } = user;
+    const access_token = this.signAccessToken(safe as AuthUser);
+    const refresh_token = this.signRefreshToken({
+      id: safe.id,
+      tenantId: safe.tenantId ?? null,
+      tokenVersion: user.tokenVersion ?? 0,
+    });
+    return {
+      access_token,
+      refresh_token,
+      user: safe,
+      provider: decoded.firebase?.sign_in_provider ?? 'firebase',
+    };
+  }
+
   async onModuleInit() {
+    // Phase 226 — Firebase Admin bridge (best-effort; disabled w/o creds)
+    this.initFirebaseAdmin();
+
     const adminEmail = 'admin@yapgitsin.tr';
     const legacyEmail = 'admin@hizmet.app';
     const existing = await this.usersService.findByEmail(adminEmail);

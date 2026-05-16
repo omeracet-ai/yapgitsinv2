@@ -301,6 +301,13 @@ export class User {
   @Column({ type: 'varchar', length: 64, nullable: true, unique: true })
   calendarToken: string | null;
 
+  // ── Phase 226 — Social sign-in (Firebase Auth bridge) ────────────────────
+  // Set on first successful POST /auth/firebase call. Unique so two backend
+  // users cannot map to the same Firebase uid. Nullable to keep legacy
+  // email/password and SMS users intact.
+  @Column({ type: 'varchar', length: 128, nullable: true, unique: true })
+  firebaseUid: string | null;
+
   // ── Phase P188/4 — Refresh token rotation (Voldi-sec) ────────────────────
   // Incremented every time a refresh token is consumed. Embedded in refresh JWT
   // payload and verified on /auth/refresh — mismatch ⇒ rotated/reused token ⇒ 401.

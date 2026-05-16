@@ -136,6 +136,11 @@ export class UsersService {
     return this.repo.findOne({ where: { phoneNumber } });
   }
 
+  /** Phase 226 — Social sign-in lookup by Firebase Auth uid. */
+  findByFirebaseUid(firebaseUid: string): Promise<User | null> {
+    return this.repo.findOne({ where: { firebaseUid } });
+  }
+
   findById(id: string): Promise<User | null> {
     return this.repo.findOne({ where: { id } });
   }

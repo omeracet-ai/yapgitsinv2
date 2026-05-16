@@ -30,6 +30,23 @@ export class AuthController {
   }
 
   /**
+   * Phase 226 (Voldi-sec) — Social sign-in JWT bridge.
+   *
+   * Client (Google/Apple via Firebase Auth) sends the Firebase ID token,
+   * backend verifies via firebase-admin, upserts the user row, and issues
+   * a backend JWT pair matching the /auth/login response shape.
+   *
+   * Throttle: 20 req/dk per IP — same budget as /auth/login since token
+   * verify is server-side cryptographic work and brute-forcing a valid
+   * Firebase token is infeasible, but we still want a ceiling.
+   */
+  @Throttle({ 'auth-login': { limit: 20, ttl: 60_000 } })
+  @Post('firebase')
+  async firebaseLogin(@Body() body: { idToken: string }) {
+    return this.authService.loginWithFirebase(body?.idToken);
+  }
+
+  /**
    * Phase P188/4 (Voldi-sec) — Refresh access+refresh tokens.
    * 10 req/dk per IP — refresh shouldn't be hot.
    */

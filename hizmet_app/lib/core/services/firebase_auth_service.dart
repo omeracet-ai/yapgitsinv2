@@ -9,6 +9,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../network/api_client.dart';
+import 'secure_token_store.dart';
 
 class FirebaseAuthService {
   FirebaseAuthService({ApiClient? apiClient})
@@ -208,10 +209,50 @@ class FirebaseAuthService {
     String? fallbackEmail,
   }) async {
     if (user == null) return;
-    // TODO(backend Phase 226+): Firebase token → JWT bridge endpoint
-    // (POST /auth/firebase) eklenmeden bu PATCH 401 alır ve sessizce
-    // geçilir. Bridge geldiğinde sosyal sign-in kullanıcısı backend'de
-    // gerçekten provision olur.
+
+    // Phase 226 — Firebase ID token → backend JWT bridge.
+    // 1) get a fresh Firebase ID token (force refresh = catch token-revoked)
+    // 2) POST /auth/firebase → backend verifies & issues its own JWT pair
+    // 3) persist tokens so the next /users/me PATCH carries the correct
+    //    backend Bearer (not the Firebase ID token).
+    String? idToken;
+    try {
+      idToken = await user.getIdToken(true);
+    } catch (_) {
+      // Token alınamadıysa eski davranışa düş (sessiz PATCH).
+      idToken = null;
+    }
+
+    if (idToken != null && idToken.isNotEmpty) {
+      try {
+        final res = await _dio.post<dynamic>(
+          '/auth/firebase',
+          data: {'idToken': idToken},
+          // Don't send any stale Bearer — bridge accepts the Firebase token
+          // in the body, not the header.
+          options: Options(headers: {'Authorization': ''}),
+        );
+        final data = res.data;
+        if (data is Map) {
+          final access = data['access_token'];
+          final refresh = data['refresh_token'];
+          if (access is String && access.isNotEmpty) {
+            final store = SecureTokenStore();
+            await store.writeToken(access);
+            if (refresh is String && refresh.isNotEmpty) {
+              await store.writeRefreshToken(refresh);
+            }
+          }
+        }
+      } on DioException {
+        // Bridge yoksa veya token reddedildiyse PATCH'a düş — eskiden olduğu
+        // gibi 401 alır, sessizce geçer. Kullanıcı en azından Firebase
+        // tarafında giriş yapmış olur.
+      }
+    }
+
+    // Profile PATCH — şimdi backend JWT'si ile (varsa) çağrılır; yoksa
+    // mevcut sessiz-fail davranışı korunur.
     final fullName =
         user.displayName ?? fallbackName ?? (user.email ?? 'Kullanıcı');
     final email = user.email ?? fallbackEmail ?? '';
