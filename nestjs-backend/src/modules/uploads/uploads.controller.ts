@@ -17,6 +17,7 @@ import { Throttle } from '@nestjs/throttler';
 import { memoryStorage } from 'multer';
 import { join } from 'path';
 import * as fs from 'fs';
+import { APP_ROOT } from '../../common/paths';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 import { UploadsService } from './uploads.service';
 import { processImage } from '../../common/image-pipeline';
@@ -94,7 +95,7 @@ export class UploadsController {
     if (!files || files.length === 0) {
       throw new BadRequestException('En az 1 fotoğraf yüklenmelidir');
     }
-    const dir = join(process.cwd(), 'uploads', 'jobs');
+    const dir = join(APP_ROOT, 'uploads', 'jobs');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     const urls: string[] = [];
@@ -126,7 +127,7 @@ export class UploadsController {
     if (!files || files.length === 0) {
       throw new BadRequestException('En az 1 video yüklenmelidir');
     }
-    const dir = join(process.cwd(), 'uploads', 'jobs');
+    const dir = join(APP_ROOT, 'uploads', 'jobs');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     const urls: string[] = [];
@@ -158,7 +159,7 @@ export class UploadsController {
   ): Promise<{ url: string }> {
     if (!file) throw new BadRequestException('Fotoğraf seçilmedi');
     const folder = buildFileName(req.user.id, req.user.city);
-    const dir = join(process.cwd(), 'uploads', 'portfolio', folder);
+    const dir = join(APP_ROOT, 'uploads', 'portfolio', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const baseName = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     // Phase 96: render JPEG/WebP/AVIF @ 1024/640/320 + legacy <name>.jpg
@@ -194,7 +195,7 @@ export class UploadsController {
   ): Promise<{ url: string }> {
     if (!file) throw new BadRequestException('Video seçilmedi');
     const folder = buildFileName(req.user.id, req.user.city);
-    const dir = join(process.cwd(), 'uploads', 'portfolio-videos', folder);
+    const dir = join(APP_ROOT, 'uploads', 'portfolio-videos', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const extMap: Record<string, string> = {
       'video/mp4': 'mp4',
@@ -236,7 +237,7 @@ export class UploadsController {
   ): Promise<{ url: string; duration?: number }> {
     if (!file) throw new BadRequestException('Video seçilmedi');
     const folder = buildFileName(req.user.id, req.user.city);
-    const dir = join(process.cwd(), 'uploads', 'intro-videos', folder);
+    const dir = join(APP_ROOT, 'uploads', 'intro-videos', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const extMap: Record<string, string> = {
       'video/mp4': 'mp4',
@@ -273,7 +274,7 @@ export class UploadsController {
     if (!file) throw new BadRequestException('Profil fotoğrafı seçilmedi');
 
     const folder = buildFileName(req.user.id, req.user.city);
-    const dir = join(process.cwd(), 'uploads', 'profile', folder);
+    const dir = join(APP_ROOT, 'uploads', 'profile', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     // Cache-bust isim — Phase 96: 512/256/128 cover crop, 3 format
@@ -340,7 +341,7 @@ export class UploadsController {
     if (!file) throw new BadRequestException('Kimlik fotoğrafı zorunludur');
 
     const folder = buildFileName(req.user.id, req.user.city);
-    const dir = join(process.cwd(), 'uploads', 'identity', folder);
+    const dir = join(APP_ROOT, 'uploads', 'identity', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     const dest = join(dir, 'kimlik.jpg');
@@ -369,7 +370,7 @@ export class UploadsController {
     @Req() req: any,
   ): Promise<{ url: string }> {
     if (!file) throw new BadRequestException('Görsel seçilmedi');
-    const dir = join(process.cwd(), 'uploads', 'onboarding');
+    const dir = join(APP_ROOT, 'uploads', 'onboarding');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const baseName = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     // Phase 96: 1200/800/400 + 3 formats
@@ -418,7 +419,7 @@ export class UploadsController {
     if (!file) throw new BadRequestException('Dosya seçilmedi');
 
     const folder = buildFileName(req.user.id, req.user.city);
-    const dir = join(process.cwd(), 'uploads', 'chat-attachments', folder);
+    const dir = join(APP_ROOT, 'uploads', 'chat-attachments', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     const isImage = file.mimetype.startsWith('image/');
@@ -499,7 +500,7 @@ export class UploadsController {
     if (!file) throw new BadRequestException('Ses dosyası seçilmedi');
 
     const folder = buildFileName(req.user.id, req.user.city);
-    const dir = join(process.cwd(), 'uploads', 'chat-audio', folder);
+    const dir = join(APP_ROOT, 'uploads', 'chat-audio', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     const extMap: Record<string, string> = {
@@ -556,7 +557,7 @@ export class UploadsController {
   ): Promise<{ url: string; name: string; size: number }> {
     if (!file) throw new BadRequestException('Sertifika dosyası seçilmedi');
     const folder = buildFileName(req.user.id, req.user.city);
-    const dir = join(process.cwd(), 'uploads', 'certifications', folder);
+    const dir = join(APP_ROOT, 'uploads', 'certifications', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const extMap: Record<string, string> = {
       'application/pdf': 'pdf',
@@ -592,7 +593,7 @@ export class UploadsController {
     if (!file) throw new BadRequestException('Belge fotoğrafı seçilmedi');
 
     const folder = buildFileName(req.user.id, req.user.city);
-    const dir = join(process.cwd(), 'uploads', 'identity', folder);
+    const dir = join(APP_ROOT, 'uploads', 'identity', folder);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     const dest = join(dir, 'belge.jpg');

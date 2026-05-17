@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { join } from 'path';
 import * as fs from 'fs';
+import { APP_ROOT } from '../../common/paths';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { Offer, OfferStatus } from '../jobs/offer.entity';
 
@@ -54,7 +55,7 @@ export class UploadsService {
       throw new BadRequestException('Maks 5 fotoğraf');
     }
 
-    const dir = join(process.cwd(), 'uploads', 'completion', jobId);
+    const dir = join(APP_ROOT, 'uploads', 'completion', jobId);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     const newUrls: string[] = [];
@@ -109,7 +110,7 @@ export class UploadsService {
     }
 
     const fullName: string = userId; // Basit ID kullan (privacy)
-    const dir = join(process.cwd(), 'uploads', 'profile-videos', fullName);
+    const dir = join(APP_ROOT, 'uploads', 'profile-videos', fullName);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     // MIME → extension mapping

@@ -32,6 +32,7 @@ import { CategorySubscriptionsService } from '../subscriptions/category-subscrip
 import { encodeGeohash } from '../../common/geohash.util';
 import { tlToMinor } from '../../common/money.util';
 import { join } from 'path';
+import { APP_ROOT } from '../../common/paths';
 import * as fs from 'fs';
 /* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 const sharp = require('sharp');
@@ -873,7 +874,7 @@ export class JobsService {
       );
     }
 
-    const dir = join(process.cwd(), 'uploads', 'jobs');
+    const dir = join(APP_ROOT, 'uploads', 'jobs');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     const newUrls: string[] = [];
