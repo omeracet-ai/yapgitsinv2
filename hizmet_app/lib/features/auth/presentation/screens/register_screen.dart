@@ -87,12 +87,29 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
     super.dispose();
   }
 
+  // Phase 253 (Voldi-email-validate) — RFC-lite email syntax check.
+  // Backend re-validates with class-validator + MX/disposable; this is just UX.
+  static final RegExp _emailRe = RegExp(
+    r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+  );
+
   Future<void> _submitStep1() async {
     final name  = _nameCtrl.text.trim();
     final phone = _phoneCtrl.text.trim();
     final pass  = _passCtrl.text;
+    final email = _emailCtrl.text.trim();
+    // Phase 253 — email REQUIRED on register; phone now optional in copy
+    // (still validated by backend if provided).
     if (name.isEmpty || phone.isEmpty || pass.isEmpty) {
       setState(() => _error = AppLocalizations.of(context).registerRequiredFields);
+      return;
+    }
+    if (email.isEmpty) {
+      setState(() => _error = 'E-posta gerekli');
+      return;
+    }
+    if (!_emailRe.hasMatch(email)) {
+      setState(() => _error = 'Geçerli e-posta girin');
       return;
     }
     setState(() { _loading = true; _error = null; });
@@ -101,7 +118,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         fullName:    name,
         phoneNumber: phone,
         password:    pass,
-        email:       _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
+        email:       email,
         birthDate:   _birthDate != null
             ? '${_birthDate!.year}-${_birthDate!.month.toString().padLeft(2,'0')}-${_birthDate!.day.toString().padLeft(2,'0')}'
             : null,
@@ -129,7 +146,17 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
       if (!mounted) return;
       setState(() { _step = 1; _loading = false; });
     } catch (e) {
-      setState(() { _error = e.toString().replaceFirst('Exception: ', ''); _loading = false; });
+      // Phase 253 — surface backend domain-validation error codes cleanly.
+      final raw = e.toString();
+      String msg;
+      if (raw.contains('EMAIL_DOMAIN_INVALID')) {
+        msg = 'Bu e-posta sağlayıcısı doğrulanamadı. Gmail, iCloud, Outlook gibi yaygın bir adres kullanın.';
+      } else if (raw.contains('EMAIL_DISPOSABLE')) {
+        msg = 'Geçici e-posta servisleri kullanılamaz.';
+      } else {
+        msg = raw.replaceFirst('Exception: ', '');
+      }
+      setState(() { _error = msg; _loading = false; });
     }
   }
 
@@ -200,9 +227,14 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         _field(_nameCtrl, l.registerFullName, Icons.person_outline, TextInputType.name,
             TextCapitalization.words),
         const SizedBox(height: 14),
-        _field(_emailCtrl, l.registerEmailOptional, Icons.email_outlined,
+        // Phase 253 — email REQUIRED (label drops "opsiyonel" l10n key in favor
+        // of explicit Turkish copy to avoid touching .arb in this scope).
+        _field(_emailCtrl, 'E-posta *', Icons.email_outlined,
             TextInputType.emailAddress, TextCapitalization.none),
         const SizedBox(height: 14),
+        // Phase 253 — phone still required at the backend DTO level (uniqueness
+        // index) but SMS-verify is no longer a signup gate. Label kept simple;
+        // a future phase can flip phone to truly optional once DTO is relaxed.
         _field(_phoneCtrl, l.registerPhone, Icons.phone_outlined,
             TextInputType.phone, TextCapitalization.none),
         const SizedBox(height: 14),
