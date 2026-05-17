@@ -110,34 +110,22 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         district:    _districtCtrl.text.trim(),
         address:     _addressCtrl.text.trim(),
       );
-      // Phase 250-C — Kayıt başarılı; telefonu SMS OTP ile doğrula, sonra step2.
+      // Phase 253 (Voldi-email-validate) — SMS verify DEMOTED from signup gate
+      // to optional post-signup add-on (Play Console best practice; email is
+      // now the validated primary identifier). Kayıt başarılıysa kullanıcıya
+      // telefon doğrulamayı opsiyonel olarak sunuyoruz; iptal ederse step 2'ye
+      // (kimlik upload) geçiyor — backend kayıt zaten başarılı oldu.
       if (!mounted) return;
       final verifiedPhone = await context.push<String?>(
         '/auth/sms-verify?phone=${Uri.encodeQueryComponent(phone)}',
       );
-      // Phase 252-D — Strict block: SMS doğrulama tamamlanmadan step 2'ye
-      // geçilemez. Kullanıcı verify ekranını geri tuşu ile kapattıysa
-      // (verifiedPhone == null/empty) kayıt akışı iptal: oturumu kapat,
-      // login ekranına yönlendir. Backend'de orphan user kalır; kullanıcı
-      // sonradan login + verify ile düzeltebilir.
-      if (verifiedPhone == null || verifiedPhone.isEmpty) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Telefon doğrulanmadan kayıt tamamlanamaz. Profilden tekrar deneyebilirsin.',
-            ),
-          ),
-        );
-        await ref.read(authStateProvider.notifier).logout();
-        if (!mounted) return;
-        context.go('/giris-yap');
-        return;
+      if (verifiedPhone != null && verifiedPhone.isNotEmpty) {
+        ref.read(authStateProvider.notifier).updateUserData({
+          'phoneNumber': verifiedPhone,
+          'isPhoneVerified': true,
+        });
       }
-      ref.read(authStateProvider.notifier).updateUserData({
-        'phoneNumber': verifiedPhone,
-        'isPhoneVerified': true,
-      });
+      // Verify atlandı/iptal edildi olsa bile: kayıt geçerli, step 2'ye geç.
       if (!mounted) return;
       setState(() { _step = 1; _loading = false; });
     } catch (e) {

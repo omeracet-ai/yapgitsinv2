@@ -131,7 +131,9 @@ class _SmsVerifyScreenState extends ConsumerState<SmsVerifyScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Telefon numaranızı girin. Size 6 haneli bir doğrulama kodu göndereceğiz.',
+                  'Telefonunu doğrulayarak SMS bildirimleri ve hesap kurtarma '
+                  'özelliklerini kullanabilirsin. Bu adım opsiyoneldir — '
+                  'sonra ayarlardan da yapabilirsin.',
                   style: TextStyle(fontSize: 14, color: Colors.black87),
                 ),
                 const SizedBox(height: 20),
