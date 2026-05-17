@@ -6,6 +6,17 @@ const SYSTEM_PROMPT = `You are a helpful AI assistant for a service marketplace 
 This platform connects customers with service providers for jobs like home repairs, cleaning, tutoring, and more.
 Be concise, practical, and focused on helping users of this marketplace.`;
 
+// Gemini 2.0 Flash — free tier — used for the public /ai/chat endpoint.
+// All other (agent / SEO) endpoints continue to use Anthropic.
+const GEMINI_SYSTEM_PROMPT = `Sen Yapgitsin marketplace platformunun yardımcı asistanısın.
+Türkçe yanıt ver (kullanıcı İngilizce yazarsa İngilizce yanıt ver). Kısa, net ve pratik ol.
+Platform: müşteriler iş ilanı açar, ustalar teklif verir; ödeme platform dışı (escrow opsiyonel),
+her hesap 100 jeton ile başlar, teklif vermek 5 jeton harcar.`;
+
+const GEMINI_MODEL = 'gemini-2.0-flash-exp';
+const GEMINI_MAX_INPUT_CHARS = 8000; // ~2k tokens
+const GEMINI_MAX_OUTPUT_TOKENS = 1024;
+
 const CATEGORIES = [
   {
     name: 'Boya & Badana',
@@ -85,31 +96,67 @@ Include: what the job entails, what skills/experience to look for, and what the 
     }
   }
 
+  /**
+   * Public chat endpoint — uses Google Gemini 2.0 Flash (free tier).
+   * Input capped at ~2k tokens, output at 1k tokens.
+   * Requires env: GEMINI_API_KEY (set in Plesk).
+   */
   async chat(
     message: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
   ): Promise<string> {
-    try {
-      const messages: Anthropic.MessageParam[] = [
-        ...history,
-        { role: 'user', content: message },
-      ];
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+    if (!apiKey) {
+      throw new InternalServerErrorException('GEMINI_API_KEY not configured');
+    }
 
-      const response = await this.client.messages.create({
-        model: 'claude-opus-4-7',
-        max_tokens: 1024,
-        system: [
-          {
-            type: 'text',
-            text: SYSTEM_PROMPT,
-            cache_control: { type: 'ephemeral' },
+    const trimmedMessage = (message ?? '').slice(0, GEMINI_MAX_INPUT_CHARS);
+    // Cap history tail so total input stays bounded.
+    const trimmedHistory = (history ?? [])
+      .slice(-8)
+      .map((h) => ({
+        role: h.role,
+        content: (h.content ?? '').slice(0, 2000),
+      }));
+
+    const contents = [
+      ...trimmedHistory.map((h) => ({
+        role: h.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: h.content }],
+      })),
+      { role: 'user', parts: [{ text: trimmedMessage }] },
+    ];
+
+    const url =
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}` +
+      `:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: GEMINI_SYSTEM_PROMPT }],
           },
-        ],
-        messages,
+          contents,
+          generationConfig: {
+            maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS,
+            temperature: 0.7,
+          },
+        }),
       });
 
-      const textBlock = response.content.find((b) => b.type === 'text');
-      return textBlock ? textBlock.text : '';
+      if (!res.ok) {
+        throw new Error(`Gemini HTTP ${res.status}`);
+      }
+      const data = (await res.json()) as {
+        candidates?: Array<{
+          content?: { parts?: Array<{ text?: string }> };
+        }>;
+      };
+      const parts = data.candidates?.[0]?.content?.parts ?? [];
+      return parts.map((p) => p.text ?? '').join('').trim();
     } catch {
       throw new InternalServerErrorException('AI chat request failed');
     }
