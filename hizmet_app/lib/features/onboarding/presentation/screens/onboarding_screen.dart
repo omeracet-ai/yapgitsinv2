@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/job_status_badge.dart';
+import '../../../../core/widgets/online_worker_count_badge.dart';
 import '../../data/onboarding_storage.dart';
 
 
@@ -416,7 +416,7 @@ class _PageBody extends StatelessWidget {
               const SizedBox(height: 64),
               const Spacer(flex: 3),
               if (isFirst) ...[
-                const OnlineCountBadge(text: '12.483 usta şu an çevrimiçi'),
+                const OnlineWorkerCountBadge(),
                 const SizedBox(height: 24),
               ],
               _buildTitle(context),
