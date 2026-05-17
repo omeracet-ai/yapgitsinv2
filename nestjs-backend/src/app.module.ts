@@ -55,6 +55,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
 import { PaymentEscrow } from './modules/escrow/payment-escrow.entity';
 import { BookingEscrow } from './modules/escrow/booking-escrow.entity';
 import { EscrowModule } from './modules/escrow/escrow.module';
+import { IyzicoModule } from './modules/iyzico/iyzico.module';
 import { CancellationPolicy } from './modules/cancellation/cancellation-policy.entity';
 import { CancellationModule } from './modules/cancellation/cancellation.module';
 import { JobDispute } from './modules/disputes/job-dispute.entity';
@@ -296,6 +297,7 @@ import { MaintenanceModule } from './modules/maintenance/maintenance.module';
     OnboardingModule,
     FavoritesModule,
     EscrowModule,
+    IyzicoModule,
     CancellationModule,
     DisputesModule,
     AvailabilityModule,
