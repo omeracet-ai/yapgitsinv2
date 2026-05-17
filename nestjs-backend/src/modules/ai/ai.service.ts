@@ -13,7 +13,7 @@ Türkçe yanıt ver (kullanıcı İngilizce yazarsa İngilizce yanıt ver). Kıs
 Platform: müşteriler iş ilanı açar, ustalar teklif verir; ödeme platform dışı (escrow opsiyonel),
 her hesap 100 jeton ile başlar, teklif vermek 5 jeton harcar.`;
 
-const GEMINI_MODEL = 'gemini-2.0-flash-exp';
+const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_MAX_INPUT_CHARS = 8000; // ~2k tokens
 const GEMINI_MAX_OUTPUT_TOKENS = 1024;
 
