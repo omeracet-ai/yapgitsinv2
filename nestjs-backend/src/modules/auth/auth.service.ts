@@ -327,6 +327,13 @@ export class AuthService implements OnModuleInit {
 
     const existing = await this.usersService.findByPhone(phone);
     if (existing) {
+      // Phase 252-C (Voldi-fs) — mevcut user için isPhoneVerified persist.
+      // SMS OTP başarılı doğrulandı, flag DB'ye yazılmalı (önceden sadece
+      // yeni signup dalında true'ya çekiliyordu).
+      if (!existing.isPhoneVerified) {
+        await this.usersService.update(existing.id, { isPhoneVerified: true });
+        existing.isPhoneVerified = true;
+      }
       const { passwordHash: _ph, ...safe } = existing;
       const access_token = this.signAccessToken(safe as AuthUser);
       const refresh_token = this.signRefreshToken({
