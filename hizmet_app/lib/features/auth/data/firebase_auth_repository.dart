@@ -355,6 +355,44 @@ class FirebaseAuthRepository {
     return;
   }
 
+  /// Phase 250-B — Backend `POST /auth/sms/request {phoneNumber}`.
+  /// Backend: requestSmsOtp → SMS OTP gönderir (Phase 170: 10 req/dk throttle).
+  /// 400 = DTO geçersiz, 429 = throttle, diğer hatalar Türkçe mesaja çevrilir.
+  Future<void> requestSmsCode(String phoneNumber) async {
+    try {
+      await _dio.post<dynamic>(
+        '/auth/sms/request',
+        data: {'phoneNumber': phoneNumber},
+      );
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(e,
+          fallback: 'SMS kodu gönderilemedi. Lütfen tekrar deneyin.'));
+    }
+  }
+
+  /// Phase 250-B — Backend `POST /auth/sms/verify {phoneNumber, code}`.
+  /// Backend: verifySmsOtp → 5dk expiry + used flag + attempts.
+  /// 400 = DTO (kod 6 hane vs.), 401 = yanlış/expired kod, 429 = throttle.
+  Future<Map<String, dynamic>> verifySmsCode(
+      String phoneNumber, String code) async {
+    try {
+      final res = await _dio.post<dynamic>(
+        '/auth/sms/verify',
+        data: {'phoneNumber': phoneNumber, 'code': code},
+      );
+      final data = res.data;
+      if (data is Map) return Map<String, dynamic>.from(data);
+      return {};
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      if (code == 401) {
+        throw Exception('Kod hatalı veya süresi dolmuş. Lütfen tekrar deneyin.');
+      }
+      throw Exception(_mapDioError(e,
+          fallback: 'Kod doğrulanamadı. Lütfen tekrar deneyin.'));
+    }
+  }
+
   String _mapFirebaseError(String code) => switch (code) {
         'user-not-found' => 'Bu e-posta adresiyle kayıtlı kullanıcı bulunamadı.',
         'wrong-password' => 'Şifre hatalı.',

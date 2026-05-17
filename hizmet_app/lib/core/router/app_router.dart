@@ -25,6 +25,7 @@ import '../../../features/auth/presentation/screens/two_factor_setup_screen.dart
 import '../../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../../features/auth/presentation/screens/verify_email_screen.dart';
+import '../../../features/auth/presentation/screens/sms_verify_screen.dart';
 import '../../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../../features/onboarding/presentation/screens/worker_onboarding_screen.dart';
 import '../../../features/job_templates/presentation/job_templates_screen.dart';
@@ -63,6 +64,7 @@ const _publicPaths = <String>{
   '/forgot-password',
   '/reset-password',
   '/verify-email',
+  '/auth/sms-verify',
   '/destek',
   '/harita',
 };
@@ -230,6 +232,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final token = state.uri.queryParameters['token'] ?? '';
           return VerifyEmailScreen(token: token);
+        },
+      ),
+      // Phase 250-B — SMS OTP doğrulama (POST /auth/sms/request + /auth/sms/verify).
+      GoRoute(
+        path: '/auth/sms-verify',
+        builder: (context, state) {
+          final phone = state.uri.queryParameters['phone'];
+          return SmsVerifyScreen(initialPhone: phone);
         },
       ),
       GoRoute(
