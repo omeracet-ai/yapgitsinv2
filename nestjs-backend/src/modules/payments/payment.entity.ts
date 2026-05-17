@@ -32,6 +32,12 @@ export enum PaymentMethod {
 @Index(['workerId', 'createdAt'])
 @Index(['status'])
 @Index(['externalTransactionId'])
+// Phase 252-B (Voldi-db) — iyzipay callback race idempotency:
+// DB-level UNIQUE garanti, NULL'lar serbest (partial index).
+@Index('uq_payment_iyzipay_pid', ['iyzipayPaymentId'], {
+  unique: true,
+  where: '"iyzipayPaymentId" IS NOT NULL',
+})
 export class Payment {
   @PrimaryGeneratedColumn('uuid')
   id: string;
