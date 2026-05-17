@@ -163,7 +163,9 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
   }
 
   Widget _buildInput() {
-    return Container(
+    return SafeArea(
+      top: false,
+      child: Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
       child: Row(
@@ -199,6 +201,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -71,14 +71,17 @@ class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
           tabs: _tabs,
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          const ServiceRequestBody(),
-          const JobOpportunitiesBody(),
-          const MapScreen(),
-          const MyJobsBody(),
-        ],
+      body: SafeArea(
+        top: false,
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            const ServiceRequestBody(),
+            const JobOpportunitiesBody(),
+            const MapScreen(),
+            const MyJobsBody(),
+          ],
+        ),
       ),
     );
   }

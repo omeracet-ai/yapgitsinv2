@@ -311,12 +311,15 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomBar(
-        isOwner: isOwner,
-        canMakeOffer: canMakeOffer,
-        jobStatus: jobStatus,
-        isWorker: isWorker,
-        detail: detail,
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: _buildBottomBar(
+          isOwner: isOwner,
+          canMakeOffer: canMakeOffer,
+          jobStatus: jobStatus,
+          isWorker: isWorker,
+          detail: detail,
+        ),
       ),
     );
   }

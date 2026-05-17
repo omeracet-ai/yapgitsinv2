@@ -100,7 +100,9 @@ class _MainShellState extends ConsumerState<MainShell>
 
     return Scaffold(
       body: IndexedStack(index: selectedIndex, children: pages),
-      bottomNavigationBar: Container(
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
         decoration: BoxDecoration(
           color: AppColors.darkSurface,
           boxShadow: [
@@ -189,6 +191,7 @@ class _MainShellState extends ConsumerState<MainShell>
             ],
           ),
         ),
+      ),
       ),
     );
   }
