@@ -29,10 +29,14 @@ export class RegisterDto {
   @MaxLength(128)
   password!: string;
 
-  @IsOptional()
-  @IsEmail()
+  // Phase 253 (Voldi-email-validate) — email now REQUIRED on register.
+  // Play Console best practice: email is the primary contactable identifier;
+  // SMS verify becomes an optional post-signup add-on, not a signup gate.
+  // Domain-level validation (MX + disposable block + whitelist) runs in
+  // AuthService.register via EmailValidatorService.
+  @IsEmail({}, { message: 'Geçerli e-posta girin' })
   @MaxLength(254)
-  email?: string;
+  email!: string;
 
   @IsOptional()
   @IsString()

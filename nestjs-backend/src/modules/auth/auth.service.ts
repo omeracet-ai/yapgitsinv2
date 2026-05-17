@@ -26,6 +26,7 @@ import { SmsOtp } from './sms-otp.entity';
 import { IpOtpLockout } from './ip-otp-lockout.entity';
 import { SmsService } from '../sms/sms.service';
 import { MoreThan } from 'typeorm';
+import { EmailValidatorService } from './email-validator.service';
 
 /**
  * Phase 231 (Voldi-sec) — DB per-IP OTP lockout thresholds.
@@ -63,6 +64,7 @@ export class AuthService implements OnModuleInit {
     private smsService: SmsService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     @InjectDataSource() private readonly dataSource: DataSource,
+    private readonly emailValidator: EmailValidatorService,
   ) {}
 
   /** Phase P191/4 — cache key for a user's current tokenVersion (60s TTL). */
@@ -828,7 +830,7 @@ export class AuthService implements OnModuleInit {
   }
 
   async register(userData: {
-    email?: string;
+    email: string;
     phoneNumber: string;
     password: string;
     fullName?: string;
@@ -838,9 +840,13 @@ export class AuthService implements OnModuleInit {
     district?: string;
     address?: string;
   }) {
-    const existingByEmail = userData.email
-      ? await this.usersService.findByEmail(userData.email)
-      : null;
+    // Phase 253 (Voldi-email-validate) — email REQUIRED + domain-validated.
+    // Pipeline: syntax (DTO) → disposable block → whitelist → MX lookup.
+    // Throws BadRequestException with stable codes EMAIL_DISPOSABLE /
+    // EMAIL_DOMAIN_INVALID; the UI maps these to Turkish copy.
+    await this.emailValidator.validate(userData.email);
+
+    const existingByEmail = await this.usersService.findByEmail(userData.email);
     if (existingByEmail)
       throw new UnauthorizedException('Bu e-posta zaten kayıtlı');
 
@@ -866,7 +872,11 @@ export class AuthService implements OnModuleInit {
       district: userData.district,
       address: userData.address,
       role: UserRole.USER,
-      isPhoneVerified: true,
+      // Phase 253 — SMS verify demoted to optional post-signup flow per
+      // Play Console best practice. isPhoneVerified flips to true only after
+      // user voluntarily completes /auth/sms/verify (see verifySmsOtp:
+      // existing-user branch persists the flag via Phase 252-C path).
+      isPhoneVerified: false,
     });
 
     const { passwordHash: _hash2, ...result } = newUser;

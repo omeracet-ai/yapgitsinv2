@@ -19,6 +19,7 @@ import { EmailVerificationToken } from './email-verification-token.entity';
 import { SmsOtp } from './sms-otp.entity';
 import { IpOtpLockout } from './ip-otp-lockout.entity';
 import { UserRole } from '../users/user.entity';
+import { EmailValidatorService } from './email-validator.service';
 
 // ── Phase 227 — firebase-admin tam mock ─────────────────────────────────────
 const verifyIdTokenMock = jest.fn();
@@ -130,6 +131,10 @@ describe('AuthService.loginWithFirebase (Phase 227)', () => {
             options: { type: 'sqlite' },
             query: jest.fn(),
           },
+        },
+        {
+          provide: EmailValidatorService,
+          useValue: { validate: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();

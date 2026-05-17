@@ -14,6 +14,7 @@ import { IpOtpLockout } from './ip-otp-lockout.entity';
 import { SmsModule } from '../sms/sms.module';
 import { getJwtSigningSecret } from './jwt-secrets';
 import { IpOtpLockoutCleanupService } from './ip-otp-lockout-cleanup.service';
+import { EmailValidatorService } from './email-validator.service';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { IpOtpLockoutCleanupService } from './ip-otp-lockout-cleanup.service';
     JwtStrategy,
     TwoFactorService,
     IpOtpLockoutCleanupService,
+    EmailValidatorService,
   ],
   controllers: [AuthController],
   exports: [AuthService, IpOtpLockoutCleanupService],
