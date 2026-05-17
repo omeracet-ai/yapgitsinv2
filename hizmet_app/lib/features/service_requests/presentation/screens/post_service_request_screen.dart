@@ -78,7 +78,7 @@ class _PostServiceRequestScreenState
         desc.isEmpty ||
         location.isEmpty) {
       setState(
-          () => _error = 'Kategori, baÅŸlÄ±k, aÃ§Ä±klama ve konum zorunludur.');
+          () => _error = 'Kategori, başlık, açıklama ve konum zorunludur.');
       return;
     }
 
@@ -122,7 +122,7 @@ class _PostServiceRequestScreenState
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Hizmet Al Ä°lanÄ± Ver',
+        title: const Text('Hizmet Al İlanı Ver',
             style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -161,25 +161,25 @@ class _PostServiceRequestScreenState
               ),
               const SizedBox(height: 14),
 
-              // BaÅŸlÄ±k
+              // Başlık
               TextField(
                 controller: _titleCtrl,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
-                  labelText: 'BaÅŸlÄ±k *',
+                  labelText: 'Başlık *',
                   prefixIcon: Icon(Icons.title),
                   
                 ),
               ),
               const SizedBox(height: 14),
 
-              // AÃ§Ä±klama
+              // Açıklama
               TextField(
                 controller: _descCtrl,
                 maxLines: 4,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
-                  labelText: 'AÃ§Ä±klama *',
+                  labelText: 'Açıklama *',
                   prefixIcon: Icon(Icons.description_outlined),
                   alignLabelWithHint: true,
                   
@@ -187,7 +187,7 @@ class _PostServiceRequestScreenState
               ),
               const SizedBox(height: 14),
 
-              // Konum â€” harita picker
+              // Konum — harita picker
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -198,7 +198,7 @@ class _PostServiceRequestScreenState
                       decoration: const InputDecoration(
                         labelText: 'Konum *',
                         prefixIcon: Icon(Icons.location_on_outlined),
-                        hintText: 'Haritadan seÃ§in',
+                        hintText: 'Haritadan seçin',
                         
                       ),
                     ),
@@ -242,7 +242,7 @@ class _PostServiceRequestScreenState
                 controller: _addressCtrl,
                 maxLines: 2,
                 decoration: const InputDecoration(
-                  labelText: 'DetaylÄ± Adres (opsiyonel)',
+                  labelText: 'Detaylı Adres (opsiyonel)',
                   prefixIcon: Icon(Icons.home_outlined),
                   alignLabelWithHint: true,
                   
@@ -250,7 +250,7 @@ class _PostServiceRequestScreenState
               ),
               const SizedBox(height: 16),
 
-              // FotoÄŸraf
+              // Fotoğraf
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
@@ -279,7 +279,7 @@ class _PostServiceRequestScreenState
                             Icon(Icons.add_photo_alternate_outlined,
                                 size: 40, color: AppColors.textHint),
                             SizedBox(height: 8),
-                            Text('FotoÄŸraf Ekle (opsiyonel)',
+                            Text('Fotoğraf Ekle (opsiyonel)',
                                 style: TextStyle(color: AppColors.textHint)),
                           ],
                         ),
@@ -315,7 +315,7 @@ class _PostServiceRequestScreenState
                         width: 20,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                    : const Text('Ä°lanÄ± YayÄ±nla',
+                    : const Text('İlanı Yayınla',
                         style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

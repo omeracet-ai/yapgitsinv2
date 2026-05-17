@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 
-/// Phase 129 Step 2 â€” Bio / hizmet aÃ§Ä±klamasÄ± (min 50 char).
+/// Phase 129 Step 2 â€” Bio / hizmet açıklaması (min 50 char).
 class WorkerOnboardingStep2Bio extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onChanged;
@@ -24,7 +24,7 @@ class WorkerOnboardingStep2Bio extends StatelessWidget {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           const Text(
-              'MÃ¼ÅŸteriler seni daha iyi tanÄ±sÄ±n. TecrÃ¼be, uzmanlÄ±k ve hizmet alanlarÄ±nÄ± anlat (min 50 karakter).',
+              'Müşteriler seni daha iyi tanısın. Tecrübe, uzmanlık ve hizmet alanlarını anlat (min 50 karakter).',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
           const SizedBox(height: 20),
           TextField(
@@ -34,7 +34,7 @@ class WorkerOnboardingStep2Bio extends StatelessWidget {
             onChanged: (_) => onChanged(),
             decoration: InputDecoration(
               hintText:
-                  'Ã–rn: 10 yÄ±llÄ±k tesisat ustasÄ±yÄ±m. Su tesisatÄ±, kombi montajÄ± ve banyo tadilatÄ±nda uzmanÄ±mâ€¦',
+                  'Örn: 10 yıllık tesisat ustasıyım. Su tesisatı, kombi montajı ve banyo tadilatında uzmanımâ€¦',
               
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -48,7 +48,7 @@ class WorkerOnboardingStep2Bio extends StatelessWidget {
                   color: ok ? AppColors.success : AppColors.textHint),
               const SizedBox(width: 6),
               Text(
-                ok ? 'Yeterli ($len/500)' : 'Devam etmek iÃ§in en az 50 karakter ($len/50)',
+                ok ? 'Yeterli ($len/500)' : 'Devam etmek için en az 50 karakter ($len/50)',
                 style: TextStyle(
                   fontSize: 12,
                   color: ok ? AppColors.success : AppColors.textHint,

@@ -55,12 +55,12 @@ class _RegisterForm extends ConsumerStatefulWidget {
 }
 
 class _RegisterFormState extends ConsumerState<_RegisterForm> {
-  // AdÄ±m 1: Temel bilgiler
+  // Adım 1: Temel bilgiler
   final _nameCtrl     = TextEditingController();
   final _emailCtrl    = TextEditingController();
   final _phoneCtrl    = TextEditingController();
   final _passCtrl     = TextEditingController();
-  // AdÄ±m 1: KiÅŸisel bilgiler
+  // Adım 1: Kişisel bilgiler
   final _cityCtrl     = TextEditingController();
   final _districtCtrl = TextEditingController();
   final _addressCtrl  = TextEditingController();
@@ -71,11 +71,11 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
   // Phase 129 â€” Worker onboarding routing flag.
   bool   _registerAsWorker = false;
 
-  // AdÄ±m 2: Kimlik fotoÄŸrafÄ±
+  // Adım 2: Kimlik fotoğrafı
   XFile?  _identityPhoto;
   XFile?  _documentPhoto;
 
-  int    _step     = 0; // 0 = form, 1 = kimlik yÃ¼kleme
+  int    _step     = 0; // 0 = form, 1 = kimlik yükleme
   bool   _loading  = false;
   String? _error;
 
@@ -157,7 +157,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
 
   Future<void> _submitStep2() async {
     if (_identityPhoto == null) {
-      setState(() => _error = 'Kimlik fotoÄŸrafÄ± zorunludur.');
+      setState(() => _error = 'Kimlik fotoğrafı zorunludur.');
       return;
     }
     setState(() { _loading = true; _error = null; });
@@ -168,7 +168,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
       if (_documentPhoto != null) {
         docUrl = await repo.uploadDocument(_documentPhoto!);
       }
-      // KullanÄ±cÄ± datasÄ±nÄ± gÃ¼ncelle
+      // Kullanıcı datasını güncelle
       ref.read(authStateProvider.notifier).updateUserData({
         'identityPhotoUrl': idUrl,
         if (docUrl != null) 'documentPhotoUrl': docUrl,
@@ -189,7 +189,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
 
   Future<void> _skipStep2() async {
     if (mounted) {
-      // Phase 129 â€” Worker'lar identity skip etse de wizard'a yÃ¶nlendirilir.
+      // Phase 129 â€” Worker'lar identity skip etse de wizard'a yönlendirilir.
       if (_registerAsWorker) {
         context.go('/usta-baslangic');
       } else {
@@ -238,7 +238,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
           child: Text(l.registerPersonalInfo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
         ),
 
-        // DoÄŸum tarihi
+        // Doğum tarihi
         GestureDetector(
           onTap: () async {
             final d = await showDatePicker(
@@ -279,7 +279,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
               icon: const Icon(Icons.arrow_drop_down),
               items: const [
                 DropdownMenuItem(value: 'male',   child: Text('Erkek')),
-                DropdownMenuItem(value: 'female', child: Text('KadÄ±n')),
+                DropdownMenuItem(value: 'female', child: Text('Kadın')),
                 DropdownMenuItem(value: 'other',  child: Text('Belirtmek istemiyorum')),
               ],
               onChanged: (v) => setState(() => _gender = v ?? 'other'),
@@ -306,7 +306,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         ),
 
         const SizedBox(height: 16),
-        // Phase 129 â€” Usta olarak kayÄ±t ol toggle.
+        // Phase 129 â€” Usta olarak kayıt ol toggle.
         Container(
           decoration: BoxDecoration(
             color: _registerAsWorker
@@ -323,10 +323,10 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
             value: _registerAsWorker,
             onChanged: (v) => setState(() => _registerAsWorker = v),
             activeThumbColor: AppColors.primary,
-            title: const Text('Usta olarak kayÄ±t ol',
+            title: const Text('Usta olarak kayıt ol',
                 style: TextStyle(fontWeight: FontWeight.w600)),
             subtitle: const Text(
-              'Hizmet verirsen kayÄ±t sonrasÄ± kÄ±sa bir kurulum yapacaÄŸÄ±z.',
+              'Hizmet verirsen kayıt sonrası kısa bir kurulum yapacağız.',
               style: TextStyle(fontSize: 12),
             ),
           ),
@@ -366,18 +366,18 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
             Icon(Icons.verified_user_outlined, color: AppColors.primary),
             SizedBox(width: 12),
             Expanded(child: Text(
-              'Kimlik doÄŸrulama iÃ§in kimlik fotoÄŸrafÄ±nÄ±zÄ± yÃ¼kleyin. GÃ¶rseller ÅŸifreli olarak saklanÄ±r.',
+              'Kimlik doğrulama için kimlik fotoğrafınızı yükleyin. Görseller şifreli olarak saklanır.',
               style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
             )),
           ]),
         ),
         const SizedBox(height: 24),
 
-        // Kimlik fotoÄŸrafÄ± (zorunlu)
-        const Text('Kimlik FotoÄŸrafÄ± *', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        // Kimlik fotoğrafı (zorunlu)
+        const Text('Kimlik Fotoğrafı *', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
         const SizedBox(height: 8),
         _photoPickerTile(
-          label: 'Kimlik / NÃ¼fus CÃ¼zdanÄ±',
+          label: 'Kimlik / Nüfus Cüzdanı',
           icon: Icons.badge_outlined,
           file: _identityPhoto,
           onTap: _pickIdentity,
@@ -396,13 +396,13 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: Colors.amber.shade300),
             ),
-            child: Text('Ã–nerilen', style: TextStyle(fontSize: 10, color: Colors.amber.shade800, fontWeight: FontWeight.bold)),
+            child: Text('Önerilen', style: TextStyle(fontSize: 10, color: Colors.amber.shade800, fontWeight: FontWeight.bold)),
           ),
         ]),
         const SizedBox(height: 4),
         Text(
-          'Sertifika / diploma eklemek profilinizde "BelgelenmiÅŸ Uzman" rozeti kazandÄ±rÄ±r '
-          've daha fazla teklif almanÄ±zÄ± saÄŸlar.',
+          'Sertifika / diploma eklemek profilinizde "Belgelenmiş Uzman" rozeti kazandırır '
+          've daha fazla teklif almanızı sağlar.',
           style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
         ),
         const SizedBox(height: 8),
@@ -426,7 +426,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
               Icon(Icons.info_outline, size: 15, color: Colors.amber.shade700),
               const SizedBox(width: 8),
               Expanded(child: Text(
-                'Belge yÃ¼klenmedi. Profil ayarlarÄ±ndan daha sonra ekleyebilirsiniz.',
+                'Belge yüklenmedi. Profil ayarlarından daha sonra ekleyebilirsiniz.',
                 style: TextStyle(fontSize: 11, color: Colors.amber.shade800),
               )),
             ]),
@@ -448,12 +448,12 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
           ),
           child: _loading
               ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text('YÃ¼kle ve Tamamla', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              : const Text('Yükle ve Tamamla', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
         ),
         const SizedBox(height: 12),
         TextButton(
           onPressed: _loading ? null : _skipStep2,
-          child: const Text('Åimdi DeÄŸil, Atla', style: TextStyle(color: AppColors.textSecondary)),
+          child: const Text('Şimdi Değil, Atla', style: TextStyle(color: AppColors.textSecondary)),
         ),
       ],
     );

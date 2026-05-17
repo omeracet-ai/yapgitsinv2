@@ -91,7 +91,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
   // â”€â”€ Temel bilgileri kaydet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Future<void> _saveBasic() async {
     if (_nameCtrl.text.trim().isEmpty) {
-      _snack('Ad soyad boÅŸ olamaz.', error: true);
+      _snack('Ad soyad boş olamaz.', error: true);
       return;
     }
     setState(() => _loading = true);
@@ -117,16 +117,16 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_data', jsonEncode(updated));
       ref.read(authStateProvider.notifier).updateUserData(updated);
-      if (mounted) _snack('Bilgiler gÃ¼ncellendi âœ“');
+      if (mounted) _snack('Bilgiler güncellendi âœ“');
     } on DioException catch (e) {
-      _snack(e.response?.data?['message'] ?? 'GÃ¼ncelleme baÅŸarÄ±sÄ±z',
+      _snack(e.response?.data?['message'] ?? 'Güncelleme başarısız',
           error: true);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  // â”€â”€ Belge yÃ¼kle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â”€â”€ Belge yükle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Future<void> _pickAndUpload({required bool isIdentity}) async {
     final picked = await ImagePicker().pickImage(
         source: ImageSource.gallery, imageQuality: 80, maxWidth: 1280);
@@ -142,7 +142,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
 
   Future<void> _saveDocuments() async {
     if (_newIdentityPhoto == null && _newDocumentPhoto == null) {
-      _snack('YÃ¼klenecek yeni belge seÃ§ilmedi.', error: true);
+      _snack('Yüklenecek yeni belge seçilmedi.', error: true);
       return;
     }
     setState(() => _docLoading = true);
@@ -166,7 +166,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
         });
       }
 
-      // KullanÄ±cÄ± profilini gÃ¼ncelle
+      // Kullanıcı profilini güncelle
       final updated = await ref.read(userProfileRepositoryProvider).patchMe({
         if (idUrl != null) 'identityPhotoUrl': idUrl,
         if (docUrl != null) 'documentPhotoUrl': docUrl,
@@ -174,7 +174,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_data', jsonEncode(updated));
       ref.read(authStateProvider.notifier).updateUserData(updated);
-      if (mounted) _snack('Belgeler yÃ¼klendi âœ“');
+      if (mounted) _snack('Belgeler yüklendi âœ“');
     } catch (e) {
       _snack(e.toString().replaceFirst('Exception: ', ''), error: true);
     } finally {
@@ -194,7 +194,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('KiÅŸisel Bilgiler'),
+        title: const Text('Kişisel Bilgiler'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         bottom: TabBar(
@@ -225,7 +225,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _section('Ä°letiÅŸim Bilgileri'),
+          _section('İletişim Bilgileri'),
           _field(_nameCtrl, 'Ad Soyad *', Icons.person_outline,
               TextInputType.name),
           const SizedBox(height: 12),
@@ -236,9 +236,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
               _phoneCtrl, 'Telefon', Icons.phone_outlined, TextInputType.phone),
 
           const SizedBox(height: 20),
-          _section('KiÅŸisel Bilgiler'),
+          _section('Kişisel Bilgiler'),
 
-          // DoÄŸum tarihi
+          // Doğum tarihi
           GestureDetector(
             onTap: () async {
               final d = await showDatePicker(
@@ -254,7 +254,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
               Icons.cake_outlined,
               _birthDate != null
                   ? '${_birthDate!.day}.${_birthDate!.month}.${_birthDate!.year}'
-                  : 'DoÄŸum Tarihi',
+                  : 'Doğum Tarihi',
               hint: _birthDate == null,
             ),
           ),
@@ -271,7 +271,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                 icon: const Icon(Icons.arrow_drop_down),
                 items: const [
                   DropdownMenuItem(value: 'male', child: Text('Erkek')),
-                  DropdownMenuItem(value: 'female', child: Text('KadÄ±n')),
+                  DropdownMenuItem(value: 'female', child: Text('Kadın')),
                   DropdownMenuItem(
                       value: 'other', child: Text('Belirtmek istemiyorum')),
                 ],
@@ -282,16 +282,16 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
 
           const SizedBox(height: 20),
           _section('Konum Bilgileri'),
-          _field(_cityCtrl, 'Åehir', Icons.location_city_outlined,
+          _field(_cityCtrl, 'Şehir', Icons.location_city_outlined,
               TextInputType.text),
           const SizedBox(height: 12),
-          _field(_districtCtrl, 'Ä°lÃ§e', Icons.map_outlined, TextInputType.text),
+          _field(_districtCtrl, 'İlçe', Icons.map_outlined, TextInputType.text),
           const SizedBox(height: 12),
           TextField(
             controller: _addressCtrl,
             maxLines: 3,
             decoration: InputDecoration(
-              labelText: 'AÃ§Ä±k Adres',
+              labelText: 'Açık Adres',
               prefixIcon: const Icon(Icons.home_outlined),
               alignLabelWithHint: true,
               
@@ -311,8 +311,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
             maxLines: 4,
             maxLength: 300,
             decoration: InputDecoration(
-              labelText: 'Kendinizi tanÄ±tÄ±n (workerBio)',
-              hintText: 'UzmanlÄ±k alanÄ±nÄ±z, deneyiminiz...',
+              labelText: 'Kendinizi tanıtın (workerBio)',
+              hintText: 'Uzmanlık alanınız, deneyiminiz...',
               prefixIcon: const Icon(Icons.work_outline),
               alignLabelWithHint: true,
               
@@ -372,10 +372,10 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
           _buildDocStatusBanner(),
           const SizedBox(height: 20),
 
-          _section('Kimlik FotoÄŸrafÄ±'),
+          _section('Kimlik Fotoğrafı'),
           _docCard(
-            title: 'Kimlik / NÃ¼fus CÃ¼zdanÄ±',
-            subtitle: 'Ã–n yÃ¼z veya kimlik kartÄ±',
+            title: 'Kimlik / Nüfus Cüzdanı',
+            subtitle: 'Ön yüz veya kimlik kartı',
             icon: Icons.badge_outlined,
             currentUrl: _currentIdentityUrl,
             newFile: _newIdentityPhoto,
@@ -402,14 +402,14 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                 const SizedBox(width: 10),
                 Expanded(
                     child: Text(
-                  'Yeterlilik belgesi eklemek profilinizde "BelgelenmiÅŸ Uzman" rozeti kazandÄ±rÄ±r.',
+                  'Yeterlilik belgesi eklemek profilinizde "Belgelenmiş Uzman" rozeti kazandırır.',
                   style: TextStyle(fontSize: 12, color: Colors.orange.shade800),
                 )),
               ]),
             ),
           _docCard(
             title: 'Sertifika / Diploma / Yeterlilik',
-            subtitle: 'UzmanlÄ±k alanÄ±nÄ±za ait belge',
+            subtitle: 'Uzmanlık alanınıza ait belge',
             icon: Icons.description_outlined,
             currentUrl: _currentDocumentUrl,
             newFile: _newDocumentPhoto,
@@ -426,7 +426,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
               child: ElevatedButton.icon(
                 onPressed: _docLoading ? null : _saveDocuments,
                 icon: const Icon(Icons.cloud_upload_outlined),
-                label: const Text('Belgeleri YÃ¼kle',
+                label: const Text('Belgeleri Yükle',
                     style:
                         TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 style: ElevatedButton.styleFrom(
@@ -456,15 +456,15 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                     Icon(Icons.lock_outlined,
                         size: 16, color: Colors.blue.shade700),
                     const SizedBox(width: 8),
-                    Text('GÃ¼venlik Notu',
+                    Text('Güvenlik Notu',
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.blue.shade700)),
                   ]),
                   const SizedBox(height: 6),
                   Text(
-                    'Belgeleriniz ÅŸifreli olarak saklanÄ±r ve yalnÄ±zca doÄŸrulama amacÄ±yla incelenir. '
-                    'ÃœÃ§Ã¼ncÃ¼ taraflarla paylaÅŸÄ±lmaz.',
+                    'Belgeleriniz şifreli olarak saklanır ve yalnızca doğrulama amacıyla incelenir. '
+                    'Üçüncü taraflarla paylaşılmaz.',
                     style: TextStyle(
                         fontSize: 12, color: Colors.blue.shade700, height: 1.5),
                   ),
@@ -480,15 +480,15 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
 
   Widget _buildDocStatusBanner() {
     if (_identityVerified) {
-      return _statusBanner(Icons.verified_user, 'Kimlik DoÄŸrulandÄ±',
-          'HesabÄ±nÄ±z onaylÄ±dÄ±r. Mavi tik aktif.', Colors.green);
+      return _statusBanner(Icons.verified_user, 'Kimlik Doğrulandı',
+          'Hesabınız onaylıdır. Mavi tik aktif.', Colors.green);
     }
     if (_currentIdentityUrl != null) {
-      return _statusBanner(Icons.hourglass_empty, 'Kimlik Ä°nceleniyor',
-          'DoÄŸrulama sÃ¼reci devam ediyor.', Colors.orange);
+      return _statusBanner(Icons.hourglass_empty, 'Kimlik İnceleniyor',
+          'Doğrulama süreci devam ediyor.', Colors.orange);
     }
-    return _statusBanner(Icons.warning_amber_outlined, 'Kimlik YÃ¼klenmedi',
-        'GÃ¼ven iÃ§in kimlik fotoÄŸrafÄ± yÃ¼kleyin.', Colors.red);
+    return _statusBanner(Icons.warning_amber_outlined, 'Kimlik Yüklenmedi',
+        'Güven için kimlik fotoğrafı yükleyin.', Colors.red);
   }
 
   Widget _statusBanner(IconData icon, String title, String sub, Color color) {
@@ -587,11 +587,11 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                                 fontSize: 12, color: AppColors.textSecondary)),
                         const SizedBox(height: 4),
                         if (hasFile)
-                          _badge('YÃ¼klemeye HazÄ±r', Colors.blue)
+                          _badge('Yüklemeye Hazır', Colors.blue)
                         else if (hasUrl && isVerified)
-                          _badge('OnaylandÄ± âœ“', Colors.green)
+                          _badge('Onaylandı âœ“', Colors.green)
                         else if (hasUrl)
-                          _badge('YÃ¼klendi â€“ Ä°nceleniyor', Colors.orange)
+                          _badge('Yüklendi â€“ İnceleniyor', Colors.orange)
                         else
                           _badge(required ? 'Zorunlu' : 'Opsiyonel',
                               required ? Colors.orange : Colors.grey),
@@ -601,7 +601,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
             ),
           ),
 
-          // Ã–nizleme
+          // Önizleme
           if (hasFile || hasUrl) ...[
             Container(
               height: 160,
@@ -641,7 +641,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                             ? Icons.refresh_outlined
                             : Icons.add_photo_alternate_outlined,
                         size: 16),
-                    label: Text(hasUrl || hasFile ? 'DeÄŸiÅŸtir' : 'FotoÄŸraf SeÃ§',
+                    label: Text(hasUrl || hasFile ? 'Değiştir' : 'Fotoğraf Seç',
                         style: const TextStyle(fontSize: 13)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primary,
@@ -664,7 +664,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 14),
                     ),
-                    child: const Text('Ä°ptal', style: TextStyle(fontSize: 13)),
+                    child: const Text('İptal', style: TextStyle(fontSize: 13)),
                   ),
                 ],
               ],

@@ -3,8 +3,8 @@ import '../theme/app_colors.dart';
 
 enum JobStatus { open, inProgress, completed, cancelled }
 
-/// Premium Dark Soft status pill â€” temp3.jpg style.
-/// YeÅŸil/sarÄ±/gri/kÄ±rmÄ±zÄ± renk mapping; soft tint + ince border.
+/// Premium Dark Soft status pill — temp3.jpg style.
+/// Yeşil/sarı/gri/kırmızı renk mapping; soft tint + ince border.
 class JobStatusBadge extends StatelessWidget {
   final JobStatus status;
   final double fontSize;
@@ -17,11 +17,11 @@ class JobStatusBadge extends StatelessWidget {
 
   factory JobStatusBadge.fromString(String? raw, {double fontSize = 11}) {
     final s = switch ((raw ?? '').toUpperCase()) {
-      'OPEN' || 'AÃ‡IK' || 'YENÄ°' => JobStatus.open,
-      'IN_PROGRESS' || 'ASSIGNED' || 'ATANDI' || 'BEKLÄ°YOR' =>
+      'OPEN' || 'AÇIK' || 'YENİ' => JobStatus.open,
+      'IN_PROGRESS' || 'ASSIGNED' || 'ATANDI' || 'BEKLİYOR' =>
         JobStatus.inProgress,
       'COMPLETED' || 'TAMAMLANDI' => JobStatus.completed,
-      'CANCELLED' || 'Ä°PTAL' => JobStatus.cancelled,
+      'CANCELLED' || 'İPTAL' => JobStatus.cancelled,
       _ => JobStatus.open,
     };
     return JobStatusBadge(status: s, fontSize: fontSize);
@@ -30,10 +30,10 @@ class JobStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      JobStatus.open       => ('YENÄ°',       AppColors.statusOpen),
-      JobStatus.inProgress => ('BEKLÄ°YOR',   AppColors.statusPending),
+      JobStatus.open       => ('YENİ',       AppColors.statusOpen),
+      JobStatus.inProgress => ('BEKLİYOR',   AppColors.statusPending),
       JobStatus.completed  => ('TAMAMLANDI', AppColors.statusClosed),
-      JobStatus.cancelled  => ('Ä°PTAL',      AppColors.statusError),
+      JobStatus.cancelled  => ('İPTAL',      AppColors.statusError),
     };
 
     return Container(
@@ -59,7 +59,7 @@ class JobStatusBadge extends StatelessWidget {
   }
 }
 
-/// Ã‡evrimiÃ§i rozeti (temp1.jpg "â— 12.483 usta ÅŸu an Ã§evrimiÃ§i" stili).
+/// Çevrimiçi rozeti (temp1.jpg "● 12.483 usta şu an çevrimiçi" stili).
 class OnlineCountBadge extends StatelessWidget {
   final String text;
   const OnlineCountBadge({super.key, required this.text});

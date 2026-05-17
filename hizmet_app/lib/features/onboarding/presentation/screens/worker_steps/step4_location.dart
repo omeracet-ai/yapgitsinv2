@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 
-/// Phase 129 Step 4 â€” Åehir/ilÃ§e + servis radius slider.
+/// Phase 129 Step 4 â€” Şehir/ilçe + servis radius slider.
 class WorkerOnboardingStep4Location extends StatelessWidget {
   final TextEditingController cityCtrl;
   final TextEditingController districtCtrl;
@@ -24,17 +24,17 @@ class WorkerOnboardingStep4Location extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('ğŸ“ Hizmet bÃ¶lgen',
+          const Text('ğŸ“ Hizmet bölgen',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          const Text('MÃ¼ÅŸteriler seni bu bÃ¶lgede bulacak.',
+          const Text('Müşteriler seni bu bölgede bulacak.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
           const SizedBox(height: 20),
           TextField(
             controller: cityCtrl,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              labelText: 'Åehir',
+              labelText: 'Şehir',
               prefixIcon: const Icon(Icons.location_city_outlined),
               
               border: OutlineInputBorder(
@@ -46,7 +46,7 @@ class WorkerOnboardingStep4Location extends StatelessWidget {
             controller: districtCtrl,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              labelText: 'Ä°lÃ§e',
+              labelText: 'İlçe',
               prefixIcon: const Icon(Icons.map_outlined),
               
               border: OutlineInputBorder(
@@ -54,7 +54,7 @@ class WorkerOnboardingStep4Location extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Servis YarÄ±Ã§apÄ±',
+          const Text('Servis Yarıçapı',
               style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Wrap(
@@ -70,7 +70,7 @@ class WorkerOnboardingStep4Location extends StatelessWidget {
             }).toList(),
           ),
           const SizedBox(height: 12),
-          Text('SeÃ§ili: $radiusKm km â€” bu mesafeye kadar iÅŸ tekliflerini alÄ±rsÄ±n.',
+          Text('Seçili: $radiusKm km â€” bu mesafeye kadar iş tekliflerini alırsın.',
               style: const TextStyle(
                   fontSize: 12, color: AppColors.textSecondary)),
         ],

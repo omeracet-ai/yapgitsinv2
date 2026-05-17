@@ -61,7 +61,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Ä°ki adÄ±mlÄ± doÄŸrulama aktifleÅŸtirildi'),
+            content: Text('İki adımlı doğrulama aktifleştirildi'),
             backgroundColor: Colors.green),
       );
       Navigator.of(context).pop(true);
@@ -99,11 +99,11 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
       children: [
         const Icon(Icons.shield_outlined, size: 72, color: AppColors.primary),
         const SizedBox(height: 16),
-        const Text('Ä°ki AdÄ±mlÄ± DoÄŸrulama Kur',
+        const Text('İki Adımlı Doğrulama Kur',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         const Text(
-          'HesabÄ±nÄ±za ek gÃ¼venlik katmanÄ± ekleyin. Google Authenticator, '
+          'Hesabınıza ek güvenlik katmanı ekleyin. Google Authenticator, '
           'Authy veya 1Password gibi bir uygulama gerekecek.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
@@ -121,7 +121,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
             child: _busy
                 ? const CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2.5)
-                : const Text('BaÅŸlat',
+                : const Text('Başlat',
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -142,7 +142,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
         qrWidget = Image.memory(base64Decode(base64Part),
             width: 220, height: 220, fit: BoxFit.contain);
       } catch (_) {
-        qrWidget = const Text('QR yÃ¼klenemedi');
+        qrWidget = const Text('QR yüklenemedi');
       }
     }
 
@@ -150,11 +150,11 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text('QR Kodu TarayÄ±n',
+          const Text('QR Kodu Tarayın',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           const Text(
-            'Authenticator uygulamanÄ±zla aÅŸaÄŸÄ±daki QR kodu tarayÄ±n.',
+            'Authenticator uygulamanızla aşağıdaki QR kodu tarayın.',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             textAlign: TextAlign.center,
           ),
@@ -205,11 +205,11 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('DoÄŸrulama Kodu',
+        const Text('Doğrulama Kodu',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         const Text(
-          'Authenticator uygulamanÄ±zdaki 6 haneli kodu girin.',
+          'Authenticator uygulamanızdaki 6 haneli kodu girin.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
         const SizedBox(height: 24),
@@ -228,7 +228,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
           decoration: const InputDecoration(
             
             counterText: '',
-            hintText: 'Â·Â·Â·Â·Â·Â·',
+            hintText: '······',
           ),
           onSubmitted: (_) => _busy ? null : _enable(),
         ),
@@ -246,7 +246,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
             child: _busy
                 ? const CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2.5)
-                : const Text('AktifleÅŸtir',
+                : const Text('Aktifleştir',
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

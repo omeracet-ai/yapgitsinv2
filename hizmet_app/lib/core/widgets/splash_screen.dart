@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../../features/onboarding/data/onboarding_storage.dart';
 
-/// Premium Dark Soft splash â€” "Y" yeÅŸil rounded + "yapgitsin." lowercase.
+/// Premium Dark Soft splash — "Y" yeşil rounded + "yapgitsin." lowercase.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -118,7 +118,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'PREMIUM HÄ°ZMET PLATFORMU',
+                      'PREMIUM HİZMET PLATFORMU',
                       style: GoogleFonts.inter(
                         color: AppColors.textMuted,
                         fontSize: 10,

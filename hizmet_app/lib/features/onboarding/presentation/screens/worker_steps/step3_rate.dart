@@ -2,7 +2,7 @@
 import 'package:flutter/services.dart';
 import '../../../../../core/theme/app_colors.dart';
 
-/// Phase 129 Step 3 â€” Saat Ã¼creti (opsiyonel).
+/// Phase 129 Step 3 â€” Saat ücreti (opsiyonel).
 class WorkerOnboardingStep3Rate extends StatelessWidget {
   final TextEditingController minCtrl;
   final TextEditingController maxCtrl;
@@ -19,11 +19,11 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('ğŸ’° Saatlik Ã¼cret aralÄ±ÄŸÄ±n',
+          const Text('ğŸ’° Saatlik ücret aralığın',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           const Text(
-              'Opsiyonel â€” istersen ÅŸimdi atla, profil ayarlarÄ±ndan sonra dÃ¼zenle.',
+              'Opsiyonel â€” istersen şimdi atla, profil ayarlarından sonra düzenle.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
           const SizedBox(height: 24),
           Row(
@@ -74,7 +74,7 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Piyasa ortalamasÄ±: 150â€“500 â‚º/saat. TecrÃ¼beli ustalar daha yÃ¼ksek belirleyebilir.',
+                  'Piyasa ortalaması: 150â€“500 â‚º/saat. Tecrübeli ustalar daha yüksek belirleyebilir.',
                   style: TextStyle(fontSize: 12),
                 ),
               ),
