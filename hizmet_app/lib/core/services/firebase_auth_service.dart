@@ -76,8 +76,15 @@ class FirebaseAuthService {
     await user.reauthenticateWithCredential(cred);
     try {
       await _dio.delete<dynamic>('/users/me');
-    } on DioException {
-      // Backend silme başarısız olsa bile Firebase kullanıcısını silmeye devam et.
+    } on DioException catch (e, st) {
+      // Phase 253 — was silent. Backend silme başarısız olsa bile Firebase
+      // kullanıcısını silmeye devam ediyoruz; ancak prod outage'larında
+      // hesap-silme yarı tamamlanmış kalmasın diye telemetri bırak.
+      if (kDebugMode) {
+        debugPrint(
+            '[FirebaseAuthService] deleteAccount DELETE /users/me failed: '
+            '${e.response?.statusCode} ${e.message}\n$st');
+      }
     }
     await user.delete();
   }
@@ -192,7 +199,16 @@ class FirebaseAuthService {
           await g.signOut();
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      // Phase 253 — was silent. Google plugin sign-out is best-effort
+      // (cached account temizliği); ama sessiz yutum prod'da auth
+      // bozulmasını gizliyordu — telemetri için log bırakıyoruz.
+      if (kDebugMode) {
+        debugPrint(
+            '[FirebaseAuthService] signOutAll GoogleSignIn.signOut failed: '
+            '$e\n$st');
+      }
+    }
     await _auth.signOut();
   }
 
