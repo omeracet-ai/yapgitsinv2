@@ -574,7 +574,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
 
                   jobsAsync.when(
                     data: (jobs) {
-                      final recent = jobs.take(5).toList();
+                      // Popüler Kategoriler'de seçili chip varsa Son İlanlar
+                      // o kategoriye göre süzülür; "Tümü" (null) hepsini gösterir.
+                      final filtered = _selectedCategory == null
+                          ? jobs
+                          : jobs.where((j) => j.category == _selectedCategory).toList();
+                      final recent = filtered.take(5).toList();
                       if (recent.isEmpty) return const SizedBox.shrink();
                       return Column(
                         children: recent.asMap().entries.map((e) {
