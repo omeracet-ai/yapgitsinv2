@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 /**
  * Phase 248-FU (Voldi-fs) — iyzico 3DS bank callback.
@@ -32,4 +32,9 @@ export class ThreeDsCallbackDto {
   @IsString()
   @MaxLength(64)
   conversationData?: string;
+
+  /** HMAC-SHA1(secretKey, conversationId+paymentId) base64. iyzipay imzası. */
+  @IsString()
+  @IsNotEmpty()
+  signature!: string;
 }

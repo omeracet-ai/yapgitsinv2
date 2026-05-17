@@ -7,9 +7,10 @@ import {
   Post,
   Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request, Response } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -80,12 +81,19 @@ export class IyzicoController {
   }
 
   /** Step 2 — Bank ACS → iyzipay → us. Form-encoded POST. No auth. */
-  @SkipThrottle()
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @Post('3ds/callback')
   async callback(
     @Body() dto: ThreeDsCallbackDto,
     @Res() res: Response,
   ) {
+    if (!this.iyzico.verifyCallbackSignature(dto)) {
+      this.logger.warn(
+        `3DS callback signature mismatch paymentId=${dto.paymentId} conv=${dto.conversationId}`,
+      );
+      throw new UnauthorizedException('invalid signature');
+    }
+
     // 3DS auth failed at bank — short-circuit.
     if (dto.mdStatus && dto.mdStatus !== '1') {
       this.logger.warn(

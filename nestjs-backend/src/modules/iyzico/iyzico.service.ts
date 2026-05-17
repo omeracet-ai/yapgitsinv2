@@ -6,6 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
 import { ThreeDsInitDto } from './dto/threeds-init.dto';
 import { mapIyzicoError } from './iyzico-error.map';
 
@@ -49,6 +50,7 @@ export interface ThreeDsFinalizeResult {
 export class IyzicoService {
   private readonly logger = new Logger(IyzicoService.name);
   private client: any = null;
+  private readonly secretKey: string;
   readonly mockMode: boolean;
 
   constructor(private readonly config: ConfigService) {
@@ -60,6 +62,7 @@ export class IyzicoService {
       this.config.get<string>('IYZICO_SECRET_KEY') ||
       process.env.IYZIPAY_SECRET_KEY ||
       '';
+    this.secretKey = secretKey;
     const uri =
       this.config.get<string>('IYZICO_BASE_URL') ||
       process.env.IYZIPAY_URI ||
@@ -90,6 +93,40 @@ export class IyzicoService {
       this.logger.warn(
         'iyzico 3DS running in MOCK mode (set real IYZICO_API_KEY/IYZICO_SECRET_KEY + MOCK_IYZICO=0 to go live)',
       );
+    }
+
+    if (this.mockMode && process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'IyzicoService: refusing to start with MOCK_IYZICO=1 in production',
+      );
+    }
+  }
+
+  /**
+   * Verify iyzipay 3DS callback signature.
+   * iyzipay signs `conversationId + paymentId` with HMAC-SHA1(secretKey) → base64.
+   * Mock mode bypasses (no live secret to verify against).
+   */
+  verifyCallbackSignature(body: {
+    signature?: string;
+    conversationId: string;
+    paymentId: string;
+  }): boolean {
+    if (this.mockMode) return true;
+    const sig = body.signature;
+    if (!sig) return false;
+    const payload = `${body.conversationId}${body.paymentId}`;
+    const expected = crypto
+      .createHmac('sha1', this.secretKey)
+      .update(payload)
+      .digest('base64');
+    try {
+      const a = Buffer.from(sig, 'utf8');
+      const b = Buffer.from(expected, 'utf8');
+      if (a.length !== b.length) return false;
+      return crypto.timingSafeEqual(a, b);
+    } catch {
+      return false;
     }
   }
 
