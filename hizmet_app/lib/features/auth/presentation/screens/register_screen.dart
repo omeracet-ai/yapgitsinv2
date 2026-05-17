@@ -110,6 +110,18 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         district:    _districtCtrl.text.trim(),
         address:     _addressCtrl.text.trim(),
       );
+      // Phase 250-C — Kayıt başarılı; telefonu SMS OTP ile doğrula, sonra step2.
+      if (!mounted) return;
+      final verifiedPhone = await context.push<String?>(
+        '/auth/sms-verify?phone=${Uri.encodeQueryComponent(phone)}',
+      );
+      if (verifiedPhone != null && verifiedPhone.isNotEmpty) {
+        ref.read(authStateProvider.notifier).updateUserData({
+          'phoneNumber': verifiedPhone,
+          'isPhoneVerified': true,
+        });
+      }
+      if (!mounted) return;
       setState(() { _step = 1; _loading = false; });
     } catch (e) {
       setState(() { _error = e.toString().replaceFirst('Exception: ', ''); _loading = false; });

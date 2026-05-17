@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -175,6 +176,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _saveContact() async {
+    // Phase 250-C — Telefon değiştiyse save'den ÖNCE SMS OTP ile doğrula.
+    final newPhone = _phoneCtrl.text.trim();
+    final auth = ref.read(authStateProvider);
+    final currentPhone = (auth is AuthAuthenticated)
+        ? ((auth.user['phoneNumber'] as String?) ?? '')
+        : '';
+    if (newPhone.isNotEmpty && newPhone != currentPhone) {
+      final verifiedPhone = await context.push<String?>(
+        '/auth/sms-verify?phone=${Uri.encodeQueryComponent(newPhone)}',
+      );
+      if (verifiedPhone == null || verifiedPhone.isEmpty) {
+        _snack('Telefon doğrulanmadı; değişiklik kaydedilmedi.', error: true);
+        return;
+      }
+      _phoneCtrl.text = verifiedPhone;
+    }
     await _patch('contact', {
       if (_emailCtrl.text.trim().isNotEmpty) 'email': _emailCtrl.text.trim(),
       if (_phoneCtrl.text.trim().isNotEmpty)
