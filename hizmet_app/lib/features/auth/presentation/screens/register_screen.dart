@@ -115,12 +115,29 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
       final verifiedPhone = await context.push<String?>(
         '/auth/sms-verify?phone=${Uri.encodeQueryComponent(phone)}',
       );
-      if (verifiedPhone != null && verifiedPhone.isNotEmpty) {
-        ref.read(authStateProvider.notifier).updateUserData({
-          'phoneNumber': verifiedPhone,
-          'isPhoneVerified': true,
-        });
+      // Phase 252-D — Strict block: SMS doğrulama tamamlanmadan step 2'ye
+      // geçilemez. Kullanıcı verify ekranını geri tuşu ile kapattıysa
+      // (verifiedPhone == null/empty) kayıt akışı iptal: oturumu kapat,
+      // login ekranına yönlendir. Backend'de orphan user kalır; kullanıcı
+      // sonradan login + verify ile düzeltebilir.
+      if (verifiedPhone == null || verifiedPhone.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Telefon doğrulanmadan kayıt tamamlanamaz. Profilden tekrar deneyebilirsin.',
+            ),
+          ),
+        );
+        await ref.read(authStateProvider.notifier).logout();
+        if (!mounted) return;
+        context.go('/giris-yap');
+        return;
       }
+      ref.read(authStateProvider.notifier).updateUserData({
+        'phoneNumber': verifiedPhone,
+        'isPhoneVerified': true,
+      });
       if (!mounted) return;
       setState(() { _step = 1; _loading = false; });
     } catch (e) {
