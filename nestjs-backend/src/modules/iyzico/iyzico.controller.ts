@@ -13,6 +13,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request, Response } from 'express';
+import * as crypto from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IyzicoService } from './iyzico.service';
@@ -85,11 +86,16 @@ export class IyzicoController {
   @Post('3ds/callback')
   async callback(
     @Body() dto: ThreeDsCallbackDto,
+    @Req() req: Request,
     @Res() res: Response,
   ) {
     if (!this.iyzico.verifyCallbackSignature(dto)) {
+      const sig = dto.signature;
+      const sigHash = sig
+        ? crypto.createHash('sha1').update(sig).digest('hex').slice(0, 12)
+        : 'null';
       this.logger.warn(
-        `3DS callback signature mismatch paymentId=${dto.paymentId} conv=${dto.conversationId}`,
+        `[IYZICO-CB-SIG-FAIL] pid=${dto.paymentId ?? 'null'} conv=${dto.conversationId ?? 'null'} sigHash=${sigHash} ip=${req.ip ?? 'unknown'}`,
       );
       throw new UnauthorizedException('invalid signature');
     }

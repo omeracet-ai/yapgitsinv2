@@ -165,7 +165,7 @@ export class IyzicoService {
 
     if (this.mockMode || !this.client) {
       const mockHtml = Buffer.from(
-        `<html><body><h1>Mock 3DS for ${dto.basketId}</h1><form id='f' method='POST' action='${this.callbackUrl()}'><input name='paymentId' value='mock_pid_${conversationId}'><input name='conversationId' value='${conversationId}'><input name='mdStatus' value='1'><input name='status' value='success'></form><script>document.getElementById('f').submit()</script></body></html>`,
+        `<html><body><h1>Mock 3DS for ${dto.basketId}</h1><form id='f' method='POST' action='${this.callbackUrl()}'><input name='paymentId' value='mock_pid_${conversationId}'><input name='conversationId' value='${conversationId}'><input name='mdStatus' value='1'><input name='status' value='success'><input type='hidden' name='signature' value='mock'></form><script>document.getElementById('f').submit()</script></body></html>`,
       ).toString('base64');
       return {
         paymentId: `mock_pid_${conversationId}`,
