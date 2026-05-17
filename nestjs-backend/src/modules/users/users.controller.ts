@@ -410,6 +410,7 @@ export class UsersController {
     return { portfolioPhotos: next };
   }
 
+  /** @deprecated Phase 253 — kept for legacy clients; prefer DELETE /me/portfolio/:id */
   @UseGuards(AuthGuard('jwt'))
   @Delete('me/portfolio')
   async removePortfolioPhoto(
@@ -422,6 +423,34 @@ export class UsersController {
     const current = Array.isArray(user.portfolioPhotos) ? user.portfolioPhotos : [];
     const next = current.filter((u) => u !== url);
     await this.svc.update(req.user.id, { portfolioPhotos: next });
+    return { portfolioPhotos: next };
+  }
+
+  /**
+   * Phase 253 — Per-photo delete by id (URL-encoded photo URL).
+   * Dart client (`PortfolioRepository.deletePhoto`) calls
+   * `DELETE /users/me/portfolio/:id` where :id is the photo URL the POST returned.
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('me/portfolio/:id')
+  async removePortfolioPhotoById(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') idRaw: string,
+  ) {
+    let target = (idRaw || '').trim();
+    try {
+      target = decodeURIComponent(target);
+    } catch {
+      /* zaten decode edilmiş */
+    }
+    if (!target) throw new BadRequestException('id gerekli');
+    const user = await this.svc.findById(req.user.id);
+    if (!user) return { portfolioPhotos: [] };
+    const current = Array.isArray(user.portfolioPhotos) ? user.portfolioPhotos : [];
+    const next = current.filter((u) => u !== target);
+    if (next.length !== current.length) {
+      await this.svc.update(req.user.id, { portfolioPhotos: next });
+    }
     return { portfolioPhotos: next };
   }
 
