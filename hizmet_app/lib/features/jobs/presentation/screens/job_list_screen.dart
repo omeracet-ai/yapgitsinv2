@@ -30,11 +30,14 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
   bool get _showAppBar => widget.showAppBar;
   String? _activeCategory; // null = Tümü
   String _searchQuery = '';
+  String _searchText = ''; // anlık raw input (suggestion için)
   Timer? _debounce;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -47,11 +50,23 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
   }
 
   void _onSearchChanged(String value) {
+    setState(() => _searchText = value);
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
       _searchQuery = value.trim();
       ref.read(jobsProvider.notifier).setQuery(_searchQuery);
     });
+  }
+
+  void _applySuggestion(String categoryName) {
+    _searchController.text = categoryName;
+    setState(() {
+      _searchText = '';
+      _activeCategory = categoryName;
+    });
+    _debounce?.cancel();
+    ref.read(jobsProvider.notifier).fetchJobs(category: categoryName);
+    FocusScope.of(context).unfocus();
   }
 
   @override
@@ -115,6 +130,7 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
             decoration: BoxDecoration(color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12)),
             child: TextField(
+              controller: _searchController,
               onChanged: _onSearchChanged,
               decoration: const InputDecoration(
                 hintText: 'İş ara...',
@@ -126,6 +142,58 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
               ),
             ),
           ),
+          // Suggestion dropdown — kategori match listesi
+          if (_searchText.trim().isNotEmpty)
+            categoriesAsync.maybeWhen(
+              data: (cats) {
+                final lower = _searchText.trim().toLowerCase();
+                final matches = cats.where((c) {
+                  final name = ((c['name'] as String?) ?? '').toLowerCase();
+                  if (name.isEmpty) return false;
+                  return name.contains(lower) || lower.contains(name);
+                }).take(6).toList();
+                if (matches.isEmpty) return const SizedBox.shrink();
+                return Container(
+                  margin: const EdgeInsets.only(top: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    children: matches.map((c) {
+                      final name = (c['name'] as String?) ?? '';
+                      final emoji = (c['icon'] as String?) ?? '';
+                      return InkWell(
+                        onTap: () => _applySuggestion(name),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          child: Row(
+                            children: [
+                              Text(emoji, style: const TextStyle(fontSize: 16)),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  name,
+                                  style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                              const Icon(Icons.north_west,
+                                  size: 16, color: AppColors.textHint),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
+              orElse: () => const SizedBox.shrink(),
+            ),
           const SizedBox(height: 12),
           SizedBox(
             height: 36,
