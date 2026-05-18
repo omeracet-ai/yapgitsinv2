@@ -54,8 +54,22 @@ class JobDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<JobDetailScreen> createState() => _JobDetailScreenState();
 }
 
-class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
+class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
+    with SingleTickerProviderStateMixin {
   bool _actionLoading = false;
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   // Dark theme constants — Voldi-job-detail-redesign
   static const Color _bgColor = Colors.black;
@@ -131,10 +145,24 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     return Scaffold(
       backgroundColor: _bgColor,
       appBar: AppBar(
-        title: const Text('İş Detayı'),
+        title: const Text(
+          'İş Detayı',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white60,
+          tabs: const [
+            Tab(text: 'Teklifler'),
+            Tab(text: 'Sorular'),
+          ],
+        ),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 12),
@@ -237,32 +265,34 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                     );
                   }),
                 ],
-                // ── Teklifler section (was Tab 0) ──
+                // ── Teklifler / Sorular TabBarView (restored) ──
                 const SizedBox(height: 10),
-                _buildOffersSection(offersAsync, canMakeOffer, currentUserId),
-                // ── Sorular section (was Tab 1) ──
-                const SizedBox(height: 10),
-                Container(
-                  height: 1,
-                  color: _borderColor,
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                ),
-                const SizedBox(height: 10),
-                if (widget.id != null)
-                  SizedBox(
-                    height: 600,
-                    child: JobQuestionsTab(
-                      jobId: widget.id!,
-                      currentUserId: currentUserId,
-                      isOwner: isOwner,
-                      jobStatus: jobStatus,
-                    ),
-                  )
-                else
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Center(child: Text('İlan ID bulunamadı.', style: TextStyle(color: _textHint))),
+                SizedBox(
+                  height: 600,
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      SingleChildScrollView(
+                        child: _buildOffersSection(
+                            offersAsync, canMakeOffer, currentUserId),
+                      ),
+                      if (widget.id != null)
+                        JobQuestionsTab(
+                          jobId: widget.id!,
+                          currentUserId: currentUserId,
+                          isOwner: isOwner,
+                          jobStatus: jobStatus,
+                        )
+                      else
+                        const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Center(
+                              child: Text('İlan ID bulunamadı.',
+                                  style: TextStyle(color: _textHint))),
+                        ),
+                    ],
                   ),
+                ),
                 const SizedBox(height: 80),
               ],
             ),
