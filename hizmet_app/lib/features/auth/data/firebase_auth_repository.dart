@@ -127,6 +127,11 @@ class FirebaseAuthRepository {
     }
   }
 
+  /// Phase 255 — Direct backend `POST /auth/register`. Firebase signup +
+  /// bridgeToBackend path kaldırıldı (prod'da Firebase admin service account
+  /// env yok → bridge 401, user backend'de oluşmuyordu, login fail). Login
+  /// (Phase 254) ile aynı pattern: Dio POST, response token'larını
+  /// SecureTokenStore'a yaz, backend'in `user` payload'unu döndür.
   Future<Map<String, dynamic>> register({
     required String fullName,
     required String email,
@@ -135,37 +140,93 @@ class FirebaseAuthRepository {
     String? city,
   }) async {
     try {
-      final cred = await _service.registerWithEmail(
-        email: email,
-        password: password,
-        fullName: fullName,
-        phone: phoneNumber,
-        city: city,
-      );
-      // Phase 240D — Bridge to backend JWT after Firebase register.
-      final bridge = await _service.bridgeToBackend();
-      return {
-        'access_token': bridge['access_token'],
-        if (bridge['refresh_token'] != null)
-          'refresh_token': bridge['refresh_token'],
-        'user': {
-          'id': cred.user?.uid,
-          'email': cred.user?.email,
-          'displayName': fullName,
-          'emailVerified': false,
-        },
+      final body = <String, dynamic>{
+        'fullName': fullName,
+        'email': email,
+        'password': password,
+        if (phoneNumber != null && phoneNumber.isNotEmpty)
+          'phoneNumber': phoneNumber,
+        if (city != null && city.isNotEmpty) 'city': city,
       };
-    } on FirebaseAuthException catch (e) {
-      throw Exception(_mapFirebaseError(e.code));
-    } catch (e) {
-      final msg = e.toString();
-      if (msg.contains('social_bridge_failed') ||
-          msg.contains('social_bridge_no_token') ||
-          msg.contains('social_bridge_no_idtoken')) {
-        throw Exception(
-            'Kayıt tamamlandı ancak giriş yapılamadı. Lütfen tekrar giriş yapın.');
+      final res = await _dio.post<dynamic>(
+        '/auth/register',
+        data: body,
+        options: Options(headers: {'Authorization': ''}),
+      );
+      final data = res.data;
+      if (data is! Map) {
+        throw Exception('Kayıt yanıtı beklenmedik formatta.');
       }
-      rethrow;
+      final map = Map<String, dynamic>.from(data);
+
+      final access = map['access_token'];
+      final refresh = map['refresh_token'];
+      if (access is! String || access.isEmpty) {
+        throw Exception('Sunucu erişim tokenı döndürmedi.');
+      }
+      final store = SecureTokenStore();
+      await store.writeToken(access);
+      if (refresh is String && refresh.isNotEmpty) {
+        await store.writeRefreshToken(refresh);
+      }
+
+      final userMap = map['user'];
+      return {
+        'access_token': access,
+        if (refresh is String && refresh.isNotEmpty) 'refresh_token': refresh,
+        'user': userMap is Map
+            ? Map<String, dynamic>.from(userMap)
+            : <String, dynamic>{
+                'email': email,
+                'fullName': fullName,
+                'displayName': fullName,
+              },
+      };
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      final body = e.response?.data;
+      String? serverMsg;
+      String? serverCode;
+      if (body is Map) {
+        final m = body['message'] ?? body['error'];
+        if (m is String && m.isNotEmpty) serverMsg = m;
+        final c = body['code'];
+        if (c is String && c.isNotEmpty) serverCode = c;
+      }
+      // Phase 253-A — email domain validation codes: backend mesajını öncele.
+      if (serverCode == 'EMAIL_DOMAIN_TYPO' ||
+          serverCode == 'EMAIL_DOMAIN_INVALID' ||
+          serverCode == 'EMAIL_DISPOSABLE') {
+        throw Exception(serverMsg ?? 'Geçersiz e-posta alan adı.');
+      }
+      switch (code) {
+        case 400:
+          throw Exception(serverMsg ?? 'Geçersiz bilgiler.');
+        case 401:
+          // Backend "Bu e-posta zaten kayıtlı" 401 UnauthorizedException
+          // ile dönüyor — serverMsg varsa onu göster.
+          if (serverMsg != null &&
+              (serverMsg.toLowerCase().contains('zaten') ||
+                  serverMsg.toLowerCase().contains('kayıtlı') ||
+                  serverMsg.toLowerCase().contains('exists') ||
+                  serverMsg.toLowerCase().contains('duplicate'))) {
+            throw Exception(serverMsg);
+          }
+          throw Exception(serverMsg ?? 'Bu e-posta zaten kayıtlı.');
+        case 409:
+          throw Exception(serverMsg ?? 'Bu e-posta zaten kayıtlı.');
+        case 429:
+          throw Exception(
+              'Çok fazla deneme. Birazdan tekrar deneyin.');
+        case 500:
+        case 502:
+        case 503:
+          throw Exception(
+              'Sunucu hatası, lütfen daha sonra tekrar deneyin.');
+        default:
+          throw Exception(
+              serverMsg ?? 'Kayıt yapılamadı. Lütfen tekrar deneyin.');
+      }
     }
   }
 
