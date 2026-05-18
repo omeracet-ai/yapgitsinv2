@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 
-/// Phase 129 Step 2 â€” Bio / hizmet açıklaması (min 50 char).
+/// Phase 129 Step 2 — Bio / hizmet açıklaması (min 50 char).
 class WorkerOnboardingStep2Bio extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onChanged;
@@ -34,7 +34,7 @@ class WorkerOnboardingStep2Bio extends StatelessWidget {
             onChanged: (_) => onChanged(),
             decoration: InputDecoration(
               hintText:
-                  'Örn: 10 yıllık tesisat ustasıyım. Su tesisatı, kombi montajı ve banyo tadilatında uzmanımâ€¦',
+                  'Örn: 10 yıllık tesisat ustasıyım. Su tesisatı, kombi montajı ve banyo tadilatında uzmanım…',
               
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),

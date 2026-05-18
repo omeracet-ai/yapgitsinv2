@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 
-/// Phase 129 Step 4 â€” Şehir/ilçe + servis radius slider.
+/// Phase 129 Step 4 — Şehir/ilçe + servis radius slider.
 class WorkerOnboardingStep4Location extends StatelessWidget {
   final TextEditingController cityCtrl;
   final TextEditingController districtCtrl;
@@ -70,7 +70,7 @@ class WorkerOnboardingStep4Location extends StatelessWidget {
             }).toList(),
           ),
           const SizedBox(height: 12),
-          Text('Seçili: $radiusKm km â€” bu mesafeye kadar iş tekliflerini alırsın.',
+          Text('Seçili: $radiusKm km — bu mesafeye kadar iş tekliflerini alırsın.',
               style: const TextStyle(
                   fontSize: 12, color: AppColors.textSecondary)),
         ],

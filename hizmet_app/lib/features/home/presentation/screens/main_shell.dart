@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -57,7 +57,7 @@ class _MainShellState extends ConsumerState<MainShell>
   void _onItemTapped(int index) {
     final authState = ref.read(authStateProvider);
     final isLoggedIn = authState is AuthAuthenticated;
-    // index 2 â€” "+" İlan Ver kısa yolu (tab değiştirmek yerine route push)
+    // index 2 — "+" İlan Ver kısa yolu (tab değiştirmek yerine route push)
     if (index == 2) {
       if (isLoggedIn) {
         context.push('/ilan-ver');
@@ -197,9 +197,9 @@ class _MainShellState extends ConsumerState<MainShell>
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // Ana Sayfa (Yaptır) sekmesi
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 class _HomeTab extends ConsumerStatefulWidget {
   final VoidCallback onSeeAllRequests;
   const _HomeTab({required this.onSeeAllRequests});
@@ -248,7 +248,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // â”€â”€ Hero SliverAppBar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── Hero SliverAppBar ──────────────────────────────────────
             SliverAppBar(
               expandedHeight: 200,
               pinned: true,
@@ -423,7 +423,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // â”€â”€ İlan Ver butonu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  // ── İlan Ver butonu ──────────────────────────────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                     child: ElevatedButton.icon(
@@ -456,7 +456,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
 
                   const SizedBox(height: 24),
 
-                  // â”€â”€ Popüler Kategoriler (siyah arka plan) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  // ── Popüler Kategoriler (siyah arka plan) ─────────────
                   Container(
                     color: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -591,10 +591,10 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
 
                   const SizedBox(height: 24),
 
-                  // â”€â”€ AI Önerileri (Phase 214) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  // ── AI Önerileri (Phase 214) ─────────────────────────
                   if (isLoggedIn) const AiRecommendationsSection(),
 
-                  // â”€â”€ Son İlanlar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  // ── Son İlanlar ──────────────────────────────────────
                   SectionHeader(
                     title: 'Son İlanlar',
                     actionLabel: 'Tümünü Gör',
@@ -669,11 +669,11 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // Yardımcı widget'lar
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 
-/// Recent job row for home screen â€” uses JobStatusBadge
+/// Recent job row for home screen — uses JobStatusBadge
 class _RecentJobRow extends StatelessWidget {
   final Job job;
   const _RecentJobRow({required this.job});

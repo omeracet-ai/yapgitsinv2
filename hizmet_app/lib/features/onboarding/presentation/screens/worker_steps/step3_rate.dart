@@ -1,8 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../../core/theme/app_colors.dart';
 
-/// Phase 129 Step 3 â€” Saat ücreti (opsiyonel).
+/// Phase 129 Step 3 — Saat ücreti (opsiyonel).
 class WorkerOnboardingStep3Rate extends StatelessWidget {
   final TextEditingController minCtrl;
   final TextEditingController maxCtrl;
@@ -23,7 +23,7 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           const Text(
-              'Opsiyonel â€” istersen şimdi atla, profil ayarlarından sonra düzenle.',
+              'Opsiyonel — istersen şimdi atla, profil ayarlarından sonra düzenle.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
           const SizedBox(height: 24),
           Row(
@@ -74,7 +74,7 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Piyasa ortalaması: 150â€“500 â‚º/saat. Tecrübeli ustalar daha yüksek belirleyebilir.',
+                  'Piyasa ortalaması: 150–500 â‚º/saat. Tecrübeli ustalar daha yüksek belirleyebilir.',
                   style: TextStyle(fontSize: 12),
                 ),
               ),

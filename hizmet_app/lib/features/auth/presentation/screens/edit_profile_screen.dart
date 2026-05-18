@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io' as io;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -18,7 +18,7 @@ import '../../../insurance/data/insurance_repository.dart';
 import '../../widgets/intro_video_section.dart';
 import '../../widgets/certifications_section.dart';
 
-// Phase 62 â€” Sectioned Profile Edit UX
+// Phase 62 — Sectioned Profile Edit UX
 //
 // Mevcut PATCH /users/me akışı korunur. Bölümler bağımsız submit edebilir,
 // üstte profileCompletion (%X) chip + her bölümde missingFields highlight.
@@ -91,10 +91,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final hMax = u['hourlyRateMax'];
     if (hMin != null) _hourlyMinCtrl.text = hMin.toString();
     if (hMax != null) _hourlyMaxCtrl.text = hMax.toString();
-    final bd = u['birthDate'] as String?;
-    if (bd != null && bd.isNotEmpty) {
+    final bdRaw = u['birthDate'];
+    final bd = bdRaw is String ? bdRaw : bdRaw?.toString();
+    if (bd != null && bd.length >= 10) {
+      // Phase 258 — defensive YYYY-MM-DD substring parse (matches personal_info_screen)
       try {
-        _birthDate = DateTime.parse(bd);
+        final y = int.parse(bd.substring(0, 4));
+        final m = int.parse(bd.substring(5, 7));
+        final d = int.parse(bd.substring(8, 10));
+        _birthDate = DateTime(y, m, d);
       } catch (e, st) {
         debugPrint('edit_profile_screen.parseBirthDate: $e\n$st');
       }
@@ -115,7 +120,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.dispose();
   }
 
-  // â”€â”€ Phase 72: Profile photo pick + upload â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Phase 72: Profile photo pick + upload ─────────────────────────────────
   Future<void> _pickAndUploadPhoto() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
@@ -130,7 +135,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final url = await ref
           .read(photoRepositoryProvider)
           .uploadProfilePhoto(picked);
-      // PATCH /users/me ile kalıcı olarak kaydet â€” _patch zaten authState + completion
+      // PATCH /users/me ile kalıcı olarak kaydet — _patch zaten authState + completion
       // refresh ediyor; setState 'photo' bitince UI yeni avatarı CircleAvatar'da gösterir.
       await _patch('photo', {'profileImageUrl': url});
     } catch (e) {
@@ -139,7 +144,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
-  // â”€â”€ Persistence â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Persistence ────────────────────────────────────────────────────────────
   Future<void> _patch(String section, Map<String, dynamic> data) async {
     setState(() => _busySection = section);
     try {
@@ -149,7 +154,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       await prefs.setString('user_data', jsonEncode(updated));
       ref.read(authStateProvider.notifier).updateUserData(updated);
       ref.invalidate(profileCompletionProvider);
-      if (mounted) _snack('Bilgiler güncellendi âœ“');
+      if (mounted) _snack('Bilgiler güncellendi ✓');
     } on DioException catch (e) {
       _snack(e.response?.data?['message']?.toString() ?? 'Güncelleme başarısız',
           error: true);
@@ -253,7 +258,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     ));
   }
 
-  // â”€â”€ UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── UI ─────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final completion = ref.watch(profileCompletionProvider);
@@ -321,9 +326,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           Expanded(
             child: Text(
               percent >= 100
-                  ? 'Profil tamamlandı âœ“'
+                  ? 'Profil tamamlandı ✓'
                   : 'Profilin %$percent tamamlandı'
-                      '${missingCount > 0 ? ' â€¢ $missingCount eksik alan' : ''}',
+                      '${missingCount > 0 ? ' ”¢ $missingCount eksik alan' : ''}',
               style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.w700,
@@ -351,7 +356,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  // â”€â”€ Section: Profile Photo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Section: Profile Photo ────────────────────────────────────────────────
   Widget _photoSection(Set<String> missing) {
     final auth = ref.watch(authStateProvider);
     final url = auth is AuthAuthenticated
@@ -405,7 +410,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       )
                     : const Icon(Icons.photo_camera, size: 16),
                 label: Text(
-                  _busySection == 'photo' ? 'Yükleniyorâ€¦' : 'Fotoğraf Seç',
+                  _busySection == 'photo' ? 'Yükleniyor…' : 'Fotoğraf Seç',
                   style: const TextStyle(fontSize: 12),
                 ),
                 style: OutlinedButton.styleFrom(
@@ -422,7 +427,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  // â”€â”€ Section: Personal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Section: Personal ─────────────────────────────────────────────────────
   Widget _personalSection(Set<String> missing) {
     final fields = ['fullName', 'birthDate', 'gender'];
     final missingHere = fields.where(missing.contains).toList();
@@ -534,7 +539,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  // Phase 152 â€” Tanıtım Videosu (worker only, max 60sn)
+  // Phase 152 — Tanıtım Videosu (worker only, max 60sn)
   Widget _introVideoSection() {
     final user = ref.read(authStateProvider) is AuthAuthenticated
         ? (ref.read(authStateProvider) as AuthAuthenticated).user
@@ -711,7 +716,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Helpers ────────────────────────────────────────────────────────────────
   Widget _sectionCard({
     required String icon,
     required String title,
@@ -756,8 +761,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
             ),
             _badge(isMissing
-                ? 'âœï¸  ${missingFields.length} eksik'
-                : 'âœ“ Eksiksiz',
+                ? '✏️  ${missingFields.length} eksik'
+                : '✓ Eksiksiz',
                 isMissing ? AppColors.error : AppColors.success),
           ]),
         ),
@@ -898,7 +903,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
 }
 
-// Phase 119 â€” Worker insurance edit section
+// Phase 119 — Worker insurance edit section
 class _InsuranceSection extends StatefulWidget {
   final InsuranceRepository repo;
   const _InsuranceSection({required this.repo});

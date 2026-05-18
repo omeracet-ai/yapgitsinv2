@@ -1,4 +1,4 @@
-﻿import 'dart:io' as io;
+import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -68,7 +68,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
   bool   _obscurePass   = true;
   String _gender        = 'other';
   DateTime? _birthDate;
-  // Phase 129 â€” Worker onboarding routing flag.
+  // Phase 129 — Worker onboarding routing flag.
   bool   _registerAsWorker = false;
 
   // Adım 2: Kimlik fotoğrafı
@@ -195,7 +195,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         if (docUrl != null) 'documentPhotoUrl': docUrl,
       });
       if (mounted) {
-        // Phase 129 â€” Worker registration â†’ wizard. Customer â†’ main shell.
+        // Phase 129 — Worker registration â†’ wizard. Customer â†’ main shell.
         if (_registerAsWorker) {
           context.go('/usta-baslangic');
         } else {
@@ -210,7 +210,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
 
   Future<void> _skipStep2() async {
     if (mounted) {
-      // Phase 129 â€” Worker'lar identity skip etse de wizard'a yönlendirilir.
+      // Phase 129 — Worker'lar identity skip etse de wizard'a yönlendirilir.
       if (_registerAsWorker) {
         context.go('/usta-baslangic');
       } else {
@@ -331,7 +331,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         ),
 
         const SizedBox(height: 16),
-        // Phase 129 â€” Usta olarak kayıt ol toggle.
+        // Phase 129 — Usta olarak kayıt ol toggle.
         Container(
           decoration: BoxDecoration(
             color: _registerAsWorker

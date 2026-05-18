@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -357,7 +357,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
     return CustomScrollView(
       slivers: [
         if (showRecent) SliverToBoxAdapter(child: _buildRecentSearches()),
-        // Phase 143 â€” kategori aboneliği toggle
+        // Phase 143 — kategori aboneliği toggle
         if (_activeCategory != null && _activeCategory!.isNotEmpty)
           SliverToBoxAdapter(child: _buildSubscribeBanner(_activeCategory!)),
         // Sort bar
@@ -560,7 +560,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
         ),
       );
 
-  // Phase 143 â€” kategori aboneliği banner: subscribe / unsubscribe toggle
+  // Phase 143 — kategori aboneliği banner: subscribe / unsubscribe toggle
   Widget _buildSubscribeBanner(String category) {
     final async = ref.watch(categorySubscriptionsProvider);
     return async.maybeWhen(
@@ -593,7 +593,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                             content: Text(
-                                'ğŸ”” $category aboneliği oluşturuldu â€” yeni ilanlar bildirilecek')),
+                                'ğŸ”” $category aboneliği oluşturuldu — yeni ilanlar bildirilecek')),
                       );
                     }
                   }
@@ -622,7 +622,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                     Expanded(
                       child: Text(
                         isSubscribed
-                            ? 'âœ“ "$category" aboneliği aktif'
+                            ? '✓ "$category" aboneliği aktif'
                             : 'ğŸ”” "$category" için bu aramaya abone ol',
                         style: TextStyle(
                           color:
@@ -651,7 +651,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
 
 enum _SortMode { rating, reviews }
 
-// â”€â”€â”€ Featured Card (horizontal carousel) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Featured Card (horizontal carousel) ─────────────────────────────────────
 
 class _FeaturedCard extends StatelessWidget {
   final Map<String, dynamic> provider;
@@ -775,7 +775,7 @@ class _FeaturedCard extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€ Regular Provider Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Regular Provider Card ────────────────────────────────────────────────────
 
 class _ProviderCard extends StatelessWidget {
   final Map<String, dynamic> provider;
@@ -981,7 +981,7 @@ class _ProviderCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             rateMax != null
-                                ? '$rateMinâ€“$rateMax â‚º/sa'
+                                ? '$rateMin–$rateMax â‚º/sa'
                                 : '$rateMin â‚º/sa',
                             style: const TextStyle(
                                 fontSize: 12,

@@ -65,13 +65,21 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     _currentIdentityUrl = u['identityPhotoUrl'] as String?;
     _currentDocumentUrl = u['documentPhotoUrl'] as String?;
     _identityVerified = u['identityVerified'] == true;
-    final bd = u['birthDate'] as String?;
+    final bdRaw = u['birthDate'];
+    final bd = bdRaw is String ? bdRaw : bdRaw?.toString();
     debugPrint(
-        'personal_info._prefill auth.user keys=${u.keys.toList()}, birthDate=$bd (runtimeType=${bd.runtimeType})');
-    if (bd != null && bd.isNotEmpty) {
+        'personal_info._prefill auth.user keys=${u.keys.toList()}, birthDate=$bd (runtimeType=${bdRaw.runtimeType}) bytes=${bd?.codeUnits}');
+    if (bd != null && bd.length >= 10) {
+      // Phase 258 — defensive parse: explicit YYYY-MM-DD substring extraction
+      // avoids any DateTime.parse() timezone / ISO-ordinal ambiguity (+2 day
+      // shift observed when bd was passed through DateTime.parse on cold start).
       try {
-        _birthDate = DateTime.parse(bd);
-        debugPrint('personal_info._prefill parsed _birthDate=$_birthDate');
+        final y = int.parse(bd.substring(0, 4));
+        final m = int.parse(bd.substring(5, 7));
+        final d = int.parse(bd.substring(8, 10));
+        _birthDate = DateTime(y, m, d);
+        debugPrint(
+            'personal_info._prefill parsed _birthDate=$_birthDate (y=$y m=$m d=$d)');
       } catch (e, st) {
         debugPrint('personal_info_screen.parseBirthDate: $e\n$st');
       }
@@ -626,7 +634,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                         else if (hasUrl && isVerified)
                           _badge('Onaylandı ✓', Colors.green)
                         else if (hasUrl)
-                          _badge('Yüklendi â€“ İnceleniyor', Colors.orange)
+                          _badge('Yüklendi – İnceleniyor', Colors.orange)
                         else
                           _badge(required ? 'Zorunlu' : 'Opsiyonel',
                               required ? Colors.orange : Colors.grey),
