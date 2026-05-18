@@ -198,11 +198,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               children: [
-                _buildHeader(budgetMin: budgetMin, budgetMax: budgetMax, createdAt: createdAt, dueDate: dueDate),
                 if (customer != null) ...[
-                  const SizedBox(height: 6),
                   _buildCustomerCard(customer),
+                  const SizedBox(height: 6),
                 ],
+                _buildHeader(budgetMin: budgetMin, budgetMax: budgetMax, createdAt: createdAt, dueDate: dueDate),
                 if (jobStatus == 'completed' &&
                     customer != null &&
                     authState is AuthAuthenticated &&
