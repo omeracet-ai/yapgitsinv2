@@ -42,7 +42,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Hoşgeldiniz $name! Yapgitsin'e tekrar hoş geldin.',
+                    "Hoşgeldiniz $name! Yapgitsin'e tekrar hoş geldin.",
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
