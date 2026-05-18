@@ -54,6 +54,70 @@ const TR_CITIES = [
   'Eskisehir',
 ];
 
+// Türkçe bio şablonları — kategori adı `{cat}` placeholder'ı ile doldurulur.
+const TR_BIO_TEMPLATES = [
+  '{years} yıllık {cat} tecrübesiyle hizmet veriyorum. İşçilik garantili, fiyatlar uygundur.',
+  '{cat} alanında ustalaştım, titiz ve zamanında çalışırım. Müşteri memnuniyeti önceliğimdir.',
+  'Profesyonel {cat} hizmeti. Keşif ücretsiz, randevu esnek. Hafta sonu da hizmet veriyorum.',
+  '{cat} işlerinde {years} yıl deneyim. Kaliteli malzeme, temiz işçilik, makul fiyat.',
+  '{cat} dahil pek çok alanda hizmet veriyorum. Acil durumlarda da arayabilirsiniz.',
+  'Aile şirketi olarak {cat} alanında çalışıyoruz. Referansla iş yapıyoruz.',
+  '{cat} konusunda uzmanım. Önce keşif yapıp net fiyat veririm, sürprizsiz çalışma.',
+  'Sigortalı ve faturalı {cat} hizmeti. İş bitimine kadar garantilidir.',
+  '{cat} hizmetinde hız ve kaliteyi bir arada sunuyorum. Şehir içi her bölgeye gelirim.',
+  '{years} yıldır {cat} işiyle uğraşıyorum, işimi severek yapıyorum. Memnuniyet garantili.',
+];
+
+// Türkçe iş açıklaması şablonları (kısa).
+const TR_JOB_DESCRIPTIONS = [
+  'Acil bir şekilde halledilmesi gerekiyor, en kısa zamanda dönüş bekliyorum.',
+  'Malzeme bende mevcut, sadece işçilik gerekiyor.',
+  'Detaylı keşif sonrası fiyat anlaşması yapabiliriz.',
+  'Hafta içi öğleden sonra müsaitim, evdeyim.',
+  'Daha önce yapılmış bir işin tamamlanması gerekiyor.',
+  'Apartman 3. katta, asansör yok. Buna göre fiyatlandırın lütfen.',
+  'Faturalı ve garantili çalışmasını rica ediyorum.',
+  'Birden fazla yerde aynı iş var, toplu fiyat verebilirsiniz.',
+  'Hızlı ve temiz çalışılmasını önemsiyorum.',
+  'İlk önce yerinde görmenizi rica ediyorum.',
+];
+
+// Worker response message havuzu.
+const TR_WORKER_RESPONSES = [
+  'Merhaba, ben bu işi yapabilirim. Müsait gün için iletişime geçelim.',
+  'İlgileniyorum, detaylar için arayabilir misiniz?',
+  'Bu hafta uygunum, fiyat keşiften sonra netleşir.',
+  'Görüşmek isterim, fotoğraf paylaşırsanız ön fiyat verebilirim.',
+  'Tecrübeliyim, referans verebilirim. Bekliyorum.',
+  'Yarın sabah bölgenizdeyim, uğrayabilirim.',
+];
+
+// Booking açıklamaları (kısa).
+const TR_BOOKING_NOTES = [
+  'Anahtarlar kapıcıda olacak, randevu saatinde teslim alabilirsiniz.',
+  'Adres tarifi için mesaj atın, kolayca bulabilirsiniz.',
+  'Apartman önünde park yeri mevcut.',
+  'İşin tamamlanmasını aynı gün bekliyorum.',
+  'Ödeme iş bitiminde nakit veya havale olabilir.',
+  'Kediler ev içinde, kapıyı dikkatli açın lütfen.',
+];
+
+function pickFromArray<T>(arr: T[], rand: () => number = Math.random): T {
+  return arr[Math.floor(rand() * arr.length)];
+}
+
+function buildTurkishBio(cats: string[]): string {
+  const primary = cats[0] ?? 'hizmet';
+  const years = 2 + Math.floor(Math.random() * 18);
+  const tpl = pickFromArray(TR_BIO_TEMPLATES);
+  let bio = tpl.replace(/\{cat\}/g, primary).replace(/\{years\}/g, String(years));
+  // İkinci cümle: ekstra kategori varsa onu ima et.
+  if (cats.length > 1) {
+    bio += ` Ayrıca ${cats.slice(1, 3).join(' ve ')} işleri de yapıyorum.`;
+  }
+  return bio;
+}
+
 @Injectable()
 export class AdminSeedService {
   private readonly logger = new Logger(AdminSeedService.name);
@@ -152,7 +216,7 @@ export class AdminSeedService {
             faker.number.int({ min: 2, max: Math.min(5, categoryNames.length) }),
           );
           u.workerCategories = cats;
-          u.workerBio = f.lorem.sentences(2);
+          u.workerBio = buildTurkishBio(cats);
           u.hourlyRateMinMinor = faker.number.int({ min: 5000, max: 20000 });
           u.hourlyRateMaxMinor =
             (u.hourlyRateMinMinor ?? 5000) + faker.number.int({ min: 5000, max: 30000 });
@@ -181,7 +245,7 @@ export class AdminSeedService {
             customerId: customer.id,
             category: cat,
             city: customer.city || faker.helpers.arrayElement(TR_CITIES),
-            description: `${cat} hizmeti gerekiyor. ${f.lorem.sentence()}`,
+            description: `${cat} hizmeti gerekiyor. ${faker.helpers.arrayElement(TR_JOB_DESCRIPTIONS)}`,
             budgetMin,
             budgetMax: budgetMin + faker.number.int({ min: 100, max: 1200 }),
             budgetVisible: faker.datatype.boolean(),
@@ -225,7 +289,7 @@ export class AdminSeedService {
                   'accepted',
                   'rejected',
                 ]),
-                workerMessage: f.lorem.sentence(),
+                workerMessage: faker.helpers.arrayElement(TR_WORKER_RESPONSES),
                 respondedAt: faker.date.recent({ days: 30 }),
               }),
             );
@@ -258,7 +322,7 @@ export class AdminSeedService {
             customerId: customer.id,
             workerId: worker.id,
             category: cat,
-            description: f.lorem.sentences(2),
+            description: `${cat} işi: ${faker.helpers.arrayElement(TR_BOOKING_NOTES)}`,
             address: `${customer.city ?? 'Istanbul'} - ${f.location.streetAddress()}`.slice(0, 200),
             scheduledDate: faker.date
               .soon({ days: 30 })
@@ -319,7 +383,14 @@ export class AdminSeedService {
                 reviewerId: b.customerId,
                 revieweeId: b.workerId,
                 rating: faker.number.int({ min: 3, max: 5 }),
-                comment: f.lorem.sentence(),
+                comment: faker.helpers.arrayElement([
+                  'İşini titizlikle yapıyor, çok memnun kaldım. Tavsiye ederim.',
+                  'Zamanında geldi, fiyatı uygundu. Tekrar çalışırım.',
+                  'Gerçekten profesyonel, ilgili ve güleryüzlü. Teşekkürler!',
+                  'Beklediğimden iyi bir iş çıkardı. Eline sağlık.',
+                  'Hızlı dönüş yaptı, anlaşma sorunsuz oldu.',
+                  'Detaylara dikkat ediyor, kaliteli işçilik.',
+                ]),
               }),
             );
           }
@@ -412,7 +483,7 @@ export class AdminSeedService {
             tenantId: null,
             category: cat,
             title: `${cat} hizmeti aranıyor — ${city}`.slice(0, 200),
-            description: `${cat} hizmetine ihtiyacım var. ${f.lorem.sentences(2)} Bütçe: ${budgetMin}-${budgetMax} TL.`,
+            description: `${cat} hizmetine ihtiyacım var. ${faker.helpers.arrayElement(TR_JOB_DESCRIPTIONS)} Bütçe: ${budgetMin}-${budgetMax} TL.`,
             location: city,
             address: `${city} - ${f.location.streetAddress()}`.slice(0, 500),
             price: budgetMax,
