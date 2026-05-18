@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -23,7 +23,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
   Widget build(BuildContext context) {
     final asyncData = ref.watch(earningsProvider(_months));
     return Scaffold(
-      appBar: AppBar(title: const Text('Kazançlarım')),
+      appBar: AppBar(title: const Text('KazanÃ§larÄ±m')),
       body: asyncData.when(
         loading: () => ListSkeleton(itemCount: 5, itemBuilder: (_) => const NotificationSkeleton()),
         error: (e, _) => Center(child: Text('Hata: $e')),
@@ -36,20 +36,20 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
               const SizedBox(height: 12),
               _kpiGrid(d),
               const SizedBox(height: 20),
-              _sectionTitle('Aylık Trend'),
+              _sectionTitle('AylÄ±k Trend'),
               const SizedBox(height: 8),
               _monthlyChart(d.monthlySeries),
               const SizedBox(height: 20),
-              _sectionTitle('Aylık Detay'),
+              _sectionTitle('AylÄ±k Detay'),
               const SizedBox(height: 8),
               ...d.monthlySeries.reversed.map(_monthRow),
               const SizedBox(height: 20),
-              _sectionTitle('En Çok Kazandıran Kategoriler'),
+              _sectionTitle('En Ã‡ok KazandÄ±ran Kategoriler'),
               const SizedBox(height: 8),
               if (d.topCategories.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(16),
-                  child: Text('Henüz veri yok', style: TextStyle(color: Colors.grey)),
+                  child: Text('HenÃ¼z veri yok', style: TextStyle(color: Colors.grey)),
                 )
               else
                 ...d.topCategories.map(_categoryRow),
@@ -83,13 +83,13 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
       mainAxisSpacing: 10,
       childAspectRatio: 1.5,
       children: [
-        _kpi('Toplam Kazanç', _fmtTL(d.totalEarnings), Icons.account_balance_wallet,
+        _kpi('Toplam KazanÃ§', _fmtTL(d.totalEarnings), Icons.account_balance_wallet,
             AppColors.primary),
         _kpi('Bu Ay', _fmtTL(d.thisMonthEarnings), Icons.calendar_month,
             const Color(0xFF00C9A7)),
-        _kpi('Geçen Ay', _fmtTL(d.lastMonthEarnings), Icons.history, Colors.grey),
+        _kpi('GeÃ§en Ay', _fmtTL(d.lastMonthEarnings), Icons.history, Colors.grey),
         _kpi(
-          'Büyüme',
+          'BÃ¼yÃ¼me',
           '${d.growthPercent >= 0 ? '+' : ''}${d.growthPercent.toStringAsFixed(1)}%',
           d.growthPercent >= 0 ? Icons.trending_up : Icons.trending_down,
           d.growthPercent >= 0 ? const Color(0xFF00C9A7) : const Color(0xFFDE4437),
@@ -101,8 +101,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
   Widget _kpi(String label, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
       ),
@@ -131,8 +130,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
     return Container(
       height: 180,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
       ),
@@ -177,15 +175,14 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
           Expanded(child: Text(m.month, style: const TextStyle(fontWeight: FontWeight.w600))),
-          Text('${m.count} iş',
+          Text('${m.count} iÅŸ',
               style: const TextStyle(fontSize: 12, color: Colors.grey)),
           const SizedBox(width: 12),
           Text(_fmtTL(m.earnings),
@@ -199,8 +196,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
       ),

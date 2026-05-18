@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../data/certification_repository.dart';
@@ -55,7 +55,7 @@ class _CertificationsScreenState extends ConsumerState<CertificationsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Sertifikalarım'),
+        title: const Text('SertifikalarÄ±m'),
         backgroundColor: AppColors.primary,
         elevation: 0,
         actions: [
@@ -87,9 +87,9 @@ class _CertificationsScreenState extends ConsumerState<CertificationsScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('📜', style: TextStyle(fontSize: 48)),
+                          Text('ğŸ“œ', style: TextStyle(fontSize: 48)),
                           SizedBox(height: 16),
-                          Text('Henüz sertifikanız yok.',
+                          Text('HenÃ¼z sertifikanÄ±z yok.',
                               style: TextStyle(
                                   fontSize: 16, color: AppColors.textSecondary)),
                         ],
@@ -102,22 +102,21 @@ class _CertificationsScreenState extends ConsumerState<CertificationsScreen> {
                       itemBuilder: (_, i) {
                         final c = _certs[i];
                         return Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
+                          decoration: BoxDecoration(color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: AppColors.border),
                           ),
                           child: ListTile(
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 10),
-                            leading: const Text('🪪',
+                            leading: const Text('ğŸªª',
                                 style: TextStyle(fontSize: 28)),
                             title: Text(c.name,
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w600)),
                             subtitle: Text(
                               '${c.issuer}\n${_fmtDate(c.issuedAt)}'
-                              '${c.expiresAt != null ? ' – ${_fmtDate(c.expiresAt!)}' : ' · Süresiz'}',
+                              '${c.expiresAt != null ? ' â€“ ${_fmtDate(c.expiresAt!)}' : ' Â· SÃ¼resiz'}',
                               style: const TextStyle(fontSize: 12),
                             ),
                             isThreeLine: true,
@@ -130,7 +129,7 @@ class _CertificationsScreenState extends ConsumerState<CertificationsScreen> {
                                           .withValues(alpha: 0.12),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: const Text('Onaylı',
+                                    child: const Text('OnaylÄ±',
                                         style: TextStyle(
                                             fontSize: 11,
                                             color: Color(0xFF2E7D32),
@@ -157,7 +156,7 @@ class _CertificationsScreenState extends ConsumerState<CertificationsScreen> {
   }
 }
 
-// ── Add Certification Sheet ──────────────────────────────────────────────────
+// â”€â”€ Add Certification Sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _AddCertSheet extends ConsumerStatefulWidget {
   final VoidCallback onAdded;
   const _AddCertSheet({required this.onAdded});
@@ -262,7 +261,7 @@ class _AddCertSheetState extends ConsumerState<_AddCertSheet> {
             TextField(
               controller: _nameCtrl,
               decoration: const InputDecoration(
-                labelText: 'Sertifika Adı *',
+                labelText: 'Sertifika AdÄ± *',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -278,15 +277,15 @@ class _AddCertSheetState extends ConsumerState<_AddCertSheet> {
             OutlinedButton.icon(
               onPressed: () => _pickDate(isExpiry: false),
               icon: const Icon(Icons.calendar_today, size: 16),
-              label: Text('Veriliş: ${_fmt(_issuedAt)}'),
+              label: Text('VeriliÅŸ: ${_fmt(_issuedAt)}'),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () => _pickDate(isExpiry: true),
               icon: const Icon(Icons.event_available, size: 16),
               label: Text(_expiresAt != null
-                  ? 'Geçerlilik: ${_fmt(_expiresAt!)}'
-                  : 'Geçerlilik tarihi ekle (opsiyonel)'),
+                  ? 'GeÃ§erlilik: ${_fmt(_expiresAt!)}'
+                  : 'GeÃ§erlilik tarihi ekle (opsiyonel)'),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
@@ -294,7 +293,7 @@ class _AddCertSheetState extends ConsumerState<_AddCertSheet> {
               icon: const Icon(Icons.attach_file, size: 16),
               label: Text(_docFile != null
                   ? _docFile!.name
-                  : 'Belge Yükle (pdf/jpg/png)'),
+                  : 'Belge YÃ¼kle (pdf/jpg/png)'),
             ),
             if (_error != null) ...[
               const SizedBox(height: 10),

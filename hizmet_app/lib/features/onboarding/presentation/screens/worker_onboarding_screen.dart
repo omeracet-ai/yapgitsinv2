@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
@@ -17,9 +17,9 @@ import 'worker_steps/step3_rate.dart';
 import 'worker_steps/step4_location.dart';
 import 'worker_steps/step5_identity.dart';
 
-/// Phase 129 — Worker onboarding wizard. 5 step IndexedStack.
-/// Sonda toplu PATCH /users/me ile kategori/bio/rate/şehir/identityPhoto kaydeder.
-/// Skip → wizard kapan, Phase 48 banner'da "Tamamla %X" gösterilir.
+/// Phase 129 â€” Worker onboarding wizard. 5 step IndexedStack.
+/// Sonda toplu PATCH /users/me ile kategori/bio/rate/ÅŸehir/identityPhoto kaydeder.
+/// Skip â†’ wizard kapan, Phase 48 banner'da "Tamamla %X" gÃ¶sterilir.
 class WorkerOnboardingScreen extends ConsumerStatefulWidget {
   const WorkerOnboardingScreen({super.key});
 
@@ -75,7 +75,7 @@ class _WorkerOnboardingScreenState
 
   void _next() {
     if (!_canAdvance) {
-      setState(() => _error = 'Bu adımı tamamlamadan ilerleyemezsin.');
+      setState(() => _error = 'Bu adÄ±mÄ± tamamlamadan ilerleyemezsin.');
       return;
     }
     setState(() {
@@ -88,32 +88,32 @@ class _WorkerOnboardingScreenState
     if (_step > 0) setState(() => _step--);
   }
 
-  /// Skip → wizard kapan, anasayfaya dön. Phase 48 banner görünür kalır.
+  /// Skip â†’ wizard kapan, anasayfaya dÃ¶n. Phase 48 banner gÃ¶rÃ¼nÃ¼r kalÄ±r.
   void _skip() {
     if (_saving) return;
     context.go('/');
   }
 
-  /// Sonda toplu submit — Step 5'te "Tamamla" butonu çağırır.
+  /// Sonda toplu submit â€” Step 5'te "Tamamla" butonu Ã§aÄŸÄ±rÄ±r.
   Future<void> _finish() async {
     if (_categories.isEmpty) {
       setState(() {
         _step = 0;
-        _error = 'En az 1 kategori seçmelisin.';
+        _error = 'En az 1 kategori seÃ§melisin.';
       });
       return;
     }
     if (_bioCtrl.text.trim().length < 50) {
       setState(() {
         _step = 1;
-        _error = 'Bio en az 50 karakter olmalı.';
+        _error = 'Bio en az 50 karakter olmalÄ±.';
       });
       return;
     }
     if (_identityPhoto == null) {
       setState(() {
         _step = 4;
-        _error = 'Kimlik fotoğrafı zorunlu.';
+        _error = 'Kimlik fotoÄŸrafÄ± zorunlu.';
       });
       return;
     }
@@ -153,7 +153,7 @@ class _WorkerOnboardingScreenState
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Tebrikler! Usta profilin hazır 🎉'),
+        content: Text('Tebrikler! Usta profilin hazÄ±r ğŸ‰'),
         backgroundColor: AppColors.success,
       ));
       context.go('/');
@@ -161,7 +161,7 @@ class _WorkerOnboardingScreenState
       setState(() {
         _saving = false;
         _error =
-            e.response?.data?['message']?.toString() ?? 'Kayıt başarısız';
+            e.response?.data?['message']?.toString() ?? 'KayÄ±t baÅŸarÄ±sÄ±z';
       });
     } catch (e) {
       setState(() {
@@ -176,9 +176,9 @@ class _WorkerOnboardingScreenState
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
-        title: Text('Usta Başlangıç (${_step + 1}/$_total)'),
+        title: Text('Usta BaÅŸlangÄ±Ã§ (${_step + 1}/$_total)'),
         actions: [
           TextButton(
             onPressed: _saving ? null : _skip,
@@ -247,8 +247,7 @@ class _WorkerOnboardingScreenState
             top: false,
             child: Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: const BoxDecoration(color: AppColors.surface,
                 border: Border(top: BorderSide(color: AppColors.border)),
               ),
               child: Row(
@@ -270,7 +269,7 @@ class _WorkerOnboardingScreenState
                             horizontal: 24, vertical: 14),
                       ),
                       icon: const Icon(Icons.arrow_forward),
-                      label: const Text('İleri'),
+                      label: const Text('Ä°leri'),
                     )
                   else
                     ElevatedButton.icon(
@@ -289,7 +288,7 @@ class _WorkerOnboardingScreenState
                                   color: Colors.white, strokeWidth: 2),
                             )
                           : const Icon(Icons.check),
-                      label: Text(_saving ? 'Kaydediliyor…' : 'Tamamla'),
+                      label: Text(_saving ? 'Kaydediliyorâ€¦' : 'Tamamla'),
                     ),
                 ],
               ),

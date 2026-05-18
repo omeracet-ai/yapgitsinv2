@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +55,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Phase 80 — mark this peer as the active chat so the global toast hook
+    // Phase 80 â€” mark this peer as the active chat so the global toast hook
     // suppresses banners for messages from them while this screen is open.
     ChatToastHook.activeChatPeerId = widget.peerId;
     final chatService = ref.read(chatServiceProvider);
@@ -81,7 +81,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           });
         });
         _scrollToBottom();
-        // Phase 68: peer message arrived while screen open → mark read.
+        // Phase 68: peer message arrived while screen open â†’ mark read.
         if (from != null && from != _meId && id != null) {
           chatService.markRead(_roomId, [id]);
         }
@@ -105,7 +105,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       ref.read(chatTypingProvider.notifier).state = isTyping;
       _peerTypingClearTimer?.cancel();
       if (isTyping) {
-        // Safety: clear stale "yazıyor…" if no follow-up event arrives.
+        // Safety: clear stale "yazÄ±yorâ€¦" if no follow-up event arrives.
         _peerTypingClearTimer = Timer(const Duration(seconds: 5), () {
           if (mounted) {
             ref.read(chatTypingProvider.notifier).state = false;
@@ -125,8 +125,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         SnackBar(
           backgroundColor: AppColors.warning,
           content: Text(
-            'Mesajınız filtrelendi: iletişim bilgisi içeriyor (${detectedTypes.join(", ")}). '
-            'Lütfen sistem içi mesajlaşmayı kullanın.',
+            'MesajÄ±nÄ±z filtrelendi: iletiÅŸim bilgisi iÃ§eriyor (${detectedTypes.join(", ")}). '
+            'LÃ¼tfen sistem iÃ§i mesajlaÅŸmayÄ± kullanÄ±n.',
           ),
           duration: const Duration(seconds: 4),
         ),
@@ -209,7 +209,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   @override
   void dispose() {
-    // Phase 80 — clear active-chat marker so future toasts resume.
+    // Phase 80 â€” clear active-chat marker so future toasts resume.
     if (ChatToastHook.activeChatPeerId == widget.peerId) {
       ChatToastHook.activeChatPeerId = null;
     }
@@ -311,7 +311,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: Colors.white.withValues(alpha: 0.2),
+                  backgroundColor: AppColors.surface.withValues(alpha: 0.2),
                   child: Text(
                     widget.peerName.isNotEmpty
                         ? widget.peerName[0].toUpperCase()
@@ -452,8 +452,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   Widget _buildMessageInput() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         boxShadow: [
           BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
@@ -615,7 +614,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       if (res == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Yükleme başarısız: oturum bulunamadı')),
+            const SnackBar(content: Text('YÃ¼kleme baÅŸarÄ±sÄ±z: oturum bulunamadÄ±')),
           );
         }
         return;
@@ -629,7 +628,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Yükleme hatası: $e')),
+          SnackBar(content: Text('YÃ¼kleme hatasÄ±: $e')),
         );
       }
     } finally {
@@ -646,7 +645,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       if (res == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Yükleme başarısız: oturum bulunamadı')),
+            const SnackBar(content: Text('YÃ¼kleme baÅŸarÄ±sÄ±z: oturum bulunamadÄ±')),
           );
         }
         return;
@@ -661,7 +660,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ses yüklenemedi: $e')),
+          SnackBar(content: Text('Ses yÃ¼klenemedi: $e')),
         );
       }
     } finally {

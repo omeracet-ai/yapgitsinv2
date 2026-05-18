@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -12,11 +12,11 @@ class NotificationPreferencesScreen extends ConsumerWidget {
         Icons.event_note_outlined),
     _PrefItem('offer', 'Teklif', 'Yeni teklif, kabul/red bildirimleri',
         Icons.local_offer_outlined),
-    _PrefItem('review', 'Yorum', 'Yeni değerlendirme aldığınızda',
+    _PrefItem('review', 'Yorum', 'Yeni deÄŸerlendirme aldÄ±ÄŸÄ±nÄ±zda',
         Icons.star_outline),
-    _PrefItem('message', 'Mesaj', 'Sohbet ve doğrudan mesajlar',
+    _PrefItem('message', 'Mesaj', 'Sohbet ve doÄŸrudan mesajlar',
         Icons.chat_bubble_outline),
-    _PrefItem('system', 'Sistem', 'Duyurular, kampanyalar ve güncellemeler',
+    _PrefItem('system', 'Sistem', 'Duyurular, kampanyalar ve gÃ¼ncellemeler',
         Icons.campaign_outlined),
   ];
 
@@ -28,8 +28,8 @@ class NotificationPreferencesScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Bildirim Ayarları'),
-        backgroundColor: Colors.white,
+        title: const Text('Bildirim AyarlarÄ±'),
+        backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
       ),
@@ -48,8 +48,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
                   ),
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppColors.border),
                   ),
@@ -61,7 +60,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
                               ? null
                               : () => notifier.setAll(true),
                           icon: const Icon(Icons.notifications_active_outlined),
-                          label: const Text('Tümünü Aç'),
+                          label: const Text('TÃ¼mÃ¼nÃ¼ AÃ§'),
                         ),
                       ),
                       Container(width: 1, height: 24, color: AppColors.border),
@@ -71,7 +70,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
                               ? null
                               : () => notifier.setAll(false),
                           icon: const Icon(Icons.notifications_off_outlined),
-                          label: const Text('Tümünü Kapat'),
+                          label: const Text('TÃ¼mÃ¼nÃ¼ Kapat'),
                         ),
                       ),
                     ],
@@ -80,8 +79,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppColors.border),
                   ),

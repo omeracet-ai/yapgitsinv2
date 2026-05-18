@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/ai_repository.dart';
 
-/// Phase 74 — Yapgitsin AI Assistant chat screen.
+/// Phase 74 â€” Yapgitsin AI Assistant chat screen.
 ///
 /// Uses backend `/ai/chat` for a general-purpose conversational assistant
 /// (price tips, listing advice, category suggestions, contact tips). Distinct
@@ -24,17 +24,17 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     {
       'role': 'assistant',
       'content':
-          'Merhaba! Yapgitsin asistanınız. Size nasıl yardımcı olabilirim? '
-              'Örneğin: "En uygun temizlik fiyatı ne?", "İyi ilan nasıl yazılır?"',
+          'Merhaba! Yapgitsin asistanÄ±nÄ±z. Size nasÄ±l yardÄ±mcÄ± olabilirim? '
+              'Ã–rneÄŸin: "En uygun temizlik fiyatÄ± ne?", "Ä°yi ilan nasÄ±l yazÄ±lÄ±r?"',
     },
   ];
   bool _loading = false;
 
   static const _suggestions = [
     'Fiyat tahmini al',
-    'İlan ipucu ver',
-    'Kategori öner',
-    'İletişim önerisi',
+    'Ä°lan ipucu ver',
+    'Kategori Ã¶ner',
+    'Ä°letiÅŸim Ã¶nerisi',
   ];
 
   @override
@@ -71,7 +71,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
       if (mounted) {
         setState(() => _messages.add({
               'role': 'assistant',
-              'content': 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.',
+              'content': 'ÃœzgÃ¼nÃ¼m, bir hata oluÅŸtu. LÃ¼tfen tekrar deneyin.',
             }));
       }
     } finally {
@@ -96,7 +96,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('🤖 Yapgitsin Asistan'),
+        title: const Text('ğŸ¤– Yapgitsin Asistan'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -123,7 +123,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
                   ),
                   SizedBox(width: 8),
                   Text(
-                    'Yanıt hazırlanıyor…',
+                    'YanÄ±t hazÄ±rlanÄ±yorâ€¦',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,
@@ -139,8 +139,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
   }
 
   Widget _buildSuggestionStrip() {
-    return Container(
-      color: Colors.white,
+    return Container(color: AppColors.surface,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -165,8 +164,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
   Widget _buildInput() {
     return SafeArea(
       top: false,
-      child: Container(
-      color: Colors.white,
+      child: Container(color: AppColors.surface,
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
       child: Row(
         children: [
@@ -178,7 +176,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _send(),
               decoration: InputDecoration(
-                hintText: 'Mesajınızı yazın…',
+                hintText: 'MesajÄ±nÄ±zÄ± yazÄ±nâ€¦',
                 filled: true,
                 fillColor: AppColors.background,
                 border: OutlineInputBorder(

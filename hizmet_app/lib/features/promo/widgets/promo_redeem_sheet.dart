@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/promo_repository.dart';
@@ -61,8 +61,7 @@ class _PromoRedeemSheetState extends ConsumerState<PromoRedeemSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: pad),
       child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: const BoxDecoration(color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -82,12 +81,12 @@ class _PromoRedeemSheetState extends ConsumerState<PromoRedeemSheet> {
               ),
             ),
             const Text(
-              '🎟️ Promosyon Kodu Kullan',
+              'ğŸŸï¸ Promosyon Kodu Kullan',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             const Text(
-              'Promosyon kodunuz token, indirim veya deneme süresi olarak uygulanabilir.',
+              'Promosyon kodunuz token, indirim veya deneme sÃ¼resi olarak uygulanabilir.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 16),
@@ -96,7 +95,7 @@ class _PromoRedeemSheetState extends ConsumerState<PromoRedeemSheet> {
               autofocus: true,
               textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
-                hintText: 'Örn: HOSGELDIN100',
+                hintText: 'Ã–rn: HOSGELDIN100',
                 prefixIcon: const Icon(Icons.confirmation_number_outlined),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),

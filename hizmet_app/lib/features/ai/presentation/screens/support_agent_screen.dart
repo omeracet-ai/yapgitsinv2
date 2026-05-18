@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/ai_repository.dart';
@@ -52,7 +52,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
       if (mounted) {
         setState(() => _messages.add({
               'role': 'assistant',
-              'content': 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.',
+              'content': 'ÃœzgÃ¼nÃ¼m, bir hata oluÅŸtu. LÃ¼tfen tekrar deneyin.',
             }));
       }
     } finally {
@@ -77,7 +77,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Destek Asistanı'),
+        title: const Text('Destek AsistanÄ±'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -105,7 +105,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                   SizedBox(width: 8),
-                  Text('Yanıt hazırlanıyor…',
+                  Text('YanÄ±t hazÄ±rlanÄ±yorâ€¦',
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                 ],
               ),
@@ -126,7 +126,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
             const Icon(Icons.support_agent, size: 64, color: AppColors.primary),
             const SizedBox(height: 16),
             Text(
-              'Nasıl yardımcı olabilirim?',
+              'NasÄ±l yardÄ±mcÄ± olabilirim?',
               style: Theme.of(context)
                   .textTheme
                   .titleLarge
@@ -134,7 +134,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Token, ödeme, ilan yönetimi veya platform hakkında her türlü sorunuzu sorabilirsiniz.',
+              'Token, Ã¶deme, ilan yÃ¶netimi veya platform hakkÄ±nda her tÃ¼rlÃ¼ sorunuzu sorabilirsiniz.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -144,9 +144,9 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
               runSpacing: 8,
               alignment: WrapAlignment.center,
               children: [
-                _QuickChip('Token nasıl kullanılır?', onTap: _sendQuick),
-                _QuickChip('Ödeme nasıl yapılır?', onTap: _sendQuick),
-                _QuickChip('İlan nasıl veririm?', onTap: _sendQuick),
+                _QuickChip('Token nasÄ±l kullanÄ±lÄ±r?', onTap: _sendQuick),
+                _QuickChip('Ã–deme nasÄ±l yapÄ±lÄ±r?', onTap: _sendQuick),
+                _QuickChip('Ä°lan nasÄ±l veririm?', onTap: _sendQuick),
               ],
             ),
           ],
@@ -161,8 +161,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
   }
 
   Widget _buildInput() {
-    return Container(
-      color: Colors.white,
+    return Container(color: AppColors.surface,
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
       child: Row(
         children: [
@@ -174,7 +173,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _send(),
               decoration: InputDecoration(
-                hintText: 'Mesajınızı yazın…',
+                hintText: 'MesajÄ±nÄ±zÄ± yazÄ±nâ€¦',
                 filled: true,
                 fillColor: AppColors.background,
                 border: OutlineInputBorder(
@@ -251,7 +250,7 @@ class _QuickChip extends StatelessWidget {
     return ActionChip(
       label: Text(label, style: const TextStyle(fontSize: 13)),
       onPressed: () => onTap(label),
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       side: const BorderSide(color: AppColors.primary),
       labelStyle: const TextStyle(color: AppColors.primary),
     );

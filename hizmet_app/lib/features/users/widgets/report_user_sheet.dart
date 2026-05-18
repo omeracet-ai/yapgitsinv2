@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/moderation_repository.dart';
@@ -23,7 +23,7 @@ class ReportUserSheet extends ConsumerStatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -37,11 +37,11 @@ class ReportUserSheet extends ConsumerStatefulWidget {
 
 class _ReportUserSheetState extends ConsumerState<ReportUserSheet> {
   static const _reasons = <(String, String)>[
-    ('spam', 'Spam / istenmeyen içerik'),
+    ('spam', 'Spam / istenmeyen iÃ§erik'),
     ('harassment', 'Taciz / hakaret'),
     ('fake_profile', 'Sahte profil'),
-    ('inappropriate_content', 'Uygunsuz içerik'),
-    ('other', 'Diğer'),
+    ('inappropriate_content', 'Uygunsuz iÃ§erik'),
+    ('other', 'DiÄŸer'),
   ];
 
   String _selected = _reasons.first.$1;
@@ -67,7 +67,7 @@ class _ReportUserSheetState extends ConsumerState<ReportUserSheet> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Şikayetin alındı. Ekibimiz inceleyecek.'),
+          content: Text('Åikayetin alÄ±ndÄ±. Ekibimiz inceleyecek.'),
           backgroundColor: AppColors.success,
         ),
       );
@@ -102,10 +102,10 @@ class _ReportUserSheetState extends ConsumerState<ReportUserSheet> {
           ),
           Row(
             children: [
-              const Text('🚩  ', style: TextStyle(fontSize: 18)),
+              const Text('ğŸš©  ', style: TextStyle(fontSize: 18)),
               Expanded(
                 child: Text(
-                  '${widget.userName} şikayet et',
+                  '${widget.userName} ÅŸikayet et',
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -117,7 +117,7 @@ class _ReportUserSheetState extends ConsumerState<ReportUserSheet> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Sebep seç',
+            'Sebep seÃ§',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -149,7 +149,7 @@ class _ReportUserSheetState extends ConsumerState<ReportUserSheet> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Açıklama (opsiyonel)',
+            'AÃ§Ä±klama (opsiyonel)',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -162,7 +162,7 @@ class _ReportUserSheetState extends ConsumerState<ReportUserSheet> {
             maxLines: 3,
             maxLength: 500,
             decoration: const InputDecoration(
-              hintText: 'Olayı kısaca anlat (opsiyonel)',
+              hintText: 'OlayÄ± kÄ±saca anlat (opsiyonel)',
               border: OutlineInputBorder(),
               isDense: true,
             ),
@@ -186,7 +186,7 @@ class _ReportUserSheetState extends ConsumerState<ReportUserSheet> {
                       ),
                     )
                   : const Text(
-                      'Gönder',
+                      'GÃ¶nder',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,

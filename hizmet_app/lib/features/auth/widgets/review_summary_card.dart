@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../ai/data/ai_repository.dart';
 
-/// AI özeti — backend POST /ai/summarize-reviews { reviews } → { summary }
+/// AI Ã¶zeti â€” backend POST /ai/summarize-reviews { reviews } â†’ { summary }
 final reviewSummaryProvider = FutureProvider.autoDispose
     .family<String, _SummaryArgs>((ref, args) async {
   if (args.reviews.length < 3) return '';
@@ -38,8 +38,7 @@ class ReviewSummaryCard extends ConsumerWidget {
     if (reviewComments.length < 3) return const SizedBox.shrink();
     final async = ref.watch(reviewSummaryProvider(_SummaryArgs(userId, reviewComments)));
 
-    return Container(
-      color: Colors.white,
+    return Container(color: AppColors.surface,
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
       child: Container(
         decoration: BoxDecoration(
@@ -55,9 +54,9 @@ class ReviewSummaryCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                const Text('✨', style: TextStyle(fontSize: 16)),
+                const Text('âœ¨', style: TextStyle(fontSize: 16)),
                 const SizedBox(width: 6),
-                const Text('AI Yorum Özeti',
+                const Text('AI Yorum Ã–zeti',
                     style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.bold,
@@ -83,7 +82,7 @@ class ReviewSummaryCard extends ConsumerWidget {
             async.when(
               loading: () => const _ShimmerLines(),
               error: (e, _) => Text(
-                'Özet şu an oluşturulamadı.',
+                'Ã–zet ÅŸu an oluÅŸturulamadÄ±.',
                 style: TextStyle(
                     fontSize: 12.5,
                     color: AppColors.textSecondary.withValues(alpha: 0.8),
@@ -117,8 +116,7 @@ class _ShimmerLines extends StatelessWidget {
           width: w,
           height: 10,
           margin: const EdgeInsets.only(bottom: 6),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.7),
+          decoration: BoxDecoration(color: AppColors.surface.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(4),
           ),
         );

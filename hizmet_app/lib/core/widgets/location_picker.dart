@@ -1,4 +1,4 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -6,7 +6,7 @@ import 'package:latlong2/latlong.dart';
 import '../theme/app_colors.dart';
 
 /// Tam ekran harita picker.
-/// [onLocationSelected] → (adres, lat, lng) döner.
+/// [onLocationSelected] â†’ (adres, lat, lng) dÃ¶ner.
 class LocationPickerScreen extends StatefulWidget {
   final String? initialAddress;
   const LocationPickerScreen({super.key, this.initialAddress});
@@ -16,7 +16,7 @@ class LocationPickerScreen extends StatefulWidget {
 }
 
 class _LocationPickerScreenState extends State<LocationPickerScreen> {
-  // Varsayılan: İstanbul merkezi
+  // VarsayÄ±lan: Ä°stanbul merkezi
   LatLng _selected = const LatLng(41.0082, 28.9784);
   String _address   = '';
   bool _loading     = false;
@@ -45,7 +45,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     super.dispose();
   }
 
-  // Haritaya tıklanınca → reverse geocode
+  // Haritaya tÄ±klanÄ±nca â†’ reverse geocode
   Future<void> _onMapTap(TapPosition _, LatLng point) async {
     setState(() { _selected = point; _loading = true; _suggestions = []; });
     try {
@@ -68,7 +68,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     }
   }
 
-  // Arama kutusu → Nominatim suggest
+  // Arama kutusu â†’ Nominatim suggest
   Future<void> _onSearchChanged(String q) async {
     if (q.length < 3) { setState(() => _suggestions = []); return; }
     setState(() => _searching = true);
@@ -93,8 +93,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     }
   }
 
-  // Phase 152 — "Konumumu Kullan": cihaz GPS'inden tek dokunuşla lat/lng.
-  // Permission akışı: servis kapalıysa uyar; reddedilirse açıklayıcı snackbar.
+  // Phase 152 â€” "Konumumu Kullan": cihaz GPS'inden tek dokunuÅŸla lat/lng.
+  // Permission akÄ±ÅŸÄ±: servis kapalÄ±ysa uyar; reddedilirse aÃ§Ä±klayÄ±cÄ± snackbar.
   Future<void> _useMyLocation() async {
     setState(() => _loading = true);
     try {
@@ -102,7 +102,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       if (!serviceOn) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Konum servisi kapalı — cihaz ayarlarından açın.'),
+            content: Text('Konum servisi kapalÄ± â€” cihaz ayarlarÄ±ndan aÃ§Ä±n.'),
           ));
         }
         return;
@@ -115,7 +115,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text(
-                'Konum izni kalıcı reddedildi. Ayarlar > Uygulama izinleri.'),
+                'Konum izni kalÄ±cÄ± reddedildi. Ayarlar > Uygulama izinleri.'),
           ));
         }
         return;
@@ -135,13 +135,13 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       final here = LatLng(pos.latitude, pos.longitude);
       setState(() => _selected = here);
       _mapController.move(here, 15);
-      // Reverse geocode → adres
+      // Reverse geocode â†’ adres
       await _onMapTap(const TapPosition(Offset.zero, Offset.zero), here);
     } catch (e, st) {
       debugPrint('location_picker._useMyLocation: $e\n$st');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Konum alınamadı: $e'),
+          content: Text('Konum alÄ±namadÄ±: $e'),
         ));
       }
     } finally {
@@ -192,7 +192,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Konum Seç'),
+        title: const Text('Konum SeÃ§'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         actions: [
@@ -239,14 +239,13 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             ],
           ),
 
-          // Arama kutusu (üst)
+          // Arama kutusu (Ã¼st)
           Positioned(
             top: 12, left: 12, right: 12,
             child: Column(
               children: [
                 Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: const [
                       BoxShadow(color: Colors.black26, blurRadius: 8),
@@ -286,8 +285,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                 if (_suggestions.isNotEmpty)
                   Container(
                     margin: const EdgeInsets.only(top: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
+                    decoration: BoxDecoration(color: AppColors.surface,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: const [
                         BoxShadow(color: Colors.black26, blurRadius: 8),
@@ -320,14 +318,14 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             ),
           ),
 
-          // Konumumu Kullan FAB (sağ alt — alt panelin üstünde)
+          // Konumumu Kullan FAB (saÄŸ alt â€” alt panelin Ã¼stÃ¼nde)
           Positioned(
             right: 12,
             bottom: 92,
             child: FloatingActionButton.extended(
               heroTag: 'use_my_location_fab',
               onPressed: _loading ? null : _useMyLocation,
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.surface,
               foregroundColor: AppColors.primary,
               elevation: 4,
               icon: const Icon(Icons.my_location, size: 18),
@@ -338,13 +336,12 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             ),
           ),
 
-          // Seçilen adres (alt)
+          // SeÃ§ilen adres (alt)
           Positioned(
             bottom: 0, left: 0, right: 0,
             child: Container(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: const BoxDecoration(color: AppColors.surface,
                 boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 12)],
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
@@ -361,7 +358,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                         Expanded(
                           child: Text(
                             _address.isEmpty
-                                ? 'Haritaya dokunarak konum seçin'
+                                ? 'Haritaya dokunarak konum seÃ§in'
                                 : _address,
                             style: TextStyle(
                               fontSize: 13,

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,7 +20,7 @@ import '../../widgets/post_job_step3.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class PostJobScreen extends ConsumerStatefulWidget {
-  /// Optional source job to clone (used by "🔁 Tekrar İlan Aç" feature).
+  /// Optional source job to clone (used by "ğŸ” Tekrar Ä°lan AÃ§" feature).
   /// When provided, wizard fields are pre-filled from this map.
   final Map<String, dynamic>? initialJob;
   const PostJobScreen({super.key, this.initialJob});
@@ -44,7 +44,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   double? _lng;
   DateTime? _dueDate;
 
-  // Fotoğraf & Video adımı için
+  // FotoÄŸraf & Video adÄ±mÄ± iÃ§in
   List<XFile> _selectedPhotos = [];
   List<XFile> _selectedVideos = [];
   List<String> _uploadedPhotoUrls = [];
@@ -98,13 +98,13 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       _uploadedVideoUrls = ((j['videos'] as List?) ?? [])
           .map((e) => e.toString())
           .toList();
-      // dueDate intentionally NOT cloned — old date likely past.
+      // dueDate intentionally NOT cloned â€” old date likely past.
     });
     _draftRestored = false;
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('🔁 Önceki ilan bilgileri yüklendi — düzenleyip yayınlayabilirsin'),
+          content: Text('ğŸ” Ã–nceki ilan bilgileri yÃ¼klendi â€” dÃ¼zenleyip yayÄ±nlayabilirsin'),
           backgroundColor: AppColors.primary,
           duration: Duration(seconds: 3),
         ),
@@ -130,19 +130,19 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     final saved = DateTime.fromMillisecondsSinceEpoch(draft.savedAt);
     final ago = DateTime.now().difference(saved);
     final agoLabel = ago.inMinutes < 1
-        ? 'az önce'
+        ? 'az Ã¶nce'
         : ago.inHours < 1
-            ? '${ago.inMinutes} dk önce'
+            ? '${ago.inMinutes} dk Ã¶nce'
             : ago.inDays < 1
-                ? '${ago.inHours} sa önce'
-                : '${ago.inDays} gün önce';
+                ? '${ago.inHours} sa Ã¶nce'
+                : '${ago.inDays} gÃ¼n Ã¶nce';
     final l = AppLocalizations.of(context);
     final shouldRestore = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l.postJobDraftFound),
         content: Text(
-            'Önceden kaydedilmiş bir ilan taslağınız var ($agoLabel). Devam etmek ister misiniz?'),
+            'Ã–nceden kaydedilmiÅŸ bir ilan taslaÄŸÄ±nÄ±z var ($agoLabel). Devam etmek ister misiniz?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -227,13 +227,13 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Taslağı sil?'),
+        title: const Text('TaslaÄŸÄ± sil?'),
         content: const Text(
-            'Mevcut form içeriği ve kaydedilmiş taslak silinecek. Emin misiniz?'),
+            'Mevcut form iÃ§eriÄŸi ve kaydedilmiÅŸ taslak silinecek. Emin misiniz?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Vazgeç')),
+              child: const Text('VazgeÃ§')),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
@@ -276,7 +276,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Yeni İlan • Adım ${_currentStep + 1}/3'),
+        title: Text('Yeni Ä°lan â€¢ AdÄ±m ${_currentStep + 1}/3'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         leading: IconButton(
@@ -304,7 +304,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               ),
             ),
           IconButton(
-            tooltip: 'Taslağı Sil',
+            tooltip: 'TaslaÄŸÄ± Sil',
             icon: const Icon(Icons.delete_outline),
             onPressed: _confirmClearDraft,
           ),
@@ -336,8 +336,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     final isLastStep = _currentStep == 2;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         border: Border(top: BorderSide(color: Colors.grey.shade200)),
       ),
       child: SafeArea(
@@ -391,7 +390,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
   Future<void> _onStepContinue() async {
     if (_currentStep == 0) {
-      // Step 1: kategori (dueDate opsiyonel — esnek default)
+      // Step 1: kategori (dueDate opsiyonel â€” esnek default)
       if (_selectedCategory == null) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(AppLocalizations.of(context).postJobCategoryRequired)));
@@ -412,20 +411,20 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       }
       setState(() => _currentStep++);
     } else {
-      // Step 3: en az 1 fotoğraf zorunlu, sonra upload + submit
+      // Step 3: en az 1 fotoÄŸraf zorunlu, sonra upload + submit
       if (_selectedPhotos.isEmpty && _uploadedPhotoUrls.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context).postJobPhotoRequired)),
         );
         return;
       }
-      // Phase 152 — Konum zorunlu. Şehir merkezine düşen ilanları azaltmak
-      // için harita pin'i + okunabilir adres ikisi de zorunlu.
+      // Phase 152 â€” Konum zorunlu. Åehir merkezine dÃ¼ÅŸen ilanlarÄ± azaltmak
+      // iÃ§in harita pin'i + okunabilir adres ikisi de zorunlu.
       if (_lat == null || _lng == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                'Konum seçin — haritadan pin koyun veya "Konumumu Kullan" deyin.'),
+                'Konum seÃ§in â€” haritadan pin koyun veya "Konumumu Kullan" deyin.'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -434,7 +433,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       if (_locationController.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Adres alanı boş — haritadan konum seçmelisiniz.'),
+            content: Text('Adres alanÄ± boÅŸ â€” haritadan konum seÃ§melisiniz.'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -492,10 +491,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   Widget _buildCategoryGrid() {
     return ref.watch(categoriesProvider).when(
           data: (cats) {
-            // Phase Mobile7 — chip grid → tek dropdown
+            // Phase Mobile7 â€” chip grid â†’ tek dropdown
             final items = cats.map((cat) {
               final name = cat['name'] as String? ?? '';
-              final emoji = cat['icon'] as String? ?? '🔧';
+              final emoji = cat['icon'] as String? ?? 'ğŸ”§';
               return DropdownMenuItem<String>(
                 value: name,
                 child: Row(
@@ -518,7 +517,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               value: valueExists ? _selectedCategory : null,
               isExpanded: true,
               decoration: const InputDecoration(
-                labelText: 'Kategori Seç',
+                labelText: 'Kategori SeÃ§',
                 prefixIcon: Icon(Icons.category_outlined),
               ),
               items: items,
@@ -527,13 +526,13 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                 _scheduleDraftSave();
               },
               validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Kategori seçin' : null,
+                  (v == null || v.isEmpty) ? 'Kategori seÃ§in' : null,
             );
           },
           loading: () =>
               const Center(child: CircularProgressIndicator()),
           error: (_, __) =>
-              const Text('Kategoriler yüklenemedi'),
+              const Text('Kategoriler yÃ¼klenemedi'),
         );
   }
 
@@ -544,9 +543,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       initialDate: _dueDate ?? now.add(const Duration(days: 7)),
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
-      helpText: 'İşin ne zaman bitmesini istiyorsunuz?',
-      confirmText: 'Seç',
-      cancelText: 'Vazgeç',
+      helpText: 'Ä°ÅŸin ne zaman bitmesini istiyorsunuz?',
+      confirmText: 'SeÃ§',
+      cancelText: 'VazgeÃ§',
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme: const ColorScheme.light(primary: AppColors.primary),
@@ -562,14 +561,14 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
   Widget _buildDueDateSection() {
     final dueDateLabel = _dueDate == null
-        ? 'Esnek (tarih önemli değil)'
+        ? 'Esnek (tarih Ã¶nemli deÄŸil)'
         : '${_dueDate!.day.toString().padLeft(2, '0')}/'
             '${_dueDate!.month.toString().padLeft(2, '0')}/'
             '${_dueDate!.year}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Ne zaman yapılmasını istiyorsunuz?',
+        const Text('Ne zaman yapÄ±lmasÄ±nÄ± istiyorsunuz?',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
         const SizedBox(height: 10),
@@ -619,7 +618,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                 color: _dueDate == null ? AppColors.primary : Colors.grey.shade400,
               ),
               const SizedBox(width: 6),
-              Text('Esnek — tarih önemli değil',
+              Text('Esnek â€” tarih Ã¶nemli deÄŸil',
                   style: TextStyle(
                       fontSize: 13,
                       color: _dueDate == null ? AppColors.primary : Colors.grey.shade500)),
@@ -664,7 +663,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
                   )
                 : const Icon(Icons.auto_awesome, size: 16),
-            label: Text(_aiDescLoading ? 'Üretiliyor…' : '✨ AI ile Öner'),
+            label: Text(_aiDescLoading ? 'Ãœretiliyorâ€¦' : 'âœ¨ AI ile Ã–ner'),
           ),
         ),
         const SizedBox(height: 6),
@@ -683,7 +682,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                   child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
                 )
               : const Icon(Icons.auto_awesome, size: 18),
-          label: Text(_aiLoading ? 'AI hazırlıyor…' : 'AI ile Otomatik Doldur'),
+          label: Text(_aiLoading ? 'AI hazÄ±rlÄ±yorâ€¦' : 'AI ile Otomatik Doldur'),
         ),
         const SizedBox(height: 20),
         const Divider(),
@@ -700,8 +699,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                   )
                 : const Icon(Icons.auto_awesome, size: 18),
             label: Text(_aiPriceLoading
-                ? 'Fiyat hesaplanıyor…'
-                : '💰 AI Fiyat Önerisi'),
+                ? 'Fiyat hesaplanÄ±yorâ€¦'
+                : 'ğŸ’° AI Fiyat Ã–nerisi'),
           ),
         ),
         TextFormField(
@@ -722,7 +721,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     final cat = _selectedCategory;
     if (cat == null || cat.isEmpty || desc.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Önce kategori ve açıklama gerekli')),
+        const SnackBar(content: Text('Ã–nce kategori ve aÃ§Ä±klama gerekli')),
       );
       return;
     }
@@ -744,10 +743,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         _budgetController.text = value.toStringAsFixed(0);
       }
       final range =
-          '${result.minPrice.toStringAsFixed(0)}-${result.maxPrice.toStringAsFixed(0)}₺';
+          '${result.minPrice.toStringAsFixed(0)}-${result.maxPrice.toStringAsFixed(0)}â‚º';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('💡 AI önerisi: $range — ${result.reasoning}'),
+          content: Text('ğŸ’¡ AI Ã¶nerisi: $range â€” ${result.reasoning}'),
           duration: const Duration(seconds: 6),
           backgroundColor: AppColors.primary,
         ),
@@ -770,7 +769,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Önce bir iş başlığı girin')),
+        const SnackBar(content: Text('Ã–nce bir iÅŸ baÅŸlÄ±ÄŸÄ± girin')),
       );
       return;
     }
@@ -793,7 +792,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       if (result.tips.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('💡 ${result.tips}'),
+            content: Text('ğŸ’¡ ${result.tips}'),
             duration: const Duration(seconds: 5),
             backgroundColor: AppColors.primary,
           ),
@@ -822,18 +821,18 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Mevcut açıklamayı değiştir?'),
+          title: const Text('Mevcut aÃ§Ä±klamayÄ± deÄŸiÅŸtir?'),
           content: const Text(
-              'Yazdığınız açıklama AI önerisi ile değiştirilecek. Devam etmek istiyor musunuz?'),
+              'YazdÄ±ÄŸÄ±nÄ±z aÃ§Ä±klama AI Ã¶nerisi ile deÄŸiÅŸtirilecek. Devam etmek istiyor musunuz?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Vazgeç'),
+              child: const Text('VazgeÃ§'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('Değiştir'),
+              child: const Text('DeÄŸiÅŸtir'),
             ),
           ],
         ),
@@ -851,7 +850,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       if (!mounted) return;
       if (desc.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('AI bir öneri üretemedi, tekrar deneyin')),
+          const SnackBar(content: Text('AI bir Ã¶neri Ã¼retemedi, tekrar deneyin')),
         );
         return;
       }
@@ -874,7 +873,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Fotoğraf & Video',
+        const Text('FotoÄŸraf & Video',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
         const SizedBox(height: 10),
@@ -905,7 +904,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Doğru ustaya hızlı ulaşmak için konum zorunlu — harita pin\'i veya "Konumumu Kullan".',
+          'DoÄŸru ustaya hÄ±zlÄ± ulaÅŸmak iÃ§in konum zorunlu â€” harita pin\'i veya "Konumumu Kullan".',
           style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
         ),
         const SizedBox(height: 10),
@@ -968,10 +967,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               CheckboxListTile(
                 value: _saveAsTemplate,
                 onChanged: (v) => setState(() => _saveAsTemplate = v ?? false),
-                title: const Text('Bu ilanı şablon olarak kaydet',
+                title: const Text('Bu ilanÄ± ÅŸablon olarak kaydet',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 subtitle: const Text(
-                    'Benzer ilanlar için tekrar kullan',
+                    'Benzer ilanlar iÃ§in tekrar kullan',
                     style: TextStyle(fontSize: 12)),
                 controlAffinity: ListTileControlAffinity.leading,
                 activeColor: AppColors.primary,
@@ -983,8 +982,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                   child: TextFormField(
                     controller: _templateNameController,
                     decoration: const InputDecoration(
-                      labelText: 'Şablon adı',
-                      hintText: 'Örn: Standart ev temizliği',
+                      labelText: 'Åablon adÄ±',
+                      hintText: 'Ã–rn: Standart ev temizliÄŸi',
                       isDense: true,
                     ),
                   ),
@@ -1007,7 +1006,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                     color: Colors.green.shade700, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  '${_uploadedPhotoUrls.length} fotoğraf hazır',
+                  '${_uploadedPhotoUrls.length} fotoÄŸraf hazÄ±r',
                   style: TextStyle(
                       color: Colors.green.shade800,
                       fontWeight: FontWeight.w600),
@@ -1046,10 +1045,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       'location': _locationController.text,
       'budgetMin': double.tryParse(_budgetController.text) ?? 0,
       'category': _selectedCategory,
-      // Phase 152 — Konum zorunlu (step3'te garantilendi).
+      // Phase 152 â€” Konum zorunlu (step3'te garantilendi).
       'latitude': _lat,
       'longitude': _lng,
-      // Yeni ilanlar her zaman net pin'le geliyor → backfill bayrağı false.
+      // Yeni ilanlar her zaman net pin'le geliyor â†’ backfill bayraÄŸÄ± false.
       'locationApprox': false,
       'locationSource': 'user-pin',
       if (_uploadedPhotoUrls.isNotEmpty) 'photos': _uploadedPhotoUrls,
@@ -1083,7 +1082,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(
-                'Şablon kaydedilemedi: ${e.toString().replaceFirst('Exception: ', '')}'),
+                'Åablon kaydedilemedi: ${e.toString().replaceFirst('Exception: ', '')}'),
             backgroundColor: AppColors.error,
           ));
         }

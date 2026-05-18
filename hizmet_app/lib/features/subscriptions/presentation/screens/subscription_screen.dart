@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -16,7 +16,7 @@ class SubscriptionScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Premium Üyelik'),
+        title: const Text('Premium Ãœyelik'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -92,7 +92,7 @@ class SubscriptionScreen extends ConsumerWidget {
     if (result.paymentUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ödeme URL alınamadı'),
+          content: Text('Ã–deme URL alÄ±namadÄ±'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -120,7 +120,7 @@ class SubscriptionScreen extends ConsumerWidget {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ödeme iptal edildi')),
+        const SnackBar(content: Text('Ã–deme iptal edildi')),
       );
     }
   }
@@ -129,13 +129,13 @@ class SubscriptionScreen extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Aboneliği iptal et?'),
-        content: const Text('Mevcut dönem sonuna kadar Pro avantajları devam eder.'),
+        title: const Text('AboneliÄŸi iptal et?'),
+        content: const Text('Mevcut dÃ¶nem sonuna kadar Pro avantajlarÄ± devam eder.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Vazgeç')),
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('VazgeÃ§')),
           TextButton(
             onPressed: () => Navigator.pop(c, true),
-            child: const Text('İptal Et', style: TextStyle(color: Colors.red)),
+            child: const Text('Ä°ptal Et', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -174,7 +174,7 @@ class _NoActiveBanner extends StatelessWidget {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Aktif aboneliğiniz yok. Pro/Premium ile sınırsız teklif verin.',
+              'Aktif aboneliÄŸiniz yok. Pro/Premium ile sÄ±nÄ±rsÄ±z teklif verin.',
               style: TextStyle(color: AppColors.primary),
             ),
           ),
@@ -208,19 +208,19 @@ class _ActiveSubscriptionCard extends StatelessWidget {
                 const Icon(Icons.verified, color: AppColors.success),
                 const SizedBox(width: 8),
                 Text(
-                  '✓ ${sub.plan.name}',
+                  'âœ“ ${sub.plan.name}',
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             if (sub.expiresAt != null)
-              Text('Bitiş: ${df.format(sub.expiresAt!)}'),
+              Text('BitiÅŸ: ${df.format(sub.expiresAt!)}'),
             const SizedBox(height: 12),
             TextButton(
               onPressed: onCancel,
               child: const Text(
-                'Aboneliği İptal Et',
+                'AboneliÄŸi Ä°ptal Et',
                 style: TextStyle(color: Colors.red),
               ),
             ),
@@ -248,8 +248,7 @@ class _PlanCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isPremium ? AppColors.accent : AppColors.primary,
@@ -269,7 +268,7 @@ class _PlanCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                isPremium ? '⭐' : '💎',
+                isPremium ? 'â­' : 'ğŸ’',
                 style: const TextStyle(fontSize: 22),
               ),
               const SizedBox(width: 8),
@@ -279,7 +278,7 @@ class _PlanCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                // P190/4 — IntlFormatter.currency.
+                // P190/4 â€” IntlFormatter.currency.
                 IntlFormatter.currency(context, plan.price, decimalDigits: 0),
                 style: TextStyle(
                   fontSize: 22,

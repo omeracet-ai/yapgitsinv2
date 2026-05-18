@@ -1,4 +1,4 @@
-import 'dart:io' as io;
+﻿import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,12 +55,12 @@ class _RegisterForm extends ConsumerStatefulWidget {
 }
 
 class _RegisterFormState extends ConsumerState<_RegisterForm> {
-  // Adım 1: Temel bilgiler
+  // AdÄ±m 1: Temel bilgiler
   final _nameCtrl     = TextEditingController();
   final _emailCtrl    = TextEditingController();
   final _phoneCtrl    = TextEditingController();
   final _passCtrl     = TextEditingController();
-  // Adım 1: Kişisel bilgiler
+  // AdÄ±m 1: KiÅŸisel bilgiler
   final _cityCtrl     = TextEditingController();
   final _districtCtrl = TextEditingController();
   final _addressCtrl  = TextEditingController();
@@ -68,14 +68,14 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
   bool   _obscurePass   = true;
   String _gender        = 'other';
   DateTime? _birthDate;
-  // Phase 129 — Worker onboarding routing flag.
+  // Phase 129 â€” Worker onboarding routing flag.
   bool   _registerAsWorker = false;
 
-  // Adım 2: Kimlik fotoğrafı
+  // AdÄ±m 2: Kimlik fotoÄŸrafÄ±
   XFile?  _identityPhoto;
   XFile?  _documentPhoto;
 
-  int    _step     = 0; // 0 = form, 1 = kimlik yükleme
+  int    _step     = 0; // 0 = form, 1 = kimlik yÃ¼kleme
   bool   _loading  = false;
   String? _error;
 
@@ -87,7 +87,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
     super.dispose();
   }
 
-  // Phase 253 (Voldi-email-validate) — RFC-lite email syntax check.
+  // Phase 253 (Voldi-email-validate) â€” RFC-lite email syntax check.
   // Backend re-validates with class-validator + MX/disposable; this is just UX.
   static final RegExp _emailRe = RegExp(
     r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
@@ -98,7 +98,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
     final phone = _phoneCtrl.text.trim();
     final pass  = _passCtrl.text;
     final email = _emailCtrl.text.trim();
-    // Phase 253-B (Voldi-phase253B) — phone fully optional now. Only name+pass
+    // Phase 253-B (Voldi-phase253B) â€” phone fully optional now. Only name+pass
     // gate early-return; email is the primary identifier checked below.
     if (name.isEmpty || pass.isEmpty) {
       setState(() => _error = AppLocalizations.of(context).registerRequiredFields);
@@ -109,14 +109,14 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
       return;
     }
     if (!_emailRe.hasMatch(email)) {
-      setState(() => _error = 'Geçerli e-posta girin');
+      setState(() => _error = 'GeÃ§erli e-posta girin');
       return;
     }
     setState(() { _loading = true; _error = null; });
     try {
       await ref.read(authStateProvider.notifier).register(
         fullName:    name,
-        // Phase 253-B — phone optional; omit empty string so backend stores NULL.
+        // Phase 253-B â€” phone optional; omit empty string so backend stores NULL.
         phoneNumber: phone.isEmpty ? null : phone,
         password:    pass,
         email:       email,
@@ -128,13 +128,13 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         district:    _districtCtrl.text.trim(),
         address:     _addressCtrl.text.trim(),
       );
-      // Phase 253 (Voldi-email-validate) — SMS verify DEMOTED from signup gate
+      // Phase 253 (Voldi-email-validate) â€” SMS verify DEMOTED from signup gate
       // to optional post-signup add-on (Play Console best practice; email is
-      // now the validated primary identifier). Kayıt başarılıysa kullanıcıya
-      // telefon doğrulamayı opsiyonel olarak sunuyoruz; iptal ederse step 2'ye
-      // (kimlik upload) geçiyor — backend kayıt zaten başarılı oldu.
+      // now the validated primary identifier). KayÄ±t baÅŸarÄ±lÄ±ysa kullanÄ±cÄ±ya
+      // telefon doÄŸrulamayÄ± opsiyonel olarak sunuyoruz; iptal ederse step 2'ye
+      // (kimlik upload) geÃ§iyor â€” backend kayÄ±t zaten baÅŸarÄ±lÄ± oldu.
       if (!mounted) return;
-      // Phase 253-B — only offer SMS verify if user supplied a phone.
+      // Phase 253-B â€” only offer SMS verify if user supplied a phone.
       if (phone.isEmpty) {
         setState(() { _step = 1; _loading = false; });
         return;
@@ -148,17 +148,17 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
           'isPhoneVerified': true,
         });
       }
-      // Verify atlandı/iptal edildi olsa bile: kayıt geçerli, step 2'ye geç.
+      // Verify atlandÄ±/iptal edildi olsa bile: kayÄ±t geÃ§erli, step 2'ye geÃ§.
       if (!mounted) return;
       setState(() { _step = 1; _loading = false; });
     } catch (e) {
-      // Phase 253 — surface backend domain-validation error codes cleanly.
+      // Phase 253 â€” surface backend domain-validation error codes cleanly.
       final raw = e.toString();
       String msg;
       if (raw.contains('EMAIL_DOMAIN_INVALID')) {
-        msg = 'Bu e-posta sağlayıcısı doğrulanamadı. Gmail, iCloud, Outlook gibi yaygın bir adres kullanın.';
+        msg = 'Bu e-posta saÄŸlayÄ±cÄ±sÄ± doÄŸrulanamadÄ±. Gmail, iCloud, Outlook gibi yaygÄ±n bir adres kullanÄ±n.';
       } else if (raw.contains('EMAIL_DISPOSABLE')) {
-        msg = 'Geçici e-posta servisleri kullanılamaz.';
+        msg = 'GeÃ§ici e-posta servisleri kullanÄ±lamaz.';
       } else {
         msg = raw.replaceFirst('Exception: ', '');
       }
@@ -178,7 +178,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
 
   Future<void> _submitStep2() async {
     if (_identityPhoto == null) {
-      setState(() => _error = 'Kimlik fotoğrafı zorunludur.');
+      setState(() => _error = 'Kimlik fotoÄŸrafÄ± zorunludur.');
       return;
     }
     setState(() { _loading = true; _error = null; });
@@ -189,13 +189,13 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
       if (_documentPhoto != null) {
         docUrl = await repo.uploadDocument(_documentPhoto!);
       }
-      // Kullanıcı datasını güncelle
+      // KullanÄ±cÄ± datasÄ±nÄ± gÃ¼ncelle
       ref.read(authStateProvider.notifier).updateUserData({
         'identityPhotoUrl': idUrl,
         if (docUrl != null) 'documentPhotoUrl': docUrl,
       });
       if (mounted) {
-        // Phase 129 — Worker registration â†’ wizard. Customer â†’ main shell.
+        // Phase 129 â€” Worker registration Ã¢â€ â€™ wizard. Customer Ã¢â€ â€™ main shell.
         if (_registerAsWorker) {
           context.go('/usta-baslangic');
         } else {
@@ -210,7 +210,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
 
   Future<void> _skipStep2() async {
     if (mounted) {
-      // Phase 129 — Worker'lar identity skip etse de wizard'a yönlendirilir.
+      // Phase 129 â€” Worker'lar identity skip etse de wizard'a yÃ¶nlendirilir.
       if (_registerAsWorker) {
         context.go('/usta-baslangic');
       } else {
@@ -233,12 +233,12 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         _field(_nameCtrl, l.registerFullName, Icons.person_outline, TextInputType.name,
             TextCapitalization.words),
         const SizedBox(height: 14),
-        // Phase 253 — email REQUIRED (label drops "opsiyonel" l10n key in favor
+        // Phase 253 â€” email REQUIRED (label drops "opsiyonel" l10n key in favor
         // of explicit Turkish copy to avoid touching .arb in this scope).
         _field(_emailCtrl, 'E-posta *', Icons.email_outlined,
             TextInputType.emailAddress, TextCapitalization.none),
         const SizedBox(height: 14),
-        // Phase 253-B — phone fully optional at DTO + DB level. Profile screen
+        // Phase 253-B â€” phone fully optional at DTO + DB level. Profile screen
         // lets user add+verify later.
         _field(_phoneCtrl, '${l.registerPhone} (opsiyonel)', Icons.phone_outlined,
             TextInputType.phone, TextCapitalization.none),
@@ -263,7 +263,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
           child: Text(l.registerPersonalInfo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
         ),
 
-        // Doğum tarihi
+        // DoÄŸum tarihi
         GestureDetector(
           onTap: () async {
             final d = await showDatePicker(
@@ -276,7 +276,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppColors.border)),
             child: Row(children: [
               const Icon(Icons.cake_outlined, color: AppColors.textHint),
@@ -295,7 +295,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         // Cinsiyet
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8),
               border: Border.all(color: AppColors.border)),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
@@ -304,7 +304,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
               icon: const Icon(Icons.arrow_drop_down),
               items: const [
                 DropdownMenuItem(value: 'male',   child: Text('Erkek')),
-                DropdownMenuItem(value: 'female', child: Text('Kadın')),
+                DropdownMenuItem(value: 'female', child: Text('KadÄ±n')),
                 DropdownMenuItem(value: 'other',  child: Text('Belirtmek istemiyorum')),
               ],
               onChanged: (v) => setState(() => _gender = v ?? 'other'),
@@ -331,7 +331,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         ),
 
         const SizedBox(height: 16),
-        // Phase 129 — Usta olarak kayıt ol toggle.
+        // Phase 129 â€” Usta olarak kayÄ±t ol toggle.
         Container(
           decoration: BoxDecoration(
             color: _registerAsWorker
@@ -348,10 +348,10 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
             value: _registerAsWorker,
             onChanged: (v) => setState(() => _registerAsWorker = v),
             activeThumbColor: AppColors.primary,
-            title: const Text('Usta olarak kayıt ol',
+            title: const Text('Usta olarak kayÄ±t ol',
                 style: TextStyle(fontWeight: FontWeight.w600)),
             subtitle: const Text(
-              'Hizmet verirsen kayıt sonrası kısa bir kurulum yapacağız.',
+              'Hizmet verirsen kayÄ±t sonrasÄ± kÄ±sa bir kurulum yapacaÄŸÄ±z.',
               style: TextStyle(fontSize: 12),
             ),
           ),
@@ -391,18 +391,18 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
             Icon(Icons.verified_user_outlined, color: AppColors.primary),
             SizedBox(width: 12),
             Expanded(child: Text(
-              'Kimlik doğrulama için kimlik fotoğrafınızı yükleyin. Görseller şifreli olarak saklanır.',
+              'Kimlik doÄŸrulama iÃ§in kimlik fotoÄŸrafÄ±nÄ±zÄ± yÃ¼kleyin. GÃ¶rseller ÅŸifreli olarak saklanÄ±r.',
               style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
             )),
           ]),
         ),
         const SizedBox(height: 24),
 
-        // Kimlik fotoğrafı (zorunlu)
-        const Text('Kimlik Fotoğrafı *', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        // Kimlik fotoÄŸrafÄ± (zorunlu)
+        const Text('Kimlik FotoÄŸrafÄ± *', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
         const SizedBox(height: 8),
         _photoPickerTile(
-          label: 'Kimlik / Nüfus Cüzdanı',
+          label: 'Kimlik / NÃ¼fus CÃ¼zdanÄ±',
           icon: Icons.badge_outlined,
           file: _identityPhoto,
           onTap: _pickIdentity,
@@ -421,13 +421,13 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: Colors.amber.shade300),
             ),
-            child: Text('Önerilen', style: TextStyle(fontSize: 10, color: Colors.amber.shade800, fontWeight: FontWeight.bold)),
+            child: Text('Ã–nerilen', style: TextStyle(fontSize: 10, color: Colors.amber.shade800, fontWeight: FontWeight.bold)),
           ),
         ]),
         const SizedBox(height: 4),
         Text(
-          'Sertifika / diploma eklemek profilinizde "Belgelenmiş Uzman" rozeti kazandırır '
-          've daha fazla teklif almanızı sağlar.',
+          'Sertifika / diploma eklemek profilinizde "BelgelenmiÅŸ Uzman" rozeti kazandÄ±rÄ±r '
+          've daha fazla teklif almanÄ±zÄ± saÄŸlar.',
           style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
         ),
         const SizedBox(height: 8),
@@ -451,7 +451,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
               Icon(Icons.info_outline, size: 15, color: Colors.amber.shade700),
               const SizedBox(width: 8),
               Expanded(child: Text(
-                'Belge yüklenmedi. Profil ayarlarından daha sonra ekleyebilirsiniz.',
+                'Belge yÃ¼klenmedi. Profil ayarlarÄ±ndan daha sonra ekleyebilirsiniz.',
                 style: TextStyle(fontSize: 11, color: Colors.amber.shade800),
               )),
             ]),
@@ -473,12 +473,12 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
           ),
           child: _loading
               ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text('Yükle ve Tamamla', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              : const Text('YÃ¼kle ve Tamamla', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
         ),
         const SizedBox(height: 12),
         TextButton(
           onPressed: _loading ? null : _skipStep2,
-          child: const Text('Şimdi Değil, Atla', style: TextStyle(color: AppColors.textSecondary)),
+          child: const Text('ÅÂimdi DeÄŸil, Atla', style: TextStyle(color: AppColors.textSecondary)),
         ),
       ],
     );
@@ -489,8 +489,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
       onTap: onTap,
       child: Container(
         height: 110,
-        decoration: BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: file != null ? AppColors.primary : (required ? Colors.orange.shade300 : AppColors.border),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -71,7 +71,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     super.dispose();
   }
 
-  // Dark theme constants — Voldi-job-detail-redesign
+  // Dark theme constants â€” Voldi-job-detail-redesign
   static const Color _bgColor = Colors.black;
   static const Color _surfaceColor = Color(0xFF141414);
   static const Color _surfaceColor2 = Color(0xFF1E1E1E);
@@ -115,13 +115,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         ? ref.watch(jobOffersProvider(widget.id!))
         : const AsyncValue<List<Map<String, dynamic>>>.data([]);
 
-    // API'den tam detay çek (customer bilgisi dahil)
+    // API'den tam detay Ã§ek (customer bilgisi dahil)
     final detailAsync = widget.id != null
         ? ref.watch(jobDetailProvider(widget.id!))
         : const AsyncValue<Map<String, dynamic>>.data({});
     final detail = detailAsync.valueOrNull ?? {};
 
-    // Çözümlenen değerler — API'den gelenler widget parametrelerini geçersiz kılar
+    // Ã‡Ã¶zÃ¼mlenen deÄŸerler â€” API'den gelenler widget parametrelerini geÃ§ersiz kÄ±lar
     final description = detail['description'] as String?  ?? widget.description;
     final budgetMin   = (detail['budgetMin']  as num?)?.toDouble();
     final budgetMax   = (detail['budgetMax']  as num?)?.toDouble();
@@ -146,7 +146,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       backgroundColor: _bgColor,
       appBar: AppBar(
         title: const Text(
-          'İş Detayı',
+          'Ä°ÅŸ DetayÄ±',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.black,
@@ -221,7 +221,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                           },
                         ),
                         icon: const Icon(Icons.flag_outlined, size: 16),
-                        label: const Text('🚩 Şikayet Et'),
+                        label: const Text('ğŸš© Åikayet Et'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.red,
                           side: const BorderSide(color: Colors.red),
@@ -237,7 +237,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   const SizedBox(height: 6),
                   _buildPhotosSection(photos),
                 ],
-                // Phase 203 — İlan sahibi fotoğraf ekleyebilir (max 5)
+                // Phase 203 â€” Ä°lan sahibi fotoÄŸraf ekleyebilir (max 5)
                 if (widget.id != null && isOwner) ...[
                   const SizedBox(height: 6),
                   JobPhotosBulkSection(
@@ -265,7 +265,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                     );
                   }),
                 ],
-                // ── Teklifler / Sorular TabBarView (restored) ──
+                // â”€â”€ Teklifler / Sorular TabBarView (restored) â”€â”€
                 const SizedBox(height: 10),
                 SizedBox(
                   height: 600,
@@ -287,7 +287,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                         const Padding(
                           padding: EdgeInsets.all(20),
                           child: Center(
-                              child: Text('İlan ID bulunamadı.',
+                              child: Text('Ä°lan ID bulunamadÄ±.',
                                   style: TextStyle(color: _textHint))),
                         ),
                     ],
@@ -315,11 +315,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   /// (label, icon, color) tuple for job status
   (String, IconData, Color) _statusMeta(String status) {
     return switch (status) {
-      'open'      => ('Açık',        Icons.circle,           Colors.green),
-      'closed'    => ('Kapandı',     Icons.lock_outline,     Colors.orange),
-      'completed' => ('Tamamlandı',  Icons.check_circle,     Colors.blue),
-      'cancelled' => ('İptal',       Icons.cancel_outlined,  Colors.red),
-      _           => ('Açık',        Icons.circle,           Colors.green),
+      'open'      => ('AÃ§Ä±k',        Icons.circle,           Colors.green),
+      'closed'    => ('KapandÄ±',     Icons.lock_outline,     Colors.orange),
+      'completed' => ('TamamlandÄ±',  Icons.check_circle,     Colors.blue),
+      'cancelled' => ('Ä°ptal',       Icons.cancel_outlined,  Colors.red),
+      _           => ('AÃ§Ä±k',        Icons.circle,           Colors.green),
     };
   }
 
@@ -328,29 +328,29 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     try {
       final dt   = DateTime.parse(iso).toLocal();
       final diff = DateTime.now().difference(dt);
-      if (diff.inMinutes < 1)  return 'Az önce';
-      if (diff.inMinutes < 60) return '${diff.inMinutes} dk önce';
-      if (diff.inHours   < 24) return '${diff.inHours} saat önce';
-      if (diff.inDays    < 30) return '${diff.inDays} gün önce';
-      return '${(diff.inDays / 30).floor()} ay önce';
+      if (diff.inMinutes < 1)  return 'Az Ã¶nce';
+      if (diff.inMinutes < 60) return '${diff.inMinutes} dk Ã¶nce';
+      if (diff.inHours   < 24) return '${diff.inHours} saat Ã¶nce';
+      if (diff.inDays    < 30) return '${diff.inDays} gÃ¼n Ã¶nce';
+      return '${(diff.inDays / 30).floor()} ay Ã¶nce';
     } catch (_) {
       return '';
     }
   }
 
-  // ── Header ────────────────────────────────────────────────────────────────
+  // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildHeader({
     double? budgetMin,
     double? budgetMax,
     String? createdAt,
     String? dueDate,
   }) {
-    // Bütçe gösterimi
+    // BÃ¼tÃ§e gÃ¶sterimi
     String budgetStr;
     if (budgetMin != null && budgetMax != null && budgetMax > budgetMin) {
-      // P190/4 — IntlFormatter.currency.
+      // P190/4 â€” IntlFormatter.currency.
       budgetStr =
-          '${IntlFormatter.currency(context, budgetMin, decimalDigits: 0)} – ${IntlFormatter.currency(context, budgetMax, decimalDigits: 0)}';
+          '${IntlFormatter.currency(context, budgetMin, decimalDigits: 0)} â€“ ${IntlFormatter.currency(context, budgetMax, decimalDigits: 0)}';
     } else if (budgetMin != null) {
       budgetStr = '${IntlFormatter.currency(context, budgetMin, decimalDigits: 0)} ~';
     } else {
@@ -393,7 +393,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                         children: [
                           Icon(Icons.star_rounded, color: Colors.amber.shade700, size: 13),
                           const SizedBox(width: 4),
-                          Text('Öne Çıkan',
+                          Text('Ã–ne Ã‡Ä±kan',
                               style: TextStyle(fontSize: 11, color: Colors.amber.shade800,
                                   fontWeight: FontWeight.bold)),
                         ],
@@ -425,7 +425,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           const Divider(height: 1, color: _borderColor),
           const SizedBox(height: 10),
 
-          // Bilgi satırı: konum + zaman + teslim tarihi
+          // Bilgi satÄ±rÄ±: konum + zaman + teslim tarihi
           Row(children: [
             Flexible(child: _infoChip(Icons.location_on_outlined, widget.location, Colors.red.shade300)),
             const SizedBox(width: 16),
@@ -446,7 +446,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
 
           const SizedBox(height: 10),
 
-          // Bütçe kartı
+          // BÃ¼tÃ§e kartÄ±
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
@@ -467,7 +467,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Bütçe Aralığı',
+                    const Text('BÃ¼tÃ§e AralÄ±ÄŸÄ±',
                         style: TextStyle(fontSize: 11, color: _textSecondary)),
                     Text(budgetStr,
                         style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold,
@@ -482,9 +482,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     );
   }
 
-  // ── İlanı Yayınlayan ──────────────────────────────────────────────────────
+  // â”€â”€ Ä°lanÄ± YayÄ±nlayan â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildCustomerCard(Map<String, dynamic> customer) {
-    final name             = customer['fullName']        as String? ?? 'Kullanıcı';
+    final name             = customer['fullName']        as String? ?? 'KullanÄ±cÄ±';
     final imgUrl           = customer['profileImageUrl'] as String?;
     final rating           = (customer['averageRating']  as num?)?.toDouble() ?? 0.0;
     final reviews          = (customer['totalReviews']   as num?)?.toInt()    ?? 0;
@@ -503,16 +503,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('İlanı Yayınlayan',
+          const Text('Ä°lanÄ± YayÄ±nlayan',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
                   color: _textSecondary, letterSpacing: 0.3)),
           const SizedBox(height: 10),
 
-          // Profil satırı
+          // Profil satÄ±rÄ±
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Avatar + doğrulama rozeti
+              // Avatar + doÄŸrulama rozeti
               Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -544,7 +544,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
               ),
               const SizedBox(width: 12),
 
-              // İsim + meta
+              // Ä°sim + meta
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -566,7 +566,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                               color: AppColors.primaryLight,
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text('Doğrulandı',
+                            child: const Text('DoÄŸrulandÄ±',
                                 style: TextStyle(fontSize: 10,
                                     color: AppColors.primary, fontWeight: FontWeight.w600)),
                           ),
@@ -583,9 +583,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                             Text(city, style: TextStyle(fontSize: 11, color: Colors.grey.shade300)),
                           ],
                           if (city.isNotEmpty && sinceStr.isNotEmpty)
-                            Text('  ·  ', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                            Text('  Â·  ', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                           if (sinceStr.isNotEmpty)
-                            Text('Üye: $sinceStr',
+                            Text('Ãœye: $sinceStr',
                                 style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
                         ],
                       ),
@@ -597,13 +597,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
 
           const SizedBox(height: 10),
 
-          // İstatistik satırı
+          // Ä°statistik satÄ±rÄ±
           Row(
             children: [
               _statChip(
                 icon: Icons.star_rounded,
                 iconColor: Colors.amber,
-                label: rating > 0 ? rating.toStringAsFixed(1) : '—',
+                label: rating > 0 ? rating.toStringAsFixed(1) : 'â€”',
                 sublabel: '$reviews yorum',
               ),
               const SizedBox(width: 12),
@@ -611,7 +611,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 icon: Icons.work_outline_rounded,
                 iconColor: AppColors.primary,
                 label: '$totalJobs',
-                sublabel: 'İş ilanı',
+                sublabel: 'Ä°ÅŸ ilanÄ±',
               ),
               if (successRate != null) ...[
                 const SizedBox(width: 12),
@@ -627,14 +627,14 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
 
           const SizedBox(height: 10),
 
-          // Profili Gör butonu
+          // Profili GÃ¶r butonu
           if (customerId != null)
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () => context.push('/musteri/$customerId'),
                 icon: const Icon(Icons.person_outline_rounded, size: 16),
-                label: const Text('Profili Gör'),
+                label: const Text('Profili GÃ¶r'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primary,
                   side: const BorderSide(color: AppColors.primary),
@@ -681,8 +681,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     try {
       final parts = yyyyMmDd.split('-');
       if (parts.length != 3) return yyyyMmDd;
-      final months = ['', 'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
-                      'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+      final months = ['', 'Oca', 'Åub', 'Mar', 'Nis', 'May', 'Haz',
+                      'Tem', 'AÄŸu', 'Eyl', 'Eki', 'Kas', 'Ara'];
       final m = int.parse(parts[1]);
       return '${parts[2]} ${months[m]} ${parts[0]}';
     } catch (_) {
@@ -707,10 +707,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('İş Açıklaması',
+          const Text('Ä°ÅŸ AÃ§Ä±klamasÄ±',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _textPrimary)),
           const SizedBox(height: 8),
-          Text(description.isNotEmpty ? description : 'Açıklama girilmemiş.',
+          Text(description.isNotEmpty ? description : 'AÃ§Ä±klama girilmemiÅŸ.',
               style:
                   const TextStyle(color: _textSecondary, height: 1.5, fontSize: 13)),
         ],
@@ -728,7 +728,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         children: [
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 14),
-            child: Text('Fotoğraflar',
+            child: Text('FotoÄŸraflar',
                 style:
                     TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _textPrimary)),
           ),
@@ -804,7 +804,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     );
   }
 
-  // ── Teklifler ─────────────────────────────────────────────────────────────
+  // â”€â”€ Teklifler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildOffersSection(
     AsyncValue<List<Map<String, dynamic>>> offersAsync,
     bool canMakeOffer,
@@ -845,7 +845,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 ),
                 const SizedBox(height: 8),
                 if (offers.isEmpty)
-                  const Text('Henüz teklif verilmemiş.',
+                  const Text('HenÃ¼z teklif verilmemiÅŸ.',
                       style: TextStyle(color: _textHint))
                 else
                   ...offers.map((o) => _buildOfferCard(o, canMakeOffer, currentUserId)),
@@ -885,7 +885,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final counterPrice = offer['counterPrice'];
     final counterMessage = offer['counterMessage'] as String?;
 
-    // Fiyat görünürlüğü: sadece ilan sahibi VEYA teklif sahibi görebilir
+    // Fiyat gÃ¶rÃ¼nÃ¼rlÃ¼ÄŸÃ¼: sadece ilan sahibi VEYA teklif sahibi gÃ¶rebilir
     final isOwnerView    = !canMakeOffer;
     final isOfferOwner   = currentUserId != null && currentUserId == offerUserId;
     final canSeePrice    = isOwnerView || isOfferOwner;
@@ -902,8 +902,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       'pending':   'Beklemede',
       'accepted':  'Kabul Edildi',
       'rejected':  'Reddedildi',
-      'countered': 'Pazarlık',
-      'withdrawn': 'Geri Çekildi',
+      'countered': 'PazarlÄ±k',
+      'withdrawn': 'Geri Ã‡ekildi',
     };
     final sc = statusColors[status] ?? [Colors.grey.shade100, Colors.grey];
 
@@ -923,7 +923,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       ),
       child: Column(
         children: [
-          // Ana teklif satırı
+          // Ana teklif satÄ±rÄ±
           ListTile(
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -945,8 +945,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       right: 0, bottom: 0,
                       child: Container(
                         padding: const EdgeInsets.all(1),
-                        decoration: const BoxDecoration(
-                            color: Colors.white, shape: BoxShape.circle),
+                        decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
                         child: const Icon(Icons.verified,
                             color: Colors.blue, size: 14),
                       ),
@@ -987,18 +986,18 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Rozet satırı: mavi tik + belge + doğrulanmamış uyarı
+                // Rozet satÄ±rÄ±: mavi tik + belge + doÄŸrulanmamÄ±ÅŸ uyarÄ±
                 const SizedBox(height: 4),
                 Wrap(spacing: 6, runSpacing: 4, children: [
                   if (identityVerified)
-                    _badgeChip(Icons.verified, 'Kimliği Doğrulandı', Colors.blue)
+                    _badgeChip(Icons.verified, 'KimliÄŸi DoÄŸrulandÄ±', Colors.blue)
                   else
-                    _badgeChip(Icons.warning_amber_rounded, 'Doğrulanmamış', Colors.orange),
+                    _badgeChip(Icons.warning_amber_rounded, 'DoÄŸrulanmamÄ±ÅŸ', Colors.orange),
                   if (hasDocument)
                     _badgeChip(Icons.workspace_premium_outlined, 'Yeterlilik Belgesi', Colors.green),
                 ]),
                 const SizedBox(height: 6),
-                // İstatistikler
+                // Ä°statistikler
                 Row(children: [
                   if (avgRating > 0) ...[
                     const Icon(Icons.star_rounded, color: Colors.amber, size: 13),
@@ -1010,15 +1009,15 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   if (successRate != null) ...[
                     Icon(Icons.trending_up_rounded, size: 13, color: Colors.green.shade600),
                     const SizedBox(width: 2),
-                    Text('$successRate% başarı ($wSuccess/$wTotal)',
+                    Text('$successRate% baÅŸarÄ± ($wSuccess/$wTotal)',
                         style: TextStyle(fontSize: 11, color: Colors.green.shade700)),
                   ] else if (wTotal == 0)
-                    Text('Henüz iş geçmişi yok',
+                    Text('HenÃ¼z iÅŸ geÃ§miÅŸi yok',
                         style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                 ]),
                 if (wFail > 0) ...[
                   const SizedBox(height: 2),
-                  Text('$wFail başarısız iş',
+                  Text('$wFail baÅŸarÄ±sÄ±z iÅŸ',
                       style: TextStyle(fontSize: 10, color: Colors.red.shade400)),
                 ],
                 if (workerBio.isNotEmpty) ...[
@@ -1032,16 +1031,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       style: const TextStyle(fontSize: 12, color: _textHint)),
                 ],
                 const SizedBox(height: 6),
-                // Fiyat — sadece ilan sahibi veya teklif sahibi görür
+                // Fiyat â€” sadece ilan sahibi veya teklif sahibi gÃ¶rÃ¼r
                 if (canSeePrice)
-                  Text('$price ₺',
+                  Text('$price â‚º',
                       style: const TextStyle(color: AppColors.primary,
                           fontWeight: FontWeight.bold, fontSize: 16))
                 else
                   Row(children: [
                     const Icon(Icons.lock_outline, size: 14, color: _textHint),
                     const SizedBox(width: 4),
-                    Text('Teklif tutarı gizlidir',
+                    Text('Teklif tutarÄ± gizlidir',
                         style: TextStyle(fontSize: 12, color: Colors.grey.shade500,
                             fontStyle: FontStyle.italic)),
                   ]),
@@ -1056,7 +1055,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             ),
           ),
 
-          // Pazarlık detayı
+          // PazarlÄ±k detayÄ±
           if (status == 'countered' && counterPrice != null && canSeePrice)
             Container(
               margin: const EdgeInsets.fromLTRB(14, 0, 14, 10),
@@ -1076,7 +1075,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Müşteri teklifi: $counterPrice ₺',
+                          'MÃ¼ÅŸteri teklifi: $counterPrice â‚º',
                           style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.blue,
@@ -1095,7 +1094,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
               ),
             ),
 
-          // Müşteri aksiyon butonları (status == pending veya countered'de provider için)
+          // MÃ¼ÅŸteri aksiyon butonlarÄ± (status == pending veya countered'de provider iÃ§in)
           if (isCustomerView &&
               (status == 'pending' || status == 'countered') &&
               widget.id != null)
@@ -1120,10 +1119,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Pazarlık
+                  // PazarlÄ±k
                   Expanded(
                     child: _ActionButton(
-                      label: 'Pazarlık',
+                      label: 'PazarlÄ±k',
                       icon: Icons.handshake_outlined,
                       color: Colors.blue,
                       loading: _actionLoading,
@@ -1151,7 +1150,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
               ),
             ),
 
-          // Değerlendirme butonu (müşteri, kabul edilmiş teklif)
+          // DeÄŸerlendirme butonu (mÃ¼ÅŸteri, kabul edilmiÅŸ teklif)
           if (isCustomerView && status == 'accepted' && widget.id != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -1159,7 +1158,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   icon: Icon(Icons.star_outline, size: 16, color: Colors.amber.shade700),
-                  label: Text('Değerlendir',
+                  label: Text('DeÄŸerlendir',
                       style: TextStyle(color: Colors.amber.shade700, fontWeight: FontWeight.w600)),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.amber.shade400),
@@ -1196,7 +1195,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     );
   }
 
-  // ── Bottom Bar ────────────────────────────────────────────────────────────
+  // â”€â”€ Bottom Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildBottomBar({
     required bool isOwner,
     required bool canMakeOffer,
@@ -1214,11 +1213,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           ),
           child: ElevatedButton.icon(
             onPressed: () {
-              _showSnack('QR kod oluşturuluyor...');
-              // Backend generate-qr çağrısı buraya eklenecek
+              _showSnack('QR kod oluÅŸturuluyor...');
+              // Backend generate-qr Ã§aÄŸrÄ±sÄ± buraya eklenecek
             },
             icon: const Icon(Icons.qr_code, color: Colors.white),
-            label: const Text('İş Tamamlama QR Kodunu Göster',
+            label: const Text('Ä°ÅŸ Tamamlama QR Kodunu GÃ¶ster',
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
@@ -1236,11 +1235,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           ),
           child: ElevatedButton.icon(
             onPressed: () {
-              _showSnack('Kamera açılıyor...');
-              // Backend verify-qr ve complete çağrısı buraya eklenecek
+              _showSnack('Kamera aÃ§Ä±lÄ±yor...');
+              // Backend verify-qr ve complete Ã§aÄŸrÄ±sÄ± buraya eklenecek
             },
             icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
-            label: const Text('İşi Tamamla (QR Okut & Medya Ekle)',
+            label: const Text('Ä°ÅŸi Tamamla (QR Okut & Medya Ekle)',
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
@@ -1254,8 +1253,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: const BoxDecoration(color: AppColors.surface,
         boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
       ),
       child: isOwner
@@ -1265,7 +1263,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       child: OutlinedButton.icon(
                         onPressed: () => _showUpdateJobDialog(),
                         icon: const Icon(Icons.edit_outlined),
-                        label: const Text('Güncelle'),
+                        label: const Text('GÃ¼ncelle'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primary,
                           side: const BorderSide(color: AppColors.primary),
@@ -1280,7 +1278,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       child: OutlinedButton.icon(
                         onPressed: () => _confirmDeleteJob(),
                         icon: const Icon(Icons.delete_outline),
-                        label: const Text('Kaldır'),
+                        label: const Text('KaldÄ±r'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.error,
                           side: const BorderSide(color: AppColors.error),
@@ -1312,7 +1310,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     );
   }
 
-  // ── Dialogs ───────────────────────────────────────────────────────────────
+  // â”€â”€ Dialogs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   void _showBidDialog() {
     final priceCtrl = TextEditingController();
     final msgCtrl = TextEditingController();
@@ -1324,10 +1322,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => _BidSheet(
         title: 'Teklif Ver',
-        priceLabel: 'Fiyatınız (₺)',
+        priceLabel: 'FiyatÄ±nÄ±z (â‚º)',
         priceCtrl: priceCtrl,
         msgCtrl: msgCtrl,
-        submitLabel: 'Gönder',
+        submitLabel: 'GÃ¶nder',
         showLineItems: true,
         onLineItemsChanged: (items) => lineItemsRef[0] = items,
         onSubmit: () async {
@@ -1344,7 +1342,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 0.0, (s, m) => s + ((m['total'] as num?)?.toDouble() ?? 0));
             if ((sum - price).abs() > 1.0) {
               throw Exception(
-                  'Kalemler toplamı: ₺${sum.toStringAsFixed(2)} — fiyat: ₺${price.toStringAsFixed(2)}. Devam etmek için fiyatı eşitle.');
+                  'Kalemler toplamÄ±: â‚º${sum.toStringAsFixed(2)} â€” fiyat: â‚º${price.toStringAsFixed(2)}. Devam etmek iÃ§in fiyatÄ± eÅŸitle.');
             }
           }
           await ref.read(offerRepositoryProvider).createOffer(
@@ -1355,7 +1353,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
               );
           if (widget.id != null) ref.invalidate(jobOffersProvider(widget.id!));
           if (ctx.mounted) Navigator.pop(ctx);
-          _showSnack('Teklifiniz gönderildi!');
+          _showSnack('Teklifiniz gÃ¶nderildi!');
         },
       ),
     );
@@ -1363,7 +1361,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
 
   void _showCounterDialog(String offerId, String currentPrice) {
     final priceCtrl =
-        TextEditingController(text: currentPrice.replaceAll(' ₺', ''));
+        TextEditingController(text: currentPrice.replaceAll(' â‚º', ''));
     final msgCtrl = TextEditingController();
     showModalBottomSheet(
       context: context,
@@ -1371,12 +1369,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => _BidSheet(
-        title: 'Pazarlık Yap',
-        priceLabel: 'Karşı Teklifiniz (₺)',
+        title: 'PazarlÄ±k Yap',
+        priceLabel: 'KarÅŸÄ± Teklifiniz (â‚º)',
         priceCtrl: priceCtrl,
         msgCtrl: msgCtrl,
-        submitLabel: 'Pazarlık Gönder',
-        msgLabel: 'Kısa notunuz',
+        submitLabel: 'PazarlÄ±k GÃ¶nder',
+        msgLabel: 'KÄ±sa notunuz',
         onSubmit: () async {
           if (widget.id == null || priceCtrl.text.isEmpty) return;
           await ref.read(offerRepositoryProvider).counterOffer(
@@ -1387,7 +1385,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
               );
           if (widget.id != null) ref.invalidate(jobOffersProvider(widget.id!));
           if (ctx.mounted) Navigator.pop(ctx);
-          _showSnack('Pazarlık teklifiniz gönderildi!');
+          _showSnack('PazarlÄ±k teklifiniz gÃ¶nderildi!');
         },
       ),
     );
@@ -1411,13 +1409,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     String currentCategory = widget.category;
 
     final categories = [
-      'Temizlik','Boya & Badana','Tesisat','Elektrikçi','Nakliyat',
-      'Mobilya Montaj','Bahçe & Peyzaj','Klima & Isıtma','Zemin & Parke',
-      'Çatı & Yalıtım','Marangoz & Ahşap','Cam & Doğrama','Alçıpan & Asma Tavan',
-      'Güvenlik Sistemleri','Bilgisayar & IT','Grafik & Tasarım','Web & Yazılım',
-      'Fotoğraf & Video','Düğün & Organizasyon','Özel Ders & Eğitim',
-      'Sağlık & Güzellik','Evcil Hayvan','Araç & Oto Bakım',
-      'Haşere Kontrolü','Havuz & Spa','Çilingir & Kilit',
+      'Temizlik','Boya & Badana','Tesisat','ElektrikÃ§i','Nakliyat',
+      'Mobilya Montaj','BahÃ§e & Peyzaj','Klima & IsÄ±tma','Zemin & Parke',
+      'Ã‡atÄ± & YalÄ±tÄ±m','Marangoz & AhÅŸap','Cam & DoÄŸrama','AlÃ§Ä±pan & Asma Tavan',
+      'GÃ¼venlik Sistemleri','Bilgisayar & IT','Grafik & TasarÄ±m','Web & YazÄ±lÄ±m',
+      'FotoÄŸraf & Video','DÃ¼ÄŸÃ¼n & Organizasyon','Ã–zel Ders & EÄŸitim',
+      'SaÄŸlÄ±k & GÃ¼zellik','Evcil Hayvan','AraÃ§ & Oto BakÄ±m',
+      'HaÅŸere KontrolÃ¼','Havuz & Spa','Ã‡ilingir & Kilit',
     ];
 
     showModalBottomSheet(
@@ -1426,8 +1424,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: const BoxDecoration(color: AppColors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           padding: EdgeInsets.only(
@@ -1443,18 +1440,18 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                     decoration: BoxDecoration(color: Colors.grey.shade300,
                         borderRadius: BorderRadius.circular(2)))),
                 const SizedBox(height: 16),
-                const Text('İlanı Güncelle',
+                const Text('Ä°lanÄ± GÃ¼ncelle',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 20),
 
-                _updateField(titleCtrl, 'Başlık *', Icons.title),
+                _updateField(titleCtrl, 'BaÅŸlÄ±k *', Icons.title),
                 const SizedBox(height: 12),
                 TextField(
                   controller: descCtrl,
                   maxLines: 4,
                   maxLength: 1000,
                   decoration: InputDecoration(
-                    labelText: 'Açıklama',
+                    labelText: 'AÃ§Ä±klama',
                     prefixIcon: const Icon(Icons.description_outlined),
                     alignLabelWithHint: true,
                     filled: true, fillColor: AppColors.background,
@@ -1488,12 +1485,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 ),
                 const SizedBox(height: 12),
 
-                // Bütçe aralığı
+                // BÃ¼tÃ§e aralÄ±ÄŸÄ±
                 Row(children: [
-                  Expanded(child: _updateField(budgetMinCtrl, 'Min Bütçe (₺)',
+                  Expanded(child: _updateField(budgetMinCtrl, 'Min BÃ¼tÃ§e (â‚º)',
                       Icons.arrow_downward_rounded, kb: TextInputType.number)),
                   const SizedBox(width: 10),
-                  Expanded(child: _updateField(budgetMaxCtrl, 'Max Bütçe (₺)',
+                  Expanded(child: _updateField(budgetMaxCtrl, 'Max BÃ¼tÃ§e (â‚º)',
                       Icons.arrow_upward_rounded, kb: TextInputType.number)),
                 ]),
 
@@ -1506,7 +1503,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                           foregroundColor: AppColors.textSecondary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                      child: const Text('İptal'),
+                      child: const Text('Ä°ptal'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1532,7 +1529,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                               if (bMax != null) 'budgetMax': bMax,
                             },
                           );
-                          _showSnack('İlan güncellendi!');
+                          _showSnack('Ä°lan gÃ¼ncellendi!');
                           ref.read(jobsProvider.notifier).fetchJobs();
                           if (widget.id != null) ref.invalidate(jobDetailProvider(widget.id!));
                         });
@@ -1579,13 +1576,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('İlanı Kaldır'),
+        title: const Text('Ä°lanÄ± KaldÄ±r'),
         content: const Text(
-            'Bu ilanı kalıcı olarak silmek istediğinizden emin misiniz?'),
+            'Bu ilanÄ± kalÄ±cÄ± olarak silmek istediÄŸinizden emin misiniz?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Vazgeç')),
+              child: const Text('VazgeÃ§')),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -1594,7 +1591,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 await ref
                     .read(offerRepositoryProvider)
                     .deleteJob(widget.id!);
-                _showSnack('İlan kaldırıldı.');
+                _showSnack('Ä°lan kaldÄ±rÄ±ldÄ±.');
                 ref.read(jobsProvider.notifier).fetchJobs();
                 if (mounted) Navigator.pop(context);
               });
@@ -1643,7 +1640,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   }
 }
 
-// ── Yardımcı Widgetlar ────────────────────────────────────────────────────
+// â”€â”€ YardÄ±mcÄ± Widgetlar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -1702,7 +1699,7 @@ class _BidSheet extends StatefulWidget {
     required this.msgCtrl,
     required this.submitLabel,
     required this.onSubmit,
-    this.msgLabel = 'Mesajınız',
+    this.msgLabel = 'MesajÄ±nÄ±z',
     this.showLineItems = false,
     this.onLineItemsChanged,
   });
@@ -1757,7 +1754,7 @@ class _BidSheetState extends State<_BidSheet> {
                 }
               },
               icon: const Icon(Icons.bookmark_outline, size: 18),
-              label: const Text('Şablon Seç'),
+              label: const Text('Åablon SeÃ§'),
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.primary,
                 padding: EdgeInsets.zero,
@@ -1783,7 +1780,7 @@ class _BidSheetState extends State<_BidSheet> {
               child: ExpansionTile(
                 tilePadding: EdgeInsets.zero,
                 childrenPadding: const EdgeInsets.only(bottom: 8),
-                title: const Text('Kalem Bazlı Detay (opsiyonel)',
+                title: const Text('Kalem BazlÄ± Detay (opsiyonel)',
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 children: [
                   OfferLineItemsEditor(

@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-// Phase 178 — Worker (usta) map marker. JobMapMarker ile aynı pill+tail
-// estetiği; ayırt etmek için mavi vurgu (#0EA5E9) ve kişi ikonu kullanılır.
-// Seçili durumda mavi dolgu + scale 1.1.
+import 'package:hizmet_app/core/theme/app_colors.dart';
+// Phase 178 â€” Worker (usta) map marker. JobMapMarker ile aynÄ± pill+tail
+// estetiÄŸi; ayÄ±rt etmek iÃ§in mavi vurgu (#0EA5E9) ve kiÅŸi ikonu kullanÄ±lÄ±r.
+// SeÃ§ili durumda mavi dolgu + scale 1.1.
 
 class WorkerMapMarker extends StatelessWidget {
   final String? name;
@@ -81,7 +82,7 @@ class WorkerMapMarker extends StatelessWidget {
       ),
     );
 
-    // Doğrulanmış usta için mavi tik rozeti (sağ üst).
+    // DoÄŸrulanmÄ±ÅŸ usta iÃ§in mavi tik rozeti (saÄŸ Ã¼st).
     final verifiedBadge = Positioned(
       top: -4,
       right: -4,
@@ -116,12 +117,11 @@ class WorkerMapMarker extends StatelessWidget {
       top: -4,
       left: -4,
       child: Tooltip(
-        message: 'Yaklaşık konum',
+        message: 'YaklaÅŸÄ±k konum',
         child: Container(
           width: 16,
           height: 16,
-          decoration: BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(color: AppColors.surface,
             shape: BoxShape.circle,
             border: Border.all(color: const Color(0xFF6B7280), width: 1.2),
             boxShadow: [

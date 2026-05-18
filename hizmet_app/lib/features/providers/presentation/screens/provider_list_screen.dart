@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -47,7 +47,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
   Future<void> _saveRecent({String? category}) async {
     final filter = ref.read(workerFilterProvider);
     final cat = category ?? _activeCategory;
-    // Boş arama kaydetme (hiç filtre + kategori yok)
+    // BoÅŸ arama kaydetme (hiÃ§ filtre + kategori yok)
     if ((cat == null || cat.isEmpty) && filter.isEmpty) return;
     final updated = await RecentSearchesStorage.add(RecentSearch(
       category: cat,
@@ -199,7 +199,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                           fontSize: 24,
                           fontWeight: FontWeight.bold)),
                   SizedBox(height: 4),
-                  Text('Doğrulanmış ustalarla tanışın',
+                  Text('DoÄŸrulanmÄ±ÅŸ ustalarla tanÄ±ÅŸÄ±n',
                       style: TextStyle(color: Colors.white70, fontSize: 13)),
                 ],
               ),
@@ -218,8 +218,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
             children: [
               // Search bar
               Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
+                decoration: BoxDecoration(color: AppColors.surface,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -235,7 +234,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                     _activeCategory = null;
                   }),
                   decoration: InputDecoration(
-                    hintText: 'İsim veya hizmet ara...',
+                    hintText: 'Ä°sim veya hizmet ara...',
                     hintStyle:
                         const TextStyle(color: AppColors.textHint, fontSize: 14),
                     prefixIcon: const Icon(Icons.search,
@@ -268,7 +267,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                   data: (cats) => ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
-                      _chip('Tümü', null, _activeCategory == null),
+                      _chip('TÃ¼mÃ¼', null, _activeCategory == null),
                       ...cats.map((c) {
                         final n = c['name'] as String? ?? '';
                         final e = c['icon'] as String? ?? '';
@@ -318,11 +317,11 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
       return EmptyState(
         icon: Icons.person_search_rounded,
         title: hasFilter
-            ? 'Bu kriterlere uygun usta bulunamadı'
-            : 'Henüz usta yok',
+            ? 'Bu kriterlere uygun usta bulunamadÄ±'
+            : 'HenÃ¼z usta yok',
         message: hasFilter
-            ? 'Filtreleri değiştirip tekrar dene.'
-            : 'Yakında bölgenize uygun ustalar burada listelenecek.',
+            ? 'Filtreleri deÄŸiÅŸtirip tekrar dene.'
+            : 'YakÄ±nda bÃ¶lgenize uygun ustalar burada listelenecek.',
         action: hasFilter
             ? OutlinedButton.icon(
                 onPressed: () => setState(() {
@@ -357,7 +356,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
     return CustomScrollView(
       slivers: [
         if (showRecent) SliverToBoxAdapter(child: _buildRecentSearches()),
-        // Phase 143 — kategori aboneliği toggle
+        // Phase 143 â€” kategori aboneliÄŸi toggle
         if (_activeCategory != null && _activeCategory!.isNotEmpty)
           SliverToBoxAdapter(child: _buildSubscribeBanner(_activeCategory!)),
         // Sort bar
@@ -370,9 +369,9 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                     style: const TextStyle(
                         fontSize: 13, color: AppColors.textSecondary)),
                 const Spacer(),
-                _sortChip(_SortMode.rating, 'En Yüksek Puan'),
+                _sortChip(_SortMode.rating, 'En YÃ¼ksek Puan'),
                 const SizedBox(width: 8),
-                _sortChip(_SortMode.reviews, 'En Çok Yorum'),
+                _sortChip(_SortMode.reviews, 'En Ã‡ok Yorum'),
               ],
             ),
           ),
@@ -398,7 +397,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                         Icon(Icons.workspace_premium_rounded,
                             color: Colors.white, size: 13),
                         SizedBox(width: 4),
-                        Text('Öne Çıkan Ustalar',
+                        Text('Ã–ne Ã‡Ä±kan Ustalar',
                             style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -426,7 +425,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: Row(
                 children: [
-                  const Text('Tüm Ustalar',
+                  const Text('TÃ¼m Ustalar',
                       style: TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 8),
@@ -475,7 +474,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                   await RecentSearchesStorage.clear();
                   if (mounted) setState(() => _recentSearches = []);
                 },
-                child: const Text('Tümünü Sil',
+                child: const Text('TÃ¼mÃ¼nÃ¼ Sil',
                     style: TextStyle(
                         fontSize: 11,
                         color: AppColors.primary,
@@ -560,7 +559,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
         ),
       );
 
-  // Phase 143 — kategori aboneliği banner: subscribe / unsubscribe toggle
+  // Phase 143 â€” kategori aboneliÄŸi banner: subscribe / unsubscribe toggle
   Widget _buildSubscribeBanner(String category) {
     final async = ref.watch(categorySubscriptionsProvider);
     return async.maybeWhen(
@@ -593,7 +592,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                             content: Text(
-                                'ğŸ”” $category aboneliği oluşturuldu — yeni ilanlar bildirilecek')),
+                                'ÄŸÅ¸â€â€ $category aboneliÄŸi oluÅŸturuldu â€” yeni ilanlar bildirilecek')),
                       );
                     }
                   }
@@ -602,7 +601,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('İşlem başarısız: $e')),
+                      SnackBar(content: Text('Ä°ÅŸlem baÅŸarÄ±sÄ±z: $e')),
                     );
                   }
                 }
@@ -622,8 +621,8 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                     Expanded(
                       child: Text(
                         isSubscribed
-                            ? '✓ "$category" aboneliği aktif'
-                            : 'ğŸ”” "$category" için bu aramaya abone ol',
+                            ? 'âœ“ "$category" aboneliÄŸi aktif'
+                            : 'ÄŸÅ¸â€â€ "$category" iÃ§in bu aramaya abone ol',
                         style: TextStyle(
                           color:
                               isSubscribed ? AppColors.primary : Colors.white,
@@ -632,7 +631,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                       ),
                     ),
                     Text(
-                      isSubscribed ? 'İptal Et' : 'Abone Ol',
+                      isSubscribed ? 'Ä°ptal Et' : 'Abone Ol',
                       style: TextStyle(
                         color: isSubscribed ? AppColors.primary : Colors.white,
                         fontWeight: FontWeight.bold,
@@ -651,7 +650,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
 
 enum _SortMode { rating, reviews }
 
-// ─── Featured Card (horizontal carousel) ─────────────────────────────────────
+// â”€â”€â”€ Featured Card (horizontal carousel) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _FeaturedCard extends StatelessWidget {
   final Map<String, dynamic> provider;
@@ -677,8 +676,7 @@ class _FeaturedCard extends StatelessWidget {
       child: Container(
         width: 170,
         margin: const EdgeInsets.only(right: 12, bottom: 4),
-        decoration: BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.amber.shade300, width: 1.5),
           boxShadow: [
@@ -759,7 +757,7 @@ class _FeaturedCard extends StatelessWidget {
               ],
               if (cats.isNotEmpty) ...[
                 const Spacer(),
-                Text(cats.take(2).join(' Â· '),
+                Text(cats.take(2).join(' Ã‚Â· '),
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -775,7 +773,7 @@ class _FeaturedCard extends StatelessWidget {
   }
 }
 
-// ─── Regular Provider Card ────────────────────────────────────────────────────
+// â”€â”€â”€ Regular Provider Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ProviderCard extends StatelessWidget {
   final Map<String, dynamic> provider;
@@ -805,8 +803,7 @@ class _ProviderCard extends StatelessWidget {
       )),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(color: AppColors.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: AppColors.border),
           boxShadow: [
@@ -892,7 +889,7 @@ class _ProviderCard extends StatelessWidget {
                               color: AppColors.success.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text('Müsait',
+                            child: const Text('MÃ¼sait',
                                 style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -981,8 +978,8 @@ class _ProviderCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             rateMax != null
-                                ? '$rateMin–$rateMax â‚º/sa'
-                                : '$rateMin â‚º/sa',
+                                ? '$rateMinâ€“$rateMax Ã¢â€šÂº/sa'
+                                : '$rateMin Ã¢â€šÂº/sa',
                             style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,

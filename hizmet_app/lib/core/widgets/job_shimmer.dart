@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:hizmet_app/core/theme/app_colors.dart';
 import 'package:shimmer/shimmer.dart';
 
 class JobShimmer extends StatelessWidget {
@@ -12,13 +13,12 @@ class JobShimmer extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           children: [
-            Container(width: 48, height: 48, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+            Container(width: 48, height: 48, decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12))),
             const SizedBox(width: 16),
             Expanded(
               child: Column(

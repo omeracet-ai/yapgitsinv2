@@ -255,8 +255,7 @@ class _PostServiceRequestScreenState
                 onTap: _pickImage,
                 child: Container(
                   height: 140,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                         color: _image != null

@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/network/api_client.dart';
 
-/// Phase 211 — Haftalık müsaitlik düzenleyici (gün switch + saat aralığı).
-/// PUT /users/availability — 7-gün array gönderir.
+/// Phase 211 â€” HaftalÄ±k mÃ¼saitlik dÃ¼zenleyici (gÃ¼n switch + saat aralÄ±ÄŸÄ±).
+/// PUT /users/availability â€” 7-gÃ¼n array gÃ¶nderir.
 class AvailabilityEditorSheet extends ConsumerStatefulWidget {
   /// Mevcut slot listesi: [{dayOfWeek, startTime, endTime}]
   final List<Map<String, dynamic>>? initialSlots;
@@ -16,7 +16,7 @@ class AvailabilityEditorSheet extends ConsumerStatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -43,18 +43,18 @@ class _DaySlot {
 
 class _AvailabilityEditorSheetState
     extends ConsumerState<AvailabilityEditorSheet> {
-  // 0=Pzr,1=Pzt,...,6=Cmt — backend convention (JS Date.getDay)
+  // 0=Pzr,1=Pzt,...,6=Cmt â€” backend convention (JS Date.getDay)
   static const _dayLabels = [
     'Pazar',
     'Pazartesi',
-    'Salı',
-    'Çarşamba',
-    'Perşembe',
+    'SalÄ±',
+    'Ã‡arÅŸamba',
+    'PerÅŸembe',
     'Cuma',
     'Cumartesi',
   ];
 
-  // Gösterim sırası: Pazartesi önce (1-6, sonra 0)
+  // GÃ¶sterim sÄ±rasÄ±: Pazartesi Ã¶nce (1-6, sonra 0)
   static const _displayOrder = [1, 2, 3, 4, 5, 6, 0];
 
   late final List<_DaySlot> _slots; // index = dayOfWeek (0-6)
@@ -63,7 +63,7 @@ class _AvailabilityEditorSheetState
   @override
   void initState() {
     super.initState();
-    // Varsayılan: 09:00-18:00, kapalı
+    // VarsayÄ±lan: 09:00-18:00, kapalÄ±
     _slots = List.generate(
       7,
       (_) => _DaySlot(
@@ -72,7 +72,7 @@ class _AvailabilityEditorSheetState
         endTime: const TimeOfDay(hour: 18, minute: 0),
       ),
     );
-    // Mevcut slot'ları yükle
+    // Mevcut slot'larÄ± yÃ¼kle
     final initial = widget.initialSlots;
     if (initial != null) {
       for (final s in initial) {
@@ -112,7 +112,7 @@ class _AvailabilityEditorSheetState
     final picked = await showTimePicker(
       context: context,
       initialTime: initial,
-      helpText: isStart ? 'Başlangıç saati' : 'Bitiş saati',
+      helpText: isStart ? 'BaÅŸlangÄ±Ã§ saati' : 'BitiÅŸ saati',
       builder: (ctx, child) => MediaQuery(
         data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
         child: child!,
@@ -135,7 +135,7 @@ class _AvailabilityEditorSheetState
       if (_slots[dow].isAvailable && !_isValidRange(dow)) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
-              '${_dayLabels[dow]}: başlangıç saati bitiş saatinden önce olmalı'),
+              '${_dayLabels[dow]}: baÅŸlangÄ±Ã§ saati bitiÅŸ saatinden Ã¶nce olmalÄ±'),
           backgroundColor: Colors.red,
         ));
         return;
@@ -158,7 +158,7 @@ class _AvailabilityEditorSheetState
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Müsaitlik takvimi güncellendi'),
+          content: Text('MÃ¼saitlik takvimi gÃ¼ncellendi'),
           backgroundColor: Colors.green,
         ));
       }
@@ -201,7 +201,7 @@ class _AvailabilityEditorSheetState
                       color: AppColors.primary, size: 22),
                   SizedBox(width: 10),
                   Expanded(
-                    child: Text('Müsaitlik Takvimi',
+                    child: Text('MÃ¼saitlik Takvimi',
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
@@ -211,7 +211,7 @@ class _AvailabilityEditorSheetState
             const Padding(
               padding: EdgeInsets.fromLTRB(20, 4, 20, 8),
               child: Text(
-                'Hangi gün ve saatlerde iş alabileceğinizi belirleyin.',
+                'Hangi gÃ¼n ve saatlerde iÅŸ alabileceÄŸinizi belirleyin.',
                 style:
                     TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
@@ -317,7 +317,7 @@ class _DayRow extends StatelessWidget {
                   ),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4),
-                    child: Text('–',
+                    child: Text('â€“',
                         style: TextStyle(color: AppColors.textSecondary)),
                   ),
                   _TimeButton(
@@ -329,7 +329,7 @@ class _DayRow extends StatelessWidget {
             ),
           ] else
             const Expanded(
-              child: Text('Kapalı',
+              child: Text('KapalÄ±',
                   style: TextStyle(
                       color: AppColors.textHint, fontSize: 13)),
             ),
@@ -368,13 +368,13 @@ class _TimeButton extends StatelessWidget {
   }
 }
 
-/// Public profilde gösterilen küçük gün rozetleri.
+/// Public profilde gÃ¶sterilen kÃ¼Ã§Ã¼k gÃ¼n rozetleri.
 /// Hem eski schedule (Map<String,bool>) hem yeni slot listesi desteklenir.
 class AvailabilityChips extends StatelessWidget {
   /// Slot listesi: [{dayOfWeek: int, startTime: str, endTime: str}]
   final List<Map<String, dynamic>>? slots;
 
-  /// Legacy: basit gün açık/kapalı haritası
+  /// Legacy: basit gÃ¼n aÃ§Ä±k/kapalÄ± haritasÄ±
   final Map<String, bool>? schedule;
 
   const AvailabilityChips({super.key, this.slots, this.schedule});
@@ -383,7 +383,7 @@ class AvailabilityChips extends StatelessWidget {
   static const _shortLabels = {
     'mon': 'Pzt',
     'tue': 'Sal',
-    'wed': 'Çar',
+    'wed': 'Ã‡ar',
     'thu': 'Per',
     'fri': 'Cum',
     'sat': 'Cmt',
@@ -393,7 +393,7 @@ class AvailabilityChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Slot listesinden gün seti oluştur
+    // Slot listesinden gÃ¼n seti oluÅŸtur
     final Set<String> activeDays = {};
     if (slots != null) {
       for (final s in slots!) {

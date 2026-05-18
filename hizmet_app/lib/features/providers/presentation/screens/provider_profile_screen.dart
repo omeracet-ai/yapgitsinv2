@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -27,7 +27,7 @@ class ProviderProfileScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 12),
-              Text('Yüklenemedi: $e',
+              Text('YÃ¼klenemedi: $e',
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: 16),
@@ -51,7 +51,7 @@ class _ProviderContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user         = provider['user'] as Map<String, dynamic>?;
-    final name         = user?['fullName'] as String? ?? 'Sağlayıcı';
+    final name         = user?['fullName'] as String? ?? 'SaÄŸlayÄ±cÄ±';
     final businessName = provider['businessName'] as String? ?? '';
     final bio          = provider['bio'] as String? ?? '';
     final rating       = (provider['averageRating'] ?? 0.0) as num;
@@ -119,8 +119,7 @@ class _ProviderContent extends ConsumerWidget {
                           bottom: 0,
                           child: Container(
                             padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(
-                                color: Colors.white, shape: BoxShape.circle),
+                            decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
                             child: const Icon(Icons.verified,
                                 color: Colors.blue, size: 20),
                           ),
@@ -159,8 +158,7 @@ class _ProviderContent extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),
@@ -169,7 +167,7 @@ class _ProviderContent extends ConsumerWidget {
         children: [
           _statCol(rating.toStringAsFixed(1), 'Puan', Icons.star, Colors.amber),
           _statCol(totalReviews.toString(), 'Yorum', Icons.reviews_outlined, Colors.green),
-          _statCol(isVerified ? 'Onaylı' : 'Bekliyor', 'Durum',
+          _statCol(isVerified ? 'OnaylÄ±' : 'Bekliyor', 'Durum',
               isVerified ? Icons.verified : Icons.pending_outlined,
               isVerified ? Colors.blue : Colors.orange),
         ],
@@ -193,14 +191,13 @@ class _ProviderContent extends ConsumerWidget {
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.border)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Hakkında',
+          const Text('HakkÄ±nda',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           Text(bio,
@@ -222,14 +219,13 @@ class _ProviderContent extends ConsumerWidget {
           width: double.infinity,
           margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-              color: Colors.white,
+          decoration: BoxDecoration(color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.border)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Son Tamamlanan İşler',
+              const Text('Son Tamamlanan Ä°ÅŸler',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               ...jobs.map((job) => _completedJobCard(job)),
@@ -300,8 +296,7 @@ class _ProviderContent extends ConsumerWidget {
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.border)),
       child: Column(
@@ -346,8 +341,7 @@ class _ProviderContent extends ConsumerWidget {
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.border)),
       child: Column(
@@ -371,12 +365,12 @@ class _ProviderContent extends ConsumerWidget {
           reviewsAsync.when(
             loading: () =>
                 const Center(child: CircularProgressIndicator()),
-            error: (_, __) => const Text('Yorumlar yüklenemedi.',
+            error: (_, __) => const Text('Yorumlar yÃ¼klenemedi.',
                 style: TextStyle(color: AppColors.textHint)),
             data: (reviews) => reviews.isEmpty
                 ? const Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Text('Henüz yorum yok.',
+                    child: Text('HenÃ¼z yorum yok.',
                         style: TextStyle(color: AppColors.textHint)),
                   )
                 : Column(
@@ -391,7 +385,7 @@ class _ProviderContent extends ConsumerWidget {
 
   Widget _reviewCard(Map<String, dynamic> review) {
     final reviewer = review['reviewer'] as Map<String, dynamic>?;
-    final reviewerName = reviewer?['fullName'] as String? ?? 'Kullanıcı';
+    final reviewerName = reviewer?['fullName'] as String? ?? 'KullanÄ±cÄ±';
     final rating = (review['rating'] ?? 0) as int;
     final comment = review['comment'] as String? ?? '';
     final photos = (review['photos'] as List?)?.cast<String>() ?? [];
@@ -423,14 +417,14 @@ class _ProviderContent extends ConsumerWidget {
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => WriteReviewSheet(
         revieweeId: userId,
-        revieweeName: provider['businessName'] as String? ?? 'Sağlayıcı',
+        revieweeName: provider['businessName'] as String? ?? 'SaÄŸlayÄ±cÄ±',
         onSubmitted: () => ref.invalidate(providerReviewsProvider(userId)),
       ),
     );
   }
 }
 
-/// Phase 212: Review kartı — fotoğraf scroll + faydalı butonu
+/// Phase 212: Review kartÄ± â€” fotoÄŸraf scroll + faydalÄ± butonu
 class _ReviewCardWidget extends ConsumerStatefulWidget {
   final String reviewId;
   final String reviewerName;
@@ -516,7 +510,7 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
             Text(widget.comment,
                 style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
           ],
-          // Phase 212: fotoğraf thumbnails
+          // Phase 212: fotoÄŸraf thumbnails
           if (widget.photos.isNotEmpty) ...[
             const SizedBox(height: 8),
             SizedBox(
@@ -543,7 +537,7 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
               ),
             ),
           ],
-          // Phase 212: faydalı butonu
+          // Phase 212: faydalÄ± butonu
           const SizedBox(height: 8),
           GestureDetector(
             onTap: _onHelpful,
@@ -559,7 +553,7 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
                       ),
                 const SizedBox(width: 4),
                 Text(
-                  'Faydalı ($_helpfulCount)',
+                  'FaydalÄ± ($_helpfulCount)',
                   style: TextStyle(
                     fontSize: 12,
                     color: _voted ? AppColors.primary : AppColors.textHint,

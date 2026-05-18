@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/job_repository.dart';
@@ -44,7 +44,7 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
     final auth = ref.read(authStateProvider);
     if (auth is! AuthAuthenticated) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Soru sormak için giriş yapmalısınız.')),
+        const SnackBar(content: Text('Soru sormak iÃ§in giriÅŸ yapmalÄ±sÄ±nÄ±z.')),
       );
       return;
     }
@@ -57,7 +57,7 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Sorunuz gönderildi!'),
+            content: Text('Sorunuz gÃ¶nderildi!'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -83,7 +83,7 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
 
     return Column(
       children: [
-        // Uyarı banner
+        // UyarÄ± banner
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           color: Colors.blue.shade50,
@@ -94,7 +94,7 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Bu mesajlar herkese açıktır. Kişisel bilgi paylaşmayın.',
+                  'Bu mesajlar herkese aÃ§Ä±ktÄ±r. KiÅŸisel bilgi paylaÅŸmayÄ±n.',
                   style: TextStyle(fontSize: 12, color: Colors.blue.shade700),
                 ),
               ),
@@ -170,7 +170,7 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
                 const Icon(Icons.token, size: 13, color: AppColors.accent),
                 const SizedBox(width: 4),
                 Text(
-                  'Soru sormak için bu ilana teklif vermiş olmanız gerekir (5 token)',
+                  'Soru sormak iÃ§in bu ilana teklif vermiÅŸ olmanÄ±z gerekir (5 token)',
                   style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 ),
               ],
@@ -191,7 +191,7 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
                             size: 48, color: Colors.grey.shade300),
                         const SizedBox(height: 12),
                         Text(
-                          'Henüz soru sorulmamış.',
+                          'HenÃ¼z soru sorulmamÄ±ÅŸ.',
                           style: TextStyle(color: Colors.grey.shade500),
                         ),
                       ],
@@ -285,7 +285,7 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
   @override
   Widget build(BuildContext context) {
     final user = widget.question['user'] as Map<String, dynamic>?;
-    final name = user?['fullName'] as String? ?? 'Kullanıcı';
+    final name = user?['fullName'] as String? ?? 'KullanÄ±cÄ±';
     final imgUrl = user?['profileImageUrl'] as String?;
     final text = widget.question['text'] as String? ?? '';
     final createdAt = widget.question['createdAt'] as String?;
@@ -298,8 +298,7 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
     final canReply = (widget.isOwner || isQuestionOwner) && widget.jobStatus == 'open';
 
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
@@ -356,13 +355,13 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
             ),
           ),
 
-          // Yanıtlar
+          // YanÄ±tlar
           if (replies.isNotEmpty) ...[
             Divider(height: 1, color: Colors.grey.shade100),
             ...replies.map((r) => _ReplyTile(reply: r)),
           ],
 
-          // Yanıt kutusu
+          // YanÄ±t kutusu
           if (canReply) ...[
             Divider(height: 1, color: Colors.grey.shade100),
             if (_showReplyBox)
@@ -377,7 +376,7 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                         maxLines: 2,
                         minLines: 1,
                         decoration: InputDecoration(
-                          hintText: 'Yanıtınız...',
+                          hintText: 'YanÄ±tÄ±nÄ±z...',
                           filled: true,
                           fillColor: AppColors.background,
                           border: OutlineInputBorder(
@@ -422,8 +421,8 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                     size: 15, color: AppColors.primary),
                 label: Text(
                   replies.isEmpty
-                      ? 'Yanıtla'
-                      : 'Yanıtları gör (${replies.length})',
+                      ? 'YanÄ±tla'
+                      : 'YanÄ±tlarÄ± gÃ¶r (${replies.length})',
                   style:
                       const TextStyle(fontSize: 12, color: AppColors.primary),
                 ),
@@ -436,7 +435,7 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               child: Text(
-                '${replies.length} yanıt',
+                '${replies.length} yanÄ±t',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
               ),
             ),
@@ -449,10 +448,10 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
     try {
       final dt = DateTime.parse(iso).toLocal();
       final diff = DateTime.now().difference(dt);
-      if (diff.inMinutes < 1) return 'Az önce';
+      if (diff.inMinutes < 1) return 'Az Ã¶nce';
       if (diff.inMinutes < 60) return '${diff.inMinutes} dk';
       if (diff.inHours < 24) return '${diff.inHours} sa';
-      return '${diff.inDays} gün';
+      return '${diff.inDays} gÃ¼n';
     } catch (_) {
       return '';
     }
@@ -466,7 +465,7 @@ class _ReplyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = reply['user'] as Map<String, dynamic>?;
-    final name = user?['fullName'] as String? ?? 'Kullanıcı';
+    final name = user?['fullName'] as String? ?? 'KullanÄ±cÄ±';
     final imgUrl = user?['profileImageUrl'] as String?;
     final text = reply['text'] as String? ?? '';
     final createdAt = reply['createdAt'] as String?;
@@ -522,10 +521,10 @@ class _ReplyTile extends StatelessWidget {
     try {
       final dt = DateTime.parse(iso).toLocal();
       final diff = DateTime.now().difference(dt);
-      if (diff.inMinutes < 1) return 'Az önce';
+      if (diff.inMinutes < 1) return 'Az Ã¶nce';
       if (diff.inMinutes < 60) return '${diff.inMinutes} dk';
       if (diff.inHours < 24) return '${diff.inHours} sa';
-      return '${diff.inDays} gün';
+      return '${diff.inDays} gÃ¼n';
     } catch (_) {
       return '';
     }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -7,8 +7,8 @@ import '../../../ai/data/recommendation_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// Shows AI-powered recommendations in HomeTab.
-/// - Worker user → recommended open jobs
-/// - Customer user → (reserved for future worker suggestions per-job)
+/// - Worker user â†’ recommended open jobs
+/// - Customer user â†’ (reserved for future worker suggestions per-job)
 class AiRecommendationsSection extends ConsumerWidget {
   const AiRecommendationsSection({super.key});
 
@@ -23,7 +23,7 @@ class AiRecommendationsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: 'Senin İçin Öneriler'),
+        const SectionHeader(title: 'Senin Ä°Ã§in Ã–neriler'),
         const SizedBox(height: 10),
         jobsAsync.when(
           data: (jobs) {
@@ -31,7 +31,7 @@ class AiRecommendationsSection extends ConsumerWidget {
               return const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'Henüz öneri yok. Profilini tamamla!',
+                  'HenÃ¼z Ã¶neri yok. Profilini tamamla!',
                   style: TextStyle(color: AppColors.textHint, fontSize: 13),
                 ),
               );
@@ -84,8 +84,7 @@ class _RecommendedJobCard extends StatelessWidget {
         width: 200,
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.border),
           boxShadow: const [

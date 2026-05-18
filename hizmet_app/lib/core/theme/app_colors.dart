@@ -41,12 +41,14 @@ class AppColors {
   static const Color statusClosed  = Color(0xFF6B7280);
   static const Color statusError   = Color(0xFFEF4444);
 
-  // ── Light theme tokens (Legacy support — sadeleştirildi) ───────────────
-  static const Color lightBackground     = Color(0xFFF8F9FA);
-  static const Color lightSurface        = Colors.white;
-  static const Color lightText           = Color(0xFF1A1A1A);
-  static const Color lightTextSecondary  = Color(0xFF77838F);
-  static const Color lightBorder         = Color(0xFFE7EAF3);
+  // ── Light theme tokens (Voldi-darkmode-global: remapped to dark) ───────
+  // Direct references to AppColors.light* now resolve to dark surfaces so
+  // every inline white background disappears without touching call sites.
+  static const Color lightBackground     = background;       // 0xFF0C1117
+  static const Color lightSurface        = surface;          // 0xFF161B22
+  static const Color lightText           = textPrimary;      // 0xFFFFFFFF
+  static const Color lightTextSecondary  = textSecondary;    // 0xFF9CA3AF
+  static const Color lightBorder         = border;           // 0xFF30363D
 
   // ── Dark theme tokens (current premium palette) ────────────────────────
   static const Color darkBackground       = Color(0xFF0C1117);

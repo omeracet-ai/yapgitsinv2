@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:hizmet_app/core/theme/app_colors.dart';
 import 'package:shimmer/shimmer.dart';
 
 Color _baseColor() => Colors.grey.shade300;
@@ -7,13 +8,12 @@ Color _highlightColor() => Colors.grey.shade100;
 Widget _box(double w, double h, {double r = 4}) => Container(
       width: w,
       height: h,
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(r),
       ),
     );
 
-/// Generic skeleton list — repeats [child] [itemCount] times wrapped in shimmer.
+/// Generic skeleton list â€” repeats [child] [itemCount] times wrapped in shimmer.
 class ListSkeleton extends StatelessWidget {
   final int itemCount;
   final EdgeInsetsGeometry padding;
@@ -41,7 +41,7 @@ class ListSkeleton extends StatelessWidget {
   }
 }
 
-/// Job card skeleton — title + meta + budget badge layout.
+/// Job card skeleton â€” title + meta + budget badge layout.
 class JobCardSkeleton extends StatelessWidget {
   const JobCardSkeleton({super.key});
 
@@ -49,8 +49,7 @@ class JobCardSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -83,7 +82,7 @@ class JobCardSkeleton extends StatelessWidget {
   }
 }
 
-/// Provider/worker card skeleton — avatar + name + categories + rating.
+/// Provider/worker card skeleton â€” avatar + name + categories + rating.
 class ProviderCardSkeleton extends StatelessWidget {
   const ProviderCardSkeleton({super.key});
 
@@ -91,8 +90,7 @@ class ProviderCardSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
@@ -101,8 +99,7 @@ class ProviderCardSkeleton extends StatelessWidget {
           Container(
             width: 56,
             height: 56,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: const BoxDecoration(color: AppColors.surface,
               shape: BoxShape.circle,
             ),
           ),
@@ -126,7 +123,7 @@ class ProviderCardSkeleton extends StatelessWidget {
   }
 }
 
-/// Notification card skeleton — small icon + title + body.
+/// Notification card skeleton â€” small icon + title + body.
 class NotificationSkeleton extends StatelessWidget {
   const NotificationSkeleton({super.key});
 
@@ -134,8 +131,7 @@ class NotificationSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(

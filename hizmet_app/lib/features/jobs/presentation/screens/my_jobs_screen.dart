@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -16,7 +16,7 @@ import '../providers/job_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../widgets/boost_dialog.dart';
 
-// ─── Providers ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Providers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 final myJobsProvider =
     FutureProvider.family<List<Map<String, dynamic>>, String>(
@@ -28,9 +28,9 @@ final myOffersProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
   return ref.watch(offerRepositoryProvider).getMyOffers();
 });
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-/// AppBar'sız versiyon — TabBarView içinde kullanılır
+/// AppBar'sÄ±z versiyon â€” TabBarView iÃ§inde kullanÄ±lÄ±r
 class MyJobsBody extends MyJobsScreen {
   const MyJobsBody({super.key}) : super(showAppBar: false);
 }
@@ -81,7 +81,7 @@ class _DualRoleCheckView extends ConsumerWidget {
   }
 }
 
-// ─── Dual Role View (Customer + Worker tabs) ──────────────────────────────────
+// â”€â”€â”€ Dual Role View (Customer + Worker tabs) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _DualRoleView extends ConsumerWidget {
   final String userId;
@@ -102,15 +102,15 @@ class _DualRoleView extends ConsumerWidget {
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.bookmark_border),
-                    tooltip: 'Şablonlarım',
+                    tooltip: 'ÅablonlarÄ±m',
                     onPressed: () => context.push('/sablonlarim'),
                   ),
                 ],
                 bottom: const TabBar(
                   tabs: [
-                    Tab(icon: Icon(Icons.person_outline), text: 'İlanlarım'),
+                    Tab(icon: Icon(Icons.person_outline), text: 'Ä°lanlarÄ±m'),
                     Tab(icon: Icon(Icons.handyman_outlined), text: 'Tekliflerim'),
-                    Tab(icon: Icon(Icons.work_outline), text: 'Fırsatlar'),
+                    Tab(icon: Icon(Icons.work_outline), text: 'FÄ±rsatlar'),
                   ],
                   indicatorColor: Colors.white,
                   labelColor: Colors.white,
@@ -130,7 +130,7 @@ class _DualRoleView extends ConsumerWidget {
   }
 }
 
-// Scaffold olmadan kullanılabilir wrapper
+// Scaffold olmadan kullanÄ±labilir wrapper
 class _CustomerTabContentWrapper extends ConsumerWidget {
   const _CustomerTabContentWrapper();
   @override
@@ -141,7 +141,7 @@ class _CustomerTabContentWrapper extends ConsumerWidget {
   }
 }
 
-// ─── Customer tab content ─────────────────────────────────────────────────────
+// â”€â”€â”€ Customer tab content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _CustomerTabContent extends ConsumerWidget {
   final String userId;
@@ -161,13 +161,12 @@ class _CustomerTabContent extends ConsumerWidget {
         length: 3,
         child: Column(
           children: [
-            const Material(
-              color: Colors.white,
+            const Material(color: AppColors.surface,
               child: TabBar(
                 tabs: [
                   Tab(text: 'Aktif'),
                   Tab(text: 'Tamamlanan'),
-                  Tab(text: 'İptal Edilen'),
+                  Tab(text: 'Ä°ptal Edilen'),
                 ],
                 labelColor: AppColors.primary,
                 unselectedLabelColor: AppColors.textHint,
@@ -183,17 +182,17 @@ class _CustomerTabContent extends ConsumerWidget {
                             j['status'] == 'open' ||
                             j['status'] == 'in_progress')
                         .toList(),
-                    emptyMsg: 'Aktif ilanınız yok.',
+                    emptyMsg: 'Aktif ilanÄ±nÄ±z yok.',
                   ),
                   _JobList(
                     jobs:
                         jobs.where((j) => j['status'] == 'completed').toList(),
-                    emptyMsg: 'Tamamlanan ilanınız yok.',
+                    emptyMsg: 'Tamamlanan ilanÄ±nÄ±z yok.',
                   ),
                   _JobList(
                     jobs:
                         jobs.where((j) => j['status'] == 'cancelled').toList(),
-                    emptyMsg: 'İptal edilen ilanınız yok.',
+                    emptyMsg: 'Ä°ptal edilen ilanÄ±nÄ±z yok.',
                   ),
                 ],
               ),
@@ -205,7 +204,7 @@ class _CustomerTabContent extends ConsumerWidget {
   }
 }
 
-// ─── Worker tab content ───────────────────────────────────────────────────────
+// â”€â”€â”€ Worker tab content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _WorkerTabContent extends ConsumerWidget {
   const _WorkerTabContent();
@@ -224,8 +223,8 @@ class _WorkerTabContent extends ConsumerWidget {
         if (offers.isEmpty) {
           return EmptyState(
             icon: Icons.handyman_rounded,
-            title: 'Henüz teklif vermediniz',
-            message: 'İş ilanlarını keşfet, teklif ver ve kazanmaya başla!',
+            title: 'HenÃ¼z teklif vermediniz',
+            message: 'Ä°ÅŸ ilanlarÄ±nÄ± keÅŸfet, teklif ver ve kazanmaya baÅŸla!',
             action: ElevatedButton.icon(
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const JobOpportunitiesScreen(),
@@ -245,15 +244,14 @@ class _WorkerTabContent extends ConsumerWidget {
           length: 4,
           child: Column(
             children: [
-              const Material(
-                color: Colors.white,
+              const Material(color: AppColors.surface,
                 child: TabBar(
                   isScrollable: true,
                   tabs: [
                     Tab(text: 'Bekleyen'),
                     Tab(text: 'Kabul Edilen'),
                     Tab(text: 'Reddedilen'),
-                    Tab(text: 'Tümü'),
+                    Tab(text: 'TÃ¼mÃ¼'),
                   ],
                   labelColor: AppColors.primary,
                   unselectedLabelColor: AppColors.textHint,
@@ -283,7 +281,7 @@ class _WorkerTabContent extends ConsumerWidget {
                     ),
                     _OfferList(
                       offers: offers,
-                      emptyMsg: 'Henüz teklif vermediniz.',
+                      emptyMsg: 'HenÃ¼z teklif vermediniz.',
                     ),
                   ],
                 ),
@@ -296,7 +294,7 @@ class _WorkerTabContent extends ConsumerWidget {
   }
 }
 
-// ─── Müşteri: kendi ilanları (single-role fallback) ──────────────────────────
+// â”€â”€â”€ MÃ¼ÅŸteri: kendi ilanlarÄ± (single-role fallback) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _CustomerJobsView extends ConsumerWidget {
   final String userId;
@@ -319,7 +317,7 @@ class _CustomerJobsView extends ConsumerWidget {
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.bookmark_border),
-                    tooltip: 'Şablonlarım',
+                    tooltip: 'ÅablonlarÄ±m',
                     onPressed: () => context.push('/sablonlarim'),
                   ),
                 ],
@@ -327,7 +325,7 @@ class _CustomerJobsView extends ConsumerWidget {
                   tabs: [
                     Tab(text: 'Aktif'),
                     Tab(text: 'Tamamlanan'),
-                    Tab(text: 'İptal Edilen'),
+                    Tab(text: 'Ä°ptal Edilen'),
                   ],
                   indicatorColor: Colors.white,
                   labelColor: Colors.white,
@@ -345,15 +343,15 @@ class _CustomerJobsView extends ConsumerWidget {
                     .where((j) =>
                         j['status'] == 'open' || j['status'] == 'in_progress')
                     .toList(),
-                emptyMsg: 'Aktif ilanınız yok.',
+                emptyMsg: 'Aktif ilanÄ±nÄ±z yok.',
               ),
               _JobList(
                 jobs: jobs.where((j) => j['status'] == 'completed').toList(),
-                emptyMsg: 'Tamamlanan ilanınız yok.',
+                emptyMsg: 'Tamamlanan ilanÄ±nÄ±z yok.',
               ),
               _JobList(
                 jobs: jobs.where((j) => j['status'] == 'cancelled').toList(),
-                emptyMsg: 'İptal edilen ilanınız yok.',
+                emptyMsg: 'Ä°ptal edilen ilanÄ±nÄ±z yok.',
               ),
             ],
           ),
@@ -373,7 +371,7 @@ class _JobList extends StatelessWidget {
     if (jobs.isEmpty) {
       return EmptyState(
         icon: Icons.work_outline_rounded,
-        title: 'Henüz iş yok',
+        title: 'HenÃ¼z iÅŸ yok',
         message: emptyMsg,
       );
     }
@@ -436,10 +434,10 @@ class _CustomerJobCard extends ConsumerWidget {
     final canBoost = status == 'open' && !isBoosted;
 
     final (statusLabel, statusColor) = switch (status) {
-      'open' => ('Açık', Colors.green),
+      'open' => ('AÃ§Ä±k', Colors.green),
       'in_progress' => ('Devam Ediyor', Colors.blue),
-      'completed' => ('Tamamlandı', Colors.teal),
-      'cancelled' => ('İptal', Colors.red),
+      'completed' => ('TamamlandÄ±', Colors.teal),
+      'cancelled' => ('Ä°ptal', Colors.red),
       _ => ('Bilinmiyor', Colors.grey),
     };
 
@@ -453,7 +451,7 @@ class _CustomerJobCard extends ConsumerWidget {
             title: title,
             description: job['description'] as String? ?? '',
             location: job['location'] as String? ?? '',
-            budget: '$budgetMin - $budgetMax ₺',
+            budget: '$budgetMin - $budgetMax â‚º',
             category: category,
             postedAt: dateStr,
             icon: Job.getIconForCategory(category),
@@ -469,8 +467,7 @@ class _CustomerJobCard extends ConsumerWidget {
       ),
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(color: AppColors.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: AppColors.border),
           boxShadow: [
@@ -524,7 +521,7 @@ class _CustomerJobCard extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text('🚀 Öne Çıkmış',
+                        child: const Text('ğŸš€ Ã–ne Ã‡Ä±kmÄ±ÅŸ',
                             style: TextStyle(
                                 color: AppColors.primary,
                                 fontSize: 11,
@@ -552,7 +549,7 @@ class _CustomerJobCard extends ConsumerWidget {
                             border: Border.all(
                                 color: AppColors.primary.withValues(alpha: 0.3)),
                           ),
-                          child: const Text('🚀 Öne Çıkar',
+                          child: const Text('ğŸš€ Ã–ne Ã‡Ä±kar',
                               style: TextStyle(
                                   color: AppColors.primary,
                                   fontSize: 11,
@@ -608,7 +605,7 @@ class _CustomerJobCard extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('$budgetMin - $budgetMax ₺',
+                Text('$budgetMin - $budgetMax â‚º',
                     style: const TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
@@ -641,7 +638,7 @@ class _CustomerJobCard extends ConsumerWidget {
                       ),
                     );
                   },
-                  icon: const Text('🔁', style: TextStyle(fontSize: 14)),
+                  icon: const Text('ğŸ”', style: TextStyle(fontSize: 14)),
                   label: Text(AppLocalizations.of(context).myJobsRepost),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.primary,
@@ -674,7 +671,7 @@ class _WorkerOfferCard extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         title: Text(AppLocalizations.of(context).myJobsWithdrawOffer),
         content: const Text(
-            'Bu teklifi geri çekiyorsun. 5 token iade alacaksın. Devam edilsin mi?'),
+            'Bu teklifi geri Ã§ekiyorsun. 5 token iade alacaksÄ±n. Devam edilsin mi?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -702,8 +699,8 @@ class _WorkerOfferCard extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         backgroundColor: refunded ? Colors.green : Colors.orange,
         content: Text(refunded
-            ? 'Teklif geri çekildi. $amount token iade edildi.'
-            : 'Teklif geri çekildi.'),
+            ? 'Teklif geri Ã§ekildi. $amount token iade edildi.'
+            : 'Teklif geri Ã§ekildi.'),
       ));
     } catch (e) {
       if (!context.mounted) return;
@@ -722,7 +719,7 @@ class _WorkerOfferCard extends ConsumerWidget {
     final counterPrice = (offer['counterPrice'] as num?)?.toDouble();
     final counterMessage = offer['counterMessage'] as String?;
     final job = offer['job'] as Map<String, dynamic>?;
-    final jobTitle = job?['title'] as String? ?? 'Bilinmeyen İlan';
+    final jobTitle = job?['title'] as String? ?? 'Bilinmeyen Ä°lan';
     final jobCategory = job?['category'] as String? ?? '';
     final jobLocation = job?['location'] as String? ?? '';
     final createdAt = offer['createdAt'] as String? ?? '';
@@ -734,15 +731,14 @@ class _WorkerOfferCard extends ConsumerWidget {
       'pending' => ('Bekliyor', Colors.orange),
       'accepted' => ('Kabul Edildi', Colors.green),
       'rejected' => ('Reddedildi', Colors.red),
-      'withdrawn' => ('Geri Çekildi', Colors.grey),
-      'countered' => ('Pazarlık', Colors.blue),
+      'withdrawn' => ('Geri Ã‡ekildi', Colors.grey),
+      'countered' => ('PazarlÄ±k', Colors.blue),
       _ => ('Bilinmiyor', Colors.grey),
     };
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.border),
         boxShadow: [
@@ -837,7 +833,7 @@ class _WorkerOfferCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Karşı Teklif: ${IntlFormatter.currency(context, counterPrice, decimalDigits: 0)}',
+                  Text('KarÅŸÄ± Teklif: ${IntlFormatter.currency(context, counterPrice, decimalDigits: 0)}',
                       style: TextStyle(
                           color: Colors.blue.shade700,
                           fontWeight: FontWeight.bold,

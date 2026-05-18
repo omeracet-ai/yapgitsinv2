@@ -20,7 +20,13 @@ const kCardShadow = [
 ];
 
 class AppTheme {
-  static ThemeData get lightTheme {
+  /// Voldi-darkmode-global: lightTheme remapped to darkTheme so the entire
+  /// app is dark-first regardless of system brightness. White backgrounds
+  /// are eliminated; brand green tokens are preserved.
+  static ThemeData get lightTheme => darkTheme;
+
+  // ignore: unused_element
+  static ThemeData get _lightThemeLegacy {
     // Light-mode local tokens (project palette is dark-first; AppColors.light*
     // covers the basics, these fill the gaps without bloating AppColors).
     const lightSurfaceElevated = Color(0xFFF1F3F5);

@@ -1,10 +1,10 @@
-import 'dart:io' as io;
+﻿import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../../core/theme/app_colors.dart';
 
-/// Phase 129 Step 5 — Kimlik fotoğrafı (zorunlu).
+/// Phase 129 Step 5 â€” Kimlik fotoÄŸrafÄ± (zorunlu).
 class WorkerOnboardingStep5Identity extends StatelessWidget {
   final XFile? identityPhoto;
   final ValueChanged<XFile?> onChanged;
@@ -27,19 +27,18 @@ class WorkerOnboardingStep5Identity extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('🪪 Kimlik doğrulama',
+          const Text('ğŸªª Kimlik doÄŸrulama',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           const Text(
-              'Güvenli marketplace için kimlik fotoğrafı zorunlu. Şifreli saklanır.',
+              'GÃ¼venli marketplace iÃ§in kimlik fotoÄŸrafÄ± zorunlu. Åifreli saklanÄ±r.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
           const SizedBox(height: 20),
           GestureDetector(
             onTap: _pick,
             child: Container(
               height: 220,
-              decoration: BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(color: AppColors.surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: identityPhoto != null
@@ -63,11 +62,11 @@ class WorkerOnboardingStep5Identity extends StatelessWidget {
                         Icon(Icons.badge_outlined,
                             size: 56, color: Colors.orange.shade400),
                         const SizedBox(height: 12),
-                        const Text('Kimlik fotoğrafı yükle',
+                        const Text('Kimlik fotoÄŸrafÄ± yÃ¼kle',
                             style: TextStyle(
                                 fontWeight: FontWeight.w600, fontSize: 15)),
                         const SizedBox(height: 4),
-                        Text('Galeriden seç',
+                        Text('Galeriden seÃ§',
                             style: TextStyle(
                                 fontSize: 12, color: Colors.grey.shade600)),
                       ],
@@ -80,7 +79,7 @@ class WorkerOnboardingStep5Identity extends StatelessWidget {
               child: TextButton.icon(
                 onPressed: _pick,
                 icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Yeniden Seç'),
+                label: const Text('Yeniden SeÃ§'),
               ),
             ),
           const SizedBox(height: 16),
@@ -96,7 +95,7 @@ class WorkerOnboardingStep5Identity extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Admin onayından sonra mavi tik kazanırsın — daha fazla teklif alırsın.',
+                  'Admin onayÄ±ndan sonra mavi tik kazanÄ±rsÄ±n â€” daha fazla teklif alÄ±rsÄ±n.',
                   style: TextStyle(fontSize: 12),
                 ),
               ),

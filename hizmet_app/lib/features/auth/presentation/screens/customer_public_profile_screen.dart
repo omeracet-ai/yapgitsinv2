@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../data/customer_profile_repository.dart';
 
-/// Phase 133 — Customer public profile screen (no worker fields).
+/// Phase 133 â€” Customer public profile screen (no worker fields).
 class CustomerPublicProfileScreen extends ConsumerWidget {
   final String userId;
   const CustomerPublicProfileScreen({super.key, required this.userId});
@@ -13,7 +13,7 @@ class CustomerPublicProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(customerProfileProvider(userId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Müşteri Profili')),
+      appBar: AppBar(title: const Text('MÃ¼ÅŸteri Profili')),
       body: asyncData.when(
         loading: () => ListSkeleton(itemCount: 4, itemBuilder: (_) => const ProviderCardSkeleton()),
         error: (e, _) => Center(child: Text('Hata: $e')),
@@ -29,7 +29,7 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = (data['fullName'] as String?) ?? 'Müşteri';
+    final name = (data['fullName'] as String?) ?? 'MÃ¼ÅŸteri';
     final imgUrl = data['profileImageUrl'] as String?;
     final verified = data['identityVerified'] == true;
     final joinedAt = data['joinedAt'] as String?;
@@ -97,7 +97,7 @@ class _Body extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        'Üyelik: ${_formatDate(joinedAt)}',
+                        'Ãœyelik: ${_formatDate(joinedAt)}',
                         style: const TextStyle(
                             fontSize: 12, color: Colors.black54),
                       ),
@@ -113,8 +113,7 @@ class _Body extends StatelessWidget {
         // Stats card
         Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(color: AppColors.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey.shade200),
           ),
@@ -122,9 +121,9 @@ class _Body extends StatelessWidget {
             children: [
               _stat('Tamamlanan', '$completed', Icons.check_circle_outline),
               _divider(),
-              _stat('Başarı', '%$rate', Icons.trending_up_rounded),
+              _stat('BaÅŸarÄ±', '%$rate', Icons.trending_up_rounded),
               _divider(),
-              _stat('Toplam İlan', '$total', Icons.list_alt_rounded),
+              _stat('Toplam Ä°lan', '$total', Icons.list_alt_rounded),
               _divider(),
               _stat('Yorum', '${reviews.length}', Icons.rate_review_outlined),
             ],
@@ -133,7 +132,7 @@ class _Body extends StatelessWidget {
 
         const SizedBox(height: 24),
 
-        // Phase 145 — Aktivite (son 6 ay)
+        // Phase 145 â€” Aktivite (son 6 ay)
         const Text('Aktivite (Son 6 Ay)',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
@@ -143,7 +142,7 @@ class _Body extends StatelessWidget {
 
         // Top categories
         if (topCats.isNotEmpty) ...[
-          const Text('En Sık Çalıştığı Kategoriler',
+          const Text('En SÄ±k Ã‡alÄ±ÅŸtÄ±ÄŸÄ± Kategoriler',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Wrap(
@@ -183,7 +182,7 @@ class _Body extends StatelessWidget {
                 const Icon(Icons.payments_rounded,
                     color: AppColors.primary, size: 22),
                 const SizedBox(width: 10),
-                Text('Ortalama Bütçe: $avgBudget₺',
+                Text('Ortalama BÃ¼tÃ§e: $avgBudgetâ‚º',
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -196,21 +195,21 @@ class _Body extends StatelessWidget {
 
         // Last completed jobs
         if (lastJobs.isNotEmpty) ...[
-          const Text('Son Tamamlanan İşler',
+          const Text('Son Tamamlanan Ä°ÅŸler',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           ...lastJobs.map((j) => _jobTile(j)),
           const SizedBox(height: 20),
         ],
 
-        const Text('Bu Müşteriye Verilen Yorumlar',
+        const Text('Bu MÃ¼ÅŸteriye Verilen Yorumlar',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
 
         if (reviews.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
-            child: Text('Henüz yorum yok.',
+            child: Text('HenÃ¼z yorum yok.',
                 style: TextStyle(color: Colors.black54)),
           )
         else
@@ -254,8 +253,7 @@ class _Body extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.grey.shade200),
       ),
@@ -308,8 +306,7 @@ class _Body extends StatelessWidget {
     final maxBar = maxCount == 0 ? 1 : maxCount;
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
       ),
@@ -361,8 +358,7 @@ class _Body extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.grey.shade200),
       ),
@@ -381,14 +377,14 @@ class _Body extends StatelessWidget {
                     overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 2),
                 Text(
-                    '$cat${completedAt != null ? " · ${_formatDate(completedAt)}" : ""}',
+                    '$cat${completedAt != null ? " Â· ${_formatDate(completedAt)}" : ""}',
                     style: const TextStyle(
                         fontSize: 11, color: Colors.black54)),
               ],
             ),
           ),
           if (budget > 0)
-            Text('$budget₺',
+            Text('$budgetâ‚º',
                 style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,

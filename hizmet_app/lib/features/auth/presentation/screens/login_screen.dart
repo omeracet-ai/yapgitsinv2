@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -80,12 +80,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
       return;
     }
-    // Phase Mobile7 — Email doğrulama zorunlu
+    // Phase Mobile7 â€” Email doÄŸrulama zorunlu
     final user = result['user'] as Map<String, dynamic>?;
     if (user != null && user['emailVerified'] == false) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('E-posta doğrulamanız gerekiyor.'),
+          content: const Text('E-posta doÄŸrulamanÄ±z gerekiyor.'),
           backgroundColor: const Color(0xFF161B22),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -212,9 +212,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ).animate().fade(delay: 600.ms),
               const SizedBox(height: 16),
-              // ─────────────────────────────────────────────────────────
-              // Phase 191 — Social Sign-In divider + buttons
-              // ─────────────────────────────────────────────────────────
+              // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // Phase 191 â€” Social Sign-In divider + buttons
+              // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Row(
                 children: [
                   const Expanded(child: Divider(color: AppColors.border)),
@@ -248,7 +248,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.surface,
                     side: const BorderSide(color: Color(0xFFDADCE0)),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -289,7 +289,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 }
 
 /// Minimal Google "G" glyph painted inline so we don't ship an asset for it.
-/// Four-color paint approximated as a single colored "G" — kept neutral so
+/// Four-color paint approximated as a single colored "G" â€” kept neutral so
 /// the OutlinedButton.icon slot stays brand-safe until a real SVG lands.
 class _GoogleGlyph extends StatelessWidget {
   const _GoogleGlyph();

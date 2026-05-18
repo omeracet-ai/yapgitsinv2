@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/app_colors.dart';
 
@@ -32,8 +32,7 @@ class WorkerCard extends StatelessWidget {
         width: 220,
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(
@@ -69,8 +68,7 @@ class WorkerCard extends StatelessWidget {
                     right: -4,
                     child: Container(
                       padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
+                      decoration: const BoxDecoration(color: AppColors.surface,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(

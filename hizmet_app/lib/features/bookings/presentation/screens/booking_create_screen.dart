@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -82,7 +82,7 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Randevu oluşturuldu'),
+          content: Text('Randevu oluÅŸturuldu'),
           backgroundColor: AppColors.success,
         ),
       );
@@ -105,7 +105,7 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Randevu — ${widget.workerName}'),
+        title: Text('Randevu â€” ${widget.workerName}'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -182,8 +182,7 @@ class _ProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
+    return Container(color: AppColors.surface,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         children: List.generate(total, (i) {
@@ -220,8 +219,7 @@ class _StickyBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
+    return Container(color: AppColors.surface,
       padding: EdgeInsets.fromLTRB(
           16, 12, 16, 12 + MediaQuery.of(context).padding.bottom),
       child: Row(

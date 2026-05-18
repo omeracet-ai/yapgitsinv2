@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,7 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../profile/data/user_profile_repository.dart';
 import '../providers/auth_provider.dart';
 
-// ── Model ─────────────────────────────────────────────────────────────────────
+// â”€â”€ Model â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class SavedAddress {
   final String id;
   final String title;
@@ -58,7 +58,7 @@ class SavedAddress {
       );
 }
 
-// ── Provider ──────────────────────────────────────────────────────────────────
+// â”€â”€ Provider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 final addressesProvider =
     StateNotifierProvider<AddressesNotifier, List<SavedAddress>>((ref) {
   return AddressesNotifier(ref);
@@ -86,7 +86,7 @@ class AddressesNotifier extends StateNotifier<List<SavedAddress>> {
         debugPrint('addresses_screen._load.decode: $e\n$st');
       }
     }
-    // Kullanıcının mevcut adresini varsayılan olarak al
+    // KullanÄ±cÄ±nÄ±n mevcut adresini varsayÄ±lan olarak al
     final auth = _ref.read(authStateProvider);
     if (auth is AuthAuthenticated) {
       final city = auth.user['city'] as String? ?? '';
@@ -115,7 +115,7 @@ class AddressesNotifier extends StateNotifier<List<SavedAddress>> {
   }
 
   Future<void> add(SavedAddress addr) async {
-    // Eğer yeni adres varsayılan ise diğerlerini kaldır
+    // EÄŸer yeni adres varsayÄ±lan ise diÄŸerlerini kaldÄ±r
     List<SavedAddress> next = addr.isDefault
         ? state.map((a) => a.copyWith(isDefault: false)).toList()
         : List.from(state);
@@ -160,7 +160,7 @@ class AddressesNotifier extends StateNotifier<List<SavedAddress>> {
   }
 }
 
-// ── Screen ────────────────────────────────────────────────────────────────────
+// â”€â”€ Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class AddressesScreen extends ConsumerWidget {
   const AddressesScreen({super.key});
 
@@ -218,20 +218,20 @@ class AddressesScreen extends ConsumerWidget {
             Icon(Icons.location_off_outlined,
                 size: 72, color: Colors.grey.shade300),
             const SizedBox(height: 20),
-            const Text('Kayıtlı adresiniz yok',
+            const Text('KayÄ±tlÄ± adresiniz yok',
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary)),
             const SizedBox(height: 8),
-            const Text('Hızlı sipariş için adres ekleyin.',
+            const Text('HÄ±zlÄ± sipariÅŸ iÃ§in adres ekleyin.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary)),
             const SizedBox(height: 28),
             ElevatedButton.icon(
               onPressed: () => _showAddressForm(context, ref, null),
               icon: const Icon(Icons.add_location_alt_outlined),
-              label: const Text('İlk Adresimi Ekle'),
+              label: const Text('Ä°lk Adresimi Ekle'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -266,7 +266,7 @@ class AddressesScreen extends ConsumerWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('İptal')),
+              child: const Text('Ä°ptal')),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
@@ -282,7 +282,7 @@ class AddressesScreen extends ConsumerWidget {
   }
 }
 
-// ── Address Card ─────────────────────────────────────────────────────────────
+// â”€â”€ Address Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _AddressCard extends StatelessWidget {
   final SavedAddress addr;
   final VoidCallback onEdit;
@@ -300,7 +300,7 @@ class _AddressCard extends StatelessWidget {
     switch (addr.title.toLowerCase()) {
       case 'ev':
         return Icons.home_outlined;
-      case 'iş':
+      case 'iÅŸ':
         return Icons.business_outlined;
       case 'okul':
         return Icons.school_outlined;
@@ -313,8 +313,7 @@ class _AddressCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: addr.isDefault ? AppColors.primary : AppColors.border,
@@ -361,7 +360,7 @@ class _AddressCard extends StatelessWidget {
                               color: AppColors.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text('Varsayılan',
+                            child: const Text('VarsayÄ±lan',
                                 style: TextStyle(
                                     fontSize: 10,
                                     color: AppColors.primary,
@@ -385,8 +384,8 @@ class _AddressCard extends StatelessWidget {
                 itemBuilder: (_) => [
                   if (!addr.isDefault)
                     const PopupMenuItem(
-                        value: 'default', child: Text('Varsayılan Yap')),
-                  const PopupMenuItem(value: 'edit', child: Text('Düzenle')),
+                        value: 'default', child: Text('VarsayÄ±lan Yap')),
+                  const PopupMenuItem(value: 'edit', child: Text('DÃ¼zenle')),
                   const PopupMenuItem(
                       value: 'delete',
                       child: Text('Sil', style: TextStyle(color: Colors.red))),
@@ -418,7 +417,7 @@ class _AddressCard extends StatelessWidget {
   }
 }
 
-// ── Address Form (BottomSheet) ────────────────────────────────────────────────
+// â”€â”€ Address Form (BottomSheet) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _AddressForm extends StatefulWidget {
   final SavedAddress? existing;
   final WidgetRef ref;
@@ -436,7 +435,7 @@ class _AddressFormState extends State<_AddressForm> {
   bool _isDefault = false;
   bool _loading = false;
 
-  final _titles = ['Ev', 'İş', 'Okul', 'Diğer'];
+  final _titles = ['Ev', 'Ä°ÅŸ', 'Okul', 'DiÄŸer'];
 
   @override
   void initState() {
@@ -461,7 +460,7 @@ class _AddressFormState extends State<_AddressForm> {
   Future<void> _save() async {
     if (_cityCtrl.text.trim().isEmpty && _addressCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Şehir veya adres giriniz.')));
+          const SnackBar(content: Text('Åehir veya adres giriniz.')));
       return;
     }
     setState(() => _loading = true);
@@ -486,8 +485,7 @@ class _AddressFormState extends State<_AddressForm> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: const BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
@@ -511,12 +509,12 @@ class _AddressFormState extends State<_AddressForm> {
                       borderRadius: BorderRadius.circular(2))),
             ),
             const SizedBox(height: 20),
-            Text(widget.existing != null ? 'Adresi Düzenle' : 'Yeni Adres',
+            Text(widget.existing != null ? 'Adresi DÃ¼zenle' : 'Yeni Adres',
                 style:
                     const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
 
-            // Etiket seçimi
+            // Etiket seÃ§imi
             const Text('Adres Etiketi',
                 style: TextStyle(
                     fontSize: 13,
@@ -539,22 +537,22 @@ class _AddressFormState extends State<_AddressForm> {
               }).toList(),
             ),
             const SizedBox(height: 16),
-            _field(_cityCtrl, 'Şehir *', Icons.location_city_outlined,
+            _field(_cityCtrl, 'Åehir *', Icons.location_city_outlined,
                 TextInputType.text),
             const SizedBox(height: 12),
             _field(
-                _districtCtrl, 'İlçe', Icons.map_outlined, TextInputType.text),
+                _districtCtrl, 'Ä°lÃ§e', Icons.map_outlined, TextInputType.text),
             const SizedBox(height: 12),
             TextField(
               controller: _addressCtrl,
               maxLines: 3,
-              decoration: _inputDeco('Açık Adres', Icons.home_outlined),
+              decoration: _inputDeco('AÃ§Ä±k Adres', Icons.home_outlined),
             ),
             const SizedBox(height: 16),
             SwitchListTile(
               value: _isDefault,
               onChanged: (v) => setState(() => _isDefault = v),
-              title: const Text('Varsayılan adres olarak ayarla',
+              title: const Text('VarsayÄ±lan adres olarak ayarla',
                   style: TextStyle(fontSize: 14)),
               activeThumbColor: AppColors.primary,
               contentPadding: EdgeInsets.zero,
@@ -577,7 +575,7 @@ class _AddressFormState extends State<_AddressForm> {
                         height: 22,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
-                    : Text(widget.existing != null ? 'Güncelle' : 'Ekle',
+                    : Text(widget.existing != null ? 'GÃ¼ncelle' : 'Ekle',
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16)),
               ),
