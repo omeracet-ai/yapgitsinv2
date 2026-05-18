@@ -250,7 +250,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           slivers: [
             // ── Hero SliverAppBar ──────────────────────────────────────
             SliverAppBar(
-              expandedHeight: 200,
+              expandedHeight: 280,
               pinned: true,
               backgroundColor: AppColors.background,
               elevation: 0,
@@ -371,6 +371,34 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                               ),
                             ),
                           ),
+                          const SizedBox(height: 10),
+                          // ── Hizmet İlanı Ver butonu — search'in hemen altında
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              if (isLoggedIn) {
+                                context.push('/ilan-ver');
+                              } else {
+                                context.push('/giris-yap',
+                                    extra: {'returnTo': '/ilan-ver'});
+                              }
+                            },
+                            icon: const Icon(Icons.add_circle_outline,
+                                color: Colors.white),
+                            label: const Text('Hizmet İlanı Ver',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.darkSurfaceElevated,
+                              foregroundColor: AppColors.darkPrimary,
+                              minimumSize: const Size(double.infinity, 50),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: const BorderSide(
+                                      color: AppColors.darkBorder)),
+                              elevation: 0,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -422,35 +450,6 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── İlan Ver butonu (search'in hemen altında) ────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        if (isLoggedIn) {
-                          context.push('/ilan-ver');
-                        } else {
-                          context.push('/giris-yap',
-                              extra: {'returnTo': '/ilan-ver'});
-                        }
-                      },
-                      icon: const Icon(Icons.add_circle_outline,
-                          color: Colors.white),
-                      label: const Text('Hizmet İlanı Ver',
-                          style: TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.darkSurfaceElevated,
-                        foregroundColor: AppColors.darkPrimary,
-                        minimumSize: const Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: const BorderSide(color: AppColors.darkBorder)),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
-
                   if (!isLoggedIn) _buildGuestBanner(context),
 
                   const SizedBox(height: 24),
