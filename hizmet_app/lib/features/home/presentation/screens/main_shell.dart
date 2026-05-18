@@ -298,27 +298,6 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                   ),
                                 ],
                               ),
-                              if (!isLoggedIn)
-                                GestureDetector(
-                                  onTap: () => context.push('/giris-yap'),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 7),
-                                    decoration: BoxDecoration(color: AppColors.surface.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                          color: Colors.white.withValues(alpha: 0.5)),
-                                    ),
-                                    child: const Text(
-                                      'Giriş Yap',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
                             ],
                           ),
                           const SizedBox(height: 10),
