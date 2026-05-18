@@ -422,9 +422,9 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── İlan Ver butonu ──────────────────────────────────
+                  // ── İlan Ver butonu (search'in hemen altında) ────────
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                     child: ElevatedButton.icon(
                       onPressed: () {
                         if (isLoggedIn) {
