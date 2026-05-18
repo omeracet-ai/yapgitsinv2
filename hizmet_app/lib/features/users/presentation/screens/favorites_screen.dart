@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -16,7 +16,7 @@ class FavoritesScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Favori UstalarÄ±m'),
+        title: const Text('Favori Ustalarım'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -56,9 +56,9 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return const EmptyState(
       icon: Icons.favorite_border_rounded,
-      title: 'HenÃ¼z favori usta yok',
+      title: 'Henüz favori usta yok',
       message:
-          'BeÄŸendiÄŸin ustalarÄ± kalp ikonuyla kaydet, sonra buradan kolayca ulaÅŸ.',
+          'Beğendiğin ustaları kalp ikonuyla kaydet, sonra buradan kolayca ulaş.',
     );
   }
 }
@@ -156,7 +156,7 @@ class _FavoriteWorkerCard extends ConsumerWidget {
                     ),
                     if (cats.isNotEmpty) ...[
                       const SizedBox(height: 4),
-                      Text(cats.take(2).join(' Â· '),
+                      Text(cats.take(2).join(' · '),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -177,7 +177,7 @@ class _FavoriteWorkerCard extends ConsumerWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.favorite, color: AppColors.error),
-                tooltip: 'Favorilerden Ã§Ä±kar',
+                tooltip: 'Favorilerden çıkar',
                 onPressed: () async {
                   try {
                     await ref

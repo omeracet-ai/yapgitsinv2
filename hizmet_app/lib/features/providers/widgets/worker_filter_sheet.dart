@@ -1,12 +1,12 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/worker_filter.dart';
 
-/// Phase 39 â€” Worker Filter Bottom Sheet
+/// Phase 39 — Worker Filter Bottom Sheet
 ///
-/// KullanÄ±m:
+/// Kullanım:
 /// ```dart
 /// final result = await showModalBottomSheet<WorkerFilter>(
 ///   context: context,
@@ -31,9 +31,9 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
   late WorkerSortBy _sortBy;
   late TextEditingController _minRateCtrl;
   late TextEditingController _maxRateCtrl;
-  // Phase 134 â€” AI semantic search
+  // Phase 134 — AI semantic search
   late TextEditingController _semanticQueryCtrl;
-  // Phase 112 â€” geo
+  // Phase 112 — geo
   late bool _nearMe;
   late int _radiusKm;
   double? _userLat;
@@ -95,7 +95,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Konum alÄ±namadÄ±: $e')),
+        SnackBar(content: Text('Konum alınamadı: $e')),
       );
       setState(() => _locating = false);
     }
@@ -194,29 +194,29 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _sectionTitle('âœ¨ AkÄ±llÄ± Arama (opsiyonel)'),
+                    _sectionTitle('✨ Akıllı Arama (opsiyonel)'),
                     const SizedBox(height: 8),
                     _buildSemanticQueryField(),
                     const SizedBox(height: 20),
-                    _sectionTitle('Minimum YÄ±ldÄ±z'),
+                    _sectionTitle('Minimum Yıldız'),
                     const SizedBox(height: 8),
                     _buildRatingChips(),
                     const SizedBox(height: 20),
-                    _sectionTitle('Saat Ãœcreti (â‚º)'),
+                    _sectionTitle('Saat Ücreti (₺)'),
                     const SizedBox(height: 8),
                     _buildRateInputs(),
                     const SizedBox(height: 20),
-                    _sectionTitle('SÄ±ralama'),
+                    _sectionTitle('Sıralama'),
                     const SizedBox(height: 8),
                     _buildSortChips(),
                     const SizedBox(height: 20),
                     _buildSwitch(
                       title: _locating
-                          ? 'Konum alÄ±nÄ±yorâ€¦'
-                          : 'YakÄ±nÄ±mdaki ustalar',
+                          ? 'Konum alınıyor…'
+                          : 'Yakınımdaki ustalar',
                       subtitle: _nearMe && _userLat != null
                           ? 'Konum: ${_userLat!.toStringAsFixed(3)}, ${_userLng!.toStringAsFixed(3)}'
-                          : 'GPS izni ile yakÄ±ndaki ustalarÄ± gÃ¶ster',
+                          : 'GPS izni ile yakındaki ustaları göster',
                       icon: Icons.my_location_rounded,
                       iconColor: AppColors.primary,
                       value: _nearMe,
@@ -224,7 +224,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
                     ),
                     if (_nearMe) ...[
                       const SizedBox(height: 12),
-                      _sectionTitle('YarÄ±Ã§ap (km)'),
+                      _sectionTitle('Yarıçap (km)'),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -261,7 +261,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
                     ],
                     const SizedBox(height: 12),
                     _buildSwitch(
-                      title: 'Sadece doÄŸrulanmÄ±ÅŸ',
+                      title: 'Sadece doğrulanmış',
                       subtitle: 'Mavi tikli ustalar',
                       icon: Icons.verified_rounded,
                       iconColor: Colors.blue,
@@ -270,8 +270,8 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
                     ),
                     const SizedBox(height: 8),
                     _buildSwitch(
-                      title: 'Sadece mÃ¼sait',
-                      subtitle: 'Åu anda iÅŸ alabilen',
+                      title: 'Sadece müsait',
+                      subtitle: 'Şu anda iş alabilen',
                       icon: Icons.bolt_rounded,
                       iconColor: AppColors.success,
                       value: _availableOnly,
@@ -297,7 +297,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('SÄ±fÄ±rla',
+                      child: const Text('Sıfırla',
                           style: TextStyle(
                               color: AppColors.textSecondary,
                               fontWeight: FontWeight.w600)),
@@ -380,11 +380,11 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
       controller: _semanticQueryCtrl,
       maxLength: 200,
       decoration: InputDecoration(
-        hintText: 'Ã¶rn: gece geÃ§ saat Ã§alÄ±ÅŸan tesisatÃ§Ä±',
+        hintText: 'örn: gece geç saat çalışan tesisatçı',
         hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 13),
         prefixIcon: const Icon(Icons.auto_awesome_rounded,
             size: 18, color: AppColors.primary),
-        helperText: 'AI ile sonuÃ§larÄ± akÄ±llÄ± sÄ±rala',
+        helperText: 'AI ile sonuçları akıllı sırala',
         helperStyle: const TextStyle(fontSize: 11, color: AppColors.textHint),
         counterText: '',
         contentPadding:
@@ -410,9 +410,9 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
   Widget _buildRateInputs() {
     return Row(
       children: [
-        Expanded(child: _rateField(_minRateCtrl, 'Min â‚º')),
+        Expanded(child: _rateField(_minRateCtrl, 'Min ₺')),
         const SizedBox(width: 12),
-        Expanded(child: _rateField(_maxRateCtrl, 'Max â‚º')),
+        Expanded(child: _rateField(_maxRateCtrl, 'Max ₺')),
       ],
     );
   }

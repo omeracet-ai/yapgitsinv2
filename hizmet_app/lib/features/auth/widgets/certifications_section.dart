@@ -1,4 +1,4 @@
-﻿import 'package:file_picker/file_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../certifications/data/certification_repository.dart';
 
-/// Phase 159 â€” EditProfile worker certifications section.
+/// Phase 159 — EditProfile worker certifications section.
 class CertificationsSection extends ConsumerStatefulWidget {
   const CertificationsSection({super.key});
 
@@ -65,7 +65,7 @@ class _CertificationsSectionState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'DoÄŸrulanmÄ±ÅŸ sertifikalar profilinizde "SertifikalÄ±" rozeti olarak gÃ¶rÃ¼nÃ¼r.',
+          'Doğrulanmış sertifikalar profilinizde "Sertifikalı" rozeti olarak görünür.',
           style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 12),
@@ -78,7 +78,7 @@ class _CertificationsSectionState
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Text(
-              'HenÃ¼z sertifika eklemediniz.',
+              'Henüz sertifika eklemediniz.',
               style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
             ),
           )
@@ -107,7 +107,7 @@ class _CertificationsSectionState
       ),
       child: Row(
         children: [
-          Text(c.verified ? 'ğŸªª' : 'ğŸ“œ',
+          Text(c.verified ? '🪪' : '📜',
               style: const TextStyle(fontSize: 22)),
           const SizedBox(width: 10),
           Expanded(
@@ -131,7 +131,7 @@ class _CertificationsSectionState
                         color: AppColors.success.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text('DoÄŸrulandÄ±',
+                      child: const Text('Doğrulandı',
                           style: TextStyle(
                               fontSize: 10,
                               color: AppColors.success,
@@ -227,7 +227,7 @@ class _AddCertificationSheetState
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Dosya yÃ¼klenemedi')),
+        const SnackBar(content: Text('Dosya yüklenemedi')),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -239,7 +239,7 @@ class _AddCertificationSheetState
     final issuer = _issuer.text.trim();
     if (name.isEmpty || issuer.isEmpty || _issuedAt == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ad, kurum ve veriliÅŸ tarihi gerekli')),
+        const SnackBar(content: Text('Ad, kurum ve veriliş tarihi gerekli')),
       );
       return;
     }
@@ -266,7 +266,7 @@ class _AddCertificationSheetState
   }
 
   String _fmt(DateTime? d) =>
-      d == null ? 'SeÃ§ilmedi' : '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+      d == null ? 'Seçilmedi' : '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) {
@@ -287,7 +287,7 @@ class _AddCertificationSheetState
           TextField(
             controller: _name,
             decoration: const InputDecoration(
-                labelText: 'Sertifika AdÄ±', border: OutlineInputBorder()),
+                labelText: 'Sertifika Adı', border: OutlineInputBorder()),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -300,14 +300,14 @@ class _AddCertificationSheetState
             Expanded(
               child: OutlinedButton(
                 onPressed: () => _pickDate(true),
-                child: Text('VeriliÅŸ: ${_fmt(_issuedAt)}'),
+                child: Text('Veriliş: ${_fmt(_issuedAt)}'),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: OutlinedButton(
                 onPressed: () => _pickDate(false),
-                child: Text('GeÃ§erlilik: ${_fmt(_expiresAt)}'),
+                child: Text('Geçerlilik: ${_fmt(_expiresAt)}'),
               ),
             ),
           ]),
@@ -315,7 +315,7 @@ class _AddCertificationSheetState
           OutlinedButton.icon(
             onPressed: _busy ? null : _pickFile,
             icon: const Icon(Icons.attach_file),
-            label: Text(_docName ?? 'DokÃ¼man YÃ¼kle (pdf/jpg/png)'),
+            label: Text(_docName ?? 'Doküman Yükle (pdf/jpg/png)'),
           ),
           const SizedBox(height: 12),
           ElevatedButton(

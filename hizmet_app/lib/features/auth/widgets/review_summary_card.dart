@@ -1,9 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../ai/data/ai_repository.dart';
 
-/// AI Ã¶zeti â€” backend POST /ai/summarize-reviews { reviews } â†’ { summary }
+/// AI özeti — backend POST /ai/summarize-reviews { reviews } → { summary }
 final reviewSummaryProvider = FutureProvider.autoDispose
     .family<String, _SummaryArgs>((ref, args) async {
   if (args.reviews.length < 3) return '';
@@ -54,9 +54,9 @@ class ReviewSummaryCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                const Text('âœ¨', style: TextStyle(fontSize: 16)),
+                const Text('✨', style: TextStyle(fontSize: 16)),
                 const SizedBox(width: 6),
-                const Text('AI Yorum Ã–zeti',
+                const Text('AI Yorum Özeti',
                     style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.bold,
@@ -82,7 +82,7 @@ class ReviewSummaryCard extends ConsumerWidget {
             async.when(
               loading: () => const _ShimmerLines(),
               error: (e, _) => Text(
-                'Ã–zet ÅŸu an oluÅŸturulamadÄ±.',
+                'Özet şu an oluşturulamadı.',
                 style: TextStyle(
                     fontSize: 12.5,
                     color: AppColors.textSecondary.withValues(alpha: 0.8),

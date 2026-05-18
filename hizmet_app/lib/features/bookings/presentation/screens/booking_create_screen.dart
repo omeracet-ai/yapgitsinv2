@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -82,7 +82,7 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Randevu oluÅŸturuldu'),
+          content: Text('Randevu oluşturuldu'),
           backgroundColor: AppColors.success,
         ),
       );
@@ -105,7 +105,7 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Randevu â€” ${widget.workerName}'),
+        title: Text('Randevu — ${widget.workerName}'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {

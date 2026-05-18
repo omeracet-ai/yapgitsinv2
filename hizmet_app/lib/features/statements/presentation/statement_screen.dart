@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
@@ -7,8 +7,8 @@ import '../../../core/widgets/list_skeleton.dart';
 import '../data/statement_repository.dart';
 
 const _months = [
-  'Ocak', 'Åubat', 'Mart', 'Nisan', 'MayÄ±s', 'Haziran',
-  'Temmuz', 'AÄŸustos', 'EylÃ¼l', 'Ekim', 'KasÄ±m', 'AralÄ±k'
+  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
 ];
 
 class StatementScreen extends ConsumerStatefulWidget {
@@ -42,7 +42,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
   }
 
   String _fmt(num? v) {
-    // P190/4 â€” locale-aware TRY currency via IntlFormatter.
+    // P190/4 — locale-aware TRY currency via IntlFormatter.
     return IntlFormatter.currency(context, v ?? 0);
   }
 
@@ -53,7 +53,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('AÃ§Ä±lamadÄ±: $url')),
+        SnackBar(content: Text('Açılamadı: $url')),
       );
     }
   }
@@ -65,7 +65,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('AylÄ±k Beyan'),
+        title: const Text('Aylık Beyan'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -127,10 +127,10 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
           children: [
             Expanded(
               child: _summaryCard(
-                title: 'MÃ¼ÅŸteri',
+                title: 'Müşteri',
                 color: AppColors.primary,
                 lines: [
-                  '${asCustomer['count'] ?? 0} iÅŸ',
+                  '${asCustomer['count'] ?? 0} iş',
                   _fmt((asCustomer['totalSpent'] as num?)),
                 ],
               ),
@@ -141,11 +141,11 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                 title: 'Usta',
                 color: AppColors.success,
                 lines: [
-                  '${asTasker['count'] ?? 0} iÅŸ',
+                  '${asTasker['count'] ?? 0} iş',
                   _fmt((asTasker['totalNet'] as num?)),
                 ],
                 subtitle:
-                    'BrÃ¼t: ${_fmt(asTasker['totalGross'] as num?)} / Komisyon: ${_fmt(asTasker['totalCommission'] as num?)}',
+                    'Brüt: ${_fmt(asTasker['totalGross'] as num?)} / Komisyon: ${_fmt(asTasker['totalCommission'] as num?)}',
               ),
             ),
           ],
@@ -155,7 +155,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
           width: double.infinity,
           child: ElevatedButton.icon(
             icon: const Icon(Icons.download),
-            label: const Text('CSV Ä°ndir'),
+            label: const Text('CSV İndir'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
@@ -165,13 +165,13 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
           ),
         ),
         const SizedBox(height: 24),
-        const Text('Ä°ÅŸlemler',
+        const Text('İşlemler',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         if (lineItems.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: Text('Bu ay iÅŸlem yok.')),
+            child: Center(child: Text('Bu ay işlem yok.')),
           )
         else
           ...lineItems.map((it) => _lineItemCard(it as Map)),
@@ -237,7 +237,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                isCustomer ? 'MÃ¼ÅŸteri' : 'Usta',
+                isCustomer ? 'Müşteri' : 'Usta',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -254,7 +254,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
-          child: Text('Ä°ÅŸ: ${(it['jobId'] ?? '-').toString()}',
+          child: Text('İş: ${(it['jobId'] ?? '-').toString()}',
               style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
         ),
         trailing: Text(

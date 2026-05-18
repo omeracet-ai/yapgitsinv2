@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -7,12 +7,12 @@ import '../../data/offer_repository.dart';
 import '../providers/job_provider.dart';
 import 'job_detail_screen.dart';
 
-/// AppBar'sÄ±z versiyon â€” TabBarView iÃ§inde kullanÄ±lÄ±r
+/// AppBar'sız versiyon — TabBarView içinde kullanılır
 class JobOpportunitiesBody extends JobOpportunitiesScreen {
   const JobOpportunitiesBody({super.key}) : super(showAppBar: false);
 }
 
-/// Usta iÃ§in aÃ§Ä±k ilanlar (bid verebileceÄŸi iÅŸler)
+/// Usta için açık ilanlar (bid verebileceği işler)
 class JobOpportunitiesScreen extends ConsumerStatefulWidget {
   final bool showAppBar;
   const JobOpportunitiesScreen({super.key, this.showAppBar = true});
@@ -30,7 +30,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
     final authState = ref.watch(authStateProvider);
     final jobsAsync = ref.watch(jobsProvider);
 
-    // UstanÄ±n kendi kategori listesi
+    // Ustanın kendi kategori listesi
     final myCategories = authState is AuthAuthenticated
         ? (authState.user['workerCategories'] as List<dynamic>?)
               ?.map((e) => e.toString())
@@ -41,7 +41,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
       backgroundColor: AppColors.background,
       appBar: _showAppBar
           ? AppBar(
-              title: const Text('Ä°ÅŸ FÄ±rsatlarÄ±'),
+              title: const Text('İş Fırsatları'),
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
@@ -55,7 +55,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
           : null,
       body: Column(
         children: [
-          // â”€â”€ Kategori filtresi â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // ── Kategori filtresi ────────────────────────────────────────────
           if (myCategories.isNotEmpty)
             Container(
               color: AppColors.primary,
@@ -65,7 +65,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                 children: [
                   const Padding(
                     padding: EdgeInsets.only(bottom: 8),
-                    child: Text('UzmanlÄ±k AlanlarÄ±m',
+                    child: Text('Uzmanlık Alanlarım',
                         style: TextStyle(color: Colors.white70, fontSize: 12)),
                   ),
                   SingleChildScrollView(
@@ -73,7 +73,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                     child: Row(
                       children: [
                         _FilterChip(
-                          label: 'TÃ¼mÃ¼',
+                          label: 'Tümü',
                           isActive: _selectedCategory == null,
                           onTap: () => setState(() => _selectedCategory = null),
                         ),
@@ -94,7 +94,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
               ),
             ),
 
-          // â”€â”€ Ä°lan listesi â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // ── İlan listesi ─────────────────────────────────────────────────
           Expanded(
             child: jobsAsync.when(
               loading: () => ListSkeleton(itemCount: 6, itemBuilder: (_) => const JobCardSkeleton()),
@@ -111,7 +111,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                       child: const Icon(Icons.wifi_off_rounded, size: 40, color: AppColors.error),
                     ),
                     const SizedBox(height: 16),
-                    const Text('BaÄŸlantÄ± hatasÄ±',
+                    const Text('Bağlantı hatası',
                         style: TextStyle(
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.w600,
@@ -137,7 +137,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                 final myUserId = authState is AuthAuthenticated
                     ? authState.user['id'] as String? : null;
 
-                // Sadece aÃ§Ä±k ilanlar, kendi ilanlarÄ±m hariÃ§
+                // Sadece açık ilanlar, kendi ilanlarım hariç
                 var filtered = jobs
                     .where((j) => j.status == JobStatus.OPEN)
                     .where((j) => j.customerId != myUserId)
@@ -149,7 +149,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                       .where((j) => j.category == _selectedCategory)
                       .toList();
                 } else if (myCategories.isNotEmpty) {
-                  // VarsayÄ±lan: sadece uzmanlÄ±k kategorileri
+                  // Varsayılan: sadece uzmanlık kategorileri
                   filtered = filtered
                       .where((j) => myCategories.contains(j.category))
                       .toList();
@@ -171,13 +171,13 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                               color: AppColors.primary.withValues(alpha: 0.5)),
                         ),
                         const SizedBox(height: 18),
-                        const Text('Bu kategoride aÃ§Ä±k ilan yok.',
+                        const Text('Bu kategoride açık ilan yok.',
                             style: TextStyle(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 15)),
                         const SizedBox(height: 6),
-                        const Text('FarklÄ± bir kategori deneyebilirsiniz.',
+                        const Text('Farklı bir kategori deneyebilirsiniz.',
                             style: TextStyle(color: AppColors.textHint, fontSize: 13)),
                         const SizedBox(height: 16),
                         OutlinedButton.icon(
@@ -188,7 +188,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                           icon: const Icon(Icons.grid_view_rounded, size: 16),
-                          label: const Text('TÃ¼m Kategorilere Bak'),
+                          label: const Text('Tüm Kategorilere Bak'),
                         ),
                       ],
                     ),
@@ -213,7 +213,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
   }
 }
 
-// â”€â”€â”€ Filtre chip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Filtre chip ───────────────────────────────────────────────────────────────
 
 class _FilterChip extends StatelessWidget {
   final String label;
@@ -245,7 +245,7 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€ Ä°lan kartÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── İlan kartı ───────────────────────────────────────────────────────────────
 
 class _OpportunityCard extends ConsumerWidget {
   final Job job;
@@ -257,8 +257,8 @@ class _OpportunityCard extends ConsumerWidget {
     final offerCount  = offersAsync.maybeWhen(data: (o) => o.length, orElse: () => 0);
 
     final budgetStr = (job.budgetMin != null && job.budgetMax != null)
-        ? '${job.budgetMin!.toInt()} â€“ ${job.budgetMax!.toInt()} â‚º'
-        : job.budgetMin != null ? '${job.budgetMin!.toInt()} â‚º~' : 'BelirtilmemiÅŸ';
+        ? '${job.budgetMin!.toInt()} – ${job.budgetMax!.toInt()} ₺'
+        : job.budgetMin != null ? '${job.budgetMin!.toInt()} ₺~' : 'Belirtilmemiş';
 
     final postedAgo = job.createdAt != null
         ? _timeAgo(job.createdAt!)
@@ -300,7 +300,7 @@ class _OpportunityCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // â”€â”€ Ãœst renkli ÅŸerit + baÅŸlÄ±k â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── Üst renkli şerit + başlık ─────────────────────────────────
             Container(
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
               decoration: BoxDecoration(
@@ -368,13 +368,13 @@ class _OpportunityCard extends ConsumerWidget {
               ]),
             ),
 
-            // â”€â”€ Ä°Ã§erik â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── İçerik ────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // â”€â”€ AÃ§Ä±klama â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  // ── Açıklama ─────────────────────────────────────────────
                   Text(job.description ?? '',
                       style: const TextStyle(
                           fontSize: 13,
@@ -383,7 +383,7 @@ class _OpportunityCard extends ConsumerWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis),
 
-                  // â”€â”€ FotoÄŸraflar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  // ── Fotoğraflar ───────────────────────────────────────────
                   if (job.photos != null && job.photos!.isNotEmpty) ...[
                     const SizedBox(height: 10),
                     SizedBox(
@@ -407,7 +407,7 @@ class _OpportunityCard extends ConsumerWidget {
 
                   const SizedBox(height: 12),
 
-                  // â”€â”€ Alt bilgi + CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  // ── Alt bilgi + CTA ────────────────────────────────────────
                   Row(children: [
                     const Icon(Icons.location_on_rounded, size: 14, color: AppColors.textHint),
                     const SizedBox(width: 3),
@@ -422,7 +422,7 @@ class _OpportunityCard extends ConsumerWidget {
                     Text(postedAgo,
                         style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
                     const SizedBox(width: 8),
-                    // Teklif sayÄ±sÄ± rozeti
+                    // Teklif sayısı rozeti
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
@@ -451,7 +451,7 @@ class _OpportunityCard extends ConsumerWidget {
               ),
             ),
 
-            // â”€â”€ "Teklif Ver" butonu tam geniÅŸlik â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── "Teklif Ver" butonu tam genişlik ─────────────────────────
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
@@ -497,9 +497,9 @@ class _OpportunityCard extends ConsumerWidget {
     try {
       final dt   = DateTime.parse(iso).toLocal();
       final diff = DateTime.now().difference(dt);
-      if (diff.inMinutes < 60)  return '${diff.inMinutes} dk Ã¶nce';
-      if (diff.inHours   < 24)  return '${diff.inHours} saat Ã¶nce';
-      return '${diff.inDays} gÃ¼n Ã¶nce';
+      if (diff.inMinutes < 60)  return '${diff.inMinutes} dk önce';
+      if (diff.inHours   < 24)  return '${diff.inHours} saat önce';
+      return '${diff.inDays} gün önce';
     } catch (_) {
       return '';
     }

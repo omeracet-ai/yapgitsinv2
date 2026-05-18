@@ -363,6 +363,39 @@ class AppTheme {
         unselectedLabelStyle: TextStyle(fontSize: 12),
       ),
       dividerColor: AppColors.darkBorder,
+      canvasColor: AppColors.darkSurface,
+      dialogTheme: const DialogThemeData(
+        backgroundColor: AppColors.darkSurface,
+        surfaceTintColor: AppColors.darkSurface,
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: AppColors.darkSurface,
+        surfaceTintColor: AppColors.darkSurface,
+        textStyle: const TextStyle(color: AppColors.darkText),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          side: const BorderSide(color: AppColors.darkBorder),
+        ),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        textStyle: const TextStyle(color: AppColors.darkText, fontSize: 14),
+        menuStyle: MenuStyle(
+          backgroundColor: WidgetStateProperty.all(AppColors.darkSurface),
+          surfaceTintColor: WidgetStateProperty.all(AppColors.darkSurface),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.medium),
+              side: const BorderSide(color: AppColors.darkBorder),
+            ),
+          ),
+        ),
+      ),
+      menuTheme: MenuThemeData(
+        style: MenuStyle(
+          backgroundColor: WidgetStateProperty.all(AppColors.darkSurface),
+          surfaceTintColor: WidgetStateProperty.all(AppColors.darkSurface),
+        ),
+      ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.darkSurfaceElevated,
         disabledColor: AppColors.darkSurface,

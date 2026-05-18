@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +13,7 @@ import '../../widgets/save_job_button.dart';
 import '../providers/job_provider.dart';
 import 'job_detail_screen.dart';
 
-/// AppBar'sÄ±z versiyon â€” TabBarView iÃ§inde kullanÄ±lÄ±r
+/// AppBar'sız versiyon — TabBarView içinde kullanılır
 class JobListBody extends JobListScreen {
   const JobListBody({super.key}) : super(showAppBar: false);
 }
@@ -28,7 +28,7 @@ class JobListScreen extends ConsumerStatefulWidget {
 
 class _JobListScreenState extends ConsumerState<JobListScreen> {
   bool get _showAppBar => widget.showAppBar;
-  String? _activeCategory; // null = TÃ¼mÃ¼
+  String? _activeCategory; // null = Tümü
   String _searchQuery = '';
   Timer? _debounce;
 
@@ -63,7 +63,7 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
       backgroundColor: AppColors.background,
       appBar: _showAppBar
           ? AppBar(
-              title: const Text('Ä°ÅŸ Ä°lanlarÄ±'),
+              title: const Text('İş İlanları'),
               backgroundColor: AppColors.background,
               foregroundColor: AppColors.textPrimary,
             )
@@ -99,7 +99,7 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.black,
         icon: const Icon(Icons.add),
-        label: const Text('Ä°lan Ver', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: const Text('İlan Ver', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -117,7 +117,7 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
             child: TextField(
               onChanged: _onSearchChanged,
               decoration: const InputDecoration(
-                hintText: 'Ä°ÅŸ ara...',
+                hintText: 'İş ara...',
                 prefixIcon:
                     Icon(Icons.search, color: AppColors.textHint),
                 border: InputBorder.none,
@@ -133,7 +133,7 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
               data: (cats) => ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
-                  _buildChip(null, 'TÃ¼mÃ¼'),
+                  _buildChip(null, 'Tümü'),
                   ...cats.map((c) => _buildChip(
                         c['name'] as String?,
                         '${c['icon'] ?? ''} ${c['name'] ?? ''}'.trim(),
@@ -144,7 +144,7 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
               error: (_, __) => ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
-                  _buildChip(null, 'TÃ¼mÃ¼'),
+                  _buildChip(null, 'Tümü'),
                   _buildChip('Temizlik', 'Temizlik'),
                   _buildChip('Tesisat', 'Tesisat'),
                 ],
@@ -197,21 +197,21 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
     if (hasSearch) {
       return const EmptyState(
         icon: Icons.search_off_rounded,
-        title: 'SonuÃ§ bulunamadÄ±',
-        message: 'BaÅŸka bir kelime ya da kategori deneyin.',
+        title: 'Sonuç bulunamadı',
+        message: 'Başka bir kelime ya da kategori deneyin.',
       );
     }
     return EmptyState(
       icon: Icons.work_off_rounded,
-      title: 'HenÃ¼z ilan yok',
-      message: 'Ä°lk ilanÄ± sen aÃ§, ustalar teklif vermeye baÅŸlasÄ±n!',
+      title: 'Henüz ilan yok',
+      message: 'İlk ilanı sen aç, ustalar teklif vermeye başlasın!',
       action: ElevatedButton.icon(
         onPressed: () {
           final isLoggedIn = ref.read(authStateProvider) is AuthAuthenticated;
           context.push(isLoggedIn ? '/ilan-ver' : '/giris-yap');
         },
         icon: const Icon(Icons.add),
-        label: const Text('Ä°lan AÃ§'),
+        label: const Text('İlan Aç'),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -295,7 +295,7 @@ class _JobCard extends StatelessWidget {
                     Icon(Icons.workspace_premium_rounded,
                         color: Colors.white, size: 13),
                     SizedBox(width: 4),
-                    Text('Ã–ne Ã‡Ä±kan',
+                    Text('Öne Çıkan',
                         style: TextStyle(
                             fontSize: 11,
                             color: Colors.white,

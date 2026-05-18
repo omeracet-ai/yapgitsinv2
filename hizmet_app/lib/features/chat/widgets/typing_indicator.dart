@@ -1,8 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
 /// 3-dot bouncing typing indicator. Used inside ChatScreen body
-/// when the peer is typing. Phase 66 scaffold â€” animation only,
+/// when the peer is typing. Phase 66 scaffold — animation only,
 /// trigger via [chatTypingProvider] (Phase 67 will wire WS event).
 class TypingIndicator extends StatefulWidget {
   final String? peerName;

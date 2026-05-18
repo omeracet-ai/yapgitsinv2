@@ -20,7 +20,7 @@ class WorkerOnboardingStep2Bio extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('ğŸ“ Kendinden bahset',
+          const Text('📝 Kendinden bahset',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           const Text(

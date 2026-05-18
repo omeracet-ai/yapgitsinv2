@@ -1,10 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
-/// Phase 79 â€” Slide-in toast banner shown via [InAppNotificationService].
+/// Phase 79 — Slide-in toast banner shown via [InAppNotificationService].
 ///
 /// 80px tall card pinned near the top safe-area, animates in/out with a
-/// vertical [SlideTransition]. Tap â†’ onTap, X button â†’ onDismiss.
+/// vertical [SlideTransition]. Tap → onTap, X button → onDismiss.
 class InAppNotificationBanner extends StatefulWidget {
   final String title;
   final String message;

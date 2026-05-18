@@ -1,4 +1,4 @@
-﻿import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -57,7 +57,7 @@ class _CompletionPhotosSectionState
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('FotoÄŸraflar yÃ¼klendi'),
+          content: Text('Fotoğraflar yüklendi'),
           backgroundColor: AppColors.success,
         ),
       );
@@ -116,7 +116,7 @@ class _CompletionPhotosSectionState
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
-                      'Ä°ÅŸ Tamamlama FotoÄŸraflarÄ±',
+                      'İş Tamamlama Fotoğrafları',
                       style: TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 14),
                     ),
@@ -131,7 +131,7 @@ class _CompletionPhotosSectionState
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
-                    'HenÃ¼z tamamlama fotoÄŸrafÄ± yÃ¼klenmedi.',
+                    'Henüz tamamlama fotoğrafı yüklenmedi.',
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                   ),
                 )
@@ -167,7 +167,7 @@ class _CompletionPhotosSectionState
                   child: OutlinedButton.icon(
                     onPressed: _uploading ? null : _pickAndUpload,
                     icon: const Icon(Icons.add_a_photo_outlined, size: 18),
-                    label: const Text('FotoÄŸraf Ekle'),
+                    label: const Text('Fotoğraf Ekle'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primary,
                       side: const BorderSide(color: AppColors.primary),

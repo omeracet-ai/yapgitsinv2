@@ -1,4 +1,4 @@
-﻿import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,8 +6,8 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/job_repository.dart';
 
-/// Phase 203 â€” Ä°lan sahibi iÃ§in bulk fotoÄŸraf yÃ¼kleme bÃ¶lÃ¼mÃ¼.
-/// pickMultiImage (max 5 toplam), grid Ã¶nizleme, tek request ile yÃ¼kle.
+/// Phase 203 — İlan sahibi için bulk fotoğraf yükleme bölümü.
+/// pickMultiImage (max 5 toplam), grid önizleme, tek request ile yükle.
 class JobPhotosBulkSection extends ConsumerStatefulWidget {
   final String jobId;
   final List<String> initialPhotos;
@@ -51,7 +51,7 @@ class _JobPhotosBulkSectionState extends ConsumerState<JobPhotosBulkSection> {
     if (picked.length > remaining && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('En fazla $_maxPhotos fotoÄŸraf eklenebilir.'),
+          content: Text('En fazla $_maxPhotos fotoğraf eklenebilir.'),
           backgroundColor: AppColors.warning,
         ),
       );
@@ -76,7 +76,7 @@ class _JobPhotosBulkSectionState extends ConsumerState<JobPhotosBulkSection> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('FotoÄŸraflar yÃ¼klendi'),
+          content: Text('Fotoğraflar yüklendi'),
           backgroundColor: AppColors.success,
         ),
       );
@@ -117,7 +117,7 @@ class _JobPhotosBulkSectionState extends ConsumerState<JobPhotosBulkSection> {
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
-                      'Ä°lan FotoÄŸraflarÄ±',
+                      'İlan Fotoğrafları',
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
@@ -129,7 +129,7 @@ class _JobPhotosBulkSectionState extends ConsumerState<JobPhotosBulkSection> {
               ),
               const SizedBox(height: 10),
 
-              // Mevcut yÃ¼klÃ¼ fotoÄŸraflar
+              // Mevcut yüklü fotoğraflar
               if (_photos.isNotEmpty)
                 GridView.count(
                   shrinkWrap: true,
@@ -153,11 +153,11 @@ class _JobPhotosBulkSectionState extends ConsumerState<JobPhotosBulkSection> {
                       .toList(),
                 ),
 
-              // SeÃ§ilen (henÃ¼z yÃ¼klenmemiÅŸ) fotoÄŸraflar â€” Ã¶nizleme
+              // Seçilen (henüz yüklenmemiş) fotoğraflar — önizleme
               if (_pending.isNotEmpty) ...[
                 if (_photos.isNotEmpty) const SizedBox(height: 8),
                 const Text(
-                  'YÃ¼klenecekler:',
+                  'Yüklenecekler:',
                   style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 6),
@@ -207,7 +207,7 @@ class _JobPhotosBulkSectionState extends ConsumerState<JobPhotosBulkSection> {
 
               const SizedBox(height: 10),
 
-              // Aksiyon butonlarÄ±
+              // Aksiyon butonları
               Row(
                 children: [
                   if (canAdd)
@@ -216,7 +216,7 @@ class _JobPhotosBulkSectionState extends ConsumerState<JobPhotosBulkSection> {
                         onPressed: _uploading ? null : _pickMulti,
                         icon: const Icon(Icons.add_photo_alternate_outlined,
                             size: 18),
-                        label: const Text('FotoÄŸraf SeÃ§'),
+                        label: const Text('Fotoğraf Seç'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primary,
                           side: const BorderSide(color: AppColors.primary),
@@ -230,7 +230,7 @@ class _JobPhotosBulkSectionState extends ConsumerState<JobPhotosBulkSection> {
                       child: ElevatedButton.icon(
                         onPressed: _uploading ? null : _upload,
                         icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-                        label: Text('YÃ¼kle (${_pending.length})'),
+                        label: Text('Yükle (${_pending.length})'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,

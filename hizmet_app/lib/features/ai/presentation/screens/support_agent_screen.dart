@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/ai_repository.dart';
@@ -52,7 +52,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
       if (mounted) {
         setState(() => _messages.add({
               'role': 'assistant',
-              'content': 'ÃœzgÃ¼nÃ¼m, bir hata oluÅŸtu. LÃ¼tfen tekrar deneyin.',
+              'content': 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.',
             }));
       }
     } finally {
@@ -77,7 +77,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Destek AsistanÄ±'),
+        title: const Text('Destek Asistanı'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -105,7 +105,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                   SizedBox(width: 8),
-                  Text('YanÄ±t hazÄ±rlanÄ±yorâ€¦',
+                  Text('Yanıt hazırlanıyor…',
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                 ],
               ),
@@ -126,7 +126,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
             const Icon(Icons.support_agent, size: 64, color: AppColors.primary),
             const SizedBox(height: 16),
             Text(
-              'NasÄ±l yardÄ±mcÄ± olabilirim?',
+              'Nasıl yardımcı olabilirim?',
               style: Theme.of(context)
                   .textTheme
                   .titleLarge
@@ -134,7 +134,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Token, Ã¶deme, ilan yÃ¶netimi veya platform hakkÄ±nda her tÃ¼rlÃ¼ sorunuzu sorabilirsiniz.',
+              'Token, ödeme, ilan yönetimi veya platform hakkında her türlü sorunuzu sorabilirsiniz.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -144,9 +144,9 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
               runSpacing: 8,
               alignment: WrapAlignment.center,
               children: [
-                _QuickChip('Token nasÄ±l kullanÄ±lÄ±r?', onTap: _sendQuick),
-                _QuickChip('Ã–deme nasÄ±l yapÄ±lÄ±r?', onTap: _sendQuick),
-                _QuickChip('Ä°lan nasÄ±l veririm?', onTap: _sendQuick),
+                _QuickChip('Token nasıl kullanılır?', onTap: _sendQuick),
+                _QuickChip('Ödeme nasıl yapılır?', onTap: _sendQuick),
+                _QuickChip('İlan nasıl veririm?', onTap: _sendQuick),
               ],
             ),
           ],
@@ -173,7 +173,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _send(),
               decoration: InputDecoration(
-                hintText: 'MesajÄ±nÄ±zÄ± yazÄ±nâ€¦',
+                hintText: 'Mesajınızı yazın…',
                 filled: true,
                 fillColor: AppColors.background,
                 border: OutlineInputBorder(

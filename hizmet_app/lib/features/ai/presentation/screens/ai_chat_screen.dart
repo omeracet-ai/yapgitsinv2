@@ -1,9 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/ai_repository.dart';
 
-/// Phase 74 â€” Yapgitsin AI Assistant chat screen.
+/// Phase 74 — Yapgitsin AI Assistant chat screen.
 ///
 /// Uses backend `/ai/chat` for a general-purpose conversational assistant
 /// (price tips, listing advice, category suggestions, contact tips). Distinct
@@ -24,17 +24,17 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     {
       'role': 'assistant',
       'content':
-          'Merhaba! Yapgitsin asistanÄ±nÄ±z. Size nasÄ±l yardÄ±mcÄ± olabilirim? '
-              'Ã–rneÄŸin: "En uygun temizlik fiyatÄ± ne?", "Ä°yi ilan nasÄ±l yazÄ±lÄ±r?"',
+          'Merhaba! Yapgitsin asistanınız. Size nasıl yardımcı olabilirim? '
+              'Örneğin: "En uygun temizlik fiyatı ne?", "İyi ilan nasıl yazılır?"',
     },
   ];
   bool _loading = false;
 
   static const _suggestions = [
     'Fiyat tahmini al',
-    'Ä°lan ipucu ver',
-    'Kategori Ã¶ner',
-    'Ä°letiÅŸim Ã¶nerisi',
+    'İlan ipucu ver',
+    'Kategori öner',
+    'İletişim önerisi',
   ];
 
   @override
@@ -71,7 +71,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
       if (mounted) {
         setState(() => _messages.add({
               'role': 'assistant',
-              'content': 'ÃœzgÃ¼nÃ¼m, bir hata oluÅŸtu. LÃ¼tfen tekrar deneyin.',
+              'content': 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.',
             }));
       }
     } finally {
@@ -96,7 +96,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('ğŸ¤– Yapgitsin Asistan'),
+        title: const Text('🤖 Yapgitsin Asistan'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -123,7 +123,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
                   ),
                   SizedBox(width: 8),
                   Text(
-                    'YanÄ±t hazÄ±rlanÄ±yorâ€¦',
+                    'Yanıt hazırlanıyor…',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,
@@ -176,7 +176,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _send(),
               decoration: InputDecoration(
-                hintText: 'MesajÄ±nÄ±zÄ± yazÄ±nâ€¦',
+                hintText: 'Mesajınızı yazın…',
                 filled: true,
                 fillColor: AppColors.background,
                 border: OutlineInputBorder(

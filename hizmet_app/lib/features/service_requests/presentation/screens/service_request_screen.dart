@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -12,7 +12,7 @@ final serviceRequestsProvider =
   return ref.watch(serviceRequestRepositoryProvider).getAll();
 });
 
-/// AppBar'sÄ±z versiyon â€” TabBarView iÃ§inde kullanÄ±lÄ±r
+/// AppBar'sız versiyon — TabBarView içinde kullanılır
 class ServiceRequestBody extends ConsumerWidget {
   const ServiceRequestBody({super.key});
 
@@ -90,7 +90,7 @@ class _ServiceRequestScaffold extends StatelessWidget {
               onPressed: onAddTap,
               backgroundColor: AppColors.primary,
               icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text('Ä°lan Ver',
+              label: const Text('İlan Ver',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             )
           : null,
@@ -105,10 +105,10 @@ class _ServiceRequestScaffold extends StatelessWidget {
                 children: [
                   Icon(Icons.handshake_outlined, size: 72, color: Colors.grey.shade300),
                   const SizedBox(height: 16),
-                  const Text('HenÃ¼z hizmet ilanÄ± yok',
+                  const Text('Henüz hizmet ilanı yok',
                       style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
                   const SizedBox(height: 8),
-                  const Text('Ä°lk ilanÄ± siz verin!',
+                  const Text('İlk ilanı siz verin!',
                       style: TextStyle(color: AppColors.textHint)),
                 ],
               ),
@@ -126,7 +126,7 @@ class _ServiceRequestScaffold extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
                 if (featured.isNotEmpty) ...[
-                  _sectionHeader('â­ Ã–ne Ã‡Ä±kan Ä°lanlar'),
+                  _sectionHeader('⭐ Öne Çıkan İlanlar'),
                   SizedBox(
                     height: 180,
                     child: ListView.builder(
@@ -137,7 +137,7 @@ class _ServiceRequestScaffold extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  _sectionHeader('TÃ¼m Ä°lanlar'),
+                  _sectionHeader('Tüm İlanlar'),
                 ],
                 ...regular.map((r) => _RequestCard(item: r)),
               ],
@@ -245,7 +245,7 @@ class _FeaturedCard extends StatelessWidget {
                   decoration: BoxDecoration(
                       color: Colors.amber.shade50,
                       borderRadius: BorderRadius.circular(6)),
-                  child: Text('â­ Ã–ne Ã‡Ä±kan',
+                  child: Text('⭐ Öne Çıkan',
                       style: TextStyle(
                           fontSize: 9,
                           color: Colors.amber.shade700,
@@ -270,16 +270,16 @@ class _RequestCard extends StatelessWidget {
     final dt = DateTime.tryParse(iso);
     if (dt == null) return '';
     final diff = DateTime.now().difference(dt.toLocal());
-    if (diff.inMinutes < 1) return 'Az Ã¶nce';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} dk Ã¶nce';
-    if (diff.inHours < 24) return '${diff.inHours} saat Ã¶nce';
-    return '${diff.inDays} gÃ¼n Ã¶nce';
+    if (diff.inMinutes < 1) return 'Az önce';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} dk önce';
+    if (diff.inHours < 24) return '${diff.inHours} saat önce';
+    return '${diff.inDays} gün önce';
   }
 
   @override
   Widget build(BuildContext context) {
     final user = item['user'] as Map<String, dynamic>?;
-    final name = (user?['fullName'] ?? 'KullanÄ±cÄ±') as String;
+    final name = (user?['fullName'] ?? 'Kullanıcı') as String;
     final isVerified = user?['identityVerified'] == true;
     final initials = name
         .split(' ')
@@ -325,8 +325,8 @@ class _RequestCard extends StatelessWidget {
                         height: 150,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        // Phase 152 â€” Backfill imageless; 404'lerde turuncu
-                        // marka renkli placeholder gÃ¶ster, kÄ±rÄ±k icon yok.
+                        // Phase 152 — Backfill imageless; 404'lerde turuncu
+                        // marka renkli placeholder göster, kırık icon yok.
                         errorBuilder: (_, __, ___) => Container(
                               height: 150,
                               width: double.infinity,

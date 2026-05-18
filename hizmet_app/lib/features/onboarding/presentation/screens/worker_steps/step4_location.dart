@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 
-/// Phase 129 Step 4 — Şehir/ilçe + servis radius slider.
+/// Phase 129 Step 4 — ޞehir/ilçe + servis radius slider.
 class WorkerOnboardingStep4Location extends StatelessWidget {
   final TextEditingController cityCtrl;
   final TextEditingController districtCtrl;
@@ -24,7 +24,7 @@ class WorkerOnboardingStep4Location extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('ğŸ“ Hizmet bölgen',
+          const Text('📍 Hizmet bölgen',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           const Text('Müşteriler seni bu bölgede bulacak.',
@@ -34,7 +34,7 @@ class WorkerOnboardingStep4Location extends StatelessWidget {
             controller: cityCtrl,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              labelText: 'Şehir',
+              labelText: 'ޞehir',
               prefixIcon: const Icon(Icons.location_city_outlined),
               
               border: OutlineInputBorder(

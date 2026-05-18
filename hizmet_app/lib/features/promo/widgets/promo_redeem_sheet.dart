@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/promo_repository.dart';
@@ -81,12 +81,12 @@ class _PromoRedeemSheetState extends ConsumerState<PromoRedeemSheet> {
               ),
             ),
             const Text(
-              'ğŸŸï¸ Promosyon Kodu Kullan',
+              '🎟️ Promosyon Kodu Kullan',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             const Text(
-              'Promosyon kodunuz token, indirim veya deneme sÃ¼resi olarak uygulanabilir.',
+              'Promosyon kodunuz token, indirim veya deneme süresi olarak uygulanabilir.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 16),
@@ -95,7 +95,7 @@ class _PromoRedeemSheetState extends ConsumerState<PromoRedeemSheet> {
               autofocus: true,
               textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
-                hintText: 'Ã–rn: HOSGELDIN100',
+                hintText: 'Örn: HOSGELDIN100',
                 prefixIcon: const Icon(Icons.confirmation_number_outlined),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),

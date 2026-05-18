@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -28,8 +28,8 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../certifications/data/certification_repository.dart';
 // TODO(P190): migrate remaining strings to AppLocalizations
 
-// â”€â”€ Provider: kendi profil verisini Ã§eker (stats + yorumlar + fotoÄŸraflar) â”€â”€
-// Phase 241 â€” Ham `Dio` kaldÄ±rÄ±ldÄ±; AuthInterceptor'lÄ± [ApiClient] kullanÄ±lÄ±r.
+// ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
+// Phase 241 — Ham `Dio` kaldırıldı; AuthInterceptor'lı [ApiClient] kullanılır.
 final myPublicProfileProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final auth = ref.watch(authStateProvider);
@@ -103,7 +103,7 @@ class ProfileScreen extends ConsumerWidget {
               const Icon(Icons.account_circle_outlined,
                   size: 80, color: AppColors.textHint),
               const SizedBox(height: 24),
-              const Text('Profilinizi gÃ¶rÃ¼ntÃ¼lemek iÃ§in giriÅŸ yapÄ±n.',
+              const Text('Profilinizi görüntülemek için giriş yapın.',
                   textAlign: TextAlign.center,
                   style:
                       TextStyle(fontSize: 16, color: AppColors.textSecondary)),
@@ -123,7 +123,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildProfileHeader(Map<String, dynamic> user) {
-    final name = user['fullName'] ?? 'KullanÄ±cÄ±';
+    final name = user['fullName'] ?? 'Kullanıcı';
     final city = user['city'] as String?;
     final initials = name
         .split(' ')
@@ -227,7 +227,7 @@ class ProfileScreen extends ConsumerWidget {
                                     color: Colors.white70, fontSize: 12)),
                           ])
                         else
-                          const Text('HenÃ¼z deÄŸerlendirme yok',
+                          const Text('Henüz değerlendirme yok',
                               style: TextStyle(
                                   color: Colors.white54, fontSize: 12)),
                       ],
@@ -255,12 +255,12 @@ class ProfileScreen extends ConsumerWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _headerStat('ğŸ†', '$repScore', 'Ä°tibar PuanÄ±'),
+                      _headerStat('🏆', '$repScore', 'İtibar Puanı'),
                       Container(width: 1, height: 30, color: Colors.white24),
                       _headerStat(
-                          'â­', avgRating.toStringAsFixed(1), 'Ortalama Puan'),
+                          '⭐', avgRating.toStringAsFixed(1), 'Ortalama Puan'),
                       Container(width: 1, height: 30, color: Colors.white24),
-                      _headerStat('ğŸ“', '$totalReviews', 'DeÄŸerlendirme'),
+                      _headerStat('📝', '$totalReviews', 'Değerlendirme'),
                     ],
                   ),
                 ),
@@ -297,20 +297,20 @@ class ProfileScreen extends ConsumerWidget {
       bgColor = AppColors.verifiedGreen.withValues(alpha: 0.12);
       borderColor = AppColors.verifiedGreen;
       icon = Icons.verified_user;
-      title = 'Kimlik DoÄŸrulandÄ±';
-      subtitle = 'HesabÄ±nÄ±z onaylÄ±dÄ±r.';
+      title = 'Kimlik Doğrulandı';
+      subtitle = 'Hesabınız onaylıdır.';
     } else if (hasIdentity) {
       bgColor = AppColors.warning.withValues(alpha: 0.12);
       borderColor = AppColors.warning;
       icon = Icons.hourglass_empty;
-      title = 'Kimlik Ä°nceleniyor';
-      subtitle = 'DoÄŸrulama sÃ¼reci devam ediyor.';
+      title = 'Kimlik İnceleniyor';
+      subtitle = 'Doğrulama süreci devam ediyor.';
     } else {
       bgColor = AppColors.error.withValues(alpha: 0.12);
       borderColor = AppColors.error;
       icon = Icons.warning_amber_outlined;
-      title = 'Kimlik YÃ¼klenmedi';
-      subtitle = 'GÃ¼ven iÃ§in kimlik fotoÄŸrafÄ± yÃ¼kleyin.';
+      title = 'Kimlik Yüklenmedi';
+      subtitle = 'Güven için kimlik fotoğrafı yükleyin.';
     }
 
     return Container(
@@ -373,7 +373,7 @@ class ProfileScreen extends ConsumerWidget {
                       Icon(Icons.check_circle,
                           color: AppColors.verifiedGreen, size: 14),
                       SizedBox(width: 4),
-                      Text('DoÄŸrulanmÄ±ÅŸ',
+                      Text('Doğrulanmış',
                           style: TextStyle(
                               color: AppColors.verifiedGreen,
                               fontSize: 12,
@@ -388,7 +388,7 @@ class ProfileScreen extends ConsumerWidget {
                       color: AppColors.warning.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text('DoÄŸrulanmadÄ±',
+                    child: const Text('Doğrulanmadı',
                         style: TextStyle(
                             color: AppColors.warning,
                             fontSize: 12,
@@ -400,7 +400,7 @@ class ProfileScreen extends ConsumerWidget {
           if (!verified)
             TextButton(
               onPressed: () => _requestEmailVerification(context, ref),
-              child: const Text('DoÄŸrula'),
+              child: const Text('Doğrula'),
             ),
         ],
       ),
@@ -416,23 +416,23 @@ class ProfileScreen extends ConsumerWidget {
       if (!context.mounted) return;
       if (url == null || url.isEmpty) {
         messenger.showSnackBar(const SnackBar(
-            content: Text('DoÄŸrulama baÄŸlantÄ±sÄ± email ile gÃ¶nderildi')));
+            content: Text('Doğrulama bağlantısı email ile gönderildi')));
         return;
       }
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Email DoÄŸrulama'),
+          title: const Text('Email Doğrulama'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                  'SMTP henÃ¼z aktif deÄŸil â€” baÄŸlantÄ±yÄ± manuel aÃ§Ä±n',
+                  'SMTP henüz aktif değil — bağlantıyı manuel açın',
                   style: TextStyle(
                       fontSize: 12, color: AppColors.textSecondary)),
               const SizedBox(height: 12),
-              const Text('DoÄŸrulama baÄŸlantÄ±sÄ±:',
+              const Text('Doğrulama bağlantısı:',
                   style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               SelectableText(url, style: const TextStyle(fontSize: 12)),
@@ -444,7 +444,7 @@ class ProfileScreen extends ConsumerWidget {
                 await Clipboard.setData(ClipboardData(text: url));
                 if (ctx.mounted) {
                   ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
-                      content: Text('BaÄŸlantÄ± kopyalandÄ±')));
+                      content: Text('Bağlantı kopyalandı')));
                 }
               },
               child: const Text('Kopyala'),
@@ -457,7 +457,7 @@ class ProfileScreen extends ConsumerWidget {
                       mode: LaunchMode.externalApplication);
                 }
               },
-              child: const Text('TarayÄ±cÄ±da AÃ§'),
+              child: const Text('Tarayıcıda Aç'),
             ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
@@ -511,7 +511,7 @@ class ProfileScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
                 color: Colors.white24, borderRadius: BorderRadius.circular(20)),
-            child: const Text('YÃ¼kle',
+            child: const Text('Yükle',
                 style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -550,8 +550,8 @@ class ProfileScreen extends ConsumerWidget {
                   children: [
                     Text(
                       sub != null && sub.isActive
-                          ? 'âœ“ ${sub.plan.name}'
-                          : 'Premium Ãœyelik',
+                          ? '✓ ${sub.plan.name}'
+                          : 'Premium Üyelik',
                       style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -559,15 +559,15 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     Text(
                       sub != null && sub.isActive
-                          ? 'SÄ±nÄ±rsÄ±z teklif aktif'
-                          : 'SÄ±nÄ±rsÄ±z teklif & Pro Ã¶zellikler',
+                          ? 'Sınırsız teklif aktif'
+                          : 'Sınırsız teklif & Pro özellikler',
                       style: const TextStyle(
                           color: Colors.white70, fontSize: 12),
                     ),
                   ]),
               loading: () => const Text('...',
                   style: TextStyle(color: Colors.white)),
-              error: (_, __) => const Text('Premium Ãœyelik',
+              error: (_, __) => const Text('Premium Üyelik',
                   style: TextStyle(color: Colors.white)),
             ),
           ),
@@ -577,7 +577,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // â”€â”€ Ä°statistikler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── İstatistikler ──────────────────────────────────────────────────────────
   Widget _buildStatsSection(WidgetRef ref) {
     final profileAsync = ref.watch(myPublicProfileProvider);
 
@@ -586,7 +586,7 @@ class ProfileScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Ä°statistikler',
+          const Text('İstatistikler',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           profileAsync.when(
@@ -665,14 +665,14 @@ class ProfileScreen extends ConsumerWidget {
           Text('$rate%',
               style: TextStyle(
                   fontSize: 28, fontWeight: FontWeight.bold, color: color)),
-          const Text('baÅŸarÄ± oranÄ±',
+          const Text('başarı oranı',
               style: TextStyle(fontSize: 11, color: AppColors.textHint)),
           const SizedBox(height: 10),
           _statRow('Toplam', total, AppColors.textSecondary),
           const SizedBox(height: 2),
-          _statRow('BaÅŸarÄ±lÄ±', success, AppColors.verifiedGreen),
+          _statRow('Başarılı', success, AppColors.verifiedGreen),
           const SizedBox(height: 2),
-          _statRow('BaÅŸarÄ±sÄ±z', fail, AppColors.error),
+          _statRow('Başarısız', fail, AppColors.error),
           if (total > 0) ...[
             const SizedBox(height: 8),
             ClipRRect(
@@ -704,7 +704,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // â”€â”€ Rozetlerim â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Rozetlerim ────────────────────────────────────────────────────────────
   Widget _buildBadgesSection(WidgetRef ref) {
     final profileAsync = ref.watch(myPublicProfileProvider);
     return profileAsync.when(
@@ -741,7 +741,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // â”€â”€ Phase 159: Kendi sertifikalarÄ± (verified + pending) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Phase 159: Kendi sertifikaları (verified + pending) ──────────────────
   Widget _buildCertificationsSection(WidgetRef ref) {
     final auth = ref.watch(authStateProvider);
     final user = auth is AuthAuthenticated ? auth.user : <String, dynamic>{};
@@ -768,7 +768,7 @@ class ProfileScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'SertifikalarÄ±m',
+                'Sertifikalarım',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
@@ -776,7 +776,7 @@ class ProfileScreen extends ConsumerWidget {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
                       children: [
-                        const Text('ğŸªª', style: TextStyle(fontSize: 18)),
+                        const Text('🪪', style: TextStyle(fontSize: 18)),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -798,7 +798,7 @@ class ProfileScreen extends ConsumerWidget {
                             color: AppColors.verifiedGreen.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text('OnaylÄ±',
+                          child: const Text('Onaylı',
                               style: TextStyle(
                                   fontSize: 11,
                                   color: AppColors.verifiedGreen,
@@ -814,7 +814,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // â”€â”€ GeÃ§miÅŸ Ä°ÅŸ FotoÄŸraflarÄ± (4 adet) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Geçmiş İş Fotoğrafları (4 adet) ───────────────────────────────────────
   Widget _buildPastPhotos(WidgetRef ref) {
     final profileAsync = ref.watch(myPublicProfileProvider);
 
@@ -833,10 +833,10 @@ class ProfileScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('GeÃ§miÅŸ Ä°ÅŸlerden',
+                  const Text('Geçmiş İşlerden',
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  Text('${photos.length} fotoÄŸraf',
+                  Text('${photos.length} fotoğraf',
                       style: const TextStyle(
                           fontSize: 12, color: AppColors.textHint)),
                 ],
@@ -884,7 +884,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // â”€â”€ DeÄŸerlendirmeler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Değerlendirmeler ───────────────────────────────────────────────────────
   Widget _buildReviewsSection(WidgetRef ref) {
     final profileAsync = ref.watch(myPublicProfileProvider);
 
@@ -905,7 +905,7 @@ class ProfileScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                const Text('DeÄŸerlendirmeler',
+                const Text('Değerlendirmeler',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(width: 8),
@@ -928,7 +928,7 @@ class ProfileScreen extends ConsumerWidget {
 
   Widget _reviewCard(Map<String, dynamic> r) {
     final reviewer = r['reviewer'] as Map<String, dynamic>? ?? {};
-    final name = reviewer['fullName'] ?? 'KullanÄ±cÄ±';
+    final name = reviewer['fullName'] ?? 'Kullanıcı';
     final rating = (r['rating'] ?? 0) as int;
     final comment = r['comment'] as String? ?? '';
     final createdAt = r['createdAt'] as String? ?? '';
@@ -939,10 +939,10 @@ class ProfileScreen extends ConsumerWidget {
       if (d != null) {
         final diff = DateTime.now().difference(d).inDays;
         timeAgo = diff == 0
-            ? 'BugÃ¼n'
+            ? 'Bugün'
             : diff == 1
-                ? 'DÃ¼n'
-                : '$diff gÃ¼n Ã¶nce';
+                ? 'Dün'
+                : '$diff gün önce';
       }
     }
 
@@ -1018,7 +1018,7 @@ class ProfileScreen extends ConsumerWidget {
           border: Border.all(color: AppColors.border)),
       child: Column(
         children: [
-          _menuItem(Icons.person_outline, 'KiÅŸisel Bilgiler', () {
+          _menuItem(Icons.person_outline, 'Kişisel Bilgiler', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const PersonalInfoScreen()));
           }),
@@ -1029,30 +1029,30 @@ class ProfileScreen extends ConsumerWidget {
                   builder: (_) => const WalletScreen(),
                 ));
           }),
-          _menuItem(Icons.calendar_month_outlined, 'Ä°ÅŸ Takvimi', () {
+          _menuItem(Icons.calendar_month_outlined, 'İş Takvimi', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const CalendarScreen()));
           }),
-          _menuItem(Icons.event_available_outlined, 'MÃ¼saitlik Takvimi', () {
+          _menuItem(Icons.event_available_outlined, 'Müsaitlik Takvimi', () {
             AvailabilityEditorSheet.show(context);
           }),
           ..._buildWorkerOnlyItems(context, ref),
           ..._buildCustomerOnlyItems(context, ref),
-          _menuItem(Icons.card_giftcard_rounded, 'ğŸ ArkadaÅŸ Davet', () {
+          _menuItem(Icons.card_giftcard_rounded, '🎁 Arkadaş Davet', () {
             context.push('/sadakat');
           }),
           _menuItem(Icons.confirmation_number_outlined,
-              'ğŸŸï¸ Promosyon Kodu Kullan', () {
+              '🎟️ Promosyon Kodu Kullan', () {
             PromoRedeemSheet.show(context);
           }),
-          _menuItem(Icons.payments_outlined, 'KazanÃ§larÄ±m', () {
+          _menuItem(Icons.payments_outlined, 'Kazançlarım', () {
             context.push('/kazanclarim');
           }),
-          _menuItem(Icons.history_outlined, 'Ä°ÅŸlem GeÃ§miÅŸi', () {
+          _menuItem(Icons.history_outlined, 'İşlem Geçmişi', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const EarningsScreen()));
           }),
-          _menuItem(Icons.receipt_long_outlined, 'AylÄ±k Beyan', () {
+          _menuItem(Icons.receipt_long_outlined, 'Aylık Beyan', () {
             context.push('/aylik-beyan');
           }),
           _menuItem(Icons.favorite_outline, 'Favorilerim', () {
@@ -1061,19 +1061,19 @@ class ProfileScreen extends ConsumerWidget {
           _menuItem(Icons.block_outlined, 'Engellenenler', () {
             context.push('/engellenenler');
           }),
-          _menuItem(Icons.bookmark_border_rounded, 'Kaydedilen Ä°ÅŸler', () {
+          _menuItem(Icons.bookmark_border_rounded, 'Kaydedilen İşler', () {
             context.push('/kaydedilen-isler');
           }),
-          _menuItem(Icons.flag_outlined, 'ğŸš© Åikayetlerim', () {
+          _menuItem(Icons.flag_outlined, '🚩 Şikayetlerim', () {
             context.push('/sikayetlerim');
           }),
-          _menuItem(Icons.notifications_outlined, 'Bildirim AyarlarÄ±', () {
+          _menuItem(Icons.notifications_outlined, 'Bildirim Ayarları', () {
             context.push('/bildirim-ayarlari');
           }),
-          _menuItem(Icons.notifications_active_outlined, 'ğŸ”” Kategori Abonelikleri', () {
+          _menuItem(Icons.notifications_active_outlined, '🔔 Kategori Abonelikleri', () {
             context.push('/kategori-abonelikleri');
           }),
-          _menuItem(Icons.attach_money_rounded, 'ğŸ’± Para Birimi', () {
+          _menuItem(Icons.attach_money_rounded, '💱 Para Birimi', () {
             CurrencyPickerSheet.show(context);
           }),
           _menuItem(Icons.location_on_outlined,
@@ -1081,25 +1081,25 @@ class ProfileScreen extends ConsumerWidget {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const AddressesScreen()));
           }),
-          _menuItem(Icons.payment_outlined, 'Ã–deme YÃ¶ntemleri', () {
+          _menuItem(Icons.payment_outlined, 'Ödeme Yöntemleri', () {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Ã–deme yÃ¶netimi yakÄ±nda eklenecek.')),
+              const SnackBar(content: Text('Ödeme yönetimi yakında eklenecek.')),
             );
           }),
           _build2FAMenuItem(context, ref),
           _buildAppearanceItem(context, ref),
           _buildLanguageItem(context, ref),
-          _menuItem(Icons.help_outline, 'YardÄ±m & Destek', () {
+          _menuItem(Icons.help_outline, 'Yardım & Destek', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const HelpScreen()));
           }),
-          _menuItem(Icons.smart_toy_outlined, 'ğŸ¤– Yapgitsin Asistan',
+          _menuItem(Icons.smart_toy_outlined, '🤖 Yapgitsin Asistan',
               () => context.push('/asistan')),
           const Divider(height: 1, indent: 50),
-          _menuItem(Icons.download_outlined, 'ğŸ“¥ Verilerimi Ä°ndir (KVKK)',
+          _menuItem(Icons.download_outlined, '📥 Verilerimi İndir (KVKK)',
               () => _handleDataExport(context, ref)),
           _menuItem(Icons.privacy_tip_outlined,
-              'ğŸ—‘ï¸ Hesap Verilerimi Sil (KVKK)',
+              '🗑️ Hesap Verilerimi Sil (KVKK)',
               () => _showDataDeletionDialog(context, ref),
               color: AppColors.error),
           const Divider(height: 1, indent: 50),
@@ -1115,7 +1115,7 @@ class ProfileScreen extends ConsumerWidget {
                 onPressed: () => _showDeleteAccountDialog(context, ref),
                 icon: const Icon(Icons.delete_forever, color: AppColors.error),
                 label: const Text(
-                  'HesabÄ± Sil',
+                  'Hesabı Sil',
                   style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600),
                 ),
                 style: OutlinedButton.styleFrom(
@@ -1134,7 +1134,7 @@ class ProfileScreen extends ConsumerWidget {
   Future<void> _handleDataExport(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(
-      const SnackBar(content: Text('Verileriniz hazÄ±rlanÄ±yor...')),
+      const SnackBar(content: Text('Verileriniz hazırlanıyor...')),
     );
     try {
       final body = await ref.read(firebaseAuthRepositoryProvider).downloadDataExport();
@@ -1142,7 +1142,7 @@ class ProfileScreen extends ConsumerWidget {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-              'âœ… Verileriniz hazÄ±r (${(body.length / 1024).toStringAsFixed(1)} KB). KVKK Madde 11.'),
+              '✅ Verileriniz hazır (${(body.length / 1024).toStringAsFixed(1)} KB). KVKK Madde 11.'),
           duration: const Duration(seconds: 4),
         ),
       );
@@ -1177,8 +1177,8 @@ class ProfileScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'KVKK Madde 11 gereÄŸi tÃ¼m verilerinizin silinmesini talep edebilirsiniz. '
-                'Talep yÃ¶neticilerimizce 30 gÃ¼n iÃ§inde deÄŸerlendirilir.',
+                'KVKK Madde 11 gereği tüm verilerinizin silinmesini talep edebilirsiniz. '
+                'Talep yöneticilerimizce 30 gün içinde değerlendirilir.',
                 style: TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 12),
@@ -1198,7 +1198,7 @@ class ProfileScreen extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: busy ? null : () => Navigator.of(dialogCtx).pop(),
-              child: const Text('Ä°ptal'),
+              child: const Text('İptal'),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -1222,7 +1222,7 @@ class ProfileScreen extends ConsumerWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(
-                                'âœ… Silme talebiniz alÄ±ndÄ±. 30 gÃ¼n iÃ§inde deÄŸerlendirilecek.'),
+                                '✅ Silme talebiniz alındı. 30 gün içinde değerlendirilecek.'),
                           ),
                         );
                       } catch (e) {
@@ -1241,7 +1241,7 @@ class ProfileScreen extends ConsumerWidget {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('Talep GÃ¶nder'),
+                  : const Text('Talep Gönder'),
             ),
           ],
         ),
@@ -1265,7 +1265,7 @@ class ProfileScreen extends ConsumerWidget {
             children: [
               Icon(Icons.warning_amber_rounded, color: AppColors.error),
               SizedBox(width: 8),
-              Expanded(child: Text('HesabÄ± Sil')),
+              Expanded(child: Text('Hesabı Sil')),
             ],
           ),
           content: Column(
@@ -1273,7 +1273,7 @@ class ProfileScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'âš ï¸ HesabÄ±nÄ±z silinecek. Bu iÅŸlem geri alÄ±namaz. Devam iÃ§in ÅŸifrenizi girin.',
+                '⚠️ Hesabınız silinecek. Bu işlem geri alınamaz. Devam için şifrenizi girin.',
                 style: TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 14),
@@ -1282,7 +1282,7 @@ class ProfileScreen extends ConsumerWidget {
                 obscureText: obscure,
                 enabled: !busy,
                 decoration: InputDecoration(
-                  labelText: 'Åifre',
+                  labelText: 'Şifre',
                   errorText: errorText,
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
@@ -1296,7 +1296,7 @@ class ProfileScreen extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: busy ? null : () => Navigator.of(dialogCtx).pop(),
-              child: const Text('Ä°ptal'),
+              child: const Text('İptal'),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -1308,7 +1308,7 @@ class ProfileScreen extends ConsumerWidget {
                   : () async {
                       final pw = passwordCtrl.text;
                       if (pw.isEmpty) {
-                        setState(() => errorText = 'Åifrenizi girin');
+                        setState(() => errorText = 'Şifrenizi girin');
                         return;
                       }
                       setState(() {
@@ -1339,7 +1339,7 @@ class ProfileScreen extends ConsumerWidget {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('HesabÄ± Sil'),
+                  : const Text('Hesabı Sil'),
             ),
           ],
         ),
@@ -1354,25 +1354,25 @@ class ProfileScreen extends ConsumerWidget {
     final isWorker = cats is List && cats.isNotEmpty;
     if (!isWorker) return const [];
     return [
-      _menuItem(Icons.verified_outlined, 'ğŸ“œ SertifikalarÄ±m', () {
+      _menuItem(Icons.verified_outlined, '📜 Sertifikalarım', () {
         context.push('/sertifikalarim');
       }),
-      _menuItem(Icons.photo_library_outlined, 'ğŸ–¼ï¸ Portfolyom', () {
+      _menuItem(Icons.photo_library_outlined, '🖼️ Portfolyom', () {
         context.push('/portfolyo');
       }),
-      _menuItem(Icons.note_alt_outlined, 'Teklif ÅablonlarÄ±m', () {
+      _menuItem(Icons.note_alt_outlined, 'Teklif Şablonlarım', () {
         context.push('/teklif-sablonlarim');
       }),
-      _menuItem(Icons.rocket_launch_rounded, 'ğŸš€ HÄ±zlÄ± Boost', () {
+      _menuItem(Icons.rocket_launch_rounded, '🚀 Hızlı Boost', () {
         context.push('/boost');
       }),
-      _menuItem(Icons.calendar_month_outlined, 'ğŸ“… Takvim Senkronizasyonu', () {
+      _menuItem(Icons.calendar_month_outlined, '📅 Takvim Senkronizasyonu', () {
         context.push('/takvim-sync');
       }),
     ];
   }
 
-  /// Phase 138 â€” customer (or general) sees message templates entry.
+  /// Phase 138 — customer (or general) sees message templates entry.
   /// Shown when user is not a worker (workerCategories empty/missing).
   List<Widget> _buildCustomerOnlyItems(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authStateProvider);
@@ -1381,7 +1381,7 @@ class ProfileScreen extends ConsumerWidget {
     final isWorker = cats is List && cats.isNotEmpty;
     if (isWorker) return const [];
     return [
-      _menuItem(Icons.chat_bubble_outline, 'ğŸ’¬ Mesaj ÅablonlarÄ±m', () {
+      _menuItem(Icons.chat_bubble_outline, '💬 Mesaj Şablonlarım', () {
         context.push('/mesaj-sablonlarim');
       }),
     ];
@@ -1398,13 +1398,13 @@ class ProfileScreen extends ConsumerWidget {
         color: enabled ? AppColors.verifiedGreen : AppColors.textPrimary,
         size: 22,
       ),
-      title: const Text('Ä°ki AdÄ±mlÄ± DoÄŸrulama',
+      title: const Text('İki Adımlı Doğrulama',
           style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 15,
               fontWeight: FontWeight.w500)),
       subtitle: Text(
-        enabled ? 'AÃ§Ä±k' : 'KapalÄ±',
+        enabled ? 'Açık' : 'Kapalı',
         style: TextStyle(
             fontSize: 12,
             color: enabled ? AppColors.verifiedGreen : AppColors.textHint,
@@ -1431,12 +1431,12 @@ class ProfileScreen extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('2FA Devre DÄ±ÅŸÄ± BÄ±rak'),
+        title: const Text('2FA Devre Dışı Bırak'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-                'Devre dÄ±ÅŸÄ± bÄ±rakmak iÃ§in authenticator uygulamanÄ±zdaki kodu girin:'),
+                'Devre dışı bırakmak için authenticator uygulamanızdaki kodu girin:'),
             const SizedBox(height: 12),
             TextField(
               controller: codeController,
@@ -1447,17 +1447,17 @@ class ProfileScreen extends ConsumerWidget {
               style: const TextStyle(
                   fontFamily: 'monospace', fontSize: 20, letterSpacing: 6),
               decoration: const InputDecoration(
-                  counterText: '', hintText: 'Â·Â·Â·Â·Â·Â·'),
+                  counterText: '', hintText: '······'),
             ),
           ],
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Ä°ptal')),
+              child: const Text('İptal')),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Devre DÄ±ÅŸÄ± BÄ±rak',
+              child: const Text('Devre Dışı Bırak',
                   style: TextStyle(color: AppColors.error))),
         ],
       ),
@@ -1474,7 +1474,7 @@ class ProfileScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('2FA devre dÄ±ÅŸÄ± bÄ±rakÄ±ldÄ±'),
+              content: Text('2FA devre dışı bırakıldı'),
               backgroundColor: AppColors.verifiedGreen),
         );
       }
@@ -1492,7 +1492,7 @@ class ProfileScreen extends ConsumerWidget {
     return ListTile(
       leading: const Icon(Icons.brightness_6_outlined,
           color: AppColors.textPrimary, size: 22),
-      title: const Text('GÃ¶rÃ¼nÃ¼m',
+      title: const Text('Görünüm',
           style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 15,
@@ -1538,13 +1538,13 @@ class ProfileScreen extends ConsumerWidget {
                   padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('GÃ¶rÃ¼nÃ¼m',
+                    child: Text('Görünüm',
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 tile(ThemeMode.system, 'Sistem', Icons.settings_suggest_outlined),
-                tile(ThemeMode.light, 'AÃ§Ä±k', Icons.light_mode_outlined),
+                tile(ThemeMode.light, 'Açık', Icons.light_mode_outlined),
                 tile(ThemeMode.dark, 'Koyu', Icons.dark_mode_outlined),
                 const SizedBox(height: 8),
               ],
@@ -1594,7 +1594,7 @@ class ProfileScreen extends ConsumerWidget {
                 if (v == null) return;
                 await ref2.read(localeProvider.notifier).setLocale(loc);
                 // PATCH /users/me to persist preferredLang on backend.
-                // Phase 241 â€” Ham Dio kaldÄ±rÄ±ldÄ±; AuthInterceptor Bearer ekler.
+                // Phase 241 — Ham Dio kaldırıldı; AuthInterceptor Bearer ekler.
                 try {
                   await ref2
                       .read(apiClientProvider)
@@ -1624,9 +1624,9 @@ class ProfileScreen extends ConsumerWidget {
                             fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                 ),
-                tile(const Locale('tr'), 'ğŸ‡¹ğŸ‡· TÃ¼rkÃ§e'),
-                tile(const Locale('en'), 'ğŸ‡¬ğŸ‡§ English'),
-                tile(const Locale('az'), 'ğŸ‡¦ğŸ‡¿ AzÉ™rbaycan'),
+                tile(const Locale('tr'), '🇹🇷 Türkçe'),
+                tile(const Locale('en'), '🇬🇧 English'),
+                tile(const Locale('az'), '🇦🇿 Azərbaycan'),
                 const SizedBox(height: 8),
               ],
             ),

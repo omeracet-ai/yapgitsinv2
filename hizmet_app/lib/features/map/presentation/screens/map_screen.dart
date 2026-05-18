@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -20,8 +20,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final _mapController = MapController();
   bool _hasInitialFit = false;
 
-  // Phase 180 â€” fitBounds helper. TÃ¼m pin'leri + kullanÄ±cÄ± konumunu kapsayan
-  // LatLngBounds dÃ¶ndÃ¼rÃ¼r. BoÅŸ listede null.
+  // Phase 180 — fitBounds helper. Tüm pin'leri + kullanıcı konumunu kapsayan
+  // LatLngBounds döndürür. Boş listede null.
   LatLngBounds? _boundsFromPoints(List<LatLng> points) {
     if (points.isEmpty) return null;
     double minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
@@ -45,10 +45,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           LatLng(w.latitude!, w.longitude!),
       if (s.userLocation != null) s.userLocation!,
     ];
-    if (points.isEmpty) return; // hiÃ§ pin yok â†’ default zoom
+    if (points.isEmpty) return; // hiç pin yok → default zoom
     _hasInitialFit = true;
     if (points.length == 1) {
-      // Tek pin â†’ orta-zoom
+      // Tek pin → orta-zoom
       _mapController.move(points.first, 13);
       return;
     }
@@ -65,9 +65,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   void initState() {
     super.initState();
-    // Phase 179 â€” Post-frame callback + try/catch. Microtask iÃ§inde provider
-    // init throw ederse uncaught error olarak swallow oluyordu; artÄ±k explicit
-    // logger + UI fallback'i provider tarafÄ±nda garanti.
+    // Phase 179 — Post-frame callback + try/catch. Microtask içinde provider
+    // init throw ederse uncaught error olarak swallow oluyordu; artık explicit
+    // logger + UI fallback'i provider tarafında garanti.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       try {
@@ -89,8 +89,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final state = ref.watch(mapProvider);
     final notifier = ref.read(mapProvider.notifier);
 
-    // Phase 180 â€” Ä°lk aÃ§Ä±lÄ±ÅŸta tÃ¼m pin'leri + user'Ä± kapsayan fitBounds.
-    // Jobs/workers/userLocation herhangi biri deÄŸiÅŸtiÄŸinde bir kez tetiklenir.
+    // Phase 180 — İlk açılışta tüm pin'leri + user'ı kapsayan fitBounds.
+    // Jobs/workers/userLocation herhangi biri değiştiğinde bir kez tetiklenir.
     ref.listen(mapProvider, (_, next) {
       if (!_hasInitialFit) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -119,14 +119,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             )
           : Stack(
               children: [
-                // â”€â”€ Full-screen map â”€â”€
+                // ── Full-screen map ──
                 _MapView(
                   state: state,
                   mapController: _mapController,
                   onPinTap: (j) => notifier.selectJob(j.id),
                   onWorkerTap: (w) {
                     notifier.selectWorker(w.id);
-                    // Phase 178 â€” Direkt usta profiline yÃ¶nlendir.
+                    // Phase 178 — Direkt usta profiline yönlendir.
                     context.push('/usta/${w.id}');
                   },
                   onMapTap: () {
@@ -135,21 +135,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   },
                 ),
 
-                // â”€â”€ Floating search bar + category chips overlay â”€â”€
+                // ── Floating search bar + category chips overlay ──
                 _FloatingOverlay(state: state, notifier: notifier),
 
-                // â”€â”€ Loading indicator â”€â”€
+                // ── Loading indicator ──
                 if (state.locationLoading)
                   const Center(child: CircularProgressIndicator()),
 
-                // â”€â”€ Error banner â”€â”€
+                // ── Error banner ──
                 if (state.error != null)
                   _ErrorBanner(
                     message: state.error!,
                     onRetry: notifier.refresh,
                   ),
 
-                // â”€â”€ Job count badge (top-right, below chips) â”€â”€
+                // ── Job count badge (top-right, below chips) ──
                 if (!state.locationLoading && state.jobs.isNotEmpty)
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 106,
@@ -176,7 +176,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ),
                   ),
 
-                // â”€â”€ Locate me FAB â”€â”€
+                // ── Locate me FAB ──
                 if (state.userLocation != null)
                   Positioned(
                     bottom: selectedJob != null ? 196 : 24,
@@ -192,7 +192,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ),
                   ),
 
-                // â”€â”€ Selected job bottom card â”€â”€
+                // ── Selected job bottom card ──
                 if (selectedJob != null)
                   Positioned(
                     bottom: 0,
@@ -209,9 +209,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // Floating header used in list-view mode
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _FloatingHeader extends StatelessWidget {
   final MapState state;
@@ -221,7 +221,7 @@ class _FloatingHeader extends StatelessWidget {
 
   static const _categories = [
     'all',
-    'ElektrikÃ§i',
+    'Elektrikçi',
     'Tesisat',
     'Temizlik',
     'Boya & Badana',
@@ -246,9 +246,9 @@ class _FloatingHeader extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // Floating overlay (search bar + chips) on top of map
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _FloatingOverlay extends StatelessWidget {
   final MapState state;
@@ -258,7 +258,7 @@ class _FloatingOverlay extends StatelessWidget {
 
   static const _categories = [
     'all',
-    'ElektrikÃ§i',
+    'Elektrikçi',
     'Tesisat',
     'Temizlik',
     'Boya & Badana',
@@ -287,9 +287,9 @@ class _FloatingOverlay extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // Search pill widget
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _SearchPill extends StatelessWidget {
   final MapState state;
@@ -316,7 +316,7 @@ class _SearchPill extends StatelessWidget {
           const SizedBox(width: 8),
           const Expanded(
             child: Text(
-              'YakÄ±nÄ±mdaki ilanlar',
+              'Yakınımdaki ilanlar',
               style: TextStyle(
                   color: Color(0xFFAAAAAA),
                   fontSize: 13),
@@ -357,9 +357,9 @@ class _SearchPill extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // Category chips row
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _CategoryChips extends StatelessWidget {
   final MapState state;
@@ -380,7 +380,7 @@ class _CategoryChips extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         children: categories.map((cat) {
           final isActive = state.activeFilter == cat;
-          final label = cat == 'all' ? 'TÃ¼mÃ¼' : cat;
+          final label = cat == 'all' ? 'Tümü' : cat;
           return GestureDetector(
             onTap: () => notifier.setFilter(cat),
             child: AnimatedContainer(
@@ -473,9 +473,9 @@ class _ToggleBtn extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Harita gÃ¶rÃ¼nÃ¼mÃ¼
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// Harita görünümü
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _MapView extends StatelessWidget {
   final MapState state;
@@ -560,8 +560,8 @@ class _MapView extends StatelessWidget {
             );
           }).toList(),
         ),
-        // Phase 178 â€” YakÄ±ndaki ustalar (mavi pill). Jobs Ã¼stÃ¼ne Ã§izilir;
-        // seÃ§ili usta turuncu jobs'tan ayÄ±rt edilebilir.
+        // Phase 178 — Yakındaki ustalar (mavi pill). Jobs üstüne çizilir;
+        // seçili usta turuncu jobs'tan ayırt edilebilir.
         MarkerLayer(
           markers: state.workers
               .where((w) => w.latitude != null && w.longitude != null)
@@ -591,9 +591,9 @@ class _MapView extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Liste gÃ¶rÃ¼nÃ¼mÃ¼ â€” kept as-is
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// Liste görünümü — kept as-is
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _JobListView extends StatelessWidget {
   final List<NearbyJob> jobs;
@@ -603,13 +603,13 @@ class _JobListView extends StatelessWidget {
 
   static String _icon(String category) {
     const icons = {
-      'ElektrikÃ§i': 'âš¡',
-      'Tesisat': 'ğŸ”§',
-      'Temizlik': 'ğŸ§¹',
-      'Boya & Badana': 'ğŸ–Œ',
-      'Nakliyat': 'ğŸš›',
+      'Elektrikçi': 'âš¡',
+      'Tesisat': '🔧',
+      'Temizlik': '🧹',
+      'Boya & Badana': '🖌',
+      'Nakliyat': '🚛',
     };
-    return icons[category] ?? 'ğŸ”¨';
+    return icons[category] ?? '🔨';
   }
 
   @override
@@ -617,7 +617,7 @@ class _JobListView extends StatelessWidget {
     if (jobs.isEmpty) {
       return const Center(
         child: Text(
-          'Bu bÃ¶lgede ilan bulunamadÄ±',
+          'Bu bölgede ilan bulunamadı',
           style: TextStyle(color: Colors.grey),
         ),
       );
@@ -637,7 +637,7 @@ class _JobListView extends StatelessWidget {
               style: const TextStyle(
                   fontWeight: FontWeight.w600, fontSize: 14)),
           subtitle: Text(
-            '${j.location} Â· ${j.distanceKm.toStringAsFixed(1)} km',
+            '${j.location} · ${j.distanceKm.toStringAsFixed(1)} km',
             style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
           trailing:
@@ -649,9 +649,9 @@ class _JobListView extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // Airtasker-style bottom card
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _AirtaskerCard extends StatelessWidget {
   final NearbyJob job;
@@ -661,7 +661,7 @@ class _AirtaskerCard extends StatelessWidget {
 
   static IconData _iconFor(String category) {
     switch (category) {
-      case 'ElektrikÃ§i':
+      case 'Elektrikçi':
         return Icons.bolt_rounded;
       case 'Tesisat':
         return Icons.plumbing_rounded;
@@ -779,7 +779,7 @@ class _AirtaskerCard extends StatelessWidget {
                           const SizedBox(width: 3),
                           Expanded(
                             child: Text(
-                              '${job.location} Â· ${job.distanceKm.toStringAsFixed(1)} km',
+                              '${job.location} · ${job.distanceKm.toStringAsFixed(1)} km',
                               style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey),
@@ -830,7 +830,7 @@ class _AirtaskerCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Row(
               children: [
-                // Teklif Ver â€” primary, 60% width
+                // Teklif Ver — primary, 60% width
                 Expanded(
                   flex: 6,
                   child: ElevatedButton(
@@ -851,7 +851,7 @@ class _AirtaskerCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                // Detay â€” outline, 35% width
+                // Detay — outline, 35% width
                 Expanded(
                   flex: 4,
                   child: OutlinedButton(
@@ -886,9 +886,9 @@ class _AirtaskerCard extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Hata banner â€” kept as-is
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// Hata banner — kept as-is
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _ErrorBanner extends StatelessWidget {
   final String message;

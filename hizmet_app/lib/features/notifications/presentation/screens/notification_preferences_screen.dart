@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -12,11 +12,11 @@ class NotificationPreferencesScreen extends ConsumerWidget {
         Icons.event_note_outlined),
     _PrefItem('offer', 'Teklif', 'Yeni teklif, kabul/red bildirimleri',
         Icons.local_offer_outlined),
-    _PrefItem('review', 'Yorum', 'Yeni deÄŸerlendirme aldÄ±ÄŸÄ±nÄ±zda',
+    _PrefItem('review', 'Yorum', 'Yeni değerlendirme aldığınızda',
         Icons.star_outline),
-    _PrefItem('message', 'Mesaj', 'Sohbet ve doÄŸrudan mesajlar',
+    _PrefItem('message', 'Mesaj', 'Sohbet ve doğrudan mesajlar',
         Icons.chat_bubble_outline),
-    _PrefItem('system', 'Sistem', 'Duyurular, kampanyalar ve gÃ¼ncellemeler',
+    _PrefItem('system', 'Sistem', 'Duyurular, kampanyalar ve güncellemeler',
         Icons.campaign_outlined),
   ];
 
@@ -28,7 +28,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Bildirim AyarlarÄ±'),
+        title: const Text('Bildirim Ayarları'),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -60,7 +60,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
                               ? null
                               : () => notifier.setAll(true),
                           icon: const Icon(Icons.notifications_active_outlined),
-                          label: const Text('TÃ¼mÃ¼nÃ¼ AÃ§'),
+                          label: const Text('Tümünü Aç'),
                         ),
                       ),
                       Container(width: 1, height: 24, color: AppColors.border),
@@ -70,7 +70,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
                               ? null
                               : () => notifier.setAll(false),
                           icon: const Icon(Icons.notifications_off_outlined),
-                          label: const Text('TÃ¼mÃ¼nÃ¼ Kapat'),
+                          label: const Text('Tümünü Kapat'),
                         ),
                       ),
                     ],

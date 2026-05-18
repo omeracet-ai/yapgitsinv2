@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -57,7 +57,7 @@ class _MainShellState extends ConsumerState<MainShell>
   void _onItemTapped(int index) {
     final authState = ref.read(authStateProvider);
     final isLoggedIn = authState is AuthAuthenticated;
-    // index 2 â€” "+" Ä°lan Ver kÄ±sa yolu (tab deÄŸiÅŸtirmek yerine route push)
+    // index 2 — "+" İlan Ver kısa yolu (tab değiştirmek yerine route push)
     if (index == 2) {
       if (isLoggedIn) {
         context.push('/ilan-ver');
@@ -66,7 +66,7 @@ class _MainShellState extends ConsumerState<MainShell>
       }
       return;
     }
-    // Bildirimler (index 3) giriÅŸ gerektiriyor
+    // Bildirimler (index 3) giriş gerektiriyor
     if (index == 3 && !isLoggedIn) {
       context.push('/giris-yap', extra: {'returnTo': '/'});
       return;
@@ -138,7 +138,7 @@ class _MainShellState extends ConsumerState<MainShell>
               const BottomNavigationBarItem(
                   icon: Icon(Icons.home_outlined),
                   activeIcon: Icon(Icons.home_rounded),
-                  label: 'YaptÄ±r'),
+                  label: 'Yaptır'),
               const BottomNavigationBarItem(
                   icon: Icon(Icons.search_outlined),
                   activeIcon: Icon(Icons.search_rounded),
@@ -171,7 +171,7 @@ class _MainShellState extends ConsumerState<MainShell>
                     child: const Icon(Icons.add_rounded,
                         color: Colors.black, size: 24),
                   ),
-                  label: 'Ä°lan Ver'),
+                  label: 'İlan Ver'),
               BottomNavigationBarItem(
                   icon: _NotifIconWithBadge(
                     icon: isLoggedIn
@@ -197,9 +197,9 @@ class _MainShellState extends ConsumerState<MainShell>
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Ana Sayfa (YaptÄ±r) sekmesi
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// Ana Sayfa (Yaptır) sekmesi
+// ─────────────────────────────────────────────────────────────────────────────
 class _HomeTab extends ConsumerStatefulWidget {
   final VoidCallback onSeeAllRequests;
   const _HomeTab({required this.onSeeAllRequests});
@@ -248,7 +248,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // â”€â”€ Hero SliverAppBar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── Hero SliverAppBar ──────────────────────────────────────
             SliverAppBar(
               expandedHeight: 200,
               pinned: true,
@@ -279,7 +279,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                   Text(
                                     userName != null
                                         ? 'Merhaba, $userName'
-                                        : 'HoÅŸ Geldiniz',
+                                        : 'Hoş Geldiniz',
                                     style: GoogleFonts.inter(
                                       color: AppColors.textSecondary,
                                       fontSize: 13,
@@ -310,7 +310,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                           color: Colors.white.withValues(alpha: 0.5)),
                                     ),
                                     child: const Text(
-                                      'GiriÅŸ Yap',
+                                      'Giriş Yap',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 13,
@@ -342,7 +342,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                               textInputAction: TextInputAction.search,
                               style: const TextStyle(color: AppColors.darkText),
                               decoration: InputDecoration(
-                                hintText: 'Hangi hizmete ihtiyacÄ±nÄ±z var?',
+                                hintText: 'Hangi hizmete ihtiyacınız var?',
                                 hintStyle: const TextStyle(
                                     color: AppColors.darkTextSecondary, fontSize: 14),
                                 prefixIcon: const Icon(Icons.search,
@@ -353,7 +353,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                     IconButton(
                                       icon: const Icon(Icons.map_outlined,
                                           color: AppColors.primary),
-                                      tooltip: 'Haritada GÃ¶r',
+                                      tooltip: 'Haritada Gör',
                                       onPressed: () =>
                                           context.push('/harita'),
                                     ),
@@ -422,7 +422,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // â”€â”€ Ä°lan Ver butonu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  // ── İlan Ver butonu ──────────────────────────────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                     child: ElevatedButton.icon(
@@ -436,7 +436,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                       },
                       icon: const Icon(Icons.add_circle_outline,
                           color: Colors.white),
-                      label: const Text('Hizmet Ä°lanÄ± Ver',
+                      label: const Text('Hizmet İlanı Ver',
                           style: TextStyle(
                               color: Colors.white, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
@@ -455,7 +455,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
 
                   const SizedBox(height: 24),
 
-                  // â”€â”€ PopÃ¼ler Kategoriler (siyah arka plan) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  // ── Popüler Kategoriler (siyah arka plan) ─────────────
                   Container(
                     color: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -468,7 +468,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'PopÃ¼ler Kategoriler',
+                          'Popüler Kategoriler',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -522,7 +522,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                   const EdgeInsets.symmetric(horizontal: 16),
                               children: [
                                 _GroupChip(
-                                  label: 'TÃ¼mÃ¼',
+                                  label: 'Tümü',
                                   isActive: _selectedGroup == null,
                                   onTap: () => setState(() {
                                     _selectedGroup = null;
@@ -542,7 +542,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          // 2x2 fotoÄŸraflÄ± kategori grid (horizontal scroll)
+                          // 2x2 fotoğraflı kategori grid (horizontal scroll)
                           SizedBox(
                             height: 130,
                             child: ListView.builder(
@@ -555,7 +555,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                 final catName =
                                     cat['name'] as String? ?? '';
                                 final emoji =
-                                    cat['icon'] as String? ?? 'ÄŸÅ¸â€Â§';
+                                    cat['icon'] as String? ?? '🔧';
                                 final isActive =
                                     _selectedCategory == catName;
                                 return SizedBox(
@@ -590,22 +590,22 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
 
                   const SizedBox(height: 24),
 
-                  // â”€â”€ AI Ã–nerileri (Phase 214) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  // ── AI Önerileri (Phase 214) ─────────────────────────
                   if (isLoggedIn) const AiRecommendationsSection(),
 
-                  // â”€â”€ Son Ä°lanlar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  // ── Son İlanlar ──────────────────────────────────────
                   SectionHeader(
-                    title: 'Son Ä°lanlar',
-                    actionLabel: 'TÃ¼mÃ¼nÃ¼ GÃ¶r',
+                    title: 'Son İlanlar',
+                    actionLabel: 'Tümünü Gör',
                     onAction: widget.onSeeAllRequests,
                   ),
                   const SizedBox(height: 12),
 
                   jobsAsync.when(
                     data: (jobs) {
-                      // PopÃ¼ler Kategoriler'de seÃ§ili chip varsa Son Ä°lanlar
-                      // o kategoriye uyanlar Ã–NCE gÃ¶sterilir (sÄ±ralama, filtre deÄŸil);
-                      // "TÃ¼mÃ¼" (null) hepsini orijinal sÄ±rada gÃ¶sterir.
+                      // Popüler Kategoriler'de seçili chip varsa Son İlanlar
+                      // o kategoriye uyanlar ÖNCE gösterilir (sıralama, filtre değil);
+                      // "Tümü" (null) hepsini orijinal sırada gösterir.
                       final ranked = _selectedCategory == null
                           ? jobs
                           : <Job>[
@@ -652,14 +652,14 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         children: [
           const Icon(Icons.info_outline, color: AppColors.primary, size: 20),
           const SizedBox(width: 10),
-          const Expanded(child: Text('Ä°lan vermek iÃ§in giriÅŸ yapÄ±n.', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w500))),
+          const Expanded(child: Text('İlan vermek için giriş yapın.', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w500))),
           const SizedBox(width: 8),
           GestureDetector(
             onTap: () => context.push('/giris-yap'),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(8)),
-              child: const Text('GiriÅŸ Yap', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+              child: const Text('Giriş Yap', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -668,11 +668,11 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// YardÄ±mcÄ± widget'lar
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// Yardımcı widget'lar
+// ─────────────────────────────────────────────────────────────────────────────
 
-/// Recent job row for home screen â€” uses JobStatusBadge
+/// Recent job row for home screen — uses JobStatusBadge
 class _RecentJobRow extends StatelessWidget {
   final Job job;
   const _RecentJobRow({required this.job});
@@ -755,7 +755,7 @@ class _RecentJobRow extends StatelessWidget {
   }
 }
 
-/// Grup filtre chip'i (TÃ¼mÃ¼ / Ev & YaÅŸam / YapÄ± & Tesisat ...)
+/// Grup filtre chip'i (Tümü / Ev & Yaşam / Yapı & Tesisat ...)
 class _GroupChip extends StatelessWidget {
   final String label;
   final bool isActive;

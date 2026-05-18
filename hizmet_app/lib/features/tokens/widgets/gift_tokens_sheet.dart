@@ -1,4 +1,4 @@
-﻿import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,7 +50,7 @@ class _GiftTokensSheetState extends ConsumerState<GiftTokensSheet> {
   Future<void> _send() async {
     final amount = int.tryParse(_amountCtrl.text.trim()) ?? 0;
     if (amount < 1 || amount > 1000) {
-      setState(() => _error = 'Miktar 1 ile 1000 arasÄ±nda olmalÄ±');
+      setState(() => _error = 'Miktar 1 ile 1000 arasında olmalı');
       return;
     }
     setState(() {
@@ -70,14 +70,14 @@ class _GiftTokensSheetState extends ConsumerState<GiftTokensSheet> {
         SnackBar(
           backgroundColor: AppColors.success,
           content: Text(
-            '${res['amount']} token ${res['recipientName']} kullanÄ±cÄ±sÄ±na gÃ¶nderildi',
+            '${res['amount']} token ${res['recipientName']} kullanıcısına gönderildi',
           ),
         ),
       );
     } on DioException catch (e) {
       final msg = e.response?.data is Map
           ? (e.response!.data['message']?.toString() ?? 'Hata')
-          : 'BaÄŸlantÄ± hatasÄ±';
+          : 'Bağlantı hatası';
       setState(() {
         _sending = false;
         _error = msg;
@@ -118,11 +118,11 @@ class _GiftTokensSheetState extends ConsumerState<GiftTokensSheet> {
             const SizedBox(height: 16),
             Row(
               children: [
-                const Text('ğŸ', style: TextStyle(fontSize: 24)),
+                const Text('🎁', style: TextStyle(fontSize: 24)),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '${widget.recipientName} kullanÄ±cÄ±sÄ±na token hediye et',
+                    '${widget.recipientName} kullanıcısına token hediye et',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -137,7 +137,7 @@ class _GiftTokensSheetState extends ConsumerState<GiftTokensSheet> {
               data: (b) => Text('Mevcut bakiyen: $b token',
                   style: const TextStyle(
                       fontSize: 13, color: AppColors.textSecondary)),
-              loading: () => const Text('Bakiye yÃ¼kleniyor...',
+              loading: () => const Text('Bakiye yükleniyor...',
                   style:
                       TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               error: (_, __) => const SizedBox.shrink(),
@@ -190,7 +190,7 @@ class _GiftTokensSheetState extends ConsumerState<GiftTokensSheet> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.send_rounded),
-                label: Text(_sending ? 'GÃ¶nderiliyor...' : 'GÃ¶nder'),
+                label: Text(_sending ? 'Gönderiliyor...' : 'Gönder'),
               ),
             ),
           ],

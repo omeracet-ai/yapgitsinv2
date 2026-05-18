@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -21,7 +21,7 @@ class WalletScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('CÃ¼zdanÄ±m'),
+        title: const Text('Cüzdanım'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         actions: [
@@ -51,7 +51,7 @@ class WalletScreen extends ConsumerWidget {
               const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Son Ä°ÅŸlemler',
+                  Text('Son İşlemler',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
@@ -110,7 +110,7 @@ class WalletScreen extends ConsumerWidget {
         Expanded(
           child: _ActionButton(
             icon: Icons.add_card,
-            label: 'Token YÃ¼kle',
+            label: 'Token Yükle',
             color: Colors.blue,
             onTap: () => context.push('/jetonlar'),
           ),
@@ -119,7 +119,7 @@ class WalletScreen extends ConsumerWidget {
         Expanded(
           child: _ActionButton(
             icon: Icons.history_rounded,
-            label: 'GeÃ§miÅŸ',
+            label: 'Geçmiş',
             color: Colors.orange,
             onTap: () {
               ref.invalidate(_walletHistoryProvider);
@@ -143,7 +143,7 @@ class WalletScreen extends ConsumerWidget {
               const Icon(Icons.wifi_off_outlined,
                   size: 40, color: AppColors.textHint),
               const SizedBox(height: 8),
-              Text('Ä°ÅŸlem geÃ§miÅŸi yÃ¼klenemedi: $e',
+              Text('İşlem geçmişi yüklenemedi: $e',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                       fontSize: 13, color: AppColors.textSecondary)),
@@ -160,7 +160,7 @@ class WalletScreen extends ConsumerWidget {
                 Icon(Icons.receipt_long_outlined,
                     size: 48, color: AppColors.textHint),
                 SizedBox(height: 12),
-                Text('HenÃ¼z iÅŸlem yok.',
+                Text('Henüz işlem yok.',
                     style: TextStyle(
                         color: AppColors.textSecondary, fontSize: 14)),
               ],
@@ -226,22 +226,22 @@ class _TxCard extends StatelessWidget {
 
     final isCredit = type == 'purchase' || type == 'refund';
     final (label, icon, color) = switch (type) {
-      'purchase' => ('Token YÃ¼kleme', Icons.add_circle_outline, Colors.green),
-      'refund' => ('Ä°ade', Icons.undo_rounded, Colors.teal),
-      _ => ('Teklif Ãœcreti', Icons.remove_circle_outline, Colors.red),
+      'purchase' => ('Token Yükleme', Icons.add_circle_outline, Colors.green),
+      'refund' => ('İade', Icons.undo_rounded, Colors.teal),
+      _ => ('Teklif Ücreti', Icons.remove_circle_outline, Colors.red),
     };
 
     final (statusLabel, statusColor) = switch (status) {
-      'completed' => ('TamamlandÄ±', Colors.green),
+      'completed' => ('Tamamlandı', Colors.green),
       'pending' => ('Bekliyor', Colors.orange),
-      _ => ('BaÅŸarÄ±sÄ±z', Colors.red),
+      _ => ('Başarısız', Colors.red),
     };
 
     String dateStr = '';
     if (createdAt.isNotEmpty) {
       final dt = DateTime.tryParse(createdAt)?.toLocal();
       if (dt != null) {
-        // P190/4 â€” locale-aware via IntlFormatter.
+        // P190/4 — locale-aware via IntlFormatter.
         dateStr = IntlFormatter.date(context, dt);
       }
     }
@@ -269,7 +269,7 @@ class _TxCard extends StatelessWidget {
                   Text(statusLabel,
                       style: TextStyle(fontSize: 12, color: statusColor)),
                   if (dateStr.isNotEmpty) ...[
-                    const Text(' Â· ',
+                    const Text(' · ',
                         style: TextStyle(
                             fontSize: 12, color: AppColors.textHint)),
                     Text(dateStr,

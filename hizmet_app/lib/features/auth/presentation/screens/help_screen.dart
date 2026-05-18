@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -15,47 +15,47 @@ class _HelpScreenState extends State<HelpScreen> {
 
   static const _faqs = [
     (
-      'Teklif nasÄ±l veririm?',
-      'YaptÄ±r ekranÄ±ndan bir ilanÄ± seÃ§in, "Teklif Ver" butonuna tÄ±klayÄ±n, fiyatÄ±nÄ±zÄ± ve mesajÄ±nÄ±zÄ± girin. '
-      'Teklif mÃ¼ÅŸteriye iletilir; kabul, ret veya pazarlÄ±k teklifi alabilirsiniz.',
+      'Teklif nasıl veririm?',
+      'Yaptır ekranından bir ilanı seçin, "Teklif Ver" butonuna tıklayın, fiyatınızı ve mesajınızı girin. '
+      'Teklif müşteriye iletilir; kabul, ret veya pazarlık teklifi alabilirsiniz.',
     ),
     (
-      'Kimlik doÄŸrulama neden gerekli?',
-      'Mavi tik (âœ“) kazanmak iÃ§in kimlik fotoÄŸrafÄ±nÄ±zÄ± yÃ¼klemeniz gerekir. '
-      'DoÄŸrulanmÄ±ÅŸ hesaplar daha fazla gÃ¼ven oluÅŸturur ve Ã¶ne Ã§Ä±kar. '
-      'Kimlik bilgileriniz ÅŸifreli olarak saklanÄ±r, Ã¼Ã§Ã¼ncÃ¼ taraflarla paylaÅŸÄ±lmaz.',
+      'Kimlik doğrulama neden gerekli?',
+      'Mavi tik (✓) kazanmak için kimlik fotoğrafınızı yüklemeniz gerekir. '
+      'Doğrulanmış hesaplar daha fazla güven oluşturur ve öne çıkar. '
+      'Kimlik bilgileriniz şifreli olarak saklanır, üçüncü taraflarla paylaşılmaz.',
     ),
     (
       'Yeterlilik Belgesi nedir?',
-      'UzmanlÄ±k alanÄ±nÄ±za ait sertifika, diploma veya belgeleri yÃ¼kleyebilirsiniz. '
-      'Onaylanan belgeler profilinizde "BelgelenmiÅŸ Uzman" rozeti olarak gÃ¶rÃ¼nÃ¼r.',
+      'Uzmanlık alanınıza ait sertifika, diploma veya belgeleri yükleyebilirsiniz. '
+      'Onaylanan belgeler profilinizde "Belgelenmiş Uzman" rozeti olarak görünür.',
     ),
     (
-      'Teklif fiyatÄ± baÅŸkasÄ± gÃ¶rebilir mi?',
-      'HayÄ±r. Teklif tutarÄ± yalnÄ±zca ilan sahibi ve teklifi veren kiÅŸi tarafÄ±ndan gÃ¶rÃ¼lebilir. '
-      'DiÄŸer kullanÄ±cÄ±lara tutar gizlenir.',
+      'Teklif fiyatı başkası görebilir mi?',
+      'Hayır. Teklif tutarı yalnızca ilan sahibi ve teklifi veren kişi tarafından görülebilir. '
+      'Diğer kullanıcılara tutar gizlenir.',
     ),
     (
-      'Ã–deme nasÄ±l yapÄ±lÄ±r?',
-      'Ã–deme ilan sahibi ile usta arasÄ±nda doÄŸrudan gerÃ§ekleÅŸir. '
-      'Platform ÅŸu an iÃ§in Ã¶deme aracÄ±lÄ±k hizmeti sunmamaktadÄ±r. '
-      'GÃ¼venli Ã¶deme iÃ§in iÅŸ tamamlandÄ±ktan sonra Ã¶deme yapmanÄ±zÄ± Ã¶neririz.',
+      'Ödeme nasıl yapılır?',
+      'Ödeme ilan sahibi ile usta arasında doğrudan gerçekleşir. '
+      'Platform şu an için ödeme aracılık hizmeti sunmamaktadır. '
+      'Güvenli ödeme için iş tamamlandıktan sonra ödeme yapmanızı öneririz.',
     ),
     (
-      'DeÄŸerlendirme nasÄ±l bÄ±rakÄ±rÄ±m?',
-      'Ä°ÅŸ tamamlandÄ±ktan sonra ilan detay ekranÄ±ndaki kabul edilmiÅŸ teklif kartÄ±nda '
-      '"DeÄŸerlendir" butonuna tÄ±klayÄ±n. 1-5 yÄ±ldÄ±z ve yorum bÄ±rakabilirsiniz.',
+      'Değerlendirme nasıl bırakırım?',
+      'İş tamamlandıktan sonra ilan detay ekranındaki kabul edilmiş teklif kartında '
+      '"Değerlendir" butonuna tıklayın. 1-5 yıldız ve yorum bırakabilirsiniz.',
     ),
     (
-      'HesabÄ±mÄ± nasÄ±l silerim?',
-      'Hesap silme iÅŸlemi iÃ§in support@yapgitsin.tr adresine e-posta gÃ¶nderiniz. '
-      'Talebiniz 5 iÅŸ gÃ¼nÃ¼ iÃ§inde iÅŸleme alÄ±nÄ±r.',
+      'Hesabımı nasıl silerim?',
+      'Hesap silme işlemi için support@yapgitsin.tr adresine e-posta gönderiniz. '
+      'Talebiniz 5 iş günü içinde işleme alınır.',
     ),
     (
-      'Teklif verirken hata alÄ±yorum?',
-      'Token bakiyenizin yeterli olduÄŸundan emin olun. '
+      'Teklif verirken hata alıyorum?',
+      'Token bakiyenizin yeterli olduğundan emin olun. '
       'Her teklif belirli miktarda token gerektirir. '
-      'Sorun devam ederse destek ekibimizle iletiÅŸime geÃ§in.',
+      'Sorun devam ederse destek ekibimizle iletişime geçin.',
     ),
   ];
 
@@ -64,7 +64,7 @@ class _HelpScreenState extends State<HelpScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('YardÄ±m & Destek'),
+        title: const Text('Yardım & Destek'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -92,11 +92,11 @@ class _HelpScreenState extends State<HelpScreen> {
                     child: const Icon(Icons.support_agent_rounded, size: 40, color: Colors.white),
                   ),
                   const SizedBox(height: 14),
-                  const Text('Size nasÄ±l yardÄ±mcÄ± olabiliriz?',
+                  const Text('Size nasıl yardımcı olabiliriz?',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
-                  const Text('AÅŸaÄŸÄ±dan sÄ±kÃ§a sorulan sorularÄ± inceleyebilir\nveya bize doÄŸrudan ulaÅŸabilirsiniz.',
+                  const Text('Aşağıdan sıkça sorulan soruları inceleyebilir\nveya bize doğrudan ulaşabilirsiniz.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.white70, fontSize: 13)),
                 ],
@@ -105,7 +105,7 @@ class _HelpScreenState extends State<HelpScreen> {
 
             const SizedBox(height: 24),
 
-            // HÄ±zlÄ± iletiÅŸim butonlarÄ±
+            // Hızlı iletişim butonları
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -135,8 +135,8 @@ class _HelpScreenState extends State<HelpScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _contactCard(
                 icon: Icons.smart_toy_outlined,
-                label: 'AI Destek AsistanÄ±',
-                sub: '7/24 anÄ±nda yanÄ±t',
+                label: 'AI Destek Asistanı',
+                sub: '7/24 anında yanıt',
                 color: AppColors.primary,
                 onTap: () => context.push('/destek'),
                 full: true,
@@ -145,13 +145,13 @@ class _HelpScreenState extends State<HelpScreen> {
 
             const SizedBox(height: 28),
 
-            // SSS baÅŸlÄ±k
+            // SSS başlık
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Row(children: [
                 Icon(Icons.quiz_outlined, size: 18, color: AppColors.primary),
                 SizedBox(width: 8),
-                Text('SÄ±kÃ§a Sorulan Sorular',
+                Text('Sıkça Sorulan Sorular',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary)),
               ]),
@@ -240,13 +240,13 @@ class _HelpScreenState extends State<HelpScreen> {
                           fontWeight: FontWeight.bold, color: AppColors.primary)),
                     ]),
                     const SizedBox(height: 8),
-                    const Text('Uygulama hakkÄ±ndaki gÃ¶rÃ¼ÅŸleriniz bizim iÃ§in deÄŸerli.',
+                    const Text('Uygulama hakkındaki görüşleriniz bizim için değerli.',
                         style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                     const SizedBox(height: 14),
                     OutlinedButton.icon(
                       onPressed: () => _launchUrl('mailto:geri-bildirim@yapgitsin.tr?subject=Uygulama%20Geri%20Bildirimi'),
                       icon: const Icon(Icons.send_outlined, size: 16),
-                      label: const Text('Geri Bildirim GÃ¶nder'),
+                      label: const Text('Geri Bildirim Gönder'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
                         side: const BorderSide(color: AppColors.primary),
@@ -266,18 +266,18 @@ class _HelpScreenState extends State<HelpScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _textLink('Gizlilik PolitikasÄ±', () => _launchUrl('https://yapgitsin.tr/privacy')),
-                  const Text(' Â· ', style: TextStyle(color: AppColors.textHint)),
-                  _textLink('KullanÄ±m KoÅŸullarÄ±', () => _launchUrl('https://yapgitsin.tr/terms')),
-                  const Text(' Â· ', style: TextStyle(color: AppColors.textHint)),
-                  _textLink('Ã‡erez PolitikasÄ±', () => _launchUrl('https://yapgitsin.tr/cookies')),
+                  _textLink('Gizlilik Politikası', () => _launchUrl('https://yapgitsin.tr/privacy')),
+                  const Text(' · ', style: TextStyle(color: AppColors.textHint)),
+                  _textLink('Kullanım Koşulları', () => _launchUrl('https://yapgitsin.tr/terms')),
+                  const Text(' · ', style: TextStyle(color: AppColors.textHint)),
+                  _textLink('Çerez Politikası', () => _launchUrl('https://yapgitsin.tr/cookies')),
                 ],
               ),
             ),
 
             const SizedBox(height: 8),
             const Center(
-              child: Text('Hizmet UygulamasÄ± v1.0.0',
+              child: Text('Hizmet Uygulaması v1.0.0',
                   style: TextStyle(fontSize: 11, color: AppColors.textHint)),
             ),
             const SizedBox(height: 32),

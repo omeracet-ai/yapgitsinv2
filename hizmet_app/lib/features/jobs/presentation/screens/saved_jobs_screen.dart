@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/intl_formatter.dart';
@@ -17,7 +17,7 @@ class SavedJobsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Kaydedilen Ä°ÅŸler'),
+        title: const Text('Kaydedilen İşler'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -57,9 +57,9 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return const EmptyState(
       icon: Icons.bookmark_border_rounded,
-      title: 'Kaydedilen iÅŸ yok',
+      title: 'Kaydedilen iş yok',
       message:
-          'Sonra dÃ¶nmek istediÄŸin ilanlarÄ± yer imine ekle, hepsi burada toplansÄ±n.',
+          'Sonra dönmek istediğin ilanları yer imine ekle, hepsi burada toplansın.',
     );
   }
 }
@@ -69,10 +69,10 @@ class _SavedJobCard extends ConsumerWidget {
   const _SavedJobCard({required this.job});
 
   String _budget(BuildContext context) {
-    // P190/4 â€” IntlFormatter.currency.
+    // P190/4 — IntlFormatter.currency.
     final mn = job['budgetMin'];
     final mx = job['budgetMax'];
-    if (mn == null && mx == null) return 'PazarlÄ±k';
+    if (mn == null && mx == null) return 'Pazarlık';
     if (mn != null && mx != null) {
       return '${IntlFormatter.currency(context, (mn as num), decimalDigits: 0)} - ${IntlFormatter.currency(context, (mx as num), decimalDigits: 0)}';
     }
@@ -202,7 +202,7 @@ class _SavedJobCard extends ConsumerWidget {
             ),
             IconButton(
               icon: const Icon(Icons.bookmark, color: AppColors.primary),
-              tooltip: 'Kaydedilenlerden Ã§Ä±kar',
+              tooltip: 'Kaydedilenlerden çıkar',
               onPressed: () async {
                 try {
                   await ref.read(savedJobsProvider.notifier).toggle(id);

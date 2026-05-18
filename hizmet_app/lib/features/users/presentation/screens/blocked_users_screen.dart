@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -67,7 +67,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           const Text(
-            'EngellediÄŸin kullanÄ±cÄ± yok',
+            'Engellediğin kullanıcı yok',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -78,7 +78,7 @@ class _EmptyState extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              'Profil ekranÄ±ndaki menÃ¼den bir kullanÄ±cÄ±yÄ± engelleyebilirsin.',
+              'Profil ekranındaki menüden bir kullanıcıyı engelleyebilirsin.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: AppColors.textHint),
             ),
@@ -104,7 +104,7 @@ class _BlockedRowState extends ConsumerState<_BlockedRow> {
   Widget build(BuildContext context) {
     final user = (widget.record['blockedUser'] as Map?) ?? const {};
     final id = (widget.record['blockedId'] ?? user['id'] ?? '').toString();
-    final name = (user['fullName'] ?? 'KullanÄ±cÄ±').toString();
+    final name = (user['fullName'] ?? 'Kullanıcı').toString();
     final imgUrl = user['profileImageUrl'] as String?;
     final initials = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
@@ -149,7 +149,7 @@ class _BlockedRowState extends ConsumerState<_BlockedRow> {
                       ref.invalidate(myBlocksListProvider);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text('Engelleme kaldÄ±rÄ±ldÄ±')),
+                            content: Text('Engelleme kaldırıldı')),
                       );
                     } catch (e) {
                       if (!context.mounted) return;
@@ -173,7 +173,7 @@ class _BlockedRowState extends ConsumerState<_BlockedRow> {
                     width: 14,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Engellemeyi KaldÄ±r',
+                : const Text('Engellemeyi Kaldır',
                     style: TextStyle(fontSize: 12.5)),
           ),
         ],

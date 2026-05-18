@@ -19,7 +19,7 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('ğŸ’° Saatlik ücret aralığın',
+          const Text('💰 Saatlik ücret aralığın',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           const Text(
@@ -34,7 +34,7 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
-                    labelText: 'Min (â‚º/saat)',
+                    labelText: 'Min (₺/saat)',
                     prefixIcon: const Icon(Icons.south_outlined),
                     
                     border: OutlineInputBorder(
@@ -50,7 +50,7 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
-                    labelText: 'Max (â‚º/saat)',
+                    labelText: 'Max (₺/saat)',
                     prefixIcon: const Icon(Icons.north_outlined),
                     
                     border: OutlineInputBorder(
@@ -74,7 +74,7 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Piyasa ortalaması: 150–500 â‚º/saat. Tecrübeli ustalar daha yüksek belirleyebilir.',
+                  'Piyasa ortalaması: 150–500 ₺/saat. Tecrübeli ustalar daha yüksek belirleyebilir.',
                   style: TextStyle(fontSize: 12),
                 ),
               ),

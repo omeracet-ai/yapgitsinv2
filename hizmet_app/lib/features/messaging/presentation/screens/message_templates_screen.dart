@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -48,12 +48,12 @@ class _MessageTemplatesScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Åablonu sil?'),
-        content: const Text('Bu ÅŸablon kalÄ±cÄ± olarak silinecek.'),
+        title: const Text('Şablonu sil?'),
+        content: const Text('Bu şablon kalıcı olarak silinecek.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('VazgeÃ§')),
+              child: const Text('Vazgeç')),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Sil',
@@ -84,7 +84,7 @@ class _MessageTemplatesScreenState
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Mesaj ÅablonlarÄ±m'),
+        title: const Text('Mesaj Şablonlarım'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -96,7 +96,7 @@ class _MessageTemplatesScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Yeni Åablon',
+                  'Yeni Şablon',
                   style: TextStyle(
                       fontSize: 14, fontWeight: FontWeight.w700),
                 ),
@@ -108,7 +108,7 @@ class _MessageTemplatesScreenState
                   minLines: 2,
                   decoration: InputDecoration(
                     hintText:
-                        'Ã–rn: Merhaba, ilanÄ±nÄ±z hÃ¢lÃ¢ aktif mi? DetaylarÄ± konuÅŸabilir miyiz?',
+                        'Örn: Merhaba, ilanınız hâlâ aktif mi? Detayları konuşabilir miyiz?',
                     filled: true,
                     fillColor: AppColors.background,
                     border: OutlineInputBorder(
@@ -122,7 +122,7 @@ class _MessageTemplatesScreenState
                   child: ElevatedButton.icon(
                     onPressed: _busy ? null : _add,
                     icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Åablon Ekle'),
+                    label: const Text('Şablon Ekle'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -155,14 +155,14 @@ class _MessageTemplatesScreenState
                       Icon(Icons.chat_bubble_outline,
                           size: 56, color: AppColors.textSecondary),
                       SizedBox(height: 12),
-                      Text('HenÃ¼z ÅŸablon yok',
+                      Text('Henüz şablon yok',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600)),
                       SizedBox(height: 6),
                       Text(
-                        'SÄ±k kullandÄ±ÄŸÄ±n mesajlarÄ± buraya kaydet, sohbette tek tÄ±kla yapÄ±ÅŸtÄ±r.',
+                        'Sık kullandığın mesajları buraya kaydet, sohbette tek tıkla yapıştır.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 13,

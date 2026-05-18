@@ -1,4 +1,4 @@
-﻿import 'dart:io' as io;
+import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -147,8 +147,14 @@ class _PostServiceRequestScreenState
                   ),
                   items: cats.map((c) {
                     final name = c['name']?.toString() ?? '';
-                    return DropdownMenuItem(value: name, child: Text(name));
+                    return DropdownMenuItem(
+                      value: name,
+                      child: Text(name,
+                          style: const TextStyle(color: AppColors.textPrimary)),
+                    );
                   }).toList(),
+                  dropdownColor: AppColors.surface,
+                  style: const TextStyle(color: AppColors.textPrimary),
                   onChanged: (v) {
                     final cat = cats.firstWhere((c) => c['name'] == v,
                         orElse: () => {});

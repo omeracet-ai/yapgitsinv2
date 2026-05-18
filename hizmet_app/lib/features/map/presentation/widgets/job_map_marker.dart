@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import 'package:hizmet_app/core/theme/app_colors.dart';
 // Airtasker-style bubble pin marker for map.
@@ -9,8 +9,8 @@ class JobMapMarker extends StatelessWidget {
   final String category;
   final bool isSelected;
   final String? price; // e.g. "250" or null
-  // Phase 152 â€” YaklaÅŸÄ±k konum (city-centroid backfill). True ise pin yarÄ±
-  // saydam ve saÄŸ alt kÃ¶ÅŸede "~" rozeti gÃ¶sterilir.
+  // Phase 152 — Yaklaşık konum (city-centroid backfill). True ise pin yarı
+  // saydam ve sağ alt köşede "~" rozeti gösterilir.
   final bool isApprox;
 
   const JobMapMarker({
@@ -21,13 +21,13 @@ class JobMapMarker extends StatelessWidget {
     this.isApprox = false,
   });
 
-  // Map marker palette â€” local-only (brand artÄ±k yeÅŸil; harita iÃ§in kontrast).
+  // Map marker palette — local-only (brand artık yeşil; harita için kontrast).
   static const _blue = Color(0xFF007DFE);
   static const _orange = Color(0xFFFF5E14);
 
   static IconData _iconFor(String category) {
     switch (category) {
-      case 'ElektrikÃ§i':
+      case 'Elektrikçi':
         return Icons.bolt_rounded;
       case 'Tesisat':
         return Icons.plumbing_rounded;
@@ -47,7 +47,7 @@ class JobMapMarker extends StatelessWidget {
     final pillBg = isSelected ? _orange : Colors.white;
     final iconColor = isSelected ? Colors.white : _orange;
     final textColor = isSelected ? Colors.white : const Color(0xFF1A1A2E);
-    final priceLabel = (price != null && price!.isNotEmpty) ? 'â‚º$price' : '?';
+    final priceLabel = (price != null && price!.isNotEmpty) ? '₺$price' : '?';
 
     final pill = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
@@ -90,7 +90,7 @@ class JobMapMarker extends StatelessWidget {
       ),
     );
 
-    // "Y" Yapgitsin logo badge â€” always visible
+    // "Y" Yapgitsin logo badge — always visible
     final badge = Positioned(
       top: -4,
       right: -4,
@@ -130,13 +130,13 @@ class JobMapMarker extends StatelessWidget {
       painter: _TailPainter(color: pillBg, hasBorder: !isSelected),
     );
 
-    // YaklaÅŸÄ±k konum ikinci rozeti (sol Ã¼st). KullanÄ±cÄ±nÄ±n "burasÄ± tam deÄŸil,
-    // ÅŸehir merkezi" anlayabilmesi iÃ§in sade bir "~" iÅŸareti.
+    // Yaklaşık konum ikinci rozeti (sol üst). Kullanıcının "burası tam değil,
+    // şehir merkezi" anlayabilmesi için sade bir "~" işareti.
     final approxBadge = Positioned(
       top: -4,
       left: -4,
       child: Tooltip(
-        message: 'YaklaÅŸÄ±k konum',
+        message: 'Yaklaşık konum',
         child: Container(
           width: 16,
           height: 16,
@@ -184,8 +184,8 @@ class JobMapMarker extends StatelessWidget {
       marker = Transform.scale(scale: 1.1, child: marker);
     }
 
-    // YaklaÅŸÄ±k konum gÃ¶rsel ipucu: pin yarÄ± saydam (alpha 0.7) â€” kullanÄ±cÄ±
-    // hassasiyet eksikliÄŸini hemen sezsin.
+    // Yaklaşık konum görsel ipucu: pin yarı saydam (alpha 0.7) — kullanıcı
+    // hassasiyet eksikliğini hemen sezsin.
     if (isApprox && !isSelected) {
       marker = Opacity(opacity: 0.7, child: marker);
     }

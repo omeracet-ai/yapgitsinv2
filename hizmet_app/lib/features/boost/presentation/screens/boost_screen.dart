@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -17,7 +17,7 @@ class BoostScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('HÄ±zlÄ± Boost'),
+        title: const Text('Hızlı Boost'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -66,7 +66,7 @@ class BoostScreen extends ConsumerWidget {
                 ],
               ),
               loading: () => Column(children: [for (var i = 0; i < 3; i++) const Padding(padding: EdgeInsets.only(bottom: 12), child: NotificationSkeleton())]),
-              error: (e, _) => Text('Paketler yÃ¼klenemedi: $e'),
+              error: (e, _) => Text('Paketler yüklenemedi: $e'),
             ),
           ],
         ),
@@ -101,7 +101,7 @@ class BoostScreen extends ConsumerWidget {
       final exp = DateTime.parse(expiresStr).toLocal();
       final diff = exp.difference(DateTime.now());
       if (diff.inHours >= 24) {
-        left = '${diff.inDays} gÃ¼n sonra biter';
+        left = '${diff.inDays} gün sonra biter';
       } else if (diff.inHours > 0) {
         left = '${diff.inHours} saat sonra biter';
       } else if (diff.inMinutes > 0) {
@@ -121,7 +121,7 @@ class BoostScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(children: [
-        const Text('ğŸš€', style: TextStyle(fontSize: 22)),
+        const Text('🚀', style: TextStyle(fontSize: 22)),
         const SizedBox(width: 10),
         Expanded(
             child: Column(
@@ -140,11 +140,11 @@ class BoostScreen extends ConsumerWidget {
   String _typeLabel(String type) {
     switch (type) {
       case 'featured_24h':
-        return 'Ã–ne Ã‡Ä±kan 24 Saat';
+        return 'Öne Çıkan 24 Saat';
       case 'featured_7d':
-        return 'Ã–ne Ã‡Ä±kan 7 GÃ¼n';
+        return 'Öne Çıkan 7 Gün';
       case 'top_search_24h':
-        return 'Aramada Ä°lk 3 â€” 24 Saat';
+        return 'Aramada İlk 3 — 24 Saat';
       default:
         return type;
     }
@@ -173,7 +173,7 @@ class BoostScreen extends ConsumerWidget {
     final canAfford = balance >= cost;
 
     final durationLabel =
-        hours >= 24 ? '${(hours / 24).round()} gÃ¼n' : '$hours saat';
+        hours >= 24 ? '${(hours / 24).round()} gün' : '$hours saat';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -212,7 +212,7 @@ class BoostScreen extends ConsumerWidget {
           Row(children: [
             const Icon(Icons.timer_outlined, size: 16, color: Colors.black45),
             const SizedBox(width: 4),
-            Text('SÃ¼re: $durationLabel',
+            Text('Süre: $durationLabel',
                 style: const TextStyle(color: Colors.black54, fontSize: 12)),
           ]),
           const SizedBox(height: 12),
@@ -225,7 +225,7 @@ class BoostScreen extends ConsumerWidget {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: Text(canAfford ? 'SatÄ±n Al' : 'Yetersiz Bakiye'),
+              child: Text(canAfford ? 'Satın Al' : 'Yetersiz Bakiye'),
             ),
           ),
         ],
@@ -242,12 +242,12 @@ class BoostScreen extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Boost OnayÄ±'),
-        content: Text('$name paketi iÃ§in $cost token harcanacak. OnaylÄ±yor musunuz?'),
+        title: const Text('Boost Onayı'),
+        content: Text('$name paketi için $cost token harcanacak. Onaylıyor musunuz?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Ä°ptal')),
+              child: const Text('İptal')),
           ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Onayla')),
@@ -260,7 +260,7 @@ class BoostScreen extends ConsumerWidget {
       ref.invalidate(myBoostsProvider);
       ref.invalidate(tokenBalanceProvider);
       messenger.showSnackBar(
-          const SnackBar(content: Text('Boost aktif edildi ğŸš€')));
+          const SnackBar(content: Text('Boost aktif edildi 🚀')));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Hata: $e')));
     }

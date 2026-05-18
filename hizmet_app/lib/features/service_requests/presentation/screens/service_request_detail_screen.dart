@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/intl_formatter.dart';
@@ -38,15 +38,15 @@ class _ServiceRequestDetailScreenState
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Teklif akÄ±ÅŸÄ±na geÃ§'),
+        title: const Text('Teklif akışına geç'),
         content: const Text(
-          'Bu hizmet talebini iÅŸ ilanÄ±na Ã§evir? '
-          'Mevcut baÅŸvurular kapanÄ±r, yeni teklif sistemi aÃ§Ä±lÄ±r.',
+          'Bu hizmet talebini iş ilanına çevir? '
+          'Mevcut başvurular kapanır, yeni teklif sistemi açılır.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('VazgeÃ§'),
+            child: const Text('Vazgeç'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -68,7 +68,7 @@ class _ServiceRequestDetailScreenState
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ä°lan oluÅŸturuldu! Teklifler bekleniyor.'),
+          content: Text('İlan oluşturuldu! Teklifler bekleniyor.'),
           backgroundColor: Colors.green,
         ),
       );
@@ -88,7 +88,7 @@ class _ServiceRequestDetailScreenState
   Future<void> _apply() async {
     final message = _messageCtrl.text.trim();
     if (message.isEmpty) {
-      setState(() => _error = 'LÃ¼tfen bir mesaj yazÄ±n.');
+      setState(() => _error = 'Lütfen bir mesaj yazın.');
       return;
     }
 
@@ -113,7 +113,7 @@ class _ServiceRequestDetailScreenState
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('BaÅŸvurunuz gÃ¶nderildi!'),
+            content: Text('Başvurunuz gönderildi!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -138,7 +138,7 @@ class _ServiceRequestDetailScreenState
     final isOwner = currentUserId != null && currentUserId == ownerId;
 
     final user = item['user'] as Map<String, dynamic>?;
-    final ownerName = user?['fullName'] as String? ?? 'KullanÄ±cÄ±';
+    final ownerName = user?['fullName'] as String? ?? 'Kullanıcı';
     final ownerInitials = ownerName
         .split(' ')
         .take(2)
@@ -154,13 +154,13 @@ class _ServiceRequestDetailScreenState
     final imageUrl = item['imageUrl'] as String?;
     final createdAt =
         item['createdAt'] != null ? DateTime.tryParse(item['createdAt']) : null;
-    // P190/4 â€” IntlFormatter.date (locale-aware).
+    // P190/4 — IntlFormatter.date (locale-aware).
     final dateStr = createdAt != null ? IntlFormatter.date(context, createdAt) : '';
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Ä°lan DetayÄ±',
+        title: const Text('İlan Detayı',
             style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -177,7 +177,7 @@ class _ServiceRequestDetailScreenState
                 height: 200,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                // Phase 152 â€” Brand-tinted placeholder for 404 / imageless backfill.
+                // Phase 152 — Brand-tinted placeholder for 404 / imageless backfill.
                 errorBuilder: (_, __, ___) => Container(
                   height: 200,
                   width: double.infinity,
@@ -242,7 +242,7 @@ class _ServiceRequestDetailScreenState
                     Expanded(
                       child: Text(
                         address != null && address.isNotEmpty
-                            ? '$location Â· $address'
+                            ? '$location · $address'
                             : location,
                         style: const TextStyle(
                             color: AppColors.textSecondary, fontSize: 13),
@@ -251,7 +251,7 @@ class _ServiceRequestDetailScreenState
                   ]),
 
                   const SizedBox(height: 16),
-                  const Text('AÃ§Ä±klama',
+                  const Text('Açıklama',
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
@@ -290,7 +290,7 @@ class _ServiceRequestDetailScreenState
                             Text(ownerName,
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w600, fontSize: 14)),
-                            const Text('Ä°lan Sahibi',
+                            const Text('İlan Sahibi',
                                 style: TextStyle(
                                     color: AppColors.textHint, fontSize: 12)),
                           ],
@@ -311,7 +311,7 @@ class _ServiceRequestDetailScreenState
                               setState(() => _showApplyForm = true),
                           icon: const Icon(Icons.send_outlined,
                               color: Colors.white),
-                          label: const Text('BaÅŸvur',
+                          label: const Text('Başvur',
                               style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -341,7 +341,7 @@ class _ServiceRequestDetailScreenState
                           Icon(Icons.check_circle_outline,
                               color: Colors.green.shade600),
                           const SizedBox(width: 10),
-                          Text('BaÅŸvurunuz gÃ¶nderildi!',
+                          Text('Başvurunuz gönderildi!',
                               style: TextStyle(
                                   color: Colors.green.shade700,
                                   fontWeight: FontWeight.w600,
@@ -362,7 +362,7 @@ class _ServiceRequestDetailScreenState
                         children: [
                           Icon(Icons.info_outline, color: AppColors.primary),
                           SizedBox(width: 10),
-                          Text('BaÅŸvurmak iÃ§in giriÅŸ yapÄ±n.',
+                          Text('Başvurmak için giriş yapın.',
                               style: TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w500)),
@@ -383,7 +383,7 @@ class _ServiceRequestDetailScreenState
                         children: [
                           Icon(Icons.person_outline, color: AppColors.textHint),
                           SizedBox(width: 10),
-                          Text('Bu sizin ilanÄ±nÄ±z.',
+                          Text('Bu sizin ilanınız.',
                               style: TextStyle(
                                   color: AppColors.textSecondary,
                                   fontWeight: FontWeight.w500)),
@@ -405,7 +405,7 @@ class _ServiceRequestDetailScreenState
                                       strokeWidth: 2, color: Colors.white))
                               : const Icon(Icons.swap_horiz,
                                   color: Colors.white),
-                          label: const Text('Teklif AkÄ±ÅŸÄ±na GeÃ§',
+                          label: const Text('Teklif Akışına Geç',
                               style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -420,7 +420,7 @@ class _ServiceRequestDetailScreenState
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        'Ä°lanÄ±nÄ± aÃ§Ä±k-teklif sistemine Ã§evir; ustalar fiyat verir.',
+                        'İlanını açık-teklif sistemine çevir; ustalar fiyat verir.',
                         style: TextStyle(
                             color: AppColors.textHint, fontSize: 12),
                       ),
@@ -447,7 +447,7 @@ class _ServiceRequestDetailScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('BaÅŸvurunuzu GÃ¶nderin',
+          const Text('Başvurunuzu Gönderin',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
           const SizedBox(height: 12),
 
@@ -456,7 +456,7 @@ class _ServiceRequestDetailScreenState
             controller: _priceCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(
-              labelText: 'Fiyat Teklifi â‚º (opsiyonel)',
+              labelText: 'Fiyat Teklifi ₺ (opsiyonel)',
               prefixIcon: Icon(Icons.attach_money),
               filled: true,
               fillColor: AppColors.background,
@@ -470,7 +470,7 @@ class _ServiceRequestDetailScreenState
             maxLines: 4,
             textCapitalization: TextCapitalization.sentences,
             decoration: const InputDecoration(
-              labelText: 'MesajÄ±nÄ±z *',
+              labelText: 'Mesajınız *',
               prefixIcon: Icon(Icons.message_outlined),
               alignLabelWithHint: true,
               filled: true,
@@ -508,7 +508,7 @@ class _ServiceRequestDetailScreenState
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('VazgeÃ§'),
+                  child: const Text('Vazgeç'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -528,7 +528,7 @@ class _ServiceRequestDetailScreenState
                           width: 20,
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white))
-                      : const Text('GÃ¶nder',
+                      : const Text('Gönder',
                           style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold)),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -22,7 +22,7 @@ final publicProfileProvider =
   },
 );
 
-/// Phase 211 â€” public availability slots for a worker
+/// Phase 211 — public availability slots for a worker
 final publicAvailabilitySlotsProvider =
     FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
   (ref, userId) async {
@@ -64,7 +64,7 @@ class _ProfileView extends ConsumerWidget {
         ? authState.user['id'] as String?
         : null;
     final isSelf = currentUserId != null && currentUserId == userId;
-    final name            = data['fullName']         as String? ?? 'KullanÄ±cÄ±';
+    final name            = data['fullName']         as String? ?? 'Kullanıcı';
     final imgUrl          = data['profileImageUrl']  as String?;
     final city            = data['city']             as String? ?? '';
     final bio             = data['workerBio']        as String?;
@@ -87,7 +87,7 @@ class _ProfileView extends ConsumerWidget {
                                 ?.cast<Map<String, dynamic>>() ?? [];
     final badges          = data['badges']            as List?;
     final isWorker        = workerCats.isNotEmpty;
-    // Phase 211 â€” slot-based availability
+    // Phase 211 — slot-based availability
     final availSlotsAsync = ref.watch(publicAvailabilitySlotsProvider(userId));
 
     return Scaffold(
@@ -102,7 +102,7 @@ class _ProfileView extends ConsumerWidget {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-          // â”€â”€ Hero header â€” full-bleed gradient, 40% screen height â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // ── Hero header — full-bleed gradient, 40% screen height ─────────
           SliverAppBar(
             expandedHeight: MediaQuery.of(context).size.height * 0.40,
             pinned: true,
@@ -111,7 +111,7 @@ class _ProfileView extends ConsumerWidget {
               if (!isSelf) ...[
                 IconButton(
                   tooltip: 'Token hediye et',
-                  icon: const Text('ğŸ', style: TextStyle(fontSize: 20)),
+                  icon: const Text('🎁', style: TextStyle(fontSize: 20)),
                   onPressed: () => GiftTokensSheet.show(
                     context,
                     recipientId: userId,
@@ -254,13 +254,13 @@ class _ProfileView extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // â”€â”€ Ä°statistikler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── İstatistikler ────────────────────────────────────────
                 Container(color: AppColors.surface,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Row(
                     children: [
                       _bigStat(
-                        label: rating > 0 ? rating.toStringAsFixed(1) : 'â€”',
+                        label: rating > 0 ? rating.toStringAsFixed(1) : '—',
                         sub: '$reviews yorum',
                         icon: Icons.star_rounded,
                         iconColor: Colors.amber,
@@ -277,7 +277,7 @@ class _ProfileView extends ConsumerWidget {
                         _bigStat(
                           label: totalWorker > 0
                               ? '%${(successWorker / totalWorker * 100).round()}'
-                              : 'â€”',
+                              : '—',
                           sub: 'Tamamlama',
                           icon: Icons.check_circle_outline_rounded,
                           iconColor: AppColors.success,
@@ -285,7 +285,7 @@ class _ProfileView extends ConsumerWidget {
                       else
                         _bigStat(
                           label: '$totalCustomer',
-                          sub: 'Ä°ÅŸ ilanÄ±',
+                          sub: 'İş ilanı',
                           icon: Icons.work_outline_rounded,
                           iconColor: AppColors.primary,
                         ),
@@ -293,7 +293,7 @@ class _ProfileView extends ConsumerWidget {
                   ),
                 ),
 
-                // â”€â”€ Teklif Yap CTA (sadece usta profili + isSelf deÄŸil) â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Teklif Yap CTA (sadece usta profili + isSelf değil) ────────
                 if (isWorker && !isSelf) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -322,7 +322,7 @@ class _ProfileView extends ConsumerWidget {
 
                 const SizedBox(height: 8),
 
-                // â”€â”€ Rozetler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Rozetler ─────────────────────────────────────────────
                 if (badges != null && badges.isNotEmpty) ...[
                   _section(
                     title: 'Rozetler',
@@ -331,10 +331,10 @@ class _ProfileView extends ConsumerWidget {
                   const SizedBox(height: 8),
                 ],
 
-                // â”€â”€ HakkÄ±nda (worker bio) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Hakkında (worker bio) ─────────────────────────────────
                 if (bio != null && bio.isNotEmpty) ...[
                   _section(
-                    title: 'HakkÄ±nda',
+                    title: 'Hakkında',
                     child: Text(bio,
                         style: const TextStyle(
                             fontSize: 14, height: 1.6, color: AppColors.textSecondary)),
@@ -342,7 +342,7 @@ class _ProfileView extends ConsumerWidget {
                   const SizedBox(height: 8),
                 ],
 
-                // â”€â”€ Kategoriler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Kategoriler ───────────────────────────────────────────
                 if (workerCats.isNotEmpty) ...[
                   _section(
                     title: 'Hizmet Kategorileri',
@@ -366,7 +366,7 @@ class _ProfileView extends ConsumerWidget {
                   const SizedBox(height: 8),
                 ],
 
-                // â”€â”€ Randevu Al CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Randevu Al CTA ────────────────────────────────────────
                 if (isWorker && !isSelf) ...[
                   Container(color: AppColors.surface,
                     padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
@@ -380,7 +380,7 @@ class _ProfileView extends ConsumerWidget {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
-                        icon: const Text('ğŸ“…', style: TextStyle(fontSize: 18)),
+                        icon: const Text('📅', style: TextStyle(fontSize: 18)),
                         label: const Text('Randevu Al',
                             style: TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.bold)),
@@ -403,7 +403,7 @@ class _ProfileView extends ConsumerWidget {
                   const SizedBox(height: 8),
                 ],
 
-                // â”€â”€ MÃ¼saitlik (Phase 211) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Müsaitlik (Phase 211) ─────────────────────────────────
                 if (isWorker)
                   availSlotsAsync.when(
                     loading: () => const SizedBox.shrink(),
@@ -413,7 +413,7 @@ class _ProfileView extends ConsumerWidget {
                         : Column(
                             children: [
                               _section(
-                                title: 'MÃ¼saitlik',
+                                title: 'Müsaitlik',
                                 child: AvailabilityChips(slots: slots),
                               ),
                               const SizedBox(height: 8),
@@ -421,19 +421,19 @@ class _ProfileView extends ConsumerWidget {
                           ),
                   ),
 
-                // â”€â”€ Ä°statistik detayÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── İstatistik detayı ─────────────────────────────────────
                 _section(
-                  title: 'Ä°statistikler',
+                  title: 'İstatistikler',
                   child: Column(
                     children: [
-                      _statRow('MÃ¼ÅŸteri olarak tamamlanan',
-                          '$successCustomer / $totalCustomer iÅŸ'),
+                      _statRow('Müşteri olarak tamamlanan',
+                          '$successCustomer / $totalCustomer iş'),
                       const SizedBox(height: 6),
                       _statRow('Usta olarak tamamlanan',
-                          '$successWorker / $totalWorker iÅŸ'),
+                          '$successWorker / $totalWorker iş'),
                       if (verified) ...[
                         const SizedBox(height: 6),
-                        _statRow('Kimlik doÄŸrulama', 'DoÄŸrulandÄ± âœ“',
+                        _statRow('Kimlik doğrulama', 'Doğrulandı ✓',
                             valueColor: AppColors.primary),
                       ],
                     ],
@@ -441,10 +441,10 @@ class _ProfileView extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
 
-                // â”€â”€ TanÄ±tÄ±m Videosu (Phase 152) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Tanıtım Videosu (Phase 152) ──────────────────────────
                 if (introVideoUrl != null && introVideoUrl.isNotEmpty) ...[
                   _section(
-                    title: 'TanÄ±tÄ±m',
+                    title: 'Tanıtım',
                     child: IntroVideoPlayer(
                       url: introVideoUrl,
                       durationSeconds: introVideoDur,
@@ -453,7 +453,7 @@ class _ProfileView extends ConsumerWidget {
                   const SizedBox(height: 8),
                 ],
 
-                // â”€â”€ Portfolyo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Portfolyo ────────────────────────────────────────────
                 if (portfolioPhotos.isNotEmpty ||
                     portfolioVideos.isNotEmpty ||
                     isSelf) ...[
@@ -469,10 +469,10 @@ class _ProfileView extends ConsumerWidget {
                   const SizedBox(height: 8),
                 ],
 
-                // â”€â”€ GeÃ§miÅŸ fotoÄŸraflar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Geçmiş fotoğraflar ────────────────────────────────────
                 if (pastPhotos.isNotEmpty) ...[
                   _section(
-                    title: 'GeÃ§miÅŸ Ä°ÅŸler',
+                    title: 'Geçmiş İşler',
                     child: SizedBox(
                       height: 100,
                       child: ListView.separated(
@@ -494,7 +494,7 @@ class _ProfileView extends ConsumerWidget {
                   const SizedBox(height: 8),
                 ],
 
-                // â”€â”€ AI Yorum Ã–zeti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── AI Yorum Özeti ───────────────────────────────────────
                 if (reviews >= 3) ...[
                   ReviewSummaryCard(
                     userId: userId,
@@ -505,7 +505,7 @@ class _ProfileView extends ConsumerWidget {
                   ),
                 ],
 
-                // â”€â”€ Yorumlar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Yorumlar ─────────────────────────────────────────────
                 if (reviewList.isNotEmpty)
                   _section(
                     title: 'Yorumlar (${reviewList.length})',
@@ -521,7 +521,7 @@ class _ProfileView extends ConsumerWidget {
                     ),
                   ),
 
-                // â”€â”€ Phase 119: SigortalÄ± rozeti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Phase 119: Sigortalı rozeti ─────────────────────────
                 if (data['insurance'] is Map) ...[
                   const SizedBox(height: 12),
                   Builder(builder: (_) {
@@ -537,18 +537,18 @@ class _ProfileView extends ConsumerWidget {
                             color: AppColors.success.withValues(alpha: 0.3)),
                       ),
                       child: Row(children: [
-                        const Text('ğŸ›¡ï¸', style: TextStyle(fontSize: 24)),
+                        const Text('🛡️', style: TextStyle(fontSize: 24)),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('SigortalÄ±',
+                              const Text('Sigortalı',
                                   style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.success)),
                               const SizedBox(height: 2),
-                              Text('$provider Â· $coverageâ‚º teminat',
+                              Text('$provider · $coverage₺ teminat',
                                   style: const TextStyle(
                                       fontSize: 13,
                                       color: AppColors.textSecondary)),
@@ -560,10 +560,10 @@ class _ProfileView extends ConsumerWidget {
                   }),
                 ],
 
-                // â”€â”€ Phase 159: Sertifikalar (verified only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Phase 159: Sertifikalar (verified only) ──────────────
                 if ((data['certifications'] as List?)?.isNotEmpty == true) ...[
                   const SizedBox(height: 16),
-                  const Text('ğŸ“œ Sertifikalar',
+                  const Text('📜 Sertifikalar',
                       style: TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 8),
@@ -580,7 +580,7 @@ class _ProfileView extends ConsumerWidget {
                                       .withValues(alpha: 0.3)),
                             ),
                             child: Row(children: [
-                              const Text('ğŸªª',
+                              const Text('🪪',
                                   style: TextStyle(fontSize: 22)),
                               const SizedBox(width: 10),
                               Expanded(
@@ -609,7 +609,7 @@ class _ProfileView extends ConsumerWidget {
                                       .withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: const Text('ğŸªª DoÄŸrulandÄ±',
+                                child: const Text('🪪 Doğrulandı',
                                     style: TextStyle(
                                         fontSize: 11,
                                         color: AppColors.success,
@@ -619,10 +619,10 @@ class _ProfileView extends ConsumerWidget {
                           ))),
                 ],
 
-                // â”€â”€ Phase 218: Portfolyo Grid (ID tabanlÄ±, public) â”€â”€â”€â”€â”€â”€â”€
+                // ── Phase 218: Portfolyo Grid (ID tabanlı, public) ───────
                 const SizedBox(height: 16),
                 _section(
-                  title: 'Ä°ÅŸ Ã–rnekleri',
+                  title: 'İş Örnekleri',
                   child: PortfolioGrid(userId: userId),
                 ),
 
@@ -693,9 +693,9 @@ class _ProfileView extends ConsumerWidget {
   static String _memberSince(String iso) {
     try {
       final dt = DateTime.parse(iso).toLocal();
-      const months = ['', 'Oca', 'Åub', 'Mar', 'Nis', 'May', 'Haz',
-                      'Tem', 'AÄŸu', 'Eyl', 'Eki', 'Kas', 'Ara'];
-      return 'Ãœye: ${months[dt.month]} ${dt.year}';
+      const months = ['', 'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
+                      'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+      return 'Üye: ${months[dt.month]} ${dt.year}';
     } catch (_) {
       return '';
     }
@@ -736,7 +736,7 @@ class _ReviewTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reviewer  = review['reviewer'] as Map<String, dynamic>?;
-    final name      = reviewer?['fullName']       as String? ?? 'KullanÄ±cÄ±';
+    final name      = reviewer?['fullName']       as String? ?? 'Kullanıcı';
     final imgUrl    = reviewer?['profileImageUrl'] as String?;
     final rating    = (review['rating'] as num?)?.toInt() ?? 0;
     final comment   = review['comment']  as String? ?? '';
@@ -814,7 +814,7 @@ class _ReviewTile extends ConsumerWidget {
                                 size: 14, color: AppColors.textSecondary),
                             const SizedBox(width: 4),
                             const Expanded(
-                              child: Text('YanÄ±t',
+                              child: Text('Yanıt',
                                   style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
@@ -826,7 +826,7 @@ class _ReviewTile extends ConsumerWidget {
                                 child: const Padding(
                                   padding: EdgeInsets.symmetric(
                                       horizontal: 4, vertical: 2),
-                                  child: Text('DÃ¼zenle',
+                                  child: Text('Düzenle',
                                       style: TextStyle(
                                           fontSize: 11,
                                           color: AppColors.primary,
@@ -867,7 +867,7 @@ class _ReviewTile extends ConsumerWidget {
                       ),
                       icon: const Icon(Icons.chat_bubble_outline_rounded,
                           size: 14),
-                      label: const Text('YanÄ±tla',
+                      label: const Text('Yanıtla',
                           style: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.w600)),
                     ),
@@ -886,13 +886,13 @@ class _ReviewTile extends ConsumerWidget {
       final dt   = DateTime.parse(iso).toLocal();
       final diff = DateTime.now().difference(dt);
       if (diff.inDays > 30) {
-        const months = ['', 'Oca', 'Åub', 'Mar', 'Nis', 'May', 'Haz',
-                        'Tem', 'AÄŸu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+        const months = ['', 'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
+                        'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
         return '${months[dt.month]} ${dt.year}';
       }
-      if (diff.inDays > 0) return '${diff.inDays} gÃ¼n Ã¶nce';
-      if (diff.inHours > 0) return '${diff.inHours} saat Ã¶nce';
-      return 'Az Ã¶nce';
+      if (diff.inDays > 0) return '${diff.inDays} gün önce';
+      if (diff.inHours > 0) return '${diff.inHours} saat önce';
+      return 'Az önce';
     } catch (_) {
       return '';
     }

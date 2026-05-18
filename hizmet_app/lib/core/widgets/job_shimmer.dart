@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:hizmet_app/core/theme/app_colors.dart';
 import 'package:shimmer/shimmer.dart';
 
