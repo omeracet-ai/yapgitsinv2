@@ -180,7 +180,7 @@ export class AdminSeedService {
             budgetMax: budgetMin + faker.number.int({ min: 100, max: 1200 }),
             budgetVisible: faker.datatype.boolean(),
             requesterName: customer.fullName,
-            requesterPhone: customer.phoneNumber,
+            requesterPhone: customer.phoneNumber ?? undefined,
             requesterEmail: customer.email,
             preferredContactTime: faker.helpers.arrayElement([
               'today',

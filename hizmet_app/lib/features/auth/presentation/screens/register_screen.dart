@@ -98,9 +98,9 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
     final phone = _phoneCtrl.text.trim();
     final pass  = _passCtrl.text;
     final email = _emailCtrl.text.trim();
-    // Phase 253 — email REQUIRED on register; phone now optional in copy
-    // (still validated by backend if provided).
-    if (name.isEmpty || phone.isEmpty || pass.isEmpty) {
+    // Phase 253-B (Voldi-phase253B) — phone fully optional now. Only name+pass
+    // gate early-return; email is the primary identifier checked below.
+    if (name.isEmpty || pass.isEmpty) {
       setState(() => _error = AppLocalizations.of(context).registerRequiredFields);
       return;
     }
@@ -116,7 +116,8 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
     try {
       await ref.read(authStateProvider.notifier).register(
         fullName:    name,
-        phoneNumber: phone,
+        // Phase 253-B — phone optional; omit empty string so backend stores NULL.
+        phoneNumber: phone.isEmpty ? null : phone,
         password:    pass,
         email:       email,
         birthDate:   _birthDate != null
@@ -133,6 +134,11 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
       // telefon doğrulamayı opsiyonel olarak sunuyoruz; iptal ederse step 2'ye
       // (kimlik upload) geçiyor — backend kayıt zaten başarılı oldu.
       if (!mounted) return;
+      // Phase 253-B — only offer SMS verify if user supplied a phone.
+      if (phone.isEmpty) {
+        setState(() { _step = 1; _loading = false; });
+        return;
+      }
       final verifiedPhone = await context.push<String?>(
         '/auth/sms-verify?phone=${Uri.encodeQueryComponent(phone)}',
       );
@@ -232,10 +238,9 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         _field(_emailCtrl, 'E-posta *', Icons.email_outlined,
             TextInputType.emailAddress, TextCapitalization.none),
         const SizedBox(height: 14),
-        // Phase 253 — phone still required at the backend DTO level (uniqueness
-        // index) but SMS-verify is no longer a signup gate. Label kept simple;
-        // a future phase can flip phone to truly optional once DTO is relaxed.
-        _field(_phoneCtrl, l.registerPhone, Icons.phone_outlined,
+        // Phase 253-B — phone fully optional at DTO + DB level. Profile screen
+        // lets user add+verify later.
+        _field(_phoneCtrl, '${l.registerPhone} (opsiyonel)', Icons.phone_outlined,
             TextInputType.phone, TextCapitalization.none),
         const SizedBox(height: 14),
         TextField(

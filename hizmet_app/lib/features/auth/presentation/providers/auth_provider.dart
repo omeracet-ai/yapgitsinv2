@@ -66,7 +66,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<Map<String, dynamic>> register({
     required String fullName,
-    required String phoneNumber,
+    // Phase 253-B — phone optional.
+    String? phoneNumber,
     required String password,
     String? email,
     String? city,

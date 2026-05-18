@@ -25,8 +25,10 @@ export class User {
   @Column({ type: 'varchar', length: 100 })
   fullName: string;
 
-  @Column({ type: 'varchar', length: 20, unique: true })
-  phoneNumber: string;
+  // Phase 253-B — phone OPTIONAL. UNIQUE preserved; SQLite + MySQL both allow
+  // multiple NULLs in a UNIQUE column, so nullable+unique is safe.
+  @Column({ type: 'varchar', length: 20, unique: true, nullable: true })
+  phoneNumber: string | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
   email: string;

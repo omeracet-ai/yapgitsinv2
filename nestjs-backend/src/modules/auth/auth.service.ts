@@ -831,7 +831,7 @@ export class AuthService implements OnModuleInit {
 
   async register(userData: {
     email: string;
-    phoneNumber: string;
+    phoneNumber?: string;
     password: string;
     fullName?: string;
     birthDate?: string;
@@ -850,11 +850,14 @@ export class AuthService implements OnModuleInit {
     if (existingByEmail)
       throw new UnauthorizedException('Bu e-posta zaten kayıtlı');
 
-    const existingByPhone = await this.usersService.findByPhone(
-      userData.phoneNumber,
-    );
-    if (existingByPhone)
-      throw new UnauthorizedException('Bu telefon numarası zaten kayıtlı');
+    // Phase 253-B (Voldi-phase253B) — phone now optional; only dedupe when present.
+    if (userData.phoneNumber) {
+      const existingByPhone = await this.usersService.findByPhone(
+        userData.phoneNumber,
+      );
+      if (existingByPhone)
+        throw new UnauthorizedException('Bu telefon numarası zaten kayıtlı');
+    }
 
     const passwordHash = await bcrypt.hash(
       userData.password,
@@ -864,7 +867,9 @@ export class AuthService implements OnModuleInit {
     const newUser = await this.usersService.create({
       fullName: userData.fullName ?? 'Kullanıcı',
       email: userData.email,
-      phoneNumber: userData.phoneNumber,
+      // Phase 253-B — phone optional; pass null when not provided so SQLite/MySQL
+      // UNIQUE column accepts the row (multiple NULLs allowed by both engines).
+      phoneNumber: userData.phoneNumber ?? null,
       passwordHash,
       birthDate: userData.birthDate,
       gender: userData.gender,

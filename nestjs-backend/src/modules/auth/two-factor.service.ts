@@ -17,7 +17,7 @@ export class TwoFactorService {
       twoFactorEnabled: false,
     });
 
-    const accountName = user.email || user.phoneNumber;
+    const accountName = user.email || user.phoneNumber || user.id;
     const otpauthUrl = authenticator.keyuri(accountName, 'Yapgitsin', secret);
     const qrDataUrl = await QRCode.toDataURL(otpauthUrl);
 

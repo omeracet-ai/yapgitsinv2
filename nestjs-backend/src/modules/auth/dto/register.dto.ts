@@ -18,11 +18,15 @@ import {
  * - phoneNumber: E.164-lite — opsiyonel '+', 10-15 digit (TR + uluslararası destek).
  */
 export class RegisterDto {
+  // Phase 253-B (Voldi-phase253B) — phone now OPTIONAL.
+  // Email is primary identifier; phone may be added via profile post-signup.
+  // Regex still validates format WHEN provided.
+  @IsOptional()
   @Matches(/^\+?[0-9]{10,15}$/, {
     message: 'phoneNumber 10-15 rakam, baş + opsiyonel olmalı',
   })
   @MaxLength(20)
-  phoneNumber!: string;
+  phoneNumber?: string;
 
   @IsString()
   @MinLength(6)
