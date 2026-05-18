@@ -1,10 +1,16 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/firebase_auth_repository.dart';
 import '../../../../core/services/fcm_service.dart';
+import '../../../../core/services/secure_token_store.dart';
+import '../../../profile/data/user_profile_repository.dart';
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(ref.watch(firebaseAuthRepositoryProvider));
+  return AuthNotifier(
+    ref.watch(firebaseAuthRepositoryProvider),
+    ref.watch(userProfileRepositoryProvider),
+  );
 });
 
 abstract class AuthState { const AuthState(); }
@@ -24,14 +30,28 @@ class AuthError extends AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final FirebaseAuthRepository _repository;
+  final UserProfileRepository _profileRepo;
   StreamSubscription<dynamic>? _authSub;
 
-  AuthNotifier(this._repository) : super(AuthInitial()) {
-    // Firebase Auth state stream — otomatik login/logout takibi
+  AuthNotifier(this._repository, this._profileRepo) : super(AuthInitial()) {
+    // Phase 256 — Cold-start rehydrate from backend JWT (SecureTokenStore).
+    // Firebase stream'i dinlemeden ÖNCE backend session'ı restore et; Phase 254
+    // email login Firebase'e signIn etmiyor → stream null emit edip
+    // AuthAuthenticated state'i SİLMESİN.
+    unawaited(_rehydrateFromBackend());
+
+    // Firebase Auth state stream — yalnızca sosyal sign-in (Google/Apple) için.
     _authSub = _repository.authStateChanges.listen((user) async {
       if (user == null) {
+        // Phase 256 — Backend-only login (Phase 254 email) için Firebase user
+        // null kalıyor; AuthAuthenticated'a DOKUNMA. Sadece pre-auth state'leri
+        // (Initial/Loading/Error) Unauthenticated'a çevir.
+        if (state is AuthAuthenticated) return;
         state = AuthUnauthenticated();
       } else {
+        // Backend-only state varsa Firebase profile override etmesin
+        // (birthDate vb. backend alanları silinmesin).
+        if (state is AuthAuthenticated) return;
         final profile = await _repository.getUserProfile();
         state = AuthAuthenticated(profile ?? {
           'uid': user.uid,
@@ -41,6 +61,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
         unawaited(FcmService.instance.init());
       }
     });
+  }
+
+  /// Phase 256 — Cold-start rehydrate. Token varsa GET /users/me ile profili
+  /// çek ve AuthAuthenticated set et; yoksa AuthUnauthenticated.
+  Future<void> _rehydrateFromBackend() async {
+    try {
+      final token = await SecureTokenStore().readToken();
+      if (token == null || token.isEmpty) {
+        if (state is AuthInitial) state = AuthUnauthenticated();
+        return;
+      }
+      final me = await _profileRepo.getMe();
+      state = AuthAuthenticated(me);
+      unawaited(FcmService.instance.init());
+    } catch (e, st) {
+      debugPrint('AuthNotifier._rehydrateFromBackend failed: $e\n$st');
+      if (state is AuthInitial) state = AuthUnauthenticated();
+    }
   }
 
   @override
