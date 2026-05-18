@@ -12,6 +12,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../categories/data/category_repository.dart';
 import '../../../jobs/presentation/providers/job_provider.dart';
 import '../../../jobs/presentation/screens/job_list_screen.dart';
+import '../../../providers/presentation/screens/provider_list_screen.dart';
 import 'hizmet_al_screen.dart';
 import '../../../notifications/data/unread_count_provider.dart';
 import '../../../../core/widgets/category_card.dart';
@@ -222,12 +223,11 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
   void _onSearch(String query) async {
     final q = query.trim();
     if (q.isEmpty) return;
-    debugPrint('main_shell._onSearch q="$q"');
+    debugPrint('main_shell._onSearch q="$q" → ProviderListScreen');
     // Kategori match — önce tam, sonra substring (her iki yön).
     String? matchedCategory;
     ref.read(categoriesProvider).whenData((cats) {
       final lower = q.toLowerCase();
-      // 1. exact match
       for (final c in cats) {
         final name = ((c['name'] as String?) ?? '').toLowerCase();
         if (name == lower) {
@@ -235,7 +235,6 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           return;
         }
       }
-      // 2. substring (kategori adı query içerir veya query kategori içinde geçer)
       for (final c in cats) {
         final name = ((c['name'] as String?) ?? '').toLowerCase();
         if (name.isEmpty) continue;
@@ -245,19 +244,14 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         }
       }
     });
-    final notifier = ref.read(jobsProvider.notifier);
-    if (matchedCategory != null) {
-      debugPrint('main_shell._onSearch category match: $matchedCategory');
-      await notifier.fetchJobs(category: matchedCategory);
-    } else {
-      debugPrint('main_shell._onSearch free-text q');
-      await notifier.fetchJobs(q: q);
-    }
+    final initial = matchedCategory ?? q;
     if (!mounted) return;
     _searchController.clear();
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const JobListScreen()),
+      MaterialPageRoute(
+        builder: (_) => ProviderListScreen(initialSearch: initial),
+      ),
     );
   }
 
