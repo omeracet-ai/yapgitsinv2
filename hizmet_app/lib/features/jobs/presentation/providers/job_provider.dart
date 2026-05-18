@@ -199,6 +199,7 @@ class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
       _allJobs = jobsData.map((m) => Job.fromMap(m)).toList();
       state = AsyncValue.data(_allJobs);
     } catch (e, st) {
+      debugPrint('jobsProvider.fetchJobs error: $e\n$st');
       state = AsyncValue.error(e, st);
     }
   }
@@ -221,12 +222,14 @@ class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
     }
   }
 
-  Future<void> addJob(Map<String, dynamic> jobData) async {
+  Future<Map<String, dynamic>> addJob(Map<String, dynamic> jobData) async {
     try {
-      await _repository.createJob(jobData);
+      final created = await _repository.createJob(jobData);
       await fetchJobs();
-    } catch (e) {
-      // Handle error
+      return created;
+    } catch (e, st) {
+      debugPrint('jobsProvider.addJob error: $e\n$st');
+      rethrow;
     }
   }
 }

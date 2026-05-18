@@ -1062,7 +1062,18 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             '${_dueDate!.year}-${_dueDate!.month.toString().padLeft(2, '0')}-${_dueDate!.day.toString().padLeft(2, '0')}',
     };
 
-    await ref.read(jobsProvider.notifier).addJob(jobData);
+    try {
+      await ref.read(jobsProvider.notifier).addJob(jobData);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('İlan kaydedilemedi: ${e.toString().replaceFirst('Exception: ', '')}'),
+          backgroundColor: AppColors.error,
+        ));
+        setState(() => _uploading = false);
+      }
+      return;
+    }
     await _draftStorage.clear();
 
     if (_saveAsTemplate) {

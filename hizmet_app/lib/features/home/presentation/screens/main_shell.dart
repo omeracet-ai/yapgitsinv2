@@ -603,9 +603,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
 
                   jobsAsync.when(
                     data: (jobs) {
-                      // Popüler Kategoriler'de seçili chip varsa Son İlanlar
-                      // o kategoriye uyanlar ÖNCE gösterilir (sıralama, filtre değil);
-                      // "Tümü" (null) hepsini orijinal sırada gösterir.
+                      debugPrint('main_shell jobs DATA: total=${jobs.length} selectedCat=$_selectedCategory');
                       final ranked = _selectedCategory == null
                           ? jobs
                           : <Job>[
@@ -613,7 +611,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                               ...jobs.where((j) => j.category != _selectedCategory),
                             ];
                       final recent = ranked.take(5).toList();
-                      if (recent.isEmpty) return const SizedBox.shrink();
+                      if (recent.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Text('Henüz ilan yok (jobs=0)', style: TextStyle(color: Colors.orangeAccent)),
+                        );
+                      }
                       return Column(
                         children: recent.asMap().entries.map((e) {
                           final job = e.value;
@@ -626,7 +629,16 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                     loading: () => const SizedBox(
                         height: 80,
                         child: Center(child: CircularProgressIndicator())),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (e, st) {
+                      debugPrint('main_shell Son İlanlar error: $e\n$st');
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          'İlanlar yüklenemedi: $e',
+                          style: const TextStyle(color: Colors.redAccent),
+                        ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 32),
