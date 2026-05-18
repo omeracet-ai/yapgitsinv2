@@ -327,6 +327,67 @@ export class AdminSeedService {
 
         if (escrows.length) await manager.getRepository(PaymentEscrow).save(escrows);
         if (payments.length) await manager.getRepository(Payment).save(payments);
+
+        // Phase 283 — Her worker için ek random review'lar (3-8 adet)
+        const trComments = [
+          'İşini titizlikle yapıyor, çok memnun kaldım. Tavsiye ederim.',
+          'Zamanında geldi, fiyatı uygundu. Tekrar çalışırım.',
+          'Gerçekten profesyonel, ilgili ve güleryüzlü. Teşekkürler!',
+          'Beklediğimden iyi bir iş çıkardı. Eline sağlık.',
+          'Uzun yıllar deneyimi belli oluyor, çok başarılı.',
+          'Hızlı dönüş yaptı, anlaşma sorunsuz oldu.',
+          'Detaylara dikkat ediyor, kaliteli işçilik.',
+          'Beklentiyi karşıladı, fiyat-performans iyi.',
+          'İletişimi güçlü, sorunsuz tamamladı.',
+          'Sonuçtan çok memnunum, tekrar tercih ederim.',
+          'Beklediğim gibi olmadı, daha hızlı olabilirdi.',
+          'Genel olarak iyiydi ama bazı eksikler kaldı.',
+          'Fiyatı biraz yüksekti ama iş güzeldi.',
+        ];
+        const extraReviews: Review[] = [];
+        for (const worker of workers) {
+          const numReviews = faker.number.int({ min: 3, max: 8 });
+          for (let i = 0; i < numReviews; i++) {
+            const customer = faker.helpers.arrayElement(customers);
+            if (customer.id === worker.id) continue;
+            // 80% chance 4-5 star, 15% 3 star, 5% 1-2 star (realistic dist)
+            const rating = faker.helpers.weightedArrayElement([
+              { weight: 50, value: 5 },
+              { weight: 30, value: 4 },
+              { weight: 15, value: 3 },
+              { weight: 4, value: 2 },
+              { weight: 1, value: 1 },
+            ]);
+            extraReviews.push(
+              manager.getRepository(Review).create({
+                jobId: null,
+                reviewerId: customer.id,
+                revieweeId: worker.id,
+                rating,
+                comment: faker.helpers.arrayElement(trComments),
+              }),
+            );
+          }
+        }
+        if (extraReviews.length) {
+          await manager.getRepository(Review).save(extraReviews);
+          reviews.push(...extraReviews);
+        }
+
+        // Update worker stats: averageRating, totalReviews, reputationScore
+        for (const worker of workers) {
+          const workerReviews = reviews.filter((r) => r.revieweeId === worker.id);
+          if (workerReviews.length === 0) continue;
+          const sum = workerReviews.reduce((s, r) => s + r.rating, 0);
+          const avg = sum / workerReviews.length;
+          await manager.getRepository(User).update(worker.id, {
+            averageRating: Math.round(avg * 10) / 10,
+            totalReviews: workerReviews.length,
+            asWorkerTotal: workerReviews.length,
+            asWorkerSuccess: workerReviews.filter((r) => r.rating >= 4).length,
+          });
+        }
+
         if (reviews.length) await manager.getRepository(Review).save(reviews);
       }
 
