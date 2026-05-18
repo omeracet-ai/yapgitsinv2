@@ -66,9 +66,12 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     _currentDocumentUrl = u['documentPhotoUrl'] as String?;
     _identityVerified = u['identityVerified'] == true;
     final bd = u['birthDate'] as String?;
+    debugPrint(
+        'personal_info._prefill auth.user keys=${u.keys.toList()}, birthDate=$bd (runtimeType=${bd.runtimeType})');
     if (bd != null && bd.isNotEmpty) {
       try {
         _birthDate = DateTime.parse(bd);
+        debugPrint('personal_info._prefill parsed _birthDate=$_birthDate');
       } catch (e, st) {
         debugPrint('personal_info_screen.parseBirthDate: $e\n$st');
       }
@@ -114,9 +117,16 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
         'gender': _gender,
         if (bdStr != null) 'birthDate': bdStr,
       });
+      debugPrint(
+          'personal_info._saveBasic sent bdStr=$bdStr, patchMe response birthDate=${updated['birthDate']} (runtimeType=${updated['birthDate']?.runtimeType})');
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_data', jsonEncode(updated));
       ref.read(authStateProvider.notifier).updateUserData(updated);
+      final s = ref.read(authStateProvider);
+      if (s is AuthAuthenticated) {
+        debugPrint(
+            'personal_info._saveBasic state.user birthDate AFTER merge=${s.user['birthDate']}');
+      }
       if (mounted) _snack('Bilgiler güncellendi âœ“');
     } on DioException catch (e) {
       _snack(e.response?.data?['message'] ?? 'Güncelleme başarısız',
@@ -704,13 +714,20 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
-        
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey.shade200)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey.shade200)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
       ),
     );
   }
