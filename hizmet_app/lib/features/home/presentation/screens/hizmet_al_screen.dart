@@ -6,7 +6,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../jobs/presentation/screens/job_opportunities_screen.dart';
 import '../../../jobs/presentation/screens/my_jobs_screen.dart';
 import '../../../map/presentation/screens/map_screen.dart';
-import '../../../service_requests/presentation/screens/service_request_screen.dart';
+import '../../../providers/presentation/screens/provider_list_screen.dart';
 
 class HizmetAlScreen extends ConsumerStatefulWidget {
   const HizmetAlScreen({super.key});
@@ -76,7 +76,7 @@ class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
         child: TabBarView(
           controller: _tabController,
           children: [
-            const ServiceRequestBody(),
+            const ProviderListScreen(),
             const JobOpportunitiesBody(),
             const MapScreen(),
             const MyJobsBody(),

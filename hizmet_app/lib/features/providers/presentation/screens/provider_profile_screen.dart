@@ -70,6 +70,7 @@ class _ProviderContent extends ConsumerWidget {
           child: Column(
             children: [
               _buildStats(rating.toDouble(), totalReviews, isVerified),
+              _buildRatingBreakdown(reviewsAsync, rating.toDouble(), totalReviews),
               if (bio.isNotEmpty) _buildBio(bio),
               _buildDocumentBadges(provider),
               _buildCompletedJobsSection(completedJobsAsync),
@@ -172,6 +173,106 @@ class _ProviderContent extends ConsumerWidget {
               isVerified ? Colors.blue : Colors.orange),
         ],
       ),
+    );
+  }
+
+  Widget _buildRatingBreakdown(
+      AsyncValue<List<Map<String, dynamic>>> reviewsAsync,
+      double rating,
+      int totalReviews) {
+    return reviewsAsync.maybeWhen(
+      data: (reviews) {
+        if (reviews.isEmpty) return const SizedBox.shrink();
+        final counts = <int, int>{1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+        for (final r in reviews) {
+          final s = (r['rating'] ?? r['stars'] ?? 0) as num;
+          final star = s.round().clamp(1, 5);
+          counts[star] = (counts[star] ?? 0) + 1;
+        }
+        final total = reviews.length;
+        return Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    rating.toStringAsFixed(1),
+                    style: const TextStyle(
+                        fontSize: 28, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: List.generate(5, (i) {
+                        final filled = i < rating.round();
+                        return Icon(
+                          filled ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 18,
+                        );
+                      })),
+                      Text('$totalReviews değerlendirme',
+                          style: const TextStyle(
+                              fontSize: 12, color: AppColors.textHint)),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...[5, 4, 3, 2, 1].map((star) {
+                final c = counts[star] ?? 0;
+                final pct = total == 0 ? 0.0 : c / total;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 18,
+                        child: Text('$star',
+                            style: const TextStyle(fontSize: 12)),
+                      ),
+                      const Icon(Icons.star,
+                          size: 14, color: Colors.amber),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: pct,
+                            minHeight: 8,
+                            backgroundColor: AppColors.border,
+                            valueColor: const AlwaysStoppedAnimation(
+                                Colors.amber),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 32,
+                        child: Text('$c',
+                            textAlign: TextAlign.right,
+                            style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary)),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
     );
   }
 
