@@ -494,13 +494,15 @@ class _MapView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final center = state.userLocation ?? const LatLng(41.0082, 28.9784);
+    // Phase 254 — Admin map parity. Türkiye merkezi default (admin AdminMap.tsx).
+    final center = state.userLocation ?? const LatLng(39.0, 35.0);
+    final initialZoom = state.userLocation != null ? 14.0 : 6.0;
 
     return FlutterMap(
       mapController: mapController,
       options: MapOptions(
         initialCenter: center,
-        initialZoom: 14,
+        initialZoom: initialZoom,
         minZoom: 5,
         maxZoom: 18,
         onTap: (_, __) => onMapTap(),
@@ -508,9 +510,10 @@ class _MapView extends StatelessWidget {
       children: [
         TileLayer(
           urlTemplate:
-              'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-          subdomains: const ['a', 'b', 'c', 'd'],
+              'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          subdomains: const ['a', 'b', 'c'],
           userAgentPackageName: 'com.yapgitsin.hizmet_app',
+          retinaMode: RetinaMode.isHighDensity(context),
         ),
         if (state.userLocation != null)
           CircleLayer(
@@ -538,9 +541,9 @@ class _MapView extends StatelessWidget {
               .where((j) => j.latitude != null && j.longitude != null)
               .map((j) {
             final isSelected = j.id == state.selectedJobId;
-            // Pill markers need more width; height includes the tail
-            final w = isSelected ? 88.0 : 76.0;
-            final h = isSelected ? 46.0 : 38.0;
+            // Phase 254 — Admin parity: 18x18 circle + 14x14 ~ badge için 28x28 hit area.
+            const w = 28.0;
+            const h = 28.0;
             final price = j.budgetMin != null
                 ? j.budgetMin!.toStringAsFixed(0)
                 : null;
