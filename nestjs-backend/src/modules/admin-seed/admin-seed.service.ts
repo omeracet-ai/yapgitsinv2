@@ -37,9 +37,9 @@ export interface CreateCounts {
 }
 
 // bcrypt hash of "Yapgitsin1234!" (cost 10) — generated once, deterministic
-// to avoid 50× bcrypt overhead during populate.
+// to avoid 50× bcrypt overhead during populate. Verified 2026-05-19.
 const SEED_PASSWORD_HASH =
-  '$2b$10$Ne0gxBxRkLW2lXJpFEXM2.0jOXFNwNUM6CG5sM4F7B3jE7Y2yKlxK';
+  '$2b$10$mTsH6R8sQUJInRzLNROW6OEqBiWE71i7oOcc/rfKh.uyzTCJXpFxe';
 
 const TR_CITIES = [
   'Istanbul',
