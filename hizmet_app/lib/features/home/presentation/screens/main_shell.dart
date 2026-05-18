@@ -250,7 +250,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           slivers: [
             // ── Hero SliverAppBar ──────────────────────────────────────
             SliverAppBar(
-              expandedHeight: 220,
+              expandedHeight: 280,
               pinned: true,
               backgroundColor: AppColors.background,
               elevation: 0,
@@ -266,7 +266,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                   ),
                   child: SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                      padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 4, 20, 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
