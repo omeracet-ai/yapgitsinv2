@@ -222,11 +222,10 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
   void _onSearch(String query) async {
     final q = query.trim();
     if (q.isEmpty) return;
-    // Server-side category match: if query exactly matches a known category name,
-    // fetch jobs with that category. Otherwise free-text search via ?q=.
-    final categoriesAsync = ref.read(categoriesProvider);
+    debugPrint('main_shell._onSearch q="$q"');
+    // Exact category match → fetch by category; else free-text q.
     String? matchedCategory;
-    categoriesAsync.whenData((cats) {
+    ref.read(categoriesProvider).whenData((cats) {
       final lower = q.toLowerCase();
       for (final c in cats) {
         final name = (c['name'] as String?) ?? '';
@@ -236,10 +235,13 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         }
       }
     });
+    final notifier = ref.read(jobsProvider.notifier);
     if (matchedCategory != null) {
-      await ref.read(jobsProvider.notifier).fetchJobs(category: matchedCategory);
+      debugPrint('main_shell._onSearch category match: $matchedCategory');
+      await notifier.fetchJobs(category: matchedCategory);
     } else {
-      await ref.read(jobsProvider.notifier).setQuery(q);
+      debugPrint('main_shell._onSearch free-text q');
+      await notifier.fetchJobs(q: q);
     }
     if (!mounted) return;
     _searchController.clear();
