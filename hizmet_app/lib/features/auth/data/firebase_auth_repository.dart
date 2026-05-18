@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_client_provider.dart';
 import '../../../core/services/firebase_auth_service.dart';
+import '../../../core/services/secure_token_store.dart';
 
 final firebaseAuthServiceProvider = Provider((_) => FirebaseAuthService());
 
@@ -54,40 +55,75 @@ class FirebaseAuthRepository {
   User? get currentUser => _service.currentUser;
   Stream<User?> get authStateChanges => _service.authStateChanges;
 
+  /// Phase 254 — Email+password login NestJS `POST /auth/login`'e doğrudan
+  /// bağlandı. Firebase signIn + /auth/firebase bridge yolu kaldırıldı çünkü
+  /// prod'da Firebase admin service account env yok → bridge 401 dönüyor.
+  /// Google/Apple sosyal sign-in akışı [signInWithGoogle]/[signInWithApple]
+  /// bridge'e bağlı kalıyor.
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
-      final cred = await _service.signInWithEmail(email, password);
-      // Phase 240D — Bridge Firebase ID token → backend JWT pair and persist
-      // to SecureTokenStore so protected REST calls succeed.
-      final bridge = await _service.bridgeToBackend();
-      final bridgeUser = bridge['user'];
-      final profileFromBridge =
-          bridgeUser is Map ? Map<String, dynamic>.from(bridgeUser) : null;
-      final profile = profileFromBridge ?? await _service.getUserProfile();
-      return {
-        'access_token': bridge['access_token'],
-        if (bridge['refresh_token'] != null)
-          'refresh_token': bridge['refresh_token'],
-        'user': {
-          'id': cred.user?.uid,
-          'email': cred.user?.email,
-          'displayName': cred.user?.displayName,
-          'emailVerified': cred.user?.emailVerified,
-          ...?profile,
-        },
-      };
-    } on FirebaseAuthException catch (e) {
-      throw Exception(_mapFirebaseError(e.code));
-    } catch (e) {
-      // Phase 240D — bridge fail görünür Türkçe hata.
-      final msg = e.toString();
-      if (msg.contains('social_bridge_failed') ||
-          msg.contains('social_bridge_no_token') ||
-          msg.contains('social_bridge_no_idtoken')) {
-        throw Exception(
-            'Giriş şu an tamamlanamadı. Lütfen birazdan tekrar deneyin.');
+      final res = await _dio.post<dynamic>(
+        '/auth/login',
+        data: {'email': email, 'password': password},
+        // Stale Bearer header gönderme — backend creds'e bakacak.
+        options: Options(headers: {'Authorization': ''}),
+      );
+      final data = res.data;
+      if (data is! Map) {
+        throw Exception('Giriş yanıtı beklenmedik formatta.');
       }
-      rethrow;
+      final map = Map<String, dynamic>.from(data);
+
+      // 2FA gerekiyorsa token persist etme — UI tempToken ile challenge ekranına
+      // gider. AuthNotifier 2FA path'i mevcut (verify2FALogin).
+      if (map['requires2FA'] == true) {
+        return map;
+      }
+
+      final access = map['access_token'];
+      final refresh = map['refresh_token'];
+      if (access is! String || access.isEmpty) {
+        throw Exception('Sunucu erişim tokenı döndürmedi.');
+      }
+      final store = SecureTokenStore();
+      await store.writeToken(access);
+      if (refresh is String && refresh.isNotEmpty) {
+        await store.writeRefreshToken(refresh);
+      }
+
+      final userMap = map['user'];
+      return {
+        'access_token': access,
+        if (refresh is String && refresh.isNotEmpty) 'refresh_token': refresh,
+        'user': userMap is Map
+            ? Map<String, dynamic>.from(userMap)
+            : <String, dynamic>{'email': email},
+      };
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      final body = e.response?.data;
+      // Backend mesajını öncele (UnauthorizedException → 'E-posta veya şifre hatalı' vb.).
+      String? serverMsg;
+      if (body is Map) {
+        final m = body['message'] ?? body['error'];
+        if (m is String && m.isNotEmpty) serverMsg = m;
+      }
+      switch (code) {
+        case 400:
+          throw Exception(serverMsg ?? 'E-posta veya şifre yanlış.');
+        case 401:
+          throw Exception(serverMsg ?? 'E-posta veya şifre yanlış.');
+        case 403:
+          throw Exception(serverMsg ?? 'Hesabınız devre dışı.');
+        case 429:
+          throw Exception('Çok fazla deneme. Lütfen birazdan tekrar deneyin.');
+        case 500:
+        case 502:
+        case 503:
+          throw Exception('Sunucu hatası, lütfen daha sonra tekrar deneyin.');
+        default:
+          throw Exception(serverMsg ?? 'Giriş yapılamadı. Lütfen tekrar deneyin.');
+      }
     }
   }
 
