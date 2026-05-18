@@ -10,6 +10,7 @@ import { Review } from '../reviews/review.entity';
 import { JobLead } from '../leads/job-lead.entity';
 import { JobLeadResponse } from '../leads/job-lead-response.entity';
 import { Category } from '../categories/category.entity';
+import { ServiceRequest } from '../service-requests/service-request.entity';
 
 export interface WipeCounts {
   reviews: number;
@@ -18,6 +19,7 @@ export interface WipeCounts {
   bookings: number;
   jobLeadResponses: number;
   jobLeads: number;
+  serviceRequests: number;
   users: number;
 }
 
@@ -31,6 +33,7 @@ export interface CreateCounts {
   escrows: number;
   payments: number;
   reviews: number;
+  serviceRequests: number;
 }
 
 // bcrypt hash of "Yapgitsin1234!" (cost 10) — generated once, deterministic
@@ -71,6 +74,7 @@ export class AdminSeedService {
         bookings: 0,
         jobLeadResponses: 0,
         jobLeads: 0,
+        serviceRequests: 0,
         users: 0,
       };
       const wipeAll = async (entity: any): Promise<number> => {
@@ -87,6 +91,7 @@ export class AdminSeedService {
       counts.bookings = await wipeAll(Booking);
       counts.jobLeadResponses = await wipeAll(JobLeadResponse);
       counts.jobLeads = await wipeAll(JobLead);
+      counts.serviceRequests = await wipeAll(ServiceRequest);
       counts.users = await wipeAll(User);
       return counts;
     });
@@ -105,6 +110,7 @@ export class AdminSeedService {
         escrows: 0,
         payments: 0,
         reviews: 0,
+        serviceRequests: 0,
       };
 
       const allCategories = await manager.getRepository(Category).find();
@@ -328,6 +334,35 @@ export class AdminSeedService {
       created.escrows = escrows.length;
       created.payments = payments.length;
       created.reviews = reviews.length;
+
+      // ── 5. Service Requests (hizmet alanı ilanları) — 30% of customers ──────
+      const serviceRequests: ServiceRequest[] = [];
+      if (customers.length > 0) {
+        const srCount = Math.max(1, Math.floor(customers.length * 0.3));
+        for (let i = 0; i < srCount; i++) {
+          const customer = faker.helpers.arrayElement(customers);
+          const cat = faker.helpers.arrayElement(categoryNames);
+          const city = customer.city || faker.helpers.arrayElement(TR_CITIES);
+          const budgetMin = faker.number.int({ min: 100, max: 800 });
+          const budgetMax = budgetMin + faker.number.int({ min: 100, max: 1500 });
+          const priceMinor = budgetMax * 100;
+          const sr = manager.getRepository(ServiceRequest).create({
+            userId: customer.id,
+            tenantId: null,
+            category: cat,
+            title: `${cat} hizmeti aranıyor — ${city}`.slice(0, 200),
+            description: `${cat} hizmetine ihtiyacım var. ${f.lorem.sentences(2)} Bütçe: ${budgetMin}-${budgetMax} TL.`,
+            location: city,
+            address: `${city} - ${f.location.streetAddress()}`.slice(0, 500),
+            price: budgetMax,
+            priceMinor,
+            status: faker.helpers.arrayElement(['open', 'open', 'closed']),
+          });
+          serviceRequests.push(sr);
+        }
+        await manager.getRepository(ServiceRequest).save(serviceRequests);
+      }
+      created.serviceRequests = serviceRequests.length;
 
       return created;
     });
