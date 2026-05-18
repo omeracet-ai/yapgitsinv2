@@ -197,7 +197,19 @@ class _SmsVerifyScreenState extends ConsumerState<SmsVerifyScreen> {
                         : const Text('Doğrula'),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: (_sending || _verifying)
+                      ? null
+                      : () => Navigator.of(context).pop(null),
+                  child: Text(
+                    'Şimdilik Atla',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 if (_error != null)
                   Container(
                     padding: const EdgeInsets.all(12),

@@ -456,16 +456,43 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
 
                   const SizedBox(height: 24),
 
-                  // â”€â”€ Popüler Kategoriler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                  SectionHeader(
-                    title: 'Popüler Kategoriler',
-                    actionLabel: _selectedCategory != null ? 'Temizle' : null,
-                    onAction: _selectedCategory != null
-                        ? () => setState(() {
+                  // â”€â”€ Popüler Kategoriler (siyah arka plan) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  Container(
+                    color: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Popüler Kategoriler',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        if (_selectedCategory != null)
+                          GestureDetector(
+                            onTap: () => setState(() {
                               _selectedCategory = null;
                               _selectedGroup = null;
-                            })
-                        : null,
+                            }),
+                            child: const Text(
+                              'Temizle',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 10),
 
@@ -557,6 +584,9 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                         height: 164,
                         child: Center(child: CircularProgressIndicator())),
                     error: (_, __) => const SizedBox.shrink(),
+                  ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 24),
@@ -738,10 +768,10 @@ class _GroupChip extends StatelessWidget {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.darkPrimary : AppColors.darkSurfaceElevated,
+          color: isActive ? AppColors.darkPrimary : Colors.black,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
-            color: isActive ? AppColors.darkPrimary : AppColors.darkBorder,
+            color: isActive ? AppColors.darkPrimary : Colors.white24,
             width: 1.5,
           ),
           boxShadow: isActive
@@ -758,7 +788,7 @@ class _GroupChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: isActive ? Colors.black : AppColors.darkTextSecondary,
+            color: isActive ? Colors.black : Colors.white,
           ),
         ),
       ),

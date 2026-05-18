@@ -52,6 +52,24 @@ const WHITELIST = new Set<string>([
   'yapgitsin.tr',
 ]);
 
+/**
+ * Phase 253-fix — common-typo map for top Turkish/global providers.
+ * Caught before MX lookup; suggests the correct domain to the user.
+ */
+const TYPO_MAP: Record<string, string> = {
+  'gmial.com': 'gmail.com',
+  'gmai.com': 'gmail.com',
+  'gmal.com': 'gmail.com',
+  'gnail.com': 'gmail.com',
+  'yaho.com': 'yahoo.com',
+  'yahooo.com': 'yahoo.com',
+  'hotnail.com': 'hotmail.com',
+  'hotmial.com': 'hotmail.com',
+  'hotmai.com': 'hotmail.com',
+  'outlok.com': 'outlook.com',
+  'iclod.com': 'icloud.com',
+};
+
 const DISPOSABLE = new Set<string>([
   '10minutemail.com',
   '10minutemail.net',
@@ -143,6 +161,16 @@ export class EmailValidatorService {
       });
     }
     const domain = email.slice(at + 1).toLowerCase().trim();
+
+    // 1a. Common-typo guard (cheap, runs before MX lookup).
+    const suggested = TYPO_MAP[domain];
+    if (suggested) {
+      throw new BadRequestException({
+        code: 'EMAIL_DOMAIN_TYPO',
+        message: `E-posta adresi hatalı görünüyor. "${suggested}" demek istemiş olabilir misiniz?`,
+        suggested,
+      });
+    }
 
     // 1. Disposable block (before whitelist so collisions are caught).
     if (DISPOSABLE.has(domain)) {
