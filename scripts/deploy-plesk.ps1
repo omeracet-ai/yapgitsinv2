@@ -80,6 +80,11 @@ function Get-ModuleMap {
             Remote = '/backend/src/modules/jobs'
             Smoke  = @('GET /healthz:200','GET /jobs:200')
         }
+        'admin-seed' = @{
+            Local  = 'nestjs-backend/src/modules/admin-seed'
+            Remote = '/backend/src/modules/admin-seed'
+            Smoke  = @('GET /healthz:200')
+        }
         'full'       = @{
             Local  = 'nestjs-backend/src'
             Remote = '/backend/src'

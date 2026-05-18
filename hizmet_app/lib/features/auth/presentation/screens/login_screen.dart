@@ -57,8 +57,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       } else if (next is AuthError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.message),
-            backgroundColor: AppColors.surface,
+            content: Text(
+              next.message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
           ),
         );
       }

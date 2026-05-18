@@ -185,6 +185,31 @@ export class AdminSeedService {
       // ── 1. Users ───────────────────────────────────────────────────────────
       const users: User[] = [];
       const usedPhones = new Set<string>();
+
+      // ── Sabit demo hesap — login için bilinen kimlik bilgisi ────────────
+      // demo@yapgitsin.tr / Yapgitsin1234!  (worker; gerçek kategorilerle)
+      const demoCats = categoryNames.slice(0, 3);
+      const demo = manager.getRepository(User).create({
+        fullName: 'Demo Usta',
+        phoneNumber: '+905550000001',
+        email: 'demo@yapgitsin.tr',
+        passwordHash: SEED_PASSWORD_HASH,
+        isPhoneVerified: true,
+        emailVerified: true,
+        identityVerified: true,
+        role: UserRole.USER,
+        tenantId: null,
+        city: 'Istanbul',
+        workerCategories: demoCats,
+        workerBio: buildTurkishBio(demoCats),
+        hourlyRateMinMinor: 12000,
+        hourlyRateMaxMinor: 25000,
+        isAvailable: true,
+      });
+      users.push(demo);
+      usedPhones.add('+905550000001');
+      created.workers++;
+
       for (let i = 0; i < count; i++) {
         const isWorker = Math.random() < 0.2;
         // Unique TR phone +905XXXXXXXX (12 chars total, kept under length=20)
