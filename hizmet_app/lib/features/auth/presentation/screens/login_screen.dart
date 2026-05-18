@@ -30,13 +30,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _sub = ref.listenManual<AuthState>(authStateProvider, (previous, next) {
       if (!mounted) return;
       if (next is AuthAuthenticated) {
+        final user = next.user;
+        final name = (user['fullName'] as String?)?.trim().isNotEmpty == true
+            ? user['fullName'] as String
+            : (user['email'] as String? ?? 'Kullanıcı');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.celebration, color: Colors.white),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Hoşgeldiniz $name! Yapgitsin'e tekrar hoş geldin.',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.primary,
+            duration: const Duration(seconds: 3),
+          ),
+        );
         ref.read(selectedTabProvider.notifier).state = 4;
         context.go(widget.returnTo ?? '/');
       } else if (next is AuthError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.message),
-            backgroundColor: Colors.red.shade600,
+            backgroundColor: AppColors.surface,
           ),
         );
       }
