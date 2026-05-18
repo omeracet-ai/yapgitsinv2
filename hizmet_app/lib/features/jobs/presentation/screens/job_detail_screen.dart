@@ -54,22 +54,17 @@ class JobDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<JobDetailScreen> createState() => _JobDetailScreenState();
 }
 
-class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
-    with SingleTickerProviderStateMixin {
+class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   bool _actionLoading = false;
-  late final TabController _tabController;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+  // Dark theme constants — Voldi-job-detail-redesign
+  static const Color _bgColor = Colors.black;
+  static const Color _surfaceColor = Color(0xFF141414);
+  static const Color _surfaceColor2 = Color(0xFF1E1E1E);
+  static const Color _textPrimary = Colors.white;
+  static const Color _textSecondary = Color(0xFFBDBDBD);
+  static const Color _textHint = Color(0xFF8A8A8A);
+  static const Color _borderColor = Color(0xFF2A2A2A);
 
   Future<void> _doAction(Future<void> Function() action) async {
     setState(() => _actionLoading = true);
@@ -134,10 +129,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final statusMeta = _statusMeta(jobStatus);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: _bgColor,
       appBar: AppBar(
         title: const Text('İş Detayı'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -159,157 +154,120 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             ),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          tabs: [
-            Tab(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.local_offer_outlined, size: 16),
-                  const SizedBox(width: 6),
-                  offersAsync.when(
-                    data: (o) => Text('Teklifler (${o.length})'),
-                    loading: () => const Text('Teklifler'),
-                    error: (_, __) => const Text('Teklifler'),
-                  ),
-                ],
-              ),
-            ),
-            const Tab(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.chat_bubble_outline, size: 16),
-                  SizedBox(width: 6),
-                  Text('Sorular'),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
-      body: Column(
-        children: [
-          // İlan üst bilgileri (her iki sekmede de görünür)
-          Flexible(
-            child: RefreshIndicator(
-              color: AppColors.primary,
-              displacement: 50,
-              onRefresh: () async {
-                if (widget.id != null) {
-                  ref.invalidate(jobDetailProvider(widget.id!));
-                  ref.invalidate(jobOffersProvider(widget.id!));
-                }
-              },
-              child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                children: [
-                  _buildHeader(budgetMin: budgetMin, budgetMax: budgetMax, createdAt: createdAt, dueDate: dueDate),
-                  if (customer != null) ...[
-                    const SizedBox(height: 8),
-                    _buildCustomerCard(customer),
-                  ],
-                  if (jobStatus == 'completed' &&
-                      customer != null &&
-                      authState is AuthAuthenticated &&
-                      (customer['id'] as String?) != currentUserId) ...[
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () => context.push(
-                            '/sikayet-olustur',
-                            extra: {
-                              'againstUserId': customer['id'] as String,
-                              'jobId': widget.id,
-                            },
-                          ),
-                          icon: const Icon(Icons.flag_outlined, size: 16),
-                          label: const Text('🚩 Şikayet Et'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            side: const BorderSide(color: Colors.red),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                          ),
+      body: DefaultTextStyle.merge(
+        style: const TextStyle(color: _textPrimary),
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          displacement: 50,
+          onRefresh: () async {
+            if (widget.id != null) {
+              ref.invalidate(jobDetailProvider(widget.id!));
+              ref.invalidate(jobOffersProvider(widget.id!));
+            }
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                _buildHeader(budgetMin: budgetMin, budgetMax: budgetMax, createdAt: createdAt, dueDate: dueDate),
+                if (customer != null) ...[
+                  const SizedBox(height: 6),
+                  _buildCustomerCard(customer),
+                ],
+                if (jobStatus == 'completed' &&
+                    customer != null &&
+                    authState is AuthAuthenticated &&
+                    (customer['id'] as String?) != currentUserId) ...[
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.push(
+                          '/sikayet-olustur',
+                          extra: {
+                            'againstUserId': customer['id'] as String,
+                            'jobId': widget.id,
+                          },
+                        ),
+                        icon: const Icon(Icons.flag_outlined, size: 16),
+                        label: const Text('🚩 Şikayet Et'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 8),
-                  _buildDescription(description),
-                  if (photos.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    _buildPhotosSection(photos),
-                  ],
-                  // Phase 203 — İlan sahibi fotoğraf ekleyebilir (max 5)
-                  if (widget.id != null && isOwner) ...[
-                    const SizedBox(height: 8),
-                    JobPhotosBulkSection(
-                      jobId: widget.id!,
-                      initialPhotos: photos,
-                    ),
-                  ],
-                  if (videos.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    _buildVideosSection(videos),
-                  ],
-                  if (widget.id != null) ...[
-                    const SizedBox(height: 8),
-                    Builder(builder: (_) {
-                      final initial = (detail['completionPhotos'] as List?)
-                              ?.cast<String>() ??
-                          const <String>[];
-                      final canUpload = isWorker &&
-                          (jobStatus == 'in_progress' ||
-                              jobStatus == 'pending_completion');
-                      return CompletionPhotosSection(
-                        jobId: widget.id!,
-                        initialPhotos: initial,
-                        canUpload: canUpload,
-                      );
-                    }),
-                  ],
-                  const SizedBox(height: 8),
-                ],
-              ),
-            ),
-            ),
-          ),
-          // Sekme içerikleri
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // Tab 0: Teklifler
-                SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      _buildOffersSection(offersAsync, canMakeOffer, currentUserId),
-                      const SizedBox(height: 100),
-                    ],
                   ),
+                ],
+                const SizedBox(height: 6),
+                _buildDescription(description),
+                if (photos.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  _buildPhotosSection(photos),
+                ],
+                // Phase 203 — İlan sahibi fotoğraf ekleyebilir (max 5)
+                if (widget.id != null && isOwner) ...[
+                  const SizedBox(height: 6),
+                  JobPhotosBulkSection(
+                    jobId: widget.id!,
+                    initialPhotos: photos,
+                  ),
+                ],
+                if (videos.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  _buildVideosSection(videos),
+                ],
+                if (widget.id != null) ...[
+                  const SizedBox(height: 6),
+                  Builder(builder: (_) {
+                    final initial = (detail['completionPhotos'] as List?)
+                            ?.cast<String>() ??
+                        const <String>[];
+                    final canUpload = isWorker &&
+                        (jobStatus == 'in_progress' ||
+                            jobStatus == 'pending_completion');
+                    return CompletionPhotosSection(
+                      jobId: widget.id!,
+                      initialPhotos: initial,
+                      canUpload: canUpload,
+                    );
+                  }),
+                ],
+                // ── Teklifler section (was Tab 0) ──
+                const SizedBox(height: 10),
+                _buildOffersSection(offersAsync, canMakeOffer, currentUserId),
+                // ── Sorular section (was Tab 1) ──
+                const SizedBox(height: 10),
+                Container(
+                  height: 1,
+                  color: _borderColor,
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
                 ),
-                // Tab 1: Sorular
-                widget.id != null
-                    ? JobQuestionsTab(
-                        jobId: widget.id!,
-                        currentUserId: currentUserId,
-                        isOwner: isOwner,
-                        jobStatus: jobStatus,
-                      )
-                    : const Center(child: Text('İlan ID bulunamadı.')),
+                const SizedBox(height: 10),
+                if (widget.id != null)
+                  SizedBox(
+                    height: 600,
+                    child: JobQuestionsTab(
+                      jobId: widget.id!,
+                      currentUserId: currentUserId,
+                      isOwner: isOwner,
+                      jobStatus: jobStatus,
+                    ),
+                  )
+                else
+                  const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Center(child: Text('İlan ID bulunamadı.', style: TextStyle(color: _textHint))),
+                  ),
+                const SizedBox(height: 80),
               ],
             ),
           ),
-        ],
+        ),
       ),
       bottomNavigationBar: SafeArea(
         top: false,
@@ -374,20 +332,20 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         : widget.postedAt;
 
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+      color: _surfaceColor,
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(
-              height: 56, width: 56,
+              height: 48, width: 48,
               decoration: BoxDecoration(
                   color: widget.color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16)),
-              child: Icon(widget.icon, color: widget.color, size: 28),
+              child: Icon(widget.icon, color: widget.color, size: 24),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -412,9 +370,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       ),
                     ),
                   Text(widget.title,
-                      style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary)),
-                  const SizedBox(height: 6),
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold,
+                          color: _textPrimary)),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
                       Container(
@@ -433,34 +391,34 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             ),
           ]),
 
-          const SizedBox(height: 16),
-          const Divider(height: 1),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+          const Divider(height: 1, color: _borderColor),
+          const SizedBox(height: 10),
 
           // Bilgi satırı: konum + zaman + teslim tarihi
           Row(children: [
-            Flexible(child: _infoChip(Icons.location_on_outlined, widget.location, Colors.red.shade400)),
-            const SizedBox(width: 20),
-            Flexible(child: _infoChip(Icons.access_time_rounded, postedStr, Colors.grey.shade500)),
+            Flexible(child: _infoChip(Icons.location_on_outlined, widget.location, Colors.red.shade300)),
+            const SizedBox(width: 16),
+            Flexible(child: _infoChip(Icons.access_time_rounded, postedStr, Colors.grey.shade400)),
           ]),
           if (dueDate != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(children: [
               Flexible(
                 child: _infoChip(
                   Icons.event_outlined,
                   'Teslim: ${_formatDueDate(dueDate)}',
-                  Colors.orange.shade600,
+                  Colors.orange.shade400,
                 ),
               ),
             ]),
           ],
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
 
           // Bütçe kartı
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [AppColors.primary.withValues(alpha: 0.07),
@@ -480,10 +438,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Bütçe Aralığı',
-                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        style: TextStyle(fontSize: 11, color: _textSecondary)),
                     Text(budgetStr,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
-                            color: AppColors.primary)),
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold,
+                            color: Colors.white)),
                   ],
                 ),
               ],
@@ -510,15 +468,15 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final customerId       = customer['id'] as String?;
 
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      color: _surfaceColor,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('İlanı Yayınlayan',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary, letterSpacing: 0.3)),
-          const SizedBox(height: 14),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
+                  color: _textSecondary, letterSpacing: 0.3)),
+          const SizedBox(height: 10),
 
           // Profil satırı
           Row(
@@ -529,12 +487,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 clipBehavior: Clip.none,
                 children: [
                   CircleAvatar(
-                    radius: 32,
+                    radius: 26,
                     backgroundColor: AppColors.primaryLight,
                     backgroundImage: imgUrl != null ? NetworkImage(imgUrl) : null,
                     child: imgUrl == null
                         ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
-                            style: const TextStyle(fontSize: 24,
+                            style: const TextStyle(fontSize: 20,
                                 color: AppColors.primary, fontWeight: FontWeight.bold))
                         : null,
                   ),
@@ -545,16 +503,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       child: Container(
                         padding: const EdgeInsets.all(2),
                         decoration: const BoxDecoration(
-                          color: Colors.white,
+                          color: _surfaceColor2,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.verified_rounded,
-                            color: AppColors.primary, size: 18),
+                            color: AppColors.primary, size: 16),
                       ),
                     ),
                 ],
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
 
               // İsim + meta
               Expanded(
@@ -565,9 +523,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       children: [
                         Flexible(
                           child: Text(name,
-                              style: const TextStyle(fontSize: 16,
+                              style: const TextStyle(fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary),
+                                  color: _textPrimary),
                               overflow: TextOverflow.ellipsis),
                         ),
                         if (verified) ...[
@@ -585,20 +543,20 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                         ],
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     if (city.isNotEmpty || sinceStr.isNotEmpty)
                       Row(
                         children: [
                           if (city.isNotEmpty) ...[
-                            Icon(Icons.location_on_outlined, size: 12, color: Colors.grey.shade500),
+                            Icon(Icons.location_on_outlined, size: 11, color: Colors.grey.shade400),
                             const SizedBox(width: 2),
-                            Text(city, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                            Text(city, style: TextStyle(fontSize: 11, color: Colors.grey.shade300)),
                           ],
                           if (city.isNotEmpty && sinceStr.isNotEmpty)
-                            Text('  ·  ', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+                            Text('  ·  ', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                           if (sinceStr.isNotEmpty)
                             Text('Üye: $sinceStr',
-                                style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                                style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
                         ],
                       ),
                   ],
@@ -607,7 +565,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
           // İstatistik satırı
           Row(
@@ -637,7 +595,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             ],
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
 
           // Profili Gör butonu
           if (customerId != null)
@@ -651,7 +609,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   foregroundColor: AppColors.primary,
                   side: const BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -669,20 +627,20 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: _surfaceColor2,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
           children: [
-            Icon(icon, color: iconColor, size: 18),
-            const SizedBox(height: 4),
+            Icon(icon, color: iconColor, size: 16),
+            const SizedBox(height: 2),
             Text(label,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary)),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold,
+                    color: _textPrimary)),
             Text(sublabel,
-                style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+                style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
           ],
         ),
       ),
@@ -714,17 +672,17 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   Widget _buildDescription(String description) {
     return Container(
       width: double.infinity,
-      color: Colors.white,
-      padding: const EdgeInsets.all(20),
+      color: _surfaceColor,
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('İş Açıklaması',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _textPrimary)),
+          const SizedBox(height: 8),
           Text(description.isNotEmpty ? description : 'Açıklama girilmemiş.',
               style:
-                  const TextStyle(color: AppColors.textSecondary, height: 1.6)),
+                  const TextStyle(color: _textSecondary, height: 1.5, fontSize: 13)),
         ],
       ),
     );
@@ -733,23 +691,23 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   Widget _buildPhotosSection(List<String> photos) {
     return Container(
       width: double.infinity,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      color: _surfaceColor,
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
+            padding: EdgeInsets.symmetric(horizontal: 14),
             child: Text('Fotoğraflar',
                 style:
-                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _textPrimary)),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           SizedBox(
-            height: 200,
+            height: 160,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               itemCount: photos.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (ctx, i) => GestureDetector(
@@ -765,14 +723,14 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   borderRadius: BorderRadius.circular(12),
                   child: Image.network(
                     photos[i],
-                    height: 200,
-                    width: 160,
+                    height: 160,
+                    width: 130,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
-                      width: 160,
-                      color: AppColors.border,
+                      width: 130,
+                      color: _surfaceColor2,
                       child: const Icon(Icons.broken_image,
-                          color: AppColors.textHint),
+                          color: _textHint),
                     ),
                   ),
                 ),
@@ -787,20 +745,20 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   Widget _buildVideosSection(List<String> videos) {
     return Container(
       width: double.infinity,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      color: _surfaceColor,
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
+            padding: EdgeInsets.symmetric(horizontal: 14),
             child: Text('Videolar',
                 style:
-                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _textPrimary)),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           SizedBox(
-            height: 250,
+            height: 220,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               scrollDirection: Axis.horizontal,
@@ -823,8 +781,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     String? currentUserId,
   ) {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.all(20),
+      color: _surfaceColor,
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -837,7 +795,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   children: [
                     Text('Teklifler (${offers.length})',
                         style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+                            fontSize: 16, fontWeight: FontWeight.bold, color: _textPrimary)),
                     if (offers.any((o) => o['status'] == 'accepted'))
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -855,10 +813,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 if (offers.isEmpty)
                   const Text('Henüz teklif verilmemiş.',
-                      style: TextStyle(color: AppColors.textHint))
+                      style: TextStyle(color: _textHint))
                 else
                   ...offers.map((o) => _buildOfferCard(o, canMakeOffer, currentUserId)),
               ],
@@ -920,24 +878,18 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final sc = statusColors[status] ?? [Colors.grey.shade100, Colors.grey];
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: _surfaceColor2,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: status == 'accepted'
               ? Colors.green.shade400
               : status == 'countered'
                   ? Colors.blue.shade300
-                  : AppColors.border,
+                  : _borderColor,
           width: status == 'accepted' ? 2 : 1,
         ),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2))
-        ],
       ),
       child: Column(
         children: [
@@ -977,7 +929,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 Expanded(
                   child: Text(name,
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 14)),
+                          fontWeight: FontWeight.bold, fontSize: 14, color: _textPrimary)),
                 ),
                 if (!isOfferOwner && offerUserId.isNotEmpty)
                   SizedBox(
@@ -1022,7 +974,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                     const Icon(Icons.star_rounded, color: Colors.amber, size: 13),
                     const SizedBox(width: 2),
                     Text('${avgRating.toStringAsFixed(1)} ($totalReviews yorum)',
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        style: const TextStyle(fontSize: 11, color: _textSecondary)),
                     const SizedBox(width: 10),
                   ],
                   if (successRate != null) ...[
@@ -1042,12 +994,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 if (workerBio.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(workerBio, maxLines: 2, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      style: const TextStyle(fontSize: 11, color: _textSecondary)),
                 ],
                 if (offer['message'] != null && offer['message'].toString().isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(offer['message'].toString(), maxLines: 2, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+                      style: const TextStyle(fontSize: 12, color: _textHint)),
                 ],
                 const SizedBox(height: 6),
                 // Fiyat — sadece ilan sahibi veya teklif sahibi görür
@@ -1057,7 +1009,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                           fontWeight: FontWeight.bold, fontSize: 16))
                 else
                   Row(children: [
-                    const Icon(Icons.lock_outline, size: 14, color: AppColors.textHint),
+                    const Icon(Icons.lock_outline, size: 14, color: _textHint),
                     const SizedBox(width: 4),
                     Text('Teklif tutarı gizlidir',
                         style: TextStyle(fontSize: 12, color: Colors.grey.shade500,
@@ -1105,7 +1057,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                           Text(counterMessage,
                               style: const TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary)),
+                                  color: _textSecondary)),
                       ],
                     ),
                   ),
@@ -1225,10 +1177,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     if (jobStatus == 'in_progress') {
       if (isOwner) {
         return Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: const BoxDecoration(
-            color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+            color: _surfaceColor,
+            border: Border(top: BorderSide(color: _borderColor)),
           ),
           child: ElevatedButton.icon(
             onPressed: () {
@@ -1247,10 +1199,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         );
       } else if (isWorker) {
         return Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: const BoxDecoration(
-            color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+            color: _surfaceColor,
+            border: Border(top: BorderSide(color: _borderColor)),
           ),
           child: ElevatedButton.icon(
             onPressed: () {
@@ -1655,7 +1607,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style:
-                const TextStyle(fontSize: 13, color: AppColors.textHint)),
+                const TextStyle(fontSize: 12, color: _textSecondary)),
       ),
     ]);
   }
