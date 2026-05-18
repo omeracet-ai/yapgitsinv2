@@ -219,9 +219,29 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
     super.dispose();
   }
 
-  void _onSearch(String query) {
-    if (query.trim().isEmpty) return;
-    ref.read(jobsProvider.notifier).filterJobs(query.trim());
+  void _onSearch(String query) async {
+    final q = query.trim();
+    if (q.isEmpty) return;
+    // Server-side category match: if query exactly matches a known category name,
+    // fetch jobs with that category. Otherwise free-text search via ?q=.
+    final categoriesAsync = ref.read(categoriesProvider);
+    String? matchedCategory;
+    categoriesAsync.whenData((cats) {
+      final lower = q.toLowerCase();
+      for (final c in cats) {
+        final name = (c['name'] as String?) ?? '';
+        if (name.toLowerCase() == lower) {
+          matchedCategory = name;
+          break;
+        }
+      }
+    });
+    if (matchedCategory != null) {
+      await ref.read(jobsProvider.notifier).fetchJobs(category: matchedCategory);
+    } else {
+      await ref.read(jobsProvider.notifier).setQuery(q);
+    }
+    if (!mounted) return;
     _searchController.clear();
     Navigator.push(
       context,
