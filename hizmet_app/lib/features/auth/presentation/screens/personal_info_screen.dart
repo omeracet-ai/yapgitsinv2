@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io' as io;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -22,7 +22,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
 
-  // â”€â”€ Temel Bilgiler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Temel Bilgiler ─────────────────────────────────────────────────────────
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
@@ -33,7 +33,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
   String _gender = 'other';
   DateTime? _birthDate;
 
-  // â”€â”€ Belgeler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Belgeler ───────────────────────────────────────────────────────────────
   XFile? _newIdentityPhoto;
   XFile? _newDocumentPhoto;
   String? _currentIdentityUrl;
@@ -91,7 +91,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     super.dispose();
   }
 
-  // â”€â”€ Temel bilgileri kaydet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Temel bilgileri kaydet ─────────────────────────────────────────────────
   Future<void> _saveBasic() async {
     if (_nameCtrl.text.trim().isEmpty) {
       _snack('Ad soyad boş olamaz.', error: true);
@@ -127,16 +127,15 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
         debugPrint(
             'personal_info._saveBasic state.user birthDate AFTER merge=${s.user['birthDate']}');
       }
-      if (mounted) _snack('Bilgiler güncellendi âœ“');
+      if (mounted) _snack('Bilgiler güncellendi ✓');
     } on DioException catch (e) {
-      _snack(e.response?.data?['message'] ?? 'Güncelleme başarısız',
-          error: true);
+      _snack(_mapDioError(e), error: true);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  // â”€â”€ Belge yükle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Belge yükle ────────────────────────────────────────────────────────────
   Future<void> _pickAndUpload({required bool isIdentity}) async {
     final picked = await ImagePicker().pickImage(
         source: ImageSource.gallery, imageQuality: 80, maxWidth: 1280);
@@ -184,12 +183,35 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_data', jsonEncode(updated));
       ref.read(authStateProvider.notifier).updateUserData(updated);
-      if (mounted) _snack('Belgeler yüklendi âœ“');
+      if (mounted) _snack('Belgeler yüklendi ✓');
+    } on DioException catch (e) {
+      _snack(_mapDioError(e), error: true);
     } catch (e) {
       _snack(e.toString().replaceFirst('Exception: ', ''), error: true);
     } finally {
       if (mounted) setState(() => _docLoading = false);
     }
+  }
+
+  String _mapDioError(DioException e) {
+    final status = e.response?.statusCode;
+    final data = e.response?.data;
+    final serverMsg =
+        data is Map ? data['message']?.toString() : null;
+    if (status == 400) return serverMsg ?? 'Geçersiz veri gönderildi.';
+    if (status == 401) return 'Oturum süresi doldu, tekrar giriş yap.';
+    if (status == 403) return 'Bu işlem için yetkin yok.';
+    if (status == 404) return 'Kayıt bulunamadı.';
+    if (status != null && status >= 500) {
+      return 'Sunucu hatası, daha sonra tekrar deneyin.';
+    }
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.connectionError) {
+      return 'Bağlantı hatası, internet bağlantını kontrol et.';
+    }
+    return serverMsg ?? 'Güncelleme başarısız.';
   }
 
   void _snack(String msg, {bool error = false}) {
@@ -228,7 +250,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     );
   }
 
-  // â”€â”€ Tab 1: Temel Bilgiler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Tab 1: Temel Bilgiler ──────────────────────────────────────────────────
   Widget _buildBasicTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -258,7 +280,10 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                 lastDate:
                     DateTime.now().subtract(const Duration(days: 365 * 16)),
               );
-              if (d != null) setState(() => _birthDate = d);
+              if (d != null) {
+                debugPrint('personal_info birthDate picked: $d');
+                setState(() => _birthDate = d);
+              }
             },
             child: _infoTile(
               Icons.cake_outlined,
@@ -364,7 +389,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     );
   }
 
-  // â”€â”€ Tab 2: Belgeler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Tab 2: Belgeler ────────────────────────────────────────────────────────
   Widget _buildDocumentsTab() {
     final hasIdentity =
         _currentIdentityUrl != null || _newIdentityPhoto != null;
@@ -599,7 +624,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                         if (hasFile)
                           _badge('Yüklemeye Hazır', Colors.blue)
                         else if (hasUrl && isVerified)
-                          _badge('Onaylandı âœ“', Colors.green)
+                          _badge('Onaylandı ✓', Colors.green)
                         else if (hasUrl)
                           _badge('Yüklendi â€“ İnceleniyor', Colors.orange)
                         else
