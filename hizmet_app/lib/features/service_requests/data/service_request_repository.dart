@@ -12,32 +12,25 @@ class ServiceRequestRepository {
   ServiceRequestRepository({required Dio dio}) : _dio = dio;
 
   Future<List<Map<String, dynamic>>> getAll({String? category}) async {
-    // Phase 152 — Single source of truth: /jobs (NestJS SQLite). Eski
-    // /service-requests endpoint'i ayrı tablo ve boş; backfill verisi
-    // jobs tablosuna düştü. Map'a çevirip SR kart formatına uyduruyoruz.
+    // Phase 281 — /service-requests artık dolu (Phase 266 seed + POST). Phase 152
+    // /jobs fallback'i kaldırıldı; doğru tablodan okuyoruz.
     try {
-      final qp = <String, dynamic>{'status': 'open'};
+      final qp = <String, dynamic>{};
       if (category != null) qp['category'] = category;
-      final response = await _dio.get('/jobs', queryParameters: qp);
+      final response = await _dio.get('/service-requests',
+          queryParameters: qp.isEmpty ? null : qp);
       final raw = response.data;
-      // /jobs hem List hem {items: [...]} dönebiliyor — savunmacı parse.
       final List<dynamic> list = raw is List
           ? raw
-          : (raw is Map && raw['items'] is List
-              ? raw['items'] as List<dynamic>
-              : const []);
+          : (raw is Map && raw['data'] is List
+              ? raw['data'] as List<dynamic>
+              : (raw is Map && raw['items'] is List
+                  ? raw['items'] as List<dynamic>
+                  : const []));
       return list.map<Map<String, dynamic>>((e) {
         final j = Map<String, dynamic>.from(e as Map);
-        final photos = (j['photos'] as List?)
-            ?.map((p) => p.toString())
-            .toList(growable: false) ??
-            const [];
         return {
           ...j,
-          // SR kart şablonu `imageUrl` bekliyor — ilk fotoğrafı eşle.
-          'imageUrl': photos.isNotEmpty ? photos.first : null,
-          // SR kart `user.fullName` & `identityVerified` okur; backend job'da
-          // henüz join yok → boş placeholder göster, çakılma.
           'user': j['user'] ?? const {
             'fullName': 'İlan sahibi',
             'identityVerified': false,
