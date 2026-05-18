@@ -250,7 +250,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           slivers: [
             // ── Hero SliverAppBar ──────────────────────────────────────
             SliverAppBar(
-              expandedHeight: 280,
+              expandedHeight: 220,
               pinned: true,
               backgroundColor: AppColors.background,
               elevation: 0,
@@ -266,7 +266,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                   ),
                   child: SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -321,7 +321,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                 ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 10),
                           // Search bar
                           Container(
                             decoration: BoxDecoration(
@@ -371,7 +371,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 6),
                           // ── Hizmet İlanı Ver butonu — search'in hemen altında
                           ElevatedButton.icon(
                             onPressed: () {
