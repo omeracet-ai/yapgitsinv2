@@ -223,15 +223,25 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
     final q = query.trim();
     if (q.isEmpty) return;
     debugPrint('main_shell._onSearch q="$q"');
-    // Exact category match → fetch by category; else free-text q.
+    // Kategori match — önce tam, sonra substring (her iki yön).
     String? matchedCategory;
     ref.read(categoriesProvider).whenData((cats) {
       final lower = q.toLowerCase();
+      // 1. exact match
       for (final c in cats) {
-        final name = (c['name'] as String?) ?? '';
-        if (name.toLowerCase() == lower) {
-          matchedCategory = name;
-          break;
+        final name = ((c['name'] as String?) ?? '').toLowerCase();
+        if (name == lower) {
+          matchedCategory = c['name'] as String;
+          return;
+        }
+      }
+      // 2. substring (kategori adı query içerir veya query kategori içinde geçer)
+      for (final c in cats) {
+        final name = ((c['name'] as String?) ?? '').toLowerCase();
+        if (name.isEmpty) continue;
+        if (name.contains(lower) || lower.contains(name)) {
+          matchedCategory = c['name'] as String;
+          return;
         }
       }
     });
