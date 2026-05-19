@@ -6,7 +6,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/providers/navigation_provider.dart';
 import '../../../auth/presentation/screens/profile_screen.dart';
-import '../../../notifications/presentation/screens/notification_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../categories/data/category_repository.dart';
@@ -14,6 +13,7 @@ import '../../../jobs/presentation/providers/job_provider.dart' as jp;
 import '../../../jobs/presentation/providers/job_provider.dart' show jobsProvider, Job;
 import '../../../jobs/presentation/screens/job_list_screen.dart';
 import '../../../jobs/presentation/screens/job_detail_screen.dart';
+import '../../../jobs/presentation/screens/my_jobs_screen.dart';
 import '../../../providers/data/provider_repository.dart';
 import '../../../providers/presentation/screens/provider_list_screen.dart';
 import '../../../providers/presentation/screens/provider_profile_screen.dart';
@@ -91,15 +91,13 @@ class _MainShellState extends ConsumerState<MainShell>
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final isLoggedIn = authState is AuthAuthenticated;
     final selectedIndex = ref.watch(selectedTabProvider);
-    final unreadCount = ref.watch(unreadCountBadgeProvider);
 
     final List<Widget> pages = [
       _HomeTab(onSeeAllRequests: () => _onItemTapped(1)),
       const HizmetAlScreen(),
       const JobListScreen(),
-      const NotificationScreen(),
+      const MyJobsScreen(showAppBar: true),
       const ProfileScreen(),
     ];
 
@@ -177,18 +175,10 @@ class _MainShellState extends ConsumerState<MainShell>
                         color: Colors.black, size: 24),
                   ),
                   label: 'İlan Ver'),
-              BottomNavigationBarItem(
-                  icon: _NotifIconWithBadge(
-                    icon: isLoggedIn
-                        ? Icons.notifications_outlined
-                        : Icons.lock_outline_rounded,
-                    count: isLoggedIn ? unreadCount : 0,
-                  ),
-                  activeIcon: _NotifIconWithBadge(
-                    icon: Icons.notifications_rounded,
-                    count: isLoggedIn ? unreadCount : 0,
-                  ),
-                  label: 'Bildirimlerim'),
+              const BottomNavigationBarItem(
+                  icon: Icon(Icons.work_outline_rounded),
+                  activeIcon: Icon(Icons.work_rounded),
+                  label: 'İşlerim'),
               const BottomNavigationBarItem(
                   icon: Icon(Icons.person_outline_rounded),
                   activeIcon: Icon(Icons.person_rounded),
@@ -906,49 +896,6 @@ class _GroupChip extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Bell icon with red unread-count badge in the top-right corner.
-class _NotifIconWithBadge extends StatelessWidget {
-  final IconData icon;
-  final int count;
-  const _NotifIconWithBadge({required this.icon, required this.count});
-
-  @override
-  Widget build(BuildContext context) {
-    if (count <= 0) return Icon(icon);
-    final label = count > 99 ? '99+' : '$count';
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Icon(icon),
-        Positioned(
-          right: -6,
-          top: -4,
-          child: Container(
-            padding: EdgeInsets.symmetric(
-                horizontal: count > 9 ? 5 : 4, vertical: 1.5),
-            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-            decoration: BoxDecoration(
-              color: AppColors.error,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.white, width: 1.5),
-            ),
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 9,
-                fontWeight: FontWeight.bold,
-                height: 1.1,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
