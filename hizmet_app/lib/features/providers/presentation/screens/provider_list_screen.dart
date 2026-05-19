@@ -135,40 +135,15 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
   Widget _buildAppBar(BuildContext context) {
     return SliverAppBar(
       pinned: true,
-      expandedHeight: 160,
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
       elevation: 0,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.primary, AppColors.primaryDark],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: const SafeArea(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 50, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Ustalar',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold)),
-                  SizedBox(height: 4),
-                  Text('Doğrulanmış ustalarla tanışın',
-                      style: TextStyle(color: Colors.white70, fontSize: 13)),
-                ],
-              ),
-            ),
-          ),
-        ),
-        collapseMode: CollapseMode.pin,
-        title: const Text('Ustalar', style: TextStyle(color: Colors.white)),
+      automaticallyImplyLeading: false,
+      titleSpacing: 16,
+      title: const Text(
+        'Ustalar',
+        style: TextStyle(
+            color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(112),
@@ -254,19 +229,22 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
           margin: const EdgeInsets.only(right: 8),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: active ? Colors.white : Colors.white.withValues(alpha: 0.18),
+            color: active
+                ? AppColors.background
+                : Colors.black.withValues(alpha: 0.28),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color:
-                  active ? Colors.white : Colors.white.withValues(alpha: 0.35),
+              color: active
+                  ? AppColors.background
+                  : Colors.white.withValues(alpha: 0.35),
             ),
           ),
           child: Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: active ? AppColors.primary : Colors.white,
+              color: Colors.white,
             ),
           ),
         ),
