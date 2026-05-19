@@ -379,32 +379,63 @@ export class AdminSeedService {
       const reviews: Review[] = [];
 
       if (workers.length > 0 && customers.length > 0) {
-        const bookingCount = Math.max(1, Math.floor(count / 4));
+        // Phase Two-Sided demo — bookingCount artırıldı (count/4 → count/2)
+        const bookingCount = Math.max(8, Math.floor(count / 2));
+        const workerNotes = [
+          'İş tamamlandı, her şey istenildiği gibi yapıldı.',
+          'Söz verdiğim gün geldim, sorunsuz teslim ettim.',
+          'Müşteri ile uyumlu çalıştık, ek talep olmadı.',
+          'Garanti kapsamında 1 yıl boyunca takipteyim.',
+          'Malzeme dahil teslim ettim, kalitesinden eminim.',
+        ];
+        const customerNotes = [
+          'Anahtar kapıcıda, randevu saatinde teslim alabilirsiniz.',
+          'Apartman önünde park yeri mevcut.',
+          'Adres tarifi için mesaj atın.',
+          'Ödeme iş bitiminde havale.',
+          'Kediler ev içinde dikkat.',
+        ];
         for (let i = 0; i < bookingCount; i++) {
           const customer = faker.helpers.arrayElement(customers);
           const worker = faker.helpers.arrayElement(workers);
           const cat = faker.helpers.arrayElement(worker.workerCategories ?? categoryNames);
           const priceMinor = faker.number.int({ min: 10000, max: 200000 });
-          const status = faker.helpers.arrayElement([
-            BookingStatus.CONFIRMED,
-            BookingStatus.IN_PROGRESS,
-            BookingStatus.COMPLETED,
-            BookingStatus.COMPLETED, // weight completed higher
+          // %50 COMPLETED, %20 IN_PROGRESS, %15 CONFIRMED, %10 CANCELLED, %5 PENDING
+          const status = faker.helpers.weightedArrayElement([
+            { weight: 50, value: BookingStatus.COMPLETED },
+            { weight: 20, value: BookingStatus.IN_PROGRESS },
+            { weight: 15, value: BookingStatus.CONFIRMED },
+            { weight: 10, value: BookingStatus.CANCELLED },
+            { weight: 5, value: BookingStatus.PENDING },
           ]);
+          // Tarih: COMPLETED için geçmiş, diğerleri için yakın gelecek
+          const isCompleted = status === BookingStatus.COMPLETED;
+          const scheduledDate = isCompleted
+            ? faker.date.past({ years: 0.5 }).toISOString().slice(0, 10)
+            : faker.date.soon({ days: 14 }).toISOString().slice(0, 10);
           const booking = manager.getRepository(Booking).create({
             customerId: customer.id,
             workerId: worker.id,
             category: cat,
             description: `${cat} işi: ${faker.helpers.arrayElement(TR_BOOKING_NOTES)}`,
             address: `${customer.city ?? 'Istanbul'} - ${f.location.streetAddress()}`.slice(0, 200),
-            scheduledDate: faker.date
-              .soon({ days: 30 })
-              .toISOString()
-              .slice(0, 10),
+            scheduledDate,
             scheduledTime: `${faker.number.int({ min: 9, max: 17 })}:00`,
             status,
             agreedPriceMinor: priceMinor,
             agreedPrice: priceMinor / 100,
+            // Geçmiş iş detayları — completion not + customer not
+            workerNote: isCompleted
+                ? faker.helpers.arrayElement(workerNotes)
+                : null,
+            customerNote: faker.helpers.arrayElement(customerNotes),
+            // İptal edilenlere cancellation alanları
+            cancelledAt: status === BookingStatus.CANCELLED
+                ? faker.date.past({ years: 0.2 })
+                : null,
+            cancelledBy: status === BookingStatus.CANCELLED
+                ? (Math.random() < 0.5 ? customer.id : worker.id)
+                : null,
           });
           bookings.push(booking);
         }
@@ -608,12 +639,25 @@ export class AdminSeedService {
       ];
       // Phase Two-Sided — Fırsatlar dolu olsun: her müşteri ~1.5 talep
       const requestCount = Math.max(15, Math.floor(customers.length * 1.5));
+      // Phase Two-Sided demo — geçmiş iş için placeholder foto havuzu
+      const completionPhotoUrls = (seed: string, n: number) =>
+        Array.from(
+          { length: n },
+          (_, i) => `https://picsum.photos/seed/${seed}-${i}/600/400`,
+        );
       for (let i = 0; i < requestCount; i++) {
         const customer = faker.helpers.arrayElement(customers);
         const cat = faker.helpers.arrayElement(categoryNames);
         const [bLat, bLng] = CITY_COORDS[customer.city ?? 'Istanbul'] ?? CITY_COORDS.Istanbul;
         const budgetMin = faker.number.int({ min: 200, max: 1500 });
         const status = faker.helpers.arrayElement(requestStatuses);
+        const isCompleted = status === JobStatus.COMPLETED;
+        const isInProgress = status === JobStatus.IN_PROGRESS;
+        const createdAt = isCompleted
+          ? faker.date.past({ years: 0.5 })
+          : isInProgress
+              ? faker.date.recent({ days: 14 })
+              : faker.date.recent({ days: 30 });
         allJobs.push(
           manager.getRepository(Job).create({
             customerId: customer.id,
@@ -629,6 +673,15 @@ export class AdminSeedService {
             budgetMinMinor: budgetMin * 100,
             budgetMaxMinor: (budgetMin + faker.number.int({ min: 200, max: 2000 })) * 100,
             status,
+            // Geçmiş iş detayları — tamamlanan ilanlarda fotoğraf + ön foto
+            photos: faker.helpers.maybe(
+              () => completionPhotoUrls(`req-${i}`, faker.number.int({ min: 1, max: 3 })),
+              { probability: 0.4 },
+            ),
+            completionPhotos: isCompleted
+                ? completionPhotoUrls(`comp-${i}`, faker.number.int({ min: 2, max: 4 }))
+                : null,
+            createdAt,
           } as Partial<Job>),
         );
       }
