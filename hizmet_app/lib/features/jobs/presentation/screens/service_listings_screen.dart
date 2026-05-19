@@ -148,14 +148,6 @@ class _ServiceListingsScreenState
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openPost,
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.black,
-        icon: const Icon(Icons.add),
-        label: const Text('Hizmet Ver',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
     );
   }
 
