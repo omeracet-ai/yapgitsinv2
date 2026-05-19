@@ -15,6 +15,7 @@ import {
   PaymentMethod,
 } from '../tokens/token-transaction.entity';
 import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
+import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
 
 /**
  * Phase 136 — Token-based booking escrow service.
@@ -26,6 +27,7 @@ export class BookingEscrowService {
     @InjectRepository(BookingEscrow)
     private readonly repo: Repository<BookingEscrow>,
     private readonly dataSource: DataSource,
+    private readonly platformSettings: PlatformSettingsService,
   ) {}
 
   /** Customer holds tokens for booking. Atomic: balance--, escrow create, tx log, audit. */
@@ -135,42 +137,103 @@ export class BookingEscrowService {
         );
       }
 
+      // Phase 254a — Commission split. commission_pct_qr (default 1%) of the
+      // escrow amount goes to the platform admin account; remainder to worker.
+      const pctRaw = await this.platformSettings.getNumber(
+        'commission_pct_qr',
+        1,
+      );
+      // Clamp 0..100 — defensive against bad admin input.
+      const pct = Math.max(0, Math.min(100, pctRaw));
+      const totalAmount = Number(escrow.amount) || 0;
+      const commissionAmount =
+        Math.round(((totalAmount * pct) / 100) * 100) / 100;
+      const workerPayout =
+        Math.round((totalAmount - commissionAmount) * 100) / 100;
+
       escrow.status = BookingEscrowStatus.RELEASED;
       escrow.releasedAt = new Date();
+      escrow.platformFeePct = pct;
+      escrow.platformFeeMinor = Math.round(commissionAmount * 100);
+      escrow.workerPayoutMinor = Math.round(workerPayout * 100);
       const saved = await em.save(escrow);
 
-      await em.increment(
-        User,
-        { id: escrow.workerId },
-        'tokenBalance',
-        escrow.amount,
-      );
+      // Worker payout (net of commission)
+      if (workerPayout > 0) {
+        await em.increment(
+          User,
+          { id: escrow.workerId },
+          'tokenBalance',
+          workerPayout,
+        );
+        await em.save(
+          em.create(TokenTransaction, {
+            userId: escrow.workerId,
+            type: TxType.PURCHASE,
+            amount: workerPayout,
+            description: `Escrow release — booking ${bookingId} (net of ${pct}% platform fee)`,
+            status: TxStatus.COMPLETED,
+            paymentMethod: PaymentMethod.SYSTEM,
+            paymentRef: `ESCROW-RELEASE-${bookingId}`,
+          }),
+        );
+      }
 
-      await em.save(
-        em.create(TokenTransaction, {
-          userId: escrow.workerId,
-          type: TxType.PURCHASE,
-          amount: escrow.amount,
-          description: `Escrow release — booking ${bookingId}`,
-          status: TxStatus.COMPLETED,
-          paymentMethod: PaymentMethod.SYSTEM,
-          paymentRef: `ESCROW-RELEASE-${bookingId}`,
-        }),
-      );
+      // Platform fee — credit admin user if exists, else virtual (tx-only).
+      if (commissionAmount > 0) {
+        const adminUser = await em.findOne(User, {
+          where: { email: 'admin@yapgitsin.tr' },
+        });
+        if (adminUser) {
+          await em.increment(
+            User,
+            { id: adminUser.id },
+            'tokenBalance',
+            commissionAmount,
+          );
+          await em.save(
+            em.create(TokenTransaction, {
+              userId: adminUser.id,
+              type: TxType.PURCHASE,
+              amount: commissionAmount,
+              description: `Platform fee (${pct}%) — booking ${bookingId}`,
+              status: TxStatus.COMPLETED,
+              paymentMethod: PaymentMethod.SYSTEM,
+              paymentRef: `ESCROW-FEE-${bookingId}`,
+            }),
+          );
+        } else {
+          // No platform admin user exists — virtual fee. Persist as audit only
+          // (token_transactions.userId is NOT NULL, so we skip the tx row).
+          console.warn(
+            `[booking-escrow] platform fee (${commissionAmount}) for booking ${bookingId} — no admin user; recorded via audit log only`,
+          );
+        }
+      }
 
-      await em.save(
-        em.create(AdminAuditLog, {
-          adminUserId: actorId,
-          action: 'escrow.release',
-          targetType: 'booking_escrow',
-          targetId: saved.id,
-          payload: {
-            bookingId,
-            workerId: escrow.workerId,
-            amount: escrow.amount,
-          },
-        }),
-      );
+      try {
+        await em.save(
+          em.create(AdminAuditLog, {
+            adminUserId: actorId,
+            action: 'escrow.release',
+            targetType: 'booking_escrow',
+            targetId: saved.id,
+            payload: {
+              bookingId,
+              workerId: escrow.workerId,
+              amount: totalAmount,
+              platformFeePct: pct,
+              platformFee: commissionAmount,
+              workerPayout,
+            },
+          }),
+        );
+      } catch (e) {
+        console.warn(
+          '[booking-escrow] audit log skipped:',
+          e instanceof Error ? e.message : String(e),
+        );
+      }
 
       return saved;
     });

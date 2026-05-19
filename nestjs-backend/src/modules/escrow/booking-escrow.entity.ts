@@ -115,6 +115,16 @@ export class BookingEscrow {
   @Column({ type: 'datetime', nullable: true })
   confirmationDeadline: Date | null;
 
+  // Phase 254a — Platform commission split on release.
+  @Column({ type: 'integer', nullable: true })
+  platformFeeMinor: number | null;
+
+  @Column({ type: 'real', nullable: true })
+  platformFeePct: number | null;
+
+  @Column({ type: 'integer', nullable: true })
+  workerPayoutMinor: number | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

@@ -15,6 +15,9 @@ import type { UserReportStatus } from '../user-blocks/user-report.entity';
 import { UpdateReportStatusDto } from '../user-blocks/dto/report-user.dto';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { SystemSettingsService } from '../system-settings/system-settings.service';
+import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
+import { OFFER_TOKEN_COST } from '../tokens/tokens.service';
+import { UpdateCommissionDto } from './dto/commission-settings.dto';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
 import { AdminListQueryDto } from './dto/admin-list-query.dto';
 import { BulkVerifyDto } from './dto/bulk-verify.dto';
@@ -52,6 +55,7 @@ export class AdminController {
     private readonly userBlocksService: UserBlocksService,
     private readonly adminAuditService: AdminAuditService,
     private readonly systemSettings: SystemSettingsService,
+    private readonly platformSettings: PlatformSettingsService,
     private readonly insuranceSvc: WorkerInsuranceService,
     private readonly certificationSvc: WorkerCertificationService,
     private readonly dataPrivacy: DataPrivacyService,
@@ -170,6 +174,36 @@ export class AdminController {
       body as unknown as Record<string, unknown>,
     );
     return result;
+  }
+
+  // ── Phase 254b — Platform commission + token economy view ─────────────────
+  @Get('settings/commission')
+  async getCommissionSettings() {
+    const commissionPctQr = await this.platformSettings.getNumber(
+      'commission_pct_qr',
+      1,
+    );
+    return {
+      commissionPctQr,
+      offerTokenCost: OFFER_TOKEN_COST,
+    };
+  }
+
+  @Audit('platform_settings.commission.update')
+  @Patch('settings/commission')
+  async updateCommissionSettings(
+    @Body() body: UpdateCommissionDto,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    await this.platformSettings.setValue(
+      'commission_pct_qr',
+      String(body.commissionPctQr),
+      req.user.id,
+    );
+    return {
+      commissionPctQr: body.commissionPctQr,
+      offerTokenCost: OFFER_TOKEN_COST,
+    };
   }
 
   // ── System Settings ─────────────────────────────────────────────────────────

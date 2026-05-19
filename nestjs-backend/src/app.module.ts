@@ -82,6 +82,8 @@ import { AdminAuditLog } from './modules/admin-audit/admin-audit-log.entity';
 import { AdminAuditModule } from './modules/admin-audit/admin-audit.module';
 import { SystemSetting } from './modules/system-settings/system-setting.entity';
 import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
+import { PlatformSetting } from './modules/platform-settings/platform-setting.entity';
+import { PlatformSettingsModule } from './modules/platform-settings/platform-settings.module';
 import { LeadRequest } from './modules/leads/lead-request.entity';
 import { LeadsModule } from './modules/leads/leads.module';
 import { SubscriptionPlan } from './modules/subscriptions/subscription-plan.entity';
@@ -217,6 +219,7 @@ import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.enti
           SmsOtp,
           AdminAuditLog,
           SystemSetting,
+          PlatformSetting,
           LeadRequest,
           SubscriptionPlan,
           UserSubscription,
@@ -286,6 +289,7 @@ import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.enti
     }),
     AdminAuditModule,
     SystemSettingsModule,
+    PlatformSettingsModule,
     AuthModule,
     UsersModule,
     JobsModule,

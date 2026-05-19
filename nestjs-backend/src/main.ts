@@ -239,6 +239,70 @@ async function applyBootMigrations(): Promise<void> {
       }
     }
 
+    // Phase 254a — Platform commission split columns on booking_escrows.
+    const bookingEscrowCommissionCols: { name: string; type: string }[] = [
+      { name: 'platformFeeMinor', type: 'INTEGER' },
+      { name: 'platformFeePct', type: 'REAL' },
+      { name: 'workerPayoutMinor', type: 'INTEGER' },
+    ];
+    for (const col of bookingEscrowCommissionCols) {
+      try {
+        const exists = await get(
+          `SELECT 1 AS found FROM pragma_table_info('booking_escrows') WHERE name = ?`,
+          [col.name],
+        );
+        if (!exists) {
+          try {
+            await run(
+              `ALTER TABLE booking_escrows ADD COLUMN ${col.name} ${col.type}`,
+            );
+            logger.log(`added booking_escrows.${col.name}`);
+          } catch (e) {
+            logger.warn(
+              `add booking_escrows.${col.name} skipped: ${e instanceof Error ? e.message : String(e)}`,
+            );
+          }
+        }
+      } catch (e) {
+        logger.warn(
+          `detect booking_escrows.${col.name} failed: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
+    }
+
+    // Phase 254a — platform_settings table + default QR commission row.
+    try {
+      const tbl = await get(
+        `SELECT 1 AS found FROM sqlite_master WHERE type='table' AND name='platform_settings'`,
+      );
+      if (!tbl) {
+        await run(
+          `CREATE TABLE platform_settings (
+            key VARCHAR(100) PRIMARY KEY NOT NULL,
+            value TEXT NOT NULL,
+            updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updatedBy VARCHAR(36)
+          )`,
+        );
+        logger.log('created platform_settings');
+      }
+      // Idempotent default: only insert if missing.
+      const existsRow = await get(
+        `SELECT 1 AS found FROM platform_settings WHERE key = ?`,
+        ['commission_pct_qr'],
+      );
+      if (!existsRow) {
+        await run(
+          `INSERT INTO platform_settings (key, value) VALUES ('commission_pct_qr', '1')`,
+        );
+        logger.log('seeded platform_settings.commission_pct_qr=1');
+      }
+    } catch (e) {
+      logger.warn(
+        `platform_settings setup skipped: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+
     // Phase 182 — admin_audit_logs gained denormalized + request-context columns.
     const auditCols: { name: string; type: string }[] = [
       { name: 'tenantId', type: 'VARCHAR(36)' },

@@ -366,6 +366,17 @@ export const api = {
   blogUpdate: (id: string, data: Partial<BlogPost>) => request<BlogPost>(`/admin/blog/${id}`,  { method: 'PATCH',  body: JSON.stringify(data) }),
   blogDelete: (id: string)                       => request<void>(`/admin/blog/${id}`,         { method: 'DELETE' }),
 
+  // Phase 254b — Platform commission + token economy view
+  getCommissionSettings: () =>
+    request<{ commissionPctQr: number; offerTokenCost: number }>(
+      '/admin/settings/commission',
+    ),
+  updateCommissionSettings: (commissionPctQr: number) =>
+    request<{ commissionPctQr: number; offerTokenCost: number }>(
+      '/admin/settings/commission',
+      { method: 'PATCH', body: JSON.stringify({ commissionPctQr }) },
+    ),
+
   // System settings (Phase 77)
   listSettings: () => request<SystemSetting[]>('/admin/settings'),
   getSetting:   (key: string) => request<{ key: string; value: string }>(`/admin/settings/${key}`),
