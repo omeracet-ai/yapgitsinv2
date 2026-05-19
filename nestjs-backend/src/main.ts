@@ -12,6 +12,7 @@ import helmet from 'helmet';
 import * as Sentry from '@sentry/node';
 import { SentryFilter } from './common/sentry.filter';
 import { APP_ROOT } from './common/paths';
+import { applyBootMigrations } from './bootstrap/boot-migrations';
 
 // Sentry — prod-only, env-driven. Phase 189/4: release tag + tighter sample rate.
 const SENTRY_ENABLED =
@@ -52,6 +53,9 @@ process.on('unhandledRejection', (reason) => {
 
 async function bootstrap() {
   console.log('[boot] starting NestJS, node=' + process.version + ' pid=' + process.pid);
+  // Self-healing schema migration MUST run before NestFactory.create() —
+  // otherwise TypeORM crashes on missing columns/tables under `synchronize: false`.
+  await applyBootMigrations();
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   console.log('[boot] Nest app created');
   app.useGlobalFilters(new SentryFilter());
