@@ -362,11 +362,16 @@ class FirebaseAuthRepository {
 
   /// Sends an email verification link. Returns empty map on success.
   Future<Map<String, dynamic>> requestEmailVerification() async {
+    // Phase 222 sonrası backend JWT auth — Firebase currentUser null olduğu
+    // için Firebase API çağrısı "Null check operator used on a null value"
+    // crash'i veriyordu. Backend endpoint'ine taşındı.
     try {
-      await _service.sendEmailVerification();
+      final res = await _dio.post<dynamic>('/auth/verify-email/request');
+      final data = res.data;
+      if (data is Map<String, dynamic>) return data;
       return {};
-    } on FirebaseAuthException catch (e) {
-      throw Exception(_mapFirebaseError(e.code));
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(e, fallback: 'Doğrulama isteği gönderilemedi.'));
     }
   }
 
@@ -449,7 +454,15 @@ class FirebaseAuthRepository {
 
   /// Confirms email verification using a token — stub (Firebase handles via link).
   Future<void> confirmEmailVerification(String token) async {
-    return;
+    // Phase 222 — backend POST /auth/verify-email/confirm {token}
+    try {
+      await _dio.post<dynamic>(
+        '/auth/verify-email/confirm',
+        data: {'token': token},
+      );
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(e, fallback: 'Doğrulama başarısız.'));
+    }
   }
 
   /// Phase 250-B — Backend `POST /auth/sms/request {phoneNumber}`.
