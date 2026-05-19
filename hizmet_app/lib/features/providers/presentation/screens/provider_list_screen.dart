@@ -136,7 +136,9 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
 
   Widget _buildAppBar(BuildContext context) {
     return SliverAppBar(
-      pinned: true,
+      pinned: false,
+      floating: false,
+      snap: false,
       backgroundColor: Colors.transparent,
       foregroundColor: Colors.white,
       elevation: 0,
