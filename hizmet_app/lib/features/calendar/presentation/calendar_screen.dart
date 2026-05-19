@@ -299,6 +299,18 @@ Widget _bookingCard(Booking b, {VoidCallback? onCancel}) {
             alignment: Alignment.centerLeft,
             child: EscrowStatusBadge(bookingId: b.id),
           ),
+          // Müşteri görünümü:
+          //   confirmed + escrow yok → "Ödeme Yap" (hold)
+          //   in_progress + escrow held → "İşi Onayla ve Öde" (release)
+          if (b.status == BookingStatus.confirmed &&
+              (b.agreedPrice ?? 0) > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: EscrowHoldButton(
+                bookingId: b.id,
+                amount: b.agreedPrice ?? 0,
+              ),
+            ),
           if (b.status == BookingStatus.in_progress)
             Padding(
               padding: const EdgeInsets.only(top: 8),

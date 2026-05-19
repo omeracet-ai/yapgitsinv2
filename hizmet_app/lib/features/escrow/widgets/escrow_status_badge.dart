@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/escrow_repository.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Phase 136 — Compact escrow status pill for booking tiles.
 class EscrowStatusBadge extends ConsumerWidget {
@@ -56,6 +57,86 @@ class EscrowStatusBadge extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// "Ödeme Yap" — müşteri tarafı, booking CONFIRMED ama henüz escrow yoksa
+/// görünür. Escrow hold çağrısı yapar (müşteri parasını güvene alır), iş
+/// tamamlandığında EscrowReleaseButton ile usta'ya aktarılır.
+class EscrowHoldButton extends ConsumerStatefulWidget {
+  final String bookingId;
+  final double amount;
+  final VoidCallback? onHeld;
+  const EscrowHoldButton({
+    super.key,
+    required this.bookingId,
+    required this.amount,
+    this.onHeld,
+  });
+
+  @override
+  ConsumerState<EscrowHoldButton> createState() => _EscrowHoldButtonState();
+}
+
+class _EscrowHoldButtonState extends ConsumerState<EscrowHoldButton> {
+  bool _busy = false;
+
+  Future<void> _hold() async {
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(escrowRepositoryProvider)
+          .hold(widget.bookingId, widget.amount);
+      if (!mounted) return;
+      ref.invalidate(escrowByBookingProvider(widget.bookingId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Ödeme alındı — iş tamamlandığında ustaya aktarılır'),
+            backgroundColor: AppColors.success),
+      );
+      widget.onHeld?.call();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'Ödeme alınamadı: ${e.toString().replaceFirst('Exception: ', '')}'),
+            backgroundColor: AppColors.error),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(escrowByBookingProvider(widget.bookingId));
+    return async.maybeWhen(
+      // Escrow zaten varsa (held/released/refunded) buton gizlenir
+      data: (e) {
+        if (e != null) return const SizedBox.shrink();
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _busy ? null : _hold,
+            icon: const Icon(Icons.lock_outline_rounded, size: 18),
+            label: Text(_busy
+                ? 'İşleniyor…'
+                : 'Ödeme Yap (${widget.amount.toStringAsFixed(0)} ₺)'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              textStyle:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
     );
   }
 }
