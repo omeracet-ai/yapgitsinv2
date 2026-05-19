@@ -30,6 +30,17 @@ export enum JobStatus {
   DISPUTED = 'disputed',                      // çatışma — admin müdahalesi
 }
 
+/**
+ * Phase Two-Sided — çift yönlü marketplace ayraç.
+ *   REQUEST = müşteri talep ilanı (mevcut davranış, default)
+ *   OFFER   = usta hizmet ilanı (yeni)
+ * Schema aynı, semantik UI'da rol etiketi ile değişir.
+ */
+export enum JobKind {
+  REQUEST = 'request',
+  OFFER = 'offer',
+}
+
 /** Bir durumdan diğerine geçişlere izin var mı? */
 export const ALLOWED_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
   [JobStatus.OPEN]:               [JobStatus.IN_PROGRESS, JobStatus.CANCELLED],
@@ -51,12 +62,21 @@ export function isValidTransition(from: JobStatus, to: JobStatus): boolean {
 @Index('idx_jobs_categoryId_status_createdAt', ['categoryId', 'status', 'createdAt'])
 @Index('idx_jobs_featuredUntil', ['featuredUntil'])
 @Index('idx_jobs_geohash', ['geohash'])
+@Index('idx_jobs_kind_status_createdAt', ['kind', 'status', 'createdAt'])
 export class Job {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ type: 'varchar', length: 36, nullable: true })
   tenantId: string | null;
+
+  /**
+   * Phase Two-Sided — çift yönlü marketplace ayraç.
+   * 'request' = müşteri talep ilanı, 'offer' = usta hizmet ilanı.
+   * Default 'request' = mevcut Job kullanıcıları kırılmaz.
+   */
+  @Column({ type: 'varchar', length: 16, default: 'request' })
+  kind: JobKind;
 
   @Column({ type: 'varchar', length: 200 })
   title: string;

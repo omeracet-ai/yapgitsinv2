@@ -8,7 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import * as crypto from 'crypto';
-import { Job, JobStatus, isValidTransition } from './job.entity';
+import { Job, JobStatus, JobKind, isValidTransition } from './job.entity';
 import { Offer, OfferStatus } from './offer.entity';
 import { UsersService } from '../users/users.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
@@ -228,6 +228,7 @@ export class JobsService {
     page?: number;
     customerId?: string;
     q?: string;
+    kind?: JobKind;
   }) {
     const limit = filters?.limit ?? 20;
     const page = filters?.page ?? 1;
@@ -245,6 +246,10 @@ export class JobsService {
       }
       if (filters?.customerId) {
         query.andWhere('job.customerId = :customerId', { customerId: filters.customerId });
+      }
+      // Phase Two-Sided — request/offer ayrımı
+      if (filters?.kind) {
+        query.andWhere('job.kind = :kind', { kind: filters.kind });
       }
       if (filters?.q && filters.q.trim().length > 0) {
         const q = `%${filters.q.trim().toLowerCase()}%`;
@@ -310,8 +315,21 @@ export class JobsService {
   }
 
   async create(createJobDto: CreateJobDto, customerId: string): Promise<Job> {
+    // Phase Two-Sided: kind='offer' sadece worker profili olanlar yayınlayabilir
+    const kind = createJobDto.kind ?? JobKind.REQUEST;
+    if (kind === JobKind.OFFER) {
+      const user = await this.usersService.findById(customerId);
+      const cats = user?.workerCategories;
+      const isWorker = Array.isArray(cats) && cats.length > 0;
+      if (!isWorker) {
+        throw new BadRequestException(
+          'Hizmet ilanı yayınlamak için önce usta profili oluşturmalısınız.',
+        );
+      }
+    }
     const job = this.jobsRepository.create({
       ...createJobDto,
+      kind,
       customerId,
       status: JobStatus.OPEN,
       // Phase 174b — minor sync: TL float → integer kuruş

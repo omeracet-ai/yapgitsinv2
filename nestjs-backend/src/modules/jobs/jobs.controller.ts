@@ -24,7 +24,7 @@ import { OffersService } from './offers.service';
 import { SavedJobsService } from './saved-jobs.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
 import { BoostJobDto } from './dto/boost-job.dto';
-import { JobStatus } from './job.entity';
+import { JobStatus, JobKind } from './job.entity';
 import { OfferStatus } from './offer.entity';
 import { DisputeType } from '../disputes/job-dispute.entity';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
@@ -71,6 +71,7 @@ export class JobsController {
     @Query('page') page?: string,
     @Query('customerId') customerId?: string,
     @Query('q') q?: string,
+    @Query('kind') kind?: JobKind,
   ) {
     return this.jobsService.findAll({
       category,
@@ -79,6 +80,7 @@ export class JobsController {
       page: page ? Number(page) : undefined,
       customerId,
       q,
+      kind,
     });
   }
 

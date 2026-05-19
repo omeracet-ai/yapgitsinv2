@@ -216,8 +216,8 @@ UI etiketleri `kind`'a göre değişir:
 ```
 HizmetAlScreen ("Yapgitsin")
 ├── Hizmet İlanları   → ServiceListingsScreen (jobs kind='offer')
-├── Ustalar           → ProviderListScreen (mevcut, rename)
 ├── Fırsatlar         → JobOpportunitiesBody (jobs kind='request', mevcut)
+├── Ustalar           → ProviderListScreen (mevcut, rename)
 ├── Harita            → MapScreen
 └── İşlerim           → MyJobsBody
 ```

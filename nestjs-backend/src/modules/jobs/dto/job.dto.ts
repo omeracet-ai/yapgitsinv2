@@ -9,7 +9,7 @@ import {
   Min,
   Max,
 } from 'class-validator';
-import { JobStatus } from '../job.entity';
+import { JobStatus, JobKind } from '../job.entity';
 
 export class CreateJobDto {
   @IsString()
@@ -72,6 +72,15 @@ export class CreateJobDto {
   @IsOptional()
   @IsString()
   locationSource?: string;
+
+  /**
+   * Phase Two-Sided — ilan türü. Default 'request' (müşteri talep).
+   * 'offer' için kullanıcının workerCategories'i dolu olmak zorunda
+   * (validation jobs.service.ts'de).
+   */
+  @IsOptional()
+  @IsEnum(JobKind)
+  kind?: JobKind;
 }
 
 export class UpdateJobDto {
