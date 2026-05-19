@@ -264,7 +264,6 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
     final authState = ref.watch(authStateProvider);
     final userName = authState is AuthAuthenticated ? authState.displayName : null;
     final isLoggedIn = authState is AuthAuthenticated;
-    final jobsAsync = ref.watch(jobsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -443,34 +442,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               ),
             ),
 
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (!isLoggedIn) _buildGuestBanner(context),
-
-                  // ── 1) Popüler Kategoriler ───────────────────────────────
-                  const SizedBox(height: 18),
-                  _buildCategoriesSection(),
-
-                  // ── 2) Öne Çıkan Ustalar ─────────────────────────────────
-                  const SizedBox(height: 22),
-                  _buildFeaturedProvidersSection(),
-
-                  // ── 3) Son İlanlar ───────────────────────────────────────
-                  const SizedBox(height: 22),
-                  _buildRecentJobsSection(jobsAsync),
-
-                  // ── 4) AI Önerileri (sadece logged-in) ───────────────────
-                  if (isLoggedIn) ...[
-                    const SizedBox(height: 22),
-                    const AiRecommendationsSection(),
-                  ],
-
-                  const SizedBox(height: 32),
-                ],
-              ),
-            ),
+            // Kullanıcı isteğiyle feed gizlendi (kategori/usta/ilan/AI sections).
+            // Sadece hero header (logo + Merhaba + tagline + search + Hizmet
+            // İlanı Ver butonu) görünür kalır. Geri açmak için bu sliver'a
+            // _buildCategoriesSection / _buildFeaturedProvidersSection /
+            // _buildRecentJobsSection / AiRecommendationsSection ekle.
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
         ),
       ),
