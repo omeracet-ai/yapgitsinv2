@@ -86,16 +86,16 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
         // Uyarı banner
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          color: Colors.blue.shade50,
+          color: AppColors.surfaceElevated,
           child: Row(
             children: [
               Icon(Icons.visibility_outlined,
-                  size: 16, color: Colors.blue.shade600),
+                  size: 16, color: Colors.blue.shade300),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Bu mesajlar herkese açıktır. Kişisel bilgi paylaşmayın.',
-                  style: TextStyle(fontSize: 12, color: Colors.blue.shade700),
+                  style: TextStyle(fontSize: 12, color: Colors.blue.shade200),
                 ),
               ),
             ],
@@ -106,7 +106,7 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
         if (isLoggedIn && !widget.isOwner && widget.jobStatus == 'open')
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            color: Colors.white,
+            color: AppColors.background,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -121,17 +121,19 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
                     controller: _questionCtrl,
                     maxLines: 3,
                     minLines: 1,
+                    style: const TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Soru sor...',
+                      hintStyle: const TextStyle(color: AppColors.textHint),
                       filled: true,
-                      fillColor: AppColors.background,
+                      fillColor: AppColors.surfaceElevated,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
+                        borderSide: const BorderSide(color: AppColors.border),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
+                        borderSide: const BorderSide(color: AppColors.border),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 10),
@@ -300,7 +302,7 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
     return Container(
       decoration: BoxDecoration(color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
@@ -335,19 +337,25 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                     children: [
                       Row(
                         children: [
-                          Text(name,
+                              Text(name,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 13)),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: AppColors.textPrimary)),
                           const Spacer(),
                           if (createdAt != null)
                             Text(_timeAgo(createdAt),
-                                style: TextStyle(
-                                    fontSize: 11, color: Colors.grey.shade500)),
+                                style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textHint)),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(text,
-                          style: const TextStyle(fontSize: 14, height: 1.4)),
+                          style: const TextStyle(
+                              fontSize: 14,
+                              height: 1.4,
+                              color: AppColors.textPrimary)),
                     ],
                   ),
                 ),
@@ -357,13 +365,13 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
 
           // Yanıtlar
           if (replies.isNotEmpty) ...[
-            Divider(height: 1, color: Colors.grey.shade100),
+            Divider(height: 1, color: AppColors.border),
             ...replies.map((r) => _ReplyTile(reply: r)),
           ],
 
           // Yanıt kutusu
           if (canReply) ...[
-            Divider(height: 1, color: Colors.grey.shade100),
+            Divider(height: 1, color: AppColors.border),
             if (_showReplyBox)
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
@@ -375,17 +383,19 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                         controller: _replyCtrl,
                         maxLines: 2,
                         minLines: 1,
+                        style: const TextStyle(color: AppColors.textPrimary),
                         decoration: InputDecoration(
                           hintText: 'Yanıtınız...',
+                          hintStyle: const TextStyle(color: AppColors.textHint),
                           filled: true,
-                          fillColor: AppColors.background,
+                          fillColor: AppColors.surfaceElevated,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Colors.grey.shade200),
+                            borderSide: const BorderSide(color: AppColors.border),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Colors.grey.shade200),
+                            borderSide: const BorderSide(color: AppColors.border),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 8),
@@ -472,7 +482,7 @@ class _ReplyTile extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
-      color: Colors.grey.shade50,
+      color: AppColors.surfaceElevated,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -500,15 +510,21 @@ class _ReplyTile extends StatelessWidget {
                 Row(children: [
                   Text(name,
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 12)),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: AppColors.textPrimary)),
                   const Spacer(),
                   if (createdAt != null)
                     Text(_timeAgo(createdAt),
-                        style: TextStyle(
-                            fontSize: 10, color: Colors.grey.shade500)),
+                        style: const TextStyle(
+                            fontSize: 10, color: AppColors.textHint)),
                 ]),
                 const SizedBox(height: 2),
-                Text(text, style: const TextStyle(fontSize: 13, height: 1.4)),
+                Text(text,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: AppColors.textSecondary)),
               ],
             ),
           ),
