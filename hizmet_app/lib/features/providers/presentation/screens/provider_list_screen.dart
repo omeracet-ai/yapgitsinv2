@@ -140,16 +140,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
       elevation: 0,
       automaticallyImplyLeading: false,
       titleSpacing: 16,
-      flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.primaryDark, AppColors.background],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 1.0],
-          ),
-        ),
-      ),
+      flexibleSpace: const ColoredBox(color: AppColors.background),
       title: const Text(
         'Ustalar',
         style: TextStyle(
@@ -504,7 +495,9 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: hasActive ? AppColors.primary : Colors.white,
+              color: hasActive
+                  ? AppColors.primary
+                  : AppColors.surfaceElevated,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                   color: hasActive ? AppColors.primary : AppColors.border),
@@ -515,7 +508,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                 Icon(Icons.tune_rounded,
                     size: 13,
                     color:
-                        hasActive ? Colors.white : AppColors.textSecondary),
+                        hasActive ? Colors.white : AppColors.textPrimary),
                 const SizedBox(width: 4),
                 Text('Filtre',
                     style: TextStyle(
@@ -523,7 +516,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                         fontWeight: FontWeight.w600,
                         color: hasActive
                             ? Colors.white
-                            : AppColors.textSecondary)),
+                            : AppColors.textPrimary)),
               ],
             ),
           ),
@@ -560,7 +553,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: active ? AppColors.primary : Colors.white,
+          color: active ? AppColors.primary : AppColors.surfaceElevated,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
               color: active ? AppColors.primary : AppColors.border),
@@ -569,7 +562,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
             style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: active ? Colors.white : AppColors.textSecondary)),
+                color: active ? Colors.white : AppColors.textPrimary)),
       ),
     );
   }
