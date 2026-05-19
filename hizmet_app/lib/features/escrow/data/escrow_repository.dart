@@ -8,6 +8,7 @@ class EscrowStatus {
   static const released = 'released';
   static const refunded = 'refunded';
   static const cancelled = 'cancelled';
+  static const disputed = 'disputed';
 }
 
 class Escrow {
@@ -21,6 +22,10 @@ class Escrow {
   final DateTime? releasedAt;
   final DateTime? refundedAt;
   final double? refundedAmount;
+  final DateTime? disputedAt;
+  final String? disputeReason;
+
+  bool get isDisputed => disputedAt != null;
 
   Escrow({
     required this.id,
@@ -33,6 +38,8 @@ class Escrow {
     this.releasedAt,
     this.refundedAt,
     this.refundedAmount,
+    this.disputedAt,
+    this.disputeReason,
   });
 
   factory Escrow.fromJson(Map<String, dynamic> j) {
@@ -48,6 +55,8 @@ class Escrow {
       releasedAt: p(j['releasedAt']),
       refundedAt: p(j['refundedAt']),
       refundedAmount: (j['refundedAmount'] as num?)?.toDouble(),
+      disputedAt: p(j['disputedAt']),
+      disputeReason: j['disputeReason']?.toString(),
     );
   }
 }
@@ -103,5 +112,79 @@ class EscrowRepository {
     final res = await _dio.get('/escrow/my');
     final list = res.data as List;
     return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  /// Phase 253 — Open a dispute on an escrow (held/released).
+  /// Backend: POST /escrow/:id/dispute  body: { reason }
+  Future<Escrow> dispute(String escrowId, String reason) async {
+    try {
+      final res = await _dio.post(
+        '/escrow/$escrowId/dispute',
+        data: {'reason': reason},
+      );
+      return Escrow.fromJson(Map<String, dynamic>.from(res.data as Map));
+    } on DioException catch (e) {
+      throw Exception(
+          e.response?.data is Map
+              ? (e.response!.data['message'] ?? 'Uyuşmazlık açılamadı')
+              : 'Uyuşmazlık açılamadı');
+    }
+  }
+}
+
+/// Phase 253 — Admin escrow repository: list disputed + resolve.
+final adminEscrowRepositoryProvider = Provider((ref) {
+  return AdminEscrowRepository(dio: ref.read(apiClientProvider).dio);
+});
+
+final adminDisputedEscrowsProvider =
+    FutureProvider.autoDispose<List<Escrow>>((ref) {
+  return ref.watch(adminEscrowRepositoryProvider).listDisputed();
+});
+
+class AdminEscrowRepository {
+  final Dio _dio;
+  AdminEscrowRepository({required Dio dio}) : _dio = dio;
+
+  /// GET /admin/escrow — backend tüm escrow'ları döndürür; client-side filter.
+  Future<List<Escrow>> listDisputed() async {
+    try {
+      final res = await _dio.get('/admin/escrow');
+      final list = res.data as List;
+      return list
+          .map((e) => Escrow.fromJson(Map<String, dynamic>.from(e as Map)))
+          .where((e) => e.disputedAt != null)
+          .toList();
+    } on DioException catch (e) {
+      throw Exception(e.response?.data is Map
+          ? (e.response!.data['message'] ?? 'Uyuşmazlıklar yüklenemedi')
+          : 'Uyuşmazlıklar yüklenemedi');
+    }
+  }
+
+  /// POST /admin/escrow/:id/resolve body: { action, splitRatio?, reason?, adminNote? }
+  Future<Map<String, dynamic>> resolve({
+    required String escrowId,
+    required String action, // 'release' | 'refund' | 'split'
+    double? splitRatio,
+    String? reason,
+    String? adminNote,
+  }) async {
+    try {
+      final res = await _dio.post(
+        '/admin/escrow/$escrowId/resolve',
+        data: {
+          'action': action,
+          if (splitRatio != null) 'splitRatio': splitRatio,
+          if (reason != null) 'reason': reason,
+          if (adminNote != null) 'adminNote': adminNote,
+        },
+      );
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data is Map
+          ? (e.response!.data['message'] ?? 'Uyuşmazlık çözülemedi')
+          : 'Uyuşmazlık çözülemedi');
+    }
   }
 }

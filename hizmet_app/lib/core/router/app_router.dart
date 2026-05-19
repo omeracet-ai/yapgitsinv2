@@ -49,6 +49,10 @@ import '../widgets/success_screen.dart';
 import '../widgets/splash_screen.dart';
 import '../../../features/escrow/presentation/screens/payment_screen.dart';
 import '../../../features/escrow/presentation/screens/escrow_list_screen.dart';
+import '../../../features/escrow/presentation/screens/dispute_form_screen.dart';
+import '../../../features/admin/presentation/screens/admin_disputes_screen.dart';
+import '../../../features/wallet/presentation/screens/refund_request_screen.dart';
+import '../../../features/wallet/presentation/screens/withdrawal_screen.dart';
 import '../../../features/promo/presentation/screens/promo_screen.dart';
 
 /// Public path'ler — auth gerektirmez. `startsWith` ile değil tam eşleşme veya
@@ -105,6 +109,8 @@ const _protectedPrefixes = <String>[
   '/sikayet-olustur',
   '/chat',
   '/odeme',
+  '/iade-talep',
+  '/para-cek',
   '/escrow-listesi',
   '/portfolyo',
   '/ilan-basarili',
@@ -286,6 +292,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const EarningsScreen(),
       ),
       GoRoute(
+        path: '/para-cek',
+        builder: (context, state) => const WithdrawalScreen(),
+      ),
+      GoRoute(
         path: '/takvim-sync',
         builder: (context, state) => const CalendarSyncScreen(),
       ),
@@ -400,6 +410,48 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/escrow-listesi',
         builder: (context, state) => const EscrowListScreen(),
+      ),
+      // Phase 253 — escrow dispute form (customer/worker)
+      GoRoute(
+        path: '/escrow/:id/dispute',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return DisputeFormScreen(
+            escrowId: id,
+            bookingId: extra['bookingId'] as String?,
+          );
+        },
+      ),
+      // Phase 253 — admin disputes panel
+      GoRoute(
+        path: '/admin/disputes',
+        builder: (context, state) => const AdminDisputesScreen(),
+      ),
+      // Phase 253-R — Müşteri iade talep ekranı.
+      GoRoute(
+        path: '/iade-talep/:paymentId',
+        builder: (context, state) {
+          final paymentId = state.pathParameters['paymentId']!;
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final amountMinor = (extra['amountMinor'] as num?)?.toInt() ??
+              ((extra['amount'] as num?) != null
+                  ? ((extra['amount'] as num).toDouble() * 100).round()
+                  : 0);
+          final dateRaw = extra['paymentDate'];
+          DateTime? paymentDate;
+          if (dateRaw is DateTime) {
+            paymentDate = dateRaw;
+          } else if (dateRaw is String) {
+            paymentDate = DateTime.tryParse(dateRaw);
+          }
+          return RefundRequestScreen(
+            paymentId: paymentId,
+            amountMinor: amountMinor,
+            paymentDate: paymentDate,
+            workerName: extra['workerName'] as String?,
+          );
+        },
       ),
       GoRoute(
         path: '/portfolyo',

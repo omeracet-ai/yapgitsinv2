@@ -102,6 +102,8 @@ import { Badge } from './modules/reputation/badge.entity';
 import { AdminSeedModule } from './modules/admin-seed/admin-seed.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
+import { WithdrawalsModule } from './modules/withdrawals/withdrawals.module';
+import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.entity';
 
 @Module({
   imports: [
@@ -222,6 +224,7 @@ import { MaintenanceModule } from './modules/maintenance/maintenance.module';
           Payment,
           Reputation,
           Badge,
+          WithdrawalRequest,
         ];
         if (dbType === 'sqlite') {
           // DB_DATABASE override allows isolated test DBs (e.g. ':memory:'); defaults to dev file.
@@ -320,6 +323,7 @@ import { MaintenanceModule } from './modules/maintenance/maintenance.module';
     AdminSeedModule,
     StatsModule,
     MaintenanceModule,
+    WithdrawalsModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],

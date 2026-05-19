@@ -19,6 +19,13 @@ class EscrowStatusBadge extends ConsumerWidget {
         late final String label;
         late final Color bg;
         late final Color fg;
+        // Phase 253 — disputed override: status held olsa bile disputedAt
+        // varsa "Uyuşmazlık" pill göster.
+        if (e.isDisputed) {
+          label = '⚠️ Uyuşmazlık';
+          bg = const Color(0xFFFFE4E6);
+          fg = const Color(0xFFC0392B);
+        } else {
         switch (e.status) {
           case EscrowStatus.held:
             label = '💰 Ödeme Yatırıldı';
@@ -40,6 +47,7 @@ class EscrowStatusBadge extends ConsumerWidget {
             label = e.status;
             bg = Colors.grey.shade200;
             fg = Colors.grey.shade800;
+        }
         }
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

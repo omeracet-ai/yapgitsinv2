@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../data/earnings_repository.dart';
@@ -35,6 +36,15 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
               _filterRow(),
               const SizedBox(height: 12),
               _kpiGrid(d),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.account_balance),
+                  label: const Text('Para Çek'),
+                  onPressed: () => context.push('/para-cek'),
+                ),
+              ),
               const SizedBox(height: 20),
               _sectionTitle('Aylık Trend'),
               const SizedBox(height: 8),

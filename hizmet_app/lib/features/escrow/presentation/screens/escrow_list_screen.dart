@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../data/escrow_repository.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -102,6 +103,23 @@ class EscrowListScreen extends ConsumerWidget {
                   (item['amount'] as num?)?.toDouble() ?? 0.0;
               final jobTitle =
                   item['jobTitle']?.toString() ?? item['jobId']?.toString() ?? '—';
+              // Phase 253-R — refund eligibility: released ve <30 gün.
+              final paymentId = item['paymentId']?.toString() ??
+                  item['id']?.toString() ??
+                  '';
+              final releasedAtRaw = item['releasedAt']?.toString();
+              final releasedAt = releasedAtRaw == null
+                  ? null
+                  : DateTime.tryParse(releasedAtRaw);
+              final daysSinceRelease = releasedAt == null
+                  ? null
+                  : DateTime.now().difference(releasedAt).inDays;
+              final canRefund = status == EscrowStatus.released &&
+                  paymentId.isNotEmpty &&
+                  (daysSinceRelease == null || daysSinceRelease <= 30);
+              final refundedAmount =
+                  (item['refundedAmount'] as num?)?.toDouble();
+              final workerName = item['workerName']?.toString();
               return Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -109,51 +127,89 @@ class EscrowListScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.border),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            jobTitle,
-                            style: const TextStyle(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                jobTitle,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color: AppColors.textPrimary,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${amount.toStringAsFixed(2)} ₺',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: _statusBg(status),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            status == EscrowStatus.refunded &&
+                                    refundedAmount != null
+                                ? 'İade Edildi (₺${refundedAmount.toStringAsFixed(2)})'
+                                : _statusLabel(status),
+                            style: TextStyle(
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: AppColors.textPrimary,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${amount.toStringAsFixed(2)} ₺',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
+                              color: _statusColor(status),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: _statusBg(status),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        _statusLabel(status),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: _statusColor(status),
+                    if (canRefund) ...[
+                      const SizedBox(height: 12),
+                      const Divider(height: 1),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.undo_rounded, size: 18),
+                          label: const Text('İade Talep Et'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                          ),
+                          onPressed: () async {
+                            final refreshed = await context.push<bool>(
+                              '/iade-talep/$paymentId',
+                              extra: <String, dynamic>{
+                                'amount': amount,
+                                'paymentDate':
+                                    releasedAt?.toIso8601String() ??
+                                        item['heldAt']?.toString(),
+                                'workerName': workerName,
+                              },
+                            );
+                            if (refreshed == true) {
+                              ref.invalidate(_myEscrowsProvider);
+                            }
+                          },
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               );

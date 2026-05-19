@@ -38,6 +38,26 @@ class PaymentRepository {
     return Map<String, dynamic>.from(res.data as Map);
   }
 
+  /// Phase 253-R — Customer refund talebi.
+  /// Backend: POST /payments/refund
+  /// Body: { paymentId, amountMinor?, reason }
+  /// amountMinor verilmezse tam iade.
+  Future<Map<String, dynamic>> requestRefund({
+    required String paymentId,
+    int? amountMinor,
+    required String reason,
+  }) async {
+    final body = <String, dynamic>{
+      'paymentId': paymentId,
+      'reason': reason,
+    };
+    if (amountMinor != null) {
+      body['amountMinor'] = amountMinor;
+    }
+    final res = await _dio.post('/payments/refund', data: body);
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
   Future<Map<String, dynamic>> getEarnings() async {
     try {
       final res = await _dio.get('/payments/earnings');

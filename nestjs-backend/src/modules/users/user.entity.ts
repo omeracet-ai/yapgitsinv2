@@ -321,6 +321,13 @@ export class User {
   @Column({ type: 'integer', default: 0 })
   tokenVersion: number;
 
+  // ── Withdrawals — default banka bilgileri (form prefill için) ────────────
+  @Column({ type: 'varchar', length: 34, nullable: true })
+  defaultIban: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  defaultAccountHolderName: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
