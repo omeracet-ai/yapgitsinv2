@@ -352,6 +352,15 @@ export class JobsService {
         identityVerified: safe.identityVerified ?? false,
         asCustomerTotal: safe.asCustomerTotal ?? 0,
         asCustomerSuccess: safe.asCustomerSuccess ?? 0,
+        // Phase Two-Sided — offer kind ilanlarda poster usta olduğu için
+        // worker tarafı stats ve workerCategories da görünür.
+        asWorkerTotal: (safe as any).asWorkerTotal ?? 0,
+        asWorkerSuccess: (safe as any).asWorkerSuccess ?? 0,
+        workerCategories: (safe as any).workerCategories ?? [],
+        workerBio: (safe as any).workerBio ?? null,
+        hourlyRateMinMinor: (safe as any).hourlyRateMinMinor ?? null,
+        hourlyRateMaxMinor: (safe as any).hourlyRateMaxMinor ?? null,
+        isAvailable: (safe as any).isAvailable ?? false,
       } as unknown as typeof job.customer;
     }
     return job;

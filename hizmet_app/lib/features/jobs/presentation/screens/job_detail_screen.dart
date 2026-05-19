@@ -199,7 +199,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             child: Column(
               children: [
                 if (customer != null) ...[
-                  _buildCustomerCard(customer),
+                  _buildCustomerCard(customer,
+                      kind: detail['kind'] as String? ?? 'request'),
                   const SizedBox(height: 6),
                 ],
                 _buildHeader(budgetMin: budgetMin, budgetMax: budgetMax, createdAt: createdAt, dueDate: dueDate),
@@ -483,7 +484,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   }
 
   // ── İlanı Yayınlayan ──────────────────────────────────────────────────────
-  Widget _buildCustomerCard(Map<String, dynamic> customer) {
+  /// kind='offer' (usta hizmet ilanı) için worker tarafı stats gösterilir;
+  /// 'request' (müşteri talebi) için customer tarafı stats. Card başlığı +
+  /// stat etiketleri kind'a göre değişir.
+  Widget _buildCustomerCard(Map<String, dynamic> customer,
+      {String kind = 'request'}) {
+    final isOffer          = kind == 'offer';
     final name             = customer['fullName']        as String? ?? 'Kullanıcı';
     final imgUrl           = customer['profileImageUrl'] as String?;
     final rating           = (customer['averageRating']  as num?)?.toDouble() ?? 0.0;
@@ -492,10 +498,22 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final since            = customer['createdAt']       as String?;
     final sinceStr         = since != null ? _memberSince(since) : '';
     final verified         = customer['identityVerified'] == true;
-    final totalJobs        = (customer['asCustomerTotal']   as num?)?.toInt() ?? 0;
-    final successJobs      = (customer['asCustomerSuccess'] as num?)?.toInt() ?? 0;
-    final successRate      = totalJobs > 0 ? (successJobs / totalJobs * 100).round() : null;
+    // Kind-aware: offer ilanlarında usta stats, request ilanlarında müşteri.
+    final totalJobs = isOffer
+        ? ((customer['asWorkerTotal'] as num?)?.toInt() ?? 0)
+        : ((customer['asCustomerTotal'] as num?)?.toInt() ?? 0);
+    final successJobs = isOffer
+        ? ((customer['asWorkerSuccess'] as num?)?.toInt() ?? 0)
+        : ((customer['asCustomerSuccess'] as num?)?.toInt() ?? 0);
+    final successRate = totalJobs > 0
+        ? (successJobs / totalJobs * 100).round()
+        : null;
     final customerId       = customer['id'] as String?;
+    final workerCategories = customer['workerCategories'] is List
+        ? (customer['workerCategories'] as List)
+            .map((e) => e.toString())
+            .toList()
+        : <String>[];
 
     return Container(
       color: _surfaceColor,
@@ -503,8 +521,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('İlanı Yayınlayan',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
+          Text(isOffer ? 'Hizmeti Veren Usta' : 'İlanı Yayınlayan',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
                   color: _textSecondary, letterSpacing: 0.3)),
           const SizedBox(height: 10),
 
@@ -611,7 +629,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 icon: Icons.work_outline_rounded,
                 iconColor: AppColors.primary,
                 label: '$totalJobs',
-                sublabel: 'İş ilanı',
+                sublabel: isOffer ? 'Tamamlanan' : 'İlan',
               ),
               if (successRate != null) ...[
                 const SizedBox(width: 12),
@@ -619,11 +637,36 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   icon: Icons.check_circle_outline_rounded,
                   iconColor: AppColors.success,
                   label: '%$successRate',
-                  sublabel: 'Tamamlama',
+                  sublabel: 'Başarı',
                 ),
               ],
             ],
           ),
+
+          // Offer ilanlarında usta kategorileri chip'ler
+          if (isOffer && workerCategories.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: workerCategories
+                  .take(4)
+                  .map((c) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(c,
+                            style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary)),
+                      ))
+                  .toList(),
+            ),
+          ],
 
           const SizedBox(height: 10),
 
