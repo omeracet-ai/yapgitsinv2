@@ -5,7 +5,9 @@ import {
   IsNumber,
   IsEnum,
   IsArray,
+  IsBoolean,
   Min,
+  Max,
 } from 'class-validator';
 import { JobStatus } from '../job.entity';
 
@@ -49,6 +51,27 @@ export class CreateJobDto {
   @IsArray()
   @IsString({ each: true })
   videos?: string[];
+
+  // Phase 152 — konum pin'i (LocationPickerScreen'den)
+  @IsOptional()
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  latitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  longitude?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  locationApprox?: boolean;
+
+  @IsOptional()
+  @IsString()
+  locationSource?: string;
 }
 
 export class UpdateJobDto {
