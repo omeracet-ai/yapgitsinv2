@@ -8,6 +8,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaymentEscrow, EscrowStatus } from './payment-escrow.entity';
+import { BookingEscrow } from './booking-escrow.entity';
+import { BookingEscrowService } from './booking-escrow.service';
 import { tlToMinor, pctOfMinor, subMinor } from '../../common/money.util';
 import { FeeService, FeeBreakdown } from './fee.service';
 import { IyzipayService } from './iyzipay.service';
@@ -86,6 +88,9 @@ export class EscrowService {
   constructor(
     @InjectRepository(PaymentEscrow)
     private readonly repo: Repository<PaymentEscrow>,
+    @InjectRepository(BookingEscrow)
+    private readonly bookingEscrowRepo: Repository<BookingEscrow>,
+    private readonly bookingEscrowService: BookingEscrowService,
     private readonly feeService: FeeService,
     private readonly iyzipay: IyzipayService,
     private readonly notificationsService: NotificationsService,
@@ -268,7 +273,14 @@ export class EscrowService {
     if (!escrow) throw new NotFoundException('Escrow not found');
 
     if (action === 'release') {
-      return this.release(escrowId, adminId, options?.reason, adminRole);
+      // adminResolve pre-checks escrow exists in PaymentEscrow above; release()
+      // bridge dalı bu yola gelmez. Cast güvenli.
+      return this.release(
+        escrowId,
+        adminId,
+        options?.reason,
+        adminRole,
+      ) as Promise<PaymentEscrow>;
     }
     if (action === 'refund') {
       return this.refund(
@@ -284,9 +296,7 @@ export class EscrowService {
     if (ratio < 0 || ratio > 1) {
       throw new BadRequestException('splitRatio must be between 0 and 1');
     }
-    if (
-      !this.isValidTransition(escrow.status, EscrowStatus.PARTIAL_REFUND)
-    ) {
+    if (!this.isValidTransition(escrow.status, EscrowStatus.PARTIAL_REFUND)) {
       throw new BadRequestException(
         `Cannot split from status ${escrow.status}`,
       );
@@ -295,8 +305,7 @@ export class EscrowService {
     const refundShare = Math.round((escrow.amount - workerShare) * 100) / 100;
     const feeRate = getPlatformFeeRate() * 100;
     escrow.platformFeePct = feeRate;
-    escrow.platformFeeAmount =
-      Math.round(workerShare * feeRate) / 100;
+    escrow.platformFeeAmount = Math.round(workerShare * feeRate) / 100;
     escrow.taskerNetAmount = workerShare - escrow.platformFeeAmount;
     escrow.refundAmount = refundShare;
 
@@ -329,9 +338,23 @@ export class EscrowService {
     byUserId: string,
     reason?: string,
     byUserRole?: string,
-  ): Promise<PaymentEscrow> {
+  ): Promise<PaymentEscrow | BookingEscrow> {
     const escrow = await this.repo.findOne({ where: { id: escrowId } });
-    if (!escrow) throw new NotFoundException('Escrow not found');
+    if (!escrow) {
+      // Phase 253 bridge — confirmation flow tetiklediğinde escrow
+      // booking_escrows tablosunda olabilir. BookingEscrowService.release()
+      // tokenBalance üzerinden komisyon split'iyle release yapar.
+      const bookingEscrow = await this.bookingEscrowRepo.findOne({
+        where: { id: escrowId },
+      });
+      if (bookingEscrow) {
+        return this.bookingEscrowService.release(
+          bookingEscrow.bookingId,
+          byUserId,
+        );
+      }
+      throw new NotFoundException('Escrow not found');
+    }
 
     const isCustomer = escrow.customerId === byUserId;
     if (!isCustomer && !this.isAdmin(byUserRole)) {
@@ -493,10 +516,7 @@ export class EscrowService {
     if (!escrow) return null;
 
     if (requesterId !== undefined) {
-      if (
-        !this.isParty(escrow, requesterId) &&
-        !this.isAdmin(requesterRole)
-      ) {
+      if (!this.isParty(escrow, requesterId) && !this.isAdmin(requesterRole)) {
         throw new ForbiddenException('Not allowed to view this escrow');
       }
     }
