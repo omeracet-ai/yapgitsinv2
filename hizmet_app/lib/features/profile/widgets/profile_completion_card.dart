@@ -137,7 +137,7 @@ class ProfileCompletionCard extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.secondary,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -174,8 +174,8 @@ class ProfileCompletionCard extends ConsumerWidget {
               missing.isEmpty
                   ? 'Az kaldı, devam et!'
                   : '${missing.length} alan eksik',
-              style: TextStyle(
-                color: AppColors.secondary.withValues(alpha: 0.75),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -259,7 +259,7 @@ class ProfileCompletionCard extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.secondary,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -279,6 +279,7 @@ class ProfileCompletionCard extends ConsumerWidget {
                           labelForField(key),
                           style: const TextStyle(
                             fontWeight: FontWeight.w500,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       );
