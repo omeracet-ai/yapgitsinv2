@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client_provider.dart';
+import '../../../core/services/secure_token_store.dart';
 
 final offerRepositoryProvider = Provider((ref) {
   return OfferRepository(dio: ref.read(apiClientProvider).dio);
@@ -17,10 +18,18 @@ class OfferRepository {
   OfferRepository({required Dio dio}) : _dio = dio;
 
   Future<List<Map<String, dynamic>>> getOffersForJob(String jobId) async {
+    // Guest guard — backend endpoint auth gerektiriyor; token yoksa 401
+    // dönüp 'Oturum süresi doldu' Snackbar'ı tetikleniyor. Misafir için
+    // boş liste döndür; UI auth-required empty state'ini gösterir.
+    final token = await SecureTokenStore().readToken();
+    if (token == null || token.isEmpty) return const [];
     try {
       final res = await _dio.get('/jobs/$jobId/offers');
       return List<Map<String, dynamic>>.from(res.data as List);
     } on DioException catch (e) {
+      // 401 (token expired/invalid) durumunda da sessizce boş dön — kullanıcı
+      // logout veya token revoke senaryosu; teklif yokmuş gibi UI render edilir.
+      if (e.response?.statusCode == 401) return const [];
       throw Exception(_dioMsg(e, 'Teklifler yüklenemedi'));
     }
   }

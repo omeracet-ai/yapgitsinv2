@@ -670,12 +670,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
 
           const SizedBox(height: 10),
 
-          // Profili Gör butonu
+          // Profili Gör butonu — kind-aware route:
+          //   offer kind = poster usta → /usta/:id (PublicProfileScreen)
+          //   request kind = poster müşteri → /musteri/:id (CustomerPublicProfileScreen)
           if (customerId != null)
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => context.push('/musteri/$customerId'),
+                onPressed: () => context.push(
+                  isOffer ? '/usta/$customerId' : '/musteri/$customerId',
+                ),
                 icon: const Icon(Icons.person_outline_rounded, size: 16),
                 label: const Text('Profili Gör'),
                 style: OutlinedButton.styleFrom(
@@ -971,7 +975,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             leading: GestureDetector(
-              onTap: null,
+              onTap: offerUserId.isEmpty
+                  ? null
+                  : () => context.push('/usta/$offerUserId'),
               child: Stack(
                 children: [
                   CircleAvatar(
@@ -999,9 +1005,14 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             title: Row(
               children: [
                 Expanded(
-                  child: Text(name,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 14, color: _textPrimary)),
+                  child: GestureDetector(
+                    onTap: offerUserId.isEmpty
+                        ? null
+                        : () => context.push('/usta/$offerUserId'),
+                    child: Text(name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 14, color: _textPrimary)),
+                  ),
                 ),
                 if (!isOfferOwner && offerUserId.isNotEmpty)
                   SizedBox(
