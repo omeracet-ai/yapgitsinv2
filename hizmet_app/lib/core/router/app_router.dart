@@ -244,7 +244,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/ilan-ver',
-        builder: (context, state) => const PostJobScreen(kind: 'request'),
+        builder: (context, state) {
+          final extra = state.extra is Map ? state.extra as Map : null;
+          final allowed = extra?['allowedCategories'];
+          final cats = allowed is List
+              ? allowed.map((e) => e.toString()).toList()
+              : null;
+          return PostJobScreen(kind: 'request', allowedCategories: cats);
+        },
       ),
       GoRoute(
         path: '/hizmet-ilani-ver',

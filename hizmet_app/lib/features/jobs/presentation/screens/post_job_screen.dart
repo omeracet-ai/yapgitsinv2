@@ -28,7 +28,17 @@ class PostJobScreen extends ConsumerStatefulWidget {
   /// (usta hizmet ilanı). UI etiketleri ve backend payload buna göre değişir.
   final String kind;
 
-  const PostJobScreen({super.key, this.initialJob, this.kind = 'request'});
+  /// Profil → "Teklif Yap" akışı: form kategori chip'leri sadece bu listeyle
+  /// sınırlı; ustanın yapmadığı kategoride ilan veremezsin. null = tüm
+  /// kategoriler (varsayılan).
+  final List<String>? allowedCategories;
+
+  const PostJobScreen({
+    super.key,
+    this.initialJob,
+    this.kind = 'request',
+    this.allowedCategories,
+  });
 
   @override
   ConsumerState<PostJobScreen> createState() => _PostJobScreenState();
@@ -498,7 +508,16 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
   Widget _buildCategoryGrid() {
     return ref.watch(categoriesProvider).when(
-          data: (cats) {
+          data: (allCats) {
+            // Profil → "Teklif Yap" akışında ustanın workerCategories'i ile
+            // sınırla; başka senaryolarda tüm kategoriler görünür.
+            final allowed = widget.allowedCategories;
+            final cats = (allowed != null && allowed.isNotEmpty)
+                ? allCats.where((c) {
+                    final n = c['name'] as String? ?? '';
+                    return allowed.contains(n);
+                  }).toList()
+                : allCats;
             // Phase Mobile7 — chip grid → tek dropdown
             final items = cats.map((cat) {
               final name = cat['name'] as String? ?? '';

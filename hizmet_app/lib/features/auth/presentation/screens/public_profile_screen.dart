@@ -294,11 +294,17 @@ class _ProfileView extends ConsumerWidget {
                 ),
 
                 // ── Teklif Yap CTA (sadece usta profili + isSelf değil) ────────
+                // PostJobScreen'e workerCats listesi extra ile geçer; form
+                // kategori chip'ini sadece bu listeyle daraltır → kullanıcı
+                // ustanın yapmadığı kategoride ilan veremez.
                 if (isWorker && !isSelf) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                     child: ElevatedButton.icon(
-                      onPressed: () => context.push('/ilan-ver'),
+                      onPressed: () => context.push(
+                        '/ilan-ver',
+                        extra: {'allowedCategories': workerCats},
+                      ),
                       icon: const Icon(Icons.handshake_outlined,
                           color: Colors.white),
                       label: const Text(

@@ -185,7 +185,15 @@ export class AvailabilityService {
     });
     if (blackout) return false;
 
-    // Slot check
+    // Airtasker-style "opt-in scheduling": eğer kullanıcı hiç slot tanımlamadıysa
+    // (hiçbir günde) takvim ayarı yok → varsayılan müsait kabul edilir.
+    // Sadece BLACKOUT ile veya açıkça slot tanımlandığında engelleme yapılır.
+    const totalSlots = await this.slotRepo.count({
+      where: { userId, isActive: true },
+    });
+    if (totalSlots === 0) return true;
+
+    // Kullanıcının slot konfigürasyonu var — bu dow için kapsayan slot ara
     const slots = await this.slotRepo.find({
       where: { userId, dayOfWeek: dow, isActive: true },
     });
