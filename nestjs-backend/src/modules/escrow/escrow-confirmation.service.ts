@@ -112,9 +112,11 @@ function mintQrToken(escrowId: string, issuedAtMs: number): string {
     .digest('hex')
     .slice(0, 24);
   // Base token contains payload + signature so server can re-verify HMAC.
-  // 64 char cap — payload(~60) + sig collapse to 64 via base64url of concat.
+  // NOT: Eskiden .slice(0, 64) ile base64'ü kesiyorduk, decode edince payload
+  // yarım gelip HMAC roundtrip kırılıyordu. QR string artık tam base64url
+  // (~120 char) — QR kodu için yeterince kısa, validation güvenilir.
   const raw = `${payload}.${hmac}`;
-  return Buffer.from(raw).toString('base64url').slice(0, 64);
+  return Buffer.from(raw).toString('base64url');
 }
 
 function verifyQrToken(token: string, expectedEscrowId: string): boolean {
