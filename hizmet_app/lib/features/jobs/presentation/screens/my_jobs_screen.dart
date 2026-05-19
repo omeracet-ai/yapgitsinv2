@@ -91,7 +91,7 @@ class _DualRoleView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: showAppBar
@@ -107,8 +107,11 @@ class _DualRoleView extends ConsumerWidget {
                   ),
                 ],
                 bottom: const TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
                   tabs: [
-                    Tab(icon: Icon(Icons.person_outline), text: 'İlanlarım'),
+                    Tab(icon: Icon(Icons.assignment_outlined), text: 'Taleplerim'),
+                    Tab(icon: Icon(Icons.workspace_premium_outlined), text: 'Hizmetlerim'),
                     Tab(icon: Icon(Icons.handyman_outlined), text: 'Tekliflerim'),
                     Tab(icon: Icon(Icons.work_outline), text: 'Fırsatlar'),
                   ],
@@ -118,11 +121,12 @@ class _DualRoleView extends ConsumerWidget {
                 ),
               )
             : null,
-        body: const TabBarView(
+        body: TabBarView(
           children: [
-            _CustomerTabContentWrapper(),
-            _WorkerTabContent(),
-            JobOpportunitiesBody(),
+            _CustomerTabContentWrapper(kindFilter: 'request'),
+            _CustomerTabContentWrapper(kindFilter: 'offer'),
+            const _WorkerTabContent(),
+            const JobOpportunitiesBody(),
           ],
         ),
       ),
@@ -132,12 +136,17 @@ class _DualRoleView extends ConsumerWidget {
 
 // Scaffold olmadan kullanılabilir wrapper
 class _CustomerTabContentWrapper extends ConsumerWidget {
-  const _CustomerTabContentWrapper();
+  /// 'request' (talep), 'offer' (hizmet), null = hepsi
+  final String? kindFilter;
+  const _CustomerTabContentWrapper({this.kindFilter});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
     if (authState is! AuthAuthenticated) return const SizedBox.shrink();
-    return _CustomerTabContent(userId: authState.user['id'] as String);
+    return _CustomerTabContent(
+      userId: authState.user['id'] as String,
+      kindFilter: kindFilter,
+    );
   }
 }
 
@@ -145,7 +154,8 @@ class _CustomerTabContentWrapper extends ConsumerWidget {
 
 class _CustomerTabContent extends ConsumerWidget {
   final String userId;
-  const _CustomerTabContent({required this.userId});
+  final String? kindFilter; // 'request' | 'offer' | null
+  const _CustomerTabContent({required this.userId, this.kindFilter});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -157,7 +167,22 @@ class _CustomerTabContent extends ConsumerWidget {
         itemBuilder: (_) => const JobCardSkeleton(),
       ),
       error: (e, _) => Center(child: Text('Hata: $e')),
-      data: (jobs) => DefaultTabController(
+      data: (allJobs) {
+        // Phase Two-Sided — kind filter
+        final jobs = kindFilter == null
+            ? allJobs
+            : allJobs
+                .where((j) =>
+                    ((j['kind'] as String?) ?? 'request') == kindFilter)
+                .toList();
+        return _buildCustomerJobsTab(context, ref, jobs);
+      },
+    );
+  }
+
+  Widget _buildCustomerJobsTab(
+      BuildContext context, WidgetRef ref, List<Map<String, dynamic>> jobs) {
+    return DefaultTabController(
         length: 3,
         child: Column(
           children: [
@@ -199,8 +224,7 @@ class _CustomerTabContent extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 
