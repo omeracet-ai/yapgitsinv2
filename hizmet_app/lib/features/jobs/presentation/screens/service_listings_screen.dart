@@ -484,25 +484,15 @@ class _ServiceListingCard extends StatelessWidget {
               children: [
                 const Spacer(),
                 ElevatedButton.icon(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => JobDetailScreen(
-                        id: job.id,
-                        title: job.title,
-                        description: job.desc,
-                        location: job.location,
-                        budget: job.budget,
-                        category: job.category,
-                        postedAt: job.time,
-                        icon: job.icon,
-                        color: job.color,
-                        isFeatured: job.isFeatured,
-                        customerId: job.customerId,
-                      ),
-                    ),
-                  ),
-                  icon: const Icon(Icons.send_rounded, size: 16),
+                  // Phase Two-Sided: offer-tipi ilanlarda job.customerId aslında
+                  // ilanı yayınlayan USTA'nın id'si. Müşteri teklif/randevu
+                  // talebi için ustanın public profile'ına gitmeli — orada
+                  // "Randevu Al" CTA müşteriyi /randevu-olustur/:workerId
+                  // akışına yönlendiriyor. (Eskiden JobDetailScreen açıyordu —
+                  // bu ekran "Teklif Ver" formu içerdiği için müşteri yanlış
+                  // rol arayüzünü görüyordu.)
+                  onPressed: () => context.push('/profil/${job.customerId}'),
+                  icon: const Icon(Icons.handshake_rounded, size: 16),
                   label: const Text('Teklif Al'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
