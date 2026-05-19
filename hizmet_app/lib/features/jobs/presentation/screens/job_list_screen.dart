@@ -9,6 +9,8 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../../features/categories/data/category_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../data/job_filter.dart';
+import '../../widgets/job_filter_sheet.dart';
 import '../../widgets/save_job_button.dart';
 import '../providers/job_provider.dart';
 import 'job_detail_screen.dart';
@@ -56,6 +58,19 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
       _searchQuery = value.trim();
       ref.read(jobsProvider.notifier).setQuery(_searchQuery);
     });
+  }
+
+  Future<void> _openFilterSheet() async {
+    final current = ref.read(jobFilterProvider);
+    final result = await showModalBottomSheet<JobFilter>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => JobFilterSheet(initial: current),
+    );
+    if (result != null) {
+      ref.read(jobFilterProvider.notifier).state = result;
+    }
   }
 
   void _applySuggestion(String categoryName) {
@@ -126,21 +141,30 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
       child: Column(
         children: [
-          Container(
-            decoration: BoxDecoration(color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12)),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              decoration: const InputDecoration(
-                hintText: 'İş ara...',
-                prefixIcon:
-                    Icon(Icons.search, color: AppColors.textHint),
-                border: InputBorder.none,
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(12)),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    decoration: const InputDecoration(
+                      hintText: 'İş ara...',
+                      prefixIcon:
+                          Icon(Icons.search, color: AppColors.textHint),
+                      border: InputBorder.none,
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              _buildFilterButton(),
+            ],
           ),
           // Suggestion dropdown — kategori match listesi
           if (_searchText.trim().isNotEmpty)
@@ -221,6 +245,54 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFilterButton() {
+    final activeCount = ref.watch(jobFilterProvider).activeCount;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Material(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: _openFilterSheet,
+            child: Container(
+              width: 48,
+              height: 48,
+              alignment: Alignment.center,
+              child: const Icon(Icons.tune_rounded,
+                  color: AppColors.primary, size: 22),
+            ),
+          ),
+        ),
+        if (activeCount > 0)
+          Positioned(
+            top: -4,
+            right: -4,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              constraints:
+                  const BoxConstraints(minWidth: 18, minHeight: 18),
+              decoration: BoxDecoration(
+                color: AppColors.error,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.primary, width: 1.5),
+              ),
+              child: Text(
+                '$activeCount',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+      ],
     );
   }
 

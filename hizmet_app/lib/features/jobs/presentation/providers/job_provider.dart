@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/job_filter.dart';
 import '../../data/job_repository.dart';
 
 class JobStatus {
@@ -179,13 +180,19 @@ class Job {
 }
 
 final jobsProvider = StateNotifierProvider<JobNotifier, AsyncValue<List<Job>>>((ref) {
-  return JobNotifier(ref.watch(jobRepositoryProvider));
+  final notifier = JobNotifier(ref.watch(jobRepositoryProvider));
+  // Filter değiştiğinde liste yeniden hesaplansın
+  ref.listen<JobFilter>(jobFilterProvider, (_, next) {
+    notifier.applyFilter(next);
+  });
+  return notifier;
 });
 
 class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
   final JobRepository _repository;
   List<Job> _allJobs = [];
   String? _currentCategory;
+  JobFilter _filter = const JobFilter();
 
   JobNotifier(this._repository) : super(const AsyncValue.loading()) {
     fetchJobs();
@@ -197,7 +204,7 @@ class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
     try {
       final jobsData = await _repository.getJobs(category: category, q: q, status: 'open');
       _allJobs = jobsData.map((m) => Job.fromMap(m)).toList();
-      state = AsyncValue.data(_allJobs);
+      state = AsyncValue.data(_applyFilter(_allJobs));
     } catch (e, st) {
       debugPrint('jobsProvider.fetchJobs error: $e\n$st');
       state = AsyncValue.error(e, st);
@@ -210,15 +217,59 @@ class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
     await fetchJobs(category: _currentCategory, q: q.isEmpty ? null : q);
   }
 
+  /// Filter güncellendiğinde mevcut _allJobs üzerinden yeniden hesapla
+  void applyFilter(JobFilter filter) {
+    _filter = filter;
+    if (_allJobs.isEmpty) return;
+    state = AsyncValue.data(_applyFilter(_allJobs));
+  }
+
+  List<Job> _applyFilter(List<Job> input) {
+    Iterable<Job> result = input;
+    if (_filter.budgetMin != null) {
+      result = result.where((j) {
+        final b = j.budgetMax ?? j.budgetMin ?? 0;
+        return b >= _filter.budgetMin!;
+      });
+    }
+    if (_filter.budgetMax != null) {
+      result = result.where((j) {
+        final b = j.budgetMin ?? j.budgetMax ?? 0;
+        return b <= _filter.budgetMax!;
+      });
+    }
+    if (_filter.featuredOnly) {
+      result = result.where((j) => j.isFeatured);
+    }
+    final list = result.toList();
+    switch (_filter.sort) {
+      case JobSort.newest:
+        list.sort((a, b) => (b.createdAt ?? '').compareTo(a.createdAt ?? ''));
+        break;
+      case JobSort.budgetHigh:
+        list.sort((a, b) =>
+            (b.budgetMax ?? b.budgetMin ?? 0)
+                .compareTo(a.budgetMax ?? a.budgetMin ?? 0));
+        break;
+      case JobSort.budgetLow:
+        list.sort((a, b) =>
+            (a.budgetMin ?? a.budgetMax ?? 0)
+                .compareTo(b.budgetMin ?? b.budgetMax ?? 0));
+        break;
+    }
+    return list;
+  }
+
   void filterJobs(String query) {
     if (query.isEmpty) {
-      state = AsyncValue.data(_allJobs);
+      state = AsyncValue.data(_applyFilter(_allJobs));
     } else {
+      final lower = query.toLowerCase();
       final filtered = _allJobs.where((j) =>
-        j.title.toLowerCase().contains(query.toLowerCase()) ||
-        j.desc.toLowerCase().contains(query.toLowerCase())
+        j.title.toLowerCase().contains(lower) ||
+        j.desc.toLowerCase().contains(lower)
       ).toList();
-      state = AsyncValue.data(filtered);
+      state = AsyncValue.data(_applyFilter(filtered));
     }
   }
 
