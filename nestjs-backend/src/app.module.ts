@@ -54,6 +54,8 @@ import { SavedJobSearch } from './modules/favorites/saved-job-search.entity';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { PaymentEscrow } from './modules/escrow/payment-escrow.entity';
 import { BookingEscrow } from './modules/escrow/booking-escrow.entity';
+import { EscrowConfirmationPhoto } from './modules/escrow/escrow-confirmation-photo.entity';
+import { EscrowConfirmationVideo } from './modules/escrow/escrow-confirmation-video.entity';
 import { EscrowModule } from './modules/escrow/escrow.module';
 import { IyzicoModule } from './modules/iyzico/iyzico.module';
 import { CancellationPolicy } from './modules/cancellation/cancellation-policy.entity';
@@ -198,6 +200,8 @@ import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.enti
           SavedJobSearch,
           PaymentEscrow,
           BookingEscrow,
+          EscrowConfirmationPhoto,
+          EscrowConfirmationVideo,
           CancellationPolicy,
           JobDispute,
           Dispute,

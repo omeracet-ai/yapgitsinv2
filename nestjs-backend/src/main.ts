@@ -93,6 +93,110 @@ async function applyBootMigrations(): Promise<void> {
     } catch (e) {
       logger.warn(`withdrawal_requests setup skipped: ${e instanceof Error ? e.message : String(e)}`);
     }
+    // Phase 253 — Mutual confirmation flow columns on payment_escrows.
+    const escrowCols: { name: string; type: string }[] = [
+      { name: 'confirmationStatus', type: "VARCHAR(32) NOT NULL DEFAULT 'none'" },
+      { name: 'confirmationTier', type: 'VARCHAR(16)' },
+      { name: 'qrToken', type: 'VARCHAR(64)' },
+      { name: 'qrIssuedAt', type: 'DATETIME' },
+      { name: 'qrScannedAt', type: 'DATETIME' },
+      { name: 'workerLat', type: 'REAL' },
+      { name: 'workerLng', type: 'REAL' },
+      { name: 'customerLat', type: 'REAL' },
+      { name: 'customerLng', type: 'REAL' },
+      { name: 'workerConfirmedAt', type: 'DATETIME' },
+      { name: 'customerConfirmedAt', type: 'DATETIME' },
+      { name: 'confirmationDeadline', type: 'DATETIME' },
+    ];
+    for (const col of escrowCols) {
+      try {
+        const exists = await get(
+          `SELECT 1 AS found FROM pragma_table_info('payment_escrows') WHERE name = ?`,
+          [col.name],
+        );
+        if (!exists) {
+          try {
+            await run(
+              `ALTER TABLE payment_escrows ADD COLUMN ${col.name} ${col.type}`,
+            );
+            logger.log(`added payment_escrows.${col.name}`);
+          } catch (e) {
+            logger.warn(
+              `add payment_escrows.${col.name} skipped: ${e instanceof Error ? e.message : String(e)}`,
+            );
+          }
+        }
+      } catch (e) {
+        logger.warn(
+          `detect payment_escrows.${col.name} failed: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
+    }
+
+    // Phase 253 — escrow_confirmation_photos
+    try {
+      const tbl = await get(
+        `SELECT 1 AS found FROM sqlite_master WHERE type='table' AND name='escrow_confirmation_photos'`,
+      );
+      if (!tbl) {
+        await run(
+          `CREATE TABLE escrow_confirmation_photos (
+            id VARCHAR(36) PRIMARY KEY NOT NULL,
+            escrowId VARCHAR(36) NOT NULL,
+            uploadedByUserId VARCHAR(36) NOT NULL,
+            side VARCHAR(16) NOT NULL,
+            phase VARCHAR(16) NOT NULL,
+            photoUrl VARCHAR(255) NOT NULL,
+            lat REAL,
+            lng REAL,
+            takenAt DATETIME,
+            uploadedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+        );
+        await run(
+          `CREATE INDEX idx_escrow_confirm_photos_lookup ON escrow_confirmation_photos(escrowId, side, phase)`,
+        );
+        await run(
+          `CREATE INDEX idx_escrow_confirm_photos_escrow ON escrow_confirmation_photos(escrowId)`,
+        );
+        logger.log('created escrow_confirmation_photos + indexes');
+      }
+    } catch (e) {
+      logger.warn(
+        `escrow_confirmation_photos setup skipped: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+
+    // Phase 253 — escrow_confirmation_videos
+    try {
+      const tbl = await get(
+        `SELECT 1 AS found FROM sqlite_master WHERE type='table' AND name='escrow_confirmation_videos'`,
+      );
+      if (!tbl) {
+        await run(
+          `CREATE TABLE escrow_confirmation_videos (
+            id VARCHAR(36) PRIMARY KEY NOT NULL,
+            escrowId VARCHAR(36) NOT NULL,
+            uploadedByUserId VARCHAR(36) NOT NULL,
+            side VARCHAR(16) NOT NULL,
+            videoUrl VARCHAR(255) NOT NULL,
+            durationSec INTEGER,
+            lat REAL,
+            lng REAL,
+            uploadedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+        );
+        await run(
+          `CREATE INDEX idx_escrow_confirm_videos_escrow ON escrow_confirmation_videos(escrowId)`,
+        );
+        logger.log('created escrow_confirmation_videos + index');
+      }
+    } catch (e) {
+      logger.warn(
+        `escrow_confirmation_videos setup skipped: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+
     logger.log('all up-to-date');
   } finally {
     await new Promise<void>((resolve) => db.close(() => resolve()));

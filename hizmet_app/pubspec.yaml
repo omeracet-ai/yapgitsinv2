@@ -85,6 +85,11 @@ dependencies:
   sign_in_with_apple: ^6.1.2
   crypto: ^3.0.3
 
+  # Phase 254 — Escrow confirmation flow (QR + photo + video)
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^5.0.0
+  camera: ^0.11.0
+
 
 
 

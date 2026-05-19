@@ -15,6 +15,17 @@ export enum EscrowStatus {
   PARTIAL_REFUND = 'PARTIAL_REFUND',
 }
 
+export enum ConfirmationStatus {
+  NONE = 'none',
+  AWAITING_CONFIRMATION = 'awaiting_confirmation',
+}
+
+export enum ConfirmationTier {
+  LITE = 'lite',
+  STANDARD = 'standard',
+  PREMIUM = 'premium',
+}
+
 @Entity('payment_escrows')
 @Index('idx_payment_escrows_status', ['status'])
 @Index('idx_payment_escrows_taskerId_status', ['taskerId', 'status'])
@@ -117,6 +128,51 @@ export class PaymentEscrow {
 
   @Column({ type: 'datetime', nullable: true })
   disputedAt: Date | null;
+
+  // Phase 253 — Mutual confirmation flow (QR + photos + GPS).
+  @Column({
+    type: 'simple-enum',
+    enum: ConfirmationStatus,
+    default: ConfirmationStatus.NONE,
+  })
+  confirmationStatus: ConfirmationStatus;
+
+  @Column({
+    type: 'simple-enum',
+    enum: ConfirmationTier,
+    nullable: true,
+  })
+  confirmationTier: ConfirmationTier | null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  qrToken: string | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  qrIssuedAt: Date | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  qrScannedAt: Date | null;
+
+  @Column({ type: 'float', nullable: true })
+  workerLat: number | null;
+
+  @Column({ type: 'float', nullable: true })
+  workerLng: number | null;
+
+  @Column({ type: 'float', nullable: true })
+  customerLat: number | null;
+
+  @Column({ type: 'float', nullable: true })
+  customerLng: number | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  workerConfirmedAt: Date | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  customerConfirmedAt: Date | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  confirmationDeadline: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

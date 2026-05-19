@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../data/escrow_repository.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -149,58 +150,53 @@ class _EscrowHoldButtonState extends ConsumerState<EscrowHoldButton> {
   }
 }
 
-/// "İşi Onayla ve Öde" — visible to customer when escrow held & booking in_progress.
-class EscrowReleaseButton extends ConsumerStatefulWidget {
+/// Phase 254 — "İşi Tamamladım / Onayla" CTA.
+///
+/// Eski tek-tıkla /escrow/release çağrısı yerine artık karşılıklı onay flow'una
+/// (`/escrow/:id/confirmation`) yönlendirir. QR + foto + iki taraflı confirm
+/// tamamlanınca backend escrow'u serbest bırakır.
+///
+/// - Worker tarafı: "İşi Tamamladım — Onay Başlat"
+/// - Customer tarafı: "Onayla"
+/// Hangi tarafa ait olduğunu callsite belirtir (default customer — geriye
+/// dönük uyumluluk için).
+class EscrowReleaseButton extends ConsumerWidget {
   final String bookingId;
+  final bool asWorker;
   final VoidCallback? onReleased;
+
   const EscrowReleaseButton({
     super.key,
     required this.bookingId,
+    this.asWorker = false,
     this.onReleased,
   });
 
   @override
-  ConsumerState<EscrowReleaseButton> createState() =>
-      _EscrowReleaseButtonState();
-}
-
-class _EscrowReleaseButtonState extends ConsumerState<EscrowReleaseButton> {
-  bool _busy = false;
-
-  Future<void> _release() async {
-    setState(() => _busy = true);
-    try {
-      await ref.read(escrowRepositoryProvider).release(widget.bookingId);
-      if (!mounted) return;
-      ref.invalidate(escrowByBookingProvider(widget.bookingId));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ödeme ustaya aktarıldı')),
-      );
-      widget.onReleased?.call();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hata: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final async = ref.watch(escrowByBookingProvider(widget.bookingId));
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(escrowByBookingProvider(bookingId));
     return async.maybeWhen(
       data: (e) {
         if (e == null || e.status != EscrowStatus.held) {
           return const SizedBox.shrink();
         }
+        final label = asWorker
+            ? 'İşi Tamamladım — Onay Başlat'
+            : 'Onayla';
+        final icon = asWorker
+            ? Icons.task_alt_rounded
+            : Icons.check_circle_outline;
         return SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: _busy ? null : _release,
-            icon: const Icon(Icons.check_circle_outline),
-            label: Text(_busy ? 'Onaylanıyor…' : 'İşi Onayla ve Öde'),
+            onPressed: () async {
+              await context.push('/escrow/${e.id}/confirmation');
+              // Onaylar tamamlanmışsa state güncellensin.
+              ref.invalidate(escrowByBookingProvider(bookingId));
+              onReleased?.call();
+            },
+            icon: Icon(icon),
+            label: Text(label),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF00C9A7),
               foregroundColor: Colors.white,

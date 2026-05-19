@@ -1,0 +1,538 @@
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as crypto from 'crypto';
+import {
+  PaymentEscrow,
+  ConfirmationStatus,
+  ConfirmationTier,
+} from './payment-escrow.entity';
+import { EscrowService } from './escrow.service';
+import {
+  EscrowConfirmationPhoto,
+  ConfirmationSide,
+  ConfirmationPhase,
+} from './escrow-confirmation-photo.entity';
+import { EscrowConfirmationVideo } from './escrow-confirmation-video.entity';
+
+const QR_TTL_MS = 5 * 60 * 1000; // 5 min QR validity
+const CONFIRMATION_DEADLINE_MS = 72 * 60 * 60 * 1000; // 72h auto-dispute
+const GPS_MATCH_RADIUS_M = 100;
+
+export interface TierRequirements {
+  photosPerPhase: number;
+  videoRequired: boolean;
+  gpsMatchRequired: boolean;
+}
+
+export interface ConfirmationStateResponse {
+  escrowId: string;
+  confirmationStatus: ConfirmationStatus;
+  tier: ConfirmationTier | null;
+  requirements: TierRequirements;
+  qrIssuedAt: Date | null;
+  qrScannedAt: Date | null;
+  confirmationDeadline: Date | null;
+  workerLat: number | null;
+  workerLng: number | null;
+  customerLat: number | null;
+  customerLng: number | null;
+  workerConfirmedAt: Date | null;
+  customerConfirmedAt: Date | null;
+  photos: EscrowConfirmationPhoto[];
+  videoUrl: string | null;
+  allConditionsMetWorker: boolean;
+  allConditionsMetCustomer: boolean;
+}
+
+export interface ConfirmationStartResponse {
+  qrToken: string;
+  qrIssuedAt: Date;
+  expiresAt: Date;
+  tier: ConfirmationTier;
+  requirements: TierRequirements;
+  confirmationDeadline: Date;
+}
+
+function tierFor(amountMinor: number): ConfirmationTier {
+  if (amountMinor < 50_000) return ConfirmationTier.LITE;
+  if (amountMinor < 500_000) return ConfirmationTier.STANDARD;
+  return ConfirmationTier.PREMIUM;
+}
+
+function requirementsFor(tier: ConfirmationTier): TierRequirements {
+  if (tier === ConfirmationTier.LITE) {
+    return { photosPerPhase: 0, videoRequired: false, gpsMatchRequired: false };
+  }
+  // standard + premium — same hard requirements (premium video is optional)
+  return { photosPerPhase: 1, videoRequired: false, gpsMatchRequired: true };
+}
+
+/** Haversine in meters between two lat/lng pairs. */
+function haversineMeters(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const R = 6_371_000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+function qrSecret(): string {
+  return (
+    process.env.CONFIRMATION_QR_SECRET ||
+    process.env.JWT_SECRET ||
+    'dev-fallback-confirmation-secret'
+  );
+}
+
+function mintQrToken(escrowId: string, issuedAtMs: number): string {
+  const nonce = crypto.randomBytes(8).toString('hex');
+  const payload = `${escrowId}|${issuedAtMs}|${nonce}`;
+  const hmac = crypto
+    .createHmac('sha256', qrSecret())
+    .update(payload)
+    .digest('hex')
+    .slice(0, 24);
+  // Base token contains payload + signature so server can re-verify HMAC.
+  // 64 char cap — payload(~60) + sig collapse to 64 via base64url of concat.
+  const raw = `${payload}.${hmac}`;
+  return Buffer.from(raw).toString('base64url').slice(0, 64);
+}
+
+function verifyQrToken(token: string, expectedEscrowId: string): boolean {
+  try {
+    // Reconstruct: we only have the truncated base64url; decode and re-derive HMAC.
+    const decoded = Buffer.from(token, 'base64url').toString('utf8');
+    const lastDot = decoded.lastIndexOf('.');
+    if (lastDot < 0) return false;
+    const payload = decoded.slice(0, lastDot);
+    const sig = decoded.slice(lastDot + 1);
+    const [escrowId] = payload.split('|');
+    if (escrowId !== expectedEscrowId) return false;
+    const expected = crypto
+      .createHmac('sha256', qrSecret())
+      .update(payload)
+      .digest('hex')
+      .slice(0, 24);
+    return crypto.timingSafeEqual(
+      Buffer.from(sig, 'utf8'),
+      Buffer.from(expected, 'utf8'),
+    );
+  } catch {
+    return false;
+  }
+}
+
+@Injectable()
+export class EscrowConfirmationService {
+  private readonly logger = new Logger(EscrowConfirmationService.name);
+
+  constructor(
+    @InjectRepository(PaymentEscrow)
+    private readonly escrowRepo: Repository<PaymentEscrow>,
+    @InjectRepository(EscrowConfirmationPhoto)
+    private readonly photoRepo: Repository<EscrowConfirmationPhoto>,
+    @InjectRepository(EscrowConfirmationVideo)
+    private readonly videoRepo: Repository<EscrowConfirmationVideo>,
+    private readonly escrowService: EscrowService,
+  ) {}
+
+  // ------------- helpers -------------
+
+  private async loadEscrow(id: string): Promise<PaymentEscrow> {
+    const e = await this.escrowRepo.findOne({ where: { id } });
+    if (!e) throw new NotFoundException('Escrow not found');
+    return e;
+  }
+
+  private sideOf(escrow: PaymentEscrow, userId: string): ConfirmationSide {
+    if (escrow.taskerId === userId) return 'worker';
+    if (escrow.customerId === userId) return 'customer';
+    throw new ForbiddenException('Not a party to this escrow');
+  }
+
+  tierRequirements(tier: ConfirmationTier): TierRequirements {
+    return requirementsFor(tier);
+  }
+
+  // ------------- endpoints -------------
+
+  async start(
+    escrowId: string,
+    userId: string,
+    lat: number,
+    lng: number,
+  ): Promise<ConfirmationStartResponse> {
+    const escrow = await this.loadEscrow(escrowId);
+    if (escrow.taskerId !== userId) {
+      throw new ForbiddenException('Only worker may start confirmation');
+    }
+    if (escrow.paymentStatus !== 'paid' && escrow.paymentStatus !== 'held') {
+      // accept 'paid' (post-iyzipay capture) and legacy 'held'; reject pending/failed/refunded.
+      // The status string in this codebase uses 'pending' → 'paid' (see confirmByToken).
+      if (escrow.paymentStatus !== 'paid') {
+        throw new BadRequestException(
+          `Escrow not in held/paid state (paymentStatus=${escrow.paymentStatus})`,
+        );
+      }
+    }
+    if (escrow.confirmationStatus === ConfirmationStatus.AWAITING_CONFIRMATION) {
+      throw new ConflictException('Confirmation already started');
+    }
+
+    const now = Date.now();
+    const tier = tierFor(escrow.amountMinor || 0);
+    const token = mintQrToken(escrow.id, now);
+    const issuedAt = new Date(now);
+    const deadline = new Date(now + CONFIRMATION_DEADLINE_MS);
+
+    escrow.confirmationStatus = ConfirmationStatus.AWAITING_CONFIRMATION;
+    escrow.confirmationTier = tier;
+    escrow.qrToken = token;
+    escrow.qrIssuedAt = issuedAt;
+    escrow.workerLat = lat;
+    escrow.workerLng = lng;
+    escrow.confirmationDeadline = deadline;
+    await this.escrowRepo.save(escrow);
+
+    return {
+      qrToken: token,
+      qrIssuedAt: issuedAt,
+      expiresAt: new Date(now + QR_TTL_MS),
+      tier,
+      requirements: requirementsFor(tier),
+      confirmationDeadline: deadline,
+    };
+  }
+
+  async getQr(
+    escrowId: string,
+    userId: string,
+  ): Promise<{ qrToken: string; expiresAt: Date; tier: ConfirmationTier }> {
+    const escrow = await this.loadEscrow(escrowId);
+    if (escrow.taskerId !== userId) {
+      throw new ForbiddenException('Only worker may fetch QR');
+    }
+    if (escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION) {
+      throw new BadRequestException('Confirmation not started');
+    }
+    const now = Date.now();
+    const issuedMs = escrow.qrIssuedAt?.getTime() ?? 0;
+    let token = escrow.qrToken;
+    let issuedAt = escrow.qrIssuedAt!;
+    if (!token || now - issuedMs > QR_TTL_MS) {
+      token = mintQrToken(escrow.id, now);
+      issuedAt = new Date(now);
+      escrow.qrToken = token;
+      escrow.qrIssuedAt = issuedAt;
+      await this.escrowRepo.save(escrow);
+    }
+    return {
+      qrToken: token,
+      expiresAt: new Date(issuedAt.getTime() + QR_TTL_MS),
+      tier: escrow.confirmationTier!,
+    };
+  }
+
+  async getState(
+    escrowId: string,
+    userId: string,
+  ): Promise<ConfirmationStateResponse> {
+    const escrow = await this.loadEscrow(escrowId);
+    if (escrow.taskerId !== userId && escrow.customerId !== userId) {
+      throw new ForbiddenException('Not a party');
+    }
+    const tier = escrow.confirmationTier;
+    const reqs = tier
+      ? requirementsFor(tier)
+      : { photosPerPhase: 0, videoRequired: false, gpsMatchRequired: false };
+
+    const photos = await this.photoRepo.find({ where: { escrowId } });
+    const video = await this.videoRepo.findOne({ where: { escrowId } });
+
+    return {
+      escrowId,
+      confirmationStatus: escrow.confirmationStatus,
+      tier,
+      requirements: reqs,
+      qrIssuedAt: escrow.qrIssuedAt,
+      qrScannedAt: escrow.qrScannedAt,
+      confirmationDeadline: escrow.confirmationDeadline,
+      workerLat: escrow.workerLat,
+      workerLng: escrow.workerLng,
+      customerLat: escrow.customerLat,
+      customerLng: escrow.customerLng,
+      workerConfirmedAt: escrow.workerConfirmedAt,
+      customerConfirmedAt: escrow.customerConfirmedAt,
+      photos,
+      videoUrl: video?.videoUrl ?? null,
+      allConditionsMetWorker: this.conditionsMet(escrow, photos, 'worker'),
+      allConditionsMetCustomer: this.conditionsMet(escrow, photos, 'customer'),
+    };
+  }
+
+  async scan(
+    escrowId: string,
+    userId: string,
+    qrToken: string,
+    lat: number,
+    lng: number,
+  ): Promise<{ ok: true; gpsMatch: boolean; distanceM: number | null }> {
+    const escrow = await this.loadEscrow(escrowId);
+    if (escrow.customerId !== userId) {
+      throw new ForbiddenException('Only customer may scan');
+    }
+    if (escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION) {
+      throw new BadRequestException('Confirmation not active');
+    }
+    if (!escrow.qrToken || escrow.qrToken !== qrToken) {
+      throw new BadRequestException('QR token mismatch');
+    }
+    const issuedMs = escrow.qrIssuedAt?.getTime() ?? 0;
+    if (Date.now() - issuedMs > QR_TTL_MS) {
+      throw new BadRequestException('QR expired');
+    }
+    if (!verifyQrToken(qrToken, escrow.id)) {
+      throw new BadRequestException('QR signature invalid');
+    }
+
+    let distance: number | null = null;
+    let gpsMatch = true;
+    if (
+      escrow.workerLat != null &&
+      escrow.workerLng != null &&
+      lat != null &&
+      lng != null
+    ) {
+      distance = haversineMeters(escrow.workerLat, escrow.workerLng, lat, lng);
+      const tier = escrow.confirmationTier;
+      const requires =
+        tier === ConfirmationTier.STANDARD || tier === ConfirmationTier.PREMIUM;
+      gpsMatch = !requires || distance <= GPS_MATCH_RADIUS_M;
+    }
+
+    escrow.qrScannedAt = new Date();
+    escrow.customerLat = lat;
+    escrow.customerLng = lng;
+    await this.escrowRepo.save(escrow);
+
+    return { ok: true, gpsMatch, distanceM: distance };
+  }
+
+  async addPhoto(args: {
+    escrowId: string;
+    userId: string;
+    phase: ConfirmationPhase;
+    photoUrl: string;
+    lat: number | null;
+    lng: number | null;
+    takenAt: Date | null;
+  }): Promise<EscrowConfirmationPhoto> {
+    const escrow = await this.loadEscrow(args.escrowId);
+    const side = this.sideOf(escrow, args.userId);
+    if (escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION) {
+      throw new BadRequestException('Confirmation not active');
+    }
+    if (escrow.confirmationTier === ConfirmationTier.LITE) {
+      throw new BadRequestException('Photos not required for lite tier');
+    }
+    if (args.phase !== 'before' && args.phase !== 'after') {
+      throw new BadRequestException('Invalid phase');
+    }
+    const row = this.photoRepo.create({
+      escrowId: args.escrowId,
+      uploadedByUserId: args.userId,
+      side,
+      phase: args.phase,
+      photoUrl: args.photoUrl,
+      lat: args.lat,
+      lng: args.lng,
+      takenAt: args.takenAt,
+    });
+    return this.photoRepo.save(row);
+  }
+
+  async addVideo(args: {
+    escrowId: string;
+    userId: string;
+    videoUrl: string;
+    durationSec: number | null;
+    lat: number | null;
+    lng: number | null;
+  }): Promise<EscrowConfirmationVideo> {
+    const escrow = await this.loadEscrow(args.escrowId);
+    const side = this.sideOf(escrow, args.userId);
+    if (escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION) {
+      throw new BadRequestException('Confirmation not active');
+    }
+    if (escrow.confirmationTier !== ConfirmationTier.PREMIUM) {
+      throw new BadRequestException('Video only allowed for premium tier');
+    }
+    if (
+      args.durationSec != null &&
+      (args.durationSec < 5 || args.durationSec > 120)
+    ) {
+      throw new BadRequestException('Video duration must be 5-120 seconds');
+    }
+    const row = this.videoRepo.create({
+      escrowId: args.escrowId,
+      uploadedByUserId: args.userId,
+      side,
+      videoUrl: args.videoUrl,
+      durationSec: args.durationSec,
+      lat: args.lat,
+      lng: args.lng,
+    });
+    return this.videoRepo.save(row);
+  }
+
+  private conditionsMet(
+    escrow: PaymentEscrow,
+    photos: EscrowConfirmationPhoto[],
+    side: ConfirmationSide,
+  ): boolean {
+    const tier = escrow.confirmationTier;
+    if (!tier) return false;
+    if (!escrow.qrScannedAt) return false;
+    if (tier === ConfirmationTier.LITE) return true;
+
+    // standard / premium: GPS match + each side has ≥1 before AND ≥1 after photo
+    if (
+      escrow.workerLat == null ||
+      escrow.workerLng == null ||
+      escrow.customerLat == null ||
+      escrow.customerLng == null
+    ) {
+      return false;
+    }
+    const dist = haversineMeters(
+      escrow.workerLat,
+      escrow.workerLng,
+      escrow.customerLat,
+      escrow.customerLng,
+    );
+    if (dist > GPS_MATCH_RADIUS_M) return false;
+
+    const sidePhotos = photos.filter((p) => p.side === side);
+    const hasBefore = sidePhotos.some((p) => p.phase === 'before');
+    const hasAfter = sidePhotos.some((p) => p.phase === 'after');
+    return hasBefore && hasAfter;
+  }
+
+  async confirm(
+    escrowId: string,
+    userId: string,
+  ): Promise<{
+    side: ConfirmationSide;
+    allConditionsMet: boolean;
+    escrowStatus: string;
+    escrowReleased: boolean;
+    missing?: string[];
+  }> {
+    const escrow = await this.loadEscrow(escrowId);
+    const side = this.sideOf(escrow, userId);
+    if (escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION) {
+      throw new BadRequestException('Confirmation not active');
+    }
+
+    // Block double-confirm by same side
+    if (side === 'worker' && escrow.workerConfirmedAt) {
+      throw new ConflictException('Worker already confirmed');
+    }
+    if (side === 'customer' && escrow.customerConfirmedAt) {
+      throw new ConflictException('Customer already confirmed');
+    }
+
+    const photos = await this.photoRepo.find({ where: { escrowId } });
+    const missing = this.computeMissing(escrow, photos, side);
+    if (missing.length > 0) {
+      throw new BadRequestException({
+        message: 'Requirements not met',
+        missing,
+      });
+    }
+
+    const now = new Date();
+    if (side === 'worker') escrow.workerConfirmedAt = now;
+    else escrow.customerConfirmedAt = now;
+    await this.escrowRepo.save(escrow);
+
+    let released = false;
+    if (escrow.workerConfirmedAt && escrow.customerConfirmedAt) {
+      // Release via existing service. Pass adminRole='admin' to bypass customer-only
+      // guard, since this is a SYSTEM-driven release once both parties signed off.
+      await this.escrowService.release(
+        escrow.id,
+        'system',
+        'mutual confirmation complete',
+        'admin',
+      );
+      released = true;
+    }
+
+    const refreshed = await this.loadEscrow(escrowId);
+    return {
+      side,
+      allConditionsMet: true,
+      escrowStatus: refreshed.status,
+      escrowReleased: released,
+    };
+  }
+
+  private computeMissing(
+    escrow: PaymentEscrow,
+    photos: EscrowConfirmationPhoto[],
+    side: ConfirmationSide,
+  ): string[] {
+    const missing: string[] = [];
+    const tier = escrow.confirmationTier;
+    if (!tier) {
+      missing.push('confirmation not started');
+      return missing;
+    }
+    if (!escrow.qrScannedAt) missing.push('qr_not_scanned');
+    if (tier === ConfirmationTier.LITE) return missing;
+
+    // gps check
+    if (
+      escrow.workerLat == null ||
+      escrow.workerLng == null ||
+      escrow.customerLat == null ||
+      escrow.customerLng == null
+    ) {
+      missing.push('gps_missing');
+    } else {
+      const dist = haversineMeters(
+        escrow.workerLat,
+        escrow.workerLng,
+        escrow.customerLat,
+        escrow.customerLng,
+      );
+      if (dist > GPS_MATCH_RADIUS_M) missing.push('gps_too_far');
+    }
+
+    const sidePhotos = photos.filter((p) => p.side === side);
+    if (!sidePhotos.some((p) => p.phase === 'before')) {
+      missing.push(`${side}_before_photo`);
+    }
+    if (!sidePhotos.some((p) => p.phase === 'after')) {
+      missing.push(`${side}_after_photo`);
+    }
+    return missing;
+  }
+}

@@ -50,6 +50,7 @@ import '../widgets/splash_screen.dart';
 import '../../../features/escrow/presentation/screens/payment_screen.dart';
 import '../../../features/escrow/presentation/screens/escrow_list_screen.dart';
 import '../../../features/escrow/presentation/screens/dispute_form_screen.dart';
+import '../../../features/escrow/confirmation/presentation/screens/confirmation_flow_screen.dart';
 import '../../../features/admin/presentation/screens/admin_disputes_screen.dart';
 import '../../../features/wallet/presentation/screens/refund_request_screen.dart';
 import '../../../features/wallet/presentation/screens/withdrawal_screen.dart';
@@ -112,6 +113,7 @@ const _protectedPrefixes = <String>[
   '/iade-talep',
   '/para-cek',
   '/escrow-listesi',
+  '/escrow',
   '/portfolyo',
   '/ilan-basarili',
   '/2fa-setup',
@@ -410,6 +412,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/escrow-listesi',
         builder: (context, state) => const EscrowListScreen(),
+      ),
+      // Phase 254 — Karşılıklı onay flow (QR + foto + video + confirm)
+      GoRoute(
+        path: '/escrow/:id/confirmation',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return ConfirmationFlowScreen(escrowId: id);
+        },
       ),
       // Phase 253 — escrow dispute form (customer/worker)
       GoRoute(

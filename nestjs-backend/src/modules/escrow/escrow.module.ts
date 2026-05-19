@@ -12,6 +12,12 @@ import { BookingEscrowController } from './booking-escrow.controller';
 import { Booking } from '../bookings/booking.entity';
 import { TokenTransaction } from '../tokens/token-transaction.entity';
 import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
+import { EscrowConfirmationPhoto } from './escrow-confirmation-photo.entity';
+import { EscrowConfirmationVideo } from './escrow-confirmation-video.entity';
+import { EscrowConfirmationService } from './escrow-confirmation.service';
+import { EscrowConfirmationController } from './escrow-confirmation.controller';
+import { EscrowConfirmationTimeoutService } from './escrow-confirmation-timeout.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -21,10 +27,25 @@ import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
       Booking,
       TokenTransaction,
       AdminAuditLog,
+      EscrowConfirmationPhoto,
+      EscrowConfirmationVideo,
     ]),
+    NotificationsModule,
   ],
-  controllers: [EscrowController, EscrowAdminController, BookingEscrowController],
-  providers: [EscrowService, FeeService, IyzipayService, BookingEscrowService],
+  controllers: [
+    EscrowController,
+    EscrowAdminController,
+    BookingEscrowController,
+    EscrowConfirmationController,
+  ],
+  providers: [
+    EscrowService,
+    FeeService,
+    IyzipayService,
+    BookingEscrowService,
+    EscrowConfirmationService,
+    EscrowConfirmationTimeoutService,
+  ],
   exports: [EscrowService, FeeService, IyzipayService, BookingEscrowService],
 })
 export class EscrowModule {}
