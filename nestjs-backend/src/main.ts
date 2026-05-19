@@ -197,6 +197,42 @@ async function applyBootMigrations(): Promise<void> {
       );
     }
 
+    // Phase 174c — Minor-unit (kuruş) columns added later than initial schema.
+    // Idempotently ALTER each table to add the missing INTEGER column.
+    const minorCols: { table: string; column: string }[] = [
+      { table: 'token_transactions', column: 'amountMinor' },
+      { table: 'offers', column: 'priceMinor' },
+      { table: 'service_requests', column: 'priceMinor' },
+      { table: 'payments', column: 'amountMinor' },
+      { table: 'payment_escrows', column: 'amountMinor' },
+      { table: 'users', column: 'tokenBalanceMinor' },
+      { table: 'bookings', column: 'agreedPriceMinor' },
+    ];
+    for (const { table, column } of minorCols) {
+      try {
+        const exists = await get(
+          `SELECT 1 AS found FROM pragma_table_info(?) WHERE name = ?`,
+          [table, column],
+        );
+        if (!exists) {
+          try {
+            await run(
+              `ALTER TABLE ${table} ADD COLUMN ${column} INTEGER NOT NULL DEFAULT 0`,
+            );
+            logger.log(`added ${table}.${column}`);
+          } catch (e) {
+            logger.warn(
+              `add ${table}.${column} skipped: ${e instanceof Error ? e.message : String(e)}`,
+            );
+          }
+        }
+      } catch (e) {
+        logger.warn(
+          `detect ${table}.${column} failed: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
+    }
+
     logger.log('all up-to-date');
   } finally {
     await new Promise<void>((resolve) => db.close(() => resolve()));
