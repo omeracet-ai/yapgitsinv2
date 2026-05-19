@@ -592,15 +592,22 @@ export class AdminSeedService {
 
       // ── 7. Jobs (kind='request') — Müşteri talep ilanları ─────────────────
       const allJobs: Job[] = [];
+      // Fırsatlar sekmesi open ilan ağırlıklı görünsün — status dağılımı
+      // %60 OPEN, %15 in_progress, %15 completed, %10 cancelled
       const requestStatuses = [
         JobStatus.OPEN,
         JobStatus.OPEN,
+        JobStatus.OPEN,
+        JobStatus.OPEN,
+        JobStatus.OPEN,
+        JobStatus.OPEN,
         JobStatus.IN_PROGRESS,
-        JobStatus.COMPLETED,
+        JobStatus.IN_PROGRESS,
         JobStatus.COMPLETED,
         JobStatus.CANCELLED,
       ];
-      const requestCount = Math.max(5, Math.floor(customers.length * 0.6));
+      // Phase Two-Sided — Fırsatlar dolu olsun: her müşteri ~1.5 talep
+      const requestCount = Math.max(15, Math.floor(customers.length * 1.5));
       for (let i = 0; i < requestCount; i++) {
         const customer = faker.helpers.arrayElement(customers);
         const cat = faker.helpers.arrayElement(categoryNames);

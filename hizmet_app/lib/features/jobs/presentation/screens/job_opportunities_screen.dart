@@ -145,15 +145,13 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                     .where((j) => j.customerId != myUserId)
                     .toList();
 
-                // Kategori filtresi
+                // Kategori filtresi — sadece manuel seçim. Default'ta tüm
+                // açık ilanlar görünür (UX: kullanıcı uzmanlık dışı işi de
+                // görmek isteyebilir; isterse 'Uzmanlık Alanlarım' chip'inden
+                // filtreleyebilir).
                 if (_selectedCategory != null) {
                   filtered = filtered
                       .where((j) => j.category == _selectedCategory)
-                      .toList();
-                } else if (myCategories.isNotEmpty) {
-                  // Varsayılan: sadece uzmanlık kategorileri
-                  filtered = filtered
-                      .where((j) => myCategories.contains(j.category))
                       .toList();
                 }
 

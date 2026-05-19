@@ -7,7 +7,6 @@ import '../../../jobs/presentation/screens/job_opportunities_screen.dart';
 import '../../../jobs/presentation/screens/my_jobs_screen.dart';
 import '../../../jobs/presentation/screens/service_listings_screen.dart';
 import '../../../map/presentation/screens/map_screen.dart';
-import '../../../providers/presentation/screens/provider_list_screen.dart';
 
 class HizmetAlScreen extends ConsumerStatefulWidget {
   const HizmetAlScreen({super.key});
@@ -20,10 +19,11 @@ class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
+  // Phase Two-Sided — Ustalar tab kullanıcı isteğiyle gizlendi.
+  // ProviderListScreen rotuting üzerinden hâlâ erişilebilir (search vs).
   static const _tabs = [
     Tab(text: 'Hizmet İlanları'),
     Tab(text: 'Fırsatlar'),
-    Tab(text: 'Ustalar'),
     Tab(text: 'Harita'),
     Tab(text: 'İşlerim'),
   ];
@@ -44,8 +44,8 @@ class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
 
   void _onTabChanged() {
     if (!_tabController.indexIsChanging) return;
-    // İşlerim (index 4) auth gerektirir
-    if (_tabController.index == 4) {
+    // İşlerim (index 3) auth gerektirir
+    if (_tabController.index == 3) {
       final isLoggedIn = ref.read(authStateProvider) is AuthAuthenticated;
       if (!isLoggedIn) {
         _tabController.animateTo(_tabController.previousIndex);
@@ -81,9 +81,8 @@ class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
           children: const [
             ServiceListingsBody(),   // 0: Hizmet İlanları (kind='offer')
             JobOpportunitiesBody(),  // 1: Fırsatlar (kind='request')
-            ProviderListScreen(),    // 2: Ustalar
-            MapScreen(),             // 3: Harita
-            MyJobsBody(),            // 4: İşlerim (auth)
+            MapScreen(),             // 2: Harita
+            MyJobsBody(),            // 3: İşlerim (auth)
           ],
         ),
       ),
