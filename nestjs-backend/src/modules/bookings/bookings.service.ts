@@ -302,6 +302,7 @@ export class BookingsService {
       scheduledDate: string;
       scheduledTime?: string;
       customerNote?: string;
+      agreedPrice?: number;
     },
   ): Promise<Booking> {
     const worker = await this.usersService.findById(data.workerId);
@@ -331,6 +332,10 @@ export class BookingsService {
       }
     }
 
+    const priceMinor =
+        data.agreedPrice != null && data.agreedPrice > 0
+            ? Math.round(data.agreedPrice * 100)
+            : null;
     const booking = this.repo.create({
       customerId,
       workerId: data.workerId,
@@ -342,6 +347,8 @@ export class BookingsService {
       scheduledTime: data.scheduledTime ?? null,
       customerNote: data.customerNote ?? null,
       status: BookingStatus.PENDING,
+      agreedPrice: data.agreedPrice ?? null,
+      agreedPriceMinor: priceMinor,
     });
     const saved = await this.repo.save(booking);
 

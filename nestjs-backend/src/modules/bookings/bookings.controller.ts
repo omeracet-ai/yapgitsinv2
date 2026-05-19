@@ -35,6 +35,7 @@ export class BookingsController {
       scheduledDate?: string;
       scheduledTime?: string;
       customerNote?: string;
+      agreedPrice?: number;
     },
   ) {
     return this.svc.create(req.user.id, {
@@ -46,6 +47,7 @@ export class BookingsController {
       scheduledDate: body.scheduledDate ?? '',
       scheduledTime: body.scheduledTime,
       customerNote: body.customerNote,
+      agreedPrice: body.agreedPrice,
     });
   }
 

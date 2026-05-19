@@ -225,13 +225,13 @@ export class AdminSeedService {
       const usedPhones = new Set<string>();
 
       // ── Sabit demo hesap — login için bilinen kimlik bilgisi ────────────
-      // demo@yapgitsin.tr / Yapgitsin1234!  (worker; gerçek kategorilerle)
+      // bysabri0@gmail.com / Yapgitsin1234!  (worker; gerçek kategorilerle)
       const demoCats = categoryNames.slice(0, 3);
       const [demoLat, demoLng] = CITY_COORDS.Istanbul;
       const demo = manager.getRepository(User).create({
         fullName: 'Demo Usta',
-        phoneNumber: '+905550000001',
-        email: 'demo@yapgitsin.tr',
+        phoneNumber: '+905058764282',
+        email: 'bysabri0@gmail.com',
         passwordHash: SEED_PASSWORD_HASH,
         isPhoneVerified: true,
         emailVerified: true,
@@ -249,7 +249,7 @@ export class AdminSeedService {
         profileImageUrl: 'https://i.pravatar.cc/300?u=demo-usta',
       });
       users.push(demo);
-      usedPhones.add('+905550000001');
+      usedPhones.add('+905058764282');
       created.workers++;
 
       for (let i = 0; i < count; i++) {
