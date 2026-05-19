@@ -19,6 +19,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import '../constants/api_constants.dart';
 import 'in_app_notification_service.dart';
 import 'secure_token_store.dart';
+import 'sound_player.dart';
 
 class FcmService {
   FcmService._();
@@ -56,11 +57,15 @@ class FcmService {
         final title = n?.title ?? msg.data['title']?.toString() ?? 'Bildirim';
         final body = n?.body ?? msg.data['body']?.toString() ?? '';
         final type = msg.data['type']?.toString();
+        final soundTag = msg.data['soundTag']?.toString();
         InAppNotificationService.instance.show(
           title: title,
           message: body,
           type: type,
         );
+        // Phase 253 — play short in-app sound for category
+        // ignore: unawaited_futures
+        SoundPlayer.instance.play(soundTag);
       });
 
       // Auto-resync if FCM rotates the token.

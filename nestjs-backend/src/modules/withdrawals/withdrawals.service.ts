@@ -12,6 +12,8 @@ import {
 import { Payment, PaymentStatus } from '../payments/payment.entity';
 import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
 import { UpdateWithdrawalStatusDto } from './dto/update-status.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/notification.entity';
 
 @Injectable()
 export class WithdrawalsService {
@@ -20,6 +22,7 @@ export class WithdrawalsService {
     private readonly repo: Repository<WithdrawalRequest>,
     @InjectRepository(Payment)
     private readonly paymentsRepo: Repository<Payment>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -124,7 +127,43 @@ export class WithdrawalsService {
     wr.processedAt = new Date();
     wr.processedBy = adminId;
     if (dto.adminNote !== undefined) wr.adminNote = dto.adminNote;
-    return this.repo.save(wr);
+    const saved = await this.repo.save(wr);
+
+    // Phase 253 — notify worker of withdrawal status change
+    try {
+      const tl = (wr.amountMinor / 100).toFixed(2);
+      let title = '';
+      let body = '';
+      switch (dto.status) {
+        case WithdrawalStatus.APPROVED:
+          title = 'Çekme talebi onaylandı';
+          body = `${tl} TL çekme talebin onaylandı. Yakında hesabına aktarılacak.`;
+          break;
+        case WithdrawalStatus.REJECTED:
+          title = 'Çekme talebi reddedildi';
+          body = `${tl} TL çekme talebin reddedildi.${dto.adminNote ? ' Not: ' + dto.adminNote : ''}`;
+          break;
+        case WithdrawalStatus.COMPLETED:
+          title = 'Çekme tamamlandı';
+          body = `${tl} TL banka hesabına aktarıldı.`;
+          break;
+        default:
+          title = '';
+      }
+      if (title) {
+        await this.notificationsService.send({
+          userId: wr.workerId,
+          type: NotificationType.SYSTEM,
+          title,
+          body,
+          refId: wr.id,
+        });
+      }
+    } catch {
+      /* notification opsiyonel — sessiz geç */
+    }
+
+    return saved;
   }
 
   private isValidTransition(

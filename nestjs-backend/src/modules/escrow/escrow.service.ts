@@ -11,6 +11,8 @@ import { PaymentEscrow, EscrowStatus } from './payment-escrow.entity';
 import { tlToMinor, pctOfMinor, subMinor } from '../../common/money.util';
 import { FeeService, FeeBreakdown } from './fee.service';
 import { IyzipayService } from './iyzipay.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/notification.entity';
 
 export const ALLOWED_TRANSITIONS: Record<EscrowStatus, EscrowStatus[]> = {
   [EscrowStatus.HELD]: [
@@ -86,6 +88,7 @@ export class EscrowService {
     private readonly repo: Repository<PaymentEscrow>,
     private readonly feeService: FeeService,
     private readonly iyzipay: IyzipayService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   isValidTransition(from: EscrowStatus, to: EscrowStatus): boolean {
@@ -357,7 +360,26 @@ export class EscrowService {
     escrow.status = EscrowStatus.RELEASED;
     escrow.releasedAt = new Date();
     escrow.releaseReason = reason ?? null;
-    return this.repo.save(escrow);
+    const saved = await this.repo.save(escrow);
+
+    // Phase 253 — notify worker that escrow funds are released
+    try {
+      await this.notificationsService.send({
+        userId: escrow.taskerId,
+        type: NotificationType.JOB_COMPLETED,
+        title: 'Ödeme serbest bırakıldı',
+        body: `Hesabına ${escrow.taskerNetAmount ?? escrow.amount} ₺ ödeme aktarıldı.`,
+        refId: escrow.id,
+        relatedType: 'job',
+        relatedId: escrow.jobId,
+      });
+    } catch (err) {
+      this.logger.warn(
+        `ESCROW_RELEASED notification failed: ${(err as Error).message}`,
+      );
+    }
+
+    return saved;
   }
 
   async refund(

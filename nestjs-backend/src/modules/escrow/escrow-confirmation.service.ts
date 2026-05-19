@@ -21,6 +21,8 @@ import {
   ConfirmationPhase,
 } from './escrow-confirmation-photo.entity';
 import { EscrowConfirmationVideo } from './escrow-confirmation-video.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/notification.entity';
 
 const QR_TTL_MS = 5 * 60 * 1000; // 5 min QR validity
 const CONFIRMATION_DEADLINE_MS = 72 * 60 * 60 * 1000; // 72h auto-dispute
@@ -150,6 +152,7 @@ export class EscrowConfirmationService {
     @InjectRepository(EscrowConfirmationVideo)
     private readonly videoRepo: Repository<EscrowConfirmationVideo>,
     private readonly escrowService: EscrowService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   // ------------- helpers -------------
@@ -209,6 +212,23 @@ export class EscrowConfirmationService {
     escrow.workerLng = lng;
     escrow.confirmationDeadline = deadline;
     await this.escrowRepo.save(escrow);
+
+    // Phase 253 — notify customer to start confirmation flow
+    try {
+      await this.notificationsService.send({
+        userId: escrow.customerId,
+        type: NotificationType.SYSTEM,
+        title: 'Onay sürecini başlat',
+        body: 'Usta işi tamamladığını bildirdi. QR kodu okutup onay verebilirsin.',
+        refId: escrow.id,
+        relatedType: 'job',
+        relatedId: escrow.jobId,
+      });
+    } catch (err) {
+      this.logger.warn(
+        `CONFIRMATION_START notification failed: ${(err as Error).message}`,
+      );
+    }
 
     return {
       qrToken: token,

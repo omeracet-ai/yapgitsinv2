@@ -5,6 +5,7 @@ import '../../../core/models/booking_model.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/list_skeleton.dart';
 import '../data/booking_repository.dart';
+import 'booking_detail_screen.dart';
 import '../../escrow/widgets/escrow_status_badge.dart';
 import '../../escrow/widgets/dispute_button.dart';
 
@@ -88,6 +89,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                 _BookingsView(
                   mode: _mode,
                   provider: myWorkerBookingsProvider,
+                  asWorker: true,
                 ),
               ],
             ),
@@ -101,8 +103,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
 class _BookingsView extends ConsumerWidget {
   final _ViewMode mode;
   final FutureProvider<List<Booking>> provider;
+  final bool asWorker;
 
-  const _BookingsView({required this.mode, required this.provider});
+  const _BookingsView({
+    required this.mode,
+    required this.provider,
+    this.asWorker = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -123,7 +130,7 @@ class _BookingsView extends ConsumerWidget {
           );
         }
         return mode == _ViewMode.list
-            ? _ListView(bookings: bookings)
+            ? _ListView(bookings: bookings, asWorker: asWorker)
             : _CalendarView(bookings: bookings);
       },
     );
@@ -132,7 +139,8 @@ class _BookingsView extends ConsumerWidget {
 
 class _ListView extends ConsumerWidget {
   final List<Booking> bookings;
-  const _ListView({required this.bookings});
+  final bool asWorker;
+  const _ListView({required this.bookings, this.asWorker = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -141,9 +149,20 @@ class _ListView extends ConsumerWidget {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: sorted.length,
-      itemBuilder: (_, i) => _bookingCard(
-        sorted[i],
-        onCancel: () => _showCancelSheet(context, ref, sorted[i]),
+      itemBuilder: (_, i) => InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => BookingDetailScreen(
+              booking: sorted[i],
+              asWorker: asWorker,
+            ),
+          ),
+        ),
+        child: _bookingCard(
+          sorted[i],
+          onCancel: () => _showCancelSheet(context, ref, sorted[i]),
+        ),
       ),
     );
   }

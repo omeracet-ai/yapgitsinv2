@@ -82,6 +82,14 @@ class BookingRepository {
     }
   }
 
+  /// PATCH /bookings/:id/status — worker accept/reject/start/complete, or admin override.
+  Future<void> updateStatus(String bookingId, String status,
+      {String? note}) async {
+    final body = <String, dynamic>{'status': status};
+    if (note != null && note.isNotEmpty) body['note'] = note;
+    await _dio.patch('/bookings/$bookingId/status', data: body);
+  }
+
   Future<List<Booking>> getMyBookingsAsCustomer() async {
     try {
       final res = await _dio.get('/bookings/my-as-customer');

@@ -104,6 +104,23 @@ export class NotificationsService {
     return user.notificationPreferences[cat] !== false;
   }
 
+  /** Phase 253 — derive in-app sound tag for client playback */
+  static soundTagFor(type: NotificationType): 'offer' | 'accept' | 'release' | 'alert' {
+    switch (type) {
+      case NotificationType.NEW_OFFER:
+      case NotificationType.COUNTER_OFFER:
+        return 'offer';
+      case NotificationType.OFFER_ACCEPTED:
+      case NotificationType.BOOKING_CONFIRMED:
+        return 'accept';
+      case NotificationType.JOB_COMPLETED:
+      case NotificationType.BOOKING_COMPLETED:
+        return 'release';
+      default:
+        return 'alert';
+    }
+  }
+
   /** Phase 71 — derive deep-link target type from notification type */
   static relatedTypeFor(type: NotificationType): 'booking' | 'job' | 'user' | null {
     switch (type) {
@@ -166,8 +183,10 @@ export class NotificationsService {
     // Phase 121 — fire-and-forget transactional email (selected types)
     void this.sendEmailForNotification(data.userId, data.type, data.title, data.body);
     // Phase 113 — fire-and-forget FCM push (does not block API response)
+    const soundTag = NotificationsService.soundTagFor(data.type);
     void this.fcm.sendToUser(data.userId, data.title, data.body, {
       type: String(data.type),
+      soundTag,
       ...(data.refId ? { refId: data.refId } : {}),
       ...(relatedType ? { relatedType } : {}),
       ...(relatedId ? { relatedId } : {}),

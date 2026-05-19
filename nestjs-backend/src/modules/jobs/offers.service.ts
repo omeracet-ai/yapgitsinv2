@@ -177,7 +177,27 @@ export class OffersService {
       lineItems: data.lineItems && data.lineItems.length > 0 ? data.lineItems : null,
       status: OfferStatus.PENDING,
     });
-    return this.offersRepository.save(offer);
+    const saved = await this.offersRepository.save(offer);
+
+    // Phase 253 — notify customer about new offer (fire-and-forget)
+    try {
+      const job = await this.jobsRepository.findOne({ where: { id: data.jobId } });
+      if (job && job.customerId && job.customerId !== data.userId) {
+        await this.notificationsService.send({
+          userId: job.customerId,
+          type: NotificationType.NEW_OFFER,
+          title: 'Yeni teklif aldın',
+          body: `"${job.title}" ilanına ${data.price} ₺ teklif geldi`,
+          refId: saved.id,
+          relatedType: 'job',
+          relatedId: job.id,
+        });
+      }
+    } catch (err) {
+      this.logger.warn(`NEW_OFFER notification failed: ${(err as Error).message}`);
+    }
+
+    return saved;
   }
 
   /** lineItems doluysa sum(total) ile price farkı 1 TL'den fazla olmamalı. */
@@ -213,9 +233,12 @@ export class OffersService {
     await this.usersService.bumpStat(offer.userId, 'asWorkerSuccess');
 
     // Escrow hold — bookkeeping only; never block accept on escrow failure
+    let escrowHeld = false;
+    let jobTitle = '';
     try {
       const job = await this.jobsRepository.findOne({ where: { id: saved.jobId } });
       if (job && job.customerId) {
+        jobTitle = job.title ?? '';
         await this.escrowService.hold({
           jobId: saved.jobId,
           offerId: saved.id,
@@ -223,6 +246,7 @@ export class OffersService {
           customerId: job.customerId,
           taskerId: saved.userId,
         });
+        escrowHeld = true;
       } else {
         this.logger.warn(
           `Escrow hold skipped: job or customer missing for offer ${saved.id}`,
@@ -234,6 +258,34 @@ export class OffersService {
       );
     }
 
+    // Phase 253 — OFFER_ACCEPTED notification to worker + ESCROW_HOLD via SYSTEM
+    try {
+      await this.notificationsService.send({
+        userId: saved.userId,
+        type: NotificationType.OFFER_ACCEPTED,
+        title: 'Teklifin kabul edildi',
+        body: jobTitle
+          ? `"${jobTitle}" — ${saved.price} ₺ teklifin kabul edildi`
+          : `${saved.price} ₺ teklifin kabul edildi`,
+        refId: saved.id,
+        relatedType: 'job',
+        relatedId: saved.jobId,
+      });
+      if (escrowHeld) {
+        await this.notificationsService.send({
+          userId: saved.userId,
+          type: NotificationType.SYSTEM,
+          title: 'Ödeme alındı, işe başlayabilirsin',
+          body: `Ödeme güvende tutuluyor. İş tamamlandığında serbest bırakılacak.`,
+          refId: saved.id,
+          relatedType: 'job',
+          relatedId: saved.jobId,
+        });
+      }
+    } catch (err) {
+      this.logger.warn(`OFFER_ACCEPTED notification failed: ${(err as Error).message}`);
+    }
+
     return saved;
   }
 
@@ -242,6 +294,22 @@ export class OffersService {
     offer.status = OfferStatus.REJECTED;
     const saved = await this.offersRepository.save(offer);
     await this.usersService.bumpStat(offer.userId, 'asWorkerFail');
+
+    // Phase 253 — notify worker of rejection
+    try {
+      await this.notificationsService.send({
+        userId: saved.userId,
+        type: NotificationType.OFFER_REJECTED,
+        title: 'Teklifin reddedildi',
+        body: `${saved.price} ₺ teklifin reddedildi`,
+        refId: saved.id,
+        relatedType: 'job',
+        relatedId: saved.jobId,
+      });
+    } catch (err) {
+      this.logger.warn(`OFFER_REJECTED notification failed: ${(err as Error).message}`);
+    }
+
     return saved;
   }
 
