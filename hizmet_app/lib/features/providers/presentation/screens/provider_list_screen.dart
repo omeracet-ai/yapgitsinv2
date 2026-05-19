@@ -230,21 +230,21 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             color: active
-                ? AppColors.background
+                ? Colors.white
                 : Colors.black.withValues(alpha: 0.28),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: active
-                  ? AppColors.background
+                  ? Colors.white
                   : Colors.white.withValues(alpha: 0.35),
             ),
           ),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: active ? Colors.black : Colors.white,
             ),
           ),
         ),
