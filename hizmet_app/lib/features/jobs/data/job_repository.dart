@@ -18,12 +18,14 @@ class JobRepository {
 
   JobRepository({required Dio dio}) : _dio = dio;
 
-  Future<List<Map<String, dynamic>>> getJobs({String? category, String? q, String? status}) async {
+  Future<List<Map<String, dynamic>>> getJobs(
+      {String? category, String? q, String? status, String? kind}) async {
     try {
       final response = await _dio.get('/jobs', queryParameters: {
         if (category != null) 'category': category,
         if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
         if (status != null) 'status': status,
+        if (kind != null) 'kind': kind,
       });
       return List<Map<String, dynamic>>.from(response.data['data'] as List);
     } on DioException catch (e) {

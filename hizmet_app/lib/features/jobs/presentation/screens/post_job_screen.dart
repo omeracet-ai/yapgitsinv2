@@ -23,7 +23,12 @@ class PostJobScreen extends ConsumerStatefulWidget {
   /// Optional source job to clone (used by "🔁 Tekrar İlan Aç" feature).
   /// When provided, wizard fields are pre-filled from this map.
   final Map<String, dynamic>? initialJob;
-  const PostJobScreen({super.key, this.initialJob});
+
+  /// Phase Two-Sided — 'request' (müşteri talebi, default) veya 'offer'
+  /// (usta hizmet ilanı). UI etiketleri ve backend payload buna göre değişir.
+  final String kind;
+
+  const PostJobScreen({super.key, this.initialJob, this.kind = 'request'});
 
   @override
   ConsumerState<PostJobScreen> createState() => _PostJobScreenState();
@@ -276,7 +281,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Yeni İlan • Adım ${_currentStep + 1}/3'),
+        title: Text(
+          '${widget.kind == 'offer' ? 'Yeni Hizmet İlanı' : 'Yeni İlan'} • Adım ${_currentStep + 1}/3',
+        ),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         leading: IconButton(
@@ -1055,6 +1062,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       // Yeni ilanlar her zaman net pin'le geliyor → backfill bayrağı false.
       'locationApprox': false,
       'locationSource': 'user-pin',
+      // Phase Two-Sided — request/offer ayraç
+      'kind': widget.kind,
       if (_uploadedPhotoUrls.isNotEmpty) 'photos': _uploadedPhotoUrls,
       if (_uploadedVideoUrls.isNotEmpty) 'videos': _uploadedVideoUrls,
       if (_dueDate != null)

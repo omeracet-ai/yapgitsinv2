@@ -14,6 +14,12 @@ class JobStatus {
   static const String CANCELLED = 'cancelled';
 }
 
+/// Phase Two-Sided — ilan türü ayraç (backend ile aynı string'ler)
+class JobKind {
+  static const String request = 'request'; // müşteri talep
+  static const String offer = 'offer';     // usta hizmet ilanı
+}
+
 class Job {
   final String id, title, desc, location, budget, time;
   final IconData icon;
@@ -30,6 +36,7 @@ class Job {
   final String? description;
   final List<String>? photos;
   final int? featuredOrder;
+  final String kind; // 'request' | 'offer'
 
   Job({
     required this.id,
@@ -50,6 +57,7 @@ class Job {
     this.description,
     this.photos,
     this.featuredOrder,
+    this.kind = JobKind.request,
   });
 
   factory Job.fromMap(Map<String, dynamic> map) {
@@ -84,6 +92,7 @@ class Job {
       description: map['description'] as String?,
       photos: photoList,
       featuredOrder: map['featuredOrder'] as int?,
+      kind: (map['kind'] as String?) ?? JobKind.request,
     );
   }
 
@@ -180,8 +189,20 @@ class Job {
 }
 
 final jobsProvider = StateNotifierProvider<JobNotifier, AsyncValue<List<Job>>>((ref) {
-  final notifier = JobNotifier(ref.watch(jobRepositoryProvider));
+  final notifier = JobNotifier(ref.watch(jobRepositoryProvider),
+      kind: JobKind.request);
   // Filter değiştiğinde liste yeniden hesaplansın
+  ref.listen<JobFilter>(jobFilterProvider, (_, next) {
+    notifier.applyFilter(next);
+  });
+  return notifier;
+});
+
+/// Phase Two-Sided — Usta hizmet ilanları (kind='offer')
+final serviceListingsProvider =
+    StateNotifierProvider<JobNotifier, AsyncValue<List<Job>>>((ref) {
+  final notifier = JobNotifier(ref.watch(jobRepositoryProvider),
+      kind: JobKind.offer);
   ref.listen<JobFilter>(jobFilterProvider, (_, next) {
     notifier.applyFilter(next);
   });
@@ -190,11 +211,14 @@ final jobsProvider = StateNotifierProvider<JobNotifier, AsyncValue<List<Job>>>((
 
 class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
   final JobRepository _repository;
+  final String _kind;
   List<Job> _allJobs = [];
   String? _currentCategory;
   JobFilter _filter = const JobFilter();
 
-  JobNotifier(this._repository) : super(const AsyncValue.loading()) {
+  JobNotifier(this._repository, {String kind = JobKind.request})
+      : _kind = kind,
+        super(const AsyncValue.loading()) {
     fetchJobs();
   }
 
@@ -202,7 +226,8 @@ class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
     _currentCategory = category;
     state = const AsyncValue.loading();
     try {
-      final jobsData = await _repository.getJobs(category: category, q: q, status: 'open');
+      final jobsData = await _repository.getJobs(
+          category: category, q: q, status: 'open', kind: _kind);
       _allJobs = jobsData.map((m) => Job.fromMap(m)).toList();
       state = AsyncValue.data(_applyFilter(_allJobs));
     } catch (e, st) {

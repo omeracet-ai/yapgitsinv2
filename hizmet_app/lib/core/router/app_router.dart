@@ -244,7 +244,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/ilan-ver',
-        builder: (context, state) => const PostJobScreen(),
+        builder: (context, state) => const PostJobScreen(kind: 'request'),
+      ),
+      GoRoute(
+        path: '/hizmet-ilani-ver',
+        builder: (context, state) => const PostJobScreen(kind: 'offer'),
       ),
       GoRoute(
         path: '/jetonlar',
