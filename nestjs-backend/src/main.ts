@@ -197,6 +197,38 @@ async function applyBootMigrations(): Promise<void> {
       );
     }
 
+    // Phase 182 — admin_audit_logs gained denormalized + request-context columns.
+    const auditCols: { name: string; type: string }[] = [
+      { name: 'tenantId', type: 'VARCHAR(36)' },
+      { name: 'actorEmail', type: 'VARCHAR(255)' },
+      { name: 'ip', type: 'VARCHAR(64)' },
+      { name: 'userAgent', type: 'VARCHAR(512)' },
+    ];
+    for (const col of auditCols) {
+      try {
+        const exists = await get(
+          `SELECT 1 AS found FROM pragma_table_info('admin_audit_logs') WHERE name = ?`,
+          [col.name],
+        );
+        if (!exists) {
+          try {
+            await run(
+              `ALTER TABLE admin_audit_logs ADD COLUMN ${col.name} ${col.type}`,
+            );
+            logger.log(`added admin_audit_logs.${col.name}`);
+          } catch (e) {
+            logger.warn(
+              `add admin_audit_logs.${col.name} skipped: ${e instanceof Error ? e.message : String(e)}`,
+            );
+          }
+        }
+      } catch (e) {
+        logger.warn(
+          `detect admin_audit_logs.${col.name} failed: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
+    }
+
     // Phase 174c — Minor-unit (kuruş) columns added later than initial schema.
     // Idempotently ALTER each table to add the missing INTEGER column.
     const minorCols: { table: string; column: string }[] = [

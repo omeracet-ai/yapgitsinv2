@@ -89,15 +89,25 @@ export class BookingEscrowService {
         }),
       );
 
-      await em.save(
-        em.create(AdminAuditLog, {
-          adminUserId: customerId,
-          action: 'escrow.hold',
-          targetType: 'booking_escrow',
-          targetId: saved.id,
-          payload: { bookingId, customerId, workerId, amount },
-        }),
-      );
+      // Audit log is best-effort — escrow operations must succeed even if the
+      // log row write fails (e.g., schema drift between deployments).
+      try {
+        await em.save(
+          em.create(AdminAuditLog, {
+            adminUserId: customerId,
+            action: 'escrow.hold',
+            targetType: 'booking_escrow',
+            targetId: saved.id,
+            payload: { bookingId, customerId, workerId, amount },
+          }),
+        );
+      } catch (e) {
+        // swallow — schema drift on audit table mustn't block escrow hold
+        console.warn(
+          '[booking-escrow] audit log skipped:',
+          e instanceof Error ? e.message : String(e),
+        );
+      }
 
       return saved;
     });
