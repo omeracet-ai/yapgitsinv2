@@ -239,7 +239,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
                               decoration: BoxDecoration(
                                 color: active
                                     ? AppColors.primary
-                                    : Colors.white,
+                                    : AppColors.background,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                     color: active
