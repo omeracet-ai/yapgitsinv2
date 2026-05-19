@@ -186,8 +186,11 @@ export class EmailService implements OnModuleInit {
 
   async sendPasswordReset(user: MailUser, resetToken: string): Promise<void> {
     if (!user.email) return;
-    const base = process.env.FRONTEND_URL ?? 'https://yapgitsin.tr';
-    const url = `${base}/reset-password?token=${resetToken}`;
+    // Reset page is served by the backend; marketing domain has no route.
+    const base = process.env.PASSWORD_RESET_URL_BASE
+      ?? process.env.API_BASE_URL
+      ?? 'https://api.yapgitsin.tr';
+    const url = `${base}/auth/reset-password?token=${resetToken}`;
     const html = shell(
       'Şifre sıfırlama',
       `<p>Merhaba <b>${user.fullName ?? ''}</b>,</p>

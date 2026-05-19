@@ -427,8 +427,12 @@ export class AuthService implements OnModuleInit {
       this.resetRepo.create({ userId: user.id, tokenHash, expiresAt, usedAt: null }),
     );
 
-    const base = process.env.FRONTEND_URL ?? 'https://yapgitsin.tr';
-    generic.resetUrl = `${base}/reset-password?token=${plain}`;
+    // Reset page is served by the backend itself (Next.js marketing domain has
+    // no /reset-password route), so build the URL from the API base.
+    const apiBase = process.env.PASSWORD_RESET_URL_BASE
+      ?? process.env.API_BASE_URL
+      ?? 'https://api.yapgitsin.tr';
+    generic.resetUrl = `${apiBase}/auth/reset-password?token=${plain}`;
     // Phase 121 — fire-and-forget password reset email
     void this.emailService.sendPasswordReset(user, plain);
     return generic;
