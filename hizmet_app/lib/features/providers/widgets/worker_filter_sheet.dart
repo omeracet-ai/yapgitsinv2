@@ -349,7 +349,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: active ? AppColors.primary : Colors.white,
+              color: active ? AppColors.primary : AppColors.surfaceElevated,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                   color: active ? AppColors.primary : AppColors.border),
@@ -459,7 +459,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: active ? AppColors.primary : Colors.white,
+              color: active ? AppColors.primary : AppColors.surfaceElevated,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                   color: active ? AppColors.primary : AppColors.border),
