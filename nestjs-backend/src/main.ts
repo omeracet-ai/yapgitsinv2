@@ -197,6 +197,48 @@ async function applyBootMigrations(): Promise<void> {
       );
     }
 
+    // Phase 257 — Mutual confirmation flow columns mirrored onto booking_escrows
+    // so /escrow/:id/confirmation/* can bridge to BookingEscrow rows written by
+    // /escrow/hold. Idempotent ADD COLUMN — safe to run on every boot.
+    const bookingEscrowConfirmCols: { name: string; type: string }[] = [
+      { name: 'confirmationStatus', type: "VARCHAR(32) NOT NULL DEFAULT 'none'" },
+      { name: 'confirmationTier', type: 'VARCHAR(16)' },
+      { name: 'qrToken', type: 'VARCHAR(64)' },
+      { name: 'qrIssuedAt', type: 'DATETIME' },
+      { name: 'qrScannedAt', type: 'DATETIME' },
+      { name: 'workerLat', type: 'REAL' },
+      { name: 'workerLng', type: 'REAL' },
+      { name: 'customerLat', type: 'REAL' },
+      { name: 'customerLng', type: 'REAL' },
+      { name: 'workerConfirmedAt', type: 'DATETIME' },
+      { name: 'customerConfirmedAt', type: 'DATETIME' },
+      { name: 'confirmationDeadline', type: 'DATETIME' },
+    ];
+    for (const col of bookingEscrowConfirmCols) {
+      try {
+        const exists = await get(
+          `SELECT 1 AS found FROM pragma_table_info('booking_escrows') WHERE name = ?`,
+          [col.name],
+        );
+        if (!exists) {
+          try {
+            await run(
+              `ALTER TABLE booking_escrows ADD COLUMN ${col.name} ${col.type}`,
+            );
+            logger.log(`added booking_escrows.${col.name}`);
+          } catch (e) {
+            logger.warn(
+              `add booking_escrows.${col.name} skipped: ${e instanceof Error ? e.message : String(e)}`,
+            );
+          }
+        }
+      } catch (e) {
+        logger.warn(
+          `detect booking_escrows.${col.name} failed: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
+    }
+
     // Phase 182 — admin_audit_logs gained denormalized + request-context columns.
     const auditCols: { name: string; type: string }[] = [
       { name: 'tenantId', type: 'VARCHAR(36)' },
@@ -237,6 +279,7 @@ async function applyBootMigrations(): Promise<void> {
       { table: 'service_requests', column: 'priceMinor' },
       { table: 'payments', column: 'amountMinor' },
       { table: 'payment_escrows', column: 'amountMinor' },
+      { table: 'booking_escrows', column: 'amountMinor' },
       { table: 'users', column: 'tokenBalanceMinor' },
       { table: 'bookings', column: 'agreedPriceMinor' },
     ];
@@ -261,6 +304,43 @@ async function applyBootMigrations(): Promise<void> {
       } catch (e) {
         logger.warn(
           `detect ${table}.${column} failed: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
+    }
+
+    // Phase 174c backfill — rows that existed BEFORE the minor-unit column was
+    // added got `0` from the ALTER DEFAULT. Translate the legacy decimal `amount`
+    // / `price` columns into kuruş (×100, rounded) so the API stops returning
+    // amountMinor=0/null while amount is populated. Idempotent: only touches
+    // rows where the minor field is still 0 but the source field is positive.
+    const backfills: { table: string; minor: string; source: string }[] = [
+      { table: 'booking_escrows', minor: 'amountMinor', source: 'amount' },
+      { table: 'payment_escrows', minor: 'amountMinor', source: 'amount' },
+      { table: 'payments', minor: 'amountMinor', source: 'amount' },
+      { table: 'offers', minor: 'priceMinor', source: 'price' },
+      { table: 'service_requests', minor: 'priceMinor', source: 'price' },
+      { table: 'bookings', minor: 'agreedPriceMinor', source: 'agreedPrice' },
+      { table: 'token_transactions', minor: 'amountMinor', source: 'amount' },
+      { table: 'users', minor: 'tokenBalanceMinor', source: 'tokenBalance' },
+    ];
+    for (const { table, minor, source } of backfills) {
+      try {
+        const hasMinor = await get(
+          `SELECT 1 AS found FROM pragma_table_info(?) WHERE name = ?`,
+          [table, minor],
+        );
+        const hasSource = await get(
+          `SELECT 1 AS found FROM pragma_table_info(?) WHERE name = ?`,
+          [table, source],
+        );
+        if (!hasMinor || !hasSource) continue;
+        await run(
+          `UPDATE ${table} SET ${minor} = CAST(ROUND(${source} * 100) AS INTEGER) WHERE (${minor} IS NULL OR ${minor} = 0) AND ${source} IS NOT NULL AND ${source} > 0`,
+        );
+        logger.log(`backfilled ${table}.${minor} from ${source}`);
+      } catch (e) {
+        logger.warn(
+          `backfill ${table}.${minor} skipped: ${e instanceof Error ? e.message : String(e)}`,
         );
       }
     }

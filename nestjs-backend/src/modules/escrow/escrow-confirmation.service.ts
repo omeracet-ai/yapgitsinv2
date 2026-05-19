@@ -14,6 +14,7 @@ import {
   ConfirmationStatus,
   ConfirmationTier,
 } from './payment-escrow.entity';
+import { BookingEscrow } from './booking-escrow.entity';
 import { EscrowService } from './escrow.service';
 import {
   EscrowConfirmationPhoto,
@@ -147,6 +148,8 @@ export class EscrowConfirmationService {
   constructor(
     @InjectRepository(PaymentEscrow)
     private readonly escrowRepo: Repository<PaymentEscrow>,
+    @InjectRepository(BookingEscrow)
+    private readonly bookingEscrowRepo: Repository<BookingEscrow>,
     @InjectRepository(EscrowConfirmationPhoto)
     private readonly photoRepo: Repository<EscrowConfirmationPhoto>,
     @InjectRepository(EscrowConfirmationVideo)
@@ -157,10 +160,73 @@ export class EscrowConfirmationService {
 
   // ------------- helpers -------------
 
+  /**
+   * Bug #2 bridge — confirmation flow operates on PaymentEscrow shape, but
+   * `/escrow/hold` writes to BookingEscrow. This helper finds an escrow in
+   * either table and returns a uniform handle (`PaymentEscrow`-shaped view +
+   * source-aware `save()`). For BookingEscrow rows we adapt: `workerId` →
+   * `taskerId`, status mapping is best-effort (BookingEscrow.status uses a
+   * different enum but confirmation only reads paymentStatus for the
+   * pre-flight check, which we synthesize as 'paid' when status === HELD).
+   */
+  private async findEscrowAnywhere(
+    id: string,
+  ): Promise<{ escrow: PaymentEscrow; save: () => Promise<void> }> {
+    const fromPayment = await this.escrowRepo.findOne({ where: { id } });
+    if (fromPayment) {
+      return {
+        escrow: fromPayment,
+        save: async () => {
+          await this.escrowRepo.save(fromPayment);
+        },
+      };
+    }
+    const fromBooking = await this.bookingEscrowRepo.findOne({ where: { id } });
+    if (!fromBooking) throw new NotFoundException('Escrow not found');
+    // Adapt BookingEscrow → PaymentEscrow-shaped view. We mutate the same
+    // underlying instance for confirmation fields so save() persists them.
+    const adapted = fromBooking as unknown as PaymentEscrow;
+    // Synthesize PaymentEscrow-only fields that confirmation service reads.
+    if (!('taskerId' in fromBooking) || !adapted.taskerId) {
+      Object.defineProperty(adapted, 'taskerId', {
+        get: () => fromBooking.workerId,
+        set: (v: string) => {
+          fromBooking.workerId = v;
+        },
+        configurable: true,
+      });
+    }
+    // paymentStatus: BookingEscrow has no such column. The `start()` guard
+    // requires 'paid' or 'held'. Map BookingEscrow.status HELD/RELEASED →
+    // 'paid' so the guard passes; otherwise leave undefined → BadRequest.
+    if (!('paymentStatus' in adapted) || !adapted.paymentStatus) {
+      Object.defineProperty(adapted, 'paymentStatus', {
+        get: () =>
+          fromBooking.status === 'held' || fromBooking.status === 'released'
+            ? 'paid'
+            : 'pending',
+        configurable: true,
+      });
+    }
+    // jobId is not stored on BookingEscrow (it's booking-scoped). Provide
+    // bookingId as a fallback so the notification refId is meaningful.
+    if (!('jobId' in adapted) || !adapted.jobId) {
+      Object.defineProperty(adapted, 'jobId', {
+        get: () => fromBooking.bookingId,
+        configurable: true,
+      });
+    }
+    return {
+      escrow: adapted,
+      save: async () => {
+        await this.bookingEscrowRepo.save(fromBooking);
+      },
+    };
+  }
+
   private async loadEscrow(id: string): Promise<PaymentEscrow> {
-    const e = await this.escrowRepo.findOne({ where: { id } });
-    if (!e) throw new NotFoundException('Escrow not found');
-    return e;
+    const { escrow } = await this.findEscrowAnywhere(id);
+    return escrow;
   }
 
   private sideOf(escrow: PaymentEscrow, userId: string): ConfirmationSide {
@@ -181,7 +247,7 @@ export class EscrowConfirmationService {
     lat: number,
     lng: number,
   ): Promise<ConfirmationStartResponse> {
-    const escrow = await this.loadEscrow(escrowId);
+    const { escrow, save } = await this.findEscrowAnywhere(escrowId);
     if (escrow.taskerId !== userId) {
       throw new ForbiddenException('Only worker may start confirmation');
     }
@@ -211,7 +277,7 @@ export class EscrowConfirmationService {
     escrow.workerLat = lat;
     escrow.workerLng = lng;
     escrow.confirmationDeadline = deadline;
-    await this.escrowRepo.save(escrow);
+    await save();
 
     // Phase 253 — notify customer to start confirmation flow
     try {
@@ -244,7 +310,7 @@ export class EscrowConfirmationService {
     escrowId: string,
     userId: string,
   ): Promise<{ qrToken: string; expiresAt: Date; tier: ConfirmationTier }> {
-    const escrow = await this.loadEscrow(escrowId);
+    const { escrow, save } = await this.findEscrowAnywhere(escrowId);
     if (escrow.taskerId !== userId) {
       throw new ForbiddenException('Only worker may fetch QR');
     }
@@ -260,7 +326,7 @@ export class EscrowConfirmationService {
       issuedAt = new Date(now);
       escrow.qrToken = token;
       escrow.qrIssuedAt = issuedAt;
-      await this.escrowRepo.save(escrow);
+      await save();
     }
     return {
       qrToken: token,
@@ -313,7 +379,7 @@ export class EscrowConfirmationService {
     lat: number,
     lng: number,
   ): Promise<{ ok: true; gpsMatch: boolean; distanceM: number | null }> {
-    const escrow = await this.loadEscrow(escrowId);
+    const { escrow, save } = await this.findEscrowAnywhere(escrowId);
     if (escrow.customerId !== userId) {
       throw new ForbiddenException('Only customer may scan');
     }
@@ -349,7 +415,7 @@ export class EscrowConfirmationService {
     escrow.qrScannedAt = new Date();
     escrow.customerLat = lat;
     escrow.customerLng = lng;
-    await this.escrowRepo.save(escrow);
+    await save();
 
     return { ok: true, gpsMatch, distanceM: distance };
   }
@@ -464,7 +530,7 @@ export class EscrowConfirmationService {
     escrowReleased: boolean;
     missing?: string[];
   }> {
-    const escrow = await this.loadEscrow(escrowId);
+    const { escrow, save } = await this.findEscrowAnywhere(escrowId);
     const side = this.sideOf(escrow, userId);
     if (escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION) {
       throw new BadRequestException('Confirmation not active');
@@ -490,7 +556,7 @@ export class EscrowConfirmationService {
     const now = new Date();
     if (side === 'worker') escrow.workerConfirmedAt = now;
     else escrow.customerConfirmedAt = now;
-    await this.escrowRepo.save(escrow);
+    await save();
 
     let released = false;
     if (escrow.workerConfirmedAt && escrow.customerConfirmedAt) {
