@@ -217,6 +217,49 @@ export class JobsService {
           status: JobStatus.OPEN,
           customerId: userId,
         },
+        // Phase Two-Sided — kind='offer' demo hizmet ilanları (usta tarafı)
+        {
+          title: 'Profesyonel Klima Bakımı',
+          description:
+              'Split klima genel bakımı, gaz dolumu, derin temizlik. 1 yıl garanti.',
+          category: 'Klima Servis',
+          location: 'Kadıköy, İstanbul',
+          budgetMin: 350,
+          budgetMax: 600,
+          budgetMinMinor: tlToMinor(350),
+          budgetMaxMinor: tlToMinor(600),
+          status: JobStatus.OPEN,
+          customerId: userId,
+          kind: JobKind.OFFER,
+        },
+        {
+          title: 'Ev Boyama — Tüm Daire',
+          description:
+              '3+1 daire iç boya, malzeme dahil. 2-3 günde teslim, temiz çalışma garantili.',
+          category: 'Boya & Badana',
+          location: 'Şişli, İstanbul',
+          budgetMin: 4500,
+          budgetMax: 7000,
+          budgetMinMinor: tlToMinor(4500),
+          budgetMaxMinor: tlToMinor(7000),
+          status: JobStatus.OPEN,
+          customerId: userId,
+          kind: JobKind.OFFER,
+        },
+        {
+          title: 'Acil Tesisat Servisi',
+          description:
+              '7/24 acil su kaçağı, tıkanıklık, kombi servisi. 30 dk içinde lokal.',
+          category: 'Tesisat',
+          location: 'Beşiktaş, İstanbul',
+          budgetMin: 200,
+          budgetMax: 500,
+          budgetMinMinor: tlToMinor(200),
+          budgetMaxMinor: tlToMinor(500),
+          status: JobStatus.OPEN,
+          customerId: userId,
+          kind: JobKind.OFFER,
+        },
       ]);
     }
   }
