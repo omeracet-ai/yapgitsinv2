@@ -299,6 +299,16 @@ export class PaymentsService {
       throw new NotFoundException('Payment not found');
     }
 
+    // Idempotency: already fully refunded → return existing details
+    if (payment.status === PaymentStatus.REFUNDED) {
+      return {
+        paymentId: payment.id,
+        refundId: payment.refundId,
+        amountRefunded: payment.refundedAmountMinor ?? payment.amountMinor,
+        status: payment.status,
+      };
+    }
+
     if (payment.status !== PaymentStatus.COMPLETED) {
       throw new BadRequestException('Only completed payments can be refunded');
     }
@@ -310,8 +320,53 @@ export class PaymentsService {
     }
 
     try {
-      // Process refund based on payment method
-      payment.refundId = `refund_${uuidv4()}`;
+      let refundId: string = `refund_${uuidv4()}`;
+
+      // Real iyzipay refund for CARD payments with a known paymentTransactionId
+      if (
+        payment.method === PaymentMethod.CARD &&
+        payment.externalTransactionId
+      ) {
+        if (this.iyzipay) {
+          const priceTry = (refundAmount / 100).toFixed(2);
+          const result: any = await new Promise((resolve, reject) => {
+            this.iyzipay.refund.create(
+              {
+                locale: Iyzipay.LOCALE.TR,
+                conversationId: payment.id,
+                paymentTransactionId: payment.externalTransactionId,
+                price: priceTry,
+                currency: Iyzipay.CURRENCY.TRY,
+                ip: '127.0.0.1',
+              },
+              (err: any, res: any) => {
+                if (err) {
+                  reject(err instanceof Error ? err : new Error(String(err)));
+                  return;
+                }
+                resolve(res);
+              },
+            );
+          });
+
+          if (!result || result.status !== 'success') {
+            const errMsg = result?.errorMessage || 'iyzipay refund failed';
+            this.logger.error(
+              `iyzipay refund failed for payment ${payment.id}: ${errMsg}`,
+            );
+            throw new InternalServerErrorException(`Refund failed: ${errMsg}`);
+          }
+          if (result.paymentId) {
+            refundId = String(result.paymentId);
+          }
+        } else {
+          this.logger.warn(
+            `iyzipay not configured — refund for payment ${payment.id} processed in DB-only mode`,
+          );
+        }
+      }
+
+      payment.refundId = refundId;
       payment.refundedAmountMinor = refundAmount;
 
       if (refundAmount === payment.amountMinor) {
@@ -330,6 +385,12 @@ export class PaymentsService {
         status: payment.status,
       };
     } catch (error) {
+      if (error instanceof InternalServerErrorException || error instanceof BadRequestException) {
+        throw error;
+      }
+      this.logger.error(
+        `Refund processing failed for payment ${paymentId}: ${(error as Error).message}`,
+      );
       throw new InternalServerErrorException('Refund processing failed');
     }
   }
