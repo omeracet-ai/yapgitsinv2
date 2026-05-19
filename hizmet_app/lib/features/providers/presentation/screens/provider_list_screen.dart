@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -250,9 +252,114 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
         ),
       );
 
-  Widget _buildList(List<Map<String, dynamic>> providers) {
+  // ── Filter helpers ──────────────────────────────────────────────────────
+
+  /// Provider'ın saatlik ücretini TL olarak döner — minor (kuruş) öncelikli,
+  /// yoksa legacy hourlyRateMin'e düşer. Eksikse +∞ (rate sort'ta en sona).
+  double _rateOf(Map<String, dynamic> p) {
+    final minor = p['hourlyRateMinMinor'] as num?;
+    if (minor != null) return minor / 100.0;
+    final legacy = p['hourlyRateMin'] as num?;
+    if (legacy != null) return legacy.toDouble();
+    return double.infinity;
+  }
+
+  /// Haversine — provider lat/lng ile origin arası km.
+  double _distanceKm(Map<String, dynamic> p, double oLat, double oLng) {
+    final lat = (p['latitude'] as num?)?.toDouble();
+    final lng = (p['longitude'] as num?)?.toDouble();
+    if (lat == null || lng == null) return double.infinity;
+    const r = 6371.0;
+    final dLat = (lat - oLat) * math.pi / 180.0;
+    final dLng = (lng - oLng) * math.pi / 180.0;
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(oLat * math.pi / 180.0) *
+            math.cos(lat * math.pi / 180.0) *
+            math.sin(dLng / 2) *
+            math.sin(dLng / 2);
+    return 2 * r * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+  }
+
+  bool _matchesCategory(Map<String, dynamic> p, String category) {
+    final cats = p['workerCategories'];
+    if (cats is List) {
+      return cats.any((c) =>
+          c.toString().toLowerCase() == category.toLowerCase());
+    }
+    if (cats is String) {
+      return cats.toLowerCase().contains(category.toLowerCase());
+    }
+    return false;
+  }
+
+  /// Tüm filter koşullarını client-side uygular: kategori, rate range, geo,
+  /// rating, verified, available, semantic substring.
+  List<Map<String, dynamic>> _applyClientFilters(
+    List<Map<String, dynamic>> input,
+    WorkerFilter f,
+  ) {
+    Iterable<Map<String, dynamic>> r = input;
+
+    // Active category chip
+    if (_activeCategory != null && _activeCategory!.isNotEmpty) {
+      r = r.where((p) => _matchesCategory(p, _activeCategory!));
+    }
+    // Minimum rating
+    if (f.minRating != null) {
+      r = r.where((p) =>
+          ((p['averageRating'] as num?) ?? 0).toDouble() >= f.minRating!);
+    }
+    // Sadece doğrulanmış
+    if (f.verifiedOnly) {
+      r = r.where((p) =>
+          p['isVerified'] == true || p['identityVerified'] == true);
+    }
+    // Sadece müsait
+    if (f.availableOnly) {
+      r = r.where((p) => p['isAvailable'] == true);
+    }
+    // Ücret aralığı (TL)
+    if (f.minRate != null) {
+      r = r.where((p) => _rateOf(p) >= f.minRate!);
+    }
+    if (f.maxRate != null) {
+      r = r.where((p) {
+        final rate = _rateOf(p);
+        return rate.isFinite && rate <= f.maxRate!;
+      });
+    }
+    // Geo radius
+    if (f.nearMe && f.userLat != null && f.userLng != null) {
+      r = r.where(
+          (p) => _distanceKm(p, f.userLat!, f.userLng!) <= f.radiusKm);
+    }
+    // Semantic — basit substring match (bio + categories)
+    final sem = f.semanticQuery?.trim().toLowerCase();
+    if (sem != null && sem.isNotEmpty) {
+      r = r.where((p) {
+        final bio = (p['bio'] ?? p['workerBio'] ?? '').toString().toLowerCase();
+        if (bio.contains(sem)) return true;
+        final cats = p['workerCategories'];
+        if (cats is List) {
+          return cats.any((c) => c.toString().toLowerCase().contains(sem));
+        }
+        return false;
+      });
+    }
+    return r.toList();
+  }
+
+  Widget _buildList(List<Map<String, dynamic>> rawProviders) {
+    // ── Client-side filter pipeline ─────────────────────────────────────────
+    // Backend bazı filtreleri uygulamıyor (rate range, geo, category, semantic).
+    // WorkerFilter + active category chip hepsini burada uyguluyoruz.
+    final filter = ref.watch(workerFilterProvider);
+    final providers = _applyClientFilters(rawProviders, filter);
+
     if (providers.isEmpty) {
-      final hasFilter = _search.isNotEmpty || _activeCategory != null;
+      final hasFilter = _search.isNotEmpty ||
+          _activeCategory != null ||
+          !filter.isEmpty;
       return EmptyState(
         icon: Icons.person_search_rounded,
         title: hasFilter
@@ -263,11 +370,15 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
             : 'Yakında bölgenize uygun ustalar burada listelenecek.',
         action: hasFilter
             ? OutlinedButton.icon(
-                onPressed: () => setState(() {
-                  _search = '';
-                  _activeCategory = null;
-                  _searchCtrl.clear();
-                }),
+                onPressed: () {
+                  setState(() {
+                    _search = '';
+                    _activeCategory = null;
+                    _searchCtrl.clear();
+                  });
+                  ref.read(workerFilterProvider.notifier).state =
+                      WorkerFilter.empty;
+                },
                 icon: const Icon(Icons.clear),
                 label: const Text('Filtreleri Temizle'),
               )
@@ -282,15 +393,37 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
     final regular =
         providers.where((p) => p['featuredOrder'] == null).toList();
 
-    // Sort regular list
-    switch (_sort) {
-      case _SortMode.rating:
-        regular.sort((a, b) => ((b['averageRating'] as num?) ?? 0)
-            .compareTo((a['averageRating'] as num?) ?? 0));
+    // Sort regular list — filter sheet'in sortBy'ı rate/nearest seçtiyse
+    // önceliği ona ver; aksi halde üstteki chip (_sort) belirler.
+    switch (filter.sortBy) {
+      case WorkerSortBy.rateAsc:
+        regular.sort((a, b) => _rateOf(a).compareTo(_rateOf(b)));
         break;
-      case _SortMode.reviews:
-        regular.sort((a, b) => ((b['totalReviews'] as num?) ?? 0)
-            .compareTo((a['totalReviews'] as num?) ?? 0));
+      case WorkerSortBy.rateDesc:
+        regular.sort((a, b) => _rateOf(b).compareTo(_rateOf(a)));
+        break;
+      case WorkerSortBy.nearest:
+        if (filter.nearMe && filter.userLat != null && filter.userLng != null) {
+          regular.sort((a, b) {
+            final da = _distanceKm(a, filter.userLat!, filter.userLng!);
+            final db = _distanceKm(b, filter.userLat!, filter.userLng!);
+            return da.compareTo(db);
+          });
+        }
+        break;
+      case WorkerSortBy.rating:
+      case WorkerSortBy.reputation:
+        // Local chip kazanır
+        switch (_sort) {
+          case _SortMode.rating:
+            regular.sort((a, b) => ((b['averageRating'] as num?) ?? 0)
+                .compareTo((a['averageRating'] as num?) ?? 0));
+            break;
+          case _SortMode.reviews:
+            regular.sort((a, b) => ((b['totalReviews'] as num?) ?? 0)
+                .compareTo((a['totalReviews'] as num?) ?? 0));
+            break;
+        }
         break;
     }
 
@@ -483,9 +616,13 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
     );
   }
 
-  /// Filter butonu — sort chip'lerin yanına gömülü, badge'li
+  /// Filter butonu — sort chip'lerin yanına gömülü, badge'li.
+  /// Badge: filter sheet aktifleri + (varsa) kategori chip = toplam.
   Widget _filterChip() {
-    final activeCount = ref.watch(workerFilterProvider).activeCount;
+    final filterCount = ref.watch(workerFilterProvider).activeCount;
+    final categoryCount =
+        (_activeCategory != null && _activeCategory!.isNotEmpty) ? 1 : 0;
+    final activeCount = filterCount + categoryCount;
     final hasActive = activeCount > 0;
     return GestureDetector(
       onTap: _openFilterSheet,
