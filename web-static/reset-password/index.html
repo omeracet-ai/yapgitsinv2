@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Şifre Sıfırla — Yapgitsin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0C1117 0%, #161B22 100%);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      color: #fff;
+    }
+    .card {
+      background: #161B22;
+      border: 1px solid #2a3441;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    h1 { margin: 0 0 8px; font-size: 24px; }
+    .sub { color: #8b949e; margin-bottom: 24px; font-size: 14px; }
+    label { display: block; font-size: 13px; margin-bottom: 6px; color: #c9d1d9; }
+    input[type=password] {
+      width: 100%; padding: 12px 14px; margin-bottom: 16px;
+      background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
+      color: #fff; font-size: 15px;
+    }
+    input:focus { outline: none; border-color: #4ADE80; }
+    button {
+      width: 100%; padding: 14px; background: #4ADE80; color: #000;
+      border: none; border-radius: 8px; font-size: 16px; font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button:hover:not(:disabled) { background: #3bbf6a; }
+    .msg { padding: 12px; border-radius: 8px; margin-top: 16px; font-size: 14px; }
+    .msg-error { background: rgba(248, 81, 73, 0.15); border: 1px solid #f85149; color: #ffa198; }
+    .msg-success { background: rgba(74, 222, 128, 0.15); border: 1px solid #4ADE80; color: #4ADE80; }
+    .logo { font-size: 28px; font-weight: 800; color: #4ADE80; margin-bottom: 24px; text-align: center; }
+    .rules { font-size: 12px; color: #8b949e; margin-top: -8px; margin-bottom: 16px; }
+    a { color: #4ADE80; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">Yapgitsin</div>
+    <h1>Yeni Şifre Belirle</h1>
+    <div class="sub">Lütfen güçlü bir şifre seçin.</div>
+    <form id="form">
+      <label for="pw">Yeni Şifre</label>
+      <input id="pw" type="password" required minlength="8" autocomplete="new-password" />
+      <div class="rules">En az 8 karakter, en az 1 büyük harf ve 1 rakam.</div>
+      <label for="pw2">Şifre (Tekrar)</label>
+      <input id="pw2" type="password" required minlength="8" autocomplete="new-password" />
+      <button id="submit" type="submit">Şifreyi Güncelle</button>
+    </form>
+    <div id="msg"></div>
+    <div id="success-extra" style="display:none; margin-top: 8px;">
+      <a href="https://yapgitsin.tr/">Yapgitsin'e giriş yap</a>
+    </div>
+  </div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const form = document.getElementById('form');
+    const msg = document.getElementById('msg');
+    const btn = document.getElementById('submit');
+    const successExtra = document.getElementById('success-extra');
+
+    if (!token) {
+      msg.className = 'msg msg-error';
+      msg.textContent = 'Geçersiz veya eksik token. E-postanızdaki bağlantıyı tam olarak kullanın.';
+      form.style.display = 'none';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pw = document.getElementById('pw').value;
+      const pw2 = document.getElementById('pw2').value;
+      msg.className = '';
+      msg.textContent = '';
+
+      if (pw !== pw2) {
+        msg.className = 'msg msg-error';
+        msg.textContent = 'Şifreler eşleşmiyor.';
+        return;
+      }
+      if (!/[A-Z]/.test(pw) || !/[0-9]/.test(pw)) {
+        msg.className = 'msg msg-error';
+        msg.textContent = 'Şifre en az 1 büyük harf ve 1 rakam içermeli.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Güncelleniyor...';
+      try {
+        const res = await fetch('https://api.yapgitsin.tr/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, newPassword: pw }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (res.ok && body.success) {
+          msg.className = 'msg msg-success';
+          msg.textContent = '✓ Şifreniz güncellendi.';
+          successExtra.style.display = 'block';
+          form.style.display = 'none';
+        } else {
+          msg.className = 'msg msg-error';
+          msg.textContent = body.message || 'Şifre güncellenemedi. Token süresi dolmuş veya kullanılmış olabilir.';
+          btn.disabled = false;
+          btn.textContent = 'Şifreyi Güncelle';
+        }
+      } catch (err) {
+        msg.className = 'msg msg-error';
+        msg.textContent = 'Bağlantı hatası: ' + err.message;
+        btn.disabled = false;
+        btn.textContent = 'Şifreyi Güncelle';
+      }
+    });
+  </script>
+</body>
+</html>
