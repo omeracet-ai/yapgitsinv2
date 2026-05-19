@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -5,7 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../categories/data/category_repository.dart';
+import '../../data/job_filter.dart';
 import '../../data/offer_repository.dart';
+import '../../widgets/job_filter_sheet.dart';
 import '../providers/job_provider.dart';
 import 'job_detail_screen.dart';
 
@@ -25,16 +29,55 @@ class JobOpportunitiesScreen extends ConsumerStatefulWidget {
 
 class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen> {
   bool get _showAppBar => widget.showAppBar;
-  String? _selectedCategory;
+
+  String? _activeCategory;
+  String _searchQuery = '';
+  Timer? _debounce;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _selectCategory(String? category) {
+    setState(() => _activeCategory = category);
+    ref.read(jobsProvider.notifier).fetchJobs(
+          category: category,
+          q: _searchQuery.isEmpty ? null : _searchQuery,
+        );
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      _searchQuery = value.trim();
+      ref.read(jobsProvider.notifier).setQuery(_searchQuery);
+    });
+  }
+
+  Future<void> _openFilterSheet() async {
+    final current = ref.read(jobFilterProvider);
+    final result = await showModalBottomSheet<JobFilter>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => JobFilterSheet(initial: current),
+    );
+    if (result != null) {
+      ref.read(jobFilterProvider.notifier).state = result;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final jobsAsync = ref.watch(jobsProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final activeFilterCount = ref.watch(jobFilterProvider).activeCount;
 
-    // Ustanın kendi kategori listesi
-    // workerCategories bazı eski seed kullanıcılarında SQLite JSON string olarak
-    // dönüyor (simple-json öncesi). Hem List hem String şeklini güvenli çöz.
     final myCategories = authState is AuthAuthenticated
         ? _parseWorkerCategories(authState.user['workerCategories'])
         : <String>[];
@@ -44,8 +87,8 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
       appBar: _showAppBar
           ? AppBar(
               title: const Text('İş Fırsatları'),
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.background,
+              foregroundColor: AppColors.textPrimary,
               elevation: 0,
               actions: [
                 IconButton(
@@ -57,49 +100,11 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
           : null,
       body: Column(
         children: [
-          // ── Kategori filtresi ────────────────────────────────────────────
-          if (myCategories.isNotEmpty)
-            Container(
-              color: AppColors.primary,
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 8),
-                    child: Text('Uzmanlık Alanlarım',
-                        style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _FilterChip(
-                          label: 'Tümü',
-                          isActive: _selectedCategory == null,
-                          onTap: () => setState(() => _selectedCategory = null),
-                        ),
-                        const SizedBox(width: 8),
-                        ...myCategories.map((cat) => Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: _FilterChip(
-                            label: cat,
-                            isActive: _selectedCategory == cat,
-                            onTap: () => setState(() =>
-                                _selectedCategory = _selectedCategory == cat ? null : cat),
-                          ),
-                        )),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // ── İlan listesi ─────────────────────────────────────────────────
+          _buildSearchAndFilter(categoriesAsync, activeFilterCount, myCategories),
           Expanded(
             child: jobsAsync.when(
-              loading: () => ListSkeleton(itemCount: 6, itemBuilder: (_) => const JobCardSkeleton()),
+              loading: () => ListSkeleton(
+                  itemCount: 6, itemBuilder: (_) => const JobCardSkeleton()),
               error: (e, _) => Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -110,7 +115,8 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                         color: AppColors.error.withValues(alpha: 0.08),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.wifi_off_rounded, size: 40, color: AppColors.error),
+                      child: const Icon(Icons.wifi_off_rounded,
+                          size: 40, color: AppColors.error),
                     ),
                     const SizedBox(height: 16),
                     const Text('Bağlantı hatası',
@@ -120,7 +126,8 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                             fontSize: 15)),
                     const SizedBox(height: 6),
                     Text('$e',
-                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 13),
                         textAlign: TextAlign.center),
                     const SizedBox(height: 20),
                     ElevatedButton.icon(
@@ -128,7 +135,8 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                       style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10))),
                       icon: const Icon(Icons.refresh_rounded, size: 16),
                       label: const Text('Yenile'),
                     ),
@@ -137,7 +145,8 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
               ),
               data: (jobs) {
                 final myUserId = authState is AuthAuthenticated
-                    ? authState.user['id'] as String? : null;
+                    ? authState.user['id'] as String?
+                    : null;
 
                 // Sadece açık ilanlar, kendi ilanlarım hariç
                 var filtered = jobs
@@ -145,58 +154,38 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                     .where((j) => j.customerId != myUserId)
                     .toList();
 
-                // Kategori filtresi — sadece manuel seçim. Default'ta tüm
-                // açık ilanlar görünür (UX: kullanıcı uzmanlık dışı işi de
-                // görmek isteyebilir; isterse 'Uzmanlık Alanlarım' chip'inden
-                // filtreleyebilir).
-                if (_selectedCategory != null) {
-                  filtered = filtered
-                      .where((j) => j.category == _selectedCategory)
-                      .toList();
-                }
+                // Fırsat ilanları sıralaması:
+                // 1) workerCategories'ime uyan önce
+                // 2) createdAt DESC (en yeni)
+                // 3) budget DESC (yüksek fiyatlı önce)
+                // 4) responseCount=0 önce (rekabet az) — şu an Job
+                //    model'inde responseCount yok; offers fetch ileride
+                //    eklenebilir. Bu skorda createdAt/budget yeterli.
+                final mySet = myCategories.toSet();
+                filtered.sort((a, b) {
+                  final aMine = mySet.contains(a.category) ? 0 : 1;
+                  final bMine = mySet.contains(b.category) ? 0 : 1;
+                  if (aMine != bMine) return aMine - bMine;
+
+                  final aDate = a.createdAt ?? '';
+                  final bDate = b.createdAt ?? '';
+                  final dateCmp = bDate.compareTo(aDate);
+                  if (dateCmp != 0) return dateCmp;
+
+                  final aBudget = a.budgetMax ?? a.budgetMin ?? 0;
+                  final bBudget = b.budgetMax ?? b.budgetMin ?? 0;
+                  return bBudget.compareTo(aBudget);
+                });
 
                 if (filtered.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(22),
-                          decoration: const BoxDecoration(
-                            color: AppColors.primaryLight,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.work_off_rounded,
-                              size: 48,
-                              color: AppColors.primary.withValues(alpha: 0.5)),
-                        ),
-                        const SizedBox(height: 18),
-                        const Text('Bu kategoride açık ilan yok.',
-                            style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15)),
-                        const SizedBox(height: 6),
-                        const Text('Farklı bir kategori deneyebilirsiniz.',
-                            style: TextStyle(color: AppColors.textHint, fontSize: 13)),
-                        const SizedBox(height: 16),
-                        OutlinedButton.icon(
-                          onPressed: () => setState(() => _selectedCategory = null),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.primary),
-                            foregroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                          icon: const Icon(Icons.grid_view_rounded, size: 16),
-                          label: const Text('Tüm Kategorilere Bak'),
-                        ),
-                      ],
-                    ),
-                  );
+                  return _buildEmptyState();
                 }
 
                 return RefreshIndicator(
-                  onRefresh: () => ref.read(jobsProvider.notifier).fetchJobs(),
+                  onRefresh: () => ref.read(jobsProvider.notifier).fetchJobs(
+                        category: _activeCategory,
+                        q: _searchQuery.isEmpty ? null : _searchQuery,
+                      ),
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: filtered.length,
@@ -206,6 +195,226 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                 );
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Search bar + filter button + kategori grid (hizmet ilanları paritesi).
+  /// Worker'ın workerCategories'ini "Uzmanlık Alanlarım" başlığı altında
+  /// önce gösterir, ardından "Diğer Kategoriler" altında geri kalanı.
+  Widget _buildSearchAndFilter(
+    AsyncValue<List<Map<String, dynamic>>> categoriesAsync,
+    int activeFilterCount,
+    List<String> myCategories,
+  ) {
+    return Container(
+      color: AppColors.background,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    decoration: const InputDecoration(
+                      hintText: 'Fırsat ara...',
+                      hintStyle: TextStyle(color: AppColors.textHint),
+                      prefixIcon:
+                          Icon(Icons.search, color: AppColors.textHint),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _filterButton(activeFilterCount),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 34,
+            child: categoriesAsync.when(
+              data: (cats) {
+                final mySet = myCategories.toSet();
+                final mine = cats
+                    .where((c) => mySet.contains(c['name']))
+                    .toList();
+                final others = cats
+                    .where((c) => !mySet.contains(c['name']))
+                    .toList();
+                return ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _chip('Tümü', null, _activeCategory == null),
+                    ...mine.map((c) => _chip(
+                          '${c['icon'] ?? ''} ${c['name'] ?? ''}'.trim(),
+                          c['name'] as String?,
+                          _activeCategory == c['name'],
+                          highlight: true,
+                        )),
+                    if (mine.isNotEmpty && others.isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
+                        width: 1,
+                        height: 22,
+                        color: AppColors.border,
+                      ),
+                    ...others.map((c) => _chip(
+                          '${c['icon'] ?? ''} ${c['name'] ?? ''}'.trim(),
+                          c['name'] as String?,
+                          _activeCategory == c['name'],
+                        )),
+                  ],
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(String label, String? value, bool active,
+          {bool highlight = false}) =>
+      GestureDetector(
+        onTap: () => _selectCategory(value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          margin: const EdgeInsets.only(right: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: active
+                ? Colors.white
+                : (highlight
+                    ? AppColors.primary.withValues(alpha: 0.10)
+                    : AppColors.surfaceElevated),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+                color: active
+                    ? Colors.white
+                    : (highlight ? AppColors.primary : AppColors.border)),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: active
+                  ? Colors.black
+                  : (highlight ? AppColors.primary : AppColors.textPrimary),
+            ),
+          ),
+        ),
+      );
+
+  Widget _filterButton(int activeCount) {
+    final hasActive = activeCount > 0;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Material(
+          color: hasActive ? AppColors.primary : AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: _openFilterSheet,
+            child: Container(
+              width: 48,
+              height: 48,
+              alignment: Alignment.center,
+              child: Icon(Icons.tune_rounded,
+                  color: hasActive ? Colors.black : AppColors.textPrimary,
+                  size: 22),
+            ),
+          ),
+        ),
+        if (hasActive)
+          Positioned(
+            top: -4,
+            right: -4,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              constraints:
+                  const BoxConstraints(minWidth: 18, minHeight: 18),
+              decoration: BoxDecoration(
+                color: AppColors.error,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.background, width: 1.5),
+              ),
+              child: Text('$activeCount',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold)),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final hasSearch = _searchQuery.isNotEmpty || _activeCategory != null;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: const BoxDecoration(
+              color: AppColors.primaryLight,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+                hasSearch
+                    ? Icons.search_off_rounded
+                    : Icons.work_off_rounded,
+                size: 48,
+                color: AppColors.primary.withValues(alpha: 0.5)),
+          ),
+          const SizedBox(height: 18),
+          Text(hasSearch ? 'Sonuç bulunamadı' : 'Bu kategoride açık ilan yok.',
+              style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15)),
+          const SizedBox(height: 6),
+          const Text('Farklı bir kategori ya da kelime deneyin.',
+              style: TextStyle(color: AppColors.textHint, fontSize: 13)),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () {
+              setState(() {
+                _activeCategory = null;
+                _searchQuery = '';
+                _searchController.clear();
+              });
+              ref.read(jobsProvider.notifier).fetchJobs();
+            },
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.primary),
+              foregroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            icon: const Icon(Icons.grid_view_rounded, size: 16),
+            label: const Text('Tüm Kategorilere Bak'),
           ),
         ],
       ),
@@ -235,38 +444,6 @@ List<String> _parseWorkerCategories(dynamic raw) {
     }
   }
   return const <String>[];
-}
-
-// ─── Filtre chip ───────────────────────────────────────────────────────────────
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-  const _FilterChip({required this.label, required this.isActive, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: isActive ? Colors.white : Colors.white24,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isActive ? AppColors.primary : Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 // ─── İlan kartı ───────────────────────────────────────────────────────────────

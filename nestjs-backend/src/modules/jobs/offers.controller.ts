@@ -29,6 +29,13 @@ export class OffersRootController {
   ) {
     return this.offersService.findByUser(req.user.id, Number(page) || 1, Number(limit) || 20);
   }
+
+  /** GET /offers/incoming — ilan sahibinin kendi ilanlarına gelen teklifler */
+  @UseGuards(AuthGuard('jwt'))
+  @Get('incoming')
+  getIncomingOffers(@Request() req: AuthenticatedRequest) {
+    return this.offersService.findOffersByCustomer(req.user.id);
+  }
 }
 
 @Controller('jobs/:jobId/offers')
