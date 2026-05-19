@@ -10,9 +10,13 @@ import '../../../notifications/presentation/screens/notification_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../categories/data/category_repository.dart';
-import '../../../jobs/presentation/providers/job_provider.dart';
+import '../../../jobs/presentation/providers/job_provider.dart' as jp;
+import '../../../jobs/presentation/providers/job_provider.dart' show jobsProvider, Job;
 import '../../../jobs/presentation/screens/job_list_screen.dart';
+import '../../../jobs/presentation/screens/job_detail_screen.dart';
+import '../../../providers/data/provider_repository.dart';
 import '../../../providers/presentation/screens/provider_list_screen.dart';
+import '../../../providers/presentation/screens/provider_profile_screen.dart';
 import 'hizmet_al_screen.dart';
 import '../../../notifications/data/unread_count_provider.dart';
 import '../../../../core/widgets/category_card.dart';
@@ -445,13 +449,201 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                 children: [
                   if (!isLoggedIn) _buildGuestBanner(context),
 
-                  const SizedBox(height: 24),
+                  // ── 1) Popüler Kategoriler ───────────────────────────────
+                  const SizedBox(height: 18),
+                  _buildCategoriesSection(),
+
+                  // ── 2) Öne Çıkan Ustalar ─────────────────────────────────
+                  const SizedBox(height: 22),
+                  _buildFeaturedProvidersSection(),
+
+                  // ── 3) Son İlanlar ───────────────────────────────────────
+                  const SizedBox(height: 22),
+                  _buildRecentJobsSection(jobsAsync),
+
+                  // ── 4) AI Önerileri (sadece logged-in) ───────────────────
+                  if (isLoggedIn) ...[
+                    const SizedBox(height: 22),
+                    const AiRecommendationsSection(),
+                  ],
+
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // ─── Feed sections — hepsi prod API'sinden besleniyor ──────────────────────
+
+  Widget _buildCategoriesSection() {
+    final categoriesAsync = ref.watch(categoriesProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: 'Popüler Kategoriler',
+          actionLabel: 'Tümünü Gör',
+          onAction: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => const ProviderListScreen()),
+          ),
+        ),
+        const SizedBox(height: 10),
+        categoriesAsync.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(
+                height: 80,
+                child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2))),
+          ),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (cats) {
+            final top = cats.take(8).toList();
+            return SizedBox(
+              height: 96,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: top.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                itemBuilder: (_, i) {
+                  final c = top[i];
+                  final name = (c['name'] as String?) ?? '';
+                  final icon = (c['icon'] as String?) ?? '🔧';
+                  return SizedBox(
+                    width: 96,
+                    child: CategoryCard(
+                      label: name,
+                      emoji: icon,
+                      bgColor: AppColors.darkSurfaceElevated,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ProviderListScreen(initialSearch: name),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeaturedProvidersSection() {
+    final providersAsync = ref.watch(allProvidersProvider(''));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: 'Öne Çıkan Ustalar',
+          actionLabel: 'Tümü',
+          onAction: () => ref
+              .read(selectedTabProvider.notifier)
+              .state = 1, // HizmetAlScreen → Hizmet İlanları tab
+        ),
+        const SizedBox(height: 10),
+        providersAsync.when(
+          loading: () => const SizedBox(
+              height: 180,
+              child: Center(
+                  child: CircularProgressIndicator(strokeWidth: 2))),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (providers) {
+            // Öne çıkanları öne, sonra rating'e göre
+            final sorted = [...providers]..sort((a, b) {
+              final af = a['featuredOrder'] as int?;
+              final bf = b['featuredOrder'] as int?;
+              if (af != null && bf != null) return af.compareTo(bf);
+              if (af != null) return -1;
+              if (bf != null) return 1;
+              final ar = (a['averageRating'] as num?) ?? 0;
+              final br = (b['averageRating'] as num?) ?? 0;
+              return br.compareTo(ar);
+            });
+            final top = sorted.take(8).toList();
+            if (top.isEmpty) return const SizedBox.shrink();
+            return SizedBox(
+              height: 178,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: top.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, i) => _HomeProviderCard(provider: top[i]),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecentJobsSection(AsyncValue<List<Job>> jobsAsync) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: 'Son İlanlar',
+          actionLabel: 'Tümünü Gör',
+          onAction: widget.onSeeAllRequests,
+        ),
+        const SizedBox(height: 10),
+        jobsAsync.when(
+          loading: () => const SizedBox(
+              height: 100,
+              child: Center(
+                  child: CircularProgressIndicator(strokeWidth: 2))),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (jobs) {
+            final open = jobs
+                .where((j) => j.status == jp.JobStatus.OPEN)
+                .take(5)
+                .toList();
+            if (open.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Text('Henüz açık ilan yok.',
+                    style: TextStyle(
+                        color: AppColors.textHint, fontSize: 13)),
+              );
+            }
+            return Column(
+              children: open.map((j) => GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => JobDetailScreen(
+                          id: j.id,
+                          title: j.title,
+                          description: j.desc,
+                          location: j.location,
+                          budget: j.budget,
+                          category: j.category,
+                          postedAt: j.time,
+                          icon: j.icon,
+                          color: j.color,
+                          isFeatured: j.isFeatured,
+                          customerId: j.customerId,
+                        ),
+                      ),
+                    ),
+                    child: _RecentJobRow(job: j),
+                  )).toList(),
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -566,6 +758,132 @@ class _RecentJobRow extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Home feed öne çıkan usta kartı (horizontal carousel)
+class _HomeProviderCard extends StatelessWidget {
+  final Map<String, dynamic> provider;
+  const _HomeProviderCard({required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = provider['user'] as Map<String, dynamic>?;
+    final name =
+        (provider['businessName'] ?? user?['fullName'] ?? '').toString();
+    final rating = (provider['averageRating'] as num?)?.toDouble() ?? 0.0;
+    final reviews = (provider['totalReviews'] as num?)?.toInt() ?? 0;
+    final isVerified = provider['isVerified'] == true ||
+        provider['identityVerified'] == true;
+    final cats = provider['workerCategories'];
+    final firstCat = cats is List && cats.isNotEmpty
+        ? cats.first.toString()
+        : '';
+    final initials = name.isNotEmpty
+        ? name
+            .split(' ')
+            .take(2)
+            .map((w) => w.isNotEmpty ? w[0] : '')
+            .join()
+            .toUpperCase()
+        : '?';
+    final isFeatured = provider['featuredOrder'] != null;
+
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              ProviderProfileScreen(providerId: provider['id'].toString()),
+        ),
+      ),
+      child: Container(
+        width: 158,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.darkSurface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: isFeatured
+                  ? Colors.amber.shade400.withValues(alpha: 0.6)
+                  : AppColors.darkBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                      child: Text(initials,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: AppColors.primary)),
+                    ),
+                    if (isVerified)
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          width: 14,
+                          height: 14,
+                          decoration: const BoxDecoration(
+                              color: Colors.blue, shape: BoxShape.circle),
+                          child: const Icon(Icons.check,
+                              size: 9, color: Colors.white),
+                        ),
+                      ),
+                  ],
+                ),
+                if (isFeatured) ...[
+                  const Spacer(),
+                  Icon(Icons.workspace_premium_rounded,
+                      color: Colors.amber.shade400, size: 16),
+                ],
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: AppColors.textPrimary)),
+            if (firstCat.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(firstCat,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 11, color: AppColors.textHint)),
+            ],
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.star_rounded,
+                    size: 14, color: Colors.amber.shade400),
+                const SizedBox(width: 3),
+                Text(rating.toStringAsFixed(1),
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary)),
+                const SizedBox(width: 3),
+                Text('($reviews)',
+                    style: const TextStyle(
+                        fontSize: 11, color: AppColors.textHint)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
