@@ -861,4 +861,28 @@ export class AdminSeedService {
       return { wiped, created };
     });
   }
+
+  /** Admin/test only — top up a user's token balance by amountMinor (kuruş). */
+  async creditTokens(
+    email: string,
+    amountMinor: number,
+  ): Promise<{ email: string; newBalanceMinor: number; addedMinor: number } | { error: string }> {
+    const user = await this.dataSource
+      .getRepository('User')
+      .findOne({ where: { email } });
+    if (!user) return { error: `user ${email} not found` };
+    const current = (user as { tokenBalanceMinor?: number }).tokenBalanceMinor ?? 0;
+    const next = current + Math.max(0, amountMinor);
+    await this.dataSource
+      .getRepository('User')
+      .update({ email }, {
+        tokenBalanceMinor: next,
+        tokenBalance: Math.floor(next / 100),
+      });
+    return {
+      email,
+      addedMinor: amountMinor,
+      newBalanceMinor: next,
+    };
+  }
 }

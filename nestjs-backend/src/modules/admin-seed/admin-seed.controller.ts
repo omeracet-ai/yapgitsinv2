@@ -76,4 +76,18 @@ export class AdminSeedController {
     const result = await this.seed.wipeAndPopulate(this.clampCount(count));
     return { ...result, durationMs: Date.now() - t0, warning: this.warning() };
   }
+
+  @Post('credit-tokens')
+  async creditTokens(
+    @Query('email') email: string,
+    @Query('amountMinor', new DefaultValuePipe(100000), ParseIntPipe)
+    amountMinor: number,
+  ) {
+    this.assertEnabled();
+    if (!email) {
+      return { error: 'email query param required' };
+    }
+    const result = await this.seed.creditTokens(email, amountMinor);
+    return { ...result, warning: this.warning() };
+  }
 }
