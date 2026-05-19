@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -31,10 +33,10 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
     final jobsAsync = ref.watch(jobsProvider);
 
     // Ustanın kendi kategori listesi
+    // workerCategories bazı eski seed kullanıcılarında SQLite JSON string olarak
+    // dönüyor (simple-json öncesi). Hem List hem String şeklini güvenli çöz.
     final myCategories = authState is AuthAuthenticated
-        ? (authState.user['workerCategories'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ?? []
+        ? _parseWorkerCategories(authState.user['workerCategories'])
         : <String>[];
 
     return Scaffold(
@@ -211,6 +213,30 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
       ),
     );
   }
+}
+
+/// workerCategories alanını List veya JSON-string formatından güvenle çözer.
+/// SQLite simple-json öncesi seed kullanıcılarda string olarak gelebiliyor.
+List<String> _parseWorkerCategories(dynamic raw) {
+  if (raw is List) {
+    return raw.map((e) => e.toString()).toList();
+  }
+  if (raw is String && raw.isNotEmpty) {
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded.map((e) => e.toString()).toList();
+      }
+    } catch (_) {
+      // JSON değilse virgüllü split fallback
+      return raw
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+  }
+  return const <String>[];
 }
 
 // ─── Filtre chip ───────────────────────────────────────────────────────────────
