@@ -133,51 +133,12 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
   }
 
   Widget _buildAppBar(BuildContext context) {
-    final activeCount = ref.watch(workerFilterProvider).activeCount;
     return SliverAppBar(
       pinned: true,
       expandedHeight: 160,
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
       elevation: 0,
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                tooltip: 'Filtrele',
-                icon: const Icon(Icons.tune_rounded, color: Colors.white),
-                onPressed: _openFilterSheet,
-              ),
-              if (activeCount > 0)
-                Positioned(
-                  top: 6,
-                  right: 6,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 5, vertical: 1),
-                    constraints:
-                        const BoxConstraints(minWidth: 16, minHeight: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.primary, width: 1.5),
-                    ),
-                    child: Text('$activeCount',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold)),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: const BoxDecoration(
@@ -344,9 +305,15 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
         providers.where((p) => p['featuredOrder'] == null).toList();
 
     // Sort regular list
-    if (_sort == _SortMode.rating) {
-      regular.sort((a, b) => ((b['averageRating'] as num?) ?? 0)
-          .compareTo((a['averageRating'] as num?) ?? 0));
+    switch (_sort) {
+      case _SortMode.rating:
+        regular.sort((a, b) => ((b['averageRating'] as num?) ?? 0)
+            .compareTo((a['averageRating'] as num?) ?? 0));
+        break;
+      case _SortMode.reviews:
+        regular.sort((a, b) => ((b['totalReviews'] as num?) ?? 0)
+            .compareTo((a['totalReviews'] as num?) ?? 0));
+        break;
     }
 
     final showRecent = _search.isEmpty &&
@@ -359,19 +326,35 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
         // Phase 143 — kategori aboneliği toggle
         if (_activeCategory != null && _activeCategory!.isNotEmpty)
           SliverToBoxAdapter(child: _buildSubscribeBanner(_activeCategory!)),
-        // Sort bar
+        // Sort bar — sayım + sort chip'ler + filter butonu
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
             child: Row(
               children: [
-                Text('${providers.length} usta bulundu',
-                    style: const TextStyle(
-                        fontSize: 13, color: AppColors.textSecondary)),
+                Flexible(
+                  child: Text('${providers.length} usta bulundu',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 13, color: AppColors.textSecondary)),
+                ),
                 const Spacer(),
-                _sortChip(_SortMode.rating, 'En Yüksek Puan'),
-                const SizedBox(width: 8),
-                _sortChip(_SortMode.reviews, 'En Çok Yorum'),
+                Flexible(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
+                    child: Row(
+                      children: [
+                        _sortChip(_SortMode.rating, 'En Yüksek Puan'),
+                        const SizedBox(width: 8),
+                        _sortChip(_SortMode.reviews, 'En Çok Yorum'),
+                        const SizedBox(width: 8),
+                        _filterChip(),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -522,6 +505,67 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
               );
             }).toList(),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// Filter butonu — sort chip'lerin yanına gömülü, badge'li
+  Widget _filterChip() {
+    final activeCount = ref.watch(workerFilterProvider).activeCount;
+    final hasActive = activeCount > 0;
+    return GestureDetector(
+      onTap: _openFilterSheet,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: hasActive ? AppColors.primary : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                  color: hasActive ? AppColors.primary : AppColors.border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.tune_rounded,
+                    size: 13,
+                    color:
+                        hasActive ? Colors.white : AppColors.textSecondary),
+                const SizedBox(width: 4),
+                Text('Filtre',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: hasActive
+                            ? Colors.white
+                            : AppColors.textSecondary)),
+              ],
+            ),
+          ),
+          if (hasActive)
+            Positioned(
+              top: -4,
+              right: -4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                constraints:
+                    const BoxConstraints(minWidth: 14, minHeight: 14),
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white, width: 1.2),
+                ),
+                child: Text('$activeCount',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold)),
+              ),
+            ),
         ],
       ),
     );
