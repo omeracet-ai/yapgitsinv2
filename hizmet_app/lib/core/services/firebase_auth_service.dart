@@ -75,7 +75,13 @@ class FirebaseAuthService {
     );
     await user.reauthenticateWithCredential(cred);
     try {
-      await _dio.delete<dynamic>('/users/me');
+      // Backend DeleteAccountDto password alanını zorunlu kılıyor (KVKK
+      // soft-delete'i bcrypt eşleşmesi sonrası yapıyor). Body olmadan
+      // istek 400 "Geçersiz istek" döndürüyordu (Phase 253 sessizce yutuyordu).
+      await _dio.delete<dynamic>(
+        '/users/me',
+        data: {'password': password},
+      );
     } on DioException catch (e, st) {
       // Phase 253 — was silent. Backend silme başarısız olsa bile Firebase
       // kullanıcısını silmeye devam ediyoruz; ancak prod outage'larında
