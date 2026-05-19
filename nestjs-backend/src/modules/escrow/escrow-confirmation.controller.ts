@@ -34,7 +34,9 @@ class StartDto {
 }
 
 class ScanDto {
-  @IsString() @MaxLength(64) qrToken!: string;
+  // QR token: payload(escrowId|issuedAt|nonce) + HMAC(24), base64url encoded.
+  // ~123 char tipik. 256 ile geniş tampon — DoS koruması korunuyor.
+  @IsString() @MaxLength(256) qrToken!: string;
   @IsNumber() @Min(-90) @Max(90) lat!: number;
   @IsNumber() @Min(-180) @Max(180) lng!: number;
 }
