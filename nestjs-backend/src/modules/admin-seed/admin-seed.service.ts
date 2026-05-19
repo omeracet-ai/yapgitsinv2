@@ -11,6 +11,11 @@ import { JobLead } from '../leads/job-lead.entity';
 import { JobLeadResponse } from '../leads/job-lead-response.entity';
 import { Category } from '../categories/category.entity';
 import { ServiceRequest } from '../service-requests/service-request.entity';
+import { Job, JobStatus, JobKind } from '../jobs/job.entity';
+import { Offer, OfferStatus } from '../jobs/offer.entity';
+import { JobQuestion } from '../jobs/job-question.entity';
+import { JobQuestionReply } from '../jobs/job-question-reply.entity';
+import { Provider } from '../providers/provider.entity';
 
 export interface WipeCounts {
   reviews: number;
@@ -34,7 +39,28 @@ export interface CreateCounts {
   payments: number;
   reviews: number;
   serviceRequests: number;
+  // Phase Two-Sided + tam demo
+  jobsRequest: number;
+  jobsOffer: number;
+  offers: number;
+  questions: number;
+  replies: number;
+  providers: number;
 }
+
+/** Şehir merkezleri — admin Harita için pin koordinatları. */
+const CITY_COORDS: Record<string, [number, number]> = {
+  Istanbul:  [41.0082, 28.9784],
+  Ankara:    [39.9334, 32.8597],
+  Izmir:     [38.4192, 27.1287],
+  Bursa:     [40.1828, 29.0665],
+  Antalya:   [36.8969, 30.7133],
+  Adana:     [37.0000, 35.3213],
+  Konya:     [37.8746, 32.4932],
+  Gaziantep: [37.0662, 37.3833],
+  Kayseri:   [38.7312, 35.4787],
+  Eskisehir: [39.7767, 30.5206],
+};
 
 // bcrypt hash of "Yapgitsin1234!" (cost 10) — generated once, deterministic
 // to avoid 50× bcrypt overhead during populate. Verified 2026-05-19.
@@ -150,6 +176,12 @@ export class AdminSeedService {
         return res.affected ?? 0;
       };
       counts.reviews = await wipeAll(Review);
+      // Two-Sided chain — sırasıyla: replies → questions → offers → jobs
+      await wipeAll(JobQuestionReply);
+      await wipeAll(JobQuestion);
+      await wipeAll(Offer);
+      await wipeAll(Job);
+      await wipeAll(Provider);
       counts.payments = await wipeAll(Payment);
       counts.escrows = await wipeAll(PaymentEscrow);
       counts.bookings = await wipeAll(Booking);
@@ -175,6 +207,12 @@ export class AdminSeedService {
         payments: 0,
         reviews: 0,
         serviceRequests: 0,
+        jobsRequest: 0,
+        jobsOffer: 0,
+        offers: 0,
+        questions: 0,
+        replies: 0,
+        providers: 0,
       };
 
       const allCategories = await manager.getRepository(Category).find();
@@ -189,6 +227,7 @@ export class AdminSeedService {
       // ── Sabit demo hesap — login için bilinen kimlik bilgisi ────────────
       // demo@yapgitsin.tr / Yapgitsin1234!  (worker; gerçek kategorilerle)
       const demoCats = categoryNames.slice(0, 3);
+      const [demoLat, demoLng] = CITY_COORDS.Istanbul;
       const demo = manager.getRepository(User).create({
         fullName: 'Demo Usta',
         phoneNumber: '+905550000001',
@@ -205,6 +244,9 @@ export class AdminSeedService {
         hourlyRateMinMinor: 12000,
         hourlyRateMaxMinor: 25000,
         isAvailable: true,
+        latitude: demoLat + (Math.random() - 0.5) * 0.06,
+        longitude: demoLng + (Math.random() - 0.5) * 0.06,
+        profileImageUrl: 'https://i.pravatar.cc/300?u=demo-usta',
       });
       users.push(demo);
       usedPhones.add('+905550000001');
@@ -221,6 +263,8 @@ export class AdminSeedService {
 
         const firstName = f.person.firstName();
         const lastName = f.person.lastName();
+        const city = TR_CITIES[Math.floor(Math.random() * TR_CITIES.length)];
+        const [cLat, cLng] = CITY_COORDS[city] ?? CITY_COORDS.Istanbul;
         const u = manager.getRepository(User).create({
           fullName: `${firstName} ${lastName}`.slice(0, 100),
           phoneNumber: phone,
@@ -230,10 +274,14 @@ export class AdminSeedService {
           passwordHash: SEED_PASSWORD_HASH,
           isPhoneVerified: true,
           emailVerified: true,
-          identityVerified: true,
+          identityVerified: faker.datatype.boolean({ probability: 0.7 }),
           role: UserRole.USER,
           tenantId: null,
-          city: TR_CITIES[Math.floor(Math.random() * TR_CITIES.length)],
+          city,
+          // Phase Two-Sided — admin Harita pin'leri için lat/lng + avatar
+          latitude: cLat + (Math.random() - 0.5) * 0.08,
+          longitude: cLng + (Math.random() - 0.5) * 0.08,
+          profileImageUrl: `https://i.pravatar.cc/300?u=${phone}`,
         });
         if (isWorker) {
           const cats = faker.helpers.arrayElements(
@@ -520,6 +568,225 @@ export class AdminSeedService {
         await manager.getRepository(ServiceRequest).save(serviceRequests);
       }
       created.serviceRequests = serviceRequests.length;
+
+      // ── 6. Provider rows (worker'lar için) ───────────────────────────────
+      const providers: Provider[] = [];
+      for (const w of workers) {
+        const featured = Math.random() < 0.2;
+        providers.push(
+          manager.getRepository(Provider).create({
+            userId: w.id,
+            businessName: w.fullName,
+            bio: w.workerBio,
+            isVerified: w.identityVerified === true,
+            averageRating: w.averageRating ?? 0,
+            totalReviews: w.totalReviews ?? 0,
+            featuredOrder: featured
+              ? providers.filter((p) => p.featuredOrder !== null).length + 1
+              : null,
+          } as Partial<Provider>),
+        );
+      }
+      if (providers.length) await manager.getRepository(Provider).save(providers);
+      created.providers = providers.length;
+
+      // ── 7. Jobs (kind='request') — Müşteri talep ilanları ─────────────────
+      const allJobs: Job[] = [];
+      const requestStatuses = [
+        JobStatus.OPEN,
+        JobStatus.OPEN,
+        JobStatus.IN_PROGRESS,
+        JobStatus.COMPLETED,
+        JobStatus.COMPLETED,
+        JobStatus.CANCELLED,
+      ];
+      const requestCount = Math.max(5, Math.floor(customers.length * 0.6));
+      for (let i = 0; i < requestCount; i++) {
+        const customer = faker.helpers.arrayElement(customers);
+        const cat = faker.helpers.arrayElement(categoryNames);
+        const [bLat, bLng] = CITY_COORDS[customer.city ?? 'Istanbul'] ?? CITY_COORDS.Istanbul;
+        const budgetMin = faker.number.int({ min: 200, max: 1500 });
+        const status = faker.helpers.arrayElement(requestStatuses);
+        allJobs.push(
+          manager.getRepository(Job).create({
+            customerId: customer.id,
+            kind: JobKind.REQUEST,
+            title: `${cat} hizmeti aranıyor — ${faker.helpers.arrayElement(['acil', 'esnek', 'hafta sonu', 'bu hafta'])}`.slice(0, 200),
+            description: faker.helpers.arrayElement(TR_JOB_DESCRIPTIONS),
+            category: cat,
+            location: `${customer.city ?? 'Istanbul'} - ${f.location.streetAddress()}`.slice(0, 200),
+            latitude: bLat + (Math.random() - 0.5) * 0.08,
+            longitude: bLng + (Math.random() - 0.5) * 0.08,
+            budgetMin,
+            budgetMax: budgetMin + faker.number.int({ min: 200, max: 2000 }),
+            budgetMinMinor: budgetMin * 100,
+            budgetMaxMinor: (budgetMin + faker.number.int({ min: 200, max: 2000 })) * 100,
+            status,
+          } as Partial<Job>),
+        );
+      }
+
+      // ── 8. Jobs (kind='offer') — Usta hizmet ilanları ─────────────────────
+      const offerTitles = [
+        'Profesyonel {cat} Hizmeti',
+        'Acil {cat} — 7/24',
+        'Garantili {cat} — Faturalı',
+        'Hızlı {cat} Servisi',
+        'Uzman {cat} — Memnuniyet Garantili',
+        '{cat} — Hafta Sonu Müsait',
+      ];
+      for (const w of workers) {
+        // %60 worker'ın 1-2 hizmet ilanı olsun
+        if (Math.random() < 0.4) continue;
+        const cats = w.workerCategories ?? [];
+        const offerCnt = faker.number.int({ min: 1, max: Math.min(2, cats.length || 1) });
+        for (let i = 0; i < offerCnt; i++) {
+          const cat = cats[i] ?? faker.helpers.arrayElement(categoryNames);
+          const [wLat, wLng] = CITY_COORDS[w.city ?? 'Istanbul'] ?? CITY_COORDS.Istanbul;
+          const priceMin = faker.number.int({ min: 200, max: 1000 });
+          const titleTpl = faker.helpers.arrayElement(offerTitles);
+          allJobs.push(
+            manager.getRepository(Job).create({
+              customerId: w.id, // usta poster
+              kind: JobKind.OFFER,
+              title: titleTpl.replace('{cat}', cat).slice(0, 200),
+              description: `${cat} alanında ${faker.number.int({ min: 3, max: 18 })} yıl deneyim. ${w.workerBio ?? ''}`.slice(0, 1000),
+              category: cat,
+              location: `${w.city ?? 'Istanbul'} bölgesi`.slice(0, 200),
+              latitude: wLat + (Math.random() - 0.5) * 0.06,
+              longitude: wLng + (Math.random() - 0.5) * 0.06,
+              budgetMin: priceMin,
+              budgetMax: priceMin + faker.number.int({ min: 200, max: 1500 }),
+              budgetMinMinor: priceMin * 100,
+              budgetMaxMinor: (priceMin + faker.number.int({ min: 200, max: 1500 })) * 100,
+              status: JobStatus.OPEN,
+              featuredOrder: Math.random() < 0.15 ? faker.number.int({ min: 1, max: 5 }) : null,
+            } as Partial<Job>),
+          );
+        }
+      }
+      if (allJobs.length) await manager.getRepository(Job).save(allJobs);
+      const requestJobs = allJobs.filter((j) => j.kind === JobKind.REQUEST);
+      const offerJobs = allJobs.filter((j) => j.kind === JobKind.OFFER);
+      created.jobsRequest = requestJobs.length;
+      created.jobsOffer = offerJobs.length;
+
+      // ── 9. Offers — Request ilanlarına teklif zinciri ─────────────────────
+      const offerRows: Offer[] = [];
+      const offerMessages = [
+        'Bu işi titizlikle yapabilirim, geçmiş referanslarım mevcut.',
+        'Hızlı dönüş yapabilirim, malzeme dahil teklif veriyorum.',
+        'Bölgenizdeyim, hafta içi her gün uygunum.',
+        'Sigortalı ve faturalı çalışıyorum. Detay için arayabilirsiniz.',
+        'Yarın sabah keşfe gelebilirim, fiyat sonra netleşir.',
+        '10+ yıl tecrübeyle profesyonel hizmet veriyorum.',
+      ];
+      for (const job of requestJobs) {
+        if (workers.length === 0) break;
+        if (job.status === JobStatus.CANCELLED) continue;
+        // Her request ilanına 1-4 teklif gelsin
+        const bidders = faker.helpers.arrayElements(
+          workers.filter((w) => w.id !== job.customerId),
+          faker.number.int({
+            min: 1,
+            max: Math.min(4, workers.length - 1),
+          }),
+        );
+        let hasAccepted = false;
+        for (const bidder of bidders) {
+          const priceMin = faker.number.int({
+            min: Math.max(100, job.budgetMin ?? 200),
+            max: (job.budgetMax ?? 1000),
+          });
+          let status: OfferStatus;
+          if (job.status === JobStatus.COMPLETED && !hasAccepted) {
+            status = OfferStatus.ACCEPTED;
+            hasAccepted = true;
+          } else if (job.status === JobStatus.IN_PROGRESS && !hasAccepted) {
+            status = OfferStatus.ACCEPTED;
+            hasAccepted = true;
+          } else {
+            status = faker.helpers.weightedArrayElement([
+              { weight: 50, value: OfferStatus.PENDING },
+              { weight: 25, value: OfferStatus.REJECTED },
+              { weight: 15, value: OfferStatus.WITHDRAWN },
+              { weight: 10, value: OfferStatus.COUNTERED },
+            ]);
+          }
+          offerRows.push(
+            manager.getRepository(Offer).create({
+              jobId: job.id,
+              userId: bidder.id,
+              price: priceMin,
+              priceMinor: priceMin * 100,
+              message: faker.helpers.arrayElement(offerMessages),
+              status,
+            } as Partial<Offer>),
+          );
+        }
+      }
+      if (offerRows.length) await manager.getRepository(Offer).save(offerRows);
+      created.offers = offerRows.length;
+
+      // ── 10. Job Questions + Replies ───────────────────────────────────────
+      const questionTexts = [
+        'Malzemeleri siz mi getireceksiniz?',
+        'Hafta sonu da müsait misiniz?',
+        'Şehir dışı için ek ücret alıyor musunuz?',
+        'Ne kadar sürede tamamlanır?',
+        'Garanti süresi ne kadar?',
+        'Faturalı çalışıyor musunuz?',
+        'Önce keşif yapıp fiyat verebilir misiniz?',
+        'Sigortalı çalışıyor musunuz?',
+      ];
+      const replyTexts = [
+        'Evet, malzeme dahil teklif veriyorum.',
+        'Hafta sonu da müsaitim, en uygun saatte gelirim.',
+        'Şehir dışı için yol ücreti ekliyorum.',
+        'Yaklaşık 2-3 saatte tamamlarım.',
+        '1 yıl işçilik garantisi veriyorum.',
+        'Faturalı ve sigortalı çalışıyorum.',
+        'Keşif ücretsiz, randevu için yazın.',
+        'Detaylı bilgi için telefon görüşmesi yapalım.',
+      ];
+      const questions: JobQuestion[] = [];
+      const replies: JobQuestionReply[] = [];
+      for (const job of allJobs) {
+        if (Math.random() < 0.5) continue; // %50 ilana soru gelir
+        const qCount = faker.number.int({ min: 1, max: 3 });
+        const askers = faker.helpers.arrayElements(
+          users.filter((u) => u.id !== job.customerId),
+          Math.min(qCount, users.length - 1),
+        );
+        for (const asker of askers) {
+          const q = manager.getRepository(JobQuestion).create({
+            jobId: job.id,
+            userId: asker.id,
+            text: faker.helpers.arrayElement(questionTexts),
+          } as Partial<JobQuestion>);
+          questions.push(q);
+        }
+      }
+      if (questions.length) {
+        await manager.getRepository(JobQuestion).save(questions);
+        // %75 soruya yanıt gelir — ilan sahibi cevaplar
+        for (const q of questions) {
+          if (Math.random() < 0.25) continue;
+          const job = allJobs.find((j) => j.id === q.jobId);
+          if (!job) continue;
+          replies.push(
+            manager.getRepository(JobQuestionReply).create({
+              questionId: q.id,
+              userId: job.customerId, // ilan sahibi (request → müşteri, offer → usta)
+              text: faker.helpers.arrayElement(replyTexts),
+            } as Partial<JobQuestionReply>),
+          );
+        }
+        if (replies.length)
+          await manager.getRepository(JobQuestionReply).save(replies);
+      }
+      created.questions = questions.length;
+      created.replies = replies.length;
 
       return created;
     });

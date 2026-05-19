@@ -9,6 +9,11 @@ import { JobLead } from '../leads/job-lead.entity';
 import { JobLeadResponse } from '../leads/job-lead-response.entity';
 import { Category } from '../categories/category.entity';
 import { ServiceRequest } from '../service-requests/service-request.entity';
+import { Job } from '../jobs/job.entity';
+import { Offer } from '../jobs/offer.entity';
+import { JobQuestion } from '../jobs/job-question.entity';
+import { JobQuestionReply } from '../jobs/job-question-reply.entity';
+import { Provider } from '../providers/provider.entity';
 import { AdminSeedController } from './admin-seed.controller';
 import { AdminSeedService } from './admin-seed.service';
 
@@ -24,6 +29,11 @@ import { AdminSeedService } from './admin-seed.service';
       JobLeadResponse,
       Category,
       ServiceRequest,
+      Job,
+      Offer,
+      JobQuestion,
+      JobQuestionReply,
+      Provider,
     ]),
   ],
   controllers: [AdminSeedController],
