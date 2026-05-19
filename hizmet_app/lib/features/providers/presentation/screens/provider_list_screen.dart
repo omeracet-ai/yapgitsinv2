@@ -135,11 +135,21 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
   Widget _buildAppBar(BuildContext context) {
     return SliverAppBar(
       pinned: true,
-      backgroundColor: AppColors.primary,
+      backgroundColor: Colors.transparent,
       foregroundColor: Colors.white,
       elevation: 0,
       automaticallyImplyLeading: false,
       titleSpacing: 16,
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.primaryDark, AppColors.background],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            stops: [0.0, 1.0],
+          ),
+        ),
+      ),
       title: const Text(
         'Ustalar',
         style: TextStyle(
@@ -148,7 +158,6 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(112),
         child: Container(
-          color: AppColors.primary,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: Column(
             children: [
@@ -230,13 +239,13 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             color: active
-                ? Colors.white
-                : Colors.black.withValues(alpha: 0.28),
+                ? AppColors.primaryLight
+                : Colors.white.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: active
-                  ? Colors.white
-                  : Colors.white.withValues(alpha: 0.35),
+                  ? AppColors.primaryLight
+                  : Colors.white.withValues(alpha: 0.30),
             ),
           ),
           child: Text(
@@ -244,7 +253,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: active ? Colors.black : Colors.white,
+              color: active ? AppColors.primaryDark : Colors.white,
             ),
           ),
         ),
