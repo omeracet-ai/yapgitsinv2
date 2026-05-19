@@ -313,33 +313,28 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
         // Phase 143 — kategori aboneliği toggle
         if (_activeCategory != null && _activeCategory!.isNotEmpty)
           SliverToBoxAdapter(child: _buildSubscribeBanner(_activeCategory!)),
-        // Sort bar — sayım + sort chip'ler + filter butonu
+        // Sort bar — sayım üstte, chip'ler altta tam genişlikte yatay scroll
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Flexible(
-                  child: Text('${providers.length} usta bulundu',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 13, color: AppColors.textSecondary)),
-                ),
-                const Spacer(),
-                Flexible(
-                  child: SingleChildScrollView(
+                Text('${providers.length} usta bulundu',
+                    style: const TextStyle(
+                        fontSize: 13, color: AppColors.textSecondary)),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 32,
+                  child: ListView(
                     scrollDirection: Axis.horizontal,
-                    reverse: true,
-                    child: Row(
-                      children: [
-                        _sortChip(_SortMode.rating, 'En Yüksek Puan'),
-                        const SizedBox(width: 8),
-                        _sortChip(_SortMode.reviews, 'En Çok Yorum'),
-                        const SizedBox(width: 8),
-                        _filterChip(),
-                      ],
-                    ),
+                    children: [
+                      _sortChip(_SortMode.rating, 'En Yüksek Puan'),
+                      const SizedBox(width: 8),
+                      _sortChip(_SortMode.reviews, 'En Çok Yorum'),
+                      const SizedBox(width: 8),
+                      _filterChip(),
+                    ],
                   ),
                 ),
               ],
