@@ -116,16 +116,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Phase Mobile7 — Email doğrulama zorunlu
     final user = result['user'] as Map<String, dynamic>?;
     if (user != null && user['emailVerified'] == false) {
+      // Sert uyarı (login hata stiliyle aynı): kırmızı zemin + X ikon + beyaz
+      // kalın yazı — e-posta doğrulanmadan devam edilemeyeceğini net vurgular.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('E-posta doğrulamanız gerekiyor.'),
-          backgroundColor: AppColors.surface,
+          content: const Row(
+            children: [
+              Icon(Icons.cancel_rounded, color: Colors.white),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'E-posta adresiniz doğrulanmadı. Devam etmek için lütfen e-postanızı onaylayın.',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: AppColors.error, width: 1.5),
           ),
           margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 4),
         ),
       );
       context.push('/verify-email');
