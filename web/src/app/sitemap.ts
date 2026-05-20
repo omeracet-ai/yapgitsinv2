@@ -3,7 +3,6 @@ import {
   getCategories,
   getWorkers,
   getJobs,
-  getBlogPosts,
   unwrap,
   slugify,
   TR_CITIES,
@@ -122,27 +121,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  // Phase 158 — blog list + detail pages
-  urls.push({
-    url: `${SITE}/blog`,
-    lastModified: now,
-    changeFrequency: 'weekly',
-    priority: 0.7,
-    alternates: { languages: altLanguages('/blog') },
-  });
-  const blogResult = await getBlogPosts({ page: '1', limit: '100' });
-  const blogPosts = blogResult?.data ?? [];
-  for (const p of blogPosts) {
-    const path = `/blog/${p.slug}`;
-    const lm = p.updatedAt || p.publishedAt || p.createdAt;
-    urls.push({
-      url: `${SITE}${path}`,
-      lastModified: lm ? new Date(lm) : now,
-      changeFrequency: 'weekly',
-      priority: 0.6,
-      alternates: { languages: altLanguages(path) },
-    });
-  }
+  // Phase 158 — blog list + detail pages — GİZLENDİ (blog feature hidden).
+  // Sitemap'ten çıkarıldı; /blog route'ları 404 döndürüyor. Geri açmak için
+  // blog renderer'larındaki BLOG_HIDDEN=false yapıp bu bloğu geri ekle.
 
   return urls;
 }

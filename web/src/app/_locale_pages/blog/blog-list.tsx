@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getBlogPosts, type BlogPost } from '@/lib/api';
 import { localePath, type Locale } from '@/i18n';
@@ -16,6 +17,10 @@ export async function buildBlogListMetadata(L: Locale): Promise<Metadata> {
 }
 
 export default async function renderBlogList(L: Locale) {
+  // Blog gizlendi — tüm /blog route'ları 404. Renderer kodu dormant korunur.
+  // Geri açmak için BLOG_HIDDEN=false. (non-const: unreachable-code lint çıkmaz)
+  const BLOG_HIDDEN: boolean = true;
+  if (BLOG_HIDDEN) notFound();
   const result = await getBlogPosts({ page: '1', limit: '30' });
   const posts: BlogPost[] = result?.data ?? [];
   const home = L === 'en' ? 'Home' : L === 'az' ? 'Ana səhifə' : 'Anasayfa';

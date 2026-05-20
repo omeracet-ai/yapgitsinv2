@@ -34,7 +34,8 @@ const NAV = [
   { href: "/disputes",        label: "Anlaşmazlıklar", icon: "⚖️" },
   { href: "/certifications",  label: "Sertifikalar",   icon: "📜" },
   { href: "/audit-log",       label: "Denetim Kaydı",  icon: "📜" },
-  { href: "/blog",            label: "Blog",           icon: "📝" },
+  // Blog gizlendi — feature hidden (restorable). /blog route'ları 404.
+  // { href: "/blog",            label: "Blog",           icon: "📝" },
   { href: "/broadcast",       label: "Duyuru Gönder",  icon: "📢" },
   { href: "/harita",           label: "Harita Yönetimi", icon: "🗺️" },
   { href: "/status",          label: "Sistem Durumu",  icon: "🩺" },
