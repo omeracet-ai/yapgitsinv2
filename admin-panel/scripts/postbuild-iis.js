@@ -42,6 +42,11 @@ const webConfig = `<?xml version="1.0" encoding="utf-8"?>
       <add name="iisnode" path="server.js" verb="*" modules="iisnode" />
     </handlers>
 
+    <!-- Phase 258: single worker (predictable recycle, no split in-memory state)
+         + recycle signal so iisnode graceful-shuts-down the node process.
+         Do NOT add nodeProcessCommandLine here (causes 500.1000). -->
+    <iisnode nodeProcessCountPerApplication="1" recycleSignalEnabled="true" />
+
     <defaultDocument>
       <files>
         <clear />

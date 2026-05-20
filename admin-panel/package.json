@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && node scripts/postbuild-iis.js",
+    "postbuild": "node scripts/run-iisnode-patch.js",
     "start": "next start",
     "lint": "eslint"
   },

@@ -20,6 +20,12 @@
 .PARAMETER NoSmoke
   Deploy sonrasi smoke testlerini atlar.
 
+.PARAMETER RecyclePool
+  (Phase 258) App-pool / Node worker recycle'i ZORLAR. Uzaktan FTP ile calistirilinca
+  tmp/restart.txt mtime'ini gunceller (iisnode/Passenger graceful restart) — -NoRestart
+  verilse bile. Script DOGRUDAN sunucuda calisiyorsa ve APP_POOL_NAME .env.deploy'da
+  tanimliysa, ek olarak `appcmd recycle apppool` da denenir.
+
 .PARAMETER EnvFile
   Default: <repo>/.env.deploy
 
@@ -41,7 +47,8 @@ param(
 
     [string]$EnvFile,
     [switch]$NoRestart,
-    [switch]$NoSmoke
+    [switch]$NoSmoke,
+    [switch]$RecyclePool
 )
 
 $ErrorActionPreference = 'Stop'
@@ -99,7 +106,7 @@ Yapgitsin Plesk Deploy
 ======================
 
 Usage:
-  pwsh scripts/deploy-plesk.ps1 <mode> [module] [-NoRestart] [-NoSmoke]
+  pwsh scripts/deploy-plesk.ps1 <mode> [module] [-NoRestart] [-NoSmoke] [-RecyclePool]
 
 Modes:
   dry-run <module>   Hangi dosyalar hangi remote path'e gidecek listeler. Upload YAPMAZ.
@@ -117,6 +124,7 @@ Notlar:
 - Memory feedback_post_deploy_smoke: deploy sonrasi smoke SART. Bu script otomatik kosturur.
 - Memory feedback_prod_deploy_path: kaynak src/ altina yuklenir, dist/ DEGIL.
 - Plesk Passenger restart: tmp/restart.txt mtime degisince auto-restart. -NoRestart ile bypass.
+- -RecyclePool: restart'i ZORLAR (NoRestart'i ezer). Sunucuda + APP_POOL_NAME varsa appcmd recycle de dener.
 "@ -ForegroundColor Cyan
 }
 
@@ -151,6 +159,9 @@ function Get-Config {
         RemoteRoot = if ($env['FTP_REMOTE_DIR']) { $env['FTP_REMOTE_DIR'].TrimEnd('/') } else { '/httpdocs' }
         UseTls     = ($env['FTP_USE_TLS'] -eq '1')
         SmokeBase  = if ($env['SMOKE_BASE']) { $env['SMOKE_BASE'].TrimEnd('/') } else { 'https://api.yapgitsin.tr' }
+        # Phase 258 — optional IIS app-pool name; only used by -RecyclePool when
+        # this script runs ON the server (appcmd available). Empty = skip appcmd.
+        AppPool    = if ($env['APP_POOL_NAME']) { $env['APP_POOL_NAME'] } else { '' }
     }
 }
 
@@ -294,8 +305,9 @@ function Invoke-Live {
     }
     Write-Host "`nUpload: $okCount ok, $failCount fail" -ForegroundColor $(if ($failCount) { 'Red' } else { 'Green' })
 
-    if (-not $NoRestart) {
-        Write-Host "`nPassenger restart: tmp/restart.txt touch..." -ForegroundColor Cyan
+    # -RecyclePool restart'i ZORLAR (NoRestart verilse bile). Aksi halde NoRestart'a uy.
+    if ((-not $NoRestart) -or $RecyclePool) {
+        Write-Host "`nrestart: tmp/restart.txt touch..." -ForegroundColor Cyan
         $tmpDir = "$($Config.RemoteRoot)/backend/tmp"
         Ensure-RemoteDir -RemoteDir $tmpDir -Config $Config
         $localTmp = [System.IO.Path]::GetTempFileName()
@@ -312,7 +324,41 @@ function Invoke-Live {
         Write-Host "`n-NoRestart: restart atlandi. Plesk panelinden manuel restart yap." -ForegroundColor Yellow
     }
 
+    if ($RecyclePool) { Invoke-PoolRecycle -Config $Config }
+
     if ($failCount -gt 0) { throw "$failCount dosya upload basarisiz — smoke iptal." }
+}
+
+# ---------------------------------------------------------------------------
+# Phase 258 — app-pool recycle. FTP-only deploy uzaktan appcmd calistiramaz; bu
+# yuzden birincil mekanizma yukaridaki tmp/restart.txt touch'i (iisnode/Passenger
+# graceful restart). Bu fonksiyon EK olarak, script DOGRUDAN sunucuda calisiyorsa
+# (appcmd mevcut + APP_POOL_NAME tanimli) IIS app-pool'unu da recycle eder.
+function Invoke-PoolRecycle {
+    param($Config)
+    Write-Host "`n-RecyclePool: recycle istegi" -ForegroundColor Cyan
+
+    if (-not $Config.AppPool) {
+        Write-Host "  APP_POOL_NAME .env.deploy'da yok — appcmd recycle atlandi (tmp/restart.txt zaten dokunuldu)." -ForegroundColor DarkYellow
+        return
+    }
+
+    $appcmd = Join-Path $env:windir 'system32\inetsrv\appcmd.exe'
+    if (-not (Test-Path -LiteralPath $appcmd)) {
+        Write-Host "  appcmd.exe yok ($appcmd) — bu makine IIS host degil. Uzaktan recycle icin tmp/restart.txt kullanilir." -ForegroundColor DarkYellow
+        return
+    }
+
+    try {
+        & $appcmd recycle apppool /apppool.name:"$($Config.AppPool)"
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  ok  app-pool '$($Config.AppPool)' recycle edildi" -ForegroundColor Green
+        } else {
+            Write-Host "  FAIL appcmd recycle (exit $LASTEXITCODE)" -ForegroundColor Red
+        }
+    } catch {
+        Write-Host "  FAIL appcmd recycle — $($_.Exception.Message)" -ForegroundColor Red
+    }
 }
 
 # ---------------------------------------------------------------------------

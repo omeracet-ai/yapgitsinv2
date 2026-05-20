@@ -3,7 +3,8 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { DataSource } from 'typeorm';
-import { readFileSync } from 'fs';
+import { execFileSync } from 'child_process';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 let version = '0.0.1';
@@ -14,6 +15,38 @@ try {
 } catch {
   // fallback
 }
+
+/**
+ * Phase 258 — commit hash resolved ONCE at module load so /health never shells
+ * out per request (git would blow the <50ms budget and can throw under iisnode).
+ * Priority: GIT_COMMIT env → GIT_SHA env → build-time file (.git-commit) →
+ * best-effort `git rev-parse --short HEAD` → 'unknown'. Never throws.
+ */
+const COMMIT_HASH: string = (() => {
+  const fromEnv = (process.env.GIT_COMMIT || process.env.GIT_SHA || '').trim();
+  if (fromEnv) return fromEnv;
+  try {
+    // Build-time artifact written by CI/deploy (avoids a git binary on the host).
+    const f = join(__dirname, '../..', '.git-commit');
+    if (existsSync(f)) {
+      const v = readFileSync(f, 'utf-8').trim();
+      if (v) return v;
+    }
+  } catch {
+    // ignore — fall through to git / unknown
+  }
+  try {
+    return execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
+      cwd: join(__dirname, '../..'),
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 1500,
+    })
+      .toString()
+      .trim();
+  } catch {
+    return 'unknown';
+  }
+})();
 
 export type CheckStatus =
   | 'ok'
@@ -29,6 +62,17 @@ export interface HealthResponse {
   uptime: number;
   version: string;
   buildSha: string;
+  /**
+   * Phase 258 — short commit hash of the running build. Resolved once at boot
+   * (GIT_COMMIT/GIT_SHA env → .git-commit file → git → 'unknown'). Alias of
+   * buildSha kept for clarity in dashboards.
+   */
+  commit: string;
+  /**
+   * Phase 258 — process memory snapshot in MB (rounded). Synchronous, cheap;
+   * lets the status page spot leaks / pre-recycle bloat under iisnode.
+   */
+  memory: { rssMb: number; heapUsedMb: number; heapTotalMb: number };
   checks: {
     database: CheckStatus;
     cache: CheckStatus;
@@ -75,7 +119,23 @@ export class HealthService {
   ) {}
 
   private buildSha(): string {
-    return process.env.GIT_SHA || 'unknown';
+    // Phase 258 — unified with COMMIT_HASH (env → file → git → 'unknown').
+    return COMMIT_HASH;
+  }
+
+  /** Phase 258 — cheap synchronous memory snapshot in MB (rounded to 0.1). */
+  private memorySnapshot(): {
+    rssMb: number;
+    heapUsedMb: number;
+    heapTotalMb: number;
+  } {
+    const m = process.memoryUsage();
+    const mb = (b: number) => Math.round((b / 1024 / 1024) * 10) / 10;
+    return {
+      rssMb: mb(m.rss),
+      heapUsedMb: mb(m.heapUsed),
+      heapTotalMb: mb(m.heapTotal),
+    };
   }
 
   private async checkDatabase(): Promise<CheckStatus> {
@@ -208,6 +268,8 @@ export class HealthService {
       uptime: Math.floor(process.uptime() * 10) / 10,
       version,
       buildSha: this.buildSha(),
+      commit: COMMIT_HASH,
+      memory: this.memorySnapshot(),
       checks: { database, cache, iyzipay },
       migrationsPending,
       timestamp: new Date().toISOString(),

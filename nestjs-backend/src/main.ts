@@ -510,13 +510,57 @@ async function bootstrap() {
     );
   }
 
-  // Phase 131/170 — Helmet: HTTP güvenlik header'ları
-  // - HSTS: 1 yıl, alt domainler dahil, preload-ready
+  const isProd = process.env.NODE_ENV === 'production';
+
+  // Phase 131/170/258 — Helmet: HTTP güvenlik header'ları
+  // - HSTS: 1 yıl, alt domainler dahil, preload-ready (sadece TLS arkasında etkili)
   // - CSP: Iyzipay frame'i, Plausible/GTM analytics, self img/script/style, websocket connect
-  // - referrerPolicy + frameguard (clickjacking) + nosniff
-  // crossOriginResourcePolicy gevşetildi: /uploads farklı originden çekilebilsin
+  // - referrerPolicy + frameguard (clickjacking) + nosniff (X-Content-Type-Options)
+  // - X-DNS-Prefetch-Control: off (gizlilik — helmet default'u allow, off'a çekiyoruz)
+  // crossOriginResourcePolicy 'cross-origin': /uploads görselleri Flutter uygulamasından
+  //   ve farklı origin'lerden yüklenebilsin (CORP başlığı görseli bloke etmesin).
+  //
+  // CSP Swagger notu: Swagger UI (/api/docs, dev-only) kendi bundle JS/CSS'ini ve
+  //   inline style/script + blob worker kullanır. Bu yüzden:
+  //   - Strict CSP'yi /api/docs path'ine UYGULAMIYORUZ (aşağıdaki skipDocsCsp guard'ı).
+  //   - Genel CSP yine de scriptSrc'a 'blob:' ve worker-src 'blob:' ekler ki
+  //     Swagger dışı sayfalar da CSP altında çalışsın, JSON API zaten HTML render etmez.
+  //   Bu, JSON API + statik /uploads görselleri kırmadan makul-permissive bir politikadır.
+  const cspMiddleware = helmet.contentSecurityPolicy({
+    useDefaults: true,
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        'blob:',
+        'https://www.googletagmanager.com',
+        'https://plausible.io',
+      ],
+      // Swagger UI service worker / blob worker'ları için
+      workerSrc: ["'self'", 'blob:'],
+      connectSrc: [
+        "'self'",
+        'https://yapgitsin.tr',
+        'wss://yapgitsin.tr',
+        'https://plausible.io',
+      ],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      frameSrc: [
+        "'self'",
+        'https://sandbox-api.iyzipay.com',
+        'https://api.iyzipay.com',
+      ],
+      // upgrade-insecure-requests prod TLS uyumu
+      upgradeInsecureRequests: isProd ? [] : null,
+    },
+  });
+
   app.use(
     helmet({
+      // CSP'yi helmet ana çağrısından ayrı yönetiyoruz (Swagger path skip için).
+      contentSecurityPolicy: false,
       crossOriginResourcePolicy: { policy: 'cross-origin' },
       hsts: {
         maxAge: 31536000,
@@ -525,39 +569,19 @@ async function bootstrap() {
       },
       referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
       frameguard: { action: 'sameorigin' }, // X-Frame-Options: SAMEORIGIN
-      contentSecurityPolicy: {
-        useDefaults: true,
-        directives: {
-          defaultSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
-          scriptSrc: [
-            "'self'",
-            "'unsafe-inline'",
-            'https://www.googletagmanager.com',
-            'https://plausible.io',
-          ],
-          connectSrc: [
-            "'self'",
-            'https://yapgitsin.tr',
-            'wss://yapgitsin.tr',
-            'https://plausible.io',
-          ],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          frameSrc: [
-            "'self'",
-            'https://sandbox-api.iyzipay.com',
-            'https://api.iyzipay.com',
-          ],
-          // upgrade-insecure-requests prod TLS uyumu
-          upgradeInsecureRequests:
-            process.env.NODE_ENV === 'production' ? [] : null,
-        },
-      },
+      dnsPrefetchControl: { allow: false }, // X-DNS-Prefetch-Control: off
     }),
   );
-  console.log('[boot] helmet ready');
 
-  const isProd = process.env.NODE_ENV === 'production';
+  // CSP'yi /api/docs (Swagger UI) HARİÇ tüm route'lara uygula. Swagger UI
+  //   strict CSP altında bozulur (inline/blob script), dev-only olduğu için
+  //   bu path'i CSP'den muaf tutmak güvenlik açısından kabul edilebilir.
+  app.use((req: any, res: any, next: any) => {
+    const url: string = req.originalUrl || req.url || '';
+    if (url.startsWith('/api/docs')) return next();
+    return cspMiddleware(req, res, next);
+  });
+  console.log('[boot] helmet ready');
 
   // Global validation — tüm DTO dekoratörleri (class-validator) aktif hale gelir
   app.useGlobalPipes(
