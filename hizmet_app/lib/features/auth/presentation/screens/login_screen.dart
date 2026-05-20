@@ -119,11 +119,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('E-posta doğrulamanız gerekiyor.'),
-          backgroundColor: const Color(0xFF161B22),
+          backgroundColor: AppColors.surface,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+            side: const BorderSide(color: AppColors.error, width: 1.5),
           ),
           margin: const EdgeInsets.all(16),
         ),

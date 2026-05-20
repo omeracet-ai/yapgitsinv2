@@ -54,22 +54,22 @@ const _fallback = [
     title: 'Bir işin mi var?\nBu gece\nbiri yapsın.',
     body: 'Türkiye, Azerbaycan, Kıbrıs ve Özbekistan\'da binlerce güvenilir profesyonele saniyeler içinde ulaş.',
     icon: Icons.flash_on,
-    gradientStart: Color(0xFF0C1117),
-    gradientEnd: Color(0xFF161B22),
+    gradientStart: AppColors.background,
+    gradientEnd: AppColors.surface,
   ),
   _Slide(
     title: 'Usta bul,\nteklif al,\nrahat et.',
     body: 'İşini yayınla, dakikalar içinde en uygun teklifleri değerlendirmeye başla.',
     icon: Icons.search,
-    gradientStart: Color(0xFF0C1117),
-    gradientEnd: Color(0xFF161B22),
+    gradientStart: AppColors.background,
+    gradientEnd: AppColors.surface,
   ),
   _Slide(
     title: 'Paran emanette,\nrahat ol,\nödeme güvenli.',
     body: 'İş bitmeden paran güvende kalsın. Memnuniyet garantisi ile ödemeni onayla.',
     icon: Icons.security,
-    gradientStart: Color(0xFF0C1117),
-    gradientEnd: Color(0xFF161B22),
+    gradientStart: AppColors.background,
+    gradientEnd: AppColors.surface,
   ),
 ];
 

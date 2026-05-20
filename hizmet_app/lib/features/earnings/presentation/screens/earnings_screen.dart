@@ -26,7 +26,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Kazançlarım')),
       body: asyncData.when(
-        loading: () => ListSkeleton(itemCount: 5, itemBuilder: (_) => const NotificationSkeleton()),
+        loading: () => const StatsSkeleton(),
         error: (e, _) => Center(child: Text('Hata: $e')),
         data: (d) => RefreshIndicator(
           onRefresh: () async => ref.invalidate(earningsProvider(_months)),

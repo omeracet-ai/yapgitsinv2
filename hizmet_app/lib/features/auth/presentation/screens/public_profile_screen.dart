@@ -136,7 +136,7 @@ class _ProfileView extends ConsumerWidget {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Color(0xFF007DFE), Color(0xFF0056B3)],
+                        colors: [AppColors.primary, AppColors.primaryDark],
                       ),
                     ),
                   ),

@@ -310,7 +310,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ? AppColors.success
         : percent >= 50
             ? AppColors.primary
-            : const Color(0xFFFFA000);
+            : AppColors.warning;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Container(

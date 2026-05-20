@@ -72,6 +72,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   }
 
   // Dark theme constants — Voldi-job-detail-redesign
+  // TODO(design): values are close to AppColors.{surface,border,textSecondary}
+  // but not exact; left as-is to preserve the redesign's intentional palette.
   static const Color _bgColor = Colors.black;
   static const Color _surfaceColor = Color(0xFF141414);
   static const Color _surfaceColor2 = Color(0xFF1E1E1E);

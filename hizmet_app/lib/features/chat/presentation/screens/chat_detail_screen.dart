@@ -295,7 +295,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final renderItems = _buildRenderItems();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFECF0F5),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
         elevation: 0,
@@ -331,7 +331,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00C9A7),
+                        color: AppColors.success,
                         shape: BoxShape.circle,
                         border:
                             Border.all(color: AppColors.primary, width: 1.5),
@@ -353,7 +353,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     style: TextStyle(
                         fontSize: 11,
                         color: isOnline || isTyping
-                            ? const Color(0xFF00C9A7)
+                            ? AppColors.success
                             : Colors.white.withValues(alpha: 0.75))),
               ],
             ),
@@ -511,7 +511,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                    color: const Color(0xFFF1F4F8),
+                    color: AppColors.surfaceElevated,
                     borderRadius: BorderRadius.circular(24),
                     border:
                         Border.all(color: AppColors.border, width: 1)),

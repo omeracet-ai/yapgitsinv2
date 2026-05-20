@@ -123,6 +123,65 @@ class ProviderCardSkeleton extends StatelessWidget {
   }
 }
 
+/// Stats screen skeleton — a 2x2 KPI grid placeholder above a chart block.
+///
+/// Designed for dashboards (e.g. earnings) where the loaded layout is a grid of
+/// metric cards plus a trend chart rather than a vertical list.
+class StatsSkeleton extends StatelessWidget {
+  const StatsSkeleton({super.key});
+
+  Widget _kpiCard() => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _box(22, 22, r: 6),
+            _box(70, 10),
+            _box(90, 16),
+          ],
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: _baseColor(),
+      highlightColor: _highlightColor(),
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _box(220, 36, r: 18),
+            const SizedBox(height: 16),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.5,
+              children: [_kpiCard(), _kpiCard(), _kpiCard(), _kpiCard()],
+            ),
+            const SizedBox(height: 16),
+            _box(double.infinity, 48, r: 12),
+            const SizedBox(height: 20),
+            _box(140, 14),
+            const SizedBox(height: 10),
+            _box(double.infinity, 180, r: 14),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Notification card skeleton — small icon + title + body.
 class NotificationSkeleton extends StatelessWidget {
   const NotificationSkeleton({super.key});
