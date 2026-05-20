@@ -127,6 +127,10 @@ class _ServiceListingsScreenState
     final jobsAsync = ref.watch(serviceListingsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final activeFilterCount = ref.watch(jobFilterProvider).activeCount;
+    final authState = ref.watch(authStateProvider);
+    final myUserId = authState is AuthAuthenticated
+        ? authState.user['id'] as String?
+        : null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -155,8 +159,8 @@ class _ServiceListingsScreenState
                         itemCount: jobs.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: 12),
-                        itemBuilder: (_, i) =>
-                            _ServiceListingCard(job: jobs[i]),
+                        itemBuilder: (_, i) => _ServiceListingCard(
+                            job: jobs[i], myUserId: myUserId),
                       ),
                     ),
               loading: () => ListSkeleton(
@@ -340,10 +344,13 @@ class _ServiceListingsScreenState
 /// Hizmet ilanı kartı — usta perspektifinden (müşteri görür).
 class _ServiceListingCard extends StatelessWidget {
   final Job job;
-  const _ServiceListingCard({required this.job});
+  final String? myUserId;
+  const _ServiceListingCard({required this.job, this.myUserId});
 
   @override
   Widget build(BuildContext context) {
+    // offer ilanlarında job.customerId = ilanı yayınlayan USTA'nın id'si.
+    final isOwner = myUserId != null && job.customerId == myUserId;
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
@@ -521,26 +528,51 @@ class _ServiceListingCard extends StatelessWidget {
             Row(
               children: [
                 const Spacer(),
-                ElevatedButton.icon(
-                  // Phase Two-Sided: offer-tipi ilanlarda job.customerId aslında
-                  // ilanı yayınlayan USTA'nın id'si. Müşteri teklif/randevu
-                  // talebi için ustanın public profile'ına gitmeli — orada
-                  // "Randevu Al" CTA müşteriyi /randevu-olustur/:workerId
-                  // akışına yönlendiriyor. (Eskiden JobDetailScreen açıyordu —
-                  // bu ekran "Teklif Ver" formu içerdiği için müşteri yanlış
-                  // rol arayüzünü görüyordu.)
-                  onPressed: () => context.push('/profil/${job.customerId}'),
-                  icon: const Icon(Icons.handshake_rounded, size: 16),
-                  label: const Text('Teklif Al'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.black,
+                // Kendi ilanımsa "Teklif Al" yerine rozet (kendine randevu/teklif
+                // talebi olmaz). Aksi halde müşteri ustanın profiline gider.
+                if (isOwner)
+                  Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.person_rounded,
+                            size: 16, color: AppColors.primary),
+                        SizedBox(width: 6),
+                        Text('Bu sizin ilanınız',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary)),
+                      ],
+                    ),
+                  )
+                else
+                  ElevatedButton.icon(
+                    // Phase Two-Sided: offer-tipi ilanlarda job.customerId aslında
+                    // ilanı yayınlayan USTA'nın id'si. Müşteri teklif/randevu
+                    // talebi için ustanın public profile'ına gitmeli — orada
+                    // "Randevu Al" CTA müşteriyi /randevu-olustur/:workerId
+                    // akışına yönlendiriyor.
+                    onPressed: () => context.push('/profil/${job.customerId}'),
+                    icon: const Icon(Icons.handshake_rounded, size: 16),
+                    label: const Text('Teklif Al'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
-                ),
               ],
             ),
           ],
