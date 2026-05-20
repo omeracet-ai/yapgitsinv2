@@ -214,38 +214,57 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
     super.dispose();
   }
 
-  void _onSearch(String query) async {
+  void _onSearch(String query) {
     final q = query.trim();
-    if (q.isEmpty) return;
-    debugPrint('main_shell._onSearch q="$q" → ProviderListScreen');
-    // Kategori match — önce tam, sonra substring (her iki yön).
+    // Metinden kategori eşleştir — önce tam, sonra substring (her iki yön).
     String? matchedCategory;
-    ref.read(categoriesProvider).whenData((cats) {
-      final lower = q.toLowerCase();
-      for (final c in cats) {
-        final name = ((c['name'] as String?) ?? '').toLowerCase();
-        if (name == lower) {
-          matchedCategory = c['name'] as String;
-          return;
+    if (q.isNotEmpty) {
+      ref.read(categoriesProvider).whenData((cats) {
+        final lower = q.toLowerCase();
+        for (final c in cats) {
+          final name = ((c['name'] as String?) ?? '').toLowerCase();
+          if (name == lower) {
+            matchedCategory = c['name'] as String;
+            return;
+          }
         }
-      }
-      for (final c in cats) {
-        final name = ((c['name'] as String?) ?? '').toLowerCase();
-        if (name.isEmpty) continue;
-        if (name.contains(lower) || lower.contains(name)) {
-          matchedCategory = c['name'] as String;
-          return;
+        for (final c in cats) {
+          final name = ((c['name'] as String?) ?? '').toLowerCase();
+          if (name.isEmpty) continue;
+          if (name.contains(lower) || lower.contains(name)) {
+            matchedCategory = c['name'] as String;
+            return;
+          }
         }
-      }
-    });
-    final initial = matchedCategory ?? q;
+        // 3) Alt hizmet (subService) eşleşmesi — "musluk tamiri" → Tesisat,
+        //    "ev temizliği" → Temizlik gibi serbest metinleri kategoriye bağlar.
+        for (final c in cats) {
+          final subs = (c['subServices'] as List?) ?? const [];
+          for (final s in subs) {
+            final sub = s.toString().toLowerCase();
+            if (sub.isEmpty) continue;
+            if (sub == lower || sub.contains(lower) || lower.contains(sub)) {
+              matchedCategory = c['name'] as String;
+              return;
+            }
+          }
+        }
+      });
+    }
     if (!mounted) return;
     _searchController.clear();
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ProviderListScreen(initialSearch: initial),
-      ),
+    // Arama çubuğu artık doğrudan "Hizmet İlanı Ver" sayfasına yönlendirir.
+    // Eşleşen kategori varsa otomatik seçilir; eşleşme yoksa/metin boşsa
+    // kategorisiz açılır (kullanıcı elle seçer).
+    final isLoggedIn = ref.read(authStateProvider) is AuthAuthenticated;
+    if (!isLoggedIn) {
+      context.push('/giris-yap', extra: {'returnTo': '/ilan-ver'});
+      return;
+    }
+    final cat = matchedCategory;
+    context.push(
+      '/ilan-ver',
+      extra: cat != null ? {'initialCategory': cat} : null,
     );
   }
 

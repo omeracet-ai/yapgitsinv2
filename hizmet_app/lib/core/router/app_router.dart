@@ -260,7 +260,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           final cats = allowed is List
               ? allowed.map((e) => e.toString()).toList()
               : null;
-          return PostJobScreen(kind: 'request', allowedCategories: cats);
+          final initialCategory = extra?['initialCategory'] as String?;
+          return PostJobScreen(
+            kind: 'request',
+            allowedCategories: cats,
+            initialCategory: initialCategory,
+          );
         },
       ),
       GoRoute(

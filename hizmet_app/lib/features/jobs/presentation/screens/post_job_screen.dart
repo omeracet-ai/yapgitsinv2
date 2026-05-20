@@ -33,11 +33,17 @@ class PostJobScreen extends ConsumerStatefulWidget {
   /// kategoriler (varsayılan).
   final List<String>? allowedCategories;
 
+  /// Anasayfa arama çubuğundan gelen otomatik kategori seçimi. Metinden eşleşen
+  /// kategori adı (tam isim). Verilirse form bu kategoriyle açılır ve taslak
+  /// geri-yükleme istemi atlanır. null = normal akış.
+  final String? initialCategory;
+
   const PostJobScreen({
     super.key,
     this.initialJob,
     this.kind = 'request',
     this.allowedCategories,
+    this.initialCategory,
   });
 
   @override
@@ -87,6 +93,11 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       // Clone-mode: pre-fill from source job, skip draft restore prompt.
       WidgetsBinding.instance
           .addPostFrameCallback((_) => _applyInitialJob(widget.initialJob!));
+    } else if (widget.initialCategory != null &&
+        widget.initialCategory!.isNotEmpty) {
+      // Anasayfa aramasından kategori-hedefli giriş: kategoriyi ön-seç, taslak
+      // geri-yükleme istemini atla (kullanıcı yeni, niyetli bir akış başlattı).
+      _selectedCategory = widget.initialCategory;
     } else {
       WidgetsBinding.instance.addPostFrameCallback((_) => _maybeRestoreDraft());
     }
