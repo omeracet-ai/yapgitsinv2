@@ -6,7 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository, In } from 'typeorm';
 import * as crypto from 'crypto';
 import { Job, JobStatus, JobKind, isValidTransition } from './job.entity';
 import { Offer, OfferStatus } from './offer.entity';
@@ -14,7 +14,7 @@ import { UsersService } from '../users/users.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
 import { TokensService } from '../tokens/tokens.service';
 // Phase 245 — boost atomic transaction için doğrudan entity importları.
-import { User } from '../users/user.entity';
+import { User, UserRole } from '../users/user.entity';
 import {
   TokenTransaction,
   TxType,
@@ -52,6 +52,9 @@ export class JobsService {
     private jobsRepository: Repository<Job>,
     @InjectRepository(Offer)
     private offersRepository: Repository<Offer>,
+    // Phase 259 — read-only admin lookup for fraud-flag notifications.
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
     private usersService: UsersService,
     private dataSource: DataSource,
     private notificationsService: NotificationsService,
@@ -87,6 +90,59 @@ export class JobsService {
       }
     } catch (e) {
       this.logger.warn(`category subscription notify failed: ${String(e)}`);
+    }
+  }
+
+  /**
+   * Phase 259 — notify admins when a job is auto-flagged as high fraud risk.
+   *
+   * SAFETY: best-effort, fully self-contained. Wrapped in try/catch so a failed
+   * admin lookup or notification insert can NEVER break or delay job creation —
+   * it is only ever invoked from a fire-and-forget (.then) chain that itself has
+   * an outer .catch(). Errors are swallowed with a logger.warn, matching the
+   * fraud hook + _notifyCategorySubscribers conventions.
+   */
+  private async _notifyAdminsOfFraudFlag(
+    job: Pick<Job, 'id' | 'title'>,
+    score: number,
+    reason: string,
+  ): Promise<void> {
+    try {
+      const admins = await this.usersRepository.find({
+        where: { role: In([UserRole.ADMIN, UserRole.SUPER_ADMIN]) },
+        select: ['id'],
+      });
+      if (admins.length === 0) {
+        this.logger.warn(
+          `Job ${job.id} flagged (score=${score}) but no admin found to notify`,
+        );
+        return;
+      }
+      const title = '🚩 Şüpheli ilan';
+      const body = `"${job.title}" yüksek risk olarak işaretlendi (skor: ${score}). Sebep: ${reason || 'belirtilmedi'}`;
+      for (const admin of admins) {
+        // send() is best-effort per-recipient; guard each so one failure
+        // doesn't skip the remaining admins.
+        try {
+          await this.notificationsService.send({
+            userId: admin.id,
+            type: NotificationType.SYSTEM,
+            title,
+            body,
+            refId: job.id,
+            relatedType: 'job',
+            relatedId: job.id,
+          });
+        } catch (inner) {
+          this.logger.warn(
+            `Admin fraud-flag notify failed for admin ${admin.id} (job ${job.id}): ${String(inner)}`,
+          );
+        }
+      }
+    } catch (e) {
+      this.logger.warn(
+        `Admin fraud-flag notify failed for job ${job.id}: ${String(e)}`,
+      );
     }
   }
 
@@ -417,11 +473,17 @@ export class JobsService {
             flagReason: r.reasons.join('; '),
             fraudScore: r.score,
           });
-          // Phase 259: surface high-risk listings for moderation. Logged for
-          // now; TODO(admin-notification): wire an admin alert/notification hook
-          // (e.g. NotificationsService broadcast to admins) once available.
+          // Phase 259: surface high-risk listings for moderation.
           this.logger.warn(
             `Job ${saved.id} flagged as high fraud risk (score=${r.score}): ${r.reasons.join('; ')}`,
+          );
+          // Phase 259: alert admins. Best-effort & error-swallowed inside the
+          // helper — already on a fire-and-forget chain, so it can never block
+          // or fail job creation.
+          await this._notifyAdminsOfFraudFlag(
+            saved,
+            r.score,
+            r.reasons.join('; '),
           );
         } else {
           await this.jobsRepository.update(saved.id, { fraudScore: r.score });

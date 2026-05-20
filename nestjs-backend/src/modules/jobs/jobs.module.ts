@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Job } from './job.entity';
 import { Offer } from './offer.entity';
+import { User } from '../users/user.entity';
 import { JobQuestion } from './job-question.entity';
 import { JobQuestionReply } from './job-question-reply.entity';
 import { SavedJob } from './saved-job.entity';
@@ -30,6 +31,8 @@ import { AiModule } from '../ai/ai.module';
       JobQuestion,
       JobQuestionReply,
       SavedJob,
+      // Phase 259 — admin lookup for fraud-flag notifications (read-only).
+      User,
     ]),
     UsersModule,
     TokensModule,
