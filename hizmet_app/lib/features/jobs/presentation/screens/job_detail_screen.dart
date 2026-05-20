@@ -111,8 +111,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final authState = ref.watch(authStateProvider);
     final currentUserId =
         authState is AuthAuthenticated ? authState.user['id'] as String? : null;
-    final isOwner = widget.customerId != null && widget.customerId == currentUserId;
-
     final offersAsync = widget.id != null
         ? ref.watch(jobOffersProvider(widget.id!))
         : const AsyncValue<List<Map<String, dynamic>>>.data([]);
@@ -123,6 +121,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         : const AsyncValue<Map<String, dynamic>>.data({});
     final detail = detailAsync.valueOrNull ?? {};
 
+    // İlan sahibi tespiti — navigasyondan gelen widget.customerId garantisiz
+    // olabilir (her açılış yolu geçirmiyor), bu yüzden çekilen detay yetkili
+    // kaynak. Sahip kendi ilanında "Teklif Ver" görmemeli.
+    final customer = detail['customer'] as Map<String, dynamic>?;
+    final ownerId = (detail['customerId'] as String?) ??
+        (customer?['id'] as String?) ??
+        widget.customerId;
+    final isOwner =
+        currentUserId != null && ownerId != null && ownerId == currentUserId;
+
     // Çözümlenen değerler — API'den gelenler widget parametrelerini geçersiz kılar
     final description = detail['description'] as String?  ?? widget.description;
     final budgetMin   = (detail['budgetMin']  as num?)?.toDouble();
@@ -130,7 +138,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final jobStatus   = detail['status']      as String?  ?? 'open';
     final canMakeOffer = authState is AuthAuthenticated && !isOwner && jobStatus == 'open';
     final isWorker = offersAsync.valueOrNull?.any((o) => o['status'] == 'accepted' && o['user']?['id'] == currentUserId) ?? false;
-    final customer    = detail['customer']    as Map<String, dynamic>?;
     final rawPhotos   = detail['photos']      as List?;
     final photos      = rawPhotos != null
         ? rawPhotos.cast<String>()
