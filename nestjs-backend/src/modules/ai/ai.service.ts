@@ -6,12 +6,12 @@ import {
 import { ConfigService } from '@nestjs/config';
 import Anthropic from '@anthropic-ai/sdk';
 
-// Phase 259: named model constants.
-// MODEL_QUALITY → user-facing creative/quality prose (job descriptions, support
-// chat, review summaries, SEO copy). Keep on Opus.
-// MODEL_FAST → low-reasoning structured/JSON tasks (≈10x cheaper Haiku).
+// Phase 259: named model constant.
+// MODEL_QUALITY → user-facing creative/quality prose still on Anthropic
+// (review summaries, SEO copy, support agent). Keep on Opus.
+// NOTE: the ilan-ver helpers (generateJobDescription, runJobAssistant,
+// runPricingAdvisor) were migrated to Gemini 2.5 Flash — see geminiGenerate().
 const MODEL_QUALITY = 'claude-opus-4-7';
-const MODEL_FAST = 'claude-haiku-4-5-20251001';
 
 const SYSTEM_PROMPT = `You are a helpful AI assistant for a service marketplace platform called Hizmet.
 This platform connects customers with service providers for jobs like home repairs, cleaning, tutoring, and more.
@@ -82,31 +82,17 @@ export class AiService {
     location?: string,
   ): Promise<string> {
     try {
-      const response = await this.client.messages.create({
-        model: MODEL_QUALITY,
-        max_tokens: 1024,
-        thinking: { type: 'adaptive' },
-        system: [
-          {
-            type: 'text',
-            text: SYSTEM_PROMPT,
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        messages: [
-          {
-            role: 'user',
-            content: `Write a clear, professional job description for the following service listing:
+      // Migrated to Gemini 2.5 Flash (prod has GEMINI_API_KEY, not ANTHROPIC).
+      return await this.geminiGenerate(
+        SYSTEM_PROMPT,
+        `Write a clear, professional job description for the following service listing.
+Respond in Turkish.
 Title: ${title}
 Category: ${category}${location ? `\nLocation: ${location}` : ''}
 
-Include: what the job entails, what skills/experience to look for, and what the customer expects. Keep it under 150 words.`,
-          },
-        ],
-      });
-
-      const textBlock = response.content.find((b) => b.type === 'text');
-      return textBlock ? textBlock.text : '';
+Include: what the job entails, what skills/experience to look for, and what the customer expects. Keep it under 150 words. Return only the description text, no preamble.`,
+        1024,
+      );
     } catch (err) {
       this.logger.error(
         `generateJobDescription failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -189,6 +175,65 @@ Include: what the job entails, what skills/experience to look for, and what the 
       );
       throw new InternalServerErrorException('AI chat request failed');
     }
+  }
+
+  /**
+   * Shared Gemini 2.5 Flash single-shot text generation (no history).
+   * Used by the ilan-ver AI helpers (job description / job assistant) — these
+   * were migrated off Anthropic so they work on prod where only GEMINI_API_KEY
+   * is configured. Same request shape as chat(). Caller handles errors.
+   */
+  private async geminiGenerate(
+    systemText: string,
+    userText: string,
+    maxOutputTokens = GEMINI_MAX_OUTPUT_TOKENS,
+    temperature = 0.7,
+  ): Promise<string> {
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+    if (!apiKey) {
+      throw new InternalServerErrorException('GEMINI_API_KEY not configured');
+    }
+
+    const url =
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}` +
+      `:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemText }] },
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: userText.slice(0, GEMINI_MAX_INPUT_CHARS) }],
+          },
+        ],
+        generationConfig: { maxOutputTokens, temperature },
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Gemini HTTP ${res.status}`);
+    }
+    const data = (await res.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    const parts = data.candidates?.[0]?.content?.parts ?? [];
+    return parts
+      .map((p) => p.text ?? '')
+      .join('')
+      .trim();
+  }
+
+  /** Tolerant JSON extraction — strips ```json fences and grabs the first object. */
+  private parseJsonLoose(raw: string): Record<string, unknown> {
+    const cleaned = raw
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim();
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    return JSON.parse(match ? match[0] : cleaned) as Record<string, unknown>;
   }
 
   async summarizeReviews(reviews: string[]): Promise<string> {
@@ -341,6 +386,14 @@ faqs uzunluğu 3-5 arası olsun. SSS uzun-kuyruk SEO odaklı: fiyat, süre, gara
     }
   }
 
+  /** Static category price table as prompt-ready text (replaces the get_price_range tool). */
+  private priceReference(): string {
+    return CATEGORIES.map(
+      (c) =>
+        `- ${c.name}: ${c.priceRange.min}-${c.priceRange.max} TRY / ${c.unit}`,
+    ).join('\n');
+  }
+
   private locationMultiplier(location?: string): number {
     if (!location) return 1.0;
     const l = location.toLowerCase();
@@ -420,31 +473,6 @@ faqs uzunluğu 3-5 arası olsun. SSS uzun-kuyruk SEO odaklı: fiyat, süre, gara
     suggestedBudgetMax: number;
     tips: string;
   }> {
-    const tools: Anthropic.Tool[] = [
-      {
-        name: 'get_categories',
-        description:
-          'Lists all available service categories with typical price ranges',
-        input_schema: { type: 'object' as const, properties: {}, required: [] },
-      },
-      {
-        name: 'get_price_range',
-        description:
-          'Returns market price range for a category, optionally adjusted for location',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            category: { type: 'string', description: 'Exact category name' },
-            location: {
-              type: 'string',
-              description: 'City or district name in Turkey',
-            },
-          },
-          required: ['category'],
-        },
-      },
-    ];
-
     const systemText =
       SYSTEM_PROMPT +
       '\n\nWhen asked for structured output, respond ONLY with valid JSON — no markdown fences, no extra text.';
@@ -456,10 +484,12 @@ Category: ${category ?? 'unknown'}
 ${location ? `Location: ${location}` : ''}
 ${budgetHint ? `Customer budget hint: ${budgetHint} TRY` : ''}
 
-Steps:
-1. If category is unknown, call get_categories and pick the best match.
-2. Call get_price_range for the chosen category${location ? ' and location' : ''}.
-3. Return ONLY this JSON:
+Reference market price ranges (Turkey base, TRY). Adjust for location: İstanbul/Ankara/İzmir ≈ +15%, premium İstanbul districts (Beşiktaş, Sarıyer, Kadıköy, Şişli, Bakırköy) ≈ +30%:
+${this.priceReference()}
+
+If the category is unknown, pick the best match from the list above. Use the matching range (location-adjusted) for the suggested budget.
+
+Return ONLY this JSON (no markdown):
 {
   "description": "<professional Turkish job description, max 120 words>",
   "suggestedBudgetMin": <number>,
@@ -468,12 +498,8 @@ Steps:
 }`;
 
     try {
-      const raw = await this.runAgentLoop(
-        [{ role: 'user', content: userPrompt }],
-        tools,
-        systemText,
-      );
-      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const raw = await this.geminiGenerate(systemText, userPrompt, 1024, 0.6);
+      const parsed = this.parseJsonLoose(raw);
       return {
         description: (parsed.description as string) ?? '',
         suggestedBudgetMin: (parsed.suggestedBudgetMin as number) ?? 0,
@@ -496,29 +522,16 @@ Steps:
     jobDetails: string,
     location?: string,
   ): Promise<{ budgetMin: number; budgetMax: number; rationale: string }> {
-    const tools: Anthropic.Tool[] = [
-      {
-        name: 'get_price_range',
-        description:
-          'Returns market price range for a category and optional location',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            category: { type: 'string' },
-            location: { type: 'string' },
-          },
-          required: ['category'],
-        },
-      },
-    ];
-
     const userPrompt = `A customer needs pricing advice on a Turkish service marketplace.
 
 Category: ${category}
 Job details: ${jobDetails}
 ${location ? `Location: ${location}` : ''}
 
-Call get_price_range, then return ONLY this JSON:
+Reference market price ranges (Turkey base, TRY). Adjust for location: İstanbul/Ankara/İzmir ≈ +15%, premium İstanbul districts (Beşiktaş, Sarıyer, Kadıköy, Şişli, Bakırköy) ≈ +30%:
+${this.priceReference()}
+
+Using the matching range (location-adjusted) and the job details, return ONLY this JSON (no markdown):
 {
   "budgetMin": <number in TRY>,
   "budgetMax": <number in TRY>,
@@ -526,18 +539,14 @@ Call get_price_range, then return ONLY this JSON:
 }`;
 
     try {
-      const raw = await this.runAgentLoop(
-        [{ role: 'user', content: userPrompt }],
-        tools,
+      const raw = await this.geminiGenerate(
         SYSTEM_PROMPT +
           '\n\nRespond ONLY with valid JSON when asked for structured output.',
-        2048,
-        // Phase 259: pricing is a low-reasoning structured/JSON task — use the
-        // ≈10x cheaper Haiku model. Output is numeric range + a short rationale,
-        // not user-visible long-form prose.
-        MODEL_FAST,
+        userPrompt,
+        512,
+        0.4,
       );
-      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const parsed = this.parseJsonLoose(raw);
       return {
         budgetMin: (parsed.budgetMin as number) ?? 0,
         budgetMax: (parsed.budgetMax as number) ?? 0,

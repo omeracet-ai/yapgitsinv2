@@ -4,8 +4,11 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Anthropic from '@anthropic-ai/sdk';
 import * as crypto from 'crypto';
+
+// Migrated off Anthropic → Gemini 2.5 Flash (prod has GEMINI_API_KEY, not
+// ANTHROPIC_API_KEY). Mirrors the AiService.chat()/geminiGenerate() pattern.
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 export interface PriceSuggestion {
   minPrice: number;
@@ -27,12 +30,11 @@ const MAX_CACHE_ENTRIES = 500;
 @Injectable()
 export class PricingService {
   private readonly logger = new Logger(PricingService.name);
-  private readonly client: Anthropic | null;
+  private readonly apiKey: string | undefined;
   private readonly cache = new Map<string, CacheEntry>();
 
   constructor(private readonly configService: ConfigService) {
-    const apiKey = this.configService.get<string>('ANTHROPIC_API_KEY');
-    this.client = apiKey ? new Anthropic({ apiKey }) : null;
+    this.apiKey = this.configService.get<string>('GEMINI_API_KEY');
   }
 
   private hashKey(input: {
@@ -70,9 +72,9 @@ export class PricingService {
     photos?: string[];
     customerType?: string;
   }): Promise<PriceSuggestion> {
-    if (!this.client) {
+    if (!this.apiKey) {
       throw new ServiceUnavailableException(
-        'AI fiyat servisi şu anda kullanılamıyor (ANTHROPIC_API_KEY eksik)',
+        'AI fiyat servisi şu anda kullanılamıyor (GEMINI_API_KEY eksik)',
       );
     }
 
@@ -92,21 +94,36 @@ YALNIZCA aşağıdaki şemada geçerli JSON dön (markdown veya açıklama metni
 {"minPrice": <number>, "maxPrice": <number>, "medianPrice": <number>, "confidence": "low"|"medium"|"high", "reasoning": "<turkish>"}`;
 
     try {
-      const response = await this.client.messages.create({
-        model: 'claude-opus-4-7',
-        max_tokens: 512,
-        system: [
-          {
-            type: 'text',
-            text: 'Sen Türkiye pazarına hakim bir fiyat danışmanısın. SADECE geçerli JSON dönersin.',
-            cache_control: { type: 'ephemeral' },
+      const url =
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}` +
+        `:generateContent?key=${encodeURIComponent(this.apiKey)}`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [
+              {
+                text: 'Sen Türkiye pazarına hakim bir fiyat danışmanısın. SADECE geçerli JSON dönersin.',
+              },
+            ],
           },
-        ],
-        messages: [{ role: 'user', content: prompt }],
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 512, temperature: 0.3 },
+        }),
       });
 
-      const textBlock = response.content.find((b) => b.type === 'text');
-      const raw = textBlock && textBlock.type === 'text' ? textBlock.text : '';
+      if (!res.ok) {
+        throw new Error(`Gemini HTTP ${res.status}`);
+      }
+      const data = (await res.json()) as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      const raw = (data.candidates?.[0]?.content?.parts ?? [])
+        .map((p) => p.text ?? '')
+        .join('')
+        .trim();
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('AI yanıtı JSON içermiyor');
