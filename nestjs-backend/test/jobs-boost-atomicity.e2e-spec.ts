@@ -127,10 +127,12 @@ describe('Jobs boost atomicity (e2e — Phase 245)', () => {
     const intruder = await freshUser(100, 'intruder');
     const j = await freshJob(owner.id, 'forbidden');
 
-    await expect(jobsService.boost(j.id, 3, intruder.id)).rejects.toBeInstanceOf(
-      ForbiddenException,
-    );
-    const afterIntruder = await userRepo.findOne({ where: { id: intruder.id } });
+    await expect(
+      jobsService.boost(j.id, 3, intruder.id),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    const afterIntruder = await userRepo.findOne({
+      where: { id: intruder.id },
+    });
     expect(afterIntruder?.tokenBalance).toBe(100); // rollback: token alınmadı
     const afterOwner = await userRepo.findOne({ where: { id: owner.id } });
     expect(afterOwner?.tokenBalance).toBe(100);
@@ -168,7 +170,7 @@ describe('Jobs boost atomicity (e2e — Phase 245)', () => {
             return origSave(...sArgs);
           };
           // args[0] callback'tir
-          return (args[0] as any)(manager);
+          return args[0](manager);
         });
       });
 

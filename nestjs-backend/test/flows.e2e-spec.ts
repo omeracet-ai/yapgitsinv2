@@ -25,7 +25,11 @@ describe('Critical flows (e2e)', () => {
     app = moduleFixture.createNestApplication();
     // Mirror main.ts global pipe so DTO validators (e.g. TR phone regex) run.
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: false, transform: true }),
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: false,
+        transform: true,
+      }),
     );
     await app.init();
 
@@ -58,7 +62,7 @@ describe('Critical flows (e2e)', () => {
       expect(res.body.user.email).toBe(email);
       expect(res.body.user.passwordHash).toBeUndefined();
       // Phase 160 — JWT must carry the tenantId claim (null = default tenant).
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+
       const decoded = require('jsonwebtoken').decode(res.body.access_token);
       expect(decoded).toHaveProperty('tenantId');
       accessToken = res.body.access_token;
@@ -80,11 +84,11 @@ describe('Critical flows (e2e)', () => {
 
     it('accepts a token signed with JWT_SECRET_PREVIOUS (dual-secret rotation window)', async () => {
       // Simulate a token issued before a JWT_SECRET rotation: sign with the old key.
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+
       const jwt = require('jsonwebtoken');
       const oldKeyToken = jwt.sign(
         { email, sub: userId, role: userRole },
-        process.env.JWT_SECRET_PREVIOUS as string,
+        process.env.JWT_SECRET_PREVIOUS,
         { expiresIn: '30d' },
       );
       const res = await http()
@@ -104,12 +108,18 @@ describe('Critical flows (e2e)', () => {
     });
 
     it('rejects login with a wrong password', async () => {
-      await http().post('/auth/login').send({ email, password: 'wrong-pass' }).expect(401);
+      await http()
+        .post('/auth/login')
+        .send({ email, password: 'wrong-pass' })
+        .expect(401);
     });
 
     it('runs the SMS OTP request -> verify flow (SMS provider is log-only in test)', async () => {
       const otpPhone = '05559998877';
-      await http().post('/auth/sms/request').send({ phoneNumber: otpPhone }).expect(201);
+      await http()
+        .post('/auth/sms/request')
+        .send({ phoneNumber: otpPhone })
+        .expect(201);
 
       // Read the generated code straight from the DB (no real SMS to intercept).
       const row = await dataSource.query(
@@ -129,7 +139,10 @@ describe('Critical flows (e2e)', () => {
     });
 
     it('rejects SMS OTP request with an invalid TR phone number', async () => {
-      await http().post('/auth/sms/request').send({ phoneNumber: '12345' }).expect(400);
+      await http()
+        .post('/auth/sms/request')
+        .send({ phoneNumber: '12345' })
+        .expect(400);
     });
   });
 
@@ -174,7 +187,9 @@ describe('Critical flows (e2e)', () => {
     });
 
     it('rejects an unknown job lead id with 404', async () => {
-      await http().get('/job-leads/00000000-0000-0000-0000-000000000000').expect(404);
+      await http()
+        .get('/job-leads/00000000-0000-0000-0000-000000000000')
+        .expect(404);
     });
   });
 
@@ -199,7 +214,11 @@ describe('Critical flows (e2e)', () => {
     it('rejects admin-only endpoint with a non-admin token', async () => {
       const reg = await http()
         .post('/auth/register')
-        .send({ email: 'plainuser@test.com', phoneNumber: '5552223344', password: 'Test1234' })
+        .send({
+          email: 'plainuser@test.com',
+          phoneNumber: '5552223344',
+          password: 'Test1234',
+        })
         .expect(201);
       await http()
         .get('/admin/leads')

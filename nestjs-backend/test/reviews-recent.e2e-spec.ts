@@ -32,7 +32,9 @@ describe('Reviews /recent (e2e) — Phase 235', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    reviewsRepo = moduleFixture.get<Repository<Review>>(getRepositoryToken(Review));
+    reviewsRepo = moduleFixture.get<Repository<Review>>(
+      getRepositoryToken(Review),
+    );
     usersRepo = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
   });
 
@@ -41,7 +43,9 @@ describe('Reviews /recent (e2e) — Phase 235', () => {
   });
 
   it('GET /reviews/recent on empty DB → 200 []', async () => {
-    const res = await request(app.getHttpServer()).get('/reviews/recent').expect(200);
+    const res = await request(app.getHttpServer())
+      .get('/reviews/recent')
+      .expect(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body).toEqual([]);
   });

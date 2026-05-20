@@ -27,7 +27,10 @@ export class CalendarController {
   @Get('calendar.ics')
   @UseGuards(AuthGuard('jwt'))
   @Header('Content-Type', 'text/calendar; charset=utf-8')
-  @Header('Content-Disposition', 'attachment; filename="yapgitsin-calendar.ics"')
+  @Header(
+    'Content-Disposition',
+    'attachment; filename="yapgitsin-calendar.ics"',
+  )
   async getIcs(@Req() req: any): Promise<string> {
     const userId = req.user.id;
     const bookings = await this.svc.findWorkerBookings(userId);

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports */
 import { Injectable, Logger } from '@nestjs/common';
 
 // iyzipay official Node SDK (CommonJS)
@@ -110,7 +110,9 @@ export class IyzipayService {
    * Iyzipay Checkout Form Initialize. Returns a token + hosted payment page URL.
    * The customer pays on iyzipay's page; iyzipay then POSTs the token to callbackUrl.
    */
-  async createCheckoutForm(args: CreateCheckoutArgs): Promise<CheckoutFormResult> {
+  async createCheckoutForm(
+    args: CreateCheckoutArgs,
+  ): Promise<CheckoutFormResult> {
     const priceStr = args.gross.toFixed(2);
     if (this.mockMode || !this.client) {
       const token = `mock_cf_${args.refId}_${Date.now()}`;
@@ -175,22 +177,27 @@ export class IyzipayService {
     };
 
     return new Promise<CheckoutFormResult>((resolve, reject) => {
-      this.client.checkoutFormInitialize.create(request, (err: any, result: any) => {
-        if (err) {
-          reject(err instanceof Error ? err : new Error(String(err)));
-          return;
-        }
-        if (result && result.status === 'failure') {
-          reject(new Error(result.errorMessage || 'iyzipay checkout init failed'));
-          return;
-        }
-        resolve({
-          token: result.token,
-          paymentPageUrl: result.paymentPageUrl ?? null,
-          checkoutFormContent: result.checkoutFormContent ?? null,
-          mock: false,
-        });
-      });
+      this.client.checkoutFormInitialize.create(
+        request,
+        (err: any, result: any) => {
+          if (err) {
+            reject(err instanceof Error ? err : new Error(String(err)));
+            return;
+          }
+          if (result && result.status === 'failure') {
+            reject(
+              new Error(result.errorMessage || 'iyzipay checkout init failed'),
+            );
+            return;
+          }
+          resolve({
+            token: result.token,
+            paymentPageUrl: result.paymentPageUrl ?? null,
+            checkoutFormContent: result.checkoutFormContent ?? null,
+            mock: false,
+          });
+        },
+      );
     });
   }
 
@@ -247,10 +254,17 @@ export class IyzipayService {
     ip?: string;
   }): Promise<RefundResult> {
     if (!args.paymentTransactionId) {
-      return { status: 'failure', refundId: null, error: 'no paymentTransactionId' };
+      return {
+        status: 'failure',
+        refundId: null,
+        error: 'no paymentTransactionId',
+      };
     }
     if (this.mockMode || !this.client) {
-      return { status: 'success', refundId: `mock_refund_${args.paymentTransactionId}` };
+      return {
+        status: 'success',
+        refundId: `mock_refund_${args.paymentTransactionId}`,
+      };
     }
     return new Promise<RefundResult>((resolve) => {
       this.client.refund.create(

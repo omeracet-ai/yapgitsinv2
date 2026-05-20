@@ -47,10 +47,7 @@ export class CategorySubscriptionsController {
   }
 
   @Delete(':id')
-  async remove(
-    @Req() req: { user: { id: string } },
-    @Param('id') id: string,
-  ) {
+  async remove(@Req() req: { user: { id: string } }, @Param('id') id: string) {
     return this.svc.remove(id, req.user.id);
   }
 }

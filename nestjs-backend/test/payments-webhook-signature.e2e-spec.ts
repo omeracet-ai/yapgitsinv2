@@ -90,12 +90,15 @@ describe('Payments webhook signature guard (e2e — Phase 245)', () => {
 
   let ipCounter = 0;
   const nextIp = () =>
-    `10.246.${Math.floor(ipCounter / 256) % 256}.${(ipCounter++) % 256}`;
+    `10.246.${Math.floor(ipCounter / 256) % 256}.${ipCounter++ % 256}`;
   const post = (url: string) =>
     request(app.getHttpServer()).post(url).set('X-Forwarded-For', nextIp());
 
   const sign = (body: unknown): string =>
-    crypto.createHmac('sha256', SECRET).update(JSON.stringify(body)).digest('hex');
+    crypto
+      .createHmac('sha256', SECRET)
+      .update(JSON.stringify(body))
+      .digest('hex');
 
   it('1. signature header eksik → 403', async () => {
     const body = {

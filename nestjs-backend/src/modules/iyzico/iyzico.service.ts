@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports */
 import {
   Injectable,
   Logger,
@@ -252,7 +252,12 @@ export class IyzicoService {
           this.logger.warn(
             `threedsInitialize failure code=${result?.errorCode} msg=${result?.errorMessage}`,
           );
-          reject(new BadRequestException({ message: msg, errorCode: result?.errorCode }));
+          reject(
+            new BadRequestException({
+              message: msg,
+              errorCode: result?.errorCode,
+            }),
+          );
           return;
         }
         if (!result.threeDSHtmlContent) {

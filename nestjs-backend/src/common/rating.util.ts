@@ -44,7 +44,10 @@ export function wilsonScore(positive: number, total: number, z = 1.96): number {
   if (total <= 0) return 0;
   const p = positive / total;
   const z2 = z * z;
-  const num = p + z2 / (2 * total) - z * Math.sqrt((p * (1 - p) + z2 / (4 * total)) / total);
+  const num =
+    p +
+    z2 / (2 * total) -
+    z * Math.sqrt((p * (1 - p) + z2 / (4 * total)) / total);
   const den = 1 + z2 / total;
   return num / den;
 }

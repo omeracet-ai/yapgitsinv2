@@ -95,7 +95,12 @@ export class Offer {
   // Usta teklifini iş kalemlerine dökebilir. Her satır: label/qty/unitPrice/total.
   // Validation: lineItems doluysa sum(total) ≈ price (±1 TL tolerans).
   @Column({ type: 'simple-json', nullable: true })
-  lineItems: Array<{ label: string; qty: number; unitPrice: number; total: number }> | null;
+  lineItems: Array<{
+    label: string;
+    qty: number;
+    unitPrice: number;
+    total: number;
+  }> | null;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -53,13 +53,13 @@ export class BookingsController {
 
   /** GET /bookings/export/ics — Phase 207: worker calendar export */
   @Get('export/ics')
-  async exportIcs(
-    @Request() req: AuthenticatedRequest,
-    @Res() res: Response,
-  ) {
+  async exportIcs(@Request() req: AuthenticatedRequest, @Res() res: Response) {
     const ics = await this.svc.exportIcs(req.user.id);
     res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="yapgitsin-takvim.ics"');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="yapgitsin-takvim.ics"',
+    );
     res.send(ics);
   }
 
@@ -70,7 +70,11 @@ export class BookingsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.svc.findByCustomer(req.user.id, Number(page) || 1, Number(limit) || 20);
+    return this.svc.findByCustomer(
+      req.user.id,
+      Number(page) || 1,
+      Number(limit) || 20,
+    );
   }
 
   /** GET /bookings/my-as-worker?page=1&limit=20 */
@@ -80,7 +84,11 @@ export class BookingsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.svc.findByWorker(req.user.id, Number(page) || 1, Number(limit) || 20);
+    return this.svc.findByWorker(
+      req.user.id,
+      Number(page) || 1,
+      Number(limit) || 20,
+    );
   }
 
   /** GET /bookings/:id */

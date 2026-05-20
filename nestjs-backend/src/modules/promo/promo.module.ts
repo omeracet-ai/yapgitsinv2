@@ -8,7 +8,10 @@ import { User } from '../users/user.entity';
 import { AdminAuditModule } from '../admin-audit/admin-audit.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PromoCode, PromoRedemption, User]), AdminAuditModule],
+  imports: [
+    TypeOrmModule.forFeature([PromoCode, PromoRedemption, User]),
+    AdminAuditModule,
+  ],
   controllers: [PromoController],
   providers: [PromoService],
   exports: [PromoService],

@@ -259,6 +259,26 @@ export class User {
   @Column({ type: 'datetime', nullable: true })
   deactivatedAt: Date | null;
 
+  // ── Phase 255 (Voldi-db) — Soft-delete + scheduled hard-delete (KVKK + GDPR) ──
+  // `deletedAt`: set when account soft-deleted; queries filter `WHERE deletedAt IS NULL`.
+  // `scheduledHardDeleteAt`: future timestamp at which a cron job will purge PII
+  //   (typically deletedAt + 30 days grace period). Null while account is active.
+  @Column({ type: 'datetime', nullable: true })
+  deletedAt: Date | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  scheduledHardDeleteAt: Date | null;
+
+  // ── Phase 255b (Voldi-db) — Account temporary lock (brute-force defense) ─
+  // `failedLoginAttempts`: monotonic counter reset on successful login.
+  // `lockedUntil`: when set and in the future, login attempts return 423 Locked.
+  //   Voldi-sec owns the counter/threshold logic in `auth.service.ts`.
+  @Column({ type: 'integer', default: 0 })
+  failedLoginAttempts: number;
+
+  @Column({ type: 'datetime', nullable: true })
+  lockedUntil?: Date;
+
   // ── Phase 49 — Notification preferences (null = all enabled) ─────────────
   @Column({ type: 'simple-json', nullable: true })
   notificationPreferences: {

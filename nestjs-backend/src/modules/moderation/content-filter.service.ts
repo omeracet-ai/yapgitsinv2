@@ -9,15 +9,56 @@ export interface FilterResult {
 export class ContentFilterService {
   private readonly badWords: string[] = [
     // TR
-    'amk', 'aq', 'amq', 'siktir', 'sikeyim', 'sikiyim', 'sik', 'orospu',
-    'oç', 'piç', 'pic', 'pezevenk', 'göt', 'got', 'yarrak', 'yarak',
-    'salak', 'aptal', 'gerizekalı', 'gerizekali', 'mal', 'şerefsiz',
-    'serefsiz', 'kahpe', 'ananı', 'anani', 'ananizi', 'babanı', 'babani',
-    'ibne', 'puşt', 'pust', 'dingil', 'kaltak', 'sürtük', 'surtuk',
-    'göt verici', 'amına', 'amina', 'sikim',
+    'amk',
+    'aq',
+    'amq',
+    'siktir',
+    'sikeyim',
+    'sikiyim',
+    'sik',
+    'orospu',
+    'oç',
+    'piç',
+    'pic',
+    'pezevenk',
+    'göt',
+    'got',
+    'yarrak',
+    'yarak',
+    'salak',
+    'aptal',
+    'gerizekalı',
+    'gerizekali',
+    'mal',
+    'şerefsiz',
+    'serefsiz',
+    'kahpe',
+    'ananı',
+    'anani',
+    'ananizi',
+    'babanı',
+    'babani',
+    'ibne',
+    'puşt',
+    'pust',
+    'dingil',
+    'kaltak',
+    'sürtük',
+    'surtuk',
+    'göt verici',
+    'amına',
+    'amina',
+    'sikim',
     // EN
-    'fuck', 'shit', 'bitch', 'asshole', 'dick', 'cunt', 'bastard',
-    'motherfucker', 'pussy',
+    'fuck',
+    'shit',
+    'bitch',
+    'asshole',
+    'dick',
+    'cunt',
+    'bastard',
+    'motherfucker',
+    'pussy',
   ];
 
   private readonly contactPatterns: RegExp[] = [
@@ -64,7 +105,10 @@ export class ContentFilterService {
     }
 
     for (const re of this.contactPatterns) {
-      const g = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g');
+      const g = new RegExp(
+        re.source,
+        re.flags.includes('g') ? re.flags : re.flags + 'g',
+      );
       out = out.replace(g, '[gizlendi]');
     }
 

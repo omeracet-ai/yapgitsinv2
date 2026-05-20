@@ -112,12 +112,10 @@ Include: what the job entails, what skills/experience to look for, and what the 
 
     const trimmedMessage = (message ?? '').slice(0, GEMINI_MAX_INPUT_CHARS);
     // Cap history tail so total input stays bounded.
-    const trimmedHistory = (history ?? [])
-      .slice(-8)
-      .map((h) => ({
-        role: h.role,
-        content: (h.content ?? '').slice(0, 2000),
-      }));
+    const trimmedHistory = (history ?? []).slice(-8).map((h) => ({
+      role: h.role,
+      content: (h.content ?? '').slice(0, 2000),
+    }));
 
     const contents = [
       ...trimmedHistory.map((h) => ({
@@ -156,7 +154,10 @@ Include: what the job entails, what skills/experience to look for, and what the 
         }>;
       };
       const parts = data.candidates?.[0]?.content?.parts ?? [];
-      return parts.map((p) => p.text ?? '').join('').trim();
+      return parts
+        .map((p) => p.text ?? '')
+        .join('')
+        .trim();
     } catch {
       throw new InternalServerErrorException('AI chat request failed');
     }
@@ -204,8 +205,7 @@ Include: what the job entails, what skills/experience to look for, and what the 
     headings: string[];
     faqs: { q: string; a: string }[];
   }> {
-    const wordTarget =
-      length === 'short' ? 150 : length === 'long' ? 400 : 250;
+    const wordTarget = length === 'short' ? 150 : length === 'long' ? 400 : 250;
     const localTouch = city
       ? `Şehir bağlamı: ${city}. İçerikte ${city}'da bu hizmet için yerel ipuçları ver (semt çeşitliliği, ortalama fiyat aralığı, ulaşım/erişim notu).`
       : 'Türkiye genelinde geçerli pratik bilgiler ver.';
@@ -258,9 +258,7 @@ faqs uzunluğu 3-5 arası olsun. SSS uzun-kuyruk SEO odaklı: fiyat, süre, gara
           : [],
       };
     } catch {
-      throw new InternalServerErrorException(
-        'Kategori açıklaması üretilemedi',
-      );
+      throw new InternalServerErrorException('Kategori açıklaması üretilemedi');
     }
   }
 

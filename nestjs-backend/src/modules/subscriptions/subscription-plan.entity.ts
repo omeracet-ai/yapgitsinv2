@@ -1,4 +1,9 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+} from 'typeorm';
 import { decimalTransformer } from '../../common/transformers/decimal.transformer';
 
 export enum SubscriptionPeriod {
@@ -17,10 +22,19 @@ export class SubscriptionPlan {
   @Column({ type: 'varchar' })
   name: string;
 
-  @Column({ type: 'decimal', precision: 12, scale: 2, transformer: decimalTransformer })
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    transformer: decimalTransformer,
+  })
   price: number;
 
-  @Column({ type: 'simple-enum', enum: SubscriptionPeriod, default: SubscriptionPeriod.MONTHLY })
+  @Column({
+    type: 'simple-enum',
+    enum: SubscriptionPeriod,
+    default: SubscriptionPeriod.MONTHLY,
+  })
   period: SubscriptionPeriod;
 
   @Column({ type: 'simple-json', default: '[]' })

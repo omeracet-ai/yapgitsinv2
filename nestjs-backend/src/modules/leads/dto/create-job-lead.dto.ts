@@ -44,7 +44,9 @@ export class CreateJobLeadDto {
   requesterName: string;
 
   @IsString()
-  @Matches(/^(\+90|0)?5\d{9}$/, { message: 'Geçerli bir telefon numarası giriniz' })
+  @Matches(/^(\+90|0)?5\d{9}$/, {
+    message: 'Geçerli bir telefon numarası giriniz',
+  })
   requesterPhone: string;
 
   @IsEmail()

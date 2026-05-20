@@ -73,7 +73,8 @@ export class WalletService {
       let totalPaid = 0;
       let totalRefund = 0;
       for (const p of payments) {
-        if (p.status === PaymentStatus.COMPLETED) totalPaid += p.amountMinor || 0;
+        if (p.status === PaymentStatus.COMPLETED)
+          totalPaid += p.amountMinor || 0;
         if (p.status === PaymentStatus.REFUNDED)
           totalRefund += p.refundedAmountMinor || p.amountMinor || 0;
       }
@@ -88,9 +89,7 @@ export class WalletService {
       doc.moveDown(0.2);
       doc.font('Helvetica').fontSize(10).fillColor(this.BRAND_NAVY);
       doc.text(`Kullanici: ${user?.fullName ?? '-'}  |  ${user?.email ?? '-'}`);
-      doc.text(
-        `Tarih araligi: ${this.fmtDate(since)} - ${this.fmtDate(now)}`,
-      );
+      doc.text(`Tarih araligi: ${this.fmtDate(since)} - ${this.fmtDate(now)}`);
       doc.moveDown(0.5);
       doc
         .strokeColor(this.BRAND_ORANGE)
@@ -119,7 +118,9 @@ export class WalletService {
       const colX = [50, 115, 280, 360, 430];
       const headers = ['Tarih', 'Aciklama', 'Tutar', 'Durum', 'Referans'];
       doc.font('Helvetica-Bold').fontSize(10).fillColor(this.BRAND_NAVY);
-      headers.forEach((h, i) => doc.text(h, colX[i], doc.y, { continued: i < headers.length - 1 }));
+      headers.forEach((h, i) =>
+        doc.text(h, colX[i], doc.y, { continued: i < headers.length - 1 }),
+      );
       doc.text('');
       doc
         .strokeColor('#cccccc')

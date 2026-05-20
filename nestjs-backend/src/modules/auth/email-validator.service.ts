@@ -160,7 +160,10 @@ export class EmailValidatorService {
         message: 'Bu e-posta sağlayıcısı doğrulanamadı',
       });
     }
-    const domain = email.slice(at + 1).toLowerCase().trim();
+    const domain = email
+      .slice(at + 1)
+      .toLowerCase()
+      .trim();
 
     // 1a. Common-typo guard (cheap, runs before MX lookup).
     const suggested = TYPO_MAP[domain];

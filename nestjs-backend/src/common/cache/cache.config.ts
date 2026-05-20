@@ -44,7 +44,9 @@ export const cacheConfigAsync: CacheModuleAsyncOptions = {
           }`,
         );
       });
-      logger.log(`Redis cache aktif: ${redisUrl.replace(/\/\/[^@]*@/, '//***@')}`);
+      logger.log(
+        `Redis cache aktif: ${redisUrl.replace(/\/\/[^@]*@/, '//***@')}`,
+      );
       return { ttl: DEFAULT_CACHE_TTL, stores: [keyv] };
     } catch (err) {
       logger.warn(

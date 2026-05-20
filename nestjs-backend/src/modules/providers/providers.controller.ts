@@ -87,7 +87,12 @@ export class ProvidersController {
   @UseGuards(AuthGuard('jwt'))
   @Post()
   async create(
-    @Body() body: { businessName?: string; bio?: string; documents?: Record<string, string> },
+    @Body()
+    body: {
+      businessName?: string;
+      bio?: string;
+      documents?: Record<string, string>;
+    },
     @Request() req: AuthenticatedRequest,
   ) {
     if (!body?.businessName?.trim()) {
@@ -105,11 +110,19 @@ export class ProvidersController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body() body: { businessName?: string; bio?: string; documents?: Record<string, string> },
+    @Body()
+    body: {
+      businessName?: string;
+      bio?: string;
+      documents?: Record<string, string>;
+    },
     @Request() req: AuthenticatedRequest,
   ) {
     const ok = await this.svc.assertOwner(id, req.user.id);
-    if (!ok) throw new ForbiddenException('Bu sağlayıcı profilini düzenleme yetkiniz yok');
+    if (!ok)
+      throw new ForbiddenException(
+        'Bu sağlayıcı profilini düzenleme yetkiniz yok',
+      );
     return this.svc.updateOwned(id, {
       businessName: body.businessName?.trim(),
       bio: body.bio?.trim(),

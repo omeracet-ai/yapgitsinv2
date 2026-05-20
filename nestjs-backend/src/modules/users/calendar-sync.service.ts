@@ -22,22 +22,32 @@ export class CalendarSyncService {
     return `${base.replace(/\/$/, '')}/users/${userId}/calendar.ics?token=${token}`;
   }
 
-  async enable(userId: string): Promise<{ calendarUrl: string; token: string }> {
+  async enable(
+    userId: string,
+  ): Promise<{ calendarUrl: string; token: string }> {
     const user = await this.users.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
     if (!user.calendarToken) {
       user.calendarToken = randomUUID();
       await this.users.save(user);
     }
-    return { calendarUrl: this.buildUrl(user.id, user.calendarToken), token: user.calendarToken };
+    return {
+      calendarUrl: this.buildUrl(user.id, user.calendarToken),
+      token: user.calendarToken,
+    };
   }
 
-  async regenerate(userId: string): Promise<{ calendarUrl: string; token: string }> {
+  async regenerate(
+    userId: string,
+  ): Promise<{ calendarUrl: string; token: string }> {
     const user = await this.users.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
     user.calendarToken = randomUUID();
     await this.users.save(user);
-    return { calendarUrl: this.buildUrl(user.id, user.calendarToken), token: user.calendarToken };
+    return {
+      calendarUrl: this.buildUrl(user.id, user.calendarToken),
+      token: user.calendarToken,
+    };
   }
 
   async disable(userId: string): Promise<{ ok: true }> {
@@ -92,7 +102,8 @@ export class CalendarSyncService {
   async generateIcs(userId: string, token: string): Promise<string | null> {
     if (!token) return null;
     const user = await this.users.findOne({ where: { id: userId } });
-    if (!user || !user.calendarToken || user.calendarToken !== token) return null;
+    if (!user || !user.calendarToken || user.calendarToken !== token)
+      return null;
 
     const todayStr = new Date().toISOString().slice(0, 10);
     const bookings = await this.bookings.find({
@@ -106,12 +117,17 @@ export class CalendarSyncService {
       },
       order: { scheduledDate: 'ASC' },
     });
-    const upcoming = bookings.filter((b) => (b.scheduledDate || '') >= todayStr);
+    const upcoming = bookings.filter(
+      (b) => (b.scheduledDate || '') >= todayStr,
+    );
 
     // Pre-fetch customer names for SUMMARY
     const customerIds = Array.from(new Set(upcoming.map((b) => b.customerId)));
     const customers = customerIds.length
-      ? await this.users.find({ where: { id: In(customerIds) }, select: ['id', 'fullName'] })
+      ? await this.users.find({
+          where: { id: In(customerIds) },
+          select: ['id', 'fullName'],
+        })
       : [];
     const nameById = new Map(customers.map((c) => [c.id, c.fullName]));
 
@@ -129,16 +145,23 @@ export class CalendarSyncService {
 
     for (const b of upcoming) {
       // scheduledDate=YYYY-MM-DD; scheduledTime=HH:MM (TR = UTC+3); default 09:00 if missing
-      const [y, m, d] = (b.scheduledDate || '').split('-').map((s) => parseInt(s, 10));
+      const [y, m, d] = (b.scheduledDate || '')
+        .split('-')
+        .map((s) => parseInt(s, 10));
       if (!y || !m || !d) continue;
-      const [hh, mm] = (b.scheduledTime || '09:00').split(':').map((s) => parseInt(s, 10));
-      const startLocal = new Date(Date.UTC(y, m - 1, d, (hh || 9) - 3, mm || 0, 0));
+      const [hh, mm] = (b.scheduledTime || '09:00')
+        .split(':')
+        .map((s) => parseInt(s, 10));
+      const startLocal = new Date(
+        Date.UTC(y, m - 1, d, (hh || 9) - 3, mm || 0, 0),
+      );
       const endLocal = new Date(startLocal.getTime() + 60 * 60 * 1000);
 
       const customerName = nameById.get(b.customerId) || 'Müşteri';
       const summary = `${customerName} — ${b.category}`;
       const status =
-        b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.IN_PROGRESS
+        b.status === BookingStatus.CONFIRMED ||
+        b.status === BookingStatus.IN_PROGRESS
           ? 'CONFIRMED'
           : 'TENTATIVE';
 

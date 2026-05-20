@@ -16,7 +16,10 @@ import { StatementsService } from './statements.service';
 export class StatementsController {
   constructor(private readonly statementsService: StatementsService) {}
 
-  private parsePeriod(yearRaw?: string, monthRaw?: string): { year: number; month: number } {
+  private parsePeriod(
+    yearRaw?: string,
+    monthRaw?: string,
+  ): { year: number; month: number } {
     const now = new Date();
     const year = yearRaw ? Number(yearRaw) : now.getFullYear();
     const month = monthRaw ? Number(monthRaw) : now.getMonth() + 1;

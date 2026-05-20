@@ -66,9 +66,11 @@ export class SentryFilter implements ExceptionFilter {
 
     if (isHttp) {
       const res = exception.getResponse();
-      response.status(status).json(
-        typeof res === 'string' ? { statusCode: status, message: res } : res,
-      );
+      response
+        .status(status)
+        .json(
+          typeof res === 'string' ? { statusCode: status, message: res } : res,
+        );
     } else {
       const err = exception as Error;
       this.logger.error(err?.message ?? 'Unknown error', err?.stack);

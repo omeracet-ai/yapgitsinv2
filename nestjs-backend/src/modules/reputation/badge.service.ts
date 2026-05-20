@@ -73,7 +73,10 @@ export class BadgeService {
   /**
    * Check and award badges based on current reputation metrics
    */
-  async checkAndAwardBadges(userId: string, tenantId?: string | null): Promise<Badge[]> {
+  async checkAndAwardBadges(
+    userId: string,
+    tenantId?: string | null,
+  ): Promise<Badge[]> {
     const user = await this.usersService.findById(userId);
     if (!user) throw new NotFoundException('User not found');
 
@@ -99,7 +102,9 @@ export class BadgeService {
       user.responseTimeMinutes < 120 &&
       !(await this.hasBadge(userId, 'fast_responder'))
     ) {
-      awardedBadges.push(await this.awardBadge(userId, 'fast_responder', tenantId));
+      awardedBadges.push(
+        await this.awardBadge(userId, 'fast_responder', tenantId),
+      );
     }
 
     // Check reliable badge (50+ jobs, minimal cancellations)
@@ -122,7 +127,9 @@ export class BadgeService {
       completedJobs / totalJobs >= 0.95 &&
       !(await this.hasBadge(userId, 'power_tasker'))
     ) {
-      awardedBadges.push(await this.awardBadge(userId, 'power_tasker', tenantId));
+      awardedBadges.push(
+        await this.awardBadge(userId, 'power_tasker', tenantId),
+      );
     }
 
     // Check newcomer badge (5+ reviews, account < 3 months)
@@ -138,7 +145,11 @@ export class BadgeService {
 
     // Revoke newcomer after 3 months
     if (accountAgeMonths >= 3) {
-      await this.revokeBadge(userId, 'newcomer', 'Account no longer new (3+ months old)');
+      await this.revokeBadge(
+        userId,
+        'newcomer',
+        'Account no longer new (3+ months old)',
+      );
     }
 
     return awardedBadges;
@@ -147,8 +158,12 @@ export class BadgeService {
   /**
    * Award a badge to a user
    */
-  async awardBadge(userId: string, badgeType: BadgeType, tenantId?: string | null): Promise<Badge> {
-    const def = this.BADGE_DEFINITIONS[badgeType as keyof typeof this.BADGE_DEFINITIONS];
+  async awardBadge(
+    userId: string,
+    badgeType: BadgeType,
+    tenantId?: string | null,
+  ): Promise<Badge> {
+    const def = this.BADGE_DEFINITIONS[badgeType];
     if (!def) {
       throw new Error(`Unknown badge type: ${badgeType}`);
     }
@@ -174,7 +189,11 @@ export class BadgeService {
   /**
    * Revoke a badge from a user
    */
-  async revokeBadge(userId: string, badgeType: BadgeType, reason: string): Promise<void> {
+  async revokeBadge(
+    userId: string,
+    badgeType: BadgeType,
+    reason: string,
+  ): Promise<void> {
     await this.badgeRepo.update(
       { userId, badgeType, active: true },
       {
@@ -198,7 +217,10 @@ export class BadgeService {
   /**
    * Get all active badges for a user
    */
-  async getUserBadges(userId: string, tenantId?: string | null): Promise<Badge[]> {
+  async getUserBadges(
+    userId: string,
+    tenantId?: string | null,
+  ): Promise<Badge[]> {
     const query = this.badgeRepo
       .createQueryBuilder('b')
       .where('b.userId = :userId', { userId })

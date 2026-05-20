@@ -20,9 +20,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * Eğer mevcut data'da duplicate iyzipayPaymentId varsa migration FAIL eder —
  * beklenen davranış; kullanıcı manuel temizler.
  */
-export class AddUqPaymentIyzipayPid1747612800000
-  implements MigrationInterface
-{
+export class AddUqPaymentIyzipayPid1747612800000 implements MigrationInterface {
   name = 'AddUqPaymentIyzipayPid1747612800000';
 
   public async up(qr: QueryRunner): Promise<void> {
@@ -39,7 +37,6 @@ export class AddUqPaymentIyzipayPid1747612800000
          HAVING COUNT(*) > 1`,
       );
       if (Array.isArray(dupes) && dupes.length > 0) {
-        // eslint-disable-next-line no-console
         console.warn(
           `[Migration AddUqPaymentIyzipayPid] ${dupes.length} duplicate iyzipayPaymentId rows detected — UNIQUE index oluşturulamayacak, manuel temizlik gerek.`,
         );

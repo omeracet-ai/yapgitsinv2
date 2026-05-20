@@ -27,7 +27,11 @@ export class OffersRootController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.offersService.findByUser(req.user.id, Number(page) || 1, Number(limit) || 20);
+    return this.offersService.findByUser(
+      req.user.id,
+      Number(page) || 1,
+      Number(limit) || 20,
+    );
   }
 
   /** GET /offers/incoming — ilan sahibinin kendi ilanlarına gelen teklifler */
@@ -111,10 +115,7 @@ export class OffersController {
 
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id/status')
-  updateStatus(
-    @Param('id') id: string,
-    @Body() dto: UpdateOfferStatusDto,
-  ) {
+  updateStatus(@Param('id') id: string, @Body() dto: UpdateOfferStatusDto) {
     return this.offersService.updateStatus(id, dto.status);
   }
 }

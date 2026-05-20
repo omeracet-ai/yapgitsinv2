@@ -59,7 +59,9 @@ export class GeneralDisputesService {
     const saved = await this.repo.save(entity);
 
     // Notify all admins
-    const admins = await this.userRepo.find({ where: { role: UserRole.ADMIN } });
+    const admins = await this.userRepo.find({
+      where: { role: UserRole.ADMIN },
+    });
     for (const a of admins) {
       await this.notifications.send({
         userId: a.id,
@@ -102,7 +104,13 @@ export class GeneralDisputesService {
     status?: GeneralDisputeStatus,
     page = 1,
     limit = 20,
-  ): Promise<{ data: Dispute[]; total: number; page: number; limit: number; pages: number }> {
+  ): Promise<{
+    data: Dispute[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
     const qb = this.repo.createQueryBuilder('d').orderBy('d.createdAt', 'DESC');
     if (status) qb.andWhere('d.status = :status', { status });
     qb.skip((page - 1) * limit).take(limit);
@@ -127,7 +135,9 @@ export class GeneralDisputesService {
       dto.status !== GeneralDisputeStatus.RESOLVED &&
       dto.status !== GeneralDisputeStatus.DISMISSED
     ) {
-      throw new BadRequestException('status sadece resolved veya dismissed olabilir');
+      throw new BadRequestException(
+        'status sadece resolved veya dismissed olabilir',
+      );
     }
     d.status = dto.status;
     d.resolution = dto.resolution;

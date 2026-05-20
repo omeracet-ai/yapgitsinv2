@@ -109,7 +109,9 @@ export class JobsService {
    * UPDATE shape — manager üzerinden çalışır).
    */
   async boost(jobId: string, days: number, userId: string): Promise<Job> {
-    if (!BOOST_ALLOWED_DAYS.includes(days as (typeof BOOST_ALLOWED_DAYS)[number])) {
+    if (
+      !BOOST_ALLOWED_DAYS.includes(days as (typeof BOOST_ALLOWED_DAYS)[number])
+    ) {
       throw new BadRequestException('Geçersiz süre — 3, 7 veya 14 gün');
     }
     const cost = days * BOOST_TOKEN_COST_PER_DAY;
@@ -221,7 +223,7 @@ export class JobsService {
         {
           title: 'Profesyonel Klima Bakımı',
           description:
-              'Split klima genel bakımı, gaz dolumu, derin temizlik. 1 yıl garanti.',
+            'Split klima genel bakımı, gaz dolumu, derin temizlik. 1 yıl garanti.',
           category: 'Klima Servis',
           location: 'Kadıköy, İstanbul',
           budgetMin: 350,
@@ -235,7 +237,7 @@ export class JobsService {
         {
           title: 'Ev Boyama — Tüm Daire',
           description:
-              '3+1 daire iç boya, malzeme dahil. 2-3 günde teslim, temiz çalışma garantili.',
+            '3+1 daire iç boya, malzeme dahil. 2-3 günde teslim, temiz çalışma garantili.',
           category: 'Boya & Badana',
           location: 'Şişli, İstanbul',
           budgetMin: 4500,
@@ -249,7 +251,7 @@ export class JobsService {
         {
           title: 'Acil Tesisat Servisi',
           description:
-              '7/24 acil su kaçağı, tıkanıklık, kombi servisi. 30 dk içinde lokal.',
+            '7/24 acil su kaçağı, tıkanıklık, kombi servisi. 30 dk içinde lokal.',
           category: 'Tesisat',
           location: 'Beşiktaş, İstanbul',
           budgetMin: 200,
@@ -282,13 +284,17 @@ export class JobsService {
       const query = this.jobsRepository.createQueryBuilder('job');
 
       if (filters?.category) {
-        query.andWhere('job.category = :category', { category: filters.category });
+        query.andWhere('job.category = :category', {
+          category: filters.category,
+        });
       }
       if (filters?.status) {
         query.andWhere('job.status = :status', { status: filters.status });
       }
       if (filters?.customerId) {
-        query.andWhere('job.customerId = :customerId', { customerId: filters.customerId });
+        query.andWhere('job.customerId = :customerId', {
+          customerId: filters.customerId,
+        });
       }
       // Phase Two-Sided — request/offer ayrımı
       if (filters?.kind) {
@@ -303,7 +309,10 @@ export class JobsService {
       }
 
       query
-        .orderBy('CASE WHEN job.featuredOrder IS NOT NULL THEN 0 ELSE 1 END', 'ASC')
+        .orderBy(
+          'CASE WHEN job.featuredOrder IS NOT NULL THEN 0 ELSE 1 END',
+          'ASC',
+        )
         .addOrderBy('job.featuredOrder', 'ASC')
         .addOrderBy('job.createdAt', 'DESC')
         .skip((page - 1) * limit)
@@ -532,7 +541,7 @@ export class JobsService {
         // so the "other side" is the assigned tasker if there is one.
         const otherUserId =
           requesterId === saved.customerId
-            ? acceptedOffer?.userId ?? null
+            ? (acceptedOffer?.userId ?? null)
             : saved.customerId;
         if (otherUserId && otherUserId !== requesterId) {
           await this.notificationsService.send({
@@ -595,7 +604,12 @@ export class JobsService {
     const prev = job.status;
     job.status = JobStatus.COMPLETED;
     const saved = await this.jobsRepository.save(job);
-    await this._trackStatusChange(saved.id, saved.customerId, prev, saved.status);
+    await this._trackStatusChange(
+      saved.id,
+      saved.customerId,
+      prev,
+      saved.status,
+    );
 
     // Release escrow funds to tasker — bookkeeping only, don't break completion
     try {
@@ -685,7 +699,7 @@ export class JobsService {
 
     // Determine counterparty
     const counterPartyUserId = isCustomer
-      ? acceptedOffer?.userId ?? null
+      ? (acceptedOffer?.userId ?? null)
       : job.customerId;
 
     // Create JobDispute row
@@ -828,17 +842,22 @@ export class JobsService {
 
   // ─── İş Tamamlama ve QR Entegrasyonu ──────────────────────────────────────
 
-  async generateQr(id: string, requesterId: string): Promise<{ qrCode: string }> {
+  async generateQr(
+    id: string,
+    requesterId: string,
+  ): Promise<{ qrCode: string }> {
     const job = await this.jobsRepository.findOne({ where: { id } });
     if (!job) throw new NotFoundException('İlan bulunamadı');
-    
+
     // Yalnızca ilan sahibi QR oluşturabilir
     if (job.customerId !== requesterId) {
       throw new ForbiddenException('Yalnızca müşteri QR kod oluşturabilir.');
     }
 
     if (job.status !== JobStatus.IN_PROGRESS) {
-      throw new BadRequestException('QR kod sadece devam eden işler için oluşturulabilir.');
+      throw new BadRequestException(
+        'QR kod sadece devam eden işler için oluşturulabilir.',
+      );
     }
 
     const qrCode = crypto.randomUUID();
@@ -848,7 +867,11 @@ export class JobsService {
     return { qrCode };
   }
 
-  async verifyQr(id: string, qrCode: string, requesterId: string): Promise<{ success: boolean }> {
+  async verifyQr(
+    id: string,
+    qrCode: string,
+    requesterId: string,
+  ): Promise<{ success: boolean }> {
     const job = await this.jobsRepository.findOne({ where: { id } });
     if (!job) throw new NotFoundException('İlan bulunamadı');
 
@@ -872,14 +895,18 @@ export class JobsService {
 
     // Usta veya müşteri tamamlayabilir, genelde usta tetikler.
     if (!job.isQrVerified) {
-      throw new BadRequestException('İşi tamamlamadan önce müşterinin QR kodunu taramalısınız.');
+      throw new BadRequestException(
+        'İşi tamamlamadan önce müşterinin QR kodunu taramalısınız.',
+      );
     }
 
     const hasPhotos = job.endJobPhotos && job.endJobPhotos.length > 0;
     const hasVideos = job.endJobVideos && job.endJobVideos.length > 0;
 
     if (!hasPhotos && !hasVideos) {
-      throw new BadRequestException('İşi tamamlamak için en az bir adet iş sonu görseli veya videosu eklemelisiniz.');
+      throw new BadRequestException(
+        'İşi tamamlamak için en az bir adet iş sonu görseli veya videosu eklemelisiniz.',
+      );
     }
 
     // Kabul edilen teklifi bul (fiyat ve usta ID'si için)
@@ -888,12 +915,14 @@ export class JobsService {
     });
 
     if (!acceptedOffer) {
-      throw new BadRequestException('Bu işe ait kabul edilmiş bir teklif bulunamadı.');
+      throw new BadRequestException(
+        'Bu işe ait kabul edilmiş bir teklif bulunamadı.',
+      );
     }
 
     // -- Banka Aracılığıyla Komisyon Kesintisi Simülasyonu --
     const jobPrice = acceptedOffer.counterPrice || acceptedOffer.price;
-    const platformCommissionRate = 0.10; // %10 Komisyon
+    const platformCommissionRate = 0.1; // %10 Komisyon
     const commissionAmount = jobPrice * platformCommissionRate;
     const workerAmount = jobPrice - commissionAmount;
 
@@ -906,7 +935,12 @@ export class JobsService {
     job.status = JobStatus.COMPLETED;
     const saved = await this.jobsRepository.save(job);
 
-    await this._trackStatusChange(saved.id, saved.customerId, prevStatus, saved.status);
+    await this._trackStatusChange(
+      saved.id,
+      saved.customerId,
+      prevStatus,
+      saved.status,
+    );
 
     return saved;
   }

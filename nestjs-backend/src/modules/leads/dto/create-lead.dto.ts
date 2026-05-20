@@ -15,7 +15,9 @@ export class CreateLeadDto {
 
   // Türkiye GSM: 5 ile başlayan 10 haneli (5XXXXXXXXX). +90 / 0 prefix kabul.
   @IsString()
-  @Matches(/^(\+90|0)?5\d{9}$/, { message: 'Geçerli bir telefon numarası giriniz (5XXXXXXXXX)' })
+  @Matches(/^(\+90|0)?5\d{9}$/, {
+    message: 'Geçerli bir telefon numarası giriniz (5XXXXXXXXX)',
+  })
   phoneNumber: string;
 
   @IsOptional()

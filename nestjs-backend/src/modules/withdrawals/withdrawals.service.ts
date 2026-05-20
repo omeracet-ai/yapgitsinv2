@@ -80,7 +80,12 @@ export class WithdrawalsService {
     workerId: string,
     page = 1,
     limit = 20,
-  ): Promise<{ items: WithdrawalRequest[]; total: number; page: number; limit: number }> {
+  ): Promise<{
+    items: WithdrawalRequest[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const safePage = Math.max(1, page);
     const safeLimit = Math.min(100, Math.max(1, limit));
     const [items, total] = await this.repo.findAndCount({
@@ -96,7 +101,12 @@ export class WithdrawalsService {
     statusFilter: WithdrawalStatus | undefined,
     page = 1,
     limit = 50,
-  ): Promise<{ items: WithdrawalRequest[]; total: number; page: number; limit: number }> {
+  ): Promise<{
+    items: WithdrawalRequest[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const safePage = Math.max(1, page);
     const safeLimit = Math.min(200, Math.max(1, limit));
     const where = statusFilter ? { status: statusFilter } : {};

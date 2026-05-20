@@ -3,15 +3,20 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, IsNull } from 'typeorm';
 import { Booking, BookingStatus } from '../bookings/booking.entity';
-import { Notification, NotificationType } from '../notifications/notification.entity';
+import {
+  Notification,
+  NotificationType,
+} from '../notifications/notification.entity';
 
 @Injectable()
 export class BookingReminderService {
   private readonly logger = new Logger(BookingReminderService.name);
 
   constructor(
-    @InjectRepository(Booking) private readonly bookingRepo: Repository<Booking>,
-    @InjectRepository(Notification) private readonly notifRepo: Repository<Notification>,
+    @InjectRepository(Booking)
+    private readonly bookingRepo: Repository<Booking>,
+    @InjectRepository(Notification)
+    private readonly notifRepo: Repository<Notification>,
   ) {}
 
   // Booking.scheduledDate is YYYY-MM-DD (string), scheduledTime is HH:MM (nullable).

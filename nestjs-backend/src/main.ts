@@ -2,7 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import { ValidationPipe, ClassSerializerInterceptor, Logger } from '@nestjs/common';
+import {
+  ValidationPipe,
+  ClassSerializerInterceptor,
+  Logger,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -24,8 +28,10 @@ async function applyBootMigrations(): Promise<void> {
     logger.log(`non-sqlite DB (${dbType}), skipping boot migrations`);
     return;
   }
-  const name = process.env.DB_DATABASE || process.env.DB_NAME || 'hizmet_db.sqlite';
-  const dbPath = name === ':memory:' || isAbsolute(name) ? name : join(APP_ROOT, name);
+  const name =
+    process.env.DB_DATABASE || process.env.DB_NAME || 'hizmet_db.sqlite';
+  const dbPath =
+    name === ':memory:' || isAbsolute(name) ? name : join(APP_ROOT, name);
   logger.log(`started — opening ${dbPath}`);
 
   const db: sqlite3.Database = await new Promise((resolve, reject) => {
@@ -58,11 +64,15 @@ async function applyBootMigrations(): Promise<void> {
             await run(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
             logger.log(`added users.${col.name}`);
           } catch (e) {
-            logger.warn(`add users.${col.name} skipped: ${e instanceof Error ? e.message : String(e)}`);
+            logger.warn(
+              `add users.${col.name} skipped: ${e instanceof Error ? e.message : String(e)}`,
+            );
           }
         }
       } catch (e) {
-        logger.warn(`detect users.${col.name} failed: ${e instanceof Error ? e.message : String(e)}`);
+        logger.warn(
+          `detect users.${col.name} failed: ${e instanceof Error ? e.message : String(e)}`,
+        );
       }
     }
     try {
@@ -86,16 +96,25 @@ async function applyBootMigrations(): Promise<void> {
             workerNote TEXT
           )`,
         );
-        await run(`CREATE INDEX idx_withdrawal_requests_worker_status ON withdrawal_requests(workerId, status)`);
-        await run(`CREATE INDEX idx_withdrawal_requests_status_requested ON withdrawal_requests(status, requestedAt)`);
+        await run(
+          `CREATE INDEX idx_withdrawal_requests_worker_status ON withdrawal_requests(workerId, status)`,
+        );
+        await run(
+          `CREATE INDEX idx_withdrawal_requests_status_requested ON withdrawal_requests(status, requestedAt)`,
+        );
         logger.log('created withdrawal_requests + indexes');
       }
     } catch (e) {
-      logger.warn(`withdrawal_requests setup skipped: ${e instanceof Error ? e.message : String(e)}`);
+      logger.warn(
+        `withdrawal_requests setup skipped: ${e instanceof Error ? e.message : String(e)}`,
+      );
     }
     // Phase 253 — Mutual confirmation flow columns on payment_escrows.
     const escrowCols: { name: string; type: string }[] = [
-      { name: 'confirmationStatus', type: "VARCHAR(32) NOT NULL DEFAULT 'none'" },
+      {
+        name: 'confirmationStatus',
+        type: "VARCHAR(32) NOT NULL DEFAULT 'none'",
+      },
       { name: 'confirmationTier', type: 'VARCHAR(16)' },
       { name: 'qrToken', type: 'VARCHAR(64)' },
       { name: 'qrIssuedAt', type: 'DATETIME' },
@@ -201,7 +220,10 @@ async function applyBootMigrations(): Promise<void> {
     // so /escrow/:id/confirmation/* can bridge to BookingEscrow rows written by
     // /escrow/hold. Idempotent ADD COLUMN — safe to run on every boot.
     const bookingEscrowConfirmCols: { name: string; type: string }[] = [
-      { name: 'confirmationStatus', type: "VARCHAR(32) NOT NULL DEFAULT 'none'" },
+      {
+        name: 'confirmationStatus',
+        type: "VARCHAR(32) NOT NULL DEFAULT 'none'",
+      },
       { name: 'confirmationTier', type: 'VARCHAR(16)' },
       { name: 'qrToken', type: 'VARCHAR(64)' },
       { name: 'qrIssuedAt', type: 'DATETIME' },
@@ -430,8 +452,10 @@ if (SENTRY_ENABLED) {
 // Phase 178/189 — top-level crash visibility for iisnode logs + Sentry capture.
 // Without these, an early throw produces opaque 500s with empty log files.
 process.on('uncaughtException', (err) => {
-  // eslint-disable-next-line no-console
-  console.error('[boot] uncaughtException:', err && err.stack ? err.stack : err);
+  console.error(
+    '[boot] uncaughtException:',
+    err && err.stack ? err.stack : err,
+  );
   if (SENTRY_ENABLED) {
     try {
       Sentry.captureException(err);
@@ -441,11 +465,12 @@ process.on('uncaughtException', (err) => {
   }
 });
 process.on('unhandledRejection', (reason) => {
-  // eslint-disable-next-line no-console
   console.error('[boot] unhandledRejection:', reason);
   if (SENTRY_ENABLED) {
     try {
-      Sentry.captureException(reason instanceof Error ? reason : new Error(String(reason)));
+      Sentry.captureException(
+        reason instanceof Error ? reason : new Error(String(reason)),
+      );
     } catch {
       /* swallow */
     }
@@ -453,7 +478,9 @@ process.on('unhandledRejection', (reason) => {
 });
 
 async function bootstrap() {
-  console.log('[boot] starting NestJS, node=' + process.version + ' pid=' + process.pid);
+  console.log(
+    '[boot] starting NestJS, node=' + process.version + ' pid=' + process.pid,
+  );
   // Self-healing schema migration MUST run before NestFactory.create() —
   // otherwise TypeORM crashes on missing columns/tables under `synchronize: false`.
   await applyBootMigrations();
@@ -471,10 +498,16 @@ async function bootstrap() {
       await dataSource.query('PRAGMA busy_timeout = 5000');
       await dataSource.query('PRAGMA foreign_keys = ON');
       await dataSource.query('PRAGMA synchronous = NORMAL');
-      Logger.log('[bootstrap] SQLite PRAGMA hardening applied (WAL + busy=5s + FK=on + sync=NORMAL)', 'Bootstrap');
+      Logger.log(
+        '[bootstrap] SQLite PRAGMA hardening applied (WAL + busy=5s + FK=on + sync=NORMAL)',
+        'Bootstrap',
+      );
     }
   } catch (e) {
-    console.warn('[boot] SQLite PRAGMA hardening failed (non-fatal):', e instanceof Error ? e.message : e);
+    console.warn(
+      '[boot] SQLite PRAGMA hardening failed (non-fatal):',
+      e instanceof Error ? e.message : e,
+    );
   }
 
   // Phase 131/170 — Helmet: HTTP güvenlik header'ları
@@ -516,7 +549,8 @@ async function bootstrap() {
             'https://api.iyzipay.com',
           ],
           // upgrade-insecure-requests prod TLS uyumu
-          upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
+          upgradeInsecureRequests:
+            process.env.NODE_ENV === 'production' ? [] : null,
         },
       },
     }),
@@ -544,8 +578,8 @@ async function bootstrap() {
       .setTitle('Yapgitsin API')
       .setDescription(
         'Yapgitsin v2 — Türkiye hizmet marketplace platformu REST API dökümantasyonu.\n\n' +
-        '**Auth:** JWT Bearer token ile kimlik doğrulama.\n\n' +
-        '**Test kullanıcıları:** fatma@test.com / mehmet@test.com (şifre: Test1234)',
+          '**Auth:** JWT Bearer token ile kimlik doğrulama.\n\n' +
+          '**Test kullanıcıları:** fatma@test.com / mehmet@test.com (şifre: Test1234)',
       )
       .setVersion('2.0')
       .addBearerAuth(
@@ -579,19 +613,32 @@ async function bootstrap() {
   //   - Origin function: dev tüm localhost serbest, prod strict allowlist
   //   - Native (Capacitor / mobil) için origin=null/undefined kabul
   const rawOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+    ? process.env.ALLOWED_ORIGINS.split(',')
+        .map((o) => o.trim())
+        .filter(Boolean)
     : [];
-  const NATIVE_APP_SCHEMES = ['capacitor://', 'ionic://', 'ms-appx://', 'ms-appx-web://', 'file://'];
-  const isNativeAppScheme = (o: string) => NATIVE_APP_SCHEMES.some((s) => o.startsWith(s));
+  const NATIVE_APP_SCHEMES = [
+    'capacitor://',
+    'ionic://',
+    'ms-appx://',
+    'ms-appx-web://',
+    'file://',
+  ];
+  const isNativeAppScheme = (o: string) =>
+    NATIVE_APP_SCHEMES.some((s) => o.startsWith(s));
   if (isProd) {
     // BOOT-time fast-fail on misconfig (these THROWs are intentional — before app.listen)
     if (rawOrigins.length === 0) {
-      throw new Error('Production requires ALLOWED_ORIGINS env (comma-separated list)');
+      throw new Error(
+        'Production requires ALLOWED_ORIGINS env (comma-separated list)',
+      );
     }
     const bad = rawOrigins.find(
       (o) =>
         !isNativeAppScheme(o) &&
-        (o === '*' || o.startsWith('http://') || /localhost|127\.0\.0\.1/.test(o)),
+        (o === '*' ||
+          o.startsWith('http://') ||
+          /localhost|127\.0\.0\.1/.test(o)),
     );
     if (bad) {
       throw new Error(
@@ -614,7 +661,8 @@ async function bootstrap() {
     if (!origin) return cb(null, true);
     if (!isProd) {
       // dev: localhost / 127.0.0.1 / capacitor / file her zaman serbest
-      if (/^https?:\/\/(localhost|127\.0\.0\.1)/.test(origin)) return cb(null, true);
+      if (/^https?:\/\/(localhost|127\.0\.0\.1)/.test(origin))
+        return cb(null, true);
       if (/^capacitor:\/\//.test(origin)) return cb(null, true);
       if (rawOrigins.length === 0) return cb(null, true);
     }
@@ -631,7 +679,8 @@ async function bootstrap() {
   app.enableCors({
     origin: originFn,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Authorization,Content-Type,Accept,X-Requested-With,sentry-trace,baggage',
+    allowedHeaders:
+      'Authorization,Content-Type,Accept,X-Requested-With,sentry-trace,baggage',
     exposedHeaders: 'X-Total-Count,Content-Range',
     credentials: true,
     preflightContinue: false,
@@ -671,7 +720,6 @@ async function bootstrap() {
   console.log(`📚 Swagger Docs: http://localhost:${port}/api/docs`);
 }
 void bootstrap().catch((err) => {
-  // eslint-disable-next-line no-console
   console.error('[boot] bootstrap failed:', err && err.stack ? err.stack : err);
   process.exit(1);
 });

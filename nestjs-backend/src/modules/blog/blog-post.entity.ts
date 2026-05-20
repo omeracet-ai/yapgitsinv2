@@ -48,7 +48,11 @@ export class BlogPost {
   @Column({ type: 'simple-json', nullable: true })
   tags?: string[] | null;
 
-  @Column({ type: 'simple-enum', enum: BlogPostStatus, default: BlogPostStatus.DRAFT })
+  @Column({
+    type: 'simple-enum',
+    enum: BlogPostStatus,
+    default: BlogPostStatus.DRAFT,
+  })
   status!: BlogPostStatus;
 
   @Column({ type: 'datetime', nullable: true })

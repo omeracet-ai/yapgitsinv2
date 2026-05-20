@@ -42,9 +42,7 @@ export class FcmService implements OnModuleInit {
       const admin = require('firebase-admin') as FirebaseAdmin;
       if (!admin.apps.length) {
         admin.initializeApp({
-          credential: admin.credential.cert(
-            credentials as unknown as import('firebase-admin').ServiceAccount,
-          ),
+          credential: admin.credential.cert(credentials),
           projectId: process.env.FIREBASE_PROJECT_ID,
         });
       }
@@ -131,8 +129,7 @@ export class FcmService implements OnModuleInit {
         failureCount += response.failureCount;
         response.responses.forEach((r, idx) => {
           if (!r.success) {
-            const code =
-              (r.error as { code?: string } | undefined)?.code ?? '';
+            const code = (r.error as { code?: string } | undefined)?.code ?? '';
             if (
               code === 'messaging/invalid-registration-token' ||
               code === 'messaging/registration-token-not-registered'
@@ -274,7 +271,8 @@ export class FcmService implements OnModuleInit {
 
           response.responses.forEach((r, idx) => {
             if (!r.success) {
-              const code = (r.error as { code?: string } | undefined)?.code ?? '';
+              const code =
+                (r.error as { code?: string } | undefined)?.code ?? '';
               if (
                 code === 'messaging/invalid-registration-token' ||
                 code === 'messaging/registration-token-not-registered'

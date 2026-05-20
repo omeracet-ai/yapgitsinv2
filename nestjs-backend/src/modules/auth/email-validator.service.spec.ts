@@ -25,7 +25,9 @@ describe('EmailValidatorService (Phase 253)', () => {
   });
 
   it('rejects disposable domain with EMAIL_DISPOSABLE', async () => {
-    await expect(service.validate('throwaway@mailinator.com')).rejects.toMatchObject({
+    await expect(
+      service.validate('throwaway@mailinator.com'),
+    ).rejects.toMatchObject({
       response: { code: 'EMAIL_DISPOSABLE' },
     });
     expect(resolveMxMock).not.toHaveBeenCalled();
@@ -33,14 +35,18 @@ describe('EmailValidatorService (Phase 253)', () => {
 
   it('rejects domain with zero MX records as EMAIL_DOMAIN_INVALID', async () => {
     resolveMxMock.mockResolvedValueOnce([]);
-    await expect(service.validate('foo@asdad-nodomain.example')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      service.validate('foo@asdad-nodomain.example'),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('accepts domain with MX records', async () => {
-    resolveMxMock.mockResolvedValueOnce([{ exchange: 'mx.example.com', priority: 10 }]);
-    await expect(service.validate('foo@real-domain.example')).resolves.toBeUndefined();
+    resolveMxMock.mockResolvedValueOnce([
+      { exchange: 'mx.example.com', priority: 10 },
+    ]);
+    await expect(
+      service.validate('foo@real-domain.example'),
+    ).resolves.toBeUndefined();
   });
 
   it('caches MX result (second call hits cache)', async () => {

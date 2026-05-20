@@ -7,8 +7,8 @@ Detect spam, scams, fake listings, suspicious phone/contact extraction, money la
 adult content, hate speech, or impersonation. Output STRICT JSON only.`;
 
 export interface FraudResult {
-  score: number;       // 0-100
-  reasons: string[];   // short Turkish reasons
+  score: number; // 0-100
+  reasons: string[]; // short Turkish reasons
 }
 
 @Injectable()
@@ -21,7 +21,10 @@ export class FraudDetectionService {
     this.client = key ? new Anthropic({ apiKey: key }) : null;
   }
 
-  async analyzeJobListing(title: string, description: string): Promise<FraudResult> {
+  async analyzeJobListing(
+    title: string,
+    description: string,
+  ): Promise<FraudResult> {
     return this.analyze(
       `İŞ İLANI:\nBaşlık: ${title}\nAçıklama: ${description}`,
     );
@@ -63,7 +66,10 @@ export class FraudDetectionService {
         .replace(/^```(?:json)?\s*/i, '')
         .replace(/\s*```$/i, '')
         .trim();
-      const parsed = JSON.parse(cleaned) as { score?: number; reasons?: string[] };
+      const parsed = JSON.parse(cleaned) as {
+        score?: number;
+        reasons?: string[];
+      };
       const score = Math.max(0, Math.min(100, Number(parsed.score) || 0));
       const reasons = Array.isArray(parsed.reasons)
         ? parsed.reasons.filter((r) => typeof r === 'string').slice(0, 8)

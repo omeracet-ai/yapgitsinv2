@@ -44,7 +44,7 @@ describe('Payments DTO validation (e2e — Phase 245)', () => {
 
   let ipCounter = 0;
   const nextIp = () =>
-    `10.245.${Math.floor(ipCounter / 256) % 256}.${(ipCounter++) % 256}`;
+    `10.245.${Math.floor(ipCounter / 256) % 256}.${ipCounter++ % 256}`;
   const post = (url: string) =>
     request(app.getHttpServer()).post(url).set('X-Forwarded-For', nextIp());
 

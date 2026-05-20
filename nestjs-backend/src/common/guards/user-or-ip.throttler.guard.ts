@@ -26,12 +26,15 @@ export class UserOrIpThrottlerGuard extends ThrottlerGuard {
     const user = req?.user as { sub?: string; id?: string } | undefined;
     const sub = user?.sub ?? user?.id;
     if (sub) return Promise.resolve(`user:${String(sub)}`);
-    const headers = (req?.headers ?? {}) as Record<string, string | string[] | undefined>;
+    const headers = (req?.headers ?? {}) as Record<
+      string,
+      string | string[] | undefined
+    >;
     const xff = headers['x-forwarded-for'];
     const xffStr = Array.isArray(xff) ? xff[0] : xff;
     const ip =
       xffStr?.split(',')[0]?.trim() ??
-      (typeof req?.ip === 'string' ? (req.ip as string) : 'unknown');
+      (typeof req?.ip === 'string' ? req.ip : 'unknown');
     return Promise.resolve(`ip:${ip}`);
   }
 }

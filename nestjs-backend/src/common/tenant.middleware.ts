@@ -17,14 +17,19 @@ export class TenantMiddleware implements NestMiddleware {
     let tenant: Tenant | null = null;
 
     // 1. X-Tenant-Slug header (en yüksek öncelik — dev/test)
-    const headerSlug = (req.headers['x-tenant-slug'] as string | undefined)?.trim();
+    const headerSlug = (
+      req.headers['x-tenant-slug'] as string | undefined
+    )?.trim();
     if (headerSlug) {
       tenant = await this.tenants.findBySlug(headerSlug);
     }
 
     // 2. Host header → subdomain parse
     if (!tenant) {
-      const host = (req.headers['host'] || '').toString().split(':')[0].toLowerCase();
+      const host = (req.headers['host'] || '')
+        .toString()
+        .split(':')[0]
+        .toLowerCase();
       if (host) {
         // try exact subdomain/customDomain match
         tenant = await this.tenants.findBySubdomain(host);

@@ -11,7 +11,12 @@ import {
   Inject,
   UseInterceptors,
 } from '@nestjs/common';
-import { CACHE_MANAGER, CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
+import {
+  CACHE_MANAGER,
+  CacheInterceptor,
+  CacheKey,
+  CacheTTL,
+} from '@nestjs/cache-manager';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { Cache } from 'cache-manager';
 import { CategoriesService } from './categories.service';
@@ -50,7 +55,10 @@ export class CategoriesController {
   @Get('search')
   @CacheTTL(CATEGORY_SEARCH_TTL)
   search(@Query('q') q: string, @Query('limit') limit?: string): Category[] {
-    const lim = Math.min(Math.max(Number.parseInt(limit ?? '5', 10) || 5, 1), 20);
+    const lim = Math.min(
+      Math.max(Number.parseInt(limit ?? '5', 10) || 5, 1),
+      20,
+    );
     return this.searchSvc.searchCategories(q ?? '', lim);
   }
 

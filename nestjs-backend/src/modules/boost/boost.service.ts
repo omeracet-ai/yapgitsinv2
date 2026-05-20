@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, LessThan, Repository } from 'typeorm';
 import { Boost, BoostStatus, BoostType, BOOST_PACKAGES } from './boost.entity';
@@ -44,7 +48,9 @@ export class BoostService {
       await manager.save(User, user);
 
       const now = new Date();
-      const expiresAt = new Date(now.getTime() + pkg.durationHours * 3600 * 1000);
+      const expiresAt = new Date(
+        now.getTime() + pkg.durationHours * 3600 * 1000,
+      );
       const boost = await manager.save(
         Boost,
         manager.create(Boost, {
@@ -74,9 +80,7 @@ export class BoostService {
     });
   }
 
-  async getMy(
-    userId: string,
-  ): Promise<{ active: Boost[]; history: Boost[] }> {
+  async getMy(userId: string): Promise<{ active: Boost[]; history: Boost[] }> {
     const now = new Date();
     const all = await this.boostRepo.find({
       where: { userId },

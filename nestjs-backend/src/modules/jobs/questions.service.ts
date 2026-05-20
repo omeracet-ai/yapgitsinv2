@@ -1,4 +1,8 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JobQuestion } from './job-question.entity';
@@ -41,14 +45,22 @@ export class QuestionsService {
           photoUrl: q.photoUrl,
           createdAt: q.createdAt,
           user: q.user
-            ? { id: q.user.id, fullName: q.user.fullName, profileImageUrl: q.user.profileImageUrl }
+            ? {
+                id: q.user.id,
+                fullName: q.user.fullName,
+                profileImageUrl: q.user.profileImageUrl,
+              }
             : null,
           replies: replies.map((r) => ({
             id: r.id,
             text: r.text,
             createdAt: r.createdAt,
             user: r.user
-              ? { id: r.user.id, fullName: r.user.fullName, profileImageUrl: r.user.profileImageUrl }
+              ? {
+                  id: r.user.id,
+                  fullName: r.user.fullName,
+                  profileImageUrl: r.user.profileImageUrl,
+                }
               : null,
           })),
         };
@@ -58,9 +70,16 @@ export class QuestionsService {
     return results;
   }
 
-  async postQuestion(jobId: string, userId: string, text: string, photoUrl?: string) {
+  async postQuestion(
+    jobId: string,
+    userId: string,
+    text: string,
+    photoUrl?: string,
+  ) {
     // Karar B: Teklif vermiş olan usta soru sorabilir
-    const hasOffer = await this.offersRepo.findOne({ where: { jobId, userId } });
+    const hasOffer = await this.offersRepo.findOne({
+      where: { jobId, userId },
+    });
     if (!hasOffer) {
       throw new ForbiddenException(
         'Soru sormak için önce bu ilana teklif vermeniz gerekiyor (5 token).',
@@ -81,7 +100,9 @@ export class QuestionsService {
   }
 
   async postReply(questionId: string, userId: string, text: string) {
-    const question = await this.questionsRepo.findOne({ where: { id: questionId } });
+    const question = await this.questionsRepo.findOne({
+      where: { id: questionId },
+    });
     if (!question) throw new NotFoundException('Soru bulunamadı.');
 
     // Yanıtlayabilir: ilan sahibi veya soruyu soran
@@ -90,7 +111,9 @@ export class QuestionsService {
     const isQuestionOwner = question.userId === userId;
 
     if (!isJobOwner && !isQuestionOwner) {
-      throw new ForbiddenException('Bu soruya yalnızca ilan sahibi veya soruyu soran yanıt verebilir.');
+      throw new ForbiddenException(
+        'Bu soruya yalnızca ilan sahibi veya soruyu soran yanıt verebilir.',
+      );
     }
 
     const reply = this.repliesRepo.create({ questionId, userId, text });

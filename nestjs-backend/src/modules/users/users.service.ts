@@ -1,6 +1,14 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException, forwardRef } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { UserId } from '../../common/branded.types';
@@ -46,12 +54,16 @@ export class UsersService {
   ) {}
 
   /** Phase 146 — bulk planKey lookup helper exposed to controller. */
-  async getActiveSubscriptionPlanKeys(userIds: string[]): Promise<Map<string, string>> {
+  async getActiveSubscriptionPlanKeys(
+    userIds: string[],
+  ): Promise<Map<string, string>> {
     return this.subscriptionsService.getActiveByUserIds(userIds);
   }
 
   /** Phase 141 — Worker boost ranking: top_search_24h aktif olanları başa al. */
-  private async _applyBoostRanking<T extends { id: string }>(items: T[]): Promise<T[]> {
+  private async _applyBoostRanking<T extends { id: string }>(
+    items: T[],
+  ): Promise<T[]> {
     if (items.length === 0) return items;
     const map = await this.boostSvc.getActiveBoostsForRanking();
     if (map.size === 0) return items;
@@ -72,13 +84,15 @@ export class UsersService {
   async getAvailabilitySlots(
     userId: string,
     days: number,
-  ): Promise<Array<{
-    date: string;
-    dayOfWeek: string;
-    weeklyAvailable: boolean;
-    hasBooking: boolean;
-    fullyBooked: boolean;
-  }>> {
+  ): Promise<
+    Array<{
+      date: string;
+      dayOfWeek: string;
+      weeklyAvailable: boolean;
+      hasBooking: boolean;
+      fullyBooked: boolean;
+    }>
+  > {
     const user = await this.repo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
     const N = Math.min(90, Math.max(1, days || 30));
@@ -94,13 +108,20 @@ export class UsersService {
       .andWhere('b.scheduledDate >= :s', { s: todayStr })
       .andWhere('b.scheduledDate <= :e', { e: endStr })
       .andWhere('b.status IN (:...st)', {
-        st: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS],
+        st: [
+          BookingStatus.PENDING,
+          BookingStatus.CONFIRMED,
+          BookingStatus.IN_PROGRESS,
+        ],
       })
       .getMany();
 
     const countByDate = new Map<string, number>();
     for (const b of bookings) {
-      countByDate.set(b.scheduledDate, (countByDate.get(b.scheduledDate) ?? 0) + 1);
+      countByDate.set(
+        b.scheduledDate,
+        (countByDate.get(b.scheduledDate) ?? 0) + 1,
+      );
     }
 
     const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
@@ -130,21 +151,29 @@ export class UsersService {
     return out;
   }
 
+  // Phase 255 (Voldi-db) — Auth-path user lookups exclude soft-deleted rows so
+  // a tombstoned account cannot log in, refresh a token, or be resolved by JWT
+  // strategy. Admin-facing queries (admin.service.ts) deliberately bypass this
+  // by using their own repository calls — do not propagate the filter there.
   findByEmail(email: string): Promise<User | null> {
-    return this.repo.findOne({ where: { email } });
+    return this.repo.findOne({ where: { email, deletedAt: IsNull() } });
   }
 
   findByPhone(phoneNumber: string): Promise<User | null> {
-    return this.repo.findOne({ where: { phoneNumber } });
+    return this.repo.findOne({
+      where: { phoneNumber, deletedAt: IsNull() },
+    });
   }
 
   /** Phase 226 — Social sign-in lookup by Firebase Auth uid. */
   findByFirebaseUid(firebaseUid: string): Promise<User | null> {
-    return this.repo.findOne({ where: { firebaseUid } });
+    return this.repo.findOne({
+      where: { firebaseUid, deletedAt: IsNull() },
+    });
   }
 
   findById(id: string): Promise<User | null> {
-    return this.repo.findOne({ where: { id } });
+    return this.repo.findOne({ where: { id, deletedAt: IsNull() } });
   }
 
   findAll(): Promise<User[]> {
@@ -189,135 +218,184 @@ export class UsersService {
         .createQueryBuilder('u')
         .where("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'");
 
-    // availableOnly default true to preserve existing behavior unless explicitly false
-    if (opts.availableOnly !== false) {
-      qb.andWhere('u.isAvailable = :available', { available: true });
-    }
+      // availableOnly default true to preserve existing behavior unless explicitly false
+      if (opts.availableOnly !== false) {
+        qb.andWhere('u.isAvailable = :available', { available: true });
+      }
 
-    if (opts.category) {
-      qb.andWhere('u.workerCategories LIKE :category', {
-        category: `%"${opts.category}"%`,
-      });
-    }
-    if (opts.city) {
-      qb.andWhere('LOWER(u.city) LIKE :city', {
-        city: `%${opts.city.toLowerCase()}%`,
-      });
-    }
-    if (opts.minRating != null) {
-      qb.andWhere('u.averageRating >= :minRating', { minRating: opts.minRating });
-    }
-    if (opts.minRate != null) {
-      qb.andWhere('u.hourlyRateMin IS NOT NULL AND u.hourlyRateMin >= :minRate', {
-        minRate: opts.minRate,
-      });
-    }
-    if (opts.maxRate != null) {
-      qb.andWhere('u.hourlyRateMax IS NOT NULL AND u.hourlyRateMax <= :maxRate', {
-        maxRate: opts.maxRate,
-      });
-    }
-    if (opts.verifiedOnly) {
-      qb.andWhere('u.identityVerified = :verified', { verified: true });
-    }
-    if (opts.availableDay) {
-      // null schedule = "her gün müsait"; aksi halde gün true olmalı
-      qb.andWhere(
-        '(u.availabilitySchedule IS NULL OR u.availabilitySchedule LIKE :dayPat)',
-        { dayPat: `%"${opts.availableDay}":true%` },
-      );
-    }
-
-    // Phase 173 — Top-rated sort uses wilsonScore first (statistically robust),
-    // reputationScore as tiebreaker.
-    switch (opts.sortBy) {
-      case 'rating':
-        qb.orderBy('u.wilsonScore', 'DESC')
-          .addOrderBy('u.averageRating', 'DESC')
-          .addOrderBy('u.reputationScore', 'DESC');
-        break;
-      case 'rate_asc':
-        qb.orderBy('u.hourlyRateMin', 'ASC').addOrderBy('u.reputationScore', 'DESC');
-        break;
-      case 'rate_desc':
-        qb.orderBy('u.hourlyRateMax', 'DESC').addOrderBy('u.reputationScore', 'DESC');
-        break;
-      case 'reputation':
-      default:
-        qb.orderBy('u.wilsonScore', 'DESC').addOrderBy('u.reputationScore', 'DESC');
-        break;
-    }
-
-    // Phase 112 — Geo-fencing: lat/lng + radiusKm filter (SQLite-safe post-filter)
-    const hasGeo =
-      typeof opts.lat === 'number' &&
-      typeof opts.lng === 'number' &&
-      !isNaN(opts.lat) &&
-      !isNaN(opts.lng);
-
-    if (hasGeo || opts.sortBy === 'nearest') {
-      // Fetch all matching, post-filter + sort, then paginate
-      const all = await qb.getMany();
-      const radiusKm = Math.min(200, Math.max(1, opts.radiusKm ?? 20));
-
-      let withDist: (User & { distanceKm?: number })[] = all.map((u) => {
-        if (hasGeo && u.latitude != null && u.longitude != null) {
-          const d = distKm(opts.lat!, opts.lng!, u.latitude, u.longitude);
-          return Object.assign(u, { distanceKm: Math.round(d * 10) / 10 });
-        }
-        return Object.assign(u, { distanceKm: undefined });
-      });
-
-      if (hasGeo) {
-        withDist = withDist.filter(
-          (u) => u.distanceKm != null && u.distanceKm <= radiusKm,
+      if (opts.category) {
+        qb.andWhere('u.workerCategories LIKE :category', {
+          category: `%"${opts.category}"%`,
+        });
+      }
+      if (opts.city) {
+        qb.andWhere('LOWER(u.city) LIKE :city', {
+          city: `%${opts.city.toLowerCase()}%`,
+        });
+      }
+      if (opts.minRating != null) {
+        qb.andWhere('u.averageRating >= :minRating', {
+          minRating: opts.minRating,
+        });
+      }
+      if (opts.minRate != null) {
+        qb.andWhere(
+          'u.hourlyRateMin IS NOT NULL AND u.hourlyRateMin >= :minRate',
+          {
+            minRate: opts.minRate,
+          },
+        );
+      }
+      if (opts.maxRate != null) {
+        qb.andWhere(
+          'u.hourlyRateMax IS NOT NULL AND u.hourlyRateMax <= :maxRate',
+          {
+            maxRate: opts.maxRate,
+          },
+        );
+      }
+      if (opts.verifiedOnly) {
+        qb.andWhere('u.identityVerified = :verified', { verified: true });
+      }
+      if (opts.availableDay) {
+        // null schedule = "her gün müsait"; aksi halde gün true olmalı
+        qb.andWhere(
+          '(u.availabilitySchedule IS NULL OR u.availabilitySchedule LIKE :dayPat)',
+          { dayPat: `%"${opts.availableDay}":true%` },
         );
       }
 
-      if (opts.sortBy === 'nearest') {
-        withDist.sort((a, b) => (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9));
+      // Phase 173 — Top-rated sort uses wilsonScore first (statistically robust),
+      // reputationScore as tiebreaker.
+      switch (opts.sortBy) {
+        case 'rating':
+          qb.orderBy('u.wilsonScore', 'DESC')
+            .addOrderBy('u.averageRating', 'DESC')
+            .addOrderBy('u.reputationScore', 'DESC');
+          break;
+        case 'rate_asc':
+          qb.orderBy('u.hourlyRateMin', 'ASC').addOrderBy(
+            'u.reputationScore',
+            'DESC',
+          );
+          break;
+        case 'rate_desc':
+          qb.orderBy('u.hourlyRateMax', 'DESC').addOrderBy(
+            'u.reputationScore',
+            'DESC',
+          );
+          break;
+        case 'reputation':
+        default:
+          qb.orderBy('u.wilsonScore', 'DESC').addOrderBy(
+            'u.reputationScore',
+            'DESC',
+          );
+          break;
       }
 
-      let final = withDist;
+      // Phase 112 — Geo-fencing: lat/lng + radiusKm filter (SQLite-safe post-filter)
+      const hasGeo =
+        typeof opts.lat === 'number' &&
+        typeof opts.lng === 'number' &&
+        !isNaN(opts.lat) &&
+        !isNaN(opts.lng);
+
+      if (hasGeo || opts.sortBy === 'nearest') {
+        // Fetch all matching, post-filter + sort, then paginate
+        const all = await qb.getMany();
+        const radiusKm = Math.min(200, Math.max(1, opts.radiusKm ?? 20));
+
+        let withDist: (User & { distanceKm?: number })[] = all.map((u) => {
+          if (hasGeo && u.latitude != null && u.longitude != null) {
+            const d = distKm(opts.lat!, opts.lng!, u.latitude, u.longitude);
+            return Object.assign(u, { distanceKm: Math.round(d * 10) / 10 });
+          }
+          return Object.assign(u, { distanceKm: undefined });
+        });
+
+        if (hasGeo) {
+          withDist = withDist.filter(
+            (u) => u.distanceKm != null && u.distanceKm <= radiusKm,
+          );
+        }
+
+        if (opts.sortBy === 'nearest') {
+          withDist.sort(
+            (a, b) => (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9),
+          );
+        }
+
+        let final = withDist;
+        if (opts.semanticQuery && this.semanticSearch.isEnabled()) {
+          final = await this.semanticSearch.rerankWorkers(
+            opts.semanticQuery,
+            final,
+          );
+        }
+        final = await this._applyBoostRanking(final);
+        const total = final.length;
+        const slice = final.slice(
+          (page - 1) * limit,
+          (page - 1) * limit + limit,
+        );
+        return {
+          data: slice,
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit) || 0,
+        };
+      }
+
+      // Phase 134 — Semantic re-rank: fetch all, rerank, then paginate
       if (opts.semanticQuery && this.semanticSearch.isEnabled()) {
-        final = await this.semanticSearch.rerankWorkers(opts.semanticQuery, final);
+        const all = await qb.getMany();
+        let reranked = await this.semanticSearch.rerankWorkers(
+          opts.semanticQuery,
+          all,
+        );
+        reranked = await this._applyBoostRanking(reranked);
+        const total = reranked.length;
+        const slice = reranked.slice(
+          (page - 1) * limit,
+          (page - 1) * limit + limit,
+        );
+        return {
+          data: slice,
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit) || 0,
+        };
       }
-      final = await this._applyBoostRanking(final);
-      const total = final.length;
-      const slice = final.slice((page - 1) * limit, (page - 1) * limit + limit);
-      return { data: slice, total, page, limit, pages: Math.ceil(total / limit) || 0 };
-    }
 
-    // Phase 134 — Semantic re-rank: fetch all, rerank, then paginate
-    if (opts.semanticQuery && this.semanticSearch.isEnabled()) {
-      const all = await qb.getMany();
-      let reranked = await this.semanticSearch.rerankWorkers(
-        opts.semanticQuery,
-        all,
+      // Phase 141 — Boost ranking: fetch all, reorder, then paginate
+      const boostMap = await this.boostSvc.getActiveBoostsForRanking();
+      const hasTopBoost = Array.from(boostMap.values()).some((s) =>
+        s.has(BoostType.TOP_SEARCH_24H),
       );
-      reranked = await this._applyBoostRanking(reranked);
-      const total = reranked.length;
-      const slice = reranked.slice((page - 1) * limit, (page - 1) * limit + limit);
-      return { data: slice, total, page, limit, pages: Math.ceil(total / limit) || 0 };
-    }
+      if (hasTopBoost) {
+        const all = await qb.getMany();
+        const ranked = await this._applyBoostRanking(all);
+        const total = ranked.length;
+        const slice = ranked.slice(
+          (page - 1) * limit,
+          (page - 1) * limit + limit,
+        );
+        return {
+          data: slice,
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit) || 0,
+        };
+      }
 
-    // Phase 141 — Boost ranking: fetch all, reorder, then paginate
-    const boostMap = await this.boostSvc.getActiveBoostsForRanking();
-    const hasTopBoost = Array.from(boostMap.values()).some((s) =>
-      s.has(BoostType.TOP_SEARCH_24H),
-    );
-    if (hasTopBoost) {
-      const all = await qb.getMany();
-      const ranked = await this._applyBoostRanking(all);
-      const total = ranked.length;
-      const slice = ranked.slice((page - 1) * limit, (page - 1) * limit + limit);
-      return { data: slice, total, page, limit, pages: Math.ceil(total / limit) || 0 };
-    }
+      qb.skip((page - 1) * limit).take(limit);
 
-    qb.skip((page - 1) * limit).take(limit);
-
-    const [data, total] = await qb.getManyAndCount();
-    return { data, total, page, limit, pages: Math.ceil(total / limit) || 0 };
+      const [data, total] = await qb.getManyAndCount();
+      return { data, total, page, limit, pages: Math.ceil(total / limit) || 0 };
     } catch (err) {
       const e = err as Error;
       this.logger.error(
@@ -348,7 +426,8 @@ export class UsersService {
 
   async update(id: string, data: Partial<User>): Promise<User | null> {
     if (data.latitude != null && data.longitude != null) {
-      data.homeGeohash = encodeGeohash(data.latitude, data.longitude, 6) || null;
+      data.homeGeohash =
+        encodeGeohash(data.latitude, data.longitude, 6) || null;
     }
     // Phase 174b — minor sync if hourlyRate fields changed
     if (data.hourlyRateMin !== undefined) {
@@ -377,12 +456,74 @@ export class UsersService {
   ): Promise<{ deactivated: true; deactivatedAt: string }> {
     const user = await this.repo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
-    if (!user.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
+    if (
+      !user.passwordHash ||
+      !(await bcrypt.compare(password, user.passwordHash))
+    ) {
       throw new UnauthorizedException('Şifre yanlış');
     }
     const deactivatedAt = new Date();
     await this.repo.update(userId, { deactivated: true, deactivatedAt });
     return { deactivated: true, deactivatedAt: deactivatedAt.toISOString() };
+  }
+
+  /**
+   * Phase 255 (Voldi-fs) — KVKK soft-delete with 30-day grace period.
+   * Verifies bcrypt password, then:
+   *  - sets `deletedAt = now`
+   *  - sets `scheduledHardDeleteAt = now + 30d`
+   *  - bumps `tokenVersion` to invalidate every live JWT (refresh + access).
+   * Actual row removal is performed by `UsersCleanupTask` cron at 03:00.
+   *
+   * NOTE: `deletedAt` ve `scheduledHardDeleteAt` kolonları Voldi-db migration'ı ile
+   * `users` tablosuna eklenir; service kolonların varlığını assume eder.
+   */
+  async softDeleteAccount(
+    userId: string,
+    password: string,
+  ): Promise<{
+    deletedAt: string;
+    scheduledHardDeleteAt: string;
+    graceDays: number;
+  }> {
+    const user = await this.repo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    if (
+      !user.passwordHash ||
+      !(await bcrypt.compare(password, user.passwordHash))
+    ) {
+      throw new UnauthorizedException('Şifre yanlış');
+    }
+    const GRACE_DAYS = 30;
+    const now = new Date();
+    const scheduled = new Date(now.getTime() + GRACE_DAYS * 86_400_000);
+
+    // typeorm update payload — Voldi-db migration ile yeni kolonlar eklenecek;
+    // entity tipinde henüz yokken TS karşı koruyucu cast.
+    const patch: Record<string, unknown> = {
+      deactivated: true,
+      deactivatedAt: now,
+      deletedAt: now,
+      scheduledHardDeleteAt: scheduled,
+    };
+    await this.repo.update(userId, patch as unknown as Partial<User>);
+
+    // Invalidate all live tokens for this user
+    try {
+      await this.repo.increment({ id: userId }, 'tokenVersion', 1);
+    } catch (e) {
+      this.logger.warn(
+        `[softDeleteAccount] tokenVersion increment failed for ${userId}: ${
+          (e as Error).message
+        }`,
+      );
+    }
+
+    return {
+      deletedAt: now.toISOString(),
+      scheduledHardDeleteAt: scheduled.toISOString(),
+      graceDays: GRACE_DAYS,
+    };
   }
 
   async bumpStat(userId: string, field: StatField): Promise<void> {
@@ -437,7 +578,7 @@ export class UsersService {
     const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
     const normalized = {} as Record<(typeof days)[number], boolean>;
     for (const d of days) {
-      const v = (schedule as Record<string, unknown>)[d];
+      const v = schedule[d];
       if (typeof v !== 'boolean') {
         throw new BadRequestException(`schedule.${d} boolean olmalı`);
       }
@@ -447,7 +588,11 @@ export class UsersService {
     return { schedule: normalized };
   }
 
-  async updateLocation(id: string, latitude: number, longitude: number): Promise<void> {
+  async updateLocation(
+    id: string,
+    latitude: number,
+    longitude: number,
+  ): Promise<void> {
     await this.repo.update(id, {
       latitude,
       longitude,
@@ -495,50 +640,62 @@ export class UsersService {
       return { data: [], total: 0, page, limit, pages: 0 };
     }
     try {
-    const precision = precisionForRadiusKm(radiusKm);
-    const center = encodeGeohash(opts.lat, opts.lon, precision);
-    if (!center) {
-      return { data: [], total: 0, page, limit, pages: 0 };
-    }
-    const cells = geohashNeighbors(center);
-    const qb = this.repo
-      .createQueryBuilder('u')
-      .where("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'")
-      .andWhere('u.isAvailable = :av', { av: true })
-      .andWhere('u.homeGeohash IS NOT NULL');
-    qb.andWhere(
-      '(' +
-        cells
-          .map((_, i) => `u.homeGeohash LIKE :h${i}`)
-          .join(' OR ') +
-        ')',
-      Object.fromEntries(cells.map((c, i) => [`h${i}`, `${c}%`])),
-    );
-    if (opts.category) {
-      qb.andWhere('u.workerCategories LIKE :category', {
-        category: `%"${opts.category}"%`,
-      });
-    }
-    if (opts.verifiedOnly) {
-      qb.andWhere('u.identityVerified = :v', { v: true });
-    }
-    const candidates = await qb.getMany();
-    const annotated = candidates
-      .filter((u) => u.latitude != null && u.longitude != null)
-      .map((u) => {
-        const d = equirectangular(opts.lat, opts.lon, u.latitude!, u.longitude!);
-        return Object.assign(u, { distanceKm: Math.round(d * 10) / 10 });
-      })
-      .filter(
-        (u) =>
-          u.distanceKm <= radiusKm &&
-          // Respect worker's own service radius too
-          u.distanceKm <= (u.serviceRadiusKm ?? 9999),
-      )
-      .sort((a, b) => a.distanceKm - b.distanceKm);
-    const total = annotated.length;
-    const slice = annotated.slice((page - 1) * limit, (page - 1) * limit + limit);
-    return { data: slice, total, page, limit, pages: Math.ceil(total / limit) || 0 };
+      const precision = precisionForRadiusKm(radiusKm);
+      const center = encodeGeohash(opts.lat, opts.lon, precision);
+      if (!center) {
+        return { data: [], total: 0, page, limit, pages: 0 };
+      }
+      const cells = geohashNeighbors(center);
+      const qb = this.repo
+        .createQueryBuilder('u')
+        .where("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'")
+        .andWhere('u.isAvailable = :av', { av: true })
+        .andWhere('u.homeGeohash IS NOT NULL');
+      qb.andWhere(
+        '(' +
+          cells.map((_, i) => `u.homeGeohash LIKE :h${i}`).join(' OR ') +
+          ')',
+        Object.fromEntries(cells.map((c, i) => [`h${i}`, `${c}%`])),
+      );
+      if (opts.category) {
+        qb.andWhere('u.workerCategories LIKE :category', {
+          category: `%"${opts.category}"%`,
+        });
+      }
+      if (opts.verifiedOnly) {
+        qb.andWhere('u.identityVerified = :v', { v: true });
+      }
+      const candidates = await qb.getMany();
+      const annotated = candidates
+        .filter((u) => u.latitude != null && u.longitude != null)
+        .map((u) => {
+          const d = equirectangular(
+            opts.lat,
+            opts.lon,
+            u.latitude!,
+            u.longitude!,
+          );
+          return Object.assign(u, { distanceKm: Math.round(d * 10) / 10 });
+        })
+        .filter(
+          (u) =>
+            u.distanceKm <= radiusKm &&
+            // Respect worker's own service radius too
+            u.distanceKm <= (u.serviceRadiusKm ?? 9999),
+        )
+        .sort((a, b) => a.distanceKm - b.distanceKm);
+      const total = annotated.length;
+      const slice = annotated.slice(
+        (page - 1) * limit,
+        (page - 1) * limit + limit,
+      );
+      return {
+        data: slice,
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit) || 0,
+      };
     } catch (err) {
       const e = err as Error;
       this.logger.error(
@@ -550,7 +707,10 @@ export class UsersService {
   }
 
   /** Phase 48: Profil doluluk yüzdesi — equal-weight 10 (müşteri) / 15 (usta) alan */
-  private static readonly CUSTOMER_FIELDS: Array<{ key: string; check: (u: User) => boolean }> = [
+  private static readonly CUSTOMER_FIELDS: Array<{
+    key: string;
+    check: (u: User) => boolean;
+  }> = [
     { key: 'fullName', check: (u) => !!u.fullName },
     { key: 'phoneNumber', check: (u) => !!u.phoneNumber },
     { key: 'email', check: (u) => !!u.email },
@@ -563,12 +723,28 @@ export class UsersService {
     { key: 'district', check: (u) => !!u.district },
   ];
 
-  private static readonly WORKER_FIELDS: Array<{ key: string; check: (u: User) => boolean }> = [
-    { key: 'workerCategories', check: (u) => Array.isArray(u.workerCategories) && u.workerCategories.length > 0 },
+  private static readonly WORKER_FIELDS: Array<{
+    key: string;
+    check: (u: User) => boolean;
+  }> = [
+    {
+      key: 'workerCategories',
+      check: (u) =>
+        Array.isArray(u.workerCategories) && u.workerCategories.length > 0,
+    },
     { key: 'workerBio', check: (u) => !!u.workerBio },
-    { key: 'hourlyRateMin', check: (u) => u.hourlyRateMin != null && u.hourlyRateMin > 0 },
-    { key: 'hourlyRateMax', check: (u) => u.hourlyRateMax != null && u.hourlyRateMax > 0 },
-    { key: 'availability', check: (u) => u.isAvailable === true || u.availabilitySchedule != null },
+    {
+      key: 'hourlyRateMin',
+      check: (u) => u.hourlyRateMin != null && u.hourlyRateMin > 0,
+    },
+    {
+      key: 'hourlyRateMax',
+      check: (u) => u.hourlyRateMax != null && u.hourlyRateMax > 0,
+    },
+    {
+      key: 'availability',
+      check: (u) => u.isAvailable === true || u.availabilitySchedule != null,
+    },
   ];
 
   computeProfileCompletion(user: User): {
@@ -577,7 +753,9 @@ export class UsersService {
     totalFields: number;
     filledFields: number;
   } {
-    const isWorker = !!(user.workerCategories && user.workerCategories.length > 0);
+    const isWorker = !!(
+      user.workerCategories && user.workerCategories.length > 0
+    );
     const fields = isWorker
       ? [...UsersService.CUSTOMER_FIELDS, ...UsersService.WORKER_FIELDS]
       : UsersService.CUSTOMER_FIELDS;
@@ -588,7 +766,8 @@ export class UsersService {
       else missingFields.push(f.key);
     }
     const totalFields = fields.length;
-    const percent = totalFields > 0 ? Math.round((filledFields / totalFields) * 100) : 0;
+    const percent =
+      totalFields > 0 ? Math.round((filledFields / totalFields) * 100) : 0;
     return { percent, missingFields, totalFields, filledFields };
   }
 
@@ -601,24 +780,76 @@ export class UsersService {
     const user = await this.repo.findOne({ where: { id: userId } });
     if (!user) return { score: 0, missing: [], isWorker: false };
 
-    const isWorker = !!(user.workerCategories && user.workerCategories.length > 0);
-    const checks: Array<{ field: string; label: string; points: number; ok: boolean }> = [
+    const isWorker = !!(
+      user.workerCategories && user.workerCategories.length > 0
+    );
+    const checks: Array<{
+      field: string;
+      label: string;
+      points: number;
+      ok: boolean;
+    }> = [
       { field: 'fullName', label: 'Ad Soyad', points: 10, ok: !!user.fullName },
-      { field: 'phoneNumber', label: 'Telefon Numarası', points: 10, ok: !!user.phoneNumber },
+      {
+        field: 'phoneNumber',
+        label: 'Telefon Numarası',
+        points: 10,
+        ok: !!user.phoneNumber,
+      },
       { field: 'email', label: 'E-posta', points: 10, ok: !!user.email },
-      { field: 'profileImageUrl', label: 'Profil Fotoğrafı', points: 10, ok: !!user.profileImageUrl },
-      { field: 'birthDate', label: 'Doğum Tarihi', points: 5, ok: !!user.birthDate },
+      {
+        field: 'profileImageUrl',
+        label: 'Profil Fotoğrafı',
+        points: 10,
+        ok: !!user.profileImageUrl,
+      },
+      {
+        field: 'birthDate',
+        label: 'Doğum Tarihi',
+        points: 5,
+        ok: !!user.birthDate,
+      },
       { field: 'city', label: 'Şehir', points: 5, ok: !!user.city },
-      { field: 'identityPhotoUrl', label: 'Kimlik Fotoğrafı', points: 10, ok: !!user.identityPhotoUrl },
-      { field: 'identityVerified', label: 'Kimlik Doğrulama', points: 10, ok: !!user.identityVerified },
+      {
+        field: 'identityPhotoUrl',
+        label: 'Kimlik Fotoğrafı',
+        points: 10,
+        ok: !!user.identityPhotoUrl,
+      },
+      {
+        field: 'identityVerified',
+        label: 'Kimlik Doğrulama',
+        points: 10,
+        ok: !!user.identityVerified,
+      },
     ];
 
     if (isWorker) {
       checks.push(
-        { field: 'workerBio', label: 'Hakkında / Bio', points: 10, ok: !!user.workerBio },
-        { field: 'hourlyRate', label: 'Saatlik Ücret Aralığı', points: 10, ok: !!(user.hourlyRateMin && user.hourlyRateMax) },
-        { field: 'serviceRadiusKm', label: 'Hizmet Yarıçapı', points: 5, ok: !!user.serviceRadiusKm },
-        { field: 'isAvailable', label: 'Aktif Çalışma Durumu', points: 5, ok: !!user.isAvailable },
+        {
+          field: 'workerBio',
+          label: 'Hakkında / Bio',
+          points: 10,
+          ok: !!user.workerBio,
+        },
+        {
+          field: 'hourlyRate',
+          label: 'Saatlik Ücret Aralığı',
+          points: 10,
+          ok: !!(user.hourlyRateMin && user.hourlyRateMax),
+        },
+        {
+          field: 'serviceRadiusKm',
+          label: 'Hizmet Yarıçapı',
+          points: 5,
+          ok: !!user.serviceRadiusKm,
+        },
+        {
+          field: 'isAvailable',
+          label: 'Aktif Çalışma Durumu',
+          points: 5,
+          ok: !!user.isAvailable,
+        },
       );
     }
 
@@ -663,7 +894,7 @@ export class UsersService {
       if (v != null && typeof v !== 'boolean') {
         throw new BadRequestException(`preferences.${k} boolean olmalı`);
       }
-      normalized[k] = v == null ? true : (v as boolean);
+      normalized[k] = v == null ? true : v;
     }
     await this.repo.update(userId, { notificationPreferences: normalized });
     return { preferences: normalized };
@@ -675,7 +906,9 @@ export class UsersService {
       where: { id: userId },
       select: ['id', 'offerTemplates'],
     });
-    return { templates: Array.isArray(user?.offerTemplates) ? user!.offerTemplates : [] };
+    return {
+      templates: Array.isArray(user?.offerTemplates) ? user.offerTemplates : [],
+    };
   }
 
   async addOfferTemplate(
@@ -691,7 +924,9 @@ export class UsersService {
       select: ['id', 'offerTemplates'],
     });
     if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
-    const current = Array.isArray(user.offerTemplates) ? user.offerTemplates : [];
+    const current = Array.isArray(user.offerTemplates)
+      ? user.offerTemplates
+      : [];
     if (current.length >= 5) {
       throw new BadRequestException('En fazla 5 şablon eklenebilir');
     }
@@ -709,12 +944,16 @@ export class UsersService {
       select: ['id', 'offerTemplates'],
     });
     if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
-    const current = Array.isArray(user.offerTemplates) ? user.offerTemplates : [];
+    const current = Array.isArray(user.offerTemplates)
+      ? user.offerTemplates
+      : [];
     if (!Number.isInteger(index) || index < 0 || index >= current.length) {
       throw new NotFoundException('Geçersiz şablon indeksi');
     }
     const next = current.filter((_, i) => i !== index);
-    await this.repo.update(userId, { offerTemplates: next.length ? next : null });
+    await this.repo.update(userId, {
+      offerTemplates: next.length ? next : null,
+    });
     return { templates: next };
   }
 
@@ -724,7 +963,11 @@ export class UsersService {
       where: { id: userId },
       select: ['id', 'customerMessageTemplates'],
     });
-    return { templates: Array.isArray(user?.customerMessageTemplates) ? user!.customerMessageTemplates : [] };
+    return {
+      templates: Array.isArray(user?.customerMessageTemplates)
+        ? user.customerMessageTemplates
+        : [],
+    };
   }
 
   async addMessageTemplate(
@@ -740,7 +983,9 @@ export class UsersService {
       select: ['id', 'customerMessageTemplates'],
     });
     if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
-    const current = Array.isArray(user.customerMessageTemplates) ? user.customerMessageTemplates : [];
+    const current = Array.isArray(user.customerMessageTemplates)
+      ? user.customerMessageTemplates
+      : [];
     if (current.length >= 5) {
       throw new BadRequestException('En fazla 5 şablon eklenebilir');
     }
@@ -758,30 +1003,42 @@ export class UsersService {
       select: ['id', 'customerMessageTemplates'],
     });
     if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
-    const current = Array.isArray(user.customerMessageTemplates) ? user.customerMessageTemplates : [];
+    const current = Array.isArray(user.customerMessageTemplates)
+      ? user.customerMessageTemplates
+      : [];
     if (!Number.isInteger(index) || index < 0 || index >= current.length) {
       throw new NotFoundException('Geçersiz şablon indeksi');
     }
     const next = current.filter((_, i) => i !== index);
-    await this.repo.update(userId, { customerMessageTemplates: next.length ? next : null });
+    await this.repo.update(userId, {
+      customerMessageTemplates: next.length ? next : null,
+    });
     return { templates: next };
   }
 
   /** Phase 54: 6 auto-computed worker badges — embedded in user responses */
   static readonly BADGE_DEFINITIONS: ReadonlyArray<{
-    key: 'verified' | 'top_rated' | 'prolific' | 'rising_star' | 'available_now' | 'complete_profile' | 'pro_member' | 'premium_member';
+    key:
+      | 'verified'
+      | 'top_rated'
+      | 'prolific'
+      | 'rising_star'
+      | 'available_now'
+      | 'complete_profile'
+      | 'pro_member'
+      | 'premium_member';
     label: string;
     icon: string;
   }> = [
-    { key: 'verified',         label: 'Doğrulanmış',     icon: '✅' },
-    { key: 'top_rated',        label: 'Üst Sıralama',    icon: '⭐' },
-    { key: 'prolific',         label: 'Deneyimli',       icon: '🏆' },
-    { key: 'rising_star',      label: 'Yükselen',        icon: '🌟' },
-    { key: 'available_now',    label: 'Şu An Müsait',    icon: '🟢' },
+    { key: 'verified', label: 'Doğrulanmış', icon: '✅' },
+    { key: 'top_rated', label: 'Üst Sıralama', icon: '⭐' },
+    { key: 'prolific', label: 'Deneyimli', icon: '🏆' },
+    { key: 'rising_star', label: 'Yükselen', icon: '🌟' },
+    { key: 'available_now', label: 'Şu An Müsait', icon: '🟢' },
     { key: 'complete_profile', label: 'Eksiksiz Profil', icon: '💯' },
     // Phase 146 — tier badges (auto-granted from subscription)
-    { key: 'pro_member',       label: 'Pro Üye',         icon: '💎' },
-    { key: 'premium_member',   label: 'Premium Üye',     icon: '👑' },
+    { key: 'pro_member', label: 'Pro Üye', icon: '💎' },
+    { key: 'premium_member', label: 'Premium Üye', icon: '👑' },
   ];
 
   /**
@@ -795,10 +1052,12 @@ export class UsersService {
   ): Promise<Array<{ key: string; label: string; icon: string }>> {
     const earned = new Set<string>();
     if (user.identityVerified === true) earned.add('verified');
-    if ((user.averageRating ?? 0) >= 4.5 && (user.totalReviews ?? 0) >= 10) earned.add('top_rated');
+    if ((user.averageRating ?? 0) >= 4.5 && (user.totalReviews ?? 0) >= 10)
+      earned.add('top_rated');
     if ((user.asWorkerSuccess ?? 0) >= 50) earned.add('prolific');
     const ws = user.asWorkerSuccess ?? 0;
-    if (ws >= 5 && ws < 20 && (user.averageRating ?? 0) >= 4.0) earned.add('rising_star');
+    if (ws >= 5 && ws < 20 && (user.averageRating ?? 0) >= 4.0)
+      earned.add('rising_star');
     if (user.isAvailable === true) earned.add('available_now');
     const completion = this.computeProfileCompletion(user);
     if (completion.percent === 100) earned.add('complete_profile');
@@ -811,11 +1070,13 @@ export class UsersService {
     if (tierKey === 'pro_monthly') earned.add('pro_member');
     else if (tierKey === 'premium_monthly') earned.add('premium_member');
 
-    return UsersService.BADGE_DEFINITIONS.filter((b) => earned.has(b.key)).map((b) => ({
-      key: b.key,
-      label: b.label,
-      icon: b.icon,
-    }));
+    return UsersService.BADGE_DEFINITIONS.filter((b) => earned.has(b.key)).map(
+      (b) => ({
+        key: b.key,
+        label: b.label,
+        icon: b.icon,
+      }),
+    );
   }
 
   // ── Phase 113 — FCM device tokens (multi-device, max 5) ─────────────

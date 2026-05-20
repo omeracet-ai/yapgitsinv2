@@ -8,10 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, IsNull, Between } from 'typeorm';
 import { ChatMessage } from './chat-message.entity';
 import { User } from '../users/user.entity';
-import {
-  TranslateService,
-  TranslateLang,
-} from '../ai/translate.service';
+import { TranslateService, TranslateLang } from '../ai/translate.service';
 
 export interface ConversationItem {
   peerId: string;
@@ -89,10 +86,7 @@ export class ChatService {
   /**
    * Phase 162: send a new message from one user to another.
    */
-  async sendMessage(
-    from: string,
-    dto: SendMessageDto,
-  ): Promise<ChatMessage> {
+  async sendMessage(from: string, dto: SendMessageDto): Promise<ChatMessage> {
     if (!from || !dto.to) {
       throw new BadRequestException('from ve to alanları gereklidir');
     }
@@ -168,10 +162,7 @@ export class ChatService {
       .getMany();
 
     // Group by peer; first occurrence is the latest message because of DESC order.
-    const peers = new Map<
-      string,
-      { last: ChatMessage; unread: number }
-    >();
+    const peers = new Map<string, { last: ChatMessage; unread: number }>();
     for (const m of rows) {
       const peerId = m.from === userId ? m.to : m.from;
       if (!peerId) continue;
@@ -286,9 +277,7 @@ export class ChatService {
   /**
    * Phase 162: get unread count per peer.
    */
-  async getUnreadCountByPeer(
-    userId: string,
-  ): Promise<Map<string, number>> {
+  async getUnreadCountByPeer(userId: string): Promise<Map<string, number>> {
     const rows = await this.messagesRepo
       .createQueryBuilder('m')
       .select('m.from', 'peerId')

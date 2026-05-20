@@ -45,7 +45,8 @@ function resolveFeePct(): number {
   const rate = process.env.PLATFORM_FEE_RATE;
   if (rate !== undefined && rate !== '') {
     const p = parseFloat(rate);
-    if (!Number.isNaN(p) && p >= 0 && p <= 1) return Math.round(p * 10000) / 100;
+    if (!Number.isNaN(p) && p >= 0 && p <= 1)
+      return Math.round(p * 10000) / 100;
   }
   const pct = parseFloat(process.env.PLATFORM_FEE_PCT ?? '10');
   return Number.isNaN(pct) || pct < 0 || pct > 100 ? 10 : pct;
@@ -65,7 +66,10 @@ export class EarningsService {
     return `${y}-${m}`;
   }
 
-  async getEarnings(userId: string, monthsRaw: number): Promise<EarningsPayload> {
+  async getEarnings(
+    userId: string,
+    monthsRaw: number,
+  ): Promise<EarningsPayload> {
     const months = Math.min(24, Math.max(1, Math.floor(monthsRaw) || 6));
 
     // Worker earnings from accepted offers on completed jobs

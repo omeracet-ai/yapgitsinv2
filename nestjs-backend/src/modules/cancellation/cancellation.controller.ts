@@ -10,10 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CancellationService } from './cancellation.service';
-import type {
-  CreatePolicyDto,
-  UpdatePolicyDto,
-} from './cancellation.service';
+import type { CreatePolicyDto, UpdatePolicyDto } from './cancellation.service';
 
 @Controller('admin/cancellation-policies')
 @UseGuards(AuthGuard('jwt'))

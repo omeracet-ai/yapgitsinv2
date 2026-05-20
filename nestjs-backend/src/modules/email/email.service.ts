@@ -91,9 +91,18 @@ export class EmailService implements OnModuleInit {
     const port = process.env.SMTP_PORT ?? '587';
     const transporterLabel = `${host}:${port}`;
     if (!this.transporter) {
-      return { ok: false, error: 'transporter not configured (SMTP_HOST missing)', transporter: transporterLabel };
+      return {
+        ok: false,
+        error: 'transporter not configured (SMTP_HOST missing)',
+        transporter: transporterLabel,
+      };
     }
-    if (!to) return { ok: false, error: 'recipient empty', transporter: transporterLabel };
+    if (!to)
+      return {
+        ok: false,
+        error: 'recipient empty',
+        transporter: transporterLabel,
+      };
     try {
       await this.transporter.sendMail({
         from: this.from,
@@ -110,7 +119,12 @@ export class EmailService implements OnModuleInit {
     }
   }
 
-  async send(to: string, subject: string, html: string, text?: string): Promise<void> {
+  async send(
+    to: string,
+    subject: string,
+    html: string,
+    text?: string,
+  ): Promise<void> {
     if (!this.transporter) return;
     if (!to) return;
     try {
@@ -122,7 +136,9 @@ export class EmailService implements OnModuleInit {
         text: text ?? htmlToText(html),
       });
     } catch (err) {
-      this.logger.error(`Email send failed to ${to}: ${(err as Error).message}`);
+      this.logger.error(
+        `Email send failed to ${to}: ${(err as Error).message}`,
+      );
     }
   }
 
@@ -139,7 +155,10 @@ export class EmailService implements OnModuleInit {
     await this.send(user.email, "Yapgitsin'e hoş geldin!", html);
   }
 
-  async sendBookingConfirmed(user: MailUser, booking: MailBooking): Promise<void> {
+  async sendBookingConfirmed(
+    user: MailUser,
+    booking: MailBooking,
+  ): Promise<void> {
     if (!user.email) return;
     const html = shell(
       'Rezervasyon onaylandı',
@@ -173,7 +192,11 @@ export class EmailService implements OnModuleInit {
     await this.send(worker.email, 'Teklifin kabul edildi — Yapgitsin', html);
   }
 
-  async sendOfferRejected(worker: MailUser, job: MailJob, _offer: MailOffer): Promise<void> {
+  async sendOfferRejected(
+    worker: MailUser,
+    job: MailJob,
+    _offer: MailOffer,
+  ): Promise<void> {
     if (!worker.email) return;
     const html = shell(
       'Teklifin reddedildi',
@@ -187,9 +210,10 @@ export class EmailService implements OnModuleInit {
   async sendPasswordReset(user: MailUser, resetToken: string): Promise<void> {
     if (!user.email) return;
     // Reset page is served by the backend; marketing domain has no route.
-    const base = process.env.PASSWORD_RESET_URL_BASE
-      ?? process.env.API_BASE_URL
-      ?? 'https://api.yapgitsin.tr';
+    const base =
+      process.env.PASSWORD_RESET_URL_BASE ??
+      process.env.API_BASE_URL ??
+      'https://api.yapgitsin.tr';
     const url = `${base}/auth/reset-password?token=${resetToken}`;
     const html = shell(
       'Şifre sıfırlama',
@@ -205,14 +229,23 @@ export class EmailService implements OnModuleInit {
   // Phase 160 — Job Lead Notifications
   async sendJobLeadNotification(
     worker: MailUser,
-    leadInfo: { id: string; category: string; city: string; description?: string; budgetMin?: number; budgetMax?: number; requesterName: string },
+    leadInfo: {
+      id: string;
+      category: string;
+      city: string;
+      description?: string;
+      budgetMin?: number;
+      budgetMax?: number;
+      requesterName: string;
+    },
   ): Promise<void> {
     if (!worker.email) return;
     const base = process.env.FRONTEND_URL ?? 'https://yapgitsin.tr';
     const url = `${base}/job-leads/${leadInfo.id}`;
-    const budget = leadInfo.budgetMin || leadInfo.budgetMax
-      ? `${leadInfo.budgetMin ?? 0} - ${leadInfo.budgetMax ?? '∞'} TL`
-      : 'Bütçe belirtilmedi';
+    const budget =
+      leadInfo.budgetMin || leadInfo.budgetMax
+        ? `${leadInfo.budgetMin ?? 0} - ${leadInfo.budgetMax ?? '∞'} TL`
+        : 'Bütçe belirtilmedi';
 
     const html = shell(
       'Yeni İş İsteği',
@@ -227,10 +260,17 @@ export class EmailService implements OnModuleInit {
        <p>Hemen yanıt ver ve işi kazan!</p>
        <p style="margin:24px 0"><a href="${url}" style="background:${BRAND};color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">İş İsteğini Gör</a></p>`,
     );
-    await this.send(worker.email, `Yeni iş isteği: ${leadInfo.category} — Yapgitsin`, html);
+    await this.send(
+      worker.email,
+      `Yeni iş isteği: ${leadInfo.category} — Yapgitsin`,
+      html,
+    );
   }
 
-  async sendLeadConfirmation(customer: MailUser, leadInfo: { category: string; city: string }): Promise<void> {
+  async sendLeadConfirmation(
+    customer: MailUser,
+    leadInfo: { category: string; city: string },
+  ): Promise<void> {
     if (!customer.email) return;
     const html = shell(
       'İş İsteğin Gönderildi',
@@ -242,6 +282,10 @@ export class EmailService implements OnModuleInit {
        </ul>
        <p>Yakında ustalardan gelen yanıtları görebileceksin.</p>`,
     );
-    await this.send(customer.email, 'İş isteklerin gönderildi — Yapgitsin', html);
+    await this.send(
+      customer.email,
+      'İş isteklerin gönderildi — Yapgitsin',
+      html,
+    );
   }
 }

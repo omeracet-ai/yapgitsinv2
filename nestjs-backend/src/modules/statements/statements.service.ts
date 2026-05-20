@@ -16,7 +16,12 @@ export interface LineItem {
 export interface MonthlyStatement {
   period: { year: number; month: number };
   asCustomer: { count: number; totalSpent: number };
-  asTasker: { count: number; totalGross: number; totalCommission: number; totalNet: number };
+  asTasker: {
+    count: number;
+    totalGross: number;
+    totalCommission: number;
+    totalNet: number;
+  };
   lineItems: LineItem[];
 }
 
@@ -27,7 +32,11 @@ export class StatementsService {
     private readonly escrowRepo: Repository<PaymentEscrow>,
   ) {}
 
-  async getMonthly(userId: string, year: number, month: number): Promise<MonthlyStatement> {
+  async getMonthly(
+    userId: string,
+    year: number,
+    month: number,
+  ): Promise<MonthlyStatement> {
     const start = new Date(year, month - 1, 1, 0, 0, 0, 0);
     const end = new Date(year, month, 1, 0, 0, 0, 0);
 
@@ -50,8 +59,14 @@ export class StatementsService {
 
     const totalSpent = customerSide.reduce((s, e) => s + (e.amount ?? 0), 0);
     const totalGross = taskerSide.reduce((s, e) => s + (e.amount ?? 0), 0);
-    const totalCommission = taskerSide.reduce((s, e) => s + (e.platformFeeAmount ?? 0), 0);
-    const totalNet = taskerSide.reduce((s, e) => s + (e.taskerNetAmount ?? 0), 0);
+    const totalCommission = taskerSide.reduce(
+      (s, e) => s + (e.platformFeeAmount ?? 0),
+      0,
+    );
+    const totalNet = taskerSide.reduce(
+      (s, e) => s + (e.taskerNetAmount ?? 0),
+      0,
+    );
 
     const lineItems: LineItem[] = [
       ...customerSide.map<LineItem>((e) => ({
@@ -87,7 +102,11 @@ export class StatementsService {
     };
   }
 
-  async getMonthlyCsv(userId: string, year: number, month: number): Promise<string> {
+  async getMonthlyCsv(
+    userId: string,
+    year: number,
+    month: number,
+  ): Promise<string> {
     const data = await this.getMonthly(userId, year, month);
     const BOM = '﻿';
     const header = 'Tarih,Rol,İş ID,Tutar (₺),Komisyon (₺),Net (₺),Durum';

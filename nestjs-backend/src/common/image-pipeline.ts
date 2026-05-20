@@ -58,7 +58,10 @@ export async function processImage(
   for (const size of sizes) {
     let pipeline = sharp(buf);
     if (opts.cover) {
-      pipeline = pipeline.resize(size, size, { fit: 'cover', position: 'center' });
+      pipeline = pipeline.resize(size, size, {
+        fit: 'cover',
+        position: 'center',
+      });
     } else {
       pipeline = pipeline.resize({ width: size, withoutEnlargement: true });
     }
@@ -69,11 +72,17 @@ export async function processImage(
     const webpName = `${baseName}-${size}.webp`;
     const avifName = `${baseName}-${size}.avif`;
 
-    await sharp(resized).jpeg({ quality: jpegQ, mozjpeg: true }).toFile(join(baseDir, jpegName));
-    await sharp(resized).webp({ quality: webpQ }).toFile(join(baseDir, webpName));
+    await sharp(resized)
+      .jpeg({ quality: jpegQ, mozjpeg: true })
+      .toFile(join(baseDir, jpegName));
+    await sharp(resized)
+      .webp({ quality: webpQ })
+      .toFile(join(baseDir, webpName));
     // AVIF encoder requires libheif — not available on all servers; skip on failure.
     try {
-      await sharp(resized).avif({ quality: avifQ, effort: 4 }).toFile(join(baseDir, avifName));
+      await sharp(resized)
+        .avif({ quality: avifQ, effort: 4 })
+        .toFile(join(baseDir, avifName));
     } catch {
       // Server doesn't support AVIF — browser falls back to WebP/JPEG automatically.
     }

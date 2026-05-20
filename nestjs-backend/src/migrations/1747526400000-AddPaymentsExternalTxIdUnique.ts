@@ -15,9 +15,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * MySQL partial index desteklemez → MySQL'de plain UNIQUE (NULL'lar MySQL'de
  * UNIQUE'i ihlal etmez, "multiple NULLs allowed").
  */
-export class AddPaymentsExternalTxIdUnique1747526400000
-  implements MigrationInterface
-{
+export class AddPaymentsExternalTxIdUnique1747526400000 implements MigrationInterface {
   name = 'AddPaymentsExternalTxIdUnique1747526400000';
 
   public async up(qr: QueryRunner): Promise<void> {
@@ -35,7 +33,6 @@ export class AddPaymentsExternalTxIdUnique1747526400000
          HAVING COUNT(*) > 1`,
       );
       if (Array.isArray(dupes) && dupes.length > 0) {
-        // eslint-disable-next-line no-console
         console.warn(
           `[Migration AddPaymentsExternalTxIdUnique] ${dupes.length} duplicate externalTransactionId rows detected — UNIQUE index oluşturulamayabilir.`,
         );

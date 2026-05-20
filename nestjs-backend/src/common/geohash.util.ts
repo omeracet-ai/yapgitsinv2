@@ -24,11 +24,7 @@ const BASE32_DECODE: Record<string, number> = {};
 for (let i = 0; i < BASE32.length; i++) BASE32_DECODE[BASE32[i]] = i;
 
 /** Encode (lat, lon) into a geohash string. */
-export function encodeGeohash(
-  lat: number,
-  lon: number,
-  precision = 6,
-): string {
+export function encodeGeohash(lat: number, lon: number, precision = 6): string {
   if (
     typeof lat !== 'number' ||
     typeof lon !== 'number' ||
@@ -162,7 +158,7 @@ export function equirectangular(
 ): number {
   const R = 6371;
   const toRad = (d: number) => (d * Math.PI) / 180;
-  const x = (toRad(lon2 - lon1)) * Math.cos(toRad((lat1 + lat2) / 2));
+  const x = toRad(lon2 - lon1) * Math.cos(toRad((lat1 + lat2) / 2));
   const y = toRad(lat2 - lat1);
   return Math.sqrt(x * x + y * y) * R;
 }
@@ -187,7 +183,12 @@ export function haversine(
 /**
  * Smart dispatcher: equirectangular for <50km (~10x faster), Haversine otherwise.
  */
-export const distKm = (lat1: number, lon1: number, lat2: number, lon2: number): number =>
+export const distKm = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number =>
   Math.abs(lat2 - lat1) + Math.abs(lon2 - lon1) < 0.5
     ? equirectangular(lat1, lon1, lat2, lon2)
     : haversine(lat1, lon1, lat2, lon2);

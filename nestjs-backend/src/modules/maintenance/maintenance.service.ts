@@ -13,21 +13,111 @@ interface JobTemplate {
 }
 
 const JOB_TEMPLATES: JobTemplate[] = [
-  { title: 'Aylık Ev Temizliği', desc: 'Standart 2+1 daire derin temizlik, mutfak+banyo dahil.', cat: 'Temizlik', minPrice: 300, maxPrice: 700 },
-  { title: 'Klima Bakım', desc: 'Salon ve yatak odası klimaları için yıllık bakım.', cat: 'Klima', minPrice: 400, maxPrice: 900 },
-  { title: 'Mobilya Montaj', desc: 'IKEA gardırop + yatak başlığı + komodin kurulumu.', cat: 'Mobilya Montaj', minPrice: 500, maxPrice: 1200 },
-  { title: 'Boya Yenileme', desc: 'Salon ve hol için iki kat boya, açık renk.', cat: 'Boya & Badana', minPrice: 800, maxPrice: 2500 },
-  { title: 'Tesisat Tamiri', desc: 'Mutfak lavabo tıkanıklığı + sızıntı kontrolü.', cat: 'Tesisat', minPrice: 200, maxPrice: 500 },
-  { title: 'Elektrik Pano', desc: 'Mutfak prizleri çalışmıyor, pano kontrol gerek.', cat: 'Elektrik', minPrice: 250, maxPrice: 600 },
-  { title: 'Ev Taşıma', desc: '2+1 daire şehir içi taşıma, 3 saatlik iş tahmini.', cat: 'Nakliyat', minPrice: 1500, maxPrice: 3000 },
-  { title: 'Bahçe Düzenleme', desc: 'Çim biçme + çit budama + sulama sistemi kontrol.', cat: 'Bahçıvanlık', minPrice: 400, maxPrice: 1000 },
-  { title: 'Mutfak Dolabı Yenileme', desc: 'Eski dolapları söküp yenilerini montaj.', cat: 'Tadilat', minPrice: 3000, maxPrice: 8000 },
-  { title: 'Cam Balkon Onarım', desc: 'Salon cam balkonun açılır kapanır mekanizması bozuk.', cat: 'Cam Balkon', minPrice: 500, maxPrice: 1500 },
-  { title: 'Halı Yıkama', desc: '4 oda halıları + makine halıları yerinde yıkama.', cat: 'Halı Yıkama', minPrice: 300, maxPrice: 700 },
-  { title: 'Marangoz İşleri', desc: 'Kapı kasası tamir + raf montaj + dolap kapağı.', cat: 'Marangoz', minPrice: 400, maxPrice: 1000 },
-  { title: 'Çatı Aktarımı', desc: 'Müstakil ev çatısı kontrol, gerekli kiremit aktarma.', cat: 'Çatı', minPrice: 1500, maxPrice: 4000 },
-  { title: 'Beyaz Eşya Servis', desc: 'Buzdolabı çalışmıyor, kompresör kontrol gerek.', cat: 'Beyaz Eşya', minPrice: 300, maxPrice: 800 },
-  { title: 'Asansör Bakım', desc: 'Apartman asansörü düzensiz çalışıyor, kontrol gerek.', cat: 'Tesisat', minPrice: 800, maxPrice: 2000 },
+  {
+    title: 'Aylık Ev Temizliği',
+    desc: 'Standart 2+1 daire derin temizlik, mutfak+banyo dahil.',
+    cat: 'Temizlik',
+    minPrice: 300,
+    maxPrice: 700,
+  },
+  {
+    title: 'Klima Bakım',
+    desc: 'Salon ve yatak odası klimaları için yıllık bakım.',
+    cat: 'Klima',
+    minPrice: 400,
+    maxPrice: 900,
+  },
+  {
+    title: 'Mobilya Montaj',
+    desc: 'IKEA gardırop + yatak başlığı + komodin kurulumu.',
+    cat: 'Mobilya Montaj',
+    minPrice: 500,
+    maxPrice: 1200,
+  },
+  {
+    title: 'Boya Yenileme',
+    desc: 'Salon ve hol için iki kat boya, açık renk.',
+    cat: 'Boya & Badana',
+    minPrice: 800,
+    maxPrice: 2500,
+  },
+  {
+    title: 'Tesisat Tamiri',
+    desc: 'Mutfak lavabo tıkanıklığı + sızıntı kontrolü.',
+    cat: 'Tesisat',
+    minPrice: 200,
+    maxPrice: 500,
+  },
+  {
+    title: 'Elektrik Pano',
+    desc: 'Mutfak prizleri çalışmıyor, pano kontrol gerek.',
+    cat: 'Elektrik',
+    minPrice: 250,
+    maxPrice: 600,
+  },
+  {
+    title: 'Ev Taşıma',
+    desc: '2+1 daire şehir içi taşıma, 3 saatlik iş tahmini.',
+    cat: 'Nakliyat',
+    minPrice: 1500,
+    maxPrice: 3000,
+  },
+  {
+    title: 'Bahçe Düzenleme',
+    desc: 'Çim biçme + çit budama + sulama sistemi kontrol.',
+    cat: 'Bahçıvanlık',
+    minPrice: 400,
+    maxPrice: 1000,
+  },
+  {
+    title: 'Mutfak Dolabı Yenileme',
+    desc: 'Eski dolapları söküp yenilerini montaj.',
+    cat: 'Tadilat',
+    minPrice: 3000,
+    maxPrice: 8000,
+  },
+  {
+    title: 'Cam Balkon Onarım',
+    desc: 'Salon cam balkonun açılır kapanır mekanizması bozuk.',
+    cat: 'Cam Balkon',
+    minPrice: 500,
+    maxPrice: 1500,
+  },
+  {
+    title: 'Halı Yıkama',
+    desc: '4 oda halıları + makine halıları yerinde yıkama.',
+    cat: 'Halı Yıkama',
+    minPrice: 300,
+    maxPrice: 700,
+  },
+  {
+    title: 'Marangoz İşleri',
+    desc: 'Kapı kasası tamir + raf montaj + dolap kapağı.',
+    cat: 'Marangoz',
+    minPrice: 400,
+    maxPrice: 1000,
+  },
+  {
+    title: 'Çatı Aktarımı',
+    desc: 'Müstakil ev çatısı kontrol, gerekli kiremit aktarma.',
+    cat: 'Çatı',
+    minPrice: 1500,
+    maxPrice: 4000,
+  },
+  {
+    title: 'Beyaz Eşya Servis',
+    desc: 'Buzdolabı çalışmıyor, kompresör kontrol gerek.',
+    cat: 'Beyaz Eşya',
+    minPrice: 300,
+    maxPrice: 800,
+  },
+  {
+    title: 'Asansör Bakım',
+    desc: 'Apartman asansörü düzensiz çalışıyor, kontrol gerek.',
+    cat: 'Tesisat',
+    minPrice: 800,
+    maxPrice: 2000,
+  },
 ];
 
 const DEMO_WORKER_CATEGORIES = [
@@ -108,111 +198,211 @@ const ALIASES: Record<string, string> = {
  */
 const DISTRICT_TO_CITY: Record<string, string> = {
   // İstanbul (39 ilçe)
-  adalar: 'istanbul', arnavutkoy: 'istanbul', atasehir: 'istanbul',
-  avcilar: 'istanbul', bagcilar: 'istanbul', bahcelievler: 'istanbul',
-  bakirkoy: 'istanbul', basaksehir: 'istanbul', bayrampasa: 'istanbul',
-  besiktas: 'istanbul', beykoz: 'istanbul', beylikduzu: 'istanbul',
-  beyoglu: 'istanbul', buyukcekmece: 'istanbul', catalca: 'istanbul',
-  cekmekoy: 'istanbul', esenler: 'istanbul', esenyurt: 'istanbul',
-  eyupsultan: 'istanbul', fatih: 'istanbul', gaziosmanpasa: 'istanbul',
-  gungoren: 'istanbul', kadikoy: 'istanbul', kagithane: 'istanbul',
-  kartal: 'istanbul', kucukcekmece: 'istanbul', maltepe: 'istanbul',
-  pendik: 'istanbul', sancaktepe: 'istanbul', sariyer: 'istanbul',
-  sile: 'istanbul', silivri: 'istanbul', sisli: 'istanbul',
-  sultanbeyli: 'istanbul', sultangazi: 'istanbul', tuzla: 'istanbul',
-  umraniye: 'istanbul', uskudar: 'istanbul', zeytinburnu: 'istanbul',
+  adalar: 'istanbul',
+  arnavutkoy: 'istanbul',
+  atasehir: 'istanbul',
+  avcilar: 'istanbul',
+  bagcilar: 'istanbul',
+  bahcelievler: 'istanbul',
+  bakirkoy: 'istanbul',
+  basaksehir: 'istanbul',
+  bayrampasa: 'istanbul',
+  besiktas: 'istanbul',
+  beykoz: 'istanbul',
+  beylikduzu: 'istanbul',
+  beyoglu: 'istanbul',
+  buyukcekmece: 'istanbul',
+  catalca: 'istanbul',
+  cekmekoy: 'istanbul',
+  esenler: 'istanbul',
+  esenyurt: 'istanbul',
+  eyupsultan: 'istanbul',
+  fatih: 'istanbul',
+  gaziosmanpasa: 'istanbul',
+  gungoren: 'istanbul',
+  kadikoy: 'istanbul',
+  kagithane: 'istanbul',
+  kartal: 'istanbul',
+  kucukcekmece: 'istanbul',
+  maltepe: 'istanbul',
+  pendik: 'istanbul',
+  sancaktepe: 'istanbul',
+  sariyer: 'istanbul',
+  sile: 'istanbul',
+  silivri: 'istanbul',
+  sisli: 'istanbul',
+  sultanbeyli: 'istanbul',
+  sultangazi: 'istanbul',
+  tuzla: 'istanbul',
+  umraniye: 'istanbul',
+  uskudar: 'istanbul',
+  zeytinburnu: 'istanbul',
 
   // Ankara
-  cankaya: 'ankara', kecioren: 'ankara', mamak: 'ankara',
-  yenimahalle: 'ankara', sincan: 'ankara', etimesgut: 'ankara',
-  altindag: 'ankara', pursaklar: 'ankara', golbasi: 'ankara',
-  polatli: 'ankara', kazan: 'ankara', beypazari: 'ankara',
+  cankaya: 'ankara',
+  kecioren: 'ankara',
+  mamak: 'ankara',
+  yenimahalle: 'ankara',
+  sincan: 'ankara',
+  etimesgut: 'ankara',
+  altindag: 'ankara',
+  pursaklar: 'ankara',
+  golbasi: 'ankara',
+  polatli: 'ankara',
+  kazan: 'ankara',
+  beypazari: 'ankara',
 
   // İzmir
-  bornova: 'izmir', karsiyaka: 'izmir', konak: 'izmir',
-  buca: 'izmir', cigli: 'izmir', gaziemir: 'izmir',
-  karabaglar: 'izmir', narlidere: 'izmir', balcova: 'izmir',
-  guzelbahce: 'izmir', urla: 'izmir', cesme: 'izmir',
-  aliaga: 'izmir', menemen: 'izmir', foca: 'izmir',
-  menderes: 'izmir', odemis: 'izmir', tire: 'izmir',
-  torbali: 'izmir', bergama: 'izmir', dikili: 'izmir',
+  bornova: 'izmir',
+  karsiyaka: 'izmir',
+  konak: 'izmir',
+  buca: 'izmir',
+  cigli: 'izmir',
+  gaziemir: 'izmir',
+  karabaglar: 'izmir',
+  narlidere: 'izmir',
+  balcova: 'izmir',
+  guzelbahce: 'izmir',
+  urla: 'izmir',
+  cesme: 'izmir',
+  aliaga: 'izmir',
+  menemen: 'izmir',
+  foca: 'izmir',
+  menderes: 'izmir',
+  odemis: 'izmir',
+  tire: 'izmir',
+  torbali: 'izmir',
+  bergama: 'izmir',
+  dikili: 'izmir',
 
   // Bursa
-  nilufer: 'bursa', osmangazi: 'bursa', yildirim: 'bursa',
-  gemlik: 'bursa', mudanya: 'bursa', inegol: 'bursa',
-  iznik: 'bursa', orhangazi: 'bursa', kestel: 'bursa',
+  nilufer: 'bursa',
+  osmangazi: 'bursa',
+  yildirim: 'bursa',
+  gemlik: 'bursa',
+  mudanya: 'bursa',
+  inegol: 'bursa',
+  iznik: 'bursa',
+  orhangazi: 'bursa',
+  kestel: 'bursa',
 
   // Antalya
-  muratpasa: 'antalya', konyaalti: 'antalya', kepez: 'antalya',
-  aksu: 'antalya', 'doseme-alti': 'antalya', dosemealti: 'antalya',
-  serik: 'antalya', manavgat: 'antalya', alanya: 'antalya',
-  kemer: 'antalya', kas: 'antalya', kumluca: 'antalya',
-  finike: 'antalya', gazipasa: 'antalya', demre: 'antalya',
+  muratpasa: 'antalya',
+  konyaalti: 'antalya',
+  kepez: 'antalya',
+  aksu: 'antalya',
+  'doseme-alti': 'antalya',
+  dosemealti: 'antalya',
+  serik: 'antalya',
+  manavgat: 'antalya',
+  alanya: 'antalya',
+  kemer: 'antalya',
+  kas: 'antalya',
+  kumluca: 'antalya',
+  finike: 'antalya',
+  gazipasa: 'antalya',
+  demre: 'antalya',
 
   // Adana
-  seyhan: 'adana', yuregir: 'adana', cukurova: 'adana',
-  saricam: 'adana', karatas: 'adana', ceyhan: 'adana',
+  seyhan: 'adana',
+  yuregir: 'adana',
+  cukurova: 'adana',
+  saricam: 'adana',
+  karatas: 'adana',
+  ceyhan: 'adana',
 
   // Konya
-  selcuklu: 'konya', meram: 'konya', karatay: 'konya',
-  beysehir: 'konya', eregli: 'konya', aksehir: 'konya',
+  selcuklu: 'konya',
+  meram: 'konya',
+  karatay: 'konya',
+  beysehir: 'konya',
+  eregli: 'konya',
+  aksehir: 'konya',
 
   // Gaziantep
-  sahinbey: 'gaziantep', sehitkamil: 'gaziantep', nizip: 'gaziantep',
+  sahinbey: 'gaziantep',
+  sehitkamil: 'gaziantep',
+  nizip: 'gaziantep',
 
   // Kocaeli
-  izmit: 'kocaeli', gebze: 'kocaeli', darica: 'kocaeli',
+  izmit: 'kocaeli',
+  gebze: 'kocaeli',
+  darica: 'kocaeli',
 
   // Mersin
-  tarsus: 'mersin', erdemli: 'mersin',
+  tarsus: 'mersin',
+  erdemli: 'mersin',
 
   // Diyarbakır
   baglar: 'diyarbakir',
 
   // Hatay
-  antakya: 'hatay', iskenderun: 'hatay',
+  antakya: 'hatay',
+  iskenderun: 'hatay',
 
   // Manisa
-  turgutlu: 'manisa', akhisar: 'manisa', salihli: 'manisa',
+  turgutlu: 'manisa',
+  akhisar: 'manisa',
+  salihli: 'manisa',
 
   // Kayseri
-  kocasinan: 'kayseri', melikgazi: 'kayseri',
+  kocasinan: 'kayseri',
+  melikgazi: 'kayseri',
 
   // Samsun
-  ilkadim: 'samsun', atakum: 'samsun', canik: 'samsun',
+  ilkadim: 'samsun',
+  atakum: 'samsun',
+  canik: 'samsun',
 
   // Balıkesir
-  altieylul: 'balikesir', karesi: 'balikesir', edremit: 'balikesir',
+  altieylul: 'balikesir',
+  karesi: 'balikesir',
+  edremit: 'balikesir',
 
   // Kahramanmaraş
-  onikisubat: 'kahramanmaras', dulkadiroglu: 'kahramanmaras',
+  onikisubat: 'kahramanmaras',
+  dulkadiroglu: 'kahramanmaras',
 
   // Aydın
-  efeler: 'aydin', kusadasi: 'aydin', nazilli: 'aydin', didim: 'aydin',
+  efeler: 'aydin',
+  kusadasi: 'aydin',
+  nazilli: 'aydin',
+  didim: 'aydin',
 
   // Tekirdağ
-  corlu: 'tekirdag', cerkezkoy: 'tekirdag', suleymanpasa: 'tekirdag',
+  corlu: 'tekirdag',
+  cerkezkoy: 'tekirdag',
+  suleymanpasa: 'tekirdag',
 
   // Sakarya
-  adapazari: 'sakarya', serdivan: 'sakarya',
+  adapazari: 'sakarya',
+  serdivan: 'sakarya',
 
   // Denizli
-  pamukkale: 'denizli', merkezefendi: 'denizli',
+  pamukkale: 'denizli',
+  merkezefendi: 'denizli',
 
   // Muğla
-  bodrum: 'mugla', marmaris: 'mugla', fethiye: 'mugla', datca: 'mugla',
+  bodrum: 'mugla',
+  marmaris: 'mugla',
+  fethiye: 'mugla',
+  datca: 'mugla',
 
   // Eskişehir
-  tepebasi: 'eskisehir', odunpazari: 'eskisehir',
+  tepebasi: 'eskisehir',
+  odunpazari: 'eskisehir',
 
   // Trabzon
-  ortahisar: 'trabzon', akcaabat: 'trabzon',
+  ortahisar: 'trabzon',
+  akcaabat: 'trabzon',
 
   // Erzurum
-  palandoken: 'erzurum', yakutiye: 'erzurum',
+  palandoken: 'erzurum',
+  yakutiye: 'erzurum',
 
   // Malatya
-  battalgazi: 'malatya', yesilyurt: 'malatya',
+  battalgazi: 'malatya',
+  yesilyurt: 'malatya',
 };
 
 /**
@@ -235,15 +425,23 @@ function normalizeCity(raw: unknown): string | null {
   const first = raw.split(/[,/|]/)[0].trim();
   if (!first) return null;
   const map: Record<string, string> = {
-    'ç': 'c', 'Ç': 'c',
-    'ğ': 'g', 'Ğ': 'g',
-    'ı': 'i', 'I': 'i', 'İ': 'i',
-    'ö': 'o', 'Ö': 'o',
-    'ş': 's', 'Ş': 's',
-    'ü': 'u', 'Ü': 'u',
+    ç: 'c',
+    Ç: 'c',
+    ğ: 'g',
+    Ğ: 'g',
+    ı: 'i',
+    I: 'i',
+    İ: 'i',
+    ö: 'o',
+    Ö: 'o',
+    ş: 's',
+    Ş: 's',
+    ü: 'u',
+    Ü: 'u',
   };
   let out = '';
-  for (const ch of first) out += map[ch] !== undefined ? map[ch] : ch.toLowerCase();
+  for (const ch of first)
+    out += map[ch] !== undefined ? map[ch] : ch.toLowerCase();
   out = out.replace(/[^a-z0-9.\-]/g, '').trim();
   if (ALIASES[out]) out = ALIASES[out];
   return out || null;
@@ -322,7 +520,10 @@ export class MaintenanceService {
       }
       const key = normalizeCity(r.city);
       if (!key) {
-        unknown.set(`<empty:${r.city}>`, (unknown.get(`<empty:${r.city}>`) || 0) + 1);
+        unknown.set(
+          `<empty:${r.city}>`,
+          (unknown.get(`<empty:${r.city}>`) || 0) + 1,
+        );
         continue;
       }
       if (PLACEHOLDER_CITY_KEYS.has(key)) {
@@ -330,9 +531,7 @@ export class MaintenanceService {
         continue;
       }
       // 2-pass lookup: city first, then ilçe→şehir fallback.
-      const cityKey = CITY_CENTROIDS[key]
-        ? key
-        : DISTRICT_TO_CITY[key];
+      const cityKey = CITY_CENTROIDS[key] ? key : DISTRICT_TO_CITY[key];
       const coords = cityKey ? CITY_CENTROIDS[cityKey] : null;
       if (!coords || !cityKey) {
         unknown.set(key, (unknown.get(key) || 0) + 1);
@@ -342,7 +541,12 @@ export class MaintenanceService {
         cityKey === key
           ? `city_centroid:${cityKey}`
           : `district_to_city:${key}->${cityKey}`;
-      toUpdate.push({ id: r.id, lat: coords[0], lng: coords[1], key: sourceKey });
+      toUpdate.push({
+        id: r.id,
+        lat: coords[0],
+        lng: coords[1],
+        key: sourceKey,
+      });
     }
 
     let updated = 0;
@@ -350,12 +554,7 @@ export class MaintenanceService {
       const extra = extraSet ? `, ${extraSet}` : '';
       const sql = `UPDATE ${table} SET latitude=?, longitude=?, location_approx=1, location_source=?${extra} WHERE id=?`;
       for (const u of toUpdate) {
-        await this.ds.query(sql, [
-          u.lat,
-          u.lng,
-          u.key,
-          u.id,
-        ]);
+        await this.ds.query(sql, [u.lat, u.lng, u.key, u.id]);
         updated++;
       }
     }
@@ -460,16 +659,17 @@ export class MaintenanceService {
       );
     }
     const queries = [
-      "CREATE INDEX IF NOT EXISTS idx_jobs_status_createdAt ON jobs(status, createdAt)",
-      "CREATE INDEX IF NOT EXISTS idx_jobs_customerId_status ON jobs(customerId, status)",
-      "CREATE INDEX IF NOT EXISTS idx_jobs_categoryId_status_createdAt ON jobs(categoryId, status, createdAt)",
-      "CREATE INDEX IF NOT EXISTS idx_jobs_featuredUntil ON jobs(featuredUntil)",
-      "CREATE INDEX IF NOT EXISTS idx_jobs_geohash ON jobs(geohash)",
-      "CREATE INDEX IF NOT EXISTS idx_users_homeGeohash ON users(homeGeohash)",
-      "CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)",
-      "CREATE INDEX IF NOT EXISTS idx_users_isAvailable ON users(isAvailable)",
+      'CREATE INDEX IF NOT EXISTS idx_jobs_status_createdAt ON jobs(status, createdAt)',
+      'CREATE INDEX IF NOT EXISTS idx_jobs_customerId_status ON jobs(customerId, status)',
+      'CREATE INDEX IF NOT EXISTS idx_jobs_categoryId_status_createdAt ON jobs(categoryId, status, createdAt)',
+      'CREATE INDEX IF NOT EXISTS idx_jobs_featuredUntil ON jobs(featuredUntil)',
+      'CREATE INDEX IF NOT EXISTS idx_jobs_geohash ON jobs(geohash)',
+      'CREATE INDEX IF NOT EXISTS idx_users_homeGeohash ON users(homeGeohash)',
+      'CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)',
+      'CREATE INDEX IF NOT EXISTS idx_users_isAvailable ON users(isAvailable)',
     ];
-    const results: Array<{ query: string; status?: string; error?: string }> = [];
+    const results: Array<{ query: string; status?: string; error?: string }> =
+      [];
     for (const q of queries) {
       try {
         await this.ds.query(q);
@@ -691,7 +891,8 @@ export class MaintenanceService {
     if (owners.length === 0) {
       return {
         mode: opts.dryRun ? 'dry-run' : 'apply',
-        error: 'No users with coordinates+city available — run backfill-coords first',
+        error:
+          'No users with coordinates+city available — run backfill-coords first',
         count_requested: count,
         candidates_owner_pool: 0,
         created: 0,
@@ -701,8 +902,14 @@ export class MaintenanceService {
     }
 
     // Check optional columns once.
-    const hasLocationApprox = await this.columnExists('jobs', 'location_approx');
-    const hasLocationSource = await this.columnExists('jobs', 'location_source');
+    const hasLocationApprox = await this.columnExists(
+      'jobs',
+      'location_approx',
+    );
+    const hasLocationSource = await this.columnExists(
+      'jobs',
+      'location_source',
+    );
 
     const created: Array<{
       id: string;
@@ -739,17 +946,46 @@ export class MaintenanceService {
           // Build column list dynamically so optional location_* columns are
           // only included if they exist on this DB.
           const cols = [
-            'id', 'title', 'description', 'location', 'latitude', 'longitude',
-            'geohash', 'category', 'status', 'budgetMin', 'budgetMax',
-            'budgetMinMinor', 'budgetMaxMinor', 'customerId',
-            'createdAt', 'updatedAt', 'photos', 'isQrVerified', 'flagged',
+            'id',
+            'title',
+            'description',
+            'location',
+            'latitude',
+            'longitude',
+            'geohash',
+            'category',
+            'status',
+            'budgetMin',
+            'budgetMax',
+            'budgetMinMinor',
+            'budgetMaxMinor',
+            'customerId',
+            'createdAt',
+            'updatedAt',
+            'photos',
+            'isQrVerified',
+            'flagged',
           ];
           const vals: unknown[] = [
-            id, template.title, template.desc, owner.city,
-            owner.latitude, owner.longitude,
-            geohash, template.cat, 'open', minPrice, maxPrice,
-            minMinor, maxMinor, owner.id,
-            now, now, '[]', 0, 0,
+            id,
+            template.title,
+            template.desc,
+            owner.city,
+            owner.latitude,
+            owner.longitude,
+            geohash,
+            template.cat,
+            'open',
+            minPrice,
+            maxPrice,
+            minMinor,
+            maxMinor,
+            owner.id,
+            now,
+            now,
+            '[]',
+            0,
+            0,
           ];
           if (hasLocationApprox) {
             cols.push('location_approx');

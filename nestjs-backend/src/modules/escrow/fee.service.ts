@@ -42,7 +42,8 @@ export class FeeService {
    * @param grossAmount amount the customer pays (TRY).
    */
   calculateFee(grossAmount: number): FeeBreakdown {
-    const gross = Number.isFinite(grossAmount) && grossAmount > 0 ? grossAmount : 0;
+    const gross =
+      Number.isFinite(grossAmount) && grossAmount > 0 ? grossAmount : 0;
     const feePct = this.getFeePct();
     const feeAmount = Math.round(((gross * feePct) / 100) * 100) / 100;
     const workerNet = Math.round((gross - feeAmount) * 100) / 100;

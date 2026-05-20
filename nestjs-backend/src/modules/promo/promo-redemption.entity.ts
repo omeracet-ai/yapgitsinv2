@@ -20,7 +20,12 @@ export class PromoRedemption {
   @Column({ type: 'varchar', length: 36 })
   userId: string;
 
-  @Column({ type: 'decimal', precision: 12, scale: 2, transformer: decimalTransformer })
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    transformer: decimalTransformer,
+  })
   appliedAmount: number;
 
   @Column({ type: 'varchar', length: 20, nullable: true })

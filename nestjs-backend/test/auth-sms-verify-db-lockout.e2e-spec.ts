@@ -64,7 +64,8 @@ describe('DB-level per-IP OTP lockout (e2e — Phase 231)', () => {
   }
 
   /** Fresh IP per test so cases don't bleed. */
-  const freshIp = () => `10.231.${(Date.now() / 1000) & 0xff}.${Math.floor(Math.random() * 250) + 1}`;
+  const freshIp = () =>
+    `10.231.${(Date.now() / 1000) & 0xff}.${Math.floor(Math.random() * 250) + 1}`;
 
   it('1. ≥15 DB-fails on one IP triggers ForbiddenException (HTTP throttle bypass scenario)', async () => {
     const ip = freshIp();

@@ -26,7 +26,8 @@ export class WithdrawalsAdminController {
     @Query('limit') limit?: string,
   ) {
     const statusFilter =
-      status && Object.values(WithdrawalStatus).includes(status as WithdrawalStatus)
+      status &&
+      Object.values(WithdrawalStatus).includes(status as WithdrawalStatus)
         ? (status as WithdrawalStatus)
         : undefined;
     return this.service.listForAdmin(

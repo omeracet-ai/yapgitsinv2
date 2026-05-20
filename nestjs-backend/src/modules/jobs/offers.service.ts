@@ -1,4 +1,10 @@
-import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Offer, OfferStatus } from './offer.entity';
@@ -46,7 +52,12 @@ export class OffersService {
     jobId: string,
     offerId: string,
     userId: string,
-  ): Promise<{ id: string; status: OfferStatus; refunded: boolean; refundAmount: number }> {
+  ): Promise<{
+    id: string;
+    status: OfferStatus;
+    refunded: boolean;
+    refundAmount: number;
+  }> {
     return this.dataSource.transaction(async (manager) => {
       const offer = await manager.findOne(Offer, { where: { id: offerId } });
       if (!offer) throw new NotFoundException(`Teklif bulunamadı: #${offerId}`);
@@ -77,10 +88,16 @@ export class OffersService {
       await manager.save(Offer, offer);
 
       // Phase 110 — Aboneler token harcamadığı için iade yok
-      const isSubscriber = await this.subscriptionsService.isActiveSubscriber(userId);
+      const isSubscriber =
+        await this.subscriptionsService.isActiveSubscriber(userId);
       const refundAmount = isSubscriber ? 0 : OFFER_TOKEN_COST;
       if (refundAmount > 0) {
-        await manager.increment(User, { id: userId }, 'tokenBalance', refundAmount);
+        await manager.increment(
+          User,
+          { id: userId },
+          'tokenBalance',
+          refundAmount,
+        );
         await manager.save(
           TokenTransaction,
           manager.create(TokenTransaction, {
@@ -153,11 +170,18 @@ export class OffersService {
     price: number;
     message?: string;
     attachmentUrls?: string[];
-    lineItems?: Array<{ label: string; qty: number; unitPrice: number; total: number }>;
+    lineItems?: Array<{
+      label: string;
+      qty: number;
+      unitPrice: number;
+      total: number;
+    }>;
   }): Promise<Offer> {
     this._assertLineItemsMatchPrice(data.lineItems, data.price);
     // Phase 110 — Pro/Premium aboneler için token kesimi yapılmaz (sınırsız teklif)
-    const isSubscriber = await this.subscriptionsService.isActiveSubscriber(data.userId);
+    const isSubscriber = await this.subscriptionsService.isActiveSubscriber(
+      data.userId,
+    );
     if (!isSubscriber) {
       await this.tokensService.spend(
         data.userId,
@@ -174,14 +198,17 @@ export class OffersService {
       priceMinor: tlToMinor(data.price) ?? 0,
       message: data.message,
       attachmentUrls: this._sanitizeAttachments(data.attachmentUrls),
-      lineItems: data.lineItems && data.lineItems.length > 0 ? data.lineItems : null,
+      lineItems:
+        data.lineItems && data.lineItems.length > 0 ? data.lineItems : null,
       status: OfferStatus.PENDING,
     });
     const saved = await this.offersRepository.save(offer);
 
     // Phase 253 — notify customer about new offer (fire-and-forget)
     try {
-      const job = await this.jobsRepository.findOne({ where: { id: data.jobId } });
+      const job = await this.jobsRepository.findOne({
+        where: { id: data.jobId },
+      });
       if (job && job.customerId && job.customerId !== data.userId) {
         await this.notificationsService.send({
           userId: job.customerId,
@@ -194,7 +221,9 @@ export class OffersService {
         });
       }
     } catch (err) {
-      this.logger.warn(`NEW_OFFER notification failed: ${(err as Error).message}`);
+      this.logger.warn(
+        `NEW_OFFER notification failed: ${(err as Error).message}`,
+      );
     }
 
     return saved;
@@ -236,7 +265,9 @@ export class OffersService {
     let escrowHeld = false;
     let jobTitle = '';
     try {
-      const job = await this.jobsRepository.findOne({ where: { id: saved.jobId } });
+      const job = await this.jobsRepository.findOne({
+        where: { id: saved.jobId },
+      });
       if (job && job.customerId) {
         jobTitle = job.title ?? '';
         await this.escrowService.hold({
@@ -283,7 +314,9 @@ export class OffersService {
         });
       }
     } catch (err) {
-      this.logger.warn(`OFFER_ACCEPTED notification failed: ${(err as Error).message}`);
+      this.logger.warn(
+        `OFFER_ACCEPTED notification failed: ${(err as Error).message}`,
+      );
     }
 
     return saved;
@@ -307,7 +340,9 @@ export class OffersService {
         relatedId: saved.jobId,
       });
     } catch (err) {
-      this.logger.warn(`OFFER_REJECTED notification failed: ${(err as Error).message}`);
+      this.logger.warn(
+        `OFFER_REJECTED notification failed: ${(err as Error).message}`,
+      );
     }
 
     return saved;
@@ -327,7 +362,12 @@ export class OffersService {
     byUserId: string,
     counterPrice: number,
     counterMessage: string,
-    lineItems?: Array<{ label: string; qty: number; unitPrice: number; total: number }>,
+    lineItems?: Array<{
+      label: string;
+      qty: number;
+      unitPrice: number;
+      total: number;
+    }>,
   ): Promise<Offer> {
     this._assertLineItemsMatchPrice(lineItems, counterPrice);
     const parent = await this._getOffer(offerId);
@@ -356,8 +396,11 @@ export class OffersService {
 
     // Notify the OTHER party — usta counter'lıyorsa müşteriye, müşteri counter'lıyorsa ustaya
     try {
-      const job = await this.jobsRepository.findOne({ where: { id: parent.jobId } });
-      const recipientId = byUserId === job?.customerId ? parent.userId : job?.customerId;
+      const job = await this.jobsRepository.findOne({
+        where: { id: parent.jobId },
+      });
+      const recipientId =
+        byUserId === job?.customerId ? parent.userId : job?.customerId;
       if (recipientId && job) {
         await this.notificationsService.send({
           userId: recipientId,
@@ -370,7 +413,9 @@ export class OffersService {
           relatedId: job.id,
         });
       }
-    } catch { /* notification opsiyonel — sessiz geç */ }
+    } catch {
+      /* notification opsiyonel — sessiz geç */
+    }
 
     return saved;
   }
@@ -385,7 +430,9 @@ export class OffersService {
     while (current) {
       chain.unshift(current); // root → leaf sırası
       if (!current.parentOfferId) break;
-      current = await this.offersRepository.findOne({ where: { id: current.parentOfferId } });
+      current = await this.offersRepository.findOne({
+        where: { id: current.parentOfferId },
+      });
     }
     return chain;
   }

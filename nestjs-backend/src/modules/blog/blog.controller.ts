@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 import { BlogService } from './blog.service';
@@ -23,7 +34,12 @@ export class BlogPublicController {
     @Query('limit') limit?: string,
     @Query('tag') tag?: string,
   ) {
-    return this.blog.findAllPublished(Number(page) || 1, Number(limit) || 20, tag, req.tenant?.id);
+    return this.blog.findAllPublished(
+      Number(page) || 1,
+      Number(limit) || 20,
+      tag,
+      req.tenant?.id,
+    );
   }
 
   @Get(':slug')
@@ -46,7 +62,11 @@ export class BlogAdminController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.blog.adminFindAll(Number(page) || 1, Number(limit) || 50, req.tenant?.id);
+    return this.blog.adminFindAll(
+      Number(page) || 1,
+      Number(limit) || 50,
+      req.tenant?.id,
+    );
   }
 
   @Get(':id')
@@ -60,12 +80,18 @@ export class BlogAdminController {
     @Req() req: RequestWithTenant & { user: AuthUser },
   ) {
     const post = await this.blog.adminCreate(dto, req.tenant?.id);
-    await this.audit.logAction(req.user.id, 'blog.create', 'blog_post', post.id, {
-      slug: post.slug,
-      title: post.title,
-      status: post.status,
-      tenantId: post.tenantId,
-    });
+    await this.audit.logAction(
+      req.user.id,
+      'blog.create',
+      'blog_post',
+      post.id,
+      {
+        slug: post.slug,
+        title: post.title,
+        status: post.status,
+        tenantId: post.tenantId,
+      },
+    );
     return post;
   }
 
@@ -76,12 +102,21 @@ export class BlogAdminController {
     @Req() req: RequestWithTenant & { user: AuthUser },
   ) {
     const post = await this.blog.adminUpdate(id, dto, req.tenant?.id);
-    await this.audit.logAction(req.user.id, 'blog.update', 'blog_post', id, dto as unknown as Record<string, unknown>);
+    await this.audit.logAction(
+      req.user.id,
+      'blog.update',
+      'blog_post',
+      id,
+      dto as unknown as Record<string, unknown>,
+    );
     return post;
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @Req() req: RequestWithTenant & { user: AuthUser }) {
+  async remove(
+    @Param('id') id: string,
+    @Req() req: RequestWithTenant & { user: AuthUser },
+  ) {
     const result = await this.blog.adminDelete(id, req.tenant?.id);
     await this.audit.logAction(req.user.id, 'blog.delete', 'blog_post', id);
     return result;

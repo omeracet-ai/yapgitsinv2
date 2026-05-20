@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, Repository } from "typeorm";
+import { Brackets, In, Repository } from 'typeorm';
 import { Provider } from './provider.entity';
 import { User } from '../users/user.entity';
 import { Job, JobStatus } from '../jobs/job.entity';
@@ -91,13 +91,17 @@ export class ProvidersService {
       .andWhere("u.workerCategories != ''");
 
     if (opts.verifiedOnly) qb.andWhere('u.identityVerified = :v', { v: true });
-    if (opts.minRating != null) qb.andWhere('u.averageRating >= :mr', { mr: opts.minRating });
+    if (opts.minRating != null)
+      qb.andWhere('u.averageRating >= :mr', { mr: opts.minRating });
     if (opts.availableOnly) qb.andWhere('u.isAvailable = :a', { a: true });
     if (opts.search) {
       qb.andWhere(
         new Brackets((b) => {
-          b.where('LOWER(u.fullName) LIKE LOWER(:s)', { s: `%${opts.search}%` })
-            .orWhere('LOWER(u.workerBio) LIKE LOWER(:s)', { s: `%${opts.search}%` });
+          b.where('LOWER(u.fullName) LIKE LOWER(:s)', {
+            s: `%${opts.search}%`,
+          }).orWhere('LOWER(u.workerBio) LIKE LOWER(:s)', {
+            s: `%${opts.search}%`,
+          });
         }),
       );
     }
@@ -119,7 +123,9 @@ export class ProvidersService {
 
     const workers = await qb.getMany();
     return Promise.all(
-      workers.map(async (u) => this.toPublicDto(await this.getOrCreateForUser(u), u)),
+      workers.map(async (u) =>
+        this.toPublicDto(await this.getOrCreateForUser(u), u),
+      ),
     );
   }
 
@@ -141,7 +147,11 @@ export class ProvidersService {
   /** Upsert: create-or-update the provider row owned by `userId`. */
   async upsertForUser(
     userId: string,
-    data: { businessName: string; bio?: string; documents?: Record<string, string> },
+    data: {
+      businessName: string;
+      bio?: string;
+      documents?: Record<string, string>;
+    },
   ) {
     const u = await this.usersRepo.findOne({ where: { id: userId } });
     if (!u) throw new NotFoundException('Kullanıcı bulunamadı');
@@ -172,10 +182,15 @@ export class ProvidersService {
 
   async updateOwned(
     providerId: string,
-    patch: { businessName?: string; bio?: string; documents?: Record<string, string> },
+    patch: {
+      businessName?: string;
+      bio?: string;
+      documents?: Record<string, string>;
+    },
   ) {
     const update: Partial<Provider> = {};
-    if (patch.businessName !== undefined) update.businessName = patch.businessName;
+    if (patch.businessName !== undefined)
+      update.businessName = patch.businessName;
     if (patch.bio !== undefined) update.bio = patch.bio;
     if (patch.documents !== undefined) update.documents = patch.documents;
     if (Object.keys(update).length > 0) {
@@ -278,7 +293,9 @@ export class ProvidersService {
    */
   async findAllPaged(
     q: AdminListQueryDto,
-  ): Promise<PaginatedResult<Awaited<ReturnType<ProvidersService['findAll']>>[number]>> {
+  ): Promise<
+    PaginatedResult<Awaited<ReturnType<ProvidersService['findAll']>>[number]>
+  > {
     const { page, limit, skip, take } = normalizePaging(q);
     const search = q.search?.trim();
     const status = q.status?.trim();
@@ -289,15 +306,19 @@ export class ProvidersService {
       .andWhere("u.workerCategories != '[]'")
       .andWhere("u.workerCategories != ''");
 
-    if (status === 'verified') qb.andWhere('u.identityVerified = :v', { v: true });
-    else if (status === 'unverified') qb.andWhere('u.identityVerified = :v', { v: false });
+    if (status === 'verified')
+      qb.andWhere('u.identityVerified = :v', { v: true });
+    else if (status === 'unverified')
+      qb.andWhere('u.identityVerified = :v', { v: false });
 
     if (search) {
       qb.andWhere(
         new Brackets((b) => {
           b.where('LOWER(u.fullName) LIKE LOWER(:s)', { s: `%${search}%` })
             .orWhere('LOWER(u.email) LIKE LOWER(:s)', { s: `%${search}%` })
-            .orWhere('LOWER(u.phoneNumber) LIKE LOWER(:s)', { s: `%${search}%` });
+            .orWhere('LOWER(u.phoneNumber) LIKE LOWER(:s)', {
+              s: `%${search}%`,
+            });
         }),
       );
     }
@@ -375,11 +396,16 @@ export class ProvidersService {
     if (!provider) throw new NotFoundException('Sağlayıcı bulunamadı');
     await this.repo.update(id, { isVerified });
     // Mirror to user.identityVerified — single source of truth for "blue tick"
-    await this.usersRepo.update(provider.userId, { identityVerified: isVerified });
+    await this.usersRepo.update(provider.userId, {
+      identityVerified: isVerified,
+    });
     return { ...provider, isVerified };
   }
 
-  async setFeaturedOrder(id: string, featuredOrder: number | null): Promise<Provider> {
+  async setFeaturedOrder(
+    id: string,
+    featuredOrder: number | null,
+  ): Promise<Provider> {
     const provider = await this.repo.findOne({ where: { id } });
     if (!provider) throw new NotFoundException('Sağlayıcı bulunamadı');
     await this.repo.update(id, { featuredOrder });

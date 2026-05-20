@@ -4,10 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import {
-  UnauthorizedException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { UnauthorizedException, ForbiddenException } from '@nestjs/common';
 
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
@@ -25,7 +22,7 @@ import { EmailValidatorService } from './email-validator.service';
 const verifyIdTokenMock = jest.fn();
 const authFnMock = jest.fn(() => ({ verifyIdToken: verifyIdTokenMock }));
 const initializeAppMock = jest.fn();
-const certMock = jest.fn(() => ({} as unknown));
+const certMock = jest.fn(() => ({}));
 
 jest.mock(
   'firebase-admin',
@@ -56,16 +53,19 @@ describe('AuthService (smoke)', () => {
 // ── Phase 227 — loginWithFirebase suite ─────────────────────────────────────
 describe('AuthService.loginWithFirebase (Phase 227)', () => {
   let service: AuthService;
-  let usersService: jest.Mocked<Pick<
-    UsersService,
-    'findByFirebaseUid' | 'findByEmail' | 'findById' | 'create' | 'update'
-  >>;
+  let usersService: jest.Mocked<
+    Pick<
+      UsersService,
+      'findByFirebaseUid' | 'findByEmail' | 'findById' | 'create' | 'update'
+    >
+  >;
   let jwtService: { sign: jest.Mock };
 
   const FAKE_SA = JSON.stringify({
     type: 'service_account',
     project_id: 'fake',
-    private_key: '-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----\n',
+    private_key:
+      '-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----\n',
     client_email: 'fake@fake.iam.gserviceaccount.com',
   });
 
@@ -88,7 +88,7 @@ describe('AuthService.loginWithFirebase (Phase 227)', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     // firebase-admin mock apps array reset
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const admin = require('firebase-admin') as { apps: unknown[] };
     admin.apps.length = 0;
 
@@ -100,7 +100,7 @@ describe('AuthService.loginWithFirebase (Phase 227)', () => {
       findById: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
-    } as unknown as jest.Mocked<typeof usersService>;
+    };
 
     jwtService = { sign: jest.fn(() => 'signed.jwt.token') };
 
@@ -118,13 +118,25 @@ describe('AuthService.loginWithFirebase (Phase 227)', () => {
         { provide: UsersService, useValue: usersService },
         { provide: JwtService, useValue: jwtService },
         { provide: TwoFactorService, useValue: { verify: jest.fn() } },
-        { provide: EmailService, useValue: { sendWelcome: jest.fn(), sendPasswordReset: jest.fn() } },
+        {
+          provide: EmailService,
+          useValue: { sendWelcome: jest.fn(), sendPasswordReset: jest.fn() },
+        },
         { provide: SmsService, useValue: { sendSms: jest.fn() } },
-        { provide: getRepositoryToken(PasswordResetToken), useValue: repoMock() },
-        { provide: getRepositoryToken(EmailVerificationToken), useValue: repoMock() },
+        {
+          provide: getRepositoryToken(PasswordResetToken),
+          useValue: repoMock(),
+        },
+        {
+          provide: getRepositoryToken(EmailVerificationToken),
+          useValue: repoMock(),
+        },
         { provide: getRepositoryToken(SmsOtp), useValue: repoMock() },
         { provide: getRepositoryToken(IpOtpLockout), useValue: repoMock() },
-        { provide: CACHE_MANAGER, useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() } },
+        {
+          provide: CACHE_MANAGER,
+          useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() },
+        },
         {
           provide: DataSource,
           useValue: {
@@ -176,10 +188,18 @@ describe('AuthService.loginWithFirebase (Phase 227)', () => {
       email: 'test@example.com',
       email_verified: true,
     });
-    const existing = baseUser({ id: 'u_2', firebaseUid: null, emailVerified: false });
+    const existing = baseUser({
+      id: 'u_2',
+      firebaseUid: null,
+      emailVerified: false,
+    });
     usersService.findByFirebaseUid.mockResolvedValue(null);
     usersService.findByEmail.mockResolvedValue(existing as never);
-    usersService.findById.mockResolvedValue({ ...existing, firebaseUid: 'fb_uid_2', emailVerified: true } as never);
+    usersService.findById.mockResolvedValue({
+      ...existing,
+      firebaseUid: 'fb_uid_2',
+      emailVerified: true,
+    } as never);
 
     const out = await service.loginWithFirebase('tok');
 
@@ -215,7 +235,10 @@ describe('AuthService.loginWithFirebase (Phase 227)', () => {
     const out = await service.loginWithFirebase('tok');
 
     expect(usersService.create).toHaveBeenCalledTimes(1);
-    const createArg = usersService.create.mock.calls[0][0] as Record<string, unknown>;
+    const createArg = usersService.create.mock.calls[0][0] as Record<
+      string,
+      unknown
+    >;
     expect(createArg.firebaseUid).toBe('fb_uid_3');
     expect(createArg.fullName).toBe('New Person');
     expect(createArg.email).toBe('new@example.com');
@@ -235,13 +258,20 @@ describe('AuthService.loginWithFirebase (Phase 227)', () => {
     const existing = baseUser({ id: 'u_4', emailVerified: false });
     usersService.findByFirebaseUid.mockResolvedValue(null);
     usersService.findByEmail.mockResolvedValue(existing as never);
-    usersService.findById.mockResolvedValue({ ...existing, firebaseUid: 'fb_uid_4', emailVerified: true } as never);
+    usersService.findById.mockResolvedValue({
+      ...existing,
+      firebaseUid: 'fb_uid_4',
+      emailVerified: true,
+    } as never);
 
     await service.loginWithFirebase('tok');
 
-    expect(usersService.update).toHaveBeenCalledWith('u_4', expect.objectContaining({
-      emailVerified: true,
-    }));
+    expect(usersService.update).toHaveBeenCalledWith(
+      'u_4',
+      expect.objectContaining({
+        emailVerified: true,
+      }),
+    );
   });
 
   // 5. Invalid token
@@ -274,7 +304,11 @@ describe('AuthService.loginWithFirebase (Phase 227)', () => {
       email_verified: true,
     });
     usersService.findByFirebaseUid.mockResolvedValue(
-      baseUser({ id: 'u_7', firebaseUid: 'fb_uid_7', suspended: true }) as never,
+      baseUser({
+        id: 'u_7',
+        firebaseUid: 'fb_uid_7',
+        suspended: true,
+      }) as never,
     );
 
     await expect(service.loginWithFirebase('tok')).rejects.toThrow(
@@ -289,7 +323,11 @@ describe('AuthService.loginWithFirebase (Phase 227)', () => {
       email_verified: true,
     });
     usersService.findByFirebaseUid.mockResolvedValue(
-      baseUser({ id: 'u_7b', firebaseUid: 'fb_uid_7b', deactivated: true }) as never,
+      baseUser({
+        id: 'u_7b',
+        firebaseUid: 'fb_uid_7b',
+        deactivated: true,
+      }) as never,
     );
 
     await expect(service.loginWithFirebase('tok')).rejects.toThrow(

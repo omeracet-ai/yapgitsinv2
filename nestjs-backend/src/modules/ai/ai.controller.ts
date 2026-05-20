@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Get, Param, UseGuards, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  Param,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
 import { AiService } from './ai.service';
@@ -125,7 +133,8 @@ export class AiController {
   /** Top 5 workers for a job (by Haiku ranking) */
   @Get('recommend/workers/:jobId')
   async recommendWorkers(@Param('jobId') jobId: string) {
-    const workers = await this.recommendationService.recommendWorkersForJob(jobId);
+    const workers =
+      await this.recommendationService.recommendWorkersForJob(jobId);
     return {
       workers: workers.map((w) => ({
         id: w.id,
@@ -144,7 +153,8 @@ export class AiController {
   /** Top 5 open jobs for a worker (by Haiku ranking) */
   @Get('recommend/jobs/:workerId')
   async recommendJobs(@Param('workerId') workerId: string) {
-    const jobs = await this.recommendationService.recommendJobsForWorker(workerId);
+    const jobs =
+      await this.recommendationService.recommendJobsForWorker(workerId);
     return {
       jobs: jobs.map((j) => ({
         id: j.id,
@@ -163,7 +173,9 @@ export class AiController {
   @Post('assistant')
   async assistant(@Body() body: { message: string; context?: string }) {
     const { message, context } = body;
-    const history = context ? [{ role: 'user' as const, content: context }] : [];
+    const history = context
+      ? [{ role: 'user' as const, content: context }]
+      : [];
     const result = await this.aiService.chat(message, history);
     return { text: result };
   }

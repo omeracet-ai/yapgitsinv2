@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { LeadRequest, LeadSource, LeadStatus } from './lead-request.entity';
@@ -20,7 +25,9 @@ export class LeadsService {
   ): Promise<{ id: string; status: LeadStatus }> {
     // Honeypot check — silent success for bots
     if (dto.website && dto.website.trim().length > 0) {
-      this.logger.warn(`[leads] honeypot triggered (ip=${meta.ipAddress ?? 'n/a'})`);
+      this.logger.warn(
+        `[leads] honeypot triggered (ip=${meta.ipAddress ?? 'n/a'})`,
+      );
       return { id: 'honeypot', status: 'spam' };
     }
     const entity = this.repo.create({
@@ -30,7 +37,7 @@ export class LeadsService {
       message: dto.message.trim(),
       category: dto.category?.trim() || null,
       targetWorkerId: dto.targetWorkerId || null,
-      source: (dto.source || 'landing') as LeadSource,
+      source: dto.source || 'landing',
       status: 'new',
       ipAddress: meta.ipAddress || null,
       userAgent: meta.userAgent || null,
@@ -46,7 +53,13 @@ export class LeadsService {
     to?: string;
     page?: number;
     limit?: number;
-  }): Promise<{ data: LeadRequest[]; total: number; page: number; limit: number; pages: number }> {
+  }): Promise<{
+    data: LeadRequest[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
     const page = Math.max(1, Math.floor(opts.page ?? 1));
     const limit = Math.max(1, Math.min(200, Math.floor(opts.limit ?? 50)));
     const qb = this.repo
@@ -55,11 +68,14 @@ export class LeadsService {
       .take(limit)
       .skip((page - 1) * limit);
 
-    if (opts.status) qb.andWhere('lead.status = :status', { status: opts.status });
-    if (opts.source) qb.andWhere('lead.source = :source', { source: opts.source });
+    if (opts.status)
+      qb.andWhere('lead.status = :status', { status: opts.status });
+    if (opts.source)
+      qb.andWhere('lead.source = :source', { source: opts.source });
     if (opts.from) {
       const d = new Date(opts.from);
-      if (!isNaN(d.getTime())) qb.andWhere('lead.createdAt >= :from', { from: d });
+      if (!isNaN(d.getTime()))
+        qb.andWhere('lead.createdAt >= :from', { from: d });
     }
     if (opts.to) {
       const d = new Date(opts.to);

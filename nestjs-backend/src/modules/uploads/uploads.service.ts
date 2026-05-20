@@ -19,7 +19,8 @@ const sharp = require('sharp');
 export class UploadsService {
   constructor(
     @InjectRepository(Job) private readonly jobsRepository: Repository<Job>,
-    @InjectRepository(Offer) private readonly offersRepository: Repository<Offer>,
+    @InjectRepository(Offer)
+    private readonly offersRepository: Repository<Offer>,
   ) {}
 
   async uploadCompletionPhotos(
@@ -102,7 +103,12 @@ export class UploadsService {
     }
 
     // MIME type'ı kontrol et
-    const validMimes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/mpeg'];
+    const validMimes = [
+      'video/mp4',
+      'video/quicktime',
+      'video/x-msvideo',
+      'video/mpeg',
+    ];
     if (!validMimes.includes(file.mimetype)) {
       throw new BadRequestException(
         'Sadece MP4, MOV, AVI, MPEG formatları desteklenir',

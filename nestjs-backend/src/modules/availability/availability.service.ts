@@ -5,12 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  Repository,
-  LessThanOrEqual,
-  MoreThanOrEqual,
-  In,
-} from 'typeorm';
+import { Repository, LessThanOrEqual, MoreThanOrEqual, In } from 'typeorm';
 import { AvailabilitySlot } from './availability-slot.entity';
 import { AvailabilityBlackout } from './availability-blackout.entity';
 

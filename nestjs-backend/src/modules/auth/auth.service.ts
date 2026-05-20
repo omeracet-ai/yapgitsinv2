@@ -4,6 +4,8 @@ import {
   UnauthorizedException,
   BadRequestException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   OnModuleInit,
   Inject,
 } from '@nestjs/common';
@@ -14,6 +16,7 @@ import { JwtService } from '@nestjs/jwt';
 import { User, UserRole } from '../users/user.entity';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import * as Sentry from '@sentry/node';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { AuthUser } from '../../common/types/auth.types';
@@ -27,6 +30,20 @@ import { IpOtpLockout } from './ip-otp-lockout.entity';
 import { SmsService } from '../sms/sms.service';
 import { MoreThan } from 'typeorm';
 import { EmailValidatorService } from './email-validator.service';
+import { AdminAuditService } from '../admin-audit/admin-audit.service';
+
+/**
+ * Phase 255b (Voldi-sec) — Account temporary lock thresholds.
+ * 5 ardışık başarısız login → 15dk hesap kilidi.
+ * Voldi-db migration ekler: User.failedLoginAttempts (int default 0)
+ *                          + User.lockedUntil (datetime nullable).
+ */
+const ACCOUNT_LOCK_THRESHOLD = 5;
+const ACCOUNT_LOCK_DURATION_MS = 15 * 60_000;
+type UserLockState = User & {
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | null;
+};
 
 /**
  * Phase 231 (Voldi-sec) — DB per-IP OTP lockout thresholds.
@@ -65,7 +82,116 @@ export class AuthService implements OnModuleInit {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly emailValidator: EmailValidatorService,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    private readonly adminAudit: AdminAuditService,
   ) {}
+
+  // ── Phase 255b — Account lock helpers (Voldi-sec) ──────────────────────
+  /**
+   * Hesap kilidi kontrolü. Kilit aktifse 423 Locked + Retry-After fırlatır.
+   * Kilit süresi geçmişse sayaç + lockedUntil sıfırlanır (rolling).
+   */
+  private async assertAccountNotLocked(user: User): Promise<void> {
+    const u = user as UserLockState;
+    const lockedUntil = u.lockedUntil ?? null;
+    if (!lockedUntil) return;
+    const lockedUntilMs =
+      lockedUntil instanceof Date
+        ? lockedUntil.getTime()
+        : new Date(lockedUntil).getTime();
+    const now = Date.now();
+    if (lockedUntilMs > now) {
+      const retryAfter = Math.max(1, Math.ceil((lockedUntilMs - now) / 1000));
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.LOCKED,
+          message:
+            'Hesap geçici olarak kilitlendi. Lütfen daha sonra tekrar deneyin.',
+          retryAfter,
+        },
+        HttpStatus.LOCKED,
+        { description: `Retry-After: ${retryAfter}` },
+      );
+    }
+    // Kilit süresi dolmuş → tek atomik reset (idempotent)
+    await this.userRepo.update(
+      user.id,
+      { failedLoginAttempts: 0, lockedUntil: null } as unknown as Partial<User>,
+    );
+    u.failedLoginAttempts = 0;
+    (u as { lockedUntil?: Date | null }).lockedUntil = null;
+  }
+
+  /**
+   * Başarısız login kaydı — atomik increment, eşiğe ulaşırsa kilit + audit.
+   * SQLite + Postgres `UPDATE ... SET failedLoginAttempts = failedLoginAttempts + 1`
+   * tek raw query (lost-update race fix).
+   */
+  private async recordFailedLogin(user: User, ip: string): Promise<void> {
+    try {
+      // Atomik increment
+      await this.userRepo
+        .createQueryBuilder()
+        .update(User)
+        .set({
+          failedLoginAttempts: () =>
+            'COALESCE("failedLoginAttempts", 0) + 1',
+        } as unknown as Partial<User>)
+        .where('id = :id', { id: user.id })
+        .execute();
+
+      const fresh = (await this.userRepo.findOne({
+        where: { id: user.id },
+      })) as UserLockState | null;
+      if (!fresh) return;
+      const attempts = fresh.failedLoginAttempts ?? 0;
+      if (
+        attempts >= ACCOUNT_LOCK_THRESHOLD &&
+        (!fresh.lockedUntil ||
+          (fresh.lockedUntil instanceof Date
+            ? fresh.lockedUntil.getTime()
+            : new Date(fresh.lockedUntil).getTime()) <= Date.now())
+      ) {
+        const lockedUntil = new Date(Date.now() + ACCOUNT_LOCK_DURATION_MS);
+        await this.userRepo.update(user.id, {
+          lockedUntil,
+        } as Partial<User>);
+
+        // Audit log — fire-and-forget; audit failures must not block auth flow.
+        void this.adminAudit
+          .logAction(user.id, 'auth.account_locked', 'user', user.id, {
+            ip,
+            attempts,
+            lockedUntil: lockedUntil.toISOString(),
+          })
+          .catch(() => undefined);
+
+        this.logger.warn(
+          `Account locked userId=${user.id} attempts=${attempts} ip=${ip}`,
+        );
+      }
+    } catch (e) {
+      // Login flow asla audit/lock yan-etkisi yüzünden patlamaz.
+      this.logger.warn(
+        `recordFailedLogin failed userId=${user.id}: ${(e as Error).message}`,
+      );
+    }
+  }
+
+  /** Başarılı login → ardışık fail sayacı + kilit alanı sıfırlanır. */
+  private async resetFailedLogin(userId: string): Promise<void> {
+    try {
+      await this.userRepo.update(
+        userId,
+        { failedLoginAttempts: 0, lockedUntil: null } as unknown as Partial<User>,
+      );
+    } catch (e) {
+      this.logger.warn(
+        `resetFailedLogin failed userId=${userId}: ${(e as Error).message}`,
+      );
+    }
+  }
 
   /** Phase P191/4 — cache key for a user's current tokenVersion (60s TTL). */
   static tokenVerCacheKey(userId: string): string {
@@ -87,7 +213,9 @@ export class AuthService implements OnModuleInit {
     if (!phoneNumber) throw new BadRequestException('Telefon numarası gerekli');
     const trimmed = phoneNumber.trim().replace(/\s|-/g, '');
     if (!/^(\+90|0)?5\d{9}$/.test(trimmed)) {
-      throw new BadRequestException('Geçersiz TR telefon numarası (5XXXXXXXXX)');
+      throw new BadRequestException(
+        'Geçersiz TR telefon numarası (5XXXXXXXXX)',
+      );
     }
     let digits = trimmed.replace(/\D/g, '');
     if (digits.startsWith('90')) digits = digits.slice(2);
@@ -118,7 +246,9 @@ export class AuthService implements OnModuleInit {
     if (recentCount > 3) {
       // Bu request rate-limit'i aştı → kendi insert'ümüzü sil ve throw.
       await this.smsOtpRepo.delete({ id: inserted.id });
-      throw new BadRequestException('Çok fazla istek. Lütfen daha sonra deneyin.');
+      throw new BadRequestException(
+        'Çok fazla istek. Lütfen daha sonra deneyin.',
+      );
     }
 
     await this.smsService.sendSms(
@@ -337,7 +467,7 @@ export class AuthService implements OnModuleInit {
         existing.isPhoneVerified = true;
       }
       const { passwordHash: _ph, ...safe } = existing;
-      const access_token = this.signAccessToken(safe as AuthUser);
+      const access_token = this.signAccessToken(safe);
       const refresh_token = this.signRefreshToken({
         id: safe.id,
         tenantId: safe.tenantId ?? null,
@@ -372,7 +502,12 @@ export class AuthService implements OnModuleInit {
     const tokenHash = this.hashToken(plain);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await this.emailVerifyRepo.save(
-      this.emailVerifyRepo.create({ userId: user.id, tokenHash, expiresAt, usedAt: null }),
+      this.emailVerifyRepo.create({
+        userId: user.id,
+        tokenHash,
+        expiresAt,
+        usedAt: null,
+      }),
     );
     const base = process.env.FRONTEND_URL ?? 'https://yapgitsin.tr';
     const verifyUrl = `${base}/verify-email?token=${plain}`;
@@ -412,8 +547,7 @@ export class AuthService implements OnModuleInit {
   async forgotPassword(email: string) {
     const generic = {
       success: true,
-      message:
-        'Eğer bu email kayıtlı ise sıfırlama bağlantısı gönderildi',
+      message: 'Eğer bu email kayıtlı ise sıfırlama bağlantısı gönderildi',
     } as { success: true; message: string; resetUrl?: string };
 
     if (!email) return generic;
@@ -424,14 +558,20 @@ export class AuthService implements OnModuleInit {
     const tokenHash = this.hashToken(plain);
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
     await this.resetRepo.save(
-      this.resetRepo.create({ userId: user.id, tokenHash, expiresAt, usedAt: null }),
+      this.resetRepo.create({
+        userId: user.id,
+        tokenHash,
+        expiresAt,
+        usedAt: null,
+      }),
     );
 
     // Reset page is served by the backend itself (Next.js marketing domain has
     // no /reset-password route), so build the URL from the API base.
-    const apiBase = process.env.PASSWORD_RESET_URL_BASE
-      ?? process.env.API_BASE_URL
-      ?? 'https://api.yapgitsin.tr';
+    const apiBase =
+      process.env.PASSWORD_RESET_URL_BASE ??
+      process.env.API_BASE_URL ??
+      'https://api.yapgitsin.tr';
     generic.resetUrl = `${apiBase}/auth/reset-password?token=${plain}`;
     // Phase 121 — fire-and-forget password reset email
     void this.emailService.sendPasswordReset(user, plain);
@@ -453,6 +593,11 @@ export class AuthService implements OnModuleInit {
 
     const passwordHash = await bcrypt.hash(newPassword, await bcrypt.genSalt());
     await this.usersService.update(record.userId, { passwordHash });
+
+    // Phase 255 — Password reset must revoke ALL outstanding sessions.
+    // Bump tokenVersion so every issued access + refresh token (across all
+    // devices) fails the JwtStrategy version check on the next request.
+    await this.bumpTokenVersion(record.userId);
 
     const now = new Date();
     record.usedAt = now;
@@ -488,9 +633,7 @@ export class AuthService implements OnModuleInit {
       const admin = require('firebase-admin') as FirebaseAdmin;
       if (!admin.apps.length) {
         admin.initializeApp({
-          credential: admin.credential.cert(
-            credentials as unknown as import('firebase-admin').ServiceAccount,
-          ),
+          credential: admin.credential.cert(credentials),
           projectId: process.env.FIREBASE_PROJECT_ID,
         });
       }
@@ -528,14 +671,18 @@ export class AuthService implements OnModuleInit {
       this.initFirebaseAdmin();
     }
     if (!this.firebaseReady || !this.firebaseAdmin) {
-      throw new UnauthorizedException('Sosyal giriş geçici olarak kullanılamıyor');
+      throw new UnauthorizedException(
+        'Sosyal giriş geçici olarak kullanılamıyor',
+      );
     }
 
     let decoded: import('firebase-admin').auth.DecodedIdToken;
     try {
       decoded = await this.firebaseAdmin.auth().verifyIdToken(idToken, true);
     } catch (err) {
-      this.logger.warn(`Firebase token verify failed: ${(err as Error).message}`);
+      this.logger.warn(
+        `Firebase token verify failed: ${(err as Error).message}`,
+      );
       throw new UnauthorizedException('Firebase token geçersiz');
     }
 
@@ -585,7 +732,7 @@ export class AuthService implements OnModuleInit {
     if (user.deactivated) throw new ForbiddenException('Hesap silindi');
 
     const { passwordHash: _ph, ...safe } = user;
-    const access_token = this.signAccessToken(safe as AuthUser);
+    const access_token = this.signAccessToken(safe);
     const refresh_token = this.signRefreshToken({
       id: safe.id,
       tenantId: safe.tenantId ?? null,
@@ -629,15 +776,21 @@ export class AuthService implements OnModuleInit {
     this.logger.log('Admin seeded');
   }
 
-  async validateUser(emailOrPhone: string, pass: string): Promise<AuthUser | null> {
+  async validateUser(
+    emailOrPhone: string,
+    pass: string,
+    sourceIp = 'unknown',
+  ): Promise<AuthUser | null> {
     const user =
       (await this.usersService.findByEmail(emailOrPhone)) ??
       (await this.usersService.findByPhone(emailOrPhone));
-    if (
-      user &&
-      user.passwordHash &&
-      (await bcrypt.compare(pass, user.passwordHash))
-    ) {
+    if (!user) return null;
+
+    // Phase 255b — hesap kilidi kontrolü ŞİFRE kontrolünden ÖNCE.
+    // (Aksi halde kilit varken doğru şifre login'i geçirir.)
+    await this.assertAccountNotLocked(user);
+
+    if (user.passwordHash && (await bcrypt.compare(pass, user.passwordHash))) {
       // Phase 47 — askıya alınmış kullanıcı login yapamaz
       if (user.suspended) {
         throw new ForbiddenException('Hesap askıda');
@@ -646,20 +799,20 @@ export class AuthService implements OnModuleInit {
       if (user.deactivated) {
         throw new ForbiddenException('Hesap silindi');
       }
+      // Phase 255b — başarılı login → fail counter reset
+      await this.resetFailedLogin(user.id);
       const { passwordHash: _hash, ...result } = user;
       return result;
     }
+    // Phase 255b — yanlış şifre → atomik increment + 5. denemede kilit + audit
+    await this.recordFailedLogin(user, sourceIp);
     return null;
   }
 
   // ── Phase P188/4 — Refresh token rotation (Voldi-sec) ────────────────────
   /** Refresh-token secret: dedicated env var, falls back to JWT_SECRET in dev. */
   private getRefreshSecret(): string {
-    return (
-      process.env.JWT_REFRESH_SECRET ||
-      process.env.JWT_SECRET ||
-      ''
-    );
+    return process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || '';
   }
 
   /** Sign a refresh token (separate secret + longer expiry + tokenVersion claim). */
@@ -679,10 +832,15 @@ export class AuthService implements OnModuleInit {
     );
   }
 
-  /** Sign an access token (existing 30d expiry, default JWT_SECRET). */
-  private signAccessToken(
-    user: AuthUser & { tokenVersion?: number },
-  ): string {
+  /**
+   * Sign an access token.
+   * Phase 255b (Voldi-sec) — access expiry tightened 30d → 7d. Refresh-token
+   * rotation flow (Phase P188/4) is live both server-side (`refresh()`) and
+   * client-side (Flutter `RefreshTokenInterceptor`), so short-lived access
+   * tokens no longer translate into weekly user-visible logouts: a 401 on a
+   * stale access token transparently triggers a refresh + retry.
+   */
+  private signAccessToken(user: AuthUser & { tokenVersion?: number }): string {
     const payload = {
       email: user.email,
       sub: user.id,
@@ -692,7 +850,7 @@ export class AuthService implements OnModuleInit {
       // Legacy tokens (no claim) default to 0 downstream.
       tokenVersion: user.tokenVersion ?? 0,
     };
-    return this.jwtService.sign(payload, { expiresIn: '365d' });
+    return this.jwtService.sign(payload, { expiresIn: '7d' });
   }
 
   /**
@@ -725,7 +883,24 @@ export class AuthService implements OnModuleInit {
     const currentVersion = user.tokenVersion ?? 0;
     const tokenVersion = payload.tv ?? 0;
     if (tokenVersion !== currentVersion) {
-      // Reused / revoked refresh token.
+      // Reused / revoked refresh token — possible token theft.
+      // Phase 255b — Sentry warn signal so SecOps can correlate replays.
+      try {
+        Sentry.captureMessage('Possible refresh token reuse', {
+          level: 'warning',
+          tags: { area: 'auth', event: 'refresh_reuse' },
+          extra: {
+            userId: user.id,
+            presentedVersion: tokenVersion,
+            currentVersion,
+          },
+        });
+      } catch {
+        /* Sentry not initialized in this env — ignore. */
+      }
+      this.logger.warn(
+        `Refresh token reuse detected for user=${user.id} (presented tv=${tokenVersion}, current=${currentVersion})`,
+      );
       throw new UnauthorizedException('Refresh token geçersiz (rotated)');
     }
 
@@ -789,7 +964,7 @@ export class AuthService implements OnModuleInit {
     if (!user) throw new UnauthorizedException('Kullanıcı bulunamadı');
     if (user.suspended) throw new ForbiddenException('Hesap askıda');
     const { passwordHash: _h, ...result } = user;
-    const access_token = this.signAccessToken(result as AuthUser);
+    const access_token = this.signAccessToken(result);
     const refresh_token = this.signRefreshToken({
       id: result.id,
       tenantId: result.tenantId ?? null,
@@ -802,18 +977,22 @@ export class AuthService implements OnModuleInit {
     };
   }
 
-  async adminLogin(username: string, password: string) {
+  async adminLogin(username: string, password: string, sourceIp = 'unknown') {
     const email = username === 'admin' ? 'admin@yapgitsin.tr' : username;
     const user = await this.usersService.findByEmail(email);
     if (!user || user.role !== UserRole.ADMIN) {
       throw new UnauthorizedException('Geçersiz admin bilgileri');
     }
+    // Phase 255b — admin için de account lock + atomik fail counter.
+    await this.assertAccountNotLocked(user);
     if (!(await bcrypt.compare(password, user.passwordHash))) {
+      await this.recordFailedLogin(user, sourceIp);
       throw new UnauthorizedException('Geçersiz admin bilgileri');
     }
     if (user.suspended) {
       throw new ForbiddenException('Hesap askıda');
     }
+    await this.resetFailedLogin(user.id);
     const payload = {
       email: user.email,
       sub: user.id,
@@ -823,7 +1002,7 @@ export class AuthService implements OnModuleInit {
       tokenVersion: user.tokenVersion ?? 0,
     };
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '365d' }),
+      access_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
       user: {
         id: user.id,
         fullName: user.fullName,
@@ -891,11 +1070,11 @@ export class AuthService implements OnModuleInit {
     const { passwordHash: _hash2, ...result } = newUser;
     // Phase 121 — fire-and-forget welcome email
     void this.emailService.sendWelcome(newUser);
-    const access_token = this.signAccessToken(result as AuthUser);
+    const access_token = this.signAccessToken(result);
     const refresh_token = this.signRefreshToken({
       id: result.id,
       tenantId: result.tenantId ?? null,
-      tokenVersion: (newUser as User).tokenVersion ?? 0,
+      tokenVersion: newUser.tokenVersion ?? 0,
     });
     return {
       access_token,

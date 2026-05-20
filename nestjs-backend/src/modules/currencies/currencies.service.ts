@@ -22,12 +22,17 @@ export class CurrenciesService implements OnModuleInit {
   async onModuleInit() {
     const count = await this.repo.count();
     if (count === 0) {
-      await this.repo.save(SEED.map((s) => this.repo.create({ ...s, isActive: true })));
+      await this.repo.save(
+        SEED.map((s) => this.repo.create({ ...s, isActive: true })),
+      );
     }
   }
 
   listActive() {
-    return this.repo.find({ where: { isActive: true }, order: { code: 'ASC' } });
+    return this.repo.find({
+      where: { isActive: true },
+      order: { code: 'ASC' },
+    });
   }
 
   async findOne(code: string): Promise<Currency | null> {
@@ -43,7 +48,11 @@ export class CurrenciesService implements OnModuleInit {
 
   // amount fromCode cinsinden → toCode cinsine çevir.
   // rateToBase: 1 TRY = rate * targetUnits (yani TRY-cinsi → target = amount * rateToBase).
-  async convert(amount: number, fromCode: string, toCode: string): Promise<number> {
+  async convert(
+    amount: number,
+    fromCode: string,
+    toCode: string,
+  ): Promise<number> {
     const from = fromCode.toUpperCase();
     const to = toCode.toUpperCase();
     if (from === to) return amount;

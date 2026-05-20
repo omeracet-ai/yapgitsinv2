@@ -1249,100 +1249,233 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _showDeleteAccountDialog(BuildContext context, WidgetRef ref) async {
+  /// Phase 255 (Voldi-fs) — 2-step account deletion confirm.
+  /// Step 1: current password.
+  /// Step 2: user must type exactly `HESAP SİL` (uppercase, exact match).
+  /// On success: backend `DELETE /users/me` (soft-delete + 30d grace), logout,
+  /// then redirect to `/account-deleted`.
+  Future<void> _showDeleteAccountDialog(
+      BuildContext context, WidgetRef ref) async {
+    const String confirmPhrase = 'HESAP SİL';
     final passwordCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    int step = 1; // 1 = password, 2 = type-to-confirm
     bool obscure = true;
     bool busy = false;
     String? errorText;
+    String capturedPassword = '';
 
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogCtx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          title: const Row(
-            children: [
-              Icon(Icons.warning_amber_rounded, color: AppColors.error),
-              SizedBox(width: 8),
-              Expanded(child: Text('Hesabı Sil')),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '⚠️ Hesabınız silinecek. Bu işlem geri alınamaz. Devam için şifrenizi girin.',
-                style: TextStyle(fontSize: 14),
+        builder: (ctx, setState) {
+          // ── Step 1: password ─────────────────────────────────────────────
+          if (step == 1) {
+            return AlertDialog(
+              shape:
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              title: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: AppColors.error),
+                  SizedBox(width: 8),
+                  Expanded(child: Text('Hesabı Sil — 1/2')),
+                ],
               ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: passwordCtrl,
-                obscureText: obscure,
-                enabled: !busy,
-                decoration: InputDecoration(
-                  labelText: 'Şifre',
-                  errorText: errorText,
-                  border: const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: Icon(obscure ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () => setState(() => obscure = !obscure),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '⚠️ Hesabınızı silmek üzeresiniz.',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.info_outline,
+                            color: AppColors.primary, size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '30 gün içinde tekrar giriş yaparak hesabınızı geri yükleyebilirsiniz.',
+                            style:
+                                TextStyle(fontSize: 12, color: AppColors.primary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: passwordCtrl,
+                    obscureText: obscure,
+                    enabled: !busy,
+                    decoration: InputDecoration(
+                      labelText: 'Mevcut şifre',
+                      errorText: errorText,
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                            obscure ? Icons.visibility : Icons.visibility_off),
+                        onPressed: () => setState(() => obscure = !obscure),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: busy ? null : () => Navigator.of(dialogCtx).pop(),
+                  child: const Text('İptal'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: busy
+                      ? null
+                      : () {
+                          final pw = passwordCtrl.text;
+                          if (pw.isEmpty) {
+                            setState(() => errorText = 'Şifrenizi girin');
+                            return;
+                          }
+                          setState(() {
+                            capturedPassword = pw;
+                            errorText = null;
+                            step = 2;
+                          });
+                        },
+                  child: const Text('Devam'),
+                ),
+              ],
+            );
+          }
+
+          // ── Step 2: type-to-confirm ──────────────────────────────────────
+          final typedOk = confirmCtrl.text == confirmPhrase;
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            title: const Row(
+              children: [
+                Icon(Icons.dangerous_outlined, color: AppColors.error),
+                SizedBox(width: 8),
+                Expanded(child: Text('Hesabı Sil — 2/2')),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Onaylamak için aşağıya tam olarak şunu yazın:',
+                  style: TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    confirmPhrase,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                      color: AppColors.error,
+                    ),
                   ),
                 ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: confirmCtrl,
+                  enabled: !busy,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  textCapitalization: TextCapitalization.characters,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    labelText: 'HESAP SİL',
+                    errorText: errorText,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '30 gün içinde hesabınızı geri yükleyebilirsiniz. Süre dolduğunda veriler kalıcı olarak silinir.',
+                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: busy
+                    ? null
+                    : () => setState(() {
+                          step = 1;
+                          errorText = null;
+                        }),
+                child: const Text('Geri'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor:
+                      AppColors.error.withValues(alpha: 0.4),
+                ),
+                onPressed: (!typedOk || busy)
+                    ? null
+                    : () async {
+                        setState(() {
+                          busy = true;
+                          errorText = null;
+                        });
+                        try {
+                          await ref
+                              .read(firebaseAuthRepositoryProvider)
+                              .deleteAccount(capturedPassword);
+                          if (!ctx.mounted) return;
+                          Navigator.of(dialogCtx).pop();
+                          await ref.read(authStateProvider.notifier).logout();
+                          if (!context.mounted) return;
+                          context.go('/account-deleted');
+                        } catch (e) {
+                          final msg =
+                              e.toString().replaceFirst('Exception: ', '');
+                          setState(() {
+                            busy = false;
+                            errorText = msg;
+                          });
+                        }
+                      },
+                child: busy
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Hesabı Sil'),
               ),
             ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: busy ? null : () => Navigator.of(dialogCtx).pop(),
-              child: const Text('İptal'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: busy
-                  ? null
-                  : () async {
-                      final pw = passwordCtrl.text;
-                      if (pw.isEmpty) {
-                        setState(() => errorText = 'Şifrenizi girin');
-                        return;
-                      }
-                      setState(() {
-                        busy = true;
-                        errorText = null;
-                      });
-                      try {
-                        await ref.read(firebaseAuthRepositoryProvider).deleteAccount(pw);
-                        if (!ctx.mounted) return;
-                        Navigator.of(dialogCtx).pop();
-                        await ref.read(authStateProvider.notifier).logout();
-                        if (!context.mounted) return;
-                        context.go('/giris-yap');
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Hesap silindi')),
-                        );
-                      } catch (e) {
-                        final msg = e.toString().replaceFirst('Exception: ', '');
-                        setState(() {
-                          busy = false;
-                          errorText = msg;
-                        });
-                      }
-                    },
-              child: busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text('Hesabı Sil'),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

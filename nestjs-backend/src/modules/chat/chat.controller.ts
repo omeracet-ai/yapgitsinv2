@@ -123,9 +123,7 @@ export class ChatController {
   ) {
     const lang = body?.targetLang;
     if (lang !== 'tr' && lang !== 'en' && lang !== 'az') {
-      throw new BadRequestException(
-        'targetLang tr|en|az olmalı',
-      );
+      throw new BadRequestException('targetLang tr|en|az olmalı');
     }
     return this.svc.translateMessage(id, req.user.id, lang);
   }

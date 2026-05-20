@@ -29,7 +29,12 @@ export class QuestionsController {
     @Body('text') text: string,
     @Body('photoUrl') photoUrl?: string,
   ) {
-    return this.questionsService.postQuestion(jobId, req.user.id, text, photoUrl);
+    return this.questionsService.postQuestion(
+      jobId,
+      req.user.id,
+      text,
+      photoUrl,
+    );
   }
 
   @UseGuards(AuthGuard('jwt'))

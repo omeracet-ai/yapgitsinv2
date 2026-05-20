@@ -6,10 +6,7 @@ import {
   Index,
 } from 'typeorm';
 import { decimalTransformer } from '../../common/transformers/decimal.transformer';
-import {
-  ConfirmationStatus,
-  ConfirmationTier,
-} from './payment-escrow.entity';
+import { ConfirmationStatus, ConfirmationTier } from './payment-escrow.entity';
 
 export enum BookingEscrowStatus {
   HELD = 'held',
@@ -42,7 +39,12 @@ export class BookingEscrow {
   @Column({ type: 'varchar', length: 36 })
   workerId: string;
 
-  @Column({ type: 'decimal', precision: 12, scale: 2, transformer: decimalTransformer })
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    transformer: decimalTransformer,
+  })
   amount: number;
 
   @Column({
@@ -61,7 +63,13 @@ export class BookingEscrow {
   @Column({ type: 'datetime', nullable: true })
   refundedAt: Date | null;
 
-  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true, transformer: decimalTransformer })
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    transformer: decimalTransformer,
+  })
   refundedAmount: number | null;
 
   // Phase 174c — Integer minor units (kuruş). Added by Voldi-db backfill.

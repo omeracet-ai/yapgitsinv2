@@ -41,9 +41,7 @@ describe('Customer wallet PDF export (e2e)', () => {
   });
 
   it('A. rejects unauthenticated requests with 401', async () => {
-    await request(app.getHttpServer())
-      .get('/users/me/wallet.pdf')
-      .expect(401);
+    await request(app.getHttpServer()).get('/users/me/wallet.pdf').expect(401);
   });
 
   it('B. returns application/pdf with valid PDF magic bytes', async () => {

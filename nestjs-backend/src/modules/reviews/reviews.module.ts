@@ -8,7 +8,11 @@ import { UsersModule } from '../users/users.module';
 import { AiModule } from '../ai/ai.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Review, ReviewHelpful]), UsersModule, AiModule],
+  imports: [
+    TypeOrmModule.forFeature([Review, ReviewHelpful]),
+    UsersModule,
+    AiModule,
+  ],
   providers: [ReviewsService],
   controllers: [ReviewsController],
   exports: [ReviewsService],

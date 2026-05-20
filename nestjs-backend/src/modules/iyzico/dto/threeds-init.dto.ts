@@ -49,11 +49,15 @@ class LuhnConstraint implements ValidatorConstraintInterface {
 
 export class ThreeDsInitDto {
   /** Gross amount in TRY (e.g. 199.90). Use string-decimal to avoid float drift. */
-  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'price must be decimal with up to 2 digits' })
+  @Matches(/^\d+(\.\d{1,2})?$/, {
+    message: 'price must be decimal with up to 2 digits',
+  })
   price!: string;
 
   /** paidPrice usually == price (no surcharge); kept separate to follow iyzipay schema. */
-  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'paidPrice must be decimal with up to 2 digits' })
+  @Matches(/^\d+(\.\d{1,2})?$/, {
+    message: 'paidPrice must be decimal with up to 2 digits',
+  })
   paidPrice!: string;
 
   @IsString()

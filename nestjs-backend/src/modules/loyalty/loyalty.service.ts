@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { User } from '../users/user.entity';
@@ -43,8 +47,14 @@ export class LoyaltyService {
     return out;
   }
 
-  computeLoyaltyTier(user: User): { tier: LoyaltyTier; totalSuccess: number; nextTier: LoyaltyTier | null; jobsToNextTier: number | null } {
-    const totalSuccess = (user.asCustomerSuccess || 0) + (user.asWorkerSuccess || 0);
+  computeLoyaltyTier(user: User): {
+    tier: LoyaltyTier;
+    totalSuccess: number;
+    nextTier: LoyaltyTier | null;
+    jobsToNextTier: number | null;
+  } {
+    const totalSuccess =
+      (user.asCustomerSuccess || 0) + (user.asWorkerSuccess || 0);
     let current: LoyaltyTier = 'Bronze';
     let nextTier: LoyaltyTier | null = null;
     let jobsToNextTier: number | null = null;
@@ -67,7 +77,9 @@ export class LoyaltyService {
     // Generate unique code (retry on collision)
     for (let attempt = 0; attempt < 8; attempt++) {
       const code = this.generateCode();
-      const exists = await this.userRepo.findOne({ where: { referralCode: code } });
+      const exists = await this.userRepo.findOne({
+        where: { referralCode: code },
+      });
       if (!exists) {
         user.referralCode = code;
         await this.userRepo.save(user);
@@ -91,24 +103,34 @@ export class LoyaltyService {
     };
   }
 
-  async redeemReferralCode(userId: string, code: string): Promise<{ success: boolean; bonusTokens: number }> {
-    if (!code || typeof code !== 'string') throw new BadRequestException('Geçersiz kod');
+  async redeemReferralCode(
+    userId: string,
+    code: string,
+  ): Promise<{ success: boolean; bonusTokens: number }> {
+    if (!code || typeof code !== 'string')
+      throw new BadRequestException('Geçersiz kod');
     const normalized = code.trim().toUpperCase();
     if (normalized.length < 4) throw new BadRequestException('Geçersiz kod');
 
     const me = await this.userRepo.findOne({ where: { id: userId } });
     if (!me) throw new NotFoundException('Kullanıcı bulunamadı');
-    if (me.referredByUserId) throw new BadRequestException('Zaten bir referans kodu kullandınız');
-    if (me.referralCode === normalized) throw new BadRequestException('Kendi kodunuzu kullanamazsınız');
+    if (me.referredByUserId)
+      throw new BadRequestException('Zaten bir referans kodu kullandınız');
+    if (me.referralCode === normalized)
+      throw new BadRequestException('Kendi kodunuzu kullanamazsınız');
 
-    const referrer = await this.userRepo.findOne({ where: { referralCode: normalized } });
+    const referrer = await this.userRepo.findOne({
+      where: { referralCode: normalized },
+    });
     if (!referrer) throw new NotFoundException('Referans kodu bulunamadı');
-    if (referrer.id === me.id) throw new BadRequestException('Kendi kodunuzu kullanamazsınız');
+    if (referrer.id === me.id)
+      throw new BadRequestException('Kendi kodunuzu kullanamazsınız');
 
     await this.dataSource.transaction(async (manager) => {
       me.referredByUserId = referrer.id;
       me.tokenBalance = (me.tokenBalance || 0) + REFERRAL_BONUS_TOKENS;
-      referrer.tokenBalance = (referrer.tokenBalance || 0) + REFERRAL_BONUS_TOKENS;
+      referrer.tokenBalance =
+        (referrer.tokenBalance || 0) + REFERRAL_BONUS_TOKENS;
       await manager.save(User, me);
       await manager.save(User, referrer);
     });
@@ -133,10 +155,16 @@ export class LoyaltyService {
 
     // Audit log
     try {
-      await this.auditService.logAction(userId, 'loyalty.referral_redeem', 'user', referrer.id, {
-        code: normalized,
-        bonusTokens: REFERRAL_BONUS_TOKENS,
-      });
+      await this.auditService.logAction(
+        userId,
+        'loyalty.referral_redeem',
+        'user',
+        referrer.id,
+        {
+          code: normalized,
+          bonusTokens: REFERRAL_BONUS_TOKENS,
+        },
+      );
     } catch {
       // ignore audit failures
     }

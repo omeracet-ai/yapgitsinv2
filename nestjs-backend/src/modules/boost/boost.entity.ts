@@ -40,7 +40,11 @@ export class Boost {
   @Column({ type: 'datetime' })
   expiresAt: Date;
 
-  @Column({ type: 'simple-enum', enum: BoostStatus, default: BoostStatus.ACTIVE })
+  @Column({
+    type: 'simple-enum',
+    enum: BoostStatus,
+    default: BoostStatus.ACTIVE,
+  })
   status: BoostStatus;
 
   @CreateDateColumn()

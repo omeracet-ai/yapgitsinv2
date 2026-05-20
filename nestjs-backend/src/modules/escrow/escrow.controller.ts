@@ -47,10 +47,7 @@ class ReleaseDto {
 }
 
 class AdminResolveDto {
-  @IsIn(['release', 'refund', 'split']) action!:
-    | 'release'
-    | 'refund'
-    | 'split';
+  @IsIn(['release', 'refund', 'split']) action!: 'release' | 'refund' | 'split';
   @IsOptional() @IsNumber() @Min(0) @Max(1) splitRatio?: number;
   @IsOptional() @IsString() @MaxLength(2000) reason?: string;
   @IsOptional() @IsString() @MaxLength(2000) adminNote?: string;
@@ -136,10 +133,7 @@ export class EscrowController {
   }
 
   @Get(':id')
-  async getById(
-    @Param('id') id: string,
-    @Request() req: AuthenticatedRequest,
-  ) {
+  async getById(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     const escrow = await this.svc.getById(id, req.user.id, req.user.role);
     return this.svc.withFeeBreakdown(escrow);
   }

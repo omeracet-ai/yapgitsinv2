@@ -1,4 +1,18 @@
-import { Controller, Get, Patch, Post, Delete, Body, Param, Query, UseGuards, UseInterceptors, Req, Res, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  Req,
+  Res,
+  NotFoundException,
+} from '@nestjs/common';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { EmailService } from '../email/email.service';
 import { EmailTestDto } from './dto/email-test.dto';
@@ -26,7 +40,11 @@ import { SuspendUserDto } from './dto/suspend-user.dto';
 import { PurgeAuditLogDto } from './dto/purge-audit-log.dto';
 import { AdminNoteDto } from './dto/admin-note.dto';
 import { DataDeletionActionDto } from './dto/data-deletion-action.dto';
-import { VerifyFlagDto, IdentityVerifiedDto, IsVerifiedDto } from './dto/verify-flag.dto';
+import {
+  VerifyFlagDto,
+  IdentityVerifiedDto,
+  IsVerifiedDto,
+} from './dto/verify-flag.dto';
 import { SettingValueDto } from './dto/setting-value.dto';
 import { FeaturedOrderDto } from './dto/featured-order.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -43,7 +61,15 @@ import { DataDeletionRequestStatus } from '../users/data-deletion-request.entity
 import type { Request } from 'express';
 import type { AuthUser } from '../../common/types/auth.types';
 
-@SkipThrottle({ short: true, medium: true, long: true, default: true, 'auth-login': true, 'auth-register': true, uploads: true })
+@SkipThrottle({
+  short: true,
+  medium: true,
+  long: true,
+  default: true,
+  'auth-login': true,
+  'auth-register': true,
+  uploads: true,
+})
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
 @UseInterceptors(AuditInterceptor)
@@ -76,9 +102,18 @@ export class AdminController {
        <p>Transporter: <code>${transporterLabel}</code></p>
        <p style="color:#6b7280">Bu mesaj bir tanılama gönderimidir — başka anlamı yoktur.</p>`;
     const text = `Yapgitsin SMTP diagnostic\nTimestamp: ${stamp}\nTransporter: ${transporterLabel}\nBu bir tanılama gönderimidir.`;
-    const result = await this.emailService.sendRaw(body.to, 'Yapgitsin SMTP test', html, text);
+    const result = await this.emailService.sendRaw(
+      body.to,
+      'Yapgitsin SMTP test',
+      html,
+      text,
+    );
     if (result.ok) return { sent: true, transporter: result.transporter };
-    return { sent: false, reason: result.error, transporter: result.transporter };
+    return {
+      sent: false,
+      reason: result.error,
+      transporter: result.transporter,
+    };
   }
 
   // ── Phase 159: Worker certifications verify queue ─────────────────
@@ -94,7 +129,12 @@ export class AdminController {
     @Body() body: AdminNoteDto,
     @Req() req: Request & { user: AuthUser },
   ) {
-    return this.certificationSvc.setVerified(id, true, req.user.id, body.adminNote);
+    return this.certificationSvc.setVerified(
+      id,
+      true,
+      req.user.id,
+      body.adminNote,
+    );
   }
 
   @Audit('certification.reject')
@@ -104,16 +144,22 @@ export class AdminController {
     @Body() body: AdminNoteDto,
     @Req() req: Request & { user: AuthUser },
   ) {
-    return this.certificationSvc.setVerified(id, false, req.user.id, body.adminNote);
+    return this.certificationSvc.setVerified(
+      id,
+      false,
+      req.user.id,
+      body.adminNote,
+    );
   }
 
   // ── Phase 124: KVKK data deletion request moderation ─────────────
   @Get('data-deletion-requests')
   async listDataDeletionRequests(@Query('status') status?: string) {
     const validStatuses = Object.values(DataDeletionRequestStatus) as string[];
-    const filter = status && validStatuses.includes(status)
-      ? (status as DataDeletionRequestStatus)
-      : undefined;
+    const filter =
+      status && validStatuses.includes(status)
+        ? (status as DataDeletionRequestStatus)
+        : undefined;
     return this.dataPrivacy.listDeletionRequests(filter);
   }
 
@@ -165,7 +211,11 @@ export class AdminController {
     @Body() body: VerifyFlagDto,
     @Req() req: Request & { user: AuthUser },
   ) {
-    const result = await this.insuranceSvc.setVerified(id, !!body.verified, req.user.id);
+    const result = await this.insuranceSvc.setVerified(
+      id,
+      !!body.verified,
+      req.user.id,
+    );
     await this.adminAuditService.logAction(
       req.user.id,
       'user.insurance.verify',
@@ -262,7 +312,10 @@ export class AdminController {
     });
     const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
     res.set('Content-Type', 'text/csv; charset=utf-8');
-    res.set('Content-Disposition', `attachment; filename="audit-log-${stamp}.csv"`);
+    res.set(
+      'Content-Disposition',
+      `attachment; filename="audit-log-${stamp}.csv"`,
+    );
     res.send(csv);
   }
 
@@ -285,7 +338,10 @@ export class AdminController {
     @Body() body: PurgeAuditLogDto,
     @Req() req: Request & { user: AuthUser },
   ) {
-    return this.adminAuditService.purgeOlderThan(body.olderThanDays, req.user.id);
+    return this.adminAuditService.purgeOlderThan(
+      body.olderThanDays,
+      req.user.id,
+    );
   }
 
   // Phase 182 — single audit-log entry lookup. Declared AFTER static
@@ -318,7 +374,9 @@ export class AdminController {
       query.search !== undefined ||
       query.status !== undefined;
     if (!hasPaging) {
-      return this.adminService.getRecentJobs(query.limit ? Number(query.limit) : 20);
+      return this.adminService.getRecentJobs(
+        query.limit ? Number(query.limit) : 20,
+      );
     }
     return this.adminService.getJobsPaged(query);
   }
@@ -333,7 +391,13 @@ export class AdminController {
       id,
       body.featuredOrder ?? null,
     );
-    await this.adminAuditService.logAction(req.user.id, 'job.featured', 'job', id, body as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'job.featured',
+      'job',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
     return result;
   }
 
@@ -392,8 +456,17 @@ export class AdminController {
     @Body() body: IdentityVerifiedDto,
     @Req() req: Request & { user: AuthUser },
   ) {
-    const result = await this.adminService.verifyUser(id, body.identityVerified);
-    await this.adminAuditService.logAction(req.user.id, 'user.verify', 'user', id, body as unknown as Record<string, unknown>);
+    const result = await this.adminService.verifyUser(
+      id,
+      body.identityVerified,
+    );
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'user.verify',
+      'user',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
     return result;
   }
 
@@ -412,7 +485,13 @@ export class AdminController {
       id,
       body.featuredOrder ?? null,
     );
-    await this.adminAuditService.logAction(req.user.id, 'service_request.featured', 'service_request', id, body as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'service_request.featured',
+      'service_request',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
     return result;
   }
 
@@ -429,7 +508,13 @@ export class AdminController {
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.categoriesService.update(id, body);
-    await this.adminAuditService.logAction(req.user.id, 'category.update', 'category', id, body as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'category.update',
+      'category',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
     return result;
   }
 
@@ -455,7 +540,13 @@ export class AdminController {
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.providersService.setVerified(id, body.isVerified);
-    await this.adminAuditService.logAction(req.user.id, 'provider.verify', 'provider', id, body as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'provider.verify',
+      'provider',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
     return result;
   }
 
@@ -465,8 +556,17 @@ export class AdminController {
     @Body() body: FeaturedOrderDto,
     @Req() req: Request & { user: AuthUser },
   ) {
-    const result = await this.providersService.setFeaturedOrder(id, body.featuredOrder ?? null);
-    await this.adminAuditService.logAction(req.user.id, 'provider.featured', 'provider', id, body as unknown as Record<string, unknown>);
+    const result = await this.providersService.setFeaturedOrder(
+      id,
+      body.featuredOrder ?? null,
+    );
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'provider.featured',
+      'provider',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
     return result;
   }
 
@@ -478,26 +578,26 @@ export class AdminController {
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.setUserBadges(id, body.badges);
-    await this.adminAuditService.logAction(req.user.id, 'user.badges', 'user', id, body as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'user.badges',
+      'user',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
     return result;
   }
 
   // ── Phase 137 — Manual badge grant/revoke ───────────────────────────
   @Audit('user.badge.grant')
   @Post('users/:id/badges/grant')
-  async grantManualBadge(
-    @Param('id') id: string,
-    @Body() body: BadgeKeyDto,
-  ) {
+  async grantManualBadge(@Param('id') id: string, @Body() body: BadgeKeyDto) {
     return this.adminService.grantManualBadge(id, body.badgeKey);
   }
 
   @Audit('user.badge.revoke')
   @Post('users/:id/badges/revoke')
-  async revokeManualBadge(
-    @Param('id') id: string,
-    @Body() body: BadgeKeyDto,
-  ) {
+  async revokeManualBadge(@Param('id') id: string, @Body() body: BadgeKeyDto) {
     return this.adminService.revokeManualBadge(id, body.badgeKey);
   }
 
@@ -509,7 +609,13 @@ export class AdminController {
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.setUserSkills(id, body.skills);
-    await this.adminAuditService.logAction(req.user.id, 'user.skills', 'user', id, body as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'user.skills',
+      'user',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
     return result;
   }
 
@@ -526,7 +632,13 @@ export class AdminController {
   ) {
     const result = await this.adminService.createPromoCode(dto);
     const created = result as unknown as { id?: string };
-    await this.adminAuditService.logAction(req.user.id, 'promo.create', 'promo_code', created?.id ?? '', dto as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'promo.create',
+      'promo_code',
+      created?.id ?? '',
+      dto as unknown as Record<string, unknown>,
+    );
     return result;
   }
 
@@ -537,7 +649,13 @@ export class AdminController {
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.updatePromoCode(id, dto);
-    await this.adminAuditService.logAction(req.user.id, 'promo.update', 'promo_code', id, dto as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'promo.update',
+      'promo_code',
+      id,
+      dto,
+    );
     return result;
   }
 
@@ -547,7 +665,12 @@ export class AdminController {
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.deletePromoCode(id);
-    await this.adminAuditService.logAction(req.user.id, 'promo.delete', 'promo_code', id);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'promo.delete',
+      'promo_code',
+      id,
+    );
     return result;
   }
 
@@ -595,7 +718,12 @@ export class AdminController {
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.clearFlaggedChat(id);
-    await this.adminAuditService.logAction(req.user.id, 'moderation.chat.delete', 'chat_message', id);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'moderation.chat.delete',
+      'chat_message',
+      id,
+    );
     return result;
   }
 
@@ -605,7 +733,12 @@ export class AdminController {
     @Req() req: Request & { user: AuthUser },
   ) {
     const result = await this.adminService.clearFlaggedQuestion(id);
-    await this.adminAuditService.logAction(req.user.id, 'moderation.question.delete', 'job_question', id);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'moderation.question.delete',
+      'job_question',
+      id,
+    );
     return result;
   }
 
@@ -677,7 +810,13 @@ export class AdminController {
       body.status,
       body.adminNote,
     );
-    await this.adminAuditService.logAction(req.user.id, 'report.update', 'report', id, body as unknown as Record<string, unknown>);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'report.update',
+      'report',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
     return result;
   }
 
@@ -694,8 +833,18 @@ export class AdminController {
     @Body() body: GeoLocationDto,
     @Req() req: Request & { user: AuthUser },
   ) {
-    const result = await this.adminService.setJobLocation(id, body.latitude, body.longitude);
-    await this.adminAuditService.logAction(req.user.id, 'job.location.update', 'job', id, body as unknown as Record<string, unknown>);
+    const result = await this.adminService.setJobLocation(
+      id,
+      body.latitude,
+      body.longitude,
+    );
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'job.location.update',
+      'job',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
     return result;
   }
 
@@ -705,8 +854,18 @@ export class AdminController {
     @Body() body: GeoLocationDto,
     @Req() req: Request & { user: AuthUser },
   ) {
-    const result = await this.adminService.setUserLocation(id, body.latitude, body.longitude);
-    await this.adminAuditService.logAction(req.user.id, 'user.location.update', 'user', id, body as unknown as Record<string, unknown>);
+    const result = await this.adminService.setUserLocation(
+      id,
+      body.latitude,
+      body.longitude,
+    );
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'user.location.update',
+      'user',
+      id,
+      body as unknown as Record<string, unknown>,
+    );
     return result;
   }
 }

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import {
@@ -72,15 +76,17 @@ export class PromoService {
   ) {}
 
   /** Phase 153: Public — aktif promolar, kod metni hariç */
-  async listPublic(): Promise<Array<{
-    id: string;
-    title: string | null;
-    description: string | null;
-    discountType: PromoDiscountType;
-    discountValue: number;
-    validUntil: Date | null;
-    minPurchase: number | null;
-  }>> {
+  async listPublic(): Promise<
+    Array<{
+      id: string;
+      title: string | null;
+      description: string | null;
+      discountType: PromoDiscountType;
+      discountValue: number;
+      validUntil: Date | null;
+      minPurchase: number | null;
+    }>
+  > {
     const now = new Date();
     const rows = await this.promoRepo
       .createQueryBuilder('p')
@@ -231,8 +237,10 @@ export class PromoService {
     const promo = await this.findOne(id);
     if (dto.code !== undefined) promo.code = dto.code.trim().toUpperCase();
     if (dto.discountType !== undefined) promo.discountType = dto.discountType;
-    if (dto.discountValue !== undefined) promo.discountValue = dto.discountValue;
-    if (dto.maxRedemptions !== undefined) promo.maxRedemptions = dto.maxRedemptions;
+    if (dto.discountValue !== undefined)
+      promo.discountValue = dto.discountValue;
+    if (dto.maxRedemptions !== undefined)
+      promo.maxRedemptions = dto.maxRedemptions;
     if (dto.minSpend !== undefined) promo.minSpend = dto.minSpend;
     if (dto.validFrom !== undefined)
       promo.validFrom = dto.validFrom ? new Date(dto.validFrom) : null;
@@ -251,7 +259,10 @@ export class PromoService {
   }
 
   // ── Phase 126 ────────────────────────────────────────────────
-  async redeemByCode(code: string, userId: string): Promise<RedeemEffectResult> {
+  async redeemByCode(
+    code: string,
+    userId: string,
+  ): Promise<RedeemEffectResult> {
     return this.dataSource.transaction(async (manager) => {
       const promoRepo = manager.getRepository(PromoCode);
       const redemptionRepo = manager.getRepository(PromoRedemption);
@@ -336,7 +347,16 @@ export class PromoService {
     });
   }
 
-  async adminList(page = 1, limit = 50): Promise<{ data: PromoCode[]; total: number; page: number; limit: number; pages: number }> {
+  async adminList(
+    page = 1,
+    limit = 50,
+  ): Promise<{
+    data: PromoCode[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
     const p = Math.max(1, Math.floor(page));
     const l = Math.max(1, Math.min(100, Math.floor(limit)));
     const [data, total] = await this.promoRepo.findAndCount({
@@ -344,13 +364,20 @@ export class PromoService {
       take: l,
       skip: (p - 1) * l,
     });
-    return { data, total, page: p, limit: l, pages: Math.max(1, Math.ceil(total / l)) };
+    return {
+      data,
+      total,
+      page: p,
+      limit: l,
+      pages: Math.max(1, Math.ceil(total / l)),
+    };
   }
 
   async adminCreate(dto: AdminCreatePromoDto): Promise<PromoCode> {
     if (!dto.code) throw new BadRequestException('code zorunlu');
     if (!dto.type) throw new BadRequestException('type zorunlu');
-    if (typeof dto.value !== 'number') throw new BadRequestException('value zorunlu');
+    if (typeof dto.value !== 'number')
+      throw new BadRequestException('value zorunlu');
     const entity = this.promoRepo.create({
       code: dto.code.trim().toUpperCase(),
       effectType: dto.type,
@@ -361,7 +388,8 @@ export class PromoService {
       description: dto.description ?? null,
       // legacy required fields
       discountType: PromoDiscountType.PERCENT,
-      discountValue: dto.type === PromoEffectType.DISCOUNT_PERCENT ? dto.value : 0,
+      discountValue:
+        dto.type === PromoEffectType.DISCOUNT_PERCENT ? dto.value : 0,
       appliesTo: PromoAppliesTo.ALL,
       isActive: true,
       redeemedCount: 0,

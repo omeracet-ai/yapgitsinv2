@@ -105,7 +105,9 @@ export class NotificationsService {
   }
 
   /** Phase 253 — derive in-app sound tag for client playback */
-  static soundTagFor(type: NotificationType): 'offer' | 'accept' | 'release' | 'alert' {
+  static soundTagFor(
+    type: NotificationType,
+  ): 'offer' | 'accept' | 'release' | 'alert' {
     switch (type) {
       case NotificationType.NEW_OFFER:
       case NotificationType.COUNTER_OFFER:
@@ -122,7 +124,9 @@ export class NotificationsService {
   }
 
   /** Phase 71 — derive deep-link target type from notification type */
-  static relatedTypeFor(type: NotificationType): 'booking' | 'job' | 'user' | null {
+  static relatedTypeFor(
+    type: NotificationType,
+  ): 'booking' | 'job' | 'user' | null {
     switch (type) {
       case NotificationType.BOOKING_REQUEST:
       case NotificationType.BOOKING_CONFIRMED:
@@ -168,7 +172,7 @@ export class NotificationsService {
         ? data.relatedType
         : NotificationsService.relatedTypeFor(data.type);
     const relatedId =
-      data.relatedId !== undefined ? data.relatedId : data.refId ?? null;
+      data.relatedId !== undefined ? data.relatedId : (data.refId ?? null);
     const n = this.repo.create({
       userId: data.userId,
       type: data.type,
@@ -181,7 +185,12 @@ export class NotificationsService {
     });
     const saved = await this.repo.save(n);
     // Phase 121 — fire-and-forget transactional email (selected types)
-    void this.sendEmailForNotification(data.userId, data.type, data.title, data.body);
+    void this.sendEmailForNotification(
+      data.userId,
+      data.type,
+      data.title,
+      data.body,
+    );
     // Phase 113 — fire-and-forget FCM push (does not block API response)
     const soundTag = NotificationsService.soundTagFor(data.type);
     void this.fcm.sendToUser(data.userId, data.title, data.body, {

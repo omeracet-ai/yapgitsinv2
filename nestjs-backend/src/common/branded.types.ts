@@ -4,7 +4,10 @@ export type UserId = Brand<string, 'UserId'>;
 export type JobId = Brand<string, 'JobId'>;
 export type OfferId = Brand<string, 'OfferId'>;
 export type ServiceRequestId = Brand<string, 'ServiceRequestId'>;
-export type ServiceRequestApplicationId = Brand<string, 'ServiceRequestApplicationId'>;
+export type ServiceRequestApplicationId = Brand<
+  string,
+  'ServiceRequestApplicationId'
+>;
 export type BookingId = Brand<string, 'BookingId'>;
 export type ReviewId = Brand<string, 'ReviewId'>;
 export type CategoryId = Brand<string, 'CategoryId'>;
@@ -20,7 +23,8 @@ export const asUserId = (s: string) => s as UserId;
 export const asJobId = (s: string) => s as JobId;
 export const asOfferId = (s: string) => s as OfferId;
 export const asServiceRequestId = (s: string) => s as ServiceRequestId;
-export const asServiceRequestApplicationId = (s: string) => s as ServiceRequestApplicationId;
+export const asServiceRequestApplicationId = (s: string) =>
+  s as ServiceRequestApplicationId;
 export const asBookingId = (s: string) => s as BookingId;
 export const asReviewId = (s: string) => s as ReviewId;
 export const asCategoryId = (s: string) => s as CategoryId;

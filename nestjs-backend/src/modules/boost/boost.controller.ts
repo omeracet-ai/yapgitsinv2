@@ -44,6 +44,6 @@ export class BoostController {
     ) {
       throw new BadRequestException('Geçersiz boost tipi');
     }
-    return this.svc.purchase(req.user.id, t as BoostType);
+    return this.svc.purchase(req.user.id, t);
   }
 }

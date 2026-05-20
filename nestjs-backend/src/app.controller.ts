@@ -38,6 +38,11 @@ export class AppController {
         .andWhere("u.workerCategories != ''")
         .getCount(),
     ]);
-    return { totalUsers, totalJobs, totalWorkers, ts: new Date().toISOString() };
+    return {
+      totalUsers,
+      totalJobs,
+      totalWorkers,
+      ts: new Date().toISOString(),
+    };
   }
 }

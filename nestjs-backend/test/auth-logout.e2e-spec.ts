@@ -70,7 +70,12 @@ describe('Auth logout (e2e)', () => {
 
     const reg = await http()
       .post('/auth/register')
-      .send({ email, phoneNumber: phone, password, fullName: 'Logout Tester 2' })
+      .send({
+        email,
+        phoneNumber: phone,
+        password,
+        fullName: 'Logout Tester 2',
+      })
       .expect(201);
 
     const access = reg.body.access_token as string;
@@ -94,7 +99,12 @@ describe('Auth logout (e2e)', () => {
 
     const reg = await http()
       .post('/auth/register')
-      .send({ email, phoneNumber: phone, password, fullName: 'Logout Tester 3' })
+      .send({
+        email,
+        phoneNumber: phone,
+        password,
+        fullName: 'Logout Tester 3',
+      })
       .expect(201);
 
     const access = reg.body.access_token as string;

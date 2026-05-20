@@ -54,20 +54,65 @@ export interface BadgeMeta {
 }
 
 export const BADGE_META: Record<BadgeId, BadgeMeta> = {
-  insurance:        { id: 'insurance',        label: 'Sigortalı',          emoji: '🛡️', computed: false },
-  premium:          { id: 'premium',          label: 'Premium',            emoji: '👑', computed: false },
-  partner:          { id: 'partner',          label: 'Yapgitsin Partner',  emoji: '🤝', computed: false },
-  verified_business:{ id: 'verified_business',label: 'Doğrulanmış İşletme',emoji: '🏢', computed: false },
-  top_rated:        { id: 'top_rated',        label: 'En Yüksek Puanlı',   emoji: '⭐', computed: true  },
-  reliable:         { id: 'reliable',         label: 'Güvenilir',          emoji: '✅', computed: true  },
-  rookie:           { id: 'rookie',           label: 'Yeni',               emoji: '🌱', computed: true  },
-  power_tasker:     { id: 'power_tasker',     label: 'Süper Usta',         emoji: '🚀', computed: true  },
-  fast_responder:   { id: 'fast_responder',   label: 'Hızlı Cevap Veren',  emoji: '⚡', computed: true  },
-  blue_tick:        { id: 'blue_tick',        label: 'Mavi Tik',           emoji: '✓',  computed: true  },
-  top_partner:      { id: 'top_partner',      label: 'Top Partner',        emoji: '🥇', computed: false },
-  platform_pioneer: { id: 'platform_pioneer', label: 'Platform Öncüsü',    emoji: '🚀', computed: false },
-  community_hero:   { id: 'community_hero',   label: 'Topluluk Kahramanı', emoji: '❤️', computed: false },
-  vip:              { id: 'vip',              label: 'VIP',                emoji: '💎', computed: false },
+  insurance: {
+    id: 'insurance',
+    label: 'Sigortalı',
+    emoji: '🛡️',
+    computed: false,
+  },
+  premium: { id: 'premium', label: 'Premium', emoji: '👑', computed: false },
+  partner: {
+    id: 'partner',
+    label: 'Yapgitsin Partner',
+    emoji: '🤝',
+    computed: false,
+  },
+  verified_business: {
+    id: 'verified_business',
+    label: 'Doğrulanmış İşletme',
+    emoji: '🏢',
+    computed: false,
+  },
+  top_rated: {
+    id: 'top_rated',
+    label: 'En Yüksek Puanlı',
+    emoji: '⭐',
+    computed: true,
+  },
+  reliable: { id: 'reliable', label: 'Güvenilir', emoji: '✅', computed: true },
+  rookie: { id: 'rookie', label: 'Yeni', emoji: '🌱', computed: true },
+  power_tasker: {
+    id: 'power_tasker',
+    label: 'Süper Usta',
+    emoji: '🚀',
+    computed: true,
+  },
+  fast_responder: {
+    id: 'fast_responder',
+    label: 'Hızlı Cevap Veren',
+    emoji: '⚡',
+    computed: true,
+  },
+  blue_tick: { id: 'blue_tick', label: 'Mavi Tik', emoji: '✓', computed: true },
+  top_partner: {
+    id: 'top_partner',
+    label: 'Top Partner',
+    emoji: '🥇',
+    computed: false,
+  },
+  platform_pioneer: {
+    id: 'platform_pioneer',
+    label: 'Platform Öncüsü',
+    emoji: '🚀',
+    computed: false,
+  },
+  community_hero: {
+    id: 'community_hero',
+    label: 'Topluluk Kahramanı',
+    emoji: '❤️',
+    computed: false,
+  },
+  vip: { id: 'vip', label: 'VIP', emoji: '💎', computed: false },
 };
 
 /** Compute the full badge list (manual + derived) for a user. */
@@ -81,7 +126,8 @@ export function computeBadges(user: User): BadgeId[] {
 
   // Phase 137 — admin-granted special badges
   for (const b of user.manualBadges ?? []) {
-    if ((ADMIN_MANUAL_BADGES as readonly string[]).includes(b)) out.add(b as BadgeId);
+    if ((ADMIN_MANUAL_BADGES as readonly string[]).includes(b))
+      out.add(b as BadgeId);
   }
 
   // Derived

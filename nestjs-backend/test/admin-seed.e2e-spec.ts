@@ -65,9 +65,13 @@ describe('Admin seed (e2e)', () => {
   });
 
   it('inserts related rows (jobs, possibly bookings/escrows)', async () => {
-    const usersCount = await dataSource.query('SELECT COUNT(*) AS c FROM users');
+    const usersCount = await dataSource.query(
+      'SELECT COUNT(*) AS c FROM users',
+    );
     expect(Number(usersCount[0].c)).toBe(5);
-    const leadsCount = await dataSource.query('SELECT COUNT(*) AS c FROM leads');
+    const leadsCount = await dataSource.query(
+      'SELECT COUNT(*) AS c FROM leads',
+    );
     expect(Number(leadsCount[0].c)).toBeGreaterThanOrEqual(1);
   });
 

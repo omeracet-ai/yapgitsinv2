@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
 import { UsersService } from '../users/users.service';

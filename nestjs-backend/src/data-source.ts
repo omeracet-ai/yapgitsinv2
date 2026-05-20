@@ -16,7 +16,9 @@ import { isAbsolute, join } from 'path';
 import { APP_ROOT } from './common/paths';
 
 // iisnode/Plesk Node altında process.cwd() != uygulama dizini; .env'i APP_ROOT'a göre yükle.
-loadDotenv({ path: join(APP_ROOT, `.env.${process.env.NODE_ENV ?? 'development'}`) });
+loadDotenv({
+  path: join(APP_ROOT, `.env.${process.env.NODE_ENV ?? 'development'}`),
+});
 loadDotenv({ path: join(APP_ROOT, '.env') });
 
 const dbType = process.env.DB_TYPE || 'sqlite';

@@ -1,4 +1,12 @@
-import { IsUUID, IsInt, Min, Max, IsString, MaxLength, IsOptional } from 'class-validator';
+import {
+  IsUUID,
+  IsInt,
+  Min,
+  Max,
+  IsString,
+  MaxLength,
+  IsOptional,
+} from 'class-validator';
 
 export class GiftTokensDto {
   @IsUUID()

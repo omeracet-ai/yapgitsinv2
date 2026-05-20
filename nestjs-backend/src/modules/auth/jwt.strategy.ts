@@ -46,6 +46,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (user.deactivated) {
       throw new UnauthorizedException('Hesap silindi');
     }
+    // Phase 255 — soft-delete column landing via Voldi-db. Safe no-op until the
+    // column ships (undefined ≠ truthy); once it does, deletedAt set → reject.
+    if ((user as unknown as { deletedAt?: Date | null }).deletedAt) {
+      throw new UnauthorizedException('Account deleted');
+    }
     // Phase P191/4 — tokenVersion check (logout / refresh revokes by bumping it).
     // Legacy tokens without the claim default to 0 — only valid if user is still at 0.
     const tokenVer = payload.tokenVersion ?? 0;

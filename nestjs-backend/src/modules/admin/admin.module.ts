@@ -23,7 +23,20 @@ import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Job, Offer, User, ServiceRequest, Booking, Review, PaymentEscrow, ChatMessage, JobQuestion, Notification, AdminAuditLog, Provider]),
+    TypeOrmModule.forFeature([
+      Job,
+      Offer,
+      User,
+      ServiceRequest,
+      Booking,
+      Review,
+      PaymentEscrow,
+      ChatMessage,
+      JobQuestion,
+      Notification,
+      AdminAuditLog,
+      Provider,
+    ]),
     CategoriesModule,
     ProvidersModule,
     PromoModule,

@@ -1,4 +1,8 @@
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Anthropic from '@anthropic-ai/sdk';
 import * as crypto from 'crypto';
@@ -115,7 +119,7 @@ YALNIZCA aşağıdaki şemada geçerli JSON dön (markdown veya açıklama metni
         medianPrice: Math.max(0, Number(parsed.medianPrice) || 0),
         confidence:
           parsed.confidence === 'high' || parsed.confidence === 'low'
-            ? (parsed.confidence as 'high' | 'low')
+            ? parsed.confidence
             : 'medium',
         reasoning: String(parsed.reasoning ?? '').trim(),
         currency: 'TRY',

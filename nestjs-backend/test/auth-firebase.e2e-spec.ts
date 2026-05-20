@@ -39,8 +39,7 @@ jest.mock(
 const FAKE_SA = JSON.stringify({
   type: 'service_account',
   project_id: 'fake',
-  private_key:
-    '-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----\n',
+  private_key: '-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----\n',
   client_email: 'fake@fake.iam.gserviceaccount.com',
 });
 process.env.FIREBASE_SERVICE_ACCOUNT_JSON = FAKE_SA;
@@ -101,7 +100,7 @@ describe('POST /auth/firebase (e2e — Phase 228)', () => {
     return `e${testIdx}${rnd}`; // ~8 chars → `firebase:e1abc123` fits in 20
   };
   const nextIp = () =>
-    `10.${100 + (testIdx % 100)}.${(testIdx * 7) % 250}.${(Date.now() + testIdx) % 250 + 1}`;
+    `10.${100 + (testIdx % 100)}.${(testIdx * 7) % 250}.${((Date.now() + testIdx) % 250) + 1}`;
 
   // ─────────────────────────────────────────────────────────────────────────
   it('1. 200 happy path — returns tokens + user, no passwordHash', async () => {
@@ -182,7 +181,9 @@ describe('POST /auth/firebase (e2e — Phase 228)', () => {
         .set('X-Forwarded-For', nextIp())
         .send({ idToken: 'whatever' })
         .expect(401);
-      expect(res.body.message).toMatch(/Sosyal giriş geçici olarak kullanılamıyor/);
+      expect(res.body.message).toMatch(
+        /Sosyal giriş geçici olarak kullanılamıyor/,
+      );
       expect(verifyIdTokenMock).not.toHaveBeenCalled();
     } finally {
       if (app2) await app2.close();

@@ -161,7 +161,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const result = this.filter.check(workingMessage);
     const flagReasons: string[] = result.flagged ? [...result.reasons] : [];
-    if (contactFiltered) flagReasons.push(`contact:${detectedContactTypes.join('|')}`);
+    if (contactFiltered)
+      flagReasons.push(`contact:${detectedContactTypes.join('|')}`);
     const saved = await this.messagesRepo.save({
       from: data.from,
       to: data.to,

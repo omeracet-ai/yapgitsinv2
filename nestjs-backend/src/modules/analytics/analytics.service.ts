@@ -270,8 +270,7 @@ export class AnalyticsService {
       expiredLeads,
       conversionRate:
         totalLeads > 0 ? (leadsWithResponses / totalLeads) * 100 : 0,
-      averageResponseCount:
-        totalLeads > 0 ? totalResponses / totalLeads : 0,
+      averageResponseCount: totalLeads > 0 ? totalResponses / totalLeads : 0,
       topCategories,
     };
 

@@ -9,11 +9,15 @@ import { Injectable, Logger } from '@nestjs/common';
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
 
-  async sendSms(to: string, message: string): Promise<{ success: boolean; provider?: string; error?: string }> {
+  async sendSms(
+    to: string,
+    message: string,
+  ): Promise<{ success: boolean; provider?: string; error?: string }> {
     const ngUser = process.env.NETGSM_USER;
     const ngPass = process.env.NETGSM_PASS;
     const ngHeader = process.env.NETGSM_HEADER;
-    const ngUrl = process.env.NETGSM_API_URL || 'https://api.netgsm.com.tr/sms/send/get';
+    const ngUrl =
+      process.env.NETGSM_API_URL || 'https://api.netgsm.com.tr/sms/send/get';
 
     if (ngUser && ngPass && ngHeader) {
       try {
@@ -71,7 +75,9 @@ export class SmsService {
       }
     }
 
-    this.logger.warn(`SMS disabled (no provider configured) — would send to ${to}: ${message}`);
+    this.logger.warn(
+      `SMS disabled (no provider configured) — would send to ${to}: ${message}`,
+    );
     return { success: false, error: 'sms_disabled' };
   }
 

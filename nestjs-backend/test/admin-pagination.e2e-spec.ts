@@ -38,7 +38,7 @@ describe('Admin list pagination (e2e)', () => {
   // Per-request IP rotation to dodge auth-login throttler.
   let ipCounter = 0;
   const nextIp = () =>
-    `10.91.${Math.floor(ipCounter / 256) % 256}.${(ipCounter++) % 256}`;
+    `10.91.${Math.floor(ipCounter / 256) % 256}.${ipCounter++ % 256}`;
 
   let adminToken: string;
   it('admin login', async () => {
@@ -62,7 +62,10 @@ describe('Admin list pagination (e2e)', () => {
       }),
     );
     const p = body as {
-      items: unknown[]; total: number; limit: number; totalPages: number;
+      items: unknown[];
+      total: number;
+      limit: number;
+      totalPages: number;
     };
     expect(p.items.length).toBeLessThanOrEqual(p.limit);
     // totalPages = ceil(total / limit), with floor of 1

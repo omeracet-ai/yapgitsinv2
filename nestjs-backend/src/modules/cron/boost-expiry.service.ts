@@ -16,7 +16,10 @@ export class BoostExpiryService {
   async expireBoosts(): Promise<void> {
     const now = new Date();
     const expired = await this.jobRepo.find({
-      where: { featuredUntil: LessThan(now) as unknown as Date, featuredOrder: Not(IsNull()) },
+      where: {
+        featuredUntil: LessThan(now) as unknown as Date,
+        featuredOrder: Not(IsNull()),
+      },
     });
     for (const job of expired) {
       job.featuredOrder = null;

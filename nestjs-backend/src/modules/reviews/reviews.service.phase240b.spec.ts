@@ -91,7 +91,6 @@ describe('CreateReviewDto (mass-assignment regression)', () => {
 
 describe('OTP RNG (crypto.randomInt)', () => {
   it('produces 6-digit codes within [100000, 999999]', () => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { randomInt } = require('crypto');
     for (let i = 0; i < 50; i++) {
       const v = randomInt(100000, 1000000);

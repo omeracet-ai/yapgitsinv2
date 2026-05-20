@@ -136,8 +136,8 @@ export class DataExportService {
 
     // fcm tokens — present but redacted (KVKK: user has right to know we hold them).
     const fcmTokens =
-      Array.isArray(user?.fcmTokens) && user!.fcmTokens!.length
-        ? user!.fcmTokens!.map(() => '[REDACTED]')
+      Array.isArray(user?.fcmTokens) && user.fcmTokens.length
+        ? user.fcmTokens.map(() => '[REDACTED]')
         : [];
 
     const fields = {

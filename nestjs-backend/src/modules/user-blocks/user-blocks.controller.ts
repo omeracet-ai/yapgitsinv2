@@ -51,7 +51,7 @@ export class UserBlocksController {
     const r = await this.svc.report(
       req.user.id,
       userId,
-      body.reason as UserReportReason,
+      body.reason,
       body.description,
     );
     return { id: r.id, status: r.status };
@@ -59,18 +59,12 @@ export class UserBlocksController {
 
   // ── Legacy routes (backwards compat) ───────────────────────────────────────
   @Post('users/:id/block')
-  block(
-    @Request() req: AuthenticatedRequest,
-    @Param('id') id: string,
-  ) {
+  block(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.svc.block(req.user.id, id);
   }
 
   @Delete('users/:id/block')
-  unblock(
-    @Request() req: AuthenticatedRequest,
-    @Param('id') id: string,
-  ) {
+  unblock(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.svc.unblock(req.user.id, id);
   }
 
@@ -78,5 +72,4 @@ export class UserBlocksController {
   listBlocked(@Request() req: AuthenticatedRequest) {
     return this.svc.listBlocked(req.user.id);
   }
-
 }

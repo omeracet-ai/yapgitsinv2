@@ -57,9 +57,7 @@ describe('Tokens atomicity (e2e — Phase 242)', () => {
     const user = await freshUser(500, 'spend-race');
 
     const results = await Promise.allSettled(
-      Array.from({ length: 10 }, () =>
-        tokens.spend(user.id, 100, 'race test'),
-      ),
+      Array.from({ length: 10 }, () => tokens.spend(user.id, 100, 'race test')),
     );
 
     const ok = results.filter((r) => r.status === 'fulfilled').length;

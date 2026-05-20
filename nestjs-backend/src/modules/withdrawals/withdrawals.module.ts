@@ -8,7 +8,10 @@ import { WithdrawalsAdminController } from './withdrawals-admin.controller';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([WithdrawalRequest, Payment]), NotificationsModule],
+  imports: [
+    TypeOrmModule.forFeature([WithdrawalRequest, Payment]),
+    NotificationsModule,
+  ],
   controllers: [WithdrawalsController, WithdrawalsAdminController],
   providers: [WithdrawalsService],
   exports: [WithdrawalsService],

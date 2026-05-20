@@ -11,7 +11,12 @@ import {
 import { JobLead } from './job-lead.entity';
 import { User } from '../users/user.entity';
 
-export type JobLeadResponseStatus = 'sent_email' | 'viewed' | 'contacted' | 'accepted' | 'rejected';
+export type JobLeadResponseStatus =
+  | 'sent_email'
+  | 'viewed'
+  | 'contacted'
+  | 'accepted'
+  | 'rejected';
 
 @Entity('lead_responses')
 export class JobLeadResponse {

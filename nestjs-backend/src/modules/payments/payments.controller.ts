@@ -1,4 +1,16 @@
-import { Controller, Post, Body, Res, Get, UseGuards, Req, Query, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  Get,
+  UseGuards,
+  Req,
+  Query,
+  HttpCode,
+  HttpStatus,
+  BadRequestException,
+} from '@nestjs/common';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { PaymentsService } from './payments.service';
@@ -28,7 +40,7 @@ export class PaymentsController {
   @HttpCode(HttpStatus.CREATED)
   async createPaymentIntent(
     @Req() req: any,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
     @Body() dto: CreatePaymentIntentDto,
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -40,7 +52,7 @@ export class PaymentsController {
   @UseGuards(AuthGuard('jwt'))
   async confirmPayment(
     @Req() req: any,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
     @Body() dto: ConfirmPaymentDto,
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -52,7 +64,7 @@ export class PaymentsController {
   @UseGuards(AuthGuard('jwt'))
   async getPaymentHistory(
     @Req() req: any,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
     @Query() query: PaymentHistoryQueryDto,
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -72,7 +84,7 @@ export class PaymentsController {
   @UseGuards(AuthGuard('jwt'))
   async refundPayment(
     @Req() req: any,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
     @Body() dto: RefundPaymentDto,
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

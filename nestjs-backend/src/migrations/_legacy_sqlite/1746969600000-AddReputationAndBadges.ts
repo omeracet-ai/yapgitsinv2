@@ -1,4 +1,10 @@
-import { MigrationInterface, QueryRunner, Table, TableForeignKey, TableIndex } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  TableForeignKey,
+  TableIndex,
+} from 'typeorm';
 
 /**
  * Phase 165 — Reputation & Badges System
@@ -224,7 +230,9 @@ export class AddReputationAndBadges1746969600000 implements MigrationInterface {
     // Drop badges table and its foreign keys
     const badgesTable = await queryRunner.getTable('badges');
     if (badgesTable) {
-      const fk = badgesTable.foreignKeys.find((k) => k.columnNames[0] === 'userId');
+      const fk = badgesTable.foreignKeys.find(
+        (k) => k.columnNames[0] === 'userId',
+      );
       if (fk) await queryRunner.dropForeignKey('badges', fk);
       await queryRunner.dropTable('badges');
     }
@@ -232,7 +240,9 @@ export class AddReputationAndBadges1746969600000 implements MigrationInterface {
     // Drop reputations table and its foreign keys
     const reputationsTable = await queryRunner.getTable('reputations');
     if (reputationsTable) {
-      const fk = reputationsTable.foreignKeys.find((k) => k.columnNames[0] === 'userId');
+      const fk = reputationsTable.foreignKeys.find(
+        (k) => k.columnNames[0] === 'userId',
+      );
       if (fk) await queryRunner.dropForeignKey('reputations', fk);
       await queryRunner.dropTable('reputations');
     }

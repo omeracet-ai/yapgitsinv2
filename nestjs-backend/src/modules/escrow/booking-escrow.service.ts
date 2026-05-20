@@ -326,10 +326,7 @@ export class BookingEscrowService {
   ): Promise<BookingEscrow | null> {
     const escrow = await this.repo.findOne({ where: { bookingId } });
     if (!escrow) return null;
-    if (
-      escrow.customerId !== requesterId &&
-      escrow.workerId !== requesterId
-    ) {
+    if (escrow.customerId !== requesterId && escrow.workerId !== requesterId) {
       throw new ForbiddenException('Bu escrow size ait değil');
     }
     return escrow;

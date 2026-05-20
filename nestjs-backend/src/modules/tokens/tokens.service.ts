@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import {
@@ -8,7 +13,10 @@ import {
   PaymentMethod,
 } from './token-transaction.entity';
 import { User } from '../users/user.entity';
-import { Notification, NotificationType } from '../notifications/notification.entity';
+import {
+  Notification,
+  NotificationType,
+} from '../notifications/notification.entity';
 import { GiftTokensDto } from './dto/gift-tokens.dto';
 import { tlToMinor } from '../../common/money.util';
 import { IyzipayService } from '../escrow/iyzipay.service';
@@ -78,7 +86,9 @@ export class TokensService {
         id: userId,
         name: buyer.name || user.fullName?.split(' ')[0] || 'Yapgitsin',
         surname:
-          buyer.surname || user.fullName?.split(' ').slice(1).join(' ') || 'Kullanici',
+          buyer.surname ||
+          user.fullName?.split(' ').slice(1).join(' ') ||
+          'Kullanici',
         email: buyer.email || user.email || 'customer@yapgitsin.tr',
         gsmNumber: buyer.gsmNumber || '+905350000000',
         ip: buyer.ip,
@@ -113,9 +123,11 @@ export class TokensService {
    * POST /tokens/iyzipay/callback — iyzipay POST eder.
    * Server-side token re-verify, idempotent credit (tx zaten COMPLETED ise no-op).
    */
-  async confirmIyzipayCheckout(
-    token: string,
-  ): Promise<{ status: 'success' | 'failure'; tokens?: number; balance?: number }> {
+  async confirmIyzipayCheckout(token: string): Promise<{
+    status: 'success' | 'failure';
+    tokens?: number;
+    balance?: number;
+  }> {
     if (!token) throw new BadRequestException('Missing token');
 
     const tx = await this.txRepo.findOne({ where: { paymentRef: token } });
@@ -124,7 +136,11 @@ export class TokensService {
     // İdempotency: zaten COMPLETED veya FAILED ise no-op.
     if (tx.status === TxStatus.COMPLETED) {
       const u = await this.userRepo.findOne({ where: { id: tx.userId } });
-      return { status: 'success', tokens: tx.amount, balance: u?.tokenBalance ?? 0 };
+      return {
+        status: 'success',
+        tokens: tx.amount,
+        balance: u?.tokenBalance ?? 0,
+      };
     }
     if (tx.status === TxStatus.FAILED) {
       return { status: 'failure' };
@@ -140,7 +156,9 @@ export class TokensService {
 
     // Para alındı — bakiyeyi credit et, tx'i COMPLETED yap.
     return this.dataSource.transaction(async (manager) => {
-      const fresh = await manager.findOne(TokenTransaction, { where: { id: tx.id } });
+      const fresh = await manager.findOne(TokenTransaction, {
+        where: { id: tx.id },
+      });
       if (!fresh) throw new NotFoundException('İşlem bulunamadı (race)');
       if (fresh.status === TxStatus.COMPLETED) {
         const u = await manager.findOne(User, { where: { id: fresh.userId } });
@@ -150,7 +168,12 @@ export class TokensService {
           balance: u?.tokenBalance ?? 0,
         };
       }
-      await manager.increment(User, { id: fresh.userId }, 'tokenBalance', fresh.amount);
+      await manager.increment(
+        User,
+        { id: fresh.userId },
+        'tokenBalance',
+        fresh.amount,
+      );
       fresh.status = TxStatus.COMPLETED;
       fresh.description = `${fresh.amount} jeton satın alındı (iyzipay paymentId=${result.paymentId ?? 'n/a'})`;
       await manager.save(TokenTransaction, fresh);
@@ -208,7 +231,12 @@ export class TokensService {
           `Yetersiz bakiye. Gerekli: ${amount}, Mevcut: ${sender.tokenBalance}`,
         );
       }
-      await manager.increment(User, { id: recipient.id }, 'tokenBalance', amount);
+      await manager.increment(
+        User,
+        { id: recipient.id },
+        'tokenBalance',
+        amount,
+      );
 
       // Local snapshot'ları balance reporting için güncelle.
       sender.tokenBalance = sender.tokenBalance - amount;

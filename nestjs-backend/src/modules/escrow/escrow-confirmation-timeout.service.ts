@@ -2,10 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
-import {
-  PaymentEscrow,
-  ConfirmationStatus,
-} from './payment-escrow.entity';
+import { PaymentEscrow, ConfirmationStatus } from './payment-escrow.entity';
 import { EscrowService } from './escrow.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
@@ -53,8 +50,7 @@ export class EscrowConfirmationTimeoutService {
               userId: uid,
               type: NotificationType.DISPUTE_OPENED,
               title: 'Onay süresi doldu',
-              body:
-                'Karşılıklı onay 72 saat içinde tamamlanmadı. İş uyuşmazlık olarak işaretlendi; ekibimiz inceleyecek.',
+              body: 'Karşılıklı onay 72 saat içinde tamamlanmadı. İş uyuşmazlık olarak işaretlendi; ekibimiz inceleyecek.',
               refId: e.id,
             });
           } catch (err) {

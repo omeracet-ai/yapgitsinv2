@@ -16,7 +16,6 @@ import { join } from 'path';
 import { APP_ROOT } from '../../common/paths';
 let PKG_VERSION: string | undefined;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   PKG_VERSION = require(join(APP_ROOT, 'package.json')).version;
 } catch {
   PKG_VERSION = undefined;

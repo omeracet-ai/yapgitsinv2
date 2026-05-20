@@ -73,10 +73,7 @@ const videoFilter = (req: any, file: any, cb: any) => {
 };
 
 function publicBase(req: any): string {
-  return (
-    process.env.PUBLIC_API_URL ||
-    `${req.protocol}://${req.get('host')}`
-  );
+  return process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`;
 }
 
 @Controller('escrow/:id/confirmation')

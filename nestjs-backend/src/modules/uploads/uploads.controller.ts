@@ -27,7 +27,8 @@ const sharp = require('sharp');
 function buildFileName(userId: string, city?: string): string {
   const safe = (city ?? 'tr')
     .toLowerCase()
-    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
     .replace(/[^a-z0-9]/g, '-')
     .substring(0, 20);
   return `${userId.substring(0, 8)}_${safe}_${Date.now()}`;
@@ -46,7 +47,9 @@ const imageFilter = (req: any, file: any, cb: any) => {
 const videoFilter = (req: any, file: any, cb: any) => {
   if (!file.mimetype.match(/^video\/(mp4|quicktime|x-msvideo|mpeg)$/)) {
     return cb(
-      new BadRequestException('Sadece video dosyaları yüklenebilir (mp4, mov, avi, mpeg)'),
+      new BadRequestException(
+        'Sadece video dosyaları yüklenebilir (mp4, mov, avi, mpeg)',
+      ),
       false,
     );
   }
@@ -75,7 +78,11 @@ export class UploadsController {
     @UploadedFiles() files: Express.Multer.File[],
     @Request() req: AuthenticatedRequest,
   ) {
-    return this.uploadsService.uploadCompletionPhotos(jobId, files, req.user.id);
+    return this.uploadsService.uploadCompletionPhotos(
+      jobId,
+      files,
+      req.user.id,
+    );
   }
 
   /** POST /uploads/job-photos  — iş ilanı fotoğrafları (Phase 157: bulk, max 5) */
@@ -250,7 +257,9 @@ export class UploadsController {
     fs.writeFileSync(dest, file.buffer);
     const durationRaw = (req.body?.duration ?? '') as string;
     const durationParsed = durationRaw ? parseInt(durationRaw, 10) : NaN;
-    const duration = Number.isFinite(durationParsed) ? durationParsed : undefined;
+    const duration = Number.isFinite(durationParsed)
+      ? durationParsed
+      : undefined;
     return {
       url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/intro-videos/${folder}/${filename}`,
       duration,
@@ -315,13 +324,11 @@ export class UploadsController {
   ): Promise<{ url: string; duration?: number }> {
     const durationRaw = (req.body?.duration ?? '') as string;
     const durationParsed = durationRaw ? parseInt(durationRaw, 10) : NaN;
-    const duration = Number.isFinite(durationParsed) ? durationParsed : undefined;
+    const duration = Number.isFinite(durationParsed)
+      ? durationParsed
+      : undefined;
 
-    return this.uploadsService.uploadProfileVideo(
-      file,
-      req.user.id,
-      duration,
-    );
+    return this.uploadsService.uploadProfileVideo(file, req.user.id, duration);
   }
 
   /** POST /uploads/identity-photo  — kimlik fotoğrafı (zorunlu) */
@@ -415,7 +422,12 @@ export class UploadsController {
   async uploadChatAttachment(
     @UploadedFile() file: any,
     @Req() req: any,
-  ): Promise<{ url: string; type: 'image' | 'document'; name: string; size: number }> {
+  ): Promise<{
+    url: string;
+    type: 'image' | 'document';
+    name: string;
+    size: number;
+  }> {
     if (!file) throw new BadRequestException('Dosya seçilmedi');
 
     const folder = buildFileName(req.user.id, req.user.city);
@@ -521,7 +533,9 @@ export class UploadsController {
 
     const durationRaw = (req.body?.duration ?? '') as string;
     const durationParsed = durationRaw ? parseInt(durationRaw, 10) : NaN;
-    const duration = Number.isFinite(durationParsed) ? durationParsed : undefined;
+    const duration = Number.isFinite(durationParsed)
+      ? durationParsed
+      : undefined;
 
     return {
       url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/chat-audio/${folder}/${filename}`,
@@ -539,7 +553,12 @@ export class UploadsController {
     FileInterceptor('file', {
       storage: memoryStorage(),
       fileFilter: (req: any, file: any, cb: any) => {
-        const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        const allowed = [
+          'application/pdf',
+          'image/jpeg',
+          'image/jpg',
+          'image/png',
+        ];
         if (!allowed.includes(file.mimetype)) {
           return cb(
             new BadRequestException('Sadece PDF/JPG/PNG yüklenebilir'),

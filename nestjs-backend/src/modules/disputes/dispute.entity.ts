@@ -79,7 +79,12 @@ export class Dispute {
   aiAnalysis: {
     fairnessScore: number;
     fraudRisk: 'low' | 'medium' | 'high';
-    suggestedAction: 'refund' | 'partial_refund' | 'cancel' | 'dismiss' | 'escalate';
+    suggestedAction:
+      | 'refund'
+      | 'partial_refund'
+      | 'cancel'
+      | 'dismiss'
+      | 'escalate';
     reasoning: string;
     analyzedAt: string;
   } | null;

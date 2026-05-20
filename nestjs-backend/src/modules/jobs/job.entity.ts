@@ -22,12 +22,12 @@ import { Category } from '../categories/category.entity';
  * karşılığı — DB değerleri geriye dönük uyumluluk için aynı kalıyor.
  */
 export enum JobStatus {
-  OPEN = 'open',                              // ilan yayında, teklif kabul ediyor (Airtasker: posted)
-  IN_PROGRESS = 'in_progress',                // teklif kabul edildi, iş başladı (Airtasker: assigned)
-  PENDING_COMPLETION = 'pending_completion',  // usta "bitirdim" dedi, müşteri onayı bekliyor
-  COMPLETED = 'completed',                    // müşteri onayladı
-  CANCELLED = 'cancelled',                    // iptal
-  DISPUTED = 'disputed',                      // çatışma — admin müdahalesi
+  OPEN = 'open', // ilan yayında, teklif kabul ediyor (Airtasker: posted)
+  IN_PROGRESS = 'in_progress', // teklif kabul edildi, iş başladı (Airtasker: assigned)
+  PENDING_COMPLETION = 'pending_completion', // usta "bitirdim" dedi, müşteri onayı bekliyor
+  COMPLETED = 'completed', // müşteri onayladı
+  CANCELLED = 'cancelled', // iptal
+  DISPUTED = 'disputed', // çatışma — admin müdahalesi
 }
 
 /**
@@ -43,12 +43,20 @@ export enum JobKind {
 
 /** Bir durumdan diğerine geçişlere izin var mı? */
 export const ALLOWED_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
-  [JobStatus.OPEN]:               [JobStatus.IN_PROGRESS, JobStatus.CANCELLED],
-  [JobStatus.IN_PROGRESS]:        [JobStatus.PENDING_COMPLETION, JobStatus.CANCELLED, JobStatus.DISPUTED],
-  [JobStatus.PENDING_COMPLETION]: [JobStatus.COMPLETED, JobStatus.IN_PROGRESS, JobStatus.DISPUTED],
-  [JobStatus.COMPLETED]:          [JobStatus.DISPUTED], // post-completion uyuşmazlık
-  [JobStatus.CANCELLED]:          [],
-  [JobStatus.DISPUTED]:           [JobStatus.COMPLETED, JobStatus.CANCELLED], // admin çözüm
+  [JobStatus.OPEN]: [JobStatus.IN_PROGRESS, JobStatus.CANCELLED],
+  [JobStatus.IN_PROGRESS]: [
+    JobStatus.PENDING_COMPLETION,
+    JobStatus.CANCELLED,
+    JobStatus.DISPUTED,
+  ],
+  [JobStatus.PENDING_COMPLETION]: [
+    JobStatus.COMPLETED,
+    JobStatus.IN_PROGRESS,
+    JobStatus.DISPUTED,
+  ],
+  [JobStatus.COMPLETED]: [JobStatus.DISPUTED], // post-completion uyuşmazlık
+  [JobStatus.CANCELLED]: [],
+  [JobStatus.DISPUTED]: [JobStatus.COMPLETED, JobStatus.CANCELLED], // admin çözüm
 };
 
 export function isValidTransition(from: JobStatus, to: JobStatus): boolean {
@@ -59,7 +67,11 @@ export function isValidTransition(from: JobStatus, to: JobStatus): boolean {
 @Entity('jobs')
 @Index('idx_jobs_status_createdAt', ['status', 'createdAt'])
 @Index('idx_jobs_customerId_status', ['customerId', 'status'])
-@Index('idx_jobs_categoryId_status_createdAt', ['categoryId', 'status', 'createdAt'])
+@Index('idx_jobs_categoryId_status_createdAt', [
+  'categoryId',
+  'status',
+  'createdAt',
+])
 @Index('idx_jobs_featuredUntil', ['featuredUntil'])
 @Index('idx_jobs_geohash', ['geohash'])
 @Index('idx_jobs_kind_status_createdAt', ['kind', 'status', 'createdAt'])

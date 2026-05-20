@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Review } from './review.entity';
@@ -26,7 +33,10 @@ export class ReviewsService {
     const saved = await this.reviewsRepository.save(review);
     // Değerlendirilen kullanıcının puanını otomatik güncelle
     if (saved.revieweeId && typeof saved.rating === 'number') {
-      await this.usersService.recalcRating(asUserId(saved.revieweeId), saved.rating);
+      await this.usersService.recalcRating(
+        asUserId(saved.revieweeId),
+        saved.rating,
+      );
     }
     // Phase 116: fire-and-forget fraud check
     if (saved.comment && saved.comment.trim().length > 0) {
@@ -40,7 +50,9 @@ export class ReviewsService {
               fraudScore: r.score,
             });
           } else {
-            await this.reviewsRepository.update(saved.id, { fraudScore: r.score });
+            await this.reviewsRepository.update(saved.id, {
+              fraudScore: r.score,
+            });
           }
         })
         .catch(() => undefined);
@@ -56,14 +68,24 @@ export class ReviewsService {
    * runtime fault degrades gracefully to an empty list instead of a 500 on a public,
    * homepage-critical path.
    */
-  async findRecent(limit: number): Promise<Array<{
-    id: string;
-    rating: number;
-    comment: string | null;
-    createdAt: Date;
-    reviewer: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
-    reviewee: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
-  }>> {
+  async findRecent(limit: number): Promise<
+    Array<{
+      id: string;
+      rating: number;
+      comment: string | null;
+      createdAt: Date;
+      reviewer: {
+        id: string;
+        fullName: string | null;
+        profileImageUrl: string | null;
+      } | null;
+      reviewee: {
+        id: string;
+        fullName: string | null;
+        profileImageUrl: string | null;
+      } | null;
+    }>
+  > {
     this.logger.warn(`[PHASE236-PROBE] findRecent called with limit=${limit}`);
     const take = Math.min(50, Math.max(1, limit));
     try {
@@ -78,9 +100,17 @@ export class ReviewsService {
           'r.revieweeId',
         ])
         .leftJoin('r.reviewer', 'reviewer')
-        .addSelect(['reviewer.id', 'reviewer.fullName', 'reviewer.profileImageUrl'])
+        .addSelect([
+          'reviewer.id',
+          'reviewer.fullName',
+          'reviewer.profileImageUrl',
+        ])
         .leftJoin('r.reviewee', 'reviewee')
-        .addSelect(['reviewee.id', 'reviewee.fullName', 'reviewee.profileImageUrl'])
+        .addSelect([
+          'reviewee.id',
+          'reviewee.fullName',
+          'reviewee.profileImageUrl',
+        ])
         .orderBy('r.createdAt', 'DESC')
         .take(take)
         .getMany();
@@ -122,14 +152,24 @@ export class ReviewsService {
    * or contain NULL FK rows. Minimal SELECT + LEFT JOIN + try/catch → never 500.
    * Returns the same minimal projection shape used by findRecent for app/web parity.
    */
-  async findByReviewee(revieweeId: string): Promise<Array<{
-    id: string;
-    rating: number;
-    comment: string | null;
-    createdAt: Date;
-    reviewer: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
-    reviewee: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
-  }>> {
+  async findByReviewee(revieweeId: string): Promise<
+    Array<{
+      id: string;
+      rating: number;
+      comment: string | null;
+      createdAt: Date;
+      reviewer: {
+        id: string;
+        fullName: string | null;
+        profileImageUrl: string | null;
+      } | null;
+      reviewee: {
+        id: string;
+        fullName: string | null;
+        profileImageUrl: string | null;
+      } | null;
+    }>
+  > {
     try {
       const rows = await this.reviewsRepository
         .createQueryBuilder('r')
@@ -142,9 +182,17 @@ export class ReviewsService {
           'r.revieweeId',
         ])
         .leftJoin('r.reviewer', 'reviewer')
-        .addSelect(['reviewer.id', 'reviewer.fullName', 'reviewer.profileImageUrl'])
+        .addSelect([
+          'reviewer.id',
+          'reviewer.fullName',
+          'reviewer.profileImageUrl',
+        ])
         .leftJoin('r.reviewee', 'reviewee')
-        .addSelect(['reviewee.id', 'reviewee.fullName', 'reviewee.profileImageUrl'])
+        .addSelect([
+          'reviewee.id',
+          'reviewee.fullName',
+          'reviewee.profileImageUrl',
+        ])
         .where('r.revieweeId = :revieweeId', { revieweeId })
         .orderBy('r.createdAt', 'DESC')
         .take(100)
@@ -181,14 +229,24 @@ export class ReviewsService {
   }
 
   /** Phase 238A defensive guard (see findByReviewee). */
-  async findByJob(jobId: string): Promise<Array<{
-    id: string;
-    rating: number;
-    comment: string | null;
-    createdAt: Date;
-    reviewer: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
-    reviewee: { id: string; fullName: string | null; profileImageUrl: string | null } | null;
-  }>> {
+  async findByJob(jobId: string): Promise<
+    Array<{
+      id: string;
+      rating: number;
+      comment: string | null;
+      createdAt: Date;
+      reviewer: {
+        id: string;
+        fullName: string | null;
+        profileImageUrl: string | null;
+      } | null;
+      reviewee: {
+        id: string;
+        fullName: string | null;
+        profileImageUrl: string | null;
+      } | null;
+    }>
+  > {
     try {
       const rows = await this.reviewsRepository
         .createQueryBuilder('r')
@@ -201,9 +259,17 @@ export class ReviewsService {
           'r.revieweeId',
         ])
         .leftJoin('r.reviewer', 'reviewer')
-        .addSelect(['reviewer.id', 'reviewer.fullName', 'reviewer.profileImageUrl'])
+        .addSelect([
+          'reviewer.id',
+          'reviewer.fullName',
+          'reviewer.profileImageUrl',
+        ])
         .leftJoin('r.reviewee', 'reviewee')
-        .addSelect(['reviewee.id', 'reviewee.fullName', 'reviewee.profileImageUrl'])
+        .addSelect([
+          'reviewee.id',
+          'reviewee.fullName',
+          'reviewee.profileImageUrl',
+        ])
         .where('r.jobId = :jobId', { jobId })
         .orderBy('r.createdAt', 'DESC')
         .take(100)
@@ -244,7 +310,11 @@ export class ReviewsService {
    *  çağrılarında 3 limit'in race ile aşılmasını engeller. SQLite'da pessimistic
    *  lock no-op'tur ama transaction serialization yine de yarış penceresini kapatır.
    *  Postgres/MySQL prod'da gerçek satır kilidi devreye girer. */
-  async addPhotos(reviewId: string, userId: string, photoUrls: string[]): Promise<Review> {
+  async addPhotos(
+    reviewId: string,
+    userId: string,
+    photoUrls: string[],
+  ): Promise<Review> {
     return this.dataSource.transaction(async (manager) => {
       // SQLite lock-mode'u desteklemez; driver throw ederse plain read'e düş.
       // Postgres/MySQL prod'da gerçek satır kilidi devreye girer.
@@ -261,7 +331,9 @@ export class ReviewsService {
       }
       if (!review) throw new NotFoundException('Review bulunamadı');
       if (review.reviewerId !== userId) {
-        throw new ForbiddenException('Sadece review sahibi fotoğraf ekleyebilir');
+        throw new ForbiddenException(
+          'Sadece review sahibi fotoğraf ekleyebilir',
+        );
       }
       const existing = review.photos || [];
       const merged = [...existing, ...photoUrls];
@@ -275,14 +347,29 @@ export class ReviewsService {
 
   /** Phase 212: "faydalı" oyu ekle (kendi reviewine oy veremez, tekrar oy engeli)
    *  Phase 240B (Voldi-fs): atomic increment — paralel oy = lost-update fix. */
-  async markHelpful(reviewId: string, userId: string): Promise<{ helpfulCount: number }> {
-    const review = await this.reviewsRepository.findOne({ where: { id: reviewId } });
+  async markHelpful(
+    reviewId: string,
+    userId: string,
+  ): Promise<{ helpfulCount: number }> {
+    const review = await this.reviewsRepository.findOne({
+      where: { id: reviewId },
+    });
     if (!review) throw new NotFoundException('Review bulunamadı');
-    if (review.reviewerId === userId) throw new ForbiddenException('Kendi yorumunuza faydalı oy veremezsiniz');
-    const existing = await this.helpfulRepository.findOne({ where: { reviewId, userId } });
-    if (existing) throw new ConflictException('Bu yorumu zaten faydalı buldunuz');
-    await this.helpfulRepository.save(this.helpfulRepository.create({ reviewId, userId }));
-    const incResult = await this.reviewsRepository.increment({ id: reviewId }, 'helpfulCount', 1);
+    if (review.reviewerId === userId)
+      throw new ForbiddenException('Kendi yorumunuza faydalı oy veremezsiniz');
+    const existing = await this.helpfulRepository.findOne({
+      where: { reviewId, userId },
+    });
+    if (existing)
+      throw new ConflictException('Bu yorumu zaten faydalı buldunuz');
+    await this.helpfulRepository.save(
+      this.helpfulRepository.create({ reviewId, userId }),
+    );
+    const incResult = await this.reviewsRepository.increment(
+      { id: reviewId },
+      'helpfulCount',
+      1,
+    );
     if (!incResult.affected) {
       throw new NotFoundException('Review bulunamadı');
     }
@@ -290,7 +377,9 @@ export class ReviewsService {
       where: { id: reviewId },
       select: ['id', 'helpfulCount'],
     });
-    return { helpfulCount: fresh?.helpfulCount ?? (review.helpfulCount || 0) + 1 };
+    return {
+      helpfulCount: fresh?.helpfulCount ?? (review.helpfulCount || 0) + 1,
+    };
   }
 
   /** Phase 42: revieweeId yoruma cevap yazar (idempotent edit) */
@@ -299,16 +388,24 @@ export class ReviewsService {
     userId: string,
     text: string,
   ): Promise<{ id: string; replyText: string | null; repliedAt: Date | null }> {
-    const review = await this.reviewsRepository.findOne({ where: { id: reviewId } });
+    const review = await this.reviewsRepository.findOne({
+      where: { id: reviewId },
+    });
     if (!review) {
       throw new NotFoundException('Review bulunamadı');
     }
     if (review.revieweeId !== userId) {
-      throw new ForbiddenException('Bu yoruma sadece değerlendirilen kişi cevap verebilir');
+      throw new ForbiddenException(
+        'Bu yoruma sadece değerlendirilen kişi cevap verebilir',
+      );
     }
     review.replyText = text;
     review.repliedAt = new Date();
     const saved = await this.reviewsRepository.save(review);
-    return { id: saved.id, replyText: saved.replyText, repliedAt: saved.repliedAt };
+    return {
+      id: saved.id,
+      replyText: saved.replyText,
+      repliedAt: saved.repliedAt,
+    };
   }
 }

@@ -15,66 +15,66 @@ export class OnboardingService implements OnModuleInit {
     if (count >= 6) return;
     if (count > 0) await this.repo.clear();
     await this.repo.save([
-        {
-          title: 'Usta Bul, Hizmet Al',
-          body: 'Temizlik, tadilat, tesisattan nakliyata kadar binlerce doğrulanmış usta tek platformda.',
-          emoji: '🛠️',
-          imageUrl: null,
-          gradientStart: '#007DFE',
-          gradientEnd: '#0056B3',
-          sortOrder: 0,
-          isActive: true,
-        },
-        {
-          title: 'Güvenli & Hızlı',
-          body: 'Kimlik doğrulamalı ustalar, şeffaf fiyatlar ve güvenli ödeme sistemi ile içiniz rahat.',
-          emoji: '🔒',
-          imageUrl: null,
-          gradientStart: '#2D3E50',
-          gradientEnd: '#1a2530',
-          sortOrder: 1,
-          isActive: true,
-        },
-        {
-          title: 'Sen Söyle, Onlar Gelsin',
-          body: 'İhtiyacını ilan olarak paylaş; uygun ustalar sana teklif yağdırsın.',
-          emoji: '📣',
-          imageUrl: null,
-          gradientStart: '#00C9A7',
-          gradientEnd: '#008f75',
-          sortOrder: 2,
-          isActive: true,
-        },
-        {
-          title: 'Mavi Tik Önemli',
-          body: 'Doğrulanmış ustaları gör, doğrulanmış müşterilere teklif ver — güven iki yönlü.',
-          emoji: '✓',
-          imageUrl: null,
-          gradientStart: '#1E88E5',
-          gradientEnd: '#0D47A1',
-          sortOrder: 3,
-          isActive: true,
-        },
-        {
-          title: 'Token = Teklif',
-          body: 'Hoş geldin hediyesi 100 token. Her teklif 5 token, kazandıkça yenisini al.',
-          emoji: '🎟️',
-          imageUrl: null,
-          gradientStart: '#FFA000',
-          gradientEnd: '#C67100',
-          sortOrder: 4,
-          isActive: true,
-        },
-        {
-          title: 'İlan Ver, Teklif Al',
-          body: 'İhtiyacını yaz, teklif yağsın. Hadi başlayalım.',
-          emoji: '⭐',
-          imageUrl: null,
-          gradientStart: '#7E57C2',
-          gradientEnd: '#4527A0',
-          sortOrder: 5,
-          isActive: true,
-        },
+      {
+        title: 'Usta Bul, Hizmet Al',
+        body: 'Temizlik, tadilat, tesisattan nakliyata kadar binlerce doğrulanmış usta tek platformda.',
+        emoji: '🛠️',
+        imageUrl: null,
+        gradientStart: '#007DFE',
+        gradientEnd: '#0056B3',
+        sortOrder: 0,
+        isActive: true,
+      },
+      {
+        title: 'Güvenli & Hızlı',
+        body: 'Kimlik doğrulamalı ustalar, şeffaf fiyatlar ve güvenli ödeme sistemi ile içiniz rahat.',
+        emoji: '🔒',
+        imageUrl: null,
+        gradientStart: '#2D3E50',
+        gradientEnd: '#1a2530',
+        sortOrder: 1,
+        isActive: true,
+      },
+      {
+        title: 'Sen Söyle, Onlar Gelsin',
+        body: 'İhtiyacını ilan olarak paylaş; uygun ustalar sana teklif yağdırsın.',
+        emoji: '📣',
+        imageUrl: null,
+        gradientStart: '#00C9A7',
+        gradientEnd: '#008f75',
+        sortOrder: 2,
+        isActive: true,
+      },
+      {
+        title: 'Mavi Tik Önemli',
+        body: 'Doğrulanmış ustaları gör, doğrulanmış müşterilere teklif ver — güven iki yönlü.',
+        emoji: '✓',
+        imageUrl: null,
+        gradientStart: '#1E88E5',
+        gradientEnd: '#0D47A1',
+        sortOrder: 3,
+        isActive: true,
+      },
+      {
+        title: 'Token = Teklif',
+        body: 'Hoş geldin hediyesi 100 token. Her teklif 5 token, kazandıkça yenisini al.',
+        emoji: '🎟️',
+        imageUrl: null,
+        gradientStart: '#FFA000',
+        gradientEnd: '#C67100',
+        sortOrder: 4,
+        isActive: true,
+      },
+      {
+        title: 'İlan Ver, Teklif Al',
+        body: 'İhtiyacını yaz, teklif yağsın. Hadi başlayalım.',
+        emoji: '⭐',
+        imageUrl: null,
+        gradientStart: '#7E57C2',
+        gradientEnd: '#4527A0',
+        sortOrder: 5,
+        isActive: true,
+      },
     ]);
   }
 
@@ -94,7 +94,10 @@ export class OnboardingService implements OnModuleInit {
     return this.repo.save(slide);
   }
 
-  async update(id: string, dto: Partial<OnboardingSlide>): Promise<OnboardingSlide> {
+  async update(
+    id: string,
+    dto: Partial<OnboardingSlide>,
+  ): Promise<OnboardingSlide> {
     await this.repo.update(id, dto);
     const slide = await this.repo.findOneBy({ id });
     if (!slide) throw new NotFoundException('Slide bulunamadı');

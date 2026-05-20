@@ -13,7 +13,9 @@ export class TenantsService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    const existing = await this.tenantRepo.findOne({ where: { slug: DEFAULT_TENANT_SLUG } });
+    const existing = await this.tenantRepo.findOne({
+      where: { slug: DEFAULT_TENANT_SLUG },
+    });
     if (!existing) {
       await this.tenantRepo.save(
         this.tenantRepo.create({

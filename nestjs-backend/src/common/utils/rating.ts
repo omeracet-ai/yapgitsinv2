@@ -15,7 +15,9 @@ export function wilsonScore(positive: number, total: number): number {
   const z = 1.96;
   const phat = positive / total;
   return (
-    (phat + (z * z) / (2 * total) - z * Math.sqrt((phat * (1 - phat) + (z * z) / (4 * total)) / total)) /
+    (phat +
+      (z * z) / (2 * total) -
+      z * Math.sqrt((phat * (1 - phat) + (z * z) / (4 * total)) / total)) /
     (1 + (z * z) / total)
   );
 }

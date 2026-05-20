@@ -34,6 +34,13 @@ export interface HealthResponse {
     cache: CheckStatus;
     iyzipay: CheckStatus;
   };
+  /**
+   * Phase 255 — number of TypeORM migrations registered but not yet applied
+   * against the connected database. `undefined` if introspection fails (e.g.
+   * driver doesn't support it or DataSource not initialized). A non-zero
+   * value should fail deploy smoke tests.
+   */
+  migrationsPending?: number;
   timestamp: string;
 }
 
@@ -115,21 +122,18 @@ export class HealthService {
         const bt: Array<{ timeout: number }> = await this.dataSource.query(
           'PRAGMA busy_timeout',
         );
-        const sy: Array<{ synchronous: number }> = await this.dataSource.query(
-          'PRAGMA synchronous',
-        );
+        const sy: Array<{ synchronous: number }> =
+          await this.dataSource.query('PRAGMA synchronous');
         const jobsIdx: Array<{ c: number }> = await this.dataSource.query(
           "SELECT COUNT(*) c FROM sqlite_master WHERE type='index' AND tbl_name='jobs'",
         );
         const usersIdx: Array<{ c: number }> = await this.dataSource.query(
           "SELECT COUNT(*) c FROM sqlite_master WHERE type='index' AND tbl_name='users'",
         );
-        const pc: Array<{ page_count: number }> = await this.dataSource.query(
-          'PRAGMA page_count',
-        );
-        const ps: Array<{ page_size: number }> = await this.dataSource.query(
-          'PRAGMA page_size',
-        );
+        const pc: Array<{ page_count: number }> =
+          await this.dataSource.query('PRAGMA page_count');
+        const ps: Array<{ page_size: number }> =
+          await this.dataSource.query('PRAGMA page_size');
         out.journalMode = jm[0]?.journal_mode;
         out.foreignKeys = Number(fk[0]?.foreign_keys) === 1;
         out.busyTimeoutMs = Number(bt[0]?.timeout);
@@ -157,16 +161,47 @@ export class HealthService {
    * Shallow /health — never calls external services. <50ms target.
    * Suitable for Cloudflare uptime monitor (unauth).
    */
+  /**
+   * Phase 255 — count of registered migrations not yet applied. Best-effort:
+   * returns `undefined` on any error so /health never goes 500 because of this.
+   */
+  private async checkPendingMigrations(): Promise<number | undefined> {
+    try {
+      if (!this.dataSource.isInitialized) return undefined;
+      const pending = await this.dataSource.showMigrations();
+      // showMigrations() returns true if there are pending migrations.
+      // For an exact count, diff registered vs executed.
+      if (!pending) return 0;
+      const executed = await this.dataSource.query(
+        "SELECT name FROM migrations",
+      ).catch(() => [] as Array<{ name: string }>);
+      const executedNames = new Set(
+        (executed as Array<{ name: string }>).map((r) => r.name),
+      );
+      const all = this.dataSource.migrations
+        .map((m) => m.name)
+        .filter((n): n is string => typeof n === 'string');
+      return all.filter((n) => !executedNames.has(n)).length;
+    } catch {
+      return undefined;
+    }
+  }
+
   async getHealth(): Promise<HealthResponse> {
-    const [database, cache] = await Promise.all([
+    const [database, cache, migrationsPending] = await Promise.all([
       this.checkDatabase(),
       this.checkCache(),
+      this.checkPendingMigrations(),
     ]);
     const iyzipay = this.checkIyzipay();
 
     let status: 'ok' | 'degraded' | 'down' = 'ok';
     if (database === 'down') status = 'down';
     else if (cache === 'down' || iyzipay === 'missing') status = 'degraded';
+    if (typeof migrationsPending === 'number' && migrationsPending > 0) {
+      // Pending migrations = schema drift risk; degrade but don't go down.
+      if (status === 'ok') status = 'degraded';
+    }
 
     return {
       status,
@@ -174,6 +209,7 @@ export class HealthService {
       version,
       buildSha: this.buildSha(),
       checks: { database, cache, iyzipay },
+      migrationsPending,
       timestamp: new Date().toISOString(),
     };
   }
@@ -186,7 +222,11 @@ export class HealthService {
     const shallow = await this.getHealth();
 
     // Iyzipay deep check — only if configured AND not mocked.
-    let iyzipayDeep: { status: CheckStatus; latencyMs: number; error?: string } = {
+    let iyzipayDeep: {
+      status: CheckStatus;
+      latencyMs: number;
+      error?: string;
+    } = {
       status: 'skipped',
       latencyMs: 0,
     };

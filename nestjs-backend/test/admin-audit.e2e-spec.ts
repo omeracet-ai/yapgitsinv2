@@ -7,7 +7,6 @@ import { AdminAuditService } from '../src/modules/admin-audit/admin-audit.servic
 import { AdminAuditLog } from '../src/modules/admin-audit/admin-audit-log.entity';
 import { User } from '../src/modules/users/user.entity';
 
-
 /**
  * Phase 182 — admin audit log (e2e).
  *
@@ -52,7 +51,7 @@ describe('Admin audit log (e2e)', () => {
   // its 5/min cap without per-request IP variance.
   let ipCounter = 0;
   const nextIp = () =>
-    `10.0.${Math.floor(ipCounter / 256) % 256}.${(ipCounter++) % 256}`;
+    `10.0.${Math.floor(ipCounter / 256) % 256}.${ipCounter++ % 256}`;
   const http = () => {
     const agent = request(app.getHttpServer());
     const ip = nextIp();
@@ -175,7 +174,9 @@ describe('Admin audit log (e2e)', () => {
       payload: null,
     });
     const auditRepo = dataSource.getRepository(AdminAuditLog);
-    const before = await auditRepo.findOne({ where: { targetId: 'fk-target-1' } });
+    const before = await auditRepo.findOne({
+      where: { targetId: 'fk-target-1' },
+    });
     expect(before).toBeTruthy();
     expect(before!.adminUserId).toBe(disposable.id);
     expect(before!.actorEmail).toBe('disposable-admin@test.com');
@@ -184,7 +185,9 @@ describe('Admin audit log (e2e)', () => {
     await dataSource.query('PRAGMA foreign_keys = ON');
     await userRepo.delete(disposable.id);
 
-    const after = await auditRepo.findOne({ where: { targetId: 'fk-target-1' } });
+    const after = await auditRepo.findOne({
+      where: { targetId: 'fk-target-1' },
+    });
     expect(after).toBeTruthy();
     expect(after!.adminUserId).toBeNull();
     expect(after!.actorEmail).toBe('disposable-admin@test.com');

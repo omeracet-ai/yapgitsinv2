@@ -15,6 +15,8 @@ import { SmsModule } from '../sms/sms.module';
 import { getJwtSigningSecret } from './jwt-secrets';
 import { IpOtpLockoutCleanupService } from './ip-otp-lockout-cleanup.service';
 import { EmailValidatorService } from './email-validator.service';
+import { User } from '../users/user.entity';
+import { AdminAuditModule } from '../admin-audit/admin-audit.module';
 
 @Module({
   imports: [
@@ -23,7 +25,9 @@ import { EmailValidatorService } from './email-validator.service';
       EmailVerificationToken,
       SmsOtp,
       IpOtpLockout,
+      User,
     ]),
+    AdminAuditModule,
     SmsModule,
     UsersModule,
     PassportModule,

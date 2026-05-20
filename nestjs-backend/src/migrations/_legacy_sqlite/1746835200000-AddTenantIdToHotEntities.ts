@@ -45,7 +45,9 @@ export class AddTenantIdToHotEntities1746835200000 implements MigrationInterface
     // 1. Add tenantId column to each table (idempotent — ignore "already exists")
     for (const table of this.HOT_TABLES) {
       try {
-        await qr.query(`ALTER TABLE ${table} ADD COLUMN tenantId varchar(36) NULL`);
+        await qr.query(
+          `ALTER TABLE ${table} ADD COLUMN tenantId varchar(36) NULL`,
+        );
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         if (!/duplicate column|already exists/i.test(msg)) throw err;
@@ -71,17 +73,29 @@ export class AddTenantIdToHotEntities1746835200000 implements MigrationInterface
     // 3. Composite indexes for tenant-scoped feed queries.
     //    Tables without `createdAt` get a single-column tenantId index.
     const withCreatedAt = new Set([
-      'users', 'jobs', 'bookings', 'offers', 'reviews', 'chat_messages',
-      'notifications', 'service_requests', 'service_request_applications',
-      'job_questions', 'job_question_replies', 'favorite_workers',
-      'saved_jobs', 'favorite_providers', 'blog_posts',
-      'category_subscriptions', 'admin_audit_logs',
+      'users',
+      'jobs',
+      'bookings',
+      'offers',
+      'reviews',
+      'chat_messages',
+      'notifications',
+      'service_requests',
+      'service_request_applications',
+      'job_questions',
+      'job_question_replies',
+      'favorite_workers',
+      'saved_jobs',
+      'favorite_providers',
+      'blog_posts',
+      'category_subscriptions',
+      'admin_audit_logs',
     ]);
     for (const table of this.HOT_TABLES) {
       if (withCreatedAt.has(table)) {
         await qr.query(
           `CREATE INDEX IF NOT EXISTS idx_${table}_tenantId_createdAt ` +
-          `ON ${table} (tenantId, createdAt)`,
+            `ON ${table} (tenantId, createdAt)`,
         );
       } else {
         await qr.query(

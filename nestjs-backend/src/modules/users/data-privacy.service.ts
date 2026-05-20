@@ -28,8 +28,10 @@ export class DataPrivacyService {
     @InjectRepository(Offer) private offers: Repository<Offer>,
     @InjectRepository(Review) private reviews: Repository<Review>,
     @InjectRepository(Booking) private bookings: Repository<Booking>,
-    @InjectRepository(Notification) private notifications: Repository<Notification>,
-    @InjectRepository(ChatMessage) private chatMessages: Repository<ChatMessage>,
+    @InjectRepository(Notification)
+    private notifications: Repository<Notification>,
+    @InjectRepository(ChatMessage)
+    private chatMessages: Repository<ChatMessage>,
     @InjectRepository(TokenTransaction)
     private tokenTransactions: Repository<TokenTransaction>,
   ) {}
@@ -38,7 +40,9 @@ export class DataPrivacyService {
   async exportUserData(userId: string): Promise<Record<string, unknown>> {
     const user = await this.users.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
-    const { passwordHash: _ph, ...profile } = user as { passwordHash?: string } & User;
+    const { passwordHash: _ph, ...profile } = user as {
+      passwordHash?: string;
+    } & User;
 
     const [
       jobs,

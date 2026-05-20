@@ -1,4 +1,10 @@
-import { IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 /** Phase 244 (Voldi-fs) — POST /service-requests/:id/apply body validation. */
 export class ApplyServiceRequestDto {

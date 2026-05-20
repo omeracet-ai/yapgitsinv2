@@ -101,10 +101,7 @@ export class ReputationController {
     @Param('workerId') workerId: string,
     @Request() req: AuthenticatedRequest,
   ) {
-    return this.badgeService.getUserBadges(
-      workerId,
-      req.user?.tenantId,
-    );
+    return this.badgeService.getUserBadges(workerId, req.user?.tenantId);
   }
 
   /**
@@ -129,12 +126,9 @@ export class ReputationController {
    * Get reputation trend score (change in last 30 days)
    */
   @Get('trend')
-  async getTrendScore(
-    @Param('workerId') workerId: string,
-  ) {
-    const trendScore = await this.reputationService.calculateTrendScore(
-      workerId,
-    );
+  async getTrendScore(@Param('workerId') workerId: string) {
+    const trendScore =
+      await this.reputationService.calculateTrendScore(workerId);
     return { workerId, trendScore };
   }
 

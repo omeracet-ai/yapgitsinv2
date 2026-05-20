@@ -56,17 +56,17 @@ export class CancellationService implements OnModuleInit {
       .createQueryBuilder('p')
       .where('p.isActive = :active', { active: true })
       .andWhere('p.appliesTo = :appliesTo', { appliesTo: input.appliesTo })
+      .andWhere('(p.appliesAtStage = :anyStage OR p.appliesAtStage = :stage)', {
+        anyStage: CancellationAppliesAtStage.ANY,
+        stage: input.appliesAtStage,
+      })
+      .andWhere('p.minHoursElapsed <= :elapsed', { elapsed })
       .andWhere(
-        '(p.appliesAtStage = :anyStage OR p.appliesAtStage = :stage)',
+        '(p.maxHoursElapsed IS NULL OR p.maxHoursElapsed >= :elapsed)',
         {
-          anyStage: CancellationAppliesAtStage.ANY,
-          stage: input.appliesAtStage,
+          elapsed,
         },
       )
-      .andWhere('p.minHoursElapsed <= :elapsed', { elapsed })
-      .andWhere('(p.maxHoursElapsed IS NULL OR p.maxHoursElapsed >= :elapsed)', {
-        elapsed,
-      })
       .orderBy('p.priority', 'ASC')
       .limit(1);
 
@@ -124,10 +124,7 @@ export class CancellationService implements OnModuleInit {
     return this.repo.save(entity);
   }
 
-  async update(
-    id: string,
-    dto: UpdatePolicyDto,
-  ): Promise<CancellationPolicy> {
+  async update(id: string, dto: UpdatePolicyDto): Promise<CancellationPolicy> {
     const existing = await this.findById(id);
     Object.assign(existing, {
       ...(dto.name !== undefined ? { name: dto.name } : {}),
@@ -256,5 +253,4 @@ export class CancellationService implements OnModuleInit {
       await this.create(dto);
     }
   }
-
 }

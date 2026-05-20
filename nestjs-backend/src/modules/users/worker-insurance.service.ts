@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WorkerInsurance } from './worker-insurance.entity';
@@ -22,7 +26,10 @@ export class WorkerInsuranceService {
     return this.repo.findOne({ where: { userId } });
   }
 
-  async upsert(userId: string, dto: UpsertInsuranceDto): Promise<WorkerInsurance> {
+  async upsert(
+    userId: string,
+    dto: UpsertInsuranceDto,
+  ): Promise<WorkerInsurance> {
     const policyNumber = (dto.policyNumber || '').trim();
     const provider = (dto.provider || '').trim();
     const coverage = Number(dto.coverageAmount);
@@ -87,7 +94,8 @@ export class WorkerInsuranceService {
   isInsured(ins: WorkerInsurance | null | undefined): boolean {
     if (!ins) return false;
     if (!ins.verified) return false;
-    const exp = ins.expiresAt instanceof Date ? ins.expiresAt : new Date(ins.expiresAt);
+    const exp =
+      ins.expiresAt instanceof Date ? ins.expiresAt : new Date(ins.expiresAt);
     return exp.getTime() > Date.now();
   }
 

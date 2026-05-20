@@ -1,4 +1,9 @@
-import { SelectQueryBuilder, Repository, ObjectLiteral, FindOptionsWhere } from 'typeorm';
+import {
+  SelectQueryBuilder,
+  Repository,
+  ObjectLiteral,
+  FindOptionsWhere,
+} from 'typeorm';
 
 /**
  * Phase 160 — Tenant-aware repository helpers.
@@ -48,9 +53,9 @@ export function withTenant<T extends ObjectLiteral>(
 ): FindOptionsWhere<T> | FindOptionsWhere<T>[] {
   if (!tenantId) return where;
   if (Array.isArray(where)) {
-    return where.map((w) => ({ ...w, tenantId } as FindOptionsWhere<T>));
+    return where.map((w) => ({ ...w, tenantId }));
   }
-  return { ...where, tenantId } as FindOptionsWhere<T>;
+  return { ...where, tenantId };
 }
 
 /**

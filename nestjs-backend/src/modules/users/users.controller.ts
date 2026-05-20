@@ -129,7 +129,10 @@ export class UsersController {
     @Query('months') monthsRaw?: string,
   ) {
     const months = monthsRaw ? parseInt(monthsRaw, 10) : 6;
-    return this.earningsSvc.getEarnings(req.user.id, isNaN(months) ? 6 : months);
+    return this.earningsSvc.getEarnings(
+      req.user.id,
+      isNaN(months) ? 6 : months,
+    );
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -269,7 +272,10 @@ export class UsersController {
     @Request() req: AuthenticatedRequest,
     @Body() body: FcmTokenDto,
   ) {
-    const tokens = await this.svc.removeFcmToken(req.user.id, body?.token ?? '');
+    const tokens = await this.svc.removeFcmToken(
+      req.user.id,
+      body?.token ?? '',
+    );
     return { tokens };
   }
 
@@ -360,7 +366,10 @@ export class UsersController {
     @Body() body: DataDeleteRequestDto,
   ) {
     const reason = (body?.reason || '').trim() || null;
-    const result = await this.dataPrivacy.createDeletionRequest(req.user.id, reason);
+    const result = await this.dataPrivacy.createDeletionRequest(
+      req.user.id,
+      reason,
+    );
     await this.adminAuditService.logAction(
       req.user.id,
       'user.data_delete_request',
@@ -371,20 +380,25 @@ export class UsersController {
     return result;
   }
 
-  // ── Phase 60: Account self-deletion (KVKK) ────────────────────────
+  // ── Phase 60 / Phase 255 — Account self-deletion (KVKK) ──────────
+  // Phase 255 (Voldi-fs): 2-step confirm + 30-day grace soft-delete. Tokens revoked.
   @UseGuards(AuthGuard('jwt'))
   @Delete('me')
   async deleteMe(
     @Request() req: AuthenticatedRequest,
     @Body() body: DeleteAccountDto,
   ) {
-    const result = await this.svc.deactivateAccount(req.user.id, body.password);
+    const result = await this.svc.softDeleteAccount(req.user.id, body.password);
     await this.adminAuditService.logAction(
       req.user.id,
-      'user.self_delete',
+      'account.soft_delete',
       'user',
       req.user.id,
-      { userId: req.user.id },
+      {
+        userId: req.user.id,
+        scheduledHardDeleteAt: result.scheduledHardDeleteAt,
+        graceDays: result.graceDays,
+      },
     );
     return result;
   }
@@ -400,9 +414,13 @@ export class UsersController {
     if (!url) throw new BadRequestException('url gerekli');
     const user = await this.svc.findById(req.user.id);
     if (!user) return null;
-    const current = Array.isArray(user.portfolioPhotos) ? user.portfolioPhotos : [];
+    const current = Array.isArray(user.portfolioPhotos)
+      ? user.portfolioPhotos
+      : [];
     if (current.length >= 10) {
-      throw new BadRequestException('En fazla 10 portfolyo fotoğrafı eklenebilir');
+      throw new BadRequestException(
+        'En fazla 10 portfolyo fotoğrafı eklenebilir',
+      );
     }
     if (current.includes(url)) return { portfolioPhotos: current };
     const next = [...current, url];
@@ -420,7 +438,9 @@ export class UsersController {
     const url = (body?.url || '').trim();
     const user = await this.svc.findById(req.user.id);
     if (!user) return null;
-    const current = Array.isArray(user.portfolioPhotos) ? user.portfolioPhotos : [];
+    const current = Array.isArray(user.portfolioPhotos)
+      ? user.portfolioPhotos
+      : [];
     const next = current.filter((u) => u !== url);
     await this.svc.update(req.user.id, { portfolioPhotos: next });
     return { portfolioPhotos: next };
@@ -446,7 +466,9 @@ export class UsersController {
     if (!target) throw new BadRequestException('id gerekli');
     const user = await this.svc.findById(req.user.id);
     if (!user) return { portfolioPhotos: [] };
-    const current = Array.isArray(user.portfolioPhotos) ? user.portfolioPhotos : [];
+    const current = Array.isArray(user.portfolioPhotos)
+      ? user.portfolioPhotos
+      : [];
     const next = current.filter((u) => u !== target);
     if (next.length !== current.length) {
       await this.svc.update(req.user.id, { portfolioPhotos: next });
@@ -465,7 +487,9 @@ export class UsersController {
     if (!url) throw new BadRequestException('url gerekli');
     const user = await this.svc.findById(req.user.id);
     if (!user) return null;
-    const current = Array.isArray(user.portfolioVideos) ? user.portfolioVideos : [];
+    const current = Array.isArray(user.portfolioVideos)
+      ? user.portfolioVideos
+      : [];
     if (current.length >= 3) {
       throw new BadRequestException('En fazla 3 portfolyo videosu eklenebilir');
     }
@@ -484,7 +508,9 @@ export class UsersController {
     const url = (body?.url || '').trim();
     const user = await this.svc.findById(req.user.id);
     if (!user) return null;
-    const current = Array.isArray(user.portfolioVideos) ? user.portfolioVideos : [];
+    const current = Array.isArray(user.portfolioVideos)
+      ? user.portfolioVideos
+      : [];
     const next = current.filter((u) => u !== url);
     await this.svc.update(req.user.id, { portfolioVideos: next });
     return { videos: next };
@@ -499,7 +525,8 @@ export class UsersController {
   ) {
     const url = (body?.url || '').trim();
     if (!url) throw new BadRequestException('url gerekli');
-    const dur = typeof body?.duration === 'number' ? Math.round(body.duration) : null;
+    const dur =
+      typeof body?.duration === 'number' ? Math.round(body.duration) : null;
     if (dur != null && dur > 65) {
       throw new BadRequestException('Tanıtım videosu 60 saniyeyi geçemez');
     }
@@ -592,7 +619,7 @@ export class UsersController {
       limit: parseNum(limit),
     });
     const data = result.data.map((u) => {
-      const { passwordHash: _ph, ...safe } = u as { passwordHash?: string } & typeof u;
+      const { passwordHash: _ph, ...safe } = u;
       return safe;
     });
     return { ...result, data };
@@ -630,10 +657,22 @@ export class UsersController {
     };
 
     const minRatingN = parseNum(minRating);
-    const sortAllowed = ['rating', 'reputation', 'rate_asc', 'rate_desc', 'nearest'];
-    const sortByVal = sortBy && sortAllowed.includes(sortBy)
-      ? (sortBy as 'rating' | 'reputation' | 'rate_asc' | 'rate_desc' | 'nearest')
-      : undefined;
+    const sortAllowed = [
+      'rating',
+      'reputation',
+      'rate_asc',
+      'rate_desc',
+      'nearest',
+    ];
+    const sortByVal =
+      sortBy && sortAllowed.includes(sortBy)
+        ? (sortBy as
+            | 'rating'
+            | 'reputation'
+            | 'rate_asc'
+            | 'rate_desc'
+            | 'nearest')
+        : undefined;
     const latN = parseNum(lat);
     const lngN = parseNum(lng);
     const radiusN = parseNum(radiusKm);
@@ -641,36 +680,51 @@ export class UsersController {
     const result = await this.svc.findWorkersAdvanced({
       category,
       city,
-      minRating: minRatingN != null ? Math.min(5, Math.max(0, minRatingN)) : undefined,
+      minRating:
+        minRatingN != null ? Math.min(5, Math.max(0, minRatingN)) : undefined,
       minRate: parseNum(minRate),
       maxRate: parseNum(maxRate),
       verifiedOnly: parseBool(verifiedOnly),
       availableOnly: parseBool(availableOnly),
-      availableDay: (['mon','tue','wed','thu','fri','sat','sun'] as const).includes(
-        availableDay as 'mon',
-      )
-        ? (availableDay as 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun')
+      availableDay: (
+        ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
+      ).includes(availableDay as 'mon')
+        ? (availableDay as
+            | 'mon'
+            | 'tue'
+            | 'wed'
+            | 'thu'
+            | 'fri'
+            | 'sat'
+            | 'sun')
         : undefined,
       sortBy: sortByVal,
       page: parseNum(page),
       limit: parseNum(limit),
       lat: latN,
       lng: lngN,
-      radiusKm: radiusN != null ? Math.min(200, Math.max(1, radiusN)) : undefined,
-      semanticQuery: semanticQuery && semanticQuery.trim().length > 0
-        ? semanticQuery.trim().slice(0, 200)
-        : undefined,
+      radiusKm:
+        radiusN != null ? Math.min(200, Math.max(1, radiusN)) : undefined,
+      semanticQuery:
+        semanticQuery && semanticQuery.trim().length > 0
+          ? semanticQuery.trim().slice(0, 200)
+          : undefined,
     });
 
     // Phase 146 — bulk subscription lookup to avoid N+1 in worker list
-    const planMap = await this.svc.getActiveSubscriptionPlanKeys(result.data.map((u) => u.id));
-    const data = await Promise.all(result.data.map(async (u) => {
-      const { passwordHash: _ph, ...safe } = u as {
-        passwordHash?: string;
-      } & typeof u;
-      const badges = await this.svc.computeBadges(u, planMap.get(u.id) ?? null);
-      return { ...safe, badges };
-    }));
+    const planMap = await this.svc.getActiveSubscriptionPlanKeys(
+      result.data.map((u) => u.id),
+    );
+    const data = await Promise.all(
+      result.data.map(async (u) => {
+        const { passwordHash: _ph, ...safe } = u;
+        const badges = await this.svc.computeBadges(
+          u,
+          planMap.get(u.id) ?? null,
+        );
+        return { ...safe, badges };
+      }),
+    );
     return { ...result, data };
   }
 
@@ -712,7 +766,8 @@ export class UsersController {
     const existing = await this.availabilitySvc.getSlots(userId);
     const existingByDay = new Map(existing.map((s) => [s.dayOfWeek, s]));
 
-    const results: import('../availability/availability-slot.entity').AvailabilitySlot[] = [];
+    const results: import('../availability/availability-slot.entity').AvailabilitySlot[] =
+      [];
     for (const d of body.days) {
       if (d.dayOfWeek < 0 || d.dayOfWeek > 6) continue;
       const existing_ = existingByDay.get(d.dayOfWeek);
@@ -724,11 +779,15 @@ export class UsersController {
       } else {
         // Gün açıksa upsert
         if (existing_) {
-          const updated = await this.availabilitySvc.updateSlot(existing_.id, userId, {
-            startTime: d.startTime,
-            endTime: d.endTime,
-            isActive: true,
-          });
+          const updated = await this.availabilitySvc.updateSlot(
+            existing_.id,
+            userId,
+            {
+              startTime: d.startTime,
+              endTime: d.endTime,
+              isActive: true,
+            },
+          );
           results.push(updated);
         } else {
           const created = await this.availabilitySvc.addSlot(userId, {
@@ -878,7 +937,11 @@ export class UsersController {
     const profile = await this.buildPublicProfile(id);
     if (profile !== null) {
       try {
-        await this.cache.set(cacheKey, profile, UsersController.PROFILE_CACHE_TTL);
+        await this.cache.set(
+          cacheKey,
+          profile,
+          UsersController.PROFILE_CACHE_TTL,
+        );
       } catch {
         /* cache yazılamazsa sorun değil */
       }
@@ -911,7 +974,9 @@ export class UsersController {
         .createQueryBuilder('offer')
         .innerJoinAndSelect('offer.job', 'job')
         .where('offer.userId = :id', { id })
-        .andWhere('offer.status = :offerStatus', { offerStatus: OfferStatus.ACCEPTED })
+        .andWhere('offer.status = :offerStatus', {
+          offerStatus: OfferStatus.ACCEPTED,
+        })
         .andWhere('job.status = :jobStatus', { jobStatus: JobStatus.COMPLETED })
         .orderBy('offer.updatedAt', 'DESC')
         .take(20)
@@ -919,7 +984,7 @@ export class UsersController {
         .then((offers) => offers.map((o) => o.job)),
     ]);
 
-    const allPhotoJobs = [...customerJobs, ...(workerJobs as typeof customerJobs)];
+    const allPhotoJobs = [...customerJobs, ...workerJobs];
     const pastPhotos: string[] = [];
     for (const job of allPhotoJobs) {
       if (pastPhotos.length >= 4) break;
@@ -948,18 +1013,21 @@ export class UsersController {
       averageRating: avgRating,
       totalReviews: reviews.length,
       reputationScore: reputation,
-    } as typeof user;
+    };
     const insurance = await insurancePromise;
     const insured = this.insuranceSvc.isInsured(insurance);
     const verifiedCerts = await this.certificationSvc.listPublic(id);
     const hasCert = await this.certificationSvc.hasVerifiedCertification(id);
     const badges = await this.svc.computeBadges(enrichedUser);
-    if (insured) badges.push({ key: 'insured', label: 'Sigortalı', icon: '🛡️' });
-    if (hasCert) badges.push({ key: 'certified', label: 'Sertifikalı', icon: '📜' });
+    if (insured)
+      badges.push({ key: 'insured', label: 'Sigortalı', icon: '🛡️' });
+    if (hasCert)
+      badges.push({ key: 'certified', label: 'Sertifikalı', icon: '📜' });
 
     return {
       ...safe,
-      insurance: insured && insurance ? this.insuranceSvc.toPublic(insurance) : null,
+      insurance:
+        insured && insurance ? this.insuranceSvc.toPublic(insurance) : null,
       averageRating: avgRating,
       totalReviews: reviews.length,
       reputationScore: reputation,
@@ -978,11 +1046,17 @@ export class UsersController {
         },
       })),
       pastPhotos,
-      portfolioPhotos: Array.isArray(user.portfolioPhotos) ? user.portfolioPhotos : [],
-      portfolioVideos: Array.isArray(user.portfolioVideos) ? user.portfolioVideos : [],
+      portfolioPhotos: Array.isArray(user.portfolioPhotos)
+        ? user.portfolioPhotos
+        : [],
+      portfolioVideos: Array.isArray(user.portfolioVideos)
+        ? user.portfolioVideos
+        : [],
       introVideoUrl: user.introVideoUrl ?? null,
       introVideoDuration: user.introVideoDuration ?? null,
-      certifications: verifiedCerts.map((c) => this.certificationSvc.toPublic(c)),
+      certifications: verifiedCerts.map((c) =>
+        this.certificationSvc.toPublic(c),
+      ),
     };
   }
 }

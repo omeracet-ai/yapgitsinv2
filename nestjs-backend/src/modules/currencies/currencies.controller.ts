@@ -35,7 +35,8 @@ export class CurrenciesController {
   ) {
     const code = (body?.code || '').toUpperCase();
     const cur = await this.svc.findOne(code);
-    if (!cur || !cur.isActive) throw new BadRequestException('invalid currency');
+    if (!cur || !cur.isActive)
+      throw new BadRequestException('invalid currency');
     await this.usersRepo.update(req.user.id, { preferredCurrency: code });
     return { preferredCurrency: code };
   }

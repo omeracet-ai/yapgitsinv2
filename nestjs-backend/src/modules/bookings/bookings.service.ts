@@ -211,7 +211,12 @@ export class BookingsService {
         });
         await em.save(tx);
         // Atomic balance bump within TX
-        await em.increment(User, { id: booking.customerId }, 'tokenBalance', amount);
+        await em.increment(
+          User,
+          { id: booking.customerId },
+          'tokenBalance',
+          amount,
+        );
       }
 
       // H3: notifications inside TX so they roll back on failure
@@ -264,7 +269,10 @@ export class BookingsService {
 
     // Stats outside TX (non-critical, idempotent recalcs)
     if (result.old !== BookingStatus.PENDING) {
-      await this.usersService.bumpStat(result.saved.customerId, 'asCustomerFail');
+      await this.usersService.bumpStat(
+        result.saved.customerId,
+        'asCustomerFail',
+      );
       await this.usersService.bumpStat(result.saved.workerId, 'asWorkerFail');
       await this.usersService.recalcReputation(result.saved.customerId);
       await this.usersService.recalcReputation(result.saved.workerId);
@@ -333,9 +341,9 @@ export class BookingsService {
     }
 
     const priceMinor =
-        data.agreedPrice != null && data.agreedPrice > 0
-            ? Math.round(data.agreedPrice * 100)
-            : null;
+      data.agreedPrice != null && data.agreedPrice > 0
+        ? Math.round(data.agreedPrice * 100)
+        : null;
     const booking = this.repo.create({
       customerId,
       workerId: data.workerId,
@@ -454,7 +462,15 @@ export class BookingsService {
     const sched = user.availabilitySchedule;
     if (sched) {
       const d = new Date(`${dateStr}T00:00:00Z`);
-      const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+      const dayKeys = [
+        'sun',
+        'mon',
+        'tue',
+        'wed',
+        'thu',
+        'fri',
+        'sat',
+      ] as const;
       const dow = dayKeys[d.getUTCDay()];
       if (sched[dow] !== true) return [];
     }
@@ -464,7 +480,11 @@ export class BookingsService {
       .where('b.workerId = :uid', { uid: userId })
       .andWhere('b.scheduledDate = :d', { d: dateStr })
       .andWhere('b.status IN (:...st)', {
-        st: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS],
+        st: [
+          BookingStatus.PENDING,
+          BookingStatus.CONFIRMED,
+          BookingStatus.IN_PROGRESS,
+        ],
       })
       .getRawMany<{ time: string | null }>();
     const takenSet = new Set(
@@ -571,7 +591,10 @@ export class BookingsService {
     return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
   }
 
-  private _bookingStartDate(scheduledDate: string, scheduledTime: string | null): Date {
+  private _bookingStartDate(
+    scheduledDate: string,
+    scheduledTime: string | null,
+  ): Date {
     const [year, month, day] = scheduledDate.split('-').map(Number);
     if (scheduledTime) {
       const [hour, minute] = scheduledTime.split(':').map(Number);

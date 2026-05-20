@@ -23,10 +23,7 @@ import { EscrowService } from './escrow.service';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 class AdminResolveDto {
-  @IsIn(['release', 'refund', 'split']) action!:
-    | 'release'
-    | 'refund'
-    | 'split';
+  @IsIn(['release', 'refund', 'split']) action!: 'release' | 'refund' | 'split';
   @IsOptional() @IsNumber() @Min(0) @Max(1) splitRatio?: number;
   @IsOptional() @IsString() @MaxLength(2000) reason?: string;
   @IsOptional() @IsString() @MaxLength(2000) adminNote?: string;
@@ -92,7 +89,9 @@ export class EscrowAdminController {
       dto?.reason,
       req.user.role,
     );
-    return this.svc.withFeeBreakdown(escrow);
+    // release() polymorphic: PaymentEscrow → fee breakdown; BookingEscrow
+    // (Phase 253 bridge) lacks PaymentEscrow shape, return as-is.
+    return 'taskerId' in escrow ? this.svc.withFeeBreakdown(escrow) : escrow;
   }
 
   /** Phase 169 — admin manual refund: held → refunded (full or partial). */

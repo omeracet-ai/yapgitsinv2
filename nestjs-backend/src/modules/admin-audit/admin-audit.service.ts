@@ -137,16 +137,30 @@ export class AdminAuditService {
     targetType?: string;
     adminUserId?: string;
   }): Promise<string> {
-    const { data } = await this.findFiltered({ ...opts, limit: 10000, offset: 0 });
+    const { data } = await this.findFiltered({
+      ...opts,
+      limit: 10000,
+      offset: 0,
+    });
     const header = 'createdAt,adminUserId,action,targetType,targetId,payload';
     const esc = (v: unknown): string => {
       const s = v == null ? '' : String(v);
       return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
     const lines = data.map((r) => {
-      const ts = r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt);
+      const ts =
+        r.createdAt instanceof Date
+          ? r.createdAt.toISOString()
+          : String(r.createdAt);
       const payload = r.payload == null ? '' : JSON.stringify(r.payload);
-      return [ts, r.adminUserId, r.action, r.targetType ?? '', r.targetId ?? '', payload]
+      return [
+        ts,
+        r.adminUserId,
+        r.action,
+        r.targetType ?? '',
+        r.targetId ?? '',
+        payload,
+      ]
         .map(esc)
         .join(',');
     });
@@ -159,9 +173,11 @@ export class AdminAuditService {
     return Math.max(min, Math.min(max, n));
   }
 
-  async previewPurge(
-    olderThanDaysInput: number,
-  ): Promise<{ wouldDelete: number; cutoffDate: string; olderThanDays: number }> {
+  async previewPurge(olderThanDaysInput: number): Promise<{
+    wouldDelete: number;
+    cutoffDate: string;
+    olderThanDays: number;
+  }> {
     const olderThanDays = this.clampDays(olderThanDaysInput);
     const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
     const wouldDelete = await this.repo
@@ -189,11 +205,17 @@ export class AdminAuditService {
     const deleted = Number(result.affected ?? 0);
     const cutoffDate = cutoff.toISOString();
     // Audit the purge AFTER the delete so it isn't itself purged.
-    await this.logAction(adminUserId, 'audit_log.purge', 'audit_log', undefined, {
-      olderThanDays,
-      deletedCount: deleted,
-      cutoffDate,
-    });
+    await this.logAction(
+      adminUserId,
+      'audit_log.purge',
+      'audit_log',
+      undefined,
+      {
+        olderThanDays,
+        deletedCount: deleted,
+        cutoffDate,
+      },
+    );
     return { deleted, cutoffDate, olderThanDays };
   }
 
@@ -205,51 +227,56 @@ export class AdminAuditService {
 
     // Phase 175 — fan out all 5 independent aggregates in a single wave.
     const t0 = Date.now();
-    const [totalEntries, perDayRaw, topActionsRaw, topAdminsRaw, topTargetTypesRaw] =
-      await Promise.all([
-        this.repo
-          .createQueryBuilder('log')
-          .where(baseWhere('log'), { since })
-          .getCount(),
-        // Per-day counts. SUBSTR on ISO datetime for SQLite-friendliness; works on
-        // Postgres too because TypeORM serializes Date and SUBSTR is standard.
-        this.repo
-          .createQueryBuilder('log')
-          .select('SUBSTR(log.createdAt, 1, 10)', 'date')
-          .addSelect('COUNT(*)', 'count')
-          .where(baseWhere('log'), { since })
-          .groupBy('date')
-          .orderBy('date', 'ASC')
-          .getRawMany<{ date: string; count: string | number }>(),
-        this.repo
-          .createQueryBuilder('log')
-          .select('log.action', 'action')
-          .addSelect('COUNT(*)', 'count')
-          .where(baseWhere('log'), { since })
-          .groupBy('log.action')
-          .orderBy('count', 'DESC')
-          .limit(10)
-          .getRawMany<{ action: string; count: string | number }>(),
-        this.repo
-          .createQueryBuilder('log')
-          .select('log.adminUserId', 'adminUserId')
-          .addSelect('COUNT(*)', 'count')
-          .where(baseWhere('log'), { since })
-          .groupBy('log.adminUserId')
-          .orderBy('count', 'DESC')
-          .limit(10)
-          .getRawMany<{ adminUserId: string; count: string | number }>(),
-        this.repo
-          .createQueryBuilder('log')
-          .select('log.targetType', 'targetType')
-          .addSelect('COUNT(*)', 'count')
-          .where(baseWhere('log'), { since })
-          .andWhere('log.targetType IS NOT NULL')
-          .groupBy('log.targetType')
-          .orderBy('count', 'DESC')
-          .limit(10)
-          .getRawMany<{ targetType: string; count: string | number }>(),
-      ]);
+    const [
+      totalEntries,
+      perDayRaw,
+      topActionsRaw,
+      topAdminsRaw,
+      topTargetTypesRaw,
+    ] = await Promise.all([
+      this.repo
+        .createQueryBuilder('log')
+        .where(baseWhere('log'), { since })
+        .getCount(),
+      // Per-day counts. SUBSTR on ISO datetime for SQLite-friendliness; works on
+      // Postgres too because TypeORM serializes Date and SUBSTR is standard.
+      this.repo
+        .createQueryBuilder('log')
+        .select('SUBSTR(log.createdAt, 1, 10)', 'date')
+        .addSelect('COUNT(*)', 'count')
+        .where(baseWhere('log'), { since })
+        .groupBy('date')
+        .orderBy('date', 'ASC')
+        .getRawMany<{ date: string; count: string | number }>(),
+      this.repo
+        .createQueryBuilder('log')
+        .select('log.action', 'action')
+        .addSelect('COUNT(*)', 'count')
+        .where(baseWhere('log'), { since })
+        .groupBy('log.action')
+        .orderBy('count', 'DESC')
+        .limit(10)
+        .getRawMany<{ action: string; count: string | number }>(),
+      this.repo
+        .createQueryBuilder('log')
+        .select('log.adminUserId', 'adminUserId')
+        .addSelect('COUNT(*)', 'count')
+        .where(baseWhere('log'), { since })
+        .groupBy('log.adminUserId')
+        .orderBy('count', 'DESC')
+        .limit(10)
+        .getRawMany<{ adminUserId: string; count: string | number }>(),
+      this.repo
+        .createQueryBuilder('log')
+        .select('log.targetType', 'targetType')
+        .addSelect('COUNT(*)', 'count')
+        .where(baseWhere('log'), { since })
+        .andWhere('log.targetType IS NOT NULL')
+        .groupBy('log.targetType')
+        .orderBy('count', 'DESC')
+        .limit(10)
+        .getRawMany<{ targetType: string; count: string | number }>(),
+    ]);
 
     const entriesPerDay = perDayRaw.map((r) => ({
       date: String(r.date),

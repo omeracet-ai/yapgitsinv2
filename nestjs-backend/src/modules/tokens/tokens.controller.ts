@@ -98,8 +98,9 @@ export class TokensController {
   ) {
     if (!body?.packageId) throw new BadRequestException('packageId zorunlu');
     const ip =
-      (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-      req.ip;
+      (req.headers['x-forwarded-for'] as string | undefined)
+        ?.split(',')[0]
+        ?.trim() || req.ip;
     return this.svc.createIyzipayCheckout(req.user.id, body.packageId, { ip });
   }
 

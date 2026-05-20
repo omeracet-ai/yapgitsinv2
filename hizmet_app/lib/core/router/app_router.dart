@@ -26,6 +26,7 @@ import '../../../features/auth/presentation/screens/forgot_password_screen.dart'
 import '../../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../../features/auth/presentation/screens/verify_email_screen.dart';
 import '../../../features/auth/presentation/screens/sms_verify_screen.dart';
+import '../../../features/auth/presentation/screens/account_deleted_screen.dart';
 import '../../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../../features/onboarding/presentation/screens/worker_onboarding_screen.dart';
 import '../../../features/job_templates/presentation/job_templates_screen.dart';
@@ -72,6 +73,7 @@ const _publicPaths = <String>{
   '/auth/sms-verify',
   '/destek',
   '/harita',
+  '/account-deleted',
 };
 
 /// Public prefix'ler — `/profil/:id`, `/musteri/:id`, `/usta/:id`, `/ilan/:id`
@@ -466,6 +468,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/portfolyo',
         builder: (context, state) => const PortfolioScreen(),
+      ),
+      // Phase 255 — Hesap silme onay ekranı (soft-delete window 30 gün).
+      GoRoute(
+        path: '/account-deleted',
+        builder: (context, state) => const AccountDeletedScreen(),
       ),
       GoRoute(
         path: '/ilan-basarili',

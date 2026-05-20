@@ -13,11 +13,7 @@ export class WalletPdfService {
     @InjectRepository(User) private userRepo: Repository<User>,
   ) {}
 
-  async generatePdf(
-    userId: string,
-    from?: Date,
-    to?: Date,
-  ): Promise<Buffer> {
+  async generatePdf(userId: string, from?: Date, to?: Date): Promise<Buffer> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
 
@@ -69,7 +65,10 @@ export class WalletPdfService {
 
         // User info
         let y = 110;
-        doc.fillColor('#2D3E50').fontSize(11).text('Kullanici Bilgileri', 40, y);
+        doc
+          .fillColor('#2D3E50')
+          .fontSize(11)
+          .text('Kullanici Bilgileri', 40, y);
         y += 18;
         doc
           .fontSize(10)
@@ -90,10 +89,7 @@ export class WalletPdfService {
 
         // Balance summary
         y += 8;
-        doc
-          .roundedRect(40, y, 515, 50, 8)
-          .fillColor('#E5F2FF')
-          .fill();
+        doc.roundedRect(40, y, 515, 50, 8).fillColor('#E5F2FF').fill();
         doc
           .fillColor('#0056B3')
           .fontSize(11)
@@ -107,11 +103,14 @@ export class WalletPdfService {
         // Table header
         doc.fillColor('#2D3E50').fontSize(11).text('Islem Gecmisi', 40, y);
         y += 18;
-        const cols = { date: 40, type: 170, amount: 270, status: 340, desc: 410 };
-        doc
-          .rect(40, y, 515, 20)
-          .fillColor('#F0F4F8')
-          .fill();
+        const cols = {
+          date: 40,
+          type: 170,
+          amount: 270,
+          status: 340,
+          desc: 410,
+        };
+        doc.rect(40, y, 515, 20).fillColor('#F0F4F8').fill();
         doc
           .fillColor('#2D3E50')
           .fontSize(9)
@@ -165,12 +164,9 @@ export class WalletPdfService {
             doc.text(tx.type, cols.type + 5, y, { width: 95 });
             doc
               .fillColor(isCredit ? '#00C9A7' : '#DE4437')
-              .text(
-                `${isCredit ? '+' : ''}${tx.amount}`,
-                cols.amount + 5,
-                y,
-                { width: 65 },
-              );
+              .text(`${isCredit ? '+' : ''}${tx.amount}`, cols.amount + 5, y, {
+                width: 65,
+              });
             doc.fillColor('#000').text(tx.status, cols.status + 5, y, {
               width: 65,
             });

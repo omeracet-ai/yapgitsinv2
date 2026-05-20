@@ -16,10 +16,7 @@ export class WalletController {
   @Get('wallet.pdf')
   @UseGuards(AuthGuard('jwt'))
   @Header('Content-Type', 'application/pdf')
-  @Header(
-    'Content-Disposition',
-    'attachment; filename="yapgitsin-wallet.pdf"',
-  )
+  @Header('Content-Disposition', 'attachment; filename="yapgitsin-wallet.pdf"')
   async getPdf(@Req() req: any, @Res() res: Response): Promise<void> {
     const userId = req.user.id;
     const buffer = await this.svc.generatePdf(userId);

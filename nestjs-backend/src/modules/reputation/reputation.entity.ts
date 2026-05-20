@@ -34,7 +34,12 @@ export class Reputation {
 
   /** Type of event: 'review', 'job_completion', 'job_cancellation', 'badge_awarded' */
   @Column({ type: 'varchar', length: 50 })
-  type: 'review' | 'job_completion' | 'job_cancellation' | 'badge_awarded' | 'manual_adjustment';
+  type:
+    | 'review'
+    | 'job_completion'
+    | 'job_cancellation'
+    | 'badge_awarded'
+    | 'manual_adjustment';
 
   /** Reference ID (reviewId, jobId, badgeId, etc.) */
   @Column({ type: 'varchar', length: 36, nullable: true })

@@ -1,8 +1,16 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JobLead, JobLeadStatus } from './job-lead.entity';
-import { JobLeadResponse, JobLeadResponseStatus } from './job-lead-response.entity';
+import {
+  JobLeadResponse,
+  JobLeadResponseStatus,
+} from './job-lead-response.entity';
 import { CreateJobLeadDto } from './dto/create-job-lead.dto';
 import { User } from '../users/user.entity';
 import { EmailService } from '../email/email.service';
@@ -50,11 +58,15 @@ export class JobLeadsService {
     });
 
     const saved = await this.leadRepo.save(lead);
-    this.logger.log(`[leads] created lead ${saved.id} for ${saved.category} in ${saved.city}`);
+    this.logger.log(
+      `[leads] created lead ${saved.id} for ${saved.category} in ${saved.city}`,
+    );
 
     // Trigger async worker matching and email notifications (non-blocking)
     this.matchAndNotifyWorkers(saved).catch((err) => {
-      this.logger.error(`[leads] async matching failed for lead ${saved.id}: ${err.message}`);
+      this.logger.error(
+        `[leads] async matching failed for lead ${saved.id}: ${err.message}`,
+      );
     });
 
     return { id: saved.id, status: saved.status };
@@ -109,8 +121,12 @@ export class JobLeadsService {
 
     const workers = await this.userRepo
       .createQueryBuilder('u')
-      .where('u.workerCategories LIKE :category', { category: `%${lead.category}%` })
-      .andWhere('(u.city = :city OR u.city IS NULL OR u.city = "")', { city: lead.city })
+      .where('u.workerCategories LIKE :category', {
+        category: `%${lead.category}%`,
+      })
+      .andWhere('(u.city = :city OR u.city IS NULL OR u.city = "")', {
+        city: lead.city,
+      })
       .andWhere('u.identityVerified = true')
       .andWhere('u.isAvailable = true')
       .orderBy('u.averageRating', 'DESC')
@@ -118,7 +134,9 @@ export class JobLeadsService {
       .limit(10)
       .getMany();
 
-    this.logger.log(`[leads] matched ${workers.length} workers for lead ${leadId}`);
+    this.logger.log(
+      `[leads] matched ${workers.length} workers for lead ${leadId}`,
+    );
     return workers;
   }
 
@@ -169,7 +187,9 @@ export class JobLeadsService {
     try {
       // Find matching workers
       const workers = await this.matchWorkers(lead.id);
-      this.logger.log(`[leads] notifying ${workers.length} workers for lead ${lead.id}`);
+      this.logger.log(
+        `[leads] notifying ${workers.length} workers for lead ${lead.id}`,
+      );
 
       // Send emails and push notifications to matched workers
       for (const worker of workers) {
@@ -224,9 +244,13 @@ export class JobLeadsService {
         );
       }
 
-      this.logger.log(`[leads] matching and notifications complete for lead ${lead.id}`);
+      this.logger.log(
+        `[leads] matching and notifications complete for lead ${lead.id}`,
+      );
     } catch (err) {
-      this.logger.error(`[leads] error in matchAndNotifyWorkers: ${(err as Error).message}`);
+      this.logger.error(
+        `[leads] error in matchAndNotifyWorkers: ${(err as Error).message}`,
+      );
     }
   }
 }

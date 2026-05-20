@@ -66,10 +66,16 @@ export class AddJobKind1747900000000 implements MigrationInterface {
   public async down(qr: QueryRunner): Promise<void> {
     const driver = qr.connection.options.type;
     if (driver === 'mysql' || driver === 'mariadb') {
-      await this.safeDrop(qr, `DROP INDEX idx_jobs_kind_status_createdAt ON jobs`);
+      await this.safeDrop(
+        qr,
+        `DROP INDEX idx_jobs_kind_status_createdAt ON jobs`,
+      );
       await this.safeDrop(qr, `ALTER TABLE jobs DROP COLUMN kind`);
     } else if (driver === 'postgres') {
-      await this.safeDrop(qr, `DROP INDEX IF EXISTS idx_jobs_kind_status_createdAt`);
+      await this.safeDrop(
+        qr,
+        `DROP INDEX IF EXISTS idx_jobs_kind_status_createdAt`,
+      );
       await this.safeDrop(qr, `ALTER TABLE jobs DROP COLUMN kind`);
     } else {
       // SQLite: no-op

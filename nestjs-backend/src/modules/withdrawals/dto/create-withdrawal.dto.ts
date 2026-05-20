@@ -1,4 +1,12 @@
-import { IsInt, IsString, Matches, Min, MinLength, MaxLength, IsOptional } from 'class-validator';
+import {
+  IsInt,
+  IsString,
+  Matches,
+  Min,
+  MinLength,
+  MaxLength,
+  IsOptional,
+} from 'class-validator';
 
 export class CreateWithdrawalDto {
   // 5000 = 50 TL minimum

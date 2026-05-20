@@ -33,7 +33,9 @@ describe('Phase 243 defensive guards (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    reviewsRepo = moduleFixture.get<Repository<Review>>(getRepositoryToken(Review));
+    reviewsRepo = moduleFixture.get<Repository<Review>>(
+      getRepositoryToken(Review),
+    );
     usersRepo = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
     reviewsService = moduleFixture.get<ReviewsService>(ReviewsService);
   });

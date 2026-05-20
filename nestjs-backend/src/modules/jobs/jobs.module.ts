@@ -24,7 +24,13 @@ import { AiModule } from '../ai/ai.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Job, Offer, JobQuestion, JobQuestionReply, SavedJob]),
+    TypeOrmModule.forFeature([
+      Job,
+      Offer,
+      JobQuestion,
+      JobQuestionReply,
+      SavedJob,
+    ]),
     UsersModule,
     TokensModule,
     NotificationsModule,
@@ -36,7 +42,12 @@ import { AiModule } from '../ai/ai.module';
     AiModule,
   ],
   providers: [JobsService, OffersService, QuestionsService, SavedJobsService],
-  controllers: [JobsController, OffersController, OffersRootController, QuestionsController],
+  controllers: [
+    JobsController,
+    OffersController,
+    OffersRootController,
+    QuestionsController,
+  ],
   exports: [JobsService, OffersService],
 })
 export class JobsModule {}

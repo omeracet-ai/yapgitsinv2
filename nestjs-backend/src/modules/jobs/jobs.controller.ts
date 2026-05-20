@@ -91,7 +91,11 @@ export class JobsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.offersService.findByUser(req.user.id, Number(page) || 1, Number(limit) || 20);
+    return this.offersService.findByUser(
+      req.user.id,
+      Number(page) || 1,
+      Number(limit) || 20,
+    );
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -296,7 +300,10 @@ export class JobsController {
       storage: memoryStorage(),
       fileFilter: (req: any, file: any, cb: any) => {
         if (!file.mimetype.match(/^image\/(jpeg|jpg|png|webp)$/)) {
-          return cb(new BadRequestException('Sadece resim dosyaları yüklenebilir'), false);
+          return cb(
+            new BadRequestException('Sadece resim dosyaları yüklenebilir'),
+            false,
+          );
         }
         cb(null, true);
       },

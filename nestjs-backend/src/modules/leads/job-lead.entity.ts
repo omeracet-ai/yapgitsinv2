@@ -72,6 +72,8 @@ export class JobLead {
   @JoinColumn({ name: 'customerId' })
   customer: User | null;
 
-  @OneToMany(() => JobLeadResponse, (response) => response.lead, { cascade: true })
+  @OneToMany(() => JobLeadResponse, (response) => response.lead, {
+    cascade: true,
+  })
   responses: JobLeadResponse[];
 }

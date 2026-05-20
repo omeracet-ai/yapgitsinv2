@@ -23,7 +23,10 @@ describe('CORS originFn (e2e)', () => {
     // explicitly pass an allowlist to exercise the deny path).
     const allowed = ['https://yapgitsin.tr'];
     app.enableCors({
-      origin: (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => {
+      origin: (
+        origin: string | undefined,
+        cb: (err: Error | null, allow?: boolean) => void,
+      ) => {
         if (!origin) return cb(null, true);
         if (allowed.includes(origin)) return cb(null, true);
         return cb(null, false);
@@ -56,7 +59,9 @@ describe('CORS originFn (e2e)', () => {
       .set('Origin', 'https://yapgitsin.tr')
       .set('Access-Control-Request-Method', 'POST');
     expect(res.status).not.toBe(500);
-    expect(res.headers['access-control-allow-origin']).toBe('https://yapgitsin.tr');
+    expect(res.headers['access-control-allow-origin']).toBe(
+      'https://yapgitsin.tr',
+    );
   });
 
   it('GET with disallowed Origin still serves the request (no 500, no ACAO)', async () => {

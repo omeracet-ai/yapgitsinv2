@@ -5,7 +5,11 @@ import { faker, Faker, tr, base } from '@faker-js/faker';
 import { User, UserRole } from '../users/user.entity';
 import { Booking, BookingStatus } from '../bookings/booking.entity';
 import { PaymentEscrow, EscrowStatus } from '../escrow/payment-escrow.entity';
-import { Payment, PaymentStatus, PaymentMethod } from '../payments/payment.entity';
+import {
+  Payment,
+  PaymentStatus,
+  PaymentMethod,
+} from '../payments/payment.entity';
 import { Review } from '../reviews/review.entity';
 import { JobLead } from '../leads/job-lead.entity';
 import { JobLeadResponse } from '../leads/job-lead-response.entity';
@@ -50,15 +54,15 @@ export interface CreateCounts {
 
 /** Şehir merkezleri — admin Harita için pin koordinatları. */
 const CITY_COORDS: Record<string, [number, number]> = {
-  Istanbul:  [41.0082, 28.9784],
-  Ankara:    [39.9334, 32.8597],
-  Izmir:     [38.4192, 27.1287],
-  Bursa:     [40.1828, 29.0665],
-  Antalya:   [36.8969, 30.7133],
-  Adana:     [37.0000, 35.3213],
-  Konya:     [37.8746, 32.4932],
+  Istanbul: [41.0082, 28.9784],
+  Ankara: [39.9334, 32.8597],
+  Izmir: [38.4192, 27.1287],
+  Bursa: [40.1828, 29.0665],
+  Antalya: [36.8969, 30.7133],
+  Adana: [37.0, 35.3213],
+  Konya: [37.8746, 32.4932],
   Gaziantep: [37.0662, 37.3833],
-  Kayseri:   [38.7312, 35.4787],
+  Kayseri: [38.7312, 35.4787],
   Eskisehir: [39.7767, 30.5206],
 };
 
@@ -136,7 +140,9 @@ function buildTurkishBio(cats: string[]): string {
   const primary = cats[0] ?? 'hizmet';
   const years = 2 + Math.floor(Math.random() * 18);
   const tpl = pickFromArray(TR_BIO_TEMPLATES);
-  let bio = tpl.replace(/\{cat\}/g, primary).replace(/\{years\}/g, String(years));
+  let bio = tpl
+    .replace(/\{cat\}/g, primary)
+    .replace(/\{years\}/g, String(years));
   // İkinci cümle: ekstra kategori varsa onu ima et.
   if (cats.length > 1) {
     bio += ` Ayrıca ${cats.slice(1, 3).join(' ve ')} işleri de yapıyorum.`;
@@ -269,7 +275,10 @@ export class AdminSeedService {
           fullName: `${firstName} ${lastName}`.slice(0, 100),
           phoneNumber: phone,
           email: faker.internet
-            .email({ firstName: firstName.replace(/[^a-zA-Z]/g, ''), lastName: lastName.replace(/[^a-zA-Z]/g, '') })
+            .email({
+              firstName: firstName.replace(/[^a-zA-Z]/g, ''),
+              lastName: lastName.replace(/[^a-zA-Z]/g, ''),
+            })
             .toLowerCase(),
           passwordHash: SEED_PASSWORD_HASH,
           isPhoneVerified: true,
@@ -286,13 +295,17 @@ export class AdminSeedService {
         if (isWorker) {
           const cats = faker.helpers.arrayElements(
             categoryNames,
-            faker.number.int({ min: 2, max: Math.min(5, categoryNames.length) }),
+            faker.number.int({
+              min: 2,
+              max: Math.min(5, categoryNames.length),
+            }),
           );
           u.workerCategories = cats;
           u.workerBio = buildTurkishBio(cats);
           u.hourlyRateMinMinor = faker.number.int({ min: 5000, max: 20000 });
           u.hourlyRateMaxMinor =
-            (u.hourlyRateMinMinor ?? 5000) + faker.number.int({ min: 5000, max: 30000 });
+            (u.hourlyRateMinMinor ?? 5000) +
+            faker.number.int({ min: 5000, max: 30000 });
           u.isAvailable = true;
           created.workers++;
         } else {
@@ -329,11 +342,12 @@ export class AdminSeedService {
               'today',
               'this_week',
               'flexible',
-            ]) as 'today' | 'this_week' | 'flexible',
-            status: faker.helpers.arrayElement(['open', 'in_progress', 'closed']) as
-              | 'open'
-              | 'in_progress'
-              | 'closed',
+            ]),
+            status: faker.helpers.arrayElement([
+              'open',
+              'in_progress',
+              'closed',
+            ]),
           });
           jobLeads.push(lead);
         }
@@ -368,7 +382,8 @@ export class AdminSeedService {
             );
           }
         }
-        if (responses.length) await manager.getRepository(JobLeadResponse).save(responses);
+        if (responses.length)
+          await manager.getRepository(JobLeadResponse).save(responses);
       }
       created.jobResponses = responses.length;
 
@@ -398,7 +413,9 @@ export class AdminSeedService {
         for (let i = 0; i < bookingCount; i++) {
           const customer = faker.helpers.arrayElement(customers);
           const worker = faker.helpers.arrayElement(workers);
-          const cat = faker.helpers.arrayElement(worker.workerCategories ?? categoryNames);
+          const cat = faker.helpers.arrayElement(
+            worker.workerCategories ?? categoryNames,
+          );
           const priceMinor = faker.number.int({ min: 10000, max: 200000 });
           // %50 COMPLETED, %20 IN_PROGRESS, %15 CONFIRMED, %10 CANCELLED, %5 PENDING
           const status = faker.helpers.weightedArrayElement([
@@ -418,7 +435,11 @@ export class AdminSeedService {
             workerId: worker.id,
             category: cat,
             description: `${cat} işi: ${faker.helpers.arrayElement(TR_BOOKING_NOTES)}`,
-            address: `${customer.city ?? 'Istanbul'} - ${f.location.streetAddress()}`.slice(0, 200),
+            address:
+              `${customer.city ?? 'Istanbul'} - ${f.location.streetAddress()}`.slice(
+                0,
+                200,
+              ),
             scheduledDate,
             scheduledTime: `${faker.number.int({ min: 9, max: 17 })}:00`,
             status,
@@ -426,15 +447,19 @@ export class AdminSeedService {
             agreedPrice: priceMinor / 100,
             // Geçmiş iş detayları — completion not + customer not
             workerNote: isCompleted
-                ? faker.helpers.arrayElement(workerNotes)
-                : null,
+              ? faker.helpers.arrayElement(workerNotes)
+              : null,
             customerNote: faker.helpers.arrayElement(customerNotes),
             // İptal edilenlere cancellation alanları
-            cancelledAt: status === BookingStatus.CANCELLED
+            cancelledAt:
+              status === BookingStatus.CANCELLED
                 ? faker.date.past({ years: 0.2 })
                 : null,
-            cancelledBy: status === BookingStatus.CANCELLED
-                ? (Math.random() < 0.5 ? customer.id : worker.id)
+            cancelledBy:
+              status === BookingStatus.CANCELLED
+                ? Math.random() < 0.5
+                  ? customer.id
+                  : worker.id
                 : null,
           });
           bookings.push(booking);
@@ -443,9 +468,12 @@ export class AdminSeedService {
 
         for (const b of bookings) {
           const platformFeeMinor = Math.round((b.agreedPriceMinor ?? 0) * 0.1);
-          const workerPayoutMinor = (b.agreedPriceMinor ?? 0) - platformFeeMinor;
+          const workerPayoutMinor =
+            (b.agreedPriceMinor ?? 0) - platformFeeMinor;
           const escrowStatus =
-            b.status === BookingStatus.COMPLETED ? EscrowStatus.RELEASED : EscrowStatus.HELD;
+            b.status === BookingStatus.COMPLETED
+              ? EscrowStatus.RELEASED
+              : EscrowStatus.HELD;
           const escrow = manager.getRepository(PaymentEscrow).create({
             jobId: b.id,
             offerId: b.id, // synthetic
@@ -461,7 +489,8 @@ export class AdminSeedService {
             currency: 'TRY',
             status: escrowStatus,
             paymentStatus: 'paid',
-            releasedAt: escrowStatus === EscrowStatus.RELEASED ? new Date() : null,
+            releasedAt:
+              escrowStatus === EscrowStatus.RELEASED ? new Date() : null,
           });
           escrows.push(escrow);
 
@@ -500,8 +529,10 @@ export class AdminSeedService {
           }
         }
 
-        if (escrows.length) await manager.getRepository(PaymentEscrow).save(escrows);
-        if (payments.length) await manager.getRepository(Payment).save(payments);
+        if (escrows.length)
+          await manager.getRepository(PaymentEscrow).save(escrows);
+        if (payments.length)
+          await manager.getRepository(Payment).save(payments);
 
         // Phase 283 — Her worker için ek random review'lar (3-8 adet)
         const trComments = [
@@ -551,7 +582,9 @@ export class AdminSeedService {
 
         // Update worker stats: averageRating, totalReviews, reputationScore
         for (const worker of workers) {
-          const workerReviews = reviews.filter((r) => r.revieweeId === worker.id);
+          const workerReviews = reviews.filter(
+            (r) => r.revieweeId === worker.id,
+          );
           if (workerReviews.length === 0) continue;
           const sum = workerReviews.reduce((s, r) => s + r.rating, 0);
           const avg = sum / workerReviews.length;
@@ -580,7 +613,8 @@ export class AdminSeedService {
           const cat = faker.helpers.arrayElement(categoryNames);
           const city = customer.city || faker.helpers.arrayElement(TR_CITIES);
           const budgetMin = faker.number.int({ min: 100, max: 800 });
-          const budgetMax = budgetMin + faker.number.int({ min: 100, max: 1500 });
+          const budgetMax =
+            budgetMin + faker.number.int({ min: 100, max: 1500 });
           const priceMinor = budgetMax * 100;
           const sr = manager.getRepository(ServiceRequest).create({
             userId: customer.id,
@@ -618,7 +652,8 @@ export class AdminSeedService {
           } as Partial<Provider>),
         );
       }
-      if (providers.length) await manager.getRepository(Provider).save(providers);
+      if (providers.length)
+        await manager.getRepository(Provider).save(providers);
       created.providers = providers.length;
 
       // ── 7. Jobs (kind='request') — Müşteri talep ilanları ─────────────────
@@ -648,7 +683,8 @@ export class AdminSeedService {
       for (let i = 0; i < requestCount; i++) {
         const customer = faker.helpers.arrayElement(customers);
         const cat = faker.helpers.arrayElement(categoryNames);
-        const [bLat, bLng] = CITY_COORDS[customer.city ?? 'Istanbul'] ?? CITY_COORDS.Istanbul;
+        const [bLat, bLng] =
+          CITY_COORDS[customer.city ?? 'Istanbul'] ?? CITY_COORDS.Istanbul;
         const budgetMin = faker.number.int({ min: 200, max: 1500 });
         const status = faker.helpers.arrayElement(requestStatuses);
         const isCompleted = status === JobStatus.COMPLETED;
@@ -656,31 +692,47 @@ export class AdminSeedService {
         const createdAt = isCompleted
           ? faker.date.past({ years: 0.5 })
           : isInProgress
-              ? faker.date.recent({ days: 14 })
-              : faker.date.recent({ days: 30 });
+            ? faker.date.recent({ days: 14 })
+            : faker.date.recent({ days: 30 });
         allJobs.push(
           manager.getRepository(Job).create({
             customerId: customer.id,
             kind: JobKind.REQUEST,
-            title: `${cat} hizmeti aranıyor — ${faker.helpers.arrayElement(['acil', 'esnek', 'hafta sonu', 'bu hafta'])}`.slice(0, 200),
+            title:
+              `${cat} hizmeti aranıyor — ${faker.helpers.arrayElement(['acil', 'esnek', 'hafta sonu', 'bu hafta'])}`.slice(
+                0,
+                200,
+              ),
             description: faker.helpers.arrayElement(TR_JOB_DESCRIPTIONS),
             category: cat,
-            location: `${customer.city ?? 'Istanbul'} - ${f.location.streetAddress()}`.slice(0, 200),
+            location:
+              `${customer.city ?? 'Istanbul'} - ${f.location.streetAddress()}`.slice(
+                0,
+                200,
+              ),
             latitude: bLat + (Math.random() - 0.5) * 0.08,
             longitude: bLng + (Math.random() - 0.5) * 0.08,
             budgetMin,
             budgetMax: budgetMin + faker.number.int({ min: 200, max: 2000 }),
             budgetMinMinor: budgetMin * 100,
-            budgetMaxMinor: (budgetMin + faker.number.int({ min: 200, max: 2000 })) * 100,
+            budgetMaxMinor:
+              (budgetMin + faker.number.int({ min: 200, max: 2000 })) * 100,
             status,
             // Geçmiş iş detayları — tamamlanan ilanlarda fotoğraf + ön foto
             photos: faker.helpers.maybe(
-              () => completionPhotoUrls(`req-${i}`, faker.number.int({ min: 1, max: 3 })),
+              () =>
+                completionPhotoUrls(
+                  `req-${i}`,
+                  faker.number.int({ min: 1, max: 3 }),
+                ),
               { probability: 0.4 },
             ),
             completionPhotos: isCompleted
-                ? completionPhotoUrls(`comp-${i}`, faker.number.int({ min: 2, max: 4 }))
-                : null,
+              ? completionPhotoUrls(
+                  `comp-${i}`,
+                  faker.number.int({ min: 2, max: 4 }),
+                )
+              : null,
             createdAt,
           } as Partial<Job>),
         );
@@ -699,10 +751,14 @@ export class AdminSeedService {
         // %60 worker'ın 1-2 hizmet ilanı olsun
         if (Math.random() < 0.4) continue;
         const cats = w.workerCategories ?? [];
-        const offerCnt = faker.number.int({ min: 1, max: Math.min(2, cats.length || 1) });
+        const offerCnt = faker.number.int({
+          min: 1,
+          max: Math.min(2, cats.length || 1),
+        });
         for (let i = 0; i < offerCnt; i++) {
           const cat = cats[i] ?? faker.helpers.arrayElement(categoryNames);
-          const [wLat, wLng] = CITY_COORDS[w.city ?? 'Istanbul'] ?? CITY_COORDS.Istanbul;
+          const [wLat, wLng] =
+            CITY_COORDS[w.city ?? 'Istanbul'] ?? CITY_COORDS.Istanbul;
           const priceMin = faker.number.int({ min: 200, max: 1000 });
           const titleTpl = faker.helpers.arrayElement(offerTitles);
           allJobs.push(
@@ -710,7 +766,11 @@ export class AdminSeedService {
               customerId: w.id, // usta poster
               kind: JobKind.OFFER,
               title: titleTpl.replace('{cat}', cat).slice(0, 200),
-              description: `${cat} alanında ${faker.number.int({ min: 3, max: 18 })} yıl deneyim. ${w.workerBio ?? ''}`.slice(0, 1000),
+              description:
+                `${cat} alanında ${faker.number.int({ min: 3, max: 18 })} yıl deneyim. ${w.workerBio ?? ''}`.slice(
+                  0,
+                  1000,
+                ),
               category: cat,
               location: `${w.city ?? 'Istanbul'} bölgesi`.slice(0, 200),
               latitude: wLat + (Math.random() - 0.5) * 0.06,
@@ -718,9 +778,13 @@ export class AdminSeedService {
               budgetMin: priceMin,
               budgetMax: priceMin + faker.number.int({ min: 200, max: 1500 }),
               budgetMinMinor: priceMin * 100,
-              budgetMaxMinor: (priceMin + faker.number.int({ min: 200, max: 1500 })) * 100,
+              budgetMaxMinor:
+                (priceMin + faker.number.int({ min: 200, max: 1500 })) * 100,
               status: JobStatus.OPEN,
-              featuredOrder: Math.random() < 0.15 ? faker.number.int({ min: 1, max: 5 }) : null,
+              featuredOrder:
+                Math.random() < 0.15
+                  ? faker.number.int({ min: 1, max: 5 })
+                  : null,
             } as Partial<Job>),
           );
         }
@@ -756,7 +820,7 @@ export class AdminSeedService {
         for (const bidder of bidders) {
           const priceMin = faker.number.int({
             min: Math.max(100, job.budgetMin ?? 200),
-            max: (job.budgetMax ?? 1000),
+            max: job.budgetMax ?? 1000,
           });
           let status: OfferStatus;
           if (job.status === JobStatus.COMPLETED && !hasAccepted) {
@@ -866,19 +930,24 @@ export class AdminSeedService {
   async creditTokens(
     email: string,
     amountMinor: number,
-  ): Promise<{ email: string; newBalanceMinor: number; addedMinor: number } | { error: string }> {
+  ): Promise<
+    | { email: string; newBalanceMinor: number; addedMinor: number }
+    | { error: string }
+  > {
     const user = await this.dataSource
       .getRepository('User')
       .findOne({ where: { email } });
     if (!user) return { error: `user ${email} not found` };
-    const current = (user as { tokenBalanceMinor?: number }).tokenBalanceMinor ?? 0;
+    const current =
+      (user as { tokenBalanceMinor?: number }).tokenBalanceMinor ?? 0;
     const next = current + Math.max(0, amountMinor);
-    await this.dataSource
-      .getRepository('User')
-      .update({ email }, {
+    await this.dataSource.getRepository('User').update(
+      { email },
+      {
         tokenBalanceMinor: next,
         tokenBalance: Math.floor(next / 100),
-      });
+      },
+    );
     return {
       email,
       addedMinor: amountMinor,

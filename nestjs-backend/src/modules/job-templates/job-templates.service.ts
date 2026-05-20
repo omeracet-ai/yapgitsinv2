@@ -32,11 +32,15 @@ export class JobTemplatesService {
   async findOne(id: string, userId: string): Promise<JobTemplate> {
     const tpl = await this.repo.findOne({ where: { id } });
     if (!tpl) throw new NotFoundException('Şablon bulunamadı');
-    if (tpl.userId !== userId) throw new ForbiddenException('Bu şablona erişim yok');
+    if (tpl.userId !== userId)
+      throw new ForbiddenException('Bu şablona erişim yok');
     return tpl;
   }
 
-  async create(dto: CreateJobTemplateDto, userId: string): Promise<JobTemplate> {
+  async create(
+    dto: CreateJobTemplateDto,
+    userId: string,
+  ): Promise<JobTemplate> {
     const tpl = this.repo.create({ ...dto, userId });
     return this.repo.save(tpl);
   }

@@ -28,6 +28,16 @@ import {
 } from './dto/two-factor.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
+import { LoginThrottleGuard } from '../../common/guards/login-throttle.guard';
+import type { Request } from 'express';
+
+/** Phase 255b — extract first XFF / remote address for account-lock attribution. */
+function extractIp(req: Request): string {
+  const xff = req.headers['x-forwarded-for'];
+  if (typeof xff === 'string' && xff.length > 0) return xff.split(',')[0].trim();
+  if (Array.isArray(xff) && xff.length > 0) return xff[0];
+  return req.ip || req.socket?.remoteAddress || 'unknown';
+}
 
 @Controller('auth')
 export class AuthController {
@@ -38,9 +48,11 @@ export class AuthController {
 
   /** Kullanıcı / işçi girişi — Phase 170: 20 req/dk per IP (brute-force koruma) */
   @Throttle({ 'auth-login': { limit: 20, ttl: 60_000 } })
+  @UseGuards(LoginThrottleGuard)
   @Post('login')
-  async login(@Body() dto: LoginDto) {
-    const user = await this.authService.validateUser(dto.email, dto.password);
+  async login(@Body() dto: LoginDto, @Req() req: Request) {
+    const ip = extractIp(req);
+    const user = await this.authService.validateUser(dto.email, dto.password, ip);
     if (!user) throw new UnauthorizedException('E-posta veya şifre hatalı');
     return this.authService.login(user);
   }
@@ -86,9 +98,10 @@ export class AuthController {
 
   /** Admin girişi  –  username: "admin"  password: "admin" */
   @Throttle({ 'auth-login': { limit: 20, ttl: 60_000 } })
+  @UseGuards(LoginThrottleGuard)
   @Post('admin/login')
-  adminLogin(@Body() dto: AdminLoginDto) {
-    return this.authService.adminLogin(dto.username, dto.password);
+  adminLogin(@Body() dto: AdminLoginDto, @Req() req: Request) {
+    return this.authService.adminLogin(dto.username, dto.password, extractIp(req));
   }
 
   /** Yeni kullanıcı / işçi kaydı — Phase 170: 3 req/saat per IP (spam koruma) */
@@ -162,6 +175,7 @@ export class AuthController {
 
   /** Phase 123 — SMS OTP iste — Phase 170: 10 req/dk (sms cost koruma) */
   @Throttle({ 'auth-login': { limit: 10, ttl: 60_000 } })
+  @UseGuards(LoginThrottleGuard)
   @Post('sms/request')
   requestSmsOtp(@Body() dto: RequestSmsOtpDto) {
     return this.authService.requestSmsOtp(dto.phoneNumber);
@@ -178,11 +192,9 @@ export class AuthController {
    * slot — yeni bucket eklemek gereksiz; limit/ttl decorator'da ezilir).
    */
   @Throttle({ 'auth-login': { limit: 5, ttl: 15 * 60_000 } })
+  @UseGuards(LoginThrottleGuard)
   @Post('sms/verify')
-  verifySmsOtp(
-    @Body() dto: VerifySmsOtpDto,
-    @Req() req: AuthenticatedRequest,
-  ) {
+  verifySmsOtp(@Body() dto: VerifySmsOtpDto, @Req() req: AuthenticatedRequest) {
     return this.authService.verifySmsOtp(
       dto.phoneNumber,
       dto.code,
@@ -196,7 +208,10 @@ export class AuthController {
    * Used for DB-level per-IP OTP lockout.
    */
   private resolveIp(req: AuthenticatedRequest): string {
-    const headers = (req?.headers ?? {}) as Record<string, string | string[] | undefined>;
+    const headers = (req?.headers ?? {}) as Record<
+      string,
+      string | string[] | undefined
+    >;
     const xff = headers['x-forwarded-for'];
     const xffStr = Array.isArray(xff) ? xff[0] : xff;
     const fromXff = xffStr?.split(',')[0]?.trim();

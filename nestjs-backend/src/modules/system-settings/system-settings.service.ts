@@ -21,7 +21,11 @@ export class SystemSettingsService {
     return value;
   }
 
-  async set(key: string, value: string, adminId?: string): Promise<SystemSetting> {
+  async set(
+    key: string,
+    value: string,
+    adminId?: string,
+  ): Promise<SystemSetting> {
     const existing = await this.repo.findOne({ where: { key } });
     const entity = existing
       ? Object.assign(existing, { value, updatedBy: adminId ?? null })

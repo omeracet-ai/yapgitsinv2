@@ -50,7 +50,9 @@ export class StatsService {
         // Workers = users with workerCategories IS NOT NULL and not empty array
         this.userRepo
           .createQueryBuilder('u')
-          .where("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'")
+          .where(
+            "u.workerCategories IS NOT NULL AND u.workerCategories != '[]'",
+          )
           .getCount(),
       ]);
 

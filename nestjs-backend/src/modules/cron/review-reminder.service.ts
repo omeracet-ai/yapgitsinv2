@@ -5,7 +5,10 @@ import { Repository, Between, In } from 'typeorm';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { Offer, OfferStatus } from '../jobs/offer.entity';
 import { Review } from '../reviews/review.entity';
-import { Notification, NotificationType } from '../notifications/notification.entity';
+import {
+  Notification,
+  NotificationType,
+} from '../notifications/notification.entity';
 
 @Injectable()
 export class ReviewReminderService {
@@ -15,7 +18,8 @@ export class ReviewReminderService {
     @InjectRepository(Job) private readonly jobRepo: Repository<Job>,
     @InjectRepository(Offer) private readonly offerRepo: Repository<Offer>,
     @InjectRepository(Review) private readonly reviewRepo: Repository<Review>,
-    @InjectRepository(Notification) private readonly notifRepo: Repository<Notification>,
+    @InjectRepository(Notification)
+    private readonly notifRepo: Repository<Notification>,
   ) {}
 
   /**

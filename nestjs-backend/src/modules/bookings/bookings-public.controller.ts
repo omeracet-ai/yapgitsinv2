@@ -10,10 +10,7 @@ export class BookingsPublicController {
   /** GET /bookings/availability/:userId?date=YYYY-MM-DD */
   @SkipThrottle()
   @Get('availability/:userId')
-  availability(
-    @Param('userId') userId: string,
-    @Query('date') date?: string,
-  ) {
+  availability(@Param('userId') userId: string, @Query('date') date?: string) {
     const today = new Date().toISOString().slice(0, 10);
     return this.svc.getAvailabilityForDate(userId, date || today);
   }

@@ -63,10 +63,7 @@ export class AvailabilityController {
   /** DELETE /availability/me/slots/:id */
   @UseGuards(AuthGuard('jwt'))
   @Delete('me/slots/:id')
-  removeSlot(
-    @Request() req: AuthenticatedRequest,
-    @Param('id') id: string,
-  ) {
+  removeSlot(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.svc.removeSlot(id, req.user.id);
   }
 

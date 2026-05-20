@@ -262,7 +262,9 @@ export class EscrowConfirmationService {
         );
       }
     }
-    if (escrow.confirmationStatus === ConfirmationStatus.AWAITING_CONFIRMATION) {
+    if (
+      escrow.confirmationStatus === ConfirmationStatus.AWAITING_CONFIRMATION
+    ) {
       throw new ConflictException('Confirmation already started');
     }
 
@@ -316,7 +318,9 @@ export class EscrowConfirmationService {
     if (escrow.taskerId !== userId) {
       throw new ForbiddenException('Only worker may fetch QR');
     }
-    if (escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION) {
+    if (
+      escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION
+    ) {
       throw new BadRequestException('Confirmation not started');
     }
     const now = Date.now();
@@ -385,7 +389,9 @@ export class EscrowConfirmationService {
     if (escrow.customerId !== userId) {
       throw new ForbiddenException('Only customer may scan');
     }
-    if (escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION) {
+    if (
+      escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION
+    ) {
       throw new BadRequestException('Confirmation not active');
     }
     if (!escrow.qrToken || escrow.qrToken !== qrToken) {
@@ -433,7 +439,9 @@ export class EscrowConfirmationService {
   }): Promise<EscrowConfirmationPhoto> {
     const escrow = await this.loadEscrow(args.escrowId);
     const side = this.sideOf(escrow, args.userId);
-    if (escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION) {
+    if (
+      escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION
+    ) {
       throw new BadRequestException('Confirmation not active');
     }
     if (escrow.confirmationTier === ConfirmationTier.LITE) {
@@ -465,7 +473,9 @@ export class EscrowConfirmationService {
   }): Promise<EscrowConfirmationVideo> {
     const escrow = await this.loadEscrow(args.escrowId);
     const side = this.sideOf(escrow, args.userId);
-    if (escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION) {
+    if (
+      escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION
+    ) {
       throw new BadRequestException('Confirmation not active');
     }
     if (escrow.confirmationTier !== ConfirmationTier.PREMIUM) {
@@ -534,7 +544,9 @@ export class EscrowConfirmationService {
   }> {
     const { escrow, save } = await this.findEscrowAnywhere(escrowId);
     const side = this.sideOf(escrow, userId);
-    if (escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION) {
+    if (
+      escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION
+    ) {
       throw new BadRequestException('Confirmation not active');
     }
 

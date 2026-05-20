@@ -32,7 +32,9 @@ describe('Reviews defensive read endpoints (e2e) — Phase 238A', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    reviewsRepo = moduleFixture.get<Repository<Review>>(getRepositoryToken(Review));
+    reviewsRepo = moduleFixture.get<Repository<Review>>(
+      getRepositoryToken(Review),
+    );
     usersRepo = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
   });
 

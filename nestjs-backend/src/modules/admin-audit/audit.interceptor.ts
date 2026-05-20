@@ -54,7 +54,7 @@ export class AuditInterceptor implements NestInterceptor {
           targetType,
           targetId: params.id ?? null,
           payload: body,
-          req: { ip: req.ip, headers: req.headers as Record<string, unknown> },
+          req: { ip: req.ip, headers: req.headers },
         });
       }),
     );

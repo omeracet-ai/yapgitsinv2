@@ -13,7 +13,10 @@ import { WorkerCertificationService } from './worker-certification.service';
 import { DataPrivacyService } from './data-privacy.service';
 import { CalendarSyncService } from './calendar-sync.service';
 import { CalendarService } from './calendar.service';
-import { CalendarController, CalendarPublicController } from './calendar.controller';
+import {
+  CalendarController,
+  CalendarPublicController,
+} from './calendar.controller';
 import { UsersController } from './users.controller';
 import { WalletController } from './wallet.controller';
 import { WalletService } from './wallet.service';
@@ -31,6 +34,7 @@ import { JobLeadResponse } from '../leads/job-lead-response.entity';
 import { DataExportController } from './data-export.controller';
 import { DataExportService } from './data-export.service';
 import { EarningsService } from './earnings.service';
+import { UsersCleanupTask } from './users-cleanup.task';
 import { AiModule } from '../ai/ai.module';
 import { BoostModule } from '../boost/boost.module';
 import { AvailabilityModule } from '../availability/availability.module';
@@ -38,17 +42,54 @@ import { AvailabilityModule } from '../availability/availability.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      User, FavoriteWorker, WorkerInsurance, WorkerCertification, DataDeletionRequest,
-      Job, Review, Offer, Booking, Notification, ChatMessage, TokenTransaction,
-      Payment, PaymentEscrow, JobLead, JobLeadResponse,
+      User,
+      FavoriteWorker,
+      WorkerInsurance,
+      WorkerCertification,
+      DataDeletionRequest,
+      Job,
+      Review,
+      Offer,
+      Booking,
+      Notification,
+      ChatMessage,
+      TokenTransaction,
+      Payment,
+      PaymentEscrow,
+      JobLead,
+      JobLeadResponse,
     ]),
     AiModule,
     BoostModule,
     AvailabilityModule,
     forwardRef(() => SubscriptionsModule),
   ],
-  controllers: [CalendarController, CalendarPublicController, UsersController, WalletController, DataExportController],
-  providers: [UsersService, FavoriteWorkersService, EarningsService, WorkerInsuranceService, WorkerCertificationService, DataPrivacyService, CalendarSyncService, CalendarService, WalletService, DataExportService],
-  exports: [UsersService, WorkerInsuranceService, WorkerCertificationService, DataPrivacyService, CalendarSyncService],
+  controllers: [
+    CalendarController,
+    CalendarPublicController,
+    UsersController,
+    WalletController,
+    DataExportController,
+  ],
+  providers: [
+    UsersService,
+    FavoriteWorkersService,
+    EarningsService,
+    WorkerInsuranceService,
+    WorkerCertificationService,
+    DataPrivacyService,
+    CalendarSyncService,
+    CalendarService,
+    WalletService,
+    DataExportService,
+    UsersCleanupTask,
+  ],
+  exports: [
+    UsersService,
+    WorkerInsuranceService,
+    WorkerCertificationService,
+    DataPrivacyService,
+    CalendarSyncService,
+  ],
 })
 export class UsersModule {}

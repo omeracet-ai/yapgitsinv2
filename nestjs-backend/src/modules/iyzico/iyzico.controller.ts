@@ -19,7 +19,11 @@ import { Repository } from 'typeorm';
 import { IyzicoService } from './iyzico.service';
 import { ThreeDsInitDto } from './dto/threeds-init.dto';
 import { ThreeDsCallbackDto } from './dto/threeds-callback.dto';
-import { Payment, PaymentMethod, PaymentStatus } from '../payments/payment.entity';
+import {
+  Payment,
+  PaymentMethod,
+  PaymentStatus,
+} from '../payments/payment.entity';
 
 /**
  * Phase 248-FU (Voldi-fs) — iyzico 3DS endpoints.
@@ -49,7 +53,9 @@ export class IyzicoController {
   ) {
     const userId = req.user?.id ?? dto.buyerId;
     const buyerIp =
-      (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
+      (req.headers['x-forwarded-for'] as string | undefined)
+        ?.split(',')[0]
+        ?.trim() ||
       req.ip ||
       '85.34.78.112';
 

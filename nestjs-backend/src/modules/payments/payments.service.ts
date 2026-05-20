@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports */
-import { Injectable, BadRequestException, NotFoundException, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThanOrEqual } from 'typeorm';
 import { Booking, BookingStatus } from '../bookings/booking.entity';
@@ -44,7 +50,16 @@ export class PaymentsService {
 
   // Payment Intent Creation
   async createPaymentIntent(customerId: string, dto: CreatePaymentIntentDto) {
-    const { workerId, amountMinor, bookingId, description, currency = 'TRY', method = PaymentMethod.CARD, receiptEmail, idempotencyKey } = dto;
+    const {
+      workerId,
+      amountMinor,
+      bookingId,
+      description,
+      currency = 'TRY',
+      method = PaymentMethod.CARD,
+      receiptEmail,
+      idempotencyKey,
+    } = dto;
 
     // Validate amount
     if (amountMinor <= 0) {
@@ -109,7 +124,10 @@ export class PaymentsService {
         payment.status = PaymentStatus.COMPLETED;
         payment.externalTransactionId = `mock_${uuidv4()}`;
         payment.completedAt = new Date();
-      } else if (payment.method === PaymentMethod.IYZIPAY && providerTransactionId) {
+      } else if (
+        payment.method === PaymentMethod.IYZIPAY &&
+        providerTransactionId
+      ) {
         // Validate with Iyzipay
         // (Placeholder - integrate with actual Iyzipay verification)
         payment.status = PaymentStatus.COMPLETED;
@@ -162,14 +180,19 @@ export class PaymentsService {
       };
     } catch (error) {
       payment.status = PaymentStatus.FAILED;
-      payment.errorMessage = error instanceof Error ? error.message : 'Payment processing failed';
+      payment.errorMessage =
+        error instanceof Error ? error.message : 'Payment processing failed';
       await this.paymentRepository.save(payment);
       throw new InternalServerErrorException('Payment processing failed');
     }
   }
 
   // Get Payment History
-  async getPaymentHistory(userId: string, queryDto: PaymentHistoryQueryDto, isWorker: boolean = false) {
+  async getPaymentHistory(
+    userId: string,
+    queryDto: PaymentHistoryQueryDto,
+    isWorker: boolean = false,
+  ) {
     const { skip = 0, take = 20, status, startDate, endDate } = queryDto;
 
     const query = this.paymentRepository.createQueryBuilder('payment');
@@ -187,11 +210,15 @@ export class PaymentsService {
     }
 
     if (startDate) {
-      query.andWhere('payment.createdAt >= :startDate', { startDate: new Date(startDate) });
+      query.andWhere('payment.createdAt >= :startDate', {
+        startDate: new Date(startDate),
+      });
     }
 
     if (endDate) {
-      query.andWhere('payment.createdAt <= :endDate', { endDate: new Date(endDate) });
+      query.andWhere('payment.createdAt <= :endDate', {
+        endDate: new Date(endDate),
+      });
     }
 
     query.orderBy('payment.createdAt', 'DESC').skip(skip).take(take);
@@ -199,7 +226,7 @@ export class PaymentsService {
     const [payments, total] = await query.getManyAndCount();
 
     return {
-      payments: payments.map(p => ({
+      payments: payments.map((p) => ({
         id: p.id,
         customerId: p.customerId,
         workerId: p.workerId,
@@ -238,11 +265,11 @@ export class PaymentsService {
     const total = completedPayments.reduce((sum, p) => sum + p.amountMinor, 0);
 
     const monthly = completedPayments
-      .filter(p => p.completedAt && new Date(p.completedAt) >= thirtyDaysAgo)
+      .filter((p) => p.completedAt && new Date(p.completedAt) >= thirtyDaysAgo)
       .reduce((sum, p) => sum + p.amountMinor, 0);
 
     const weekly = completedPayments
-      .filter(p => p.completedAt && new Date(p.completedAt) >= sevenDaysAgo)
+      .filter((p) => p.completedAt && new Date(p.completedAt) >= sevenDaysAgo)
       .reduce((sum, p) => sum + p.amountMinor, 0);
 
     // Also include old earnings from bookings (legacy)
@@ -254,12 +281,15 @@ export class PaymentsService {
       order: { updatedAt: 'DESC' },
     });
 
-    const bookingTotal = completedBookings.reduce((sum, b) => sum + (b.agreedPriceMinor || 0), 0);
+    const bookingTotal = completedBookings.reduce(
+      (sum, b) => sum + (b.agreedPriceMinor || 0),
+      0,
+    );
     const bookingMonthly = completedBookings
-      .filter(b => new Date(b.updatedAt) >= thirtyDaysAgo)
+      .filter((b) => new Date(b.updatedAt) >= thirtyDaysAgo)
       .reduce((sum, b) => sum + (b.agreedPriceMinor || 0), 0);
     const bookingWeekly = completedBookings
-      .filter(b => new Date(b.updatedAt) >= sevenDaysAgo)
+      .filter((b) => new Date(b.updatedAt) >= sevenDaysAgo)
       .reduce((sum, b) => sum + (b.agreedPriceMinor || 0), 0);
 
     return {
@@ -269,21 +299,24 @@ export class PaymentsService {
       completedPaymentCount: completedPayments.length,
       completedBookingCount: completedBookings.length,
       lastTransactions: [
-        ...completedPayments.slice(0, 5).map(p => ({
+        ...completedPayments.slice(0, 5).map((p) => ({
           id: p.id,
           amount: p.amountMinor,
           date: p.completedAt,
           type: 'payment',
           description: p.description,
         })),
-        ...completedBookings.slice(0, 5).map(b => ({
+        ...completedBookings.slice(0, 5).map((b) => ({
           id: b.id,
           amount: b.agreedPriceMinor,
           date: b.updatedAt,
           type: 'booking',
           description: b.category,
         })),
-      ].sort((a, b) => (b.date ? b.date.getTime() : 0) - (a.date ? a.date.getTime() : 0)),
+      ].sort(
+        (a, b) =>
+          (b.date ? b.date.getTime() : 0) - (a.date ? a.date.getTime() : 0),
+      ),
     };
   }
 
@@ -385,7 +418,10 @@ export class PaymentsService {
         status: payment.status,
       };
     } catch (error) {
-      if (error instanceof InternalServerErrorException || error instanceof BadRequestException) {
+      if (
+        error instanceof InternalServerErrorException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
       this.logger.error(

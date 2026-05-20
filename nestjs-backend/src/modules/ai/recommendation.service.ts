@@ -67,7 +67,9 @@ Return JSON array of top 5 worker IDs ranked by fit. Only IDs, no explanation. E
 
       const text =
         response.content[0].type === 'text' ? response.content[0].text : '[]';
-      const rankedIds: string[] = JSON.parse(text.match(/\[.*\]/s)?.[0] ?? '[]');
+      const rankedIds: string[] = JSON.parse(
+        text.match(/\[.*\]/s)?.[0] ?? '[]',
+      );
 
       const idToWorker = new Map(workers.map((w) => [w.id, w]));
       return rankedIds
@@ -130,7 +132,9 @@ Return JSON array of top 5 job IDs ranked by fit. Only IDs, no explanation. Exam
 
       const text =
         response.content[0].type === 'text' ? response.content[0].text : '[]';
-      const rankedIds: string[] = JSON.parse(text.match(/\[.*\]/s)?.[0] ?? '[]');
+      const rankedIds: string[] = JSON.parse(
+        text.match(/\[.*\]/s)?.[0] ?? '[]',
+      );
 
       const idToJob = new Map(jobs.map((j) => [j.id, j]));
       return rankedIds

@@ -140,7 +140,9 @@ export class SubscriptionsService implements OnModuleInit {
     mock: boolean;
     plan: SubscriptionPlan;
   }> {
-    const plan = await this.plansRepo.findOne({ where: { key: planKey, isActive: true } });
+    const plan = await this.plansRepo.findOne({
+      where: { key: planKey, isActive: true },
+    });
     if (!plan) throw new NotFoundException(`Plan bulunamadı: ${planKey}`);
 
     const existing = await this.getMySubscription(userId);
@@ -197,7 +199,11 @@ export class SubscriptionsService implements OnModuleInit {
   async confirmPayment(
     userId: string,
     token: string,
-  ): Promise<{ subscriptionId: string; status: SubscriptionStatus; expiresAt: Date }> {
+  ): Promise<{
+    subscriptionId: string;
+    status: SubscriptionStatus;
+    expiresAt: Date;
+  }> {
     if (!token) throw new BadRequestException('token zorunlu');
     const sub = await this.subsRepo.findOne({
       where: { userId, paymentRef: token },
@@ -206,7 +212,11 @@ export class SubscriptionsService implements OnModuleInit {
     if (!sub) throw new NotFoundException('Abonelik kaydı bulunamadı');
 
     if (sub.status === SubscriptionStatus.ACTIVE) {
-      return { subscriptionId: sub.id, status: sub.status, expiresAt: sub.expiresAt };
+      return {
+        subscriptionId: sub.id,
+        status: sub.status,
+        expiresAt: sub.expiresAt,
+      };
     }
 
     const verify = await this.iyzipay.retrieveCheckout(token);
@@ -230,7 +240,11 @@ export class SubscriptionsService implements OnModuleInit {
     this.logger.log(
       `Subscription ${sub.id} ACTIVE (user=${userId}, paymentId=${verify.paymentId})`,
     );
-    return { subscriptionId: sub.id, status: sub.status, expiresAt: sub.expiresAt };
+    return {
+      subscriptionId: sub.id,
+      status: sub.status,
+      expiresAt: sub.expiresAt,
+    };
   }
 
   async cancel(

@@ -107,6 +107,7 @@ import { AdminSeedModule } from './modules/admin-seed/admin-seed.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { WithdrawalsModule } from './modules/withdrawals/withdrawals.module';
+import { ProvidersModule } from './modules/providers/providers.module';
 import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.entity';
 
 @Module({
@@ -264,11 +265,15 @@ import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.enti
             port: configService.get<number>('DB_PORT') || 3306,
             username: configService.get<string>('DB_USERNAME'),
             password: configService.get<string>('DB_PASSWORD'),
-            database: configService.get<string>('DB_NAME') || configService.get<string>('DB_DATABASE'),
+            database:
+              configService.get<string>('DB_NAME') ||
+              configService.get<string>('DB_DATABASE'),
             charset: 'utf8mb4_unicode_ci',
             entities,
             migrations,
-            synchronize: allowSync && configService.get<string>('DB_SYNCHRONIZE') !== 'false',
+            synchronize:
+              allowSync &&
+              configService.get<string>('DB_SYNCHRONIZE') !== 'false',
             migrationsRun,
           };
         }
@@ -278,7 +283,9 @@ import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.enti
           port: configService.get<number>('DB_PORT') || 5432,
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
-          database: configService.get<string>('DB_DATABASE') || configService.get<string>('DB_NAME'),
+          database:
+            configService.get<string>('DB_DATABASE') ||
+            configService.get<string>('DB_NAME'),
           entities,
           migrations,
           synchronize,
@@ -332,6 +339,7 @@ import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.enti
     StatsModule,
     MaintenanceModule,
     WithdrawalsModule,
+    ProvidersModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],

@@ -59,9 +59,9 @@ export function levenshtein(a: string, b: string): number {
     for (let j = 1; j <= n; j++) {
       const cost = ac === b.charCodeAt(j - 1) ? 0 : 1;
       curr[j] = Math.min(
-        curr[j - 1] + 1,        // insertion
-        prev[j] + 1,            // deletion
-        prev[j - 1] + cost,     // substitution
+        curr[j - 1] + 1, // insertion
+        prev[j] + 1, // deletion
+        prev[j - 1] + cost, // substitution
       );
     }
     [prev, curr] = [curr, prev];
@@ -194,9 +194,9 @@ export class CategorySearchService implements OnModuleInit {
   private prefixMatch(prefix: string): Set<string> {
     let node: TrieNode | undefined = this.root;
     for (const ch of prefix) {
-      node = node!.children.get(ch);
+      node = node.children.get(ch);
       if (!node) return new Set();
     }
-    return node!.categoryIds;
+    return node.categoryIds;
   }
 }

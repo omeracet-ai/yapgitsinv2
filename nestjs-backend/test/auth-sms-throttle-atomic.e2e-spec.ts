@@ -57,9 +57,7 @@ describe('SMS OTP atomicity (e2e — Phase 242)', () => {
 
     const ip = freshIp();
     await Promise.allSettled(
-      Array.from({ length: 10 }, () =>
-        auth.verifySmsOtp(phone, '000000', ip),
-      ),
+      Array.from({ length: 10 }, () => auth.verifySmsOtp(phone, '000000', ip)),
     );
 
     const fresh = await smsRepo.findOne({ where: { id: seeded.id } });

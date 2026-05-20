@@ -37,11 +37,13 @@ export class LeadsController {
   @Post('leads')
   async create(@Body() dto: CreateLeadDto, @Req() req: Request) {
     const ipRaw =
-      (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
+      (req.headers['x-forwarded-for'] as string | undefined)
+        ?.split(',')[0]
+        ?.trim() ||
       req.ip ||
       req.socket?.remoteAddress ||
       null;
-    const ua = (req.headers['user-agent'] as string | undefined) || null;
+    const ua = req.headers['user-agent'] || null;
     return this.svc.create(dto, { ipAddress: ipRaw, userAgent: ua });
   }
 

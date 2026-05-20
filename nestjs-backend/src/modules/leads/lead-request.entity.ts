@@ -7,7 +7,11 @@ import {
 } from 'typeorm';
 
 export type LeadStatus = 'new' | 'contacted' | 'converted' | 'spam';
-export type LeadSource = 'landing' | 'category' | 'worker_profile' | 'job_detail';
+export type LeadSource =
+  | 'landing'
+  | 'category'
+  | 'worker_profile'
+  | 'job_detail';
 
 @Entity('lead_requests')
 export class LeadRequest {
@@ -38,7 +42,11 @@ export class LeadRequest {
   source: LeadSource;
 
   @Index()
-  @Column({ type: 'simple-enum', enum: ['new', 'contacted', 'converted', 'spam'], default: 'new' })
+  @Column({
+    type: 'simple-enum',
+    enum: ['new', 'contacted', 'converted', 'spam'],
+    default: 'new',
+  })
   status: LeadStatus;
 
   @Column({ type: 'varchar', length: 45, nullable: true })

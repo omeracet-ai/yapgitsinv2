@@ -1,7 +1,22 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { SuspendUserDto } from './dto/suspend-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, IsNull, Between, MoreThan, In, ILike, Raw, DataSource } from 'typeorm';
+import {
+  Repository,
+  Not,
+  IsNull,
+  Between,
+  MoreThan,
+  In,
+  ILike,
+  Raw,
+  DataSource,
+} from 'typeorm';
 import {
   AdminListQueryDto,
   buildPaginated,
@@ -13,8 +28,14 @@ import { BulkVerifyDto } from './dto/bulk-verify.dto';
 import { BulkFeatureDto, BulkUnfeatureDto } from './dto/bulk-feature.dto';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { User, UserRole } from '../users/user.entity';
-import { Notification, NotificationType } from '../notifications/notification.entity';
-import { BroadcastNotificationDto, BroadcastSegment } from './dto/broadcast-notification.dto';
+import {
+  Notification,
+  NotificationType,
+} from '../notifications/notification.entity';
+import {
+  BroadcastNotificationDto,
+  BroadcastSegment,
+} from './dto/broadcast-notification.dto';
 import { ServiceRequest } from '../service-requests/service-request.entity';
 import { Offer } from '../jobs/offer.entity';
 import { Booking } from '../bookings/booking.entity';
@@ -50,11 +71,15 @@ export class AdminService {
     @InjectRepository(Offer) private offersRepo: Repository<Offer>,
     @InjectRepository(Booking) private bookingsRepo: Repository<Booking>,
     @InjectRepository(Review) private reviewsRepo: Repository<Review>,
-    @InjectRepository(PaymentEscrow) private escrowRepo: Repository<PaymentEscrow>,
+    @InjectRepository(PaymentEscrow)
+    private escrowRepo: Repository<PaymentEscrow>,
     @InjectRepository(ChatMessage) private chatRepo: Repository<ChatMessage>,
-    @InjectRepository(JobQuestion) private questionRepo: Repository<JobQuestion>,
-    @InjectRepository(Notification) private notificationRepo: Repository<Notification>,
-    @InjectRepository(AdminAuditLog) private auditRepo: Repository<AdminAuditLog>,
+    @InjectRepository(JobQuestion)
+    private questionRepo: Repository<JobQuestion>,
+    @InjectRepository(Notification)
+    private notificationRepo: Repository<Notification>,
+    @InjectRepository(AdminAuditLog)
+    private auditRepo: Repository<AdminAuditLog>,
     @InjectRepository(Provider) private providersRepo: Repository<Provider>,
     private readonly promoService: PromoService,
     private readonly fcmService: FcmService,
@@ -64,7 +89,11 @@ export class AdminService {
   async bulkVerifyUsers(
     dto: BulkVerifyDto,
     adminUserId: string,
-  ): Promise<{ updated: number; notFound: string[]; requestedSegment: 'verify' | 'unverify' }> {
+  ): Promise<{
+    updated: number;
+    notFound: string[];
+    requestedSegment: 'verify' | 'unverify';
+  }> {
     const { userIds, identityVerified } = dto;
     const found = await this.usersRepo.find({
       where: { id: In(userIds) },
@@ -108,7 +137,11 @@ export class AdminService {
   async bulkFeatureWorkers(
     dto: BulkFeatureDto,
     adminUserId: string,
-  ): Promise<{ updated: number; notFound: string[]; featuredOrder: 1 | 2 | 3 | null }> {
+  ): Promise<{
+    updated: number;
+    notFound: string[];
+    featuredOrder: 1 | 2 | 3 | null;
+  }> {
     const { userIds, featuredOrder } = dto;
     const found = await this.usersRepo.find({
       where: { id: In(userIds) },
@@ -123,7 +156,7 @@ export class AdminService {
       const result = await this.providersRepo
         .createQueryBuilder()
         .update(Provider)
-        .set({ featuredOrder: featuredOrder as number | null })
+        .set({ featuredOrder: featuredOrder })
         .where('userId IN (:...ids)', { ids: presentIds })
         .execute();
       updated = result.affected ?? 0;
@@ -201,7 +234,12 @@ export class AdminService {
       .addGroupBy('n.body')
       .orderBy('MIN(n.createdAt)', 'DESC')
       .limit(10)
-      .getRawMany<{ title: string; body: string; createdAt: Date; count: string }>();
+      .getRawMany<{
+        title: string;
+        body: string;
+        createdAt: Date;
+        count: string;
+      }>();
     return rows.map((r) => ({ ...r, count: Number(r.count) }));
   }
 
@@ -215,13 +253,19 @@ export class AdminService {
 
     switch (dto.segment) {
       case BroadcastSegment.WORKERS:
-        qb.andWhere("u.workerCategories IS NOT NULL AND u.workerCategories != '' AND u.workerCategories != '[]'");
+        qb.andWhere(
+          "u.workerCategories IS NOT NULL AND u.workerCategories != '' AND u.workerCategories != '[]'",
+        );
         break;
       case BroadcastSegment.CUSTOMERS:
-        qb.andWhere("(u.workerCategories IS NULL OR u.workerCategories = '' OR u.workerCategories = '[]')");
+        qb.andWhere(
+          "(u.workerCategories IS NULL OR u.workerCategories = '' OR u.workerCategories = '[]')",
+        );
         break;
       case BroadcastSegment.VERIFIED_WORKERS:
-        qb.andWhere("u.workerCategories IS NOT NULL AND u.workerCategories != '' AND u.workerCategories != '[]'");
+        qb.andWhere(
+          "u.workerCategories IS NOT NULL AND u.workerCategories != '' AND u.workerCategories != '[]'",
+        );
         qb.andWhere('u.identityVerified = :v', { v: true });
         break;
       case BroadcastSegment.ALL:
@@ -252,7 +296,11 @@ export class AdminService {
 
     // Phase 171 — fan-out FCM push to segment users (fire-and-forget).
     // Collect all fcmTokens for these users (respecting pushNotificationsEnabled).
-    void this.broadcastFcmPush(rows.map((r) => r.id), dto.title, dto.message);
+    void this.broadcastFcmPush(
+      rows.map((r) => r.id),
+      dto.title,
+      dto.message,
+    );
 
     return { sent: entities.length, segment: dto.segment };
   }
@@ -327,17 +375,26 @@ export class AdminService {
       })),
     ];
 
-    items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    items.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
     return items;
   }
 
   async clearFlaggedChat(id: string) {
-    await this.chatRepo.update(id, { text: '[silindi]', flagged: false } as any);
+    await this.chatRepo.update(id, {
+      text: '[silindi]',
+      flagged: false,
+    } as any);
     return { id, type: 'chat', cleared: true };
   }
 
   async clearFlaggedQuestion(id: string) {
-    await this.questionRepo.update(id, { text: '[silindi]', flagged: false } as any);
+    await this.questionRepo.update(id, {
+      text: '[silindi]',
+      flagged: false,
+    });
     return { id, type: 'question', cleared: true };
   }
 
@@ -346,11 +403,17 @@ export class AdminService {
     type: 'job' | 'review' | 'chat',
     page = 1,
     limit = 20,
-  ): Promise<{ data: unknown[]; total: number; page: number; limit: number; pages: number }> {
+  ): Promise<{
+    data: unknown[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
     const skip = (Math.max(1, page) - 1) * limit;
     if (type === 'job') {
       const [data, total] = await this.jobsRepo.findAndCount({
-        where: { flagged: true } as any,
+        where: { flagged: true },
         order: { createdAt: 'DESC' },
         take: limit,
         skip,
@@ -359,7 +422,7 @@ export class AdminService {
     }
     if (type === 'review') {
       const [data, total] = await this.reviewsRepo.findAndCount({
-        where: { flagged: true } as any,
+        where: { flagged: true },
         order: { createdAt: 'DESC' },
         take: limit,
         skip,
@@ -367,7 +430,7 @@ export class AdminService {
       return { data, total, page, limit, pages: Math.ceil(total / limit) };
     }
     const [data, total] = await this.chatRepo.findAndCount({
-      where: { flagged: true } as any,
+      where: { flagged: true },
       order: { createdAt: 'DESC' },
       take: limit,
       skip,
@@ -389,10 +452,20 @@ export class AdminService {
       if (action === 'approve') {
         await this.jobsRepo.update(id, { flagged: false, flagReason: null });
       } else if (action === 'remove') {
-        await this.jobsRepo.update(id, { deletedAt: new Date(), flagged: false });
+        await this.jobsRepo.update(id, {
+          deletedAt: new Date(),
+          flagged: false,
+        });
       } else {
-        await this.usersRepo.update(job.customerId, { suspended: true, suspendedAt: new Date(), suspendedReason: 'Phase 116 fraud moderation' } as any);
-        await this.jobsRepo.update(id, { deletedAt: new Date(), flagged: false });
+        await this.usersRepo.update(job.customerId, {
+          suspended: true,
+          suspendedAt: new Date(),
+          suspendedReason: 'Phase 116 fraud moderation',
+        });
+        await this.jobsRepo.update(id, {
+          deletedAt: new Date(),
+          flagged: false,
+        });
       }
     } else if (type === 'review') {
       const review = await this.reviewsRepo.findOne({ where: { id } });
@@ -400,22 +473,43 @@ export class AdminService {
       if (action === 'approve') {
         await this.reviewsRepo.update(id, { flagged: false, flagReason: null });
       } else if (action === 'remove') {
-        await this.reviewsRepo.update(id, { deletedAt: new Date(), flagged: false });
+        await this.reviewsRepo.update(id, {
+          deletedAt: new Date(),
+          flagged: false,
+        });
       } else {
-        await this.usersRepo.update(review.reviewerId, { suspended: true, suspendedAt: new Date(), suspendedReason: 'Phase 116 fraud moderation' } as any);
-        await this.reviewsRepo.update(id, { deletedAt: new Date(), flagged: false });
+        await this.usersRepo.update(review.reviewerId, {
+          suspended: true,
+          suspendedAt: new Date(),
+          suspendedReason: 'Phase 116 fraud moderation',
+        });
+        await this.reviewsRepo.update(id, {
+          deletedAt: new Date(),
+          flagged: false,
+        });
       }
     } else {
       const chat = await this.chatRepo.findOne({ where: { id } });
       if (!chat) throw new NotFoundException('Mesaj bulunamadı');
       if (action === 'approve') {
-        await this.chatRepo.update(id, { flagged: false } as any);
+        await this.chatRepo.update(id, { flagged: false });
       } else if (action === 'remove') {
-        await this.chatRepo.update(id, { message: '[silindi]', flagged: false } as any);
+        await this.chatRepo.update(id, {
+          message: '[silindi]',
+          flagged: false,
+        });
       } else {
         const senderId = (chat as any).from;
-        if (senderId) await this.usersRepo.update(senderId, { suspended: true, suspendedAt: new Date(), suspendedReason: 'Phase 116 fraud moderation' } as any);
-        await this.chatRepo.update(id, { message: '[silindi]', flagged: false } as any);
+        if (senderId)
+          await this.usersRepo.update(senderId, {
+            suspended: true,
+            suspendedAt: new Date(),
+            suspendedReason: 'Phase 116 fraud moderation',
+          });
+        await this.chatRepo.update(id, {
+          message: '[silindi]',
+          flagged: false,
+        });
       }
     }
     return { id, type, action, ok: true };
@@ -436,7 +530,9 @@ export class AdminService {
   }
 
   async getRevenue() {
-    const baseSelect = (qb: ReturnType<typeof this.escrowRepo.createQueryBuilder>) =>
+    const baseSelect = (
+      qb: ReturnType<typeof this.escrowRepo.createQueryBuilder>,
+    ) =>
       qb
         .select('COALESCE(SUM(e.amount), 0)', 'totalGross')
         .addSelect('COALESCE(SUM(e.platformFeeAmount), 0)', 'totalPlatformFee')
@@ -444,7 +540,9 @@ export class AdminService {
         .addSelect('COUNT(*)', 'releasedCount')
         .where('e.status = :status', { status: EscrowStatus.RELEASED });
 
-    const allRow = await baseSelect(this.escrowRepo.createQueryBuilder('e')).getRawOne();
+    const allRow = await baseSelect(
+      this.escrowRepo.createQueryBuilder('e'),
+    ).getRawOne();
 
     const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const last30Row = await baseSelect(this.escrowRepo.createQueryBuilder('e'))
@@ -552,13 +650,21 @@ export class AdminService {
       ),
       Promise.all(
         ranges.map(({ date, nextDay }) =>
-          this.usersRepo.count({ where: { createdAt: Between(date, nextDay) } }),
+          this.usersRepo.count({
+            where: { createdAt: Between(date, nextDay) },
+          }),
         ),
       ),
     ]);
 
-    const jobsPerDay = ranges.map((r, i) => ({ date: r.label, count: jobCounts[i] }));
-    const usersPerDay = ranges.map((r, i) => ({ date: r.label, count: userCounts[i] }));
+    const jobsPerDay = ranges.map((r, i) => ({
+      date: r.label,
+      count: jobCounts[i],
+    }));
+    const usersPerDay = ranges.map((r, i) => ({
+      date: r.label,
+      count: userCounts[i],
+    }));
 
     return { jobsPerDay, usersPerDay };
   }
@@ -586,8 +692,7 @@ export class AdminService {
       where.push({ category: ILike(`%${search}%`) });
       where.push({ location: ILike(`%${search}%`) });
     }
-    let whereClause: unknown =
-      where.length > 0 ? where : undefined;
+    let whereClause: unknown = where.length > 0 ? where : undefined;
     if (status) {
       // Merge status into each OR branch, or use single object.
       if (Array.isArray(whereClause)) {
@@ -650,7 +755,7 @@ export class AdminService {
     else if (status === 'verified') baseFilter.identityVerified = true;
     else if (status === 'unverified') baseFilter.identityVerified = false;
     else if (status === 'worker' || status === 'customer' || status === 'admin')
-      baseFilter.role = status as UserRole;
+      baseFilter.role = status;
 
     const orBranches: Record<string, unknown>[] = [];
     if (search) {
@@ -729,7 +834,11 @@ export class AdminService {
    * Self-suspend ve diğer adminleri suspend etme yasak.
    * Audit log AdminController'da yazılır.
    */
-  async suspendUser(targetId: string, dto: SuspendUserDto, adminUserId: string) {
+  async suspendUser(
+    targetId: string,
+    dto: SuspendUserDto,
+    adminUserId: string,
+  ) {
     if (targetId === adminUserId) {
       throw new BadRequestException('Kendi hesabınızı askıya alamazsınız');
     }
@@ -872,11 +981,26 @@ export class AdminService {
       ]);
 
       return {
-        dailyRegistrations: dailyRegistrations.map((r: any) => ({ date: r.date, count: Number(r.count) })),
-        dailyJobs: dailyJobs.map((r: any) => ({ date: r.date, count: Number(r.count) })),
-        revenueByDay: revenueByDay.map((r: any) => ({ date: r.date, tokensPurchased: Number(r.tokensPurchased ?? 0) })),
-        topCategories: topCategories.map((r: any) => ({ name: r.name, jobCount: Number(r.jobCount) })),
-        workersByCity: workersByCity.map((r: any) => ({ city: r.city, count: Number(r.count) })),
+        dailyRegistrations: dailyRegistrations.map((r: any) => ({
+          date: r.date,
+          count: Number(r.count),
+        })),
+        dailyJobs: dailyJobs.map((r: any) => ({
+          date: r.date,
+          count: Number(r.count),
+        })),
+        revenueByDay: revenueByDay.map((r: any) => ({
+          date: r.date,
+          tokensPurchased: Number(r.tokensPurchased ?? 0),
+        })),
+        topCategories: topCategories.map((r: any) => ({
+          name: r.name,
+          jobCount: Number(r.jobCount),
+        })),
+        workersByCity: workersByCity.map((r: any) => ({
+          city: r.city,
+          count: Number(r.count),
+        })),
       };
     } finally {
       await qr.release();
@@ -885,10 +1009,14 @@ export class AdminService {
 
   // ── Harita Yönetimi — Koordinat güncelleme (Phase map-mgmt) ──────────────
 
-  async setJobLocation(id: string, latitude: number, longitude: number): Promise<{ id: string }> {
+  async setJobLocation(
+    id: string,
+    latitude: number,
+    longitude: number,
+  ): Promise<{ id: string }> {
     const job = await this.jobsRepo.findOne({ where: { id } });
     if (!job) throw new NotFoundException(`Job ${id} not found`);
-    job.latitude  = latitude;
+    job.latitude = latitude;
     job.longitude = longitude;
     // geohash auto-recompute is handled by entity BeforeUpdate hook if present,
     // otherwise we just store raw coordinates for now.
@@ -896,10 +1024,14 @@ export class AdminService {
     return { id };
   }
 
-  async setUserLocation(id: string, latitude: number, longitude: number): Promise<{ id: string }> {
+  async setUserLocation(
+    id: string,
+    latitude: number,
+    longitude: number,
+  ): Promise<{ id: string }> {
     const user = await this.usersRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException(`User ${id} not found`);
-    user.latitude  = latitude;
+    user.latitude = latitude;
     user.longitude = longitude;
     await this.usersRepo.save(user);
     return { id };

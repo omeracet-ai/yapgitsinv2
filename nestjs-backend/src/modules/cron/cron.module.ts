@@ -15,7 +15,14 @@ import { BoostModule } from '../boost/boost.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Job, Offer, Review, Notification, SavedJobSearch, Booking]),
+    TypeOrmModule.forFeature([
+      Job,
+      Offer,
+      Review,
+      Notification,
+      SavedJobSearch,
+      Booking,
+    ]),
     BoostModule,
   ],
   providers: [
