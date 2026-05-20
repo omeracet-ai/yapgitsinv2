@@ -286,6 +286,15 @@ class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
   List<Job> _allJobs = [];
   String? _currentCategory;
   JobFilter _filter = const JobFilter();
+  double? _lat; // proximity sıralaması için kullanıcı konumu (varsa)
+  double? _lng;
+
+  /// Kullanıcı konumunu ayarla ve yeniden çek (proximity sıralama için).
+  Future<void> setLocation(double lat, double lng) {
+    _lat = lat;
+    _lng = lng;
+    return fetchJobs(category: _currentCategory);
+  }
 
   JobNotifier(this._repository, {String kind = JobKind.request})
       : _kind = kind,
@@ -298,7 +307,12 @@ class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
     state = const AsyncValue.loading();
     try {
       final jobsData = await _repository.getJobs(
-          category: category, q: q, status: 'open', kind: _kind);
+          category: category,
+          q: q,
+          status: 'open',
+          kind: _kind,
+          lat: _lat,
+          lng: _lng);
       _allJobs = jobsData.map((m) => Job.fromMap(m)).toList();
       state = AsyncValue.data(_applyFilter(_allJobs));
     } catch (e, st) {

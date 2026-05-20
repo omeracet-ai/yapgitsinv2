@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -36,6 +37,32 @@ class _ServiceListingsScreenState
   String _searchQuery = '';
   Timer? _debounce;
   final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _applyProximity();
+  }
+
+  /// Map'te zaten verilmiş konum iznini yeniden kullanır (yeni izin istemez);
+  /// varsa konumu provider'a geçirir → liste yakınlığa göre sıralanır.
+  Future<void> _applyProximity() async {
+    try {
+      final perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition()
+          .timeout(const Duration(seconds: 6));
+      if (!mounted) return;
+      ref
+          .read(serviceListingsProvider.notifier)
+          .setLocation(pos.latitude, pos.longitude);
+    } catch (_) {
+      // konum alınamazsa sessiz geç — liste normal sırada kalır
+    }
+  }
 
   @override
   void dispose() {

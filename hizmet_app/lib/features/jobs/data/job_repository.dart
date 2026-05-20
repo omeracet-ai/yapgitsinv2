@@ -32,13 +32,21 @@ class JobRepository {
   }
 
   Future<List<Map<String, dynamic>>> getJobs(
-      {String? category, String? q, String? status, String? kind}) async {
+      {String? category,
+      String? q,
+      String? status,
+      String? kind,
+      double? lat,
+      double? lng}) async {
     try {
       final response = await _dio.get('/jobs', queryParameters: {
         if (category != null) 'category': category,
         if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
         if (status != null) 'status': status,
         if (kind != null) 'kind': kind,
+        // Proximity sıralaması (backend featured→yakın→yeni). Konum varsa gönder.
+        if (lat != null && lng != null) 'lat': lat,
+        if (lat != null && lng != null) 'lng': lng,
       });
       return _extractJobList(response.data);
     } on DioException catch (e) {
