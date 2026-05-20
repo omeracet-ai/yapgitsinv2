@@ -21,6 +21,7 @@ import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
 import { EscrowService } from '../escrow/escrow.service';
+import { Booking, BookingStatus } from '../bookings/booking.entity';
 import { UserBlocksService } from '../user-blocks/user-blocks.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { tlToMinor } from '../../common/money.util';
@@ -34,6 +35,8 @@ export class OffersService {
     private offersRepository: Repository<Offer>,
     @InjectRepository(Job)
     private jobsRepository: Repository<Job>,
+    @InjectRepository(Booking)
+    private bookingsRepository: Repository<Booking>,
     private tokensService: TokensService,
     private usersService: UsersService,
     private notificationsService: NotificationsService,
@@ -257,19 +260,22 @@ export class OffersService {
 
   async accept(offerId: string, _requestUserId: string): Promise<Offer> {
     const offer = await this._getOffer(offerId);
+    // Idempotency — zaten kabul edilmişse tekrar işleme (mükerrer booking /
+    // escrow / bildirim / istatistik bump'ını önler).
+    if (offer.status === OfferStatus.ACCEPTED) return offer;
     offer.status = OfferStatus.ACCEPTED;
     const saved = await this.offersRepository.save(offer);
     await this.usersService.bumpStat(offer.userId, 'asWorkerSuccess');
 
+    const job = await this.jobsRepository.findOne({
+      where: { id: saved.jobId },
+    });
+    const jobTitle = job?.title ?? '';
+
     // Escrow hold — bookkeeping only; never block accept on escrow failure
     let escrowHeld = false;
-    let jobTitle = '';
     try {
-      const job = await this.jobsRepository.findOne({
-        where: { id: saved.jobId },
-      });
       if (job && job.customerId) {
-        jobTitle = job.title ?? '';
         await this.escrowService.hold({
           jobId: saved.jobId,
           offerId: saved.id,
@@ -317,6 +323,36 @@ export class OffersService {
       this.logger.warn(
         `OFFER_ACCEPTED notification failed: ${(err as Error).message}`,
       );
+    }
+
+    // Teklif kabulünü randevulaşma sistemine bağla: karşılıklı anlaşma (müşteri
+    // teklifi kabul etti, usta zaten teklif vermişti) → CONFIRMED booking.
+    // Best-effort: booking başarısız olsa da accept tamamlanır. Tarih job.dueDate,
+    // yoksa bugüne ayarlanır (taraflar koordine eder).
+    if (job && job.customerId) {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const price = saved.price ?? 0;
+        await this.bookingsRepository.save(
+          this.bookingsRepository.create({
+            customerId: job.customerId,
+            workerId: saved.userId,
+            category: job.category || 'Genel',
+            subCategory: null,
+            description: job.description || job.title || '',
+            address: job.location || 'Belirtilmedi',
+            scheduledDate: job.dueDate || today,
+            scheduledTime: null,
+            status: BookingStatus.CONFIRMED,
+            agreedPrice: price,
+            agreedPriceMinor: Math.round(price * 100),
+          }),
+        );
+      } catch (err) {
+        this.logger.warn(
+          `Auto-booking from accepted offer ${saved.id} failed: ${(err as Error).message}`,
+        );
+      }
     }
 
     return saved;

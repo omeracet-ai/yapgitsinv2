@@ -6,6 +6,7 @@ import { User } from '../users/user.entity';
 import { JobQuestion } from './job-question.entity';
 import { JobQuestionReply } from './job-question-reply.entity';
 import { SavedJob } from './saved-job.entity';
+import { Booking } from '../bookings/booking.entity';
 import { JobsService } from './jobs.service';
 import { JobsController } from './jobs.controller';
 import { OffersService } from './offers.service';
@@ -33,6 +34,8 @@ import { AiModule } from '../ai/ai.module';
       SavedJob,
       // Phase 259 — admin lookup for fraud-flag notifications (read-only).
       User,
+      // Teklif kabulü → otomatik randevu (CONFIRMED booking) için.
+      Booking,
     ]),
     UsersModule,
     TokensModule,
