@@ -359,6 +359,8 @@ Dosyalar `nestjs-backend/uploads/` klasörüne kaydedilir. `/uploads/*` static r
 AI: **claude-opus-4-7** model, adaptive thinking, prompt caching (`cache_control: ephemeral`).
 `ANTHROPIC_API_KEY` .env'de gerekli.
 
+> **İSTİSNA — `/ai/chat`**: Genel sohbet endpoint'i **bilinçli olarak Google Gemini 2.5 Flash** (`gemini-2.5-flash`, `GEMINI_API_KEY`) kullanır — yüksek hacimli sohbet desteği Gemini Flash'ta ~10x+ daha ucuz. Bu bir tutarsızlık DEĞİL, maliyet tercihidir; chat()'i Anthropic'e taşımayın. Yapısal/JSON görevler (`pricing`) **claude-haiku-4-5** kullanır (Phase 259). Geri kalan üretken/SEO endpoint'leri Opus'ta kalır. Anthropic SDK: `timeout 30s, maxRetries 2`. Tüm AI endpoint'leri per-user throttle'lı (Phase 259).
+
 ### Admin (`/admin`)
 | Method | Path | Açıklama |
 |--------|------|----------|

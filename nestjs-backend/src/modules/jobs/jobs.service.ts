@@ -402,8 +402,13 @@ export class JobsService {
       job.geohash = encodeGeohash(job.latitude, job.longitude, 6) || null;
     }
     const saved = await this.jobsRepository.save(job);
-    // Phase 116: fire-and-forget fraud check
-    this.fraudDetection
+    // Phase 116 / 259: fire-and-forget fraud check.
+    // SAFETY: not awaited → create() returns immediately; FraudDetectionService
+    // swallows all AI errors internally (returns {score:0}), and the outer
+    // .catch() swallows any DB-update failure. A fraud check can NEVER block or
+    // fail job creation. `void` matches the no-floating-promises convention used
+    // by the sibling _notifyCategorySubscribers call below.
+    void this.fraudDetection
       .analyzeJobListing(saved.title, saved.description)
       .then(async (r) => {
         if (r.score >= 70) {
@@ -412,11 +417,21 @@ export class JobsService {
             flagReason: r.reasons.join('; '),
             fraudScore: r.score,
           });
+          // Phase 259: surface high-risk listings for moderation. Logged for
+          // now; TODO(admin-notification): wire an admin alert/notification hook
+          // (e.g. NotificationsService broadcast to admins) once available.
+          this.logger.warn(
+            `Job ${saved.id} flagged as high fraud risk (score=${r.score}): ${r.reasons.join('; ')}`,
+          );
         } else {
           await this.jobsRepository.update(saved.id, { fraudScore: r.score });
         }
       })
-      .catch(() => undefined);
+      .catch((e) => {
+        this.logger.warn(
+          `Fraud post-processing failed for job ${saved.id}: ${(e as Error)?.message ?? String(e)}`,
+        );
+      });
     // Phase 143 — fire-and-forget category subscription notifications
     void this._notifyCategorySubscribers(saved);
     return saved;

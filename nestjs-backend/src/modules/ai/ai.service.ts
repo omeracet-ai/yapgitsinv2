@@ -1,13 +1,26 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Anthropic from '@anthropic-ai/sdk';
+
+// Phase 259: named model constants.
+// MODEL_QUALITY → user-facing creative/quality prose (job descriptions, support
+// chat, review summaries, SEO copy). Keep on Opus.
+// MODEL_FAST → low-reasoning structured/JSON tasks (≈10x cheaper Haiku).
+const MODEL_QUALITY = 'claude-opus-4-7';
+const MODEL_FAST = 'claude-haiku-4-5-20251001';
 
 const SYSTEM_PROMPT = `You are a helpful AI assistant for a service marketplace platform called Hizmet.
 This platform connects customers with service providers for jobs like home repairs, cleaning, tutoring, and more.
 Be concise, practical, and focused on helping users of this marketplace.`;
 
-// Gemini 2.0 Flash — free tier — used for the public /ai/chat endpoint.
-// All other (agent / SEO) endpoints continue to use Anthropic.
+// Gemini 2.5 Flash — used for the public /ai/chat endpoint (deliberate cost
+// choice: high-volume conversational support is ~10x+ cheaper on Gemini Flash).
+// All other (agent / SEO / structured) endpoints use Anthropic. Requires
+// GEMINI_API_KEY (configured in this project). Do NOT migrate chat() to Anthropic.
 const GEMINI_SYSTEM_PROMPT = `Sen Yapgitsin marketplace platformunun yardımcı asistanısın.
 Türkçe yanıt ver (kullanıcı İngilizce yazarsa İngilizce yanıt ver). Kısa, net ve pratik ol.
 Platform: müşteriler iş ilanı açar, ustalar teklif verir; ödeme platform dışı (escrow opsiyonel),
@@ -48,11 +61,16 @@ const FAQ: Record<string, string> = {
 
 @Injectable()
 export class AiService {
+  private readonly logger = new Logger(AiService.name);
   private readonly client: Anthropic;
 
   constructor(private readonly configService: ConfigService) {
+    // Phase 259: reliability — 30s per-request timeout + 2 automatic retries
+    // (the SDK retries on 408/409/429/5xx with exponential backoff).
     this.client = new Anthropic({
       apiKey: this.configService.get<string>('ANTHROPIC_API_KEY'),
+      timeout: 30_000,
+      maxRetries: 2,
     });
   }
 
@@ -65,7 +83,7 @@ export class AiService {
   ): Promise<string> {
     try {
       const response = await this.client.messages.create({
-        model: 'claude-opus-4-7',
+        model: MODEL_QUALITY,
         max_tokens: 1024,
         thinking: { type: 'adaptive' },
         system: [
@@ -89,7 +107,11 @@ Include: what the job entails, what skills/experience to look for, and what the 
 
       const textBlock = response.content.find((b) => b.type === 'text');
       return textBlock ? textBlock.text : '';
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `generateJobDescription failed: ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err.stack : undefined,
+      );
       throw new InternalServerErrorException(
         'Failed to generate job description',
       );
@@ -97,9 +119,10 @@ Include: what the job entails, what skills/experience to look for, and what the 
   }
 
   /**
-   * Public chat endpoint — uses Google Gemini 2.0 Flash (free tier).
-   * Input capped at ~2k tokens, output at 1k tokens.
-   * Requires env: GEMINI_API_KEY (set in Plesk).
+   * Public chat endpoint — uses Google Gemini 2.5 Flash (deliberate cost
+   * choice for high-volume conversational support; all other AI endpoints use
+   * Anthropic). Input capped at ~2k tokens, output at 1k tokens.
+   * Requires env: GEMINI_API_KEY (configured in this project / Plesk).
    */
   async chat(
     message: string,
@@ -158,7 +181,12 @@ Include: what the job entails, what skills/experience to look for, and what the 
         .map((p) => p.text ?? '')
         .join('')
         .trim();
-    } catch {
+    } catch (err) {
+      // Phase 259 — preserve original error context instead of silent swallow.
+      this.logger.error(
+        `chat (gemini) request failed: ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err.stack : undefined,
+      );
       throw new InternalServerErrorException('AI chat request failed');
     }
   }
@@ -170,7 +198,7 @@ Include: what the job entails, what skills/experience to look for, and what the 
       const reviewList = reviews.map((r, i) => `${i + 1}. "${r}"`).join('\n');
 
       const response = await this.client.messages.create({
-        model: 'claude-opus-4-7',
+        model: MODEL_QUALITY,
         max_tokens: 512,
         system: [
           {
@@ -189,7 +217,11 @@ Include: what the job entails, what skills/experience to look for, and what the 
 
       const textBlock = response.content.find((b) => b.type === 'text');
       return textBlock ? textBlock.text : '';
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `summarizeReviews failed: ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err.stack : undefined,
+      );
       throw new InternalServerErrorException('Failed to summarize reviews');
     }
   }
@@ -227,7 +259,7 @@ faqs uzunluğu 3-5 arası olsun. SSS uzun-kuyruk SEO odaklı: fiyat, süre, gara
 
     try {
       const response = await this.client.messages.create({
-        model: 'claude-opus-4-7',
+        model: MODEL_QUALITY,
         max_tokens: 2048,
         system: [
           {
@@ -257,7 +289,11 @@ faqs uzunluğu 3-5 arası olsun. SSS uzun-kuyruk SEO odaklı: fiyat, süre, gara
           ? (parsed.faqs as { q: string; a: string }[])
           : [],
       };
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `generateCategoryDescription failed (API or JSON parse): ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err.stack : undefined,
+      );
       throw new InternalServerErrorException('Kategori açıklaması üretilemedi');
     }
   }
@@ -323,12 +359,13 @@ faqs uzunluğu 3-5 arası olsun. SSS uzun-kuyruk SEO odaklı: fiyat, süre, gara
     tools: Anthropic.Tool[],
     systemText: string,
     maxTokens = 2048,
+    model: string = MODEL_QUALITY,
   ): Promise<string> {
     const msgs = [...messages];
 
     for (let i = 0; i < 6; i++) {
       const response = await this.client.messages.create({
-        model: 'claude-opus-4-7',
+        model,
         max_tokens: maxTokens,
         tools,
         tool_choice: { type: 'auto' },
@@ -443,7 +480,11 @@ Steps:
         suggestedBudgetMax: (parsed.suggestedBudgetMax as number) ?? 0,
         tips: (parsed.tips as string) ?? '',
       };
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `runJobAssistant failed (agent loop or JSON parse): ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err.stack : undefined,
+      );
       throw new InternalServerErrorException('İlan asistanı başarısız oldu');
     }
   }
@@ -490,6 +531,11 @@ Call get_price_range, then return ONLY this JSON:
         tools,
         SYSTEM_PROMPT +
           '\n\nRespond ONLY with valid JSON when asked for structured output.',
+        2048,
+        // Phase 259: pricing is a low-reasoning structured/JSON task — use the
+        // ≈10x cheaper Haiku model. Output is numeric range + a short rationale,
+        // not user-visible long-form prose.
+        MODEL_FAST,
       );
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       return {
@@ -497,7 +543,11 @@ Call get_price_range, then return ONLY this JSON:
         budgetMax: (parsed.budgetMax as number) ?? 0,
         rationale: (parsed.rationale as string) ?? '',
       };
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `runPricingAdvisor failed (agent loop or JSON parse): ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err.stack : undefined,
+      );
       throw new InternalServerErrorException('Fiyat danışmanı başarısız oldu');
     }
   }
@@ -545,7 +595,11 @@ Call get_price_range, then return ONLY this JSON:
         systemText,
         1024,
       );
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `runSupportAgent failed: ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err.stack : undefined,
+      );
       throw new InternalServerErrorException('Destek ajanı başarısız oldu');
     }
   }

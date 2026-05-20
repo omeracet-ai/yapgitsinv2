@@ -32,7 +32,9 @@ export class AiPublicController {
     private readonly pricingService: PricingService,
   ) {}
 
+  // Phase 259: public SEO endpoint — throttle per IP (no JWT here).
   @Post('generate-category-description')
+  @Throttle({ default: { limit: 20, ttl: 3_600_000 } })
   async generateCategoryDescription(
     @Body() dto: GenerateCategoryDescriptionDto,
   ) {
@@ -67,7 +69,12 @@ export class AiController {
 
   // ─── Existing endpoints ───────────────────────────────────────────────────
 
+  // Phase 259: per-user AI cost guard. The global UserOrIpThrottlerGuard
+  // (APP_GUARD) keys these limits by authenticated user (sub) and falls back
+  // to IP for unauthenticated callers. Overriding `default` with a lower
+  // limit + 1h ttl makes it the most-restrictive (winning) bucket.
   @Post('generate-job-description')
+  @Throttle({ default: { limit: 10, ttl: 3_600_000 } })
   async generateJobDescription(@Body() dto: GenerateJobDescriptionDto) {
     const description = await this.aiService.generateJobDescription(
       dto.title,
@@ -78,12 +85,14 @@ export class AiController {
   }
 
   @Post('chat')
+  @Throttle({ default: { limit: 30, ttl: 3_600_000 } })
   async chat(@Body() dto: AiChatDto) {
     const reply = await this.aiService.chat(dto.message, dto.history);
     return { reply };
   }
 
   @Post('summarize-reviews')
+  @Throttle({ default: { limit: 5, ttl: 3_600_000 } })
   async summarizeReviews(@Body() dto: SummarizeReviewsDto) {
     const summary = await this.aiService.summarizeReviews(dto.reviews);
     return { summary };
@@ -93,6 +102,7 @@ export class AiController {
 
   /** İlan Asistanı: generates description + suggests budget using tool calls */
   @Post('job-assistant')
+  @Throttle({ default: { limit: 20, ttl: 3_600_000 } })
   async jobAssistant(@Body() dto: JobAssistantDto) {
     return this.aiService.runJobAssistant(
       dto.title,
@@ -104,6 +114,7 @@ export class AiController {
 
   /** Fiyat Danışmanı: suggests budget range for a job category */
   @Post('pricing-advisor')
+  @Throttle({ default: { limit: 20, ttl: 3_600_000 } })
   async pricingAdvisor(@Body() dto: PricingAdvisorDto) {
     return this.aiService.runPricingAdvisor(
       dto.category,
@@ -114,6 +125,7 @@ export class AiController {
 
   /** Destek Ajanı: customer/worker support chat with platform knowledge */
   @Post('support-agent')
+  @Throttle({ default: { limit: 30, ttl: 3_600_000 } })
   async supportAgent(
     @Body() dto: SupportAgentDto,
     @Req() req: AuthenticatedRequest,
@@ -171,6 +183,7 @@ export class AiController {
 
   /** Phase 300: FlutterFlow Generic Assistant Proxy */
   @Post('assistant')
+  @Throttle({ default: { limit: 30, ttl: 3_600_000 } })
   async assistant(@Body() body: { message: string; context?: string }) {
     const { message, context } = body;
     const history = context
