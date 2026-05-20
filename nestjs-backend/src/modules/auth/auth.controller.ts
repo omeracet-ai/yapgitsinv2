@@ -107,8 +107,14 @@ export class AuthController {
   /** Yeni kullanıcı / işçi kaydı — Phase 170: 3 req/saat per IP (spam koruma) */
   @Throttle({ 'auth-register': { limit: 3, ttl: 3_600_000 } })
   @Post('register')
-  register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  register(@Body() dto: RegisterDto, @Req() req: Request) {
+    // Phase 256 (Voldi-fs) — pass IP + User-Agent for the KVKK consent audit
+    // trail (same plumbing pattern as adminLogin).
+    const userAgent = req.headers['user-agent'];
+    return this.authService.register(dto, {
+      ipAddress: extractIp(req),
+      userAgent: typeof userAgent === 'string' ? userAgent : null,
+    });
   }
 
   // ── 2FA ────────────────────────────────────────────────────────────────

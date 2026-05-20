@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/providers/navigation_provider.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/consent_section.dart';
 import '../../../service_requests/data/service_request_repository.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -71,6 +72,12 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
   // Phase 129 — Worker onboarding routing flag.
   bool   _registerAsWorker = false;
 
+  // Phase 256 — KVKK consent state.
+  // _mandatoryConsent: tek kutu hem kvkkConsent hem termsConsent'i set eder.
+  bool   _mandatoryConsent  = false;
+  bool   _marketingConsent  = false;
+  bool   _showConsentError  = false;
+
   // Adım 2: Kimlik fotoğrafı
   XFile?  _identityPhoto;
   XFile?  _documentPhoto;
@@ -112,7 +119,15 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
       setState(() => _error = 'Geçerli e-posta girin');
       return;
     }
-    setState(() { _loading = true; _error = null; });
+    // Phase 256 — KVKK zorunlu onay gate. İşaretlenmemişse kayıt engellenir.
+    if (!_mandatoryConsent) {
+      setState(() {
+        _showConsentError = true;
+        _error = 'Devam etmek için KVKK metnini ve Kullanım Koşulları\'nı kabul edin.';
+      });
+      return;
+    }
+    setState(() { _loading = true; _error = null; _showConsentError = false; });
     try {
       await ref.read(authStateProvider.notifier).register(
         fullName:    name,
@@ -127,6 +142,11 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         city:        _cityCtrl.text.trim(),
         district:    _districtCtrl.text.trim(),
         address:     _addressCtrl.text.trim(),
+        // Phase 256 — KVKK consent. Tek zorunlu kutu kvkk + terms'i set eder.
+        kvkkConsent:      true,
+        termsConsent:     true,
+        marketingConsent: _marketingConsent,
+        consentVersion:   'v1.0',
       );
       // Phase 253 (Voldi-email-validate) — SMS verify DEMOTED from signup gate
       // to optional post-signup add-on (Play Console best practice; email is
@@ -356,15 +376,30 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
             ),
           ),
         ),
+        const SizedBox(height: 20),
+        // Phase 256 — KVKK uyumluluk onay bölümü (gönder butonunun üzerinde).
+        ConsentSection(
+          mandatoryAccepted: _mandatoryConsent,
+          marketingAccepted: _marketingConsent,
+          showError: _showConsentError,
+          onMandatoryChanged: (v) => setState(() {
+            _mandatoryConsent = v;
+            if (v) _showConsentError = false;
+          }),
+          onMarketingChanged: (v) => setState(() => _marketingConsent = v),
+        ),
+
         if (_error != null) ...[
           const SizedBox(height: 12),
           _errorBox(_error!),
         ],
         const SizedBox(height: 24),
         ElevatedButton(
-          onPressed: _loading ? null : _submitStep1,
+          // Phase 256 — Zorunlu KVKK onayı yoksa buton devre dışı.
+          onPressed: (_loading || !_mandatoryConsent) ? null : _submitStep1,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
+            disabledBackgroundColor: AppColors.border,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),

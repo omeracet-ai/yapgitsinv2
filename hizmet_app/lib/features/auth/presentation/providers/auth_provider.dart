@@ -114,6 +114,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     String? gender,
     String? district,
     String? address,
+    // Phase 256 — KVKK consent. Zorunlu onay (KVKK + Kullanım Koşulları) UI'da
+    // gate edilir; marketing opsiyonel. consentVersion sürüm takibi için.
+    bool kvkkConsent = true,
+    bool termsConsent = true,
+    bool marketingConsent = false,
+    String consentVersion = 'v1.0',
   }) async {
     state = AuthLoading();
     try {
@@ -123,6 +129,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
         phoneNumber: phoneNumber,
         city: city,
+        kvkkConsent: kvkkConsent,
+        termsConsent: termsConsent,
+        marketingConsent: marketingConsent,
+        consentVersion: consentVersion,
       );
       state = AuthAuthenticated(
         data['user'] as Map<String, dynamic>? ?? {'displayName': fullName},

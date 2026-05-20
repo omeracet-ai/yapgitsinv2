@@ -1,4 +1,6 @@
 import {
+  Equals,
+  IsBoolean,
   IsDateString,
   IsEmail,
   IsIn,
@@ -69,4 +71,23 @@ export class RegisterDto {
   @IsString()
   @MaxLength(500)
   address?: string;
+
+  // ── Phase 256 (Voldi-fs) — KVKK Compliance consent gates ───────────────
+  // KVKK aydınlatma metni + kullanım koşulları kabulü kayıt için ZORUNLU.
+  // @Equals(true) → eksik/false gönderilirse 400 + Türkçe mesaj.
+  // Pazarlama izni opsiyonel; consentVersion verilmezse service 'v1.0' atar.
+  @Equals(true, { message: 'KVKK rızası zorunludur' })
+  kvkkConsent!: boolean;
+
+  @Equals(true, { message: 'Kullanım koşulları kabulü zorunludur' })
+  termsConsent!: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  marketingConsent?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  consentVersion?: string;
 }

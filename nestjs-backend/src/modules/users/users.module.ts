@@ -6,6 +6,7 @@ import { FavoriteWorker } from './favorite-worker.entity';
 import { WorkerInsurance } from './worker-insurance.entity';
 import { WorkerCertification } from './worker-certification.entity';
 import { DataDeletionRequest } from './data-deletion-request.entity';
+import { UserConsent } from './user-consent.entity';
 import { UsersService } from './users.service';
 import { FavoriteWorkersService } from './favorite-workers.service';
 import { WorkerInsuranceService } from './worker-insurance.service';
@@ -47,6 +48,7 @@ import { AvailabilityModule } from '../availability/availability.module';
       WorkerInsurance,
       WorkerCertification,
       DataDeletionRequest,
+      UserConsent,
       Job,
       Review,
       Offer,

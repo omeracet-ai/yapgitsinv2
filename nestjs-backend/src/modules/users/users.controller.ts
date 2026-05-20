@@ -341,6 +341,35 @@ export class UsersController {
     return this.insuranceSvc.toPublic(ins);
   }
 
+  // ── Phase 256: KVKK consent management ────────────────────────────
+  /** GET /users/me/consents — aktif rıza kayıtları (revokedAt IS NULL). */
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/consents')
+  listConsents(@Request() req: AuthenticatedRequest) {
+    return this.svc.listConsents(req.user.id);
+  }
+
+  /**
+   * PATCH /users/me/consents/:type/revoke — rıza geri alma.
+   * Yalnızca 'marketing' geri alınabilir; 'kvkk'/'terms' zorunlu (400).
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('me/consents/:type/revoke')
+  async revokeConsent(
+    @Request() req: AuthenticatedRequest,
+    @Param('type') type: string,
+  ) {
+    const result = await this.svc.revokeConsent(req.user.id, type);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'user.consent_revoke',
+      'user_consent',
+      req.user.id,
+      { consentType: result.consentType, revokedAt: result.revokedAt },
+    );
+    return result;
+  }
+
   // ── Phase 124: KVKK data export (Madde 11) ───────────────────────
   @UseGuards(AuthGuard('jwt'))
   @Get('me/data-export')

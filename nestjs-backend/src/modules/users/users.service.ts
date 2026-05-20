@@ -27,6 +27,7 @@ import {
 import { bayesianAverage, wilsonScore } from '../../common/rating.util';
 import { tlToMinor } from '../../common/money.util';
 import { Review } from '../reviews/review.entity';
+import { UserConsent } from './user-consent.entity';
 
 export type StatField =
   | 'asCustomerTotal'
@@ -47,6 +48,10 @@ export class UsersService {
     private bookingsRepo: Repository<Booking>,
     @InjectRepository(Review)
     private reviewsRepo: Repository<Review>,
+    // Phase 256 (Voldi-fs) — KVKK consent management. forFeature(UserConsent)
+    // is registered by Voldi-db in users.module.ts.
+    @InjectRepository(UserConsent)
+    private readonly consentRepo: Repository<UserConsent>,
     private readonly semanticSearch: SemanticSearchService,
     private readonly boostSvc: BoostService,
     @Inject(forwardRef(() => SubscriptionsService))
@@ -1117,5 +1122,46 @@ export class UsersService {
       Math.round(user.averageRating * 20) +
       (user.asCustomerSuccess + user.asWorkerSuccess) * 5;
     await this.repo.update(userId, { reputationScore: reputation });
+  }
+
+  // ── Phase 256 (Voldi-fs) — KVKK consent management ──────────────────────
+
+  /** Kullanıcının AKTİF rıza kayıtları (revokedAt IS NULL), en yeniden eskiye. */
+  async listConsents(userId: string): Promise<UserConsent[]> {
+    return this.consentRepo.find({
+      where: { userId, revokedAt: IsNull() },
+      order: { acceptedAt: 'DESC' },
+    });
+  }
+
+  /**
+   * Bir rıza tipini geri al. Yalnızca 'marketing' geri alınabilir; 'kvkk' ve
+   * 'terms' platform kullanımı için zorunlu olduğundan geri alınamaz (400).
+   * Aktif satıra revokedAt = now yazar.
+   */
+  async revokeConsent(
+    userId: string,
+    type: string,
+  ): Promise<{ revoked: true; consentType: string; revokedAt: string }> {
+    if (type !== 'marketing') {
+      throw new BadRequestException(
+        'Yalnızca pazarlama izni geri alınabilir; KVKK ve kullanım koşulları zorunludur',
+      );
+    }
+    const active = await this.consentRepo.findOne({
+      where: { userId, consentType: 'marketing', revokedAt: IsNull() },
+      order: { acceptedAt: 'DESC' },
+    });
+    if (!active) {
+      throw new NotFoundException('Aktif pazarlama izni bulunamadı');
+    }
+    const revokedAt = new Date();
+    active.revokedAt = revokedAt;
+    await this.consentRepo.save(active);
+    return {
+      revoked: true,
+      consentType: 'marketing',
+      revokedAt: revokedAt.toISOString(),
+    };
   }
 }

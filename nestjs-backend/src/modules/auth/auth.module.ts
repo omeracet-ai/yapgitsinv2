@@ -16,6 +16,7 @@ import { getJwtSigningSecret } from './jwt-secrets';
 import { IpOtpLockoutCleanupService } from './ip-otp-lockout-cleanup.service';
 import { EmailValidatorService } from './email-validator.service';
 import { User } from '../users/user.entity';
+import { UserConsent } from '../users/user-consent.entity';
 import { AdminAuditModule } from '../admin-audit/admin-audit.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { AdminAuditModule } from '../admin-audit/admin-audit.module';
       SmsOtp,
       IpOtpLockout,
       User,
+      UserConsent,
     ]),
     AdminAuditModule,
     SmsModule,

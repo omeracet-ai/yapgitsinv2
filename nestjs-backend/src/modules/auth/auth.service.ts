@@ -31,6 +31,7 @@ import { SmsService } from '../sms/sms.service';
 import { MoreThan } from 'typeorm';
 import { EmailValidatorService } from './email-validator.service';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
+import { UserConsent } from '../users/user-consent.entity';
 
 /**
  * Phase 255b (Voldi-sec) — Account temporary lock thresholds.
@@ -85,6 +86,10 @@ export class AuthService implements OnModuleInit {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly adminAudit: AdminAuditService,
+    // Phase 256 (Voldi-fs) — KVKK consent audit trail. forFeature(UserConsent)
+    // is registered by Voldi-db in auth.module.ts.
+    @InjectRepository(UserConsent)
+    private readonly consentRepo: Repository<UserConsent>,
   ) {}
 
   // ── Phase 255b — Account lock helpers (Voldi-sec) ──────────────────────
@@ -1012,17 +1017,82 @@ export class AuthService implements OnModuleInit {
     };
   }
 
-  async register(userData: {
-    email: string;
-    phoneNumber?: string;
-    password: string;
-    fullName?: string;
-    birthDate?: string;
-    gender?: string;
-    city?: string;
-    district?: string;
-    address?: string;
-  }) {
+  /**
+   * Phase 256 (Voldi-fs) — Insert KVKK/terms/marketing consent rows for a
+   * freshly-registered user.
+   *
+   * - 'kvkk' + 'terms' her zaman yazılır (DTO bunları @Equals(true) ile
+   *   zorunlu kılar; service de defansif olarak hep ekler).
+   * - 'marketing' YALNIZCA marketingConsent === true ise eklenir.
+   * - version = consentVersion ?? 'v1.0'.
+   * - ipAddress / userAgent mevcutsa yazılır, yoksa null.
+   *
+   * Hata yönetimi: consent yazımı kayıt akışını ASLA bozmamalı, ancak yasal
+   * denetim için kritik olduğundan başarısızlık ERROR seviyesinde context'le
+   * loglanır (sessizce yutulmaz).
+   */
+  private async persistRegistrationConsents(
+    userId: string,
+    data: {
+      kvkkConsent?: boolean;
+      termsConsent?: boolean;
+      marketingConsent?: boolean;
+      consentVersion?: string;
+    },
+    ctx?: { ipAddress?: string | null; userAgent?: string | null },
+  ): Promise<void> {
+    const version = data.consentVersion ?? 'v1.0';
+    const acceptedAt = new Date();
+    const ipAddress = ctx?.ipAddress ?? null;
+    const userAgent = ctx?.userAgent ?? null;
+
+    const types: Array<'kvkk' | 'terms' | 'marketing'> = ['kvkk', 'terms'];
+    if (data.marketingConsent === true) types.push('marketing');
+
+    try {
+      const rows = types.map((consentType) =>
+        this.consentRepo.create({
+          userId,
+          consentType,
+          version,
+          acceptedAt,
+          ipAddress: ipAddress ?? undefined,
+          userAgent: userAgent ?? undefined,
+        }),
+      );
+      await this.consentRepo.save(rows);
+    } catch (e) {
+      this.logger.error(
+        `[KVKK] consent persist failed userId=${userId} types=${types.join(
+          ',',
+        )} version=${version}: ${(e as Error).message}`,
+        (e as Error).stack,
+      );
+    }
+  }
+
+  async register(
+    userData: {
+      email: string;
+      phoneNumber?: string;
+      password: string;
+      fullName?: string;
+      birthDate?: string;
+      gender?: string;
+      city?: string;
+      district?: string;
+      address?: string;
+      // Phase 256 (Voldi-fs) — KVKK consent gates (DTO @Equals(true) enforced).
+      kvkkConsent?: boolean;
+      termsConsent?: boolean;
+      marketingConsent?: boolean;
+      consentVersion?: string;
+    },
+    // Phase 256 — request context for the consent audit trail. The controller
+    // passes IP + User-Agent (same plumbing as adminLogin). Optional so any
+    // existing internal caller keeps working; falls back to null below.
+    requestCtx?: { ipAddress?: string | null; userAgent?: string | null },
+  ) {
     // Phase 253 (Voldi-email-validate) — email REQUIRED + domain-validated.
     // Pipeline: syntax (DTO) → disposable block → whitelist → MX lookup.
     // Throws BadRequestException with stable codes EMAIL_DISPOSABLE /
@@ -1066,6 +1136,12 @@ export class AuthService implements OnModuleInit {
       // existing-user branch persists the flag via Phase 252-C path).
       isPhoneVerified: false,
     });
+
+    // Phase 256 (Voldi-fs) — KVKK consent audit trail.
+    // 'kvkk' + 'terms' her zaman; 'marketing' yalnızca kullanıcı açıkça izin
+    // verirse. Yasal denetim için kritik: hata olursa kayıt akışını BOZMA ama
+    // error seviyesinde context'le logla (sessiz yutma yok).
+    await this.persistRegistrationConsents(newUser.id, userData, requestCtx);
 
     const { passwordHash: _hash2, ...result } = newUser;
     // Phase 121 — fire-and-forget welcome email

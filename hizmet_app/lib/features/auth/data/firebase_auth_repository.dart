@@ -138,6 +138,12 @@ class FirebaseAuthRepository {
     required String password,
     String? phoneNumber,
     String? city,
+    // Phase 256 — KVKK consent. Backend register DTO artık bu alanları zorunlu
+    // kılar: kvkkConsent + termsConsent true olmalı; marketingConsent opsiyonel.
+    bool kvkkConsent = true,
+    bool termsConsent = true,
+    bool marketingConsent = false,
+    String consentVersion = 'v1.0',
   }) async {
     try {
       final body = <String, dynamic>{
@@ -147,6 +153,11 @@ class FirebaseAuthRepository {
         if (phoneNumber != null && phoneNumber.isNotEmpty)
           'phoneNumber': phoneNumber,
         if (city != null && city.isNotEmpty) 'city': city,
+        // Phase 256 — KVKK consent payload (her zaman gönderilir).
+        'kvkkConsent': kvkkConsent,
+        'termsConsent': termsConsent,
+        'marketingConsent': marketingConsent,
+        'consentVersion': consentVersion,
       };
       final res = await _dio.post<dynamic>(
         '/auth/register',
