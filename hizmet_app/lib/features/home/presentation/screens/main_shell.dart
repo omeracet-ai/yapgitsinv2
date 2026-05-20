@@ -62,12 +62,15 @@ class _MainShellState extends ConsumerState<MainShell>
   void _onItemTapped(int index) {
     final authState = ref.read(authStateProvider);
     final isLoggedIn = authState is AuthAuthenticated;
-    // index 2 — "+" İlan Ver kısa yolu (tab değiştirmek yerine route push)
+    // index 2 — "+" İlan Ver kısa yolu: usta hizmet ilanı (offer) akışı.
+    // Müşteri talebi (request) anasayfadaki "Hizmet İlanı Ver"den verilir;
+    // bu sekme ustaların hizmet SUNDUĞU offer ilanları içindir → "Hizmet
+    // İlanları" sekmesinde listelenir. Kısıtlama yok, herkes açabilir.
     if (index == 2) {
       if (isLoggedIn) {
-        context.push('/ilan-ver');
+        context.push('/hizmet-ilani-ver');
       } else {
-        context.push('/giris-yap', extra: {'returnTo': '/ilan-ver'});
+        context.push('/giris-yap', extra: {'returnTo': '/hizmet-ilani-ver'});
       }
       return;
     }
