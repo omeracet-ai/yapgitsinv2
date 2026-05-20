@@ -535,8 +535,8 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(11),
                 child: kIsWeb
-                    ? Image.network(file!.path, fit: BoxFit.cover, width: double.infinity)
-                    : Image.file(io.File(file!.path), fit: BoxFit.cover, width: double.infinity))
+                    ? Image.network(file.path, fit: BoxFit.cover, width: double.infinity)
+                    : Image.file(io.File(file.path), fit: BoxFit.cover, width: double.infinity))
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

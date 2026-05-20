@@ -655,9 +655,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
               clipBehavior: Clip.antiAlias,
               child: hasFile
                   ? (kIsWeb
-                      ? Image.network(newFile!.path,
+                      ? Image.network(newFile.path,
                           fit: BoxFit.cover, width: double.infinity)
-                      : Image.file(io.File(newFile!.path),
+                      : Image.file(io.File(newFile.path),
                           fit: BoxFit.cover, width: double.infinity))
                   : Image.network(currentUrl!,
                       fit: BoxFit.cover,
