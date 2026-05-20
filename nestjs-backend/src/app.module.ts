@@ -176,7 +176,15 @@ import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.enti
         // P222 — Strict opt-in: synchronize requires ALLOW_SCHEMA_SYNC=true OR NODE_ENV=development.
         // If NODE_ENV is unset/missing, default to SECURE (synchronize OFF, run migrations).
         // This prevents accidental schema rewrites in prod when env vars are missing.
-        const allowSync = isDev || process.env.ALLOW_SCHEMA_SYNC === 'true';
+        //
+        // Phase 257 — production safety hard guard: synchronize can NEVER be true when
+        // NODE_ENV=production or DB_TYPE=postgres (the prod path), regardless of any
+        // ALLOW_SCHEMA_SYNC override. Postgres = prod = migrations-only.
+        const isPostgres = dbType === 'postgres';
+        const allowSync =
+          (isDev || process.env.ALLOW_SCHEMA_SYNC === 'true') &&
+          !isProd &&
+          !isPostgres;
         const synchronize = allowSync;
         const migrationsRun = !allowSync;
         const migrations = [`${__dirname}/migrations/*{.js,.ts}`];

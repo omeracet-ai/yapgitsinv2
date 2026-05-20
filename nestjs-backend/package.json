@@ -24,6 +24,7 @@
     "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/data-source.ts",
     "migration:show": "npm run typeorm -- migration:show -d src/data-source.ts",
+    "migration:check": "node scripts/migration-check.js",
     "openapi:export": "ts-node --transpile-only -r tsconfig-paths/register scripts/export-openapi.ts",
     "backfill:coords:dry": "node scripts/backfill-coords.js",
     "backfill:coords:apply": "node scripts/backfill-coords.js --apply"

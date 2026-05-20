@@ -135,7 +135,9 @@ export class TokensService {
 
     // İdempotency: zaten COMPLETED veya FAILED ise no-op.
     if (tx.status === TxStatus.COMPLETED) {
-      const u = await this.userRepo.findOne({ where: { id: tx.userId } });
+      // Phase 257 — userId is nullable (virtual platform tx); purchase rows
+      // always have a real owner. Fall back to '' (no match) defensively.
+      const u = await this.userRepo.findOne({ where: { id: tx.userId ?? '' } });
       return {
         status: 'success',
         tokens: tx.amount,
@@ -161,7 +163,9 @@ export class TokensService {
       });
       if (!fresh) throw new NotFoundException('İşlem bulunamadı (race)');
       if (fresh.status === TxStatus.COMPLETED) {
-        const u = await manager.findOne(User, { where: { id: fresh.userId } });
+        const u = await manager.findOne(User, {
+          where: { id: fresh.userId ?? '' },
+        });
         return {
           status: 'success' as const,
           tokens: fresh.amount,
@@ -170,14 +174,16 @@ export class TokensService {
       }
       await manager.increment(
         User,
-        { id: fresh.userId },
+        { id: fresh.userId ?? '' },
         'tokenBalance',
         fresh.amount,
       );
       fresh.status = TxStatus.COMPLETED;
       fresh.description = `${fresh.amount} jeton satın alındı (iyzipay paymentId=${result.paymentId ?? 'n/a'})`;
       await manager.save(TokenTransaction, fresh);
-      const u = await manager.findOne(User, { where: { id: fresh.userId } });
+      const u = await manager.findOne(User, {
+        where: { id: fresh.userId ?? '' },
+      });
       this.logger.log(
         `Token purchase confirmed: user=${fresh.userId} tokens=${fresh.amount} paymentId=${result.paymentId ?? 'n/a'}`,
       );

@@ -203,10 +203,19 @@ export class BookingEscrowService {
             }),
           );
         } else {
-          // No platform admin user exists — virtual fee. Persist as audit only
-          // (token_transactions.userId is NOT NULL, so we skip the tx row).
-          console.warn(
-            `[booking-escrow] platform fee (${commissionAmount}) for booking ${bookingId} — no admin user; recorded via audit log only`,
+          // Phase 257 — no platform admin user exists. token_transactions.userId
+          // is now nullable, so persist the platform fee as a virtual (userId:null)
+          // tx row instead of dropping it, keeping the commission ledger complete.
+          await em.save(
+            em.create(TokenTransaction, {
+              userId: null,
+              type: TxType.PURCHASE,
+              amount: commissionAmount,
+              description: `Platform fee (${pct}%) — booking ${bookingId} (virtual, no admin account)`,
+              status: TxStatus.COMPLETED,
+              paymentMethod: PaymentMethod.SYSTEM,
+              paymentRef: `ESCROW-FEE-${bookingId}`,
+            }),
           );
         }
       }

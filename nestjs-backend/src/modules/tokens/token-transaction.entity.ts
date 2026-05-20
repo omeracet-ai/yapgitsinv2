@@ -33,12 +33,14 @@ export class TokenTransaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 36 })
-  userId: string;
+  // Phase 257 — Nullable to support virtual platform/admin transactions
+  // (e.g. commission fee rows) that have no owning user.
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  userId?: string | null;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user?: User | null;
 
   @Column({ type: 'simple-enum', enum: TxType })
   type: TxType;

@@ -23,6 +23,13 @@ export enum BookingEscrowStatus {
 @Entity('booking_escrows')
 @Index('idx_booking_escrows_workerId_status', ['workerId', 'status'])
 @Index('idx_booking_escrows_status', ['status'])
+// Phase 257 — Prevent two active (held/released) escrows for the same booking.
+// Partial unique index (PG/SQLite). The migration is the cross-db source of
+// truth; this decorator keeps synchronize:true dev parity.
+@Index('uq_booking_escrows_active_bookingId', ['bookingId'], {
+  unique: true,
+  where: "status IN ('held', 'released')",
+})
 export class BookingEscrow {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -72,7 +79,8 @@ export class BookingEscrow {
   })
   refundedAmount: number | null;
 
-  // Phase 174c — Integer minor units (kuruş). Added by Voldi-db backfill.
+  // Phase 174c — Integer minor units (kuruş). SOURCE OF TRUTH for money;
+  // the `amount` column above is legacy/display only. Added by Voldi-db backfill.
   @Column({ type: 'integer', default: 0 })
   amountMinor!: number;
 

@@ -31,11 +31,23 @@ function resolveSqlitePath(name: string): string {
   return name === ':memory:' || isAbsolute(name) ? name : join(APP_ROOT, name);
 }
 
+const isProduction = process.env.NODE_ENV === 'production';
+const isPostgres = dbType === 'postgres';
+
+// PRODUCTION SAFETY (Phase 257):
+// The CLI DataSource must NEVER synchronize the schema — schema changes go through
+// migrations only. This is always false here, but the guard makes the intent explicit:
+//   - NODE_ENV=production  → forced false
+//   - DB_TYPE=postgres     → forced false (Postgres = prod path)
+//   - otherwise            → still false (CLI runner only runs migrations)
+// Runtime app sync logic lives in app.module.ts (P222 strict opt-in).
+const cliSynchronize = false && !isProduction && !isPostgres;
+
 const baseOptions = {
   // Glob both .ts (CLI w/ ts-node) and .js (compiled prod) so this file works in both contexts.
   entities: [`${__dirname}/**/*.entity{.ts,.js}`],
   migrations: [`${__dirname}/migrations/*{.ts,.js}`],
-  synchronize: false,
+  synchronize: cliSynchronize,
 };
 
 let options: DataSourceOptions;

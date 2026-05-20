@@ -124,6 +124,24 @@ export class EscrowService {
     return escrow.customerId === userId || escrow.taskerId === userId;
   }
 
+  /**
+   * Phase 257 — single source of truth for the platform commission split on a
+   * kuruş-integer (minor) amount. Every fee computation in this service routes
+   * through here so the platform commission percentage has ONE authority
+   * ({@link FeeService.getFeePct}). Preserves the exact kuruş-integer rounding
+   * used previously (`pctOfMinor` → `Math.round((minor*pct)/100)`).
+   */
+  private splitMinor(amountMinor: number): {
+    pct: number;
+    platformFeeMinor: number;
+    workerPayoutMinor: number;
+  } {
+    const pct = Math.round(this.feeService.getFeePct());
+    const platformFeeMinor = pctOfMinor(amountMinor, pct);
+    const workerPayoutMinor = subMinor(amountMinor, platformFeeMinor);
+    return { pct, platformFeeMinor, workerPayoutMinor };
+  }
+
   async hold(args: HoldArgs): Promise<PaymentEscrow> {
     if (!args.jobId || !args.offerId || !args.customerId || !args.taskerId) {
       throw new BadRequestException('Missing required escrow parameters');
@@ -133,10 +151,9 @@ export class EscrowService {
     }
 
     // Phase 174c — Integer minor sync (kuruş). Fee pct via FeeService (Phase 169).
+    // Phase 257 — routed through splitMinor() (single FeeService authority).
     const amountMinor = tlToMinor(args.amount) ?? 0;
-    const feePct = Math.round(this.feeService.getFeePct());
-    const platformFeeMinor = pctOfMinor(amountMinor, feePct);
-    const workerPayoutMinor = subMinor(amountMinor, platformFeeMinor);
+    const { platformFeeMinor, workerPayoutMinor } = this.splitMinor(amountMinor);
 
     const escrow = this.repo.create({
       jobId: args.jobId,
@@ -303,17 +320,19 @@ export class EscrowService {
     }
     const workerShare = Math.round(escrow.amount * ratio * 100) / 100;
     const refundShare = Math.round((escrow.amount - workerShare) * 100) / 100;
-    const feeRate = getPlatformFeeRate() * 100;
-    escrow.platformFeePct = feeRate;
-    escrow.platformFeeAmount = Math.round(workerShare * feeRate) / 100;
-    escrow.taskerNetAmount = workerShare - escrow.platformFeeAmount;
+    // Phase 257 — fee pct from FeeService (single authority), not the local
+    // getPlatformFeeRate() helper, so split commission matches hold()/release().
+    const fb = this.feeService.calculateFee(workerShare);
+    escrow.platformFeePct = fb.feePct;
+    escrow.platformFeeAmount = fb.feeAmount;
+    escrow.taskerNetAmount = fb.workerNet;
     escrow.refundAmount = refundShare;
 
-    // Phase 174c — Integer minor sync
+    // Phase 174c — Integer minor sync (Phase 257: via splitMinor()).
     const workerShareMinor = tlToMinor(workerShare) ?? 0;
-    const platformFeeMinor = pctOfMinor(workerShareMinor, Math.round(feeRate));
-    escrow.platformFeeMinor = platformFeeMinor;
-    escrow.workerPayoutMinor = subMinor(workerShareMinor, platformFeeMinor);
+    const split = this.splitMinor(workerShareMinor);
+    escrow.platformFeeMinor = split.platformFeeMinor;
+    escrow.workerPayoutMinor = split.workerPayoutMinor;
     escrow.status = EscrowStatus.PARTIAL_REFUND;
     escrow.releasedAt = new Date();
     escrow.refundedAt = new Date();
@@ -369,16 +388,16 @@ export class EscrowService {
 
     // Single source of truth: FeeService (PLATFORM_FEE_RATE 0..1 wins, else PLATFORM_FEE_PCT, default 10).
     const fb = this.feeService.calculateFee(escrow.amount);
-    const pct = fb.feePct;
-    escrow.platformFeePct = pct;
+    escrow.platformFeePct = fb.feePct;
     escrow.platformFeeAmount = fb.feeAmount;
     escrow.taskerNetAmount = fb.workerNet;
 
-    // Phase 174c — Integer minor sync
+    // Phase 174c — Integer minor sync (Phase 257: via splitMinor()).
     const amountMinor = escrow.amountMinor || tlToMinor(escrow.amount) || 0;
     escrow.amountMinor = amountMinor;
-    escrow.platformFeeMinor = pctOfMinor(amountMinor, Math.round(pct));
-    escrow.workerPayoutMinor = subMinor(amountMinor, escrow.platformFeeMinor);
+    const split = this.splitMinor(amountMinor);
+    escrow.platformFeeMinor = split.platformFeeMinor;
+    escrow.workerPayoutMinor = split.workerPayoutMinor;
 
     escrow.status = EscrowStatus.RELEASED;
     escrow.releasedAt = new Date();
