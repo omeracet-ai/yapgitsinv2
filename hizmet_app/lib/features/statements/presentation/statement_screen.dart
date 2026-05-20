@@ -144,8 +144,9 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                   '${asTasker['count'] ?? 0} iş',
                   _fmt((asTasker['totalNet'] as num?)),
                 ],
-                subtitle:
-                    'Brüt: ${_fmt(asTasker['totalGross'] as num?)} / Komisyon: ${_fmt(asTasker['totalCommission'] as num?)}',
+                // Komisyon gizlendi — platform per-iş komisyonu devre dışı (restorable).
+                // 'Brüt: ${_fmt(asTasker['totalGross'] as num?)} / Komisyon: ${_fmt(asTasker['totalCommission'] as num?)}'
+                subtitle: 'Brüt: ${_fmt(asTasker['totalGross'] as num?)}',
               ),
             ),
           ],

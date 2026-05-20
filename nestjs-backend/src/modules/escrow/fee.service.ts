@@ -12,6 +12,26 @@ export interface FeeBreakdown {
 }
 
 /**
+ * Platform commission master switch. Default OFF: the platform takes NO
+ * per-job commission — the worker receives 100% of the agreed price.
+ * The commission code below is intentionally KEPT (dormant), so the feature
+ * can be restored by setting env `PLATFORM_COMMISSION_ENABLED=true`.
+ *
+ * While OFF, getFeePct() returns 0 → feeAmount 0 / workerNet = gross
+ * everywhere (escrow split, statements, admin reports) via this single source.
+ */
+const COMMISSION_ENABLED = process.env.PLATFORM_COMMISSION_ENABLED === 'true';
+
+/**
+ * Standalone master-switch reader so non-FeeService commission paths
+ * (e.g. BookingEscrowService Phase 254a `commission_pct_qr`) share the same
+ * single source of truth. Returns false by default → commission disabled.
+ */
+export function isPlatformCommissionEnabled(): boolean {
+  return COMMISSION_ENABLED;
+}
+
+/**
  * Phase 169 — Airtasker-style service-fee calculator.
  *
  * Single source of truth for the platform commission. Reads `PLATFORM_FEE_PCT`
@@ -23,8 +43,15 @@ export interface FeeBreakdown {
  */
 @Injectable()
 export class FeeService {
+  /** Whether platform commission is active. Off → 0% everywhere. */
+  isCommissionEnabled(): boolean {
+    return COMMISSION_ENABLED;
+  }
+
   /** Resolve the configured platform fee percentage (0..100). Fallback 10. */
   getFeePct(): number {
+    // Commission disabled → 0% (worker keeps 100%). Dormant, restorable via env.
+    if (!COMMISSION_ENABLED) return 0;
     const rate = process.env.PLATFORM_FEE_RATE;
     if (rate !== undefined && rate !== '') {
       const parsed = parseFloat(rate);

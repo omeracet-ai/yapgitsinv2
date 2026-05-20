@@ -45,7 +45,8 @@ export default function RevenuePage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: "Toplam Gelir",      value: data ? fmt(data.totalGross)       : "—", icon: "💵", cls: "bg-blue-50 border-blue-100" },
-            { label: "Komisyon Gelirimiz", value: data ? fmt(data.totalPlatformFee) : "—", icon: "💰", cls: "bg-emerald-50 border-emerald-100" },
+            // Komisyon gizlendi — per-iş komisyonu devre dışı (restorable).
+            // { label: "Komisyon Gelirimiz", value: data ? fmt(data.totalPlatformFee) : "—", icon: "💰", cls: "bg-emerald-50 border-emerald-100" },
             { label: "Ustaya Net",        value: data ? fmt(data.totalTaskerNet)   : "—", icon: "👷", cls: "bg-purple-50 border-purple-100" },
             { label: "İş Sayısı",         value: data ? data.releasedCount         : "—", icon: "✅", cls: "bg-teal-50 border-teal-100" },
           ].map(c => (
@@ -76,10 +77,11 @@ export default function RevenuePage() {
                 <td className="px-5 py-3 font-medium">Toplam Gelir</td>
                 <td className="px-5 py-3 text-right">{data ? fmt(data.last30Days.totalGross) : "—"}</td>
               </tr>
+              {/* Komisyon gizlendi — per-iş komisyonu devre dışı (restorable).
               <tr>
                 <td className="px-5 py-3 font-medium">Komisyon Gelirimiz</td>
                 <td className="px-5 py-3 text-right">{data ? fmt(data.last30Days.totalPlatformFee) : "—"}</td>
-              </tr>
+              </tr> */}
               <tr>
                 <td className="px-5 py-3 font-medium">Ustaya Net</td>
                 <td className="px-5 py-3 text-right">{data ? fmt(data.last30Days.totalTaskerNet) : "—"}</td>

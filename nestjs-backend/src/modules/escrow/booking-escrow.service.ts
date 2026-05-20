@@ -16,6 +16,7 @@ import {
 } from '../tokens/token-transaction.entity';
 import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
 import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
+import { isPlatformCommissionEnabled } from './fee.service';
 
 /**
  * Phase 136 — Token-based booking escrow service.
@@ -139,10 +140,12 @@ export class BookingEscrowService {
 
       // Phase 254a — Commission split. commission_pct_qr (default 1%) of the
       // escrow amount goes to the platform admin account; remainder to worker.
-      const pctRaw = await this.platformSettings.getNumber(
-        'commission_pct_qr',
-        1,
-      );
+      // Commission master switch (default OFF): when disabled the platform takes
+      // 0% and the worker receives 100%. Dormant code kept; re-enable via env
+      // PLATFORM_COMMISSION_ENABLED=true (shared with FeeService).
+      const pctRaw = isPlatformCommissionEnabled()
+        ? await this.platformSettings.getNumber('commission_pct_qr', 1)
+        : 0;
       // Clamp 0..100 — defensive against bad admin input.
       const pct = Math.max(0, Math.min(100, pctRaw));
       const totalAmount = Number(escrow.amount) || 0;
