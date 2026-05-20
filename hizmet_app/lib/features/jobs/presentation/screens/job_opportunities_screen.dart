@@ -263,7 +263,6 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                           '${c['icon'] ?? ''} ${c['name'] ?? ''}'.trim(),
                           c['name'] as String?,
                           _activeCategory == c['name'],
-                          highlight: true,
                         )),
                     if (mine.isNotEmpty && others.isNotEmpty)
                       Container(
@@ -289,8 +288,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
     );
   }
 
-  Widget _chip(String label, String? value, bool active,
-          {bool highlight = false}) =>
+  Widget _chip(String label, String? value, bool active) =>
       GestureDetector(
         onTap: () => _selectCategory(value),
         child: AnimatedContainer(
@@ -298,25 +296,17 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
           margin: const EdgeInsets.only(right: 8),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: active
-                ? Colors.white
-                : (highlight
-                    ? AppColors.primary.withValues(alpha: 0.10)
-                    : AppColors.surfaceElevated),
+            color: active ? Colors.white : AppColors.surfaceElevated,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                color: active
-                    ? Colors.white
-                    : (highlight ? AppColors.primary : AppColors.border)),
+                color: active ? Colors.white : AppColors.border),
           ),
           child: Text(
             label,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: active
-                  ? Colors.black
-                  : (highlight ? AppColors.primary : AppColors.textPrimary),
+              color: active ? Colors.black : AppColors.textPrimary,
             ),
           ),
         ),
