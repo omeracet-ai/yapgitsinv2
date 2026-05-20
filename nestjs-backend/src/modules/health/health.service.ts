@@ -7,34 +7,47 @@ import { execFileSync } from 'child_process';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
-let version = '0.0.1';
-try {
-  const pkgPath = join(__dirname, '../..', 'package.json');
-  const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-  version = pkg.version;
-} catch {
-  // fallback
+/**
+ * Phase 258 (rev) — build metadata read ONCE at module load (sync fs, env-
+ * independent). The build step (`scripts/write-build-info.js`) writes
+ * `build-info.json` next to the flattened server entry. NO leading dot so FTP/
+ * IIS deploys never skip it, and a file read at require-time avoids the
+ * ConfigModule .env-loaded-too-late problem that made env GIT_COMMIT unusable.
+ */
+interface BuildInfo {
+  commit?: string;
+  version?: string;
+}
+const BUILD_INFO: BuildInfo = (() => {
+  try {
+    const f = join(__dirname, '../..', 'build-info.json');
+    if (existsSync(f)) return JSON.parse(readFileSync(f, 'utf-8')) as BuildInfo;
+  } catch {
+    // ignore — fall through to fallbacks below
+  }
+  return {};
+})();
+
+let version = BUILD_INFO.version || '0.0.1';
+if (!BUILD_INFO.version) {
+  try {
+    const pkg = JSON.parse(
+      readFileSync(join(__dirname, '../..', 'package.json'), 'utf-8'),
+    ) as { version?: string };
+    if (pkg.version) version = pkg.version;
+  } catch {
+    // keep fallback
+  }
 }
 
 /**
- * Phase 258 — commit hash resolved ONCE at module load so /health never shells
- * out per request (git would blow the <50ms budget and can throw under iisnode).
- * Priority: GIT_COMMIT env → GIT_SHA env → build-time file (.git-commit) →
- * best-effort `git rev-parse --short HEAD` → 'unknown'. Never throws.
+ * Commit hash for /health. Priority: GIT_COMMIT/GIT_SHA env → build-info.json →
+ * best-effort `git rev-parse` (dev only) → 'unknown'. Resolved once; never throws.
  */
 const COMMIT_HASH: string = (() => {
   const fromEnv = (process.env.GIT_COMMIT || process.env.GIT_SHA || '').trim();
   if (fromEnv) return fromEnv;
-  try {
-    // Build-time artifact written by CI/deploy (avoids a git binary on the host).
-    const f = join(__dirname, '../..', '.git-commit');
-    if (existsSync(f)) {
-      const v = readFileSync(f, 'utf-8').trim();
-      if (v) return v;
-    }
-  } catch {
-    // ignore — fall through to git / unknown
-  }
+  if (BUILD_INFO.commit) return BUILD_INFO.commit;
   try {
     return execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
       cwd: join(__dirname, '../..'),
