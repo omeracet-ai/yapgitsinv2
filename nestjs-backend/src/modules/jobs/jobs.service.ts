@@ -330,6 +330,8 @@ export class JobsService {
     customerId?: string;
     q?: string;
     kind?: JobKind;
+    lat?: number;
+    lng?: number;
   }) {
     const limit = filters?.limit ?? 20;
     const page = filters?.page ?? 1;
@@ -364,12 +366,41 @@ export class JobsService {
         );
       }
 
+      // Sıralama: 1) "Öne Çıkan" (boost/featured) en üstte, 2) kullanıcı
+      // konumu verildiyse en yakın ilan, 3) en yeni. Konum yoksa eski davranış.
       query
         .orderBy(
           'CASE WHEN job.featuredOrder IS NOT NULL THEN 0 ELSE 1 END',
           'ASC',
         )
-        .addOrderBy('job.featuredOrder', 'ASC')
+        .addOrderBy('job.featuredOrder', 'ASC');
+
+      const hasGeo =
+        filters?.lat != null &&
+        filters?.lng != null &&
+        !Number.isNaN(filters.lat) &&
+        !Number.isNaN(filters.lng);
+      if (hasGeo) {
+        // Koordinatsız ilanlar en sona; koordinatlılar Haversine mesafesine göre
+        // (km) artan sırada. Math fonksiyonları /jobs/nearby ile aynı (prod'da
+        // çalışıyor: Postgres native, SQLite math-functions etkin).
+        query
+          .addOrderBy(
+            'CASE WHEN job.latitude IS NULL OR job.longitude IS NULL THEN 1 ELSE 0 END',
+            'ASC',
+          )
+          .addOrderBy(
+            `(6371 * acos(
+              cos(radians(:ulat)) * cos(radians(job.latitude)) *
+              cos(radians(job.longitude) - radians(:ulng)) +
+              sin(radians(:ulat)) * sin(radians(job.latitude))
+            ))`,
+            'ASC',
+          )
+          .setParameters({ ulat: filters.lat, ulng: filters.lng });
+      }
+
+      query
         .addOrderBy('job.createdAt', 'DESC')
         .skip((page - 1) * limit)
         .take(limit);

@@ -72,6 +72,8 @@ export class JobsController {
     @Query('customerId') customerId?: string,
     @Query('q') q?: string,
     @Query('kind') kind?: JobKind,
+    @Query('lat') lat?: string,
+    @Query('lng') lng?: string,
   ) {
     return this.jobsService.findAll({
       category,
@@ -81,6 +83,8 @@ export class JobsController {
       customerId,
       q,
       kind,
+      lat: lat ? Number(lat) : undefined,
+      lng: lng ? Number(lng) : undefined,
     });
   }
 
