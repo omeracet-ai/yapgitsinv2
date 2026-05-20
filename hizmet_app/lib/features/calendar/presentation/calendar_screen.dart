@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/models/booking_model.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/list_skeleton.dart';
@@ -415,13 +416,23 @@ void _showCancelSheet(BuildContext context, WidgetRef ref, Booking b) {
               const SizedBox(height: 6),
               DropdownButtonFormField<String>(
                 initialValue: reason,
+                isExpanded: true,
+                // Dark tema: açılan menü zemini + metin rengini açıkça ver,
+                // yoksa metin zeminle aynı renge düşüp okunmuyordu.
+                dropdownColor: AppColors.surface,
+                style: const TextStyle(
+                    color: AppColors.textPrimary, fontSize: 14),
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   isDense: true,
                 ),
                 items: _kReasonLabels.entries
-                    .map((e) =>
-                        DropdownMenuItem(value: e.key, child: Text(e.value)))
+                    .map((e) => DropdownMenuItem(
+                          value: e.key,
+                          child: Text(e.value,
+                              style: const TextStyle(
+                                  color: AppColors.textPrimary)),
+                        ))
                     .toList(),
                 onChanged: (v) => setSt(() => reason = v ?? 'other'),
               ),
