@@ -63,37 +63,37 @@ if (-not $EnvFile) { $EnvFile = Join-Path $RepoRoot '.env.deploy' }
 function Get-ModuleMap {
     @{
         'reviews'    = @{
-            Local  = 'nestjs-backend/src/modules/reviews'
+            Local  = 'nestjs-backend/dist/src/modules/reviews'
             Remote = '/backend/src/modules/reviews'
             Smoke  = @('GET /healthz:200','GET /reviews/recent:200')
         }
         'categories' = @{
-            Local  = 'nestjs-backend/src/modules/categories'
+            Local  = 'nestjs-backend/dist/src/modules/categories'
             Remote = '/backend/src/modules/categories'
             Smoke  = @('GET /healthz:200','GET /categories:200','GET /categories/tree:200')
         }
         'auth'       = @{
-            Local  = 'nestjs-backend/src/modules/auth'
+            Local  = 'nestjs-backend/dist/src/modules/auth'
             Remote = '/backend/src/modules/auth'
             Smoke  = @('GET /healthz:200','POST /auth/sms/verify:400','POST /auth/firebase:400')
         }
         'iyzico'     = @{
-            Local  = 'nestjs-backend/src/modules/iyzico'
+            Local  = 'nestjs-backend/dist/src/modules/iyzico'
             Remote = '/backend/src/modules/iyzico'
             Smoke  = @('GET /healthz:200')
         }
         'jobs'       = @{
-            Local  = 'nestjs-backend/src/modules/jobs'
+            Local  = 'nestjs-backend/dist/src/modules/jobs'
             Remote = '/backend/src/modules/jobs'
             Smoke  = @('GET /healthz:200','GET /jobs:200')
         }
         'admin-seed' = @{
-            Local  = 'nestjs-backend/src/modules/admin-seed'
+            Local  = 'nestjs-backend/dist/src/modules/admin-seed'
             Remote = '/backend/src/modules/admin-seed'
             Smoke  = @('GET /healthz:200')
         }
         'full'       = @{
-            Local  = 'nestjs-backend/src'
+            Local  = 'nestjs-backend/dist/src'
             Remote = '/backend/src'
             Smoke  = @('GET /healthz:200','GET /reviews/recent:200','GET /categories/tree:200')
         }
@@ -175,7 +175,7 @@ function Get-ModuleSpec {
     $spec = $map[$Name]
     $localFull = Join-Path $RepoRoot $spec.Local
     if (-not (Test-Path $localFull)) {
-        throw "Local path yok: $localFull"
+        throw "Local path yok: $localFull`n  -> Once derle: (cd nestjs-backend; npm run build) — deploy DERLENMIS dist/ cikitisini gonderir, .ts kaynak degil."
     }
     return [pscustomobject]@{
         Name       = $Name
@@ -187,10 +187,13 @@ function Get-ModuleSpec {
 
 function Get-DeployFiles {
     param([string]$LocalRoot)
-    # node_modules, dist, test, *.spec.ts, .map, .DS_Store gibi seyler haric
+    # Local artik DERLENMIS cikti (nestjs-backend/dist/src) — uzaga .js + .d.ts +
+    # .js.map ucluleri gider (calistirilacak kod). Kaynak .ts ASLA deploy edilmez.
+    # node_modules, test ve junk haric tutulur. ('*\dist\*' dislamasi kaldirildi:
+    # Local zaten dist oldugu icin her seyi eler, deploy bos cikardi.)
     $excludePatterns = @(
-        '*\node_modules\*','*\dist\*','*\.git\*','*\coverage\*','*\__tests__\*',
-        '*.spec.ts','*.test.ts','*.map','*.log','.DS_Store','Thumbs.db'
+        '*\node_modules\*','*\.git\*','*\coverage\*','*\__tests__\*',
+        '*.spec.ts','*.test.ts','*.spec.js','*.test.js','*.log','.DS_Store','Thumbs.db'
     )
     Get-ChildItem -LiteralPath $LocalRoot -Recurse -File | Where-Object {
         $f = $_.FullName
