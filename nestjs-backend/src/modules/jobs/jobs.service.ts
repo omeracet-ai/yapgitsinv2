@@ -375,6 +375,7 @@ export class JobsService {
         .take(limit);
 
       const [data, total] = await query.getManyAndCount();
+      await this._attachPosters(data);
       return { data, total, page, limit, pages: Math.ceil(total / limit) };
     } catch (err) {
       const e = err as Error;
@@ -383,6 +384,54 @@ export class JobsService {
         e?.stack,
       );
       return { data: [], total: 0, page, limit, pages: 0 };
+    }
+  }
+
+  /**
+   * Liste kartlarına ilan sahibinin kompakt profilini ekler (avatar, puan,
+   * itibar/derece, başarı oranı). Tek batch sorgu — N+1 yok. Best-effort:
+   * hata olursa liste yine döner, sadece poster eksik kalır.
+   */
+  private async _attachPosters(jobs: Job[]): Promise<void> {
+    try {
+      const ids = [
+        ...new Set(
+          jobs.map((j) => j.customerId).filter((x): x is string => !!x),
+        ),
+      ];
+      if (ids.length === 0) return;
+      const users = await this.usersRepository.find({
+        where: { id: In(ids) },
+        select: [
+          'id',
+          'fullName',
+          'profileImageUrl',
+          'averageRating',
+          'totalReviews',
+          'reputationScore',
+          'asWorkerTotal',
+          'asWorkerSuccess',
+          'identityVerified',
+        ],
+      });
+      const byId = new Map(users.map((u) => [u.id, u]));
+      for (const job of jobs) {
+        const u = job.customerId ? byId.get(job.customerId) : undefined;
+        if (!u) continue;
+        (job as Job & { poster?: Record<string, unknown> }).poster = {
+          id: u.id,
+          fullName: u.fullName,
+          profileImageUrl: u.profileImageUrl ?? null,
+          averageRating: u.averageRating ?? 0,
+          totalReviews: u.totalReviews ?? 0,
+          reputationScore: u.reputationScore ?? 0,
+          asWorkerTotal: u.asWorkerTotal ?? 0,
+          asWorkerSuccess: u.asWorkerSuccess ?? 0,
+          identityVerified: u.identityVerified ?? false,
+        };
+      }
+    } catch (e) {
+      this.logger.warn(`_attachPosters failed: ${(e as Error).message}`);
     }
   }
 

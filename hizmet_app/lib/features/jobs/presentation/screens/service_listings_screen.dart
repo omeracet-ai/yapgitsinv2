@@ -479,6 +479,17 @@ class _ServiceListingCard extends StatelessWidget {
                 ),
               ),
             ],
+            if (job.poster != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: _PosterStrip(poster: job.poster!),
+              ),
+            ],
             const SizedBox(height: 12),
             Row(
               children: [
@@ -507,6 +518,119 @@ class _ServiceListingCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// İlan sahibi (usta) kompakt profil şeridi: avatar + doğrulama + puan +
+/// derece (itibar sayısı + seviye etiketi) + başarı oranı.
+class _PosterStrip extends StatelessWidget {
+  final JobPoster poster;
+  const _PosterStrip({required this.poster});
+
+  @override
+  Widget build(BuildContext context) {
+    final rate = poster.successRate;
+    return Row(
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+              backgroundImage: poster.profileImageUrl != null
+                  ? CachedNetworkImageProvider(poster.profileImageUrl!)
+                  : null,
+              child: poster.profileImageUrl == null
+                  ? Text(
+                      poster.fullName.isNotEmpty
+                          ? poster.fullName[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary),
+                    )
+                  : null,
+            ),
+            if (poster.identityVerified)
+              Positioned(
+                right: -2,
+                bottom: -2,
+                child: Container(
+                  decoration: const BoxDecoration(
+                      color: AppColors.primary, shape: BoxShape.circle),
+                  padding: const EdgeInsets.all(2),
+                  child: const Icon(Icons.verified,
+                      size: 12, color: Colors.white),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                poster.fullName.isEmpty ? 'Usta' : poster.fullName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                    color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  _miniChip(
+                    Icons.star_rounded,
+                    AppColors.warning,
+                    poster.totalReviews > 0
+                        ? '${poster.averageRating.toStringAsFixed(1)} (${poster.totalReviews})'
+                        : 'Yeni',
+                  ),
+                  _miniChip(
+                    Icons.military_tech_rounded,
+                    AppColors.primary,
+                    '${poster.reputationScore} · ${poster.levelLabel}',
+                  ),
+                  if (rate != null)
+                    _miniChip(
+                      Icons.check_circle_rounded,
+                      AppColors.success,
+                      '%$rate başarı',
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _miniChip(IconData icon, Color color, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 3),
+          Text(text,
+              style: TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+        ],
       ),
     );
   }

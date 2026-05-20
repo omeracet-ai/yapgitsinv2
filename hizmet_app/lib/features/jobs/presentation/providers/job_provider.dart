@@ -20,6 +20,65 @@ class JobKind {
   static const String offer = 'offer';     // usta hizmet ilanı
 }
 
+/// İlan sahibinin liste kartında gösterilen kompakt profili (backend `poster`).
+class JobPoster {
+  final String id;
+  final String fullName;
+  final String? profileImageUrl;
+  final double averageRating;
+  final int totalReviews;
+  final int reputationScore;
+  final int asWorkerTotal;
+  final int asWorkerSuccess;
+  final bool identityVerified;
+
+  const JobPoster({
+    required this.id,
+    this.fullName = '',
+    this.profileImageUrl,
+    this.averageRating = 0,
+    this.totalReviews = 0,
+    this.reputationScore = 0,
+    this.asWorkerTotal = 0,
+    this.asWorkerSuccess = 0,
+    this.identityVerified = false,
+  });
+
+  /// Başarı oranı yüzdesi (0-100). Hiç tamamlanmış iş yoksa null.
+  int? get successRate =>
+      asWorkerTotal > 0 ? ((asWorkerSuccess / asWorkerTotal) * 100).round() : null;
+
+  /// reputationScore → kısa seviye etiketi (sayı + etiket birlikte gösterilir).
+  String get levelLabel {
+    final r = reputationScore;
+    if (r >= 140) return 'Pro';
+    if (r >= 100) return 'Uzman';
+    if (r >= 50) return 'Tecrübeli';
+    return 'Yeni';
+  }
+
+  static JobPoster? fromMap(dynamic m) {
+    if (m is! Map) return null;
+    final id = m['id']?.toString();
+    if (id == null || id.isEmpty) return null;
+    num? asNum(dynamic v) =>
+        v is num ? v : num.tryParse(v?.toString() ?? '');
+    final img = m['profileImageUrl'];
+    return JobPoster(
+      id: id,
+      fullName: (m['fullName'] ?? '').toString(),
+      profileImageUrl:
+          img is String && img.isNotEmpty ? img : null,
+      averageRating: (asNum(m['averageRating']) ?? 0).toDouble(),
+      totalReviews: (asNum(m['totalReviews']) ?? 0).toInt(),
+      reputationScore: (asNum(m['reputationScore']) ?? 0).toInt(),
+      asWorkerTotal: (asNum(m['asWorkerTotal']) ?? 0).toInt(),
+      asWorkerSuccess: (asNum(m['asWorkerSuccess']) ?? 0).toInt(),
+      identityVerified: m['identityVerified'] == true,
+    );
+  }
+}
+
 class Job {
   final String id, title, desc, location, budget, time;
   final IconData icon;
@@ -37,6 +96,7 @@ class Job {
   final List<String>? photos;
   final int? featuredOrder;
   final String kind; // 'request' | 'offer'
+  final JobPoster? poster; // ilan sahibinin kompakt profili (liste kartı)
 
   Job({
     required this.id,
@@ -58,6 +118,7 @@ class Job {
     this.photos,
     this.featuredOrder,
     this.kind = JobKind.request,
+    this.poster,
   });
 
   factory Job.fromMap(Map<String, dynamic> map) {
@@ -93,6 +154,7 @@ class Job {
       photos: photoList,
       featuredOrder: map['featuredOrder'] as int?,
       kind: (map['kind'] as String?) ?? JobKind.request,
+      poster: JobPoster.fromMap(map['poster']),
     );
   }
 
