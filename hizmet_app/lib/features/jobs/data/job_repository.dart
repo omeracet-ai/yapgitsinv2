@@ -18,6 +18,19 @@ class JobRepository {
 
   JobRepository({required Dio dio}) : _dio = dio;
 
+  /// Backend yanıt şekline dayanıklı liste çıkarımı: hem paginated
+  /// `{ data: [...] }` hem de düz `[...]` döndüren ortamları destekler.
+  /// (Aksi halde düz liste dönen bir backend'de `data['data']` →
+  /// "type 'String' is not a subtype of type 'int' of 'index'" hatası olur.)
+  List<Map<String, dynamic>> _extractJobList(dynamic data) {
+    final List<dynamic> raw = data is List
+        ? data
+        : (data is Map && data['data'] is List
+            ? data['data'] as List
+            : const <dynamic>[]);
+    return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
   Future<List<Map<String, dynamic>>> getJobs(
       {String? category, String? q, String? status, String? kind}) async {
     try {
@@ -27,7 +40,7 @@ class JobRepository {
         if (status != null) 'status': status,
         if (kind != null) 'kind': kind,
       });
-      return List<Map<String, dynamic>>.from(response.data['data'] as List);
+      return _extractJobList(response.data);
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'İlanlar yüklenemedi'));
     }
@@ -58,7 +71,7 @@ class JobRepository {
         '/jobs',
         queryParameters: {'customerId': customerId},
       );
-      return List<Map<String, dynamic>>.from(response.data['data'] as List);
+      return _extractJobList(response.data);
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'İlanlar yüklenemedi'));
     }
