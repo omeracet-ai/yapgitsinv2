@@ -40,6 +40,10 @@ class _ConfirmationFlowScreenState
   bool _videoSkipped = false;
   String? _error;
 
+  /// QR ödeme onay akışında video adımı gizlendi (restorable: true yap).
+  /// Kod ve VideoCaptureStep korundu; akış foto sonrası direkt onaya geçer.
+  final bool _escrowVideoEnabled = false;
+
   @override
   void initState() {
     super.initState();
@@ -411,8 +415,8 @@ class _ConfirmationFlowScreenState
       }
     }
 
-    // Step 3: Premium video (opsiyonel).
-    if (isPremium && !_videoSkipped && st.videoUrl == null) {
+    // Step 3: Premium video (opsiyonel) — gizlendi (_escrowVideoEnabled=false).
+    if (_escrowVideoEnabled && isPremium && !_videoSkipped && st.videoUrl == null) {
       return VideoCaptureStep(
         escrowId: widget.escrowId,
         alreadyUploaded: false,
