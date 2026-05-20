@@ -175,10 +175,11 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                     ? authState.user['id'] as String?
                     : null;
 
-                // Sadece açık ilanlar, kendi ilanlarım hariç
+                // Sadece açık ilanlar. Kendi ilanlarım da listede görünür —
+                // kartta "Teklif Ver" yerine "Bu sizin ilanınız" rozeti çıkar
+                // (kendine teklif verilemez).
                 var filtered = jobs
                     .where((j) => j.status == JobStatus.OPEN)
-                    .where((j) => j.customerId != myUserId)
                     .toList();
 
                 // Fırsat ilanları sıralaması:
@@ -217,7 +218,8 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                     padding: const EdgeInsets.all(16),
                     itemCount: filtered.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (ctx, i) => _OpportunityCard(job: filtered[i]),
+                    itemBuilder: (ctx, i) =>
+                        _OpportunityCard(job: filtered[i], myUserId: myUserId),
                   ),
                 );
               },
@@ -467,12 +469,14 @@ List<String> _parseWorkerCategories(dynamic raw) {
 
 class _OpportunityCard extends ConsumerWidget {
   final Job job;
-  const _OpportunityCard({required this.job});
+  final String? myUserId;
+  const _OpportunityCard({required this.job, this.myUserId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final offersAsync = ref.watch(jobOffersProvider(job.id));
     final offerCount  = offersAsync.maybeWhen(data: (o) => o.length, orElse: () => 0);
+    final isOwner = myUserId != null && job.customerId == myUserId;
 
     final budgetStr = (job.budgetMin != null && job.budgetMax != null)
         ? '${job.budgetMin!.toInt()} – ${job.budgetMax!.toInt()} ₺'
@@ -669,40 +673,67 @@ class _OpportunityCard extends ConsumerWidget {
               ),
             ),
 
-            // ── "Teklif Ver" butonu tam genişlik ─────────────────────────
+            // ── Alt CTA: kendi ilanımsa rozet, değilse "Teklif Ver" ───────
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
               child: SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => JobDetailScreen(
-                      id: job.id,
-                      title: job.title,
-                      description: job.description ?? '',
-                      location: job.location,
-                      budget: budgetStr,
-                      category: job.category,
-                      postedAt: postedAgo,
-                      icon: Job.getIconForCategory(job.category),
-                      color: Job.getColorForCategory(job.category),
-                      isFeatured: job.featuredOrder != null,
-                      customerId: job.customerId,
-                      photos: job.photos ?? [],
-                    ),
-                  )),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                  icon: const Icon(Icons.send_rounded, size: 16),
-                  label: const Text('Teklif Ver',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                ),
+                child: isOwner
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.3)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.person_rounded,
+                                size: 16, color: AppColors.primary),
+                            SizedBox(width: 6),
+                            Text('Bu sizin ilanınız',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary)),
+                          ],
+                        ),
+                      )
+                    : ElevatedButton.icon(
+                        onPressed: () =>
+                            Navigator.push(context, MaterialPageRoute(
+                          builder: (_) => JobDetailScreen(
+                            id: job.id,
+                            title: job.title,
+                            description: job.description ?? '',
+                            location: job.location,
+                            budget: budgetStr,
+                            category: job.category,
+                            postedAt: postedAgo,
+                            icon: Job.getIconForCategory(job.category),
+                            color: Job.getColorForCategory(job.category),
+                            isFeatured: job.featuredOrder != null,
+                            customerId: job.customerId,
+                            photos: job.photos ?? [],
+                          ),
+                        )),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                        icon: const Icon(Icons.send_rounded, size: 16),
+                        label: const Text('Teklif Ver',
+                            style: TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.bold)),
+                      ),
               ),
             ),
           ],
