@@ -335,6 +335,7 @@ export class OffersService {
         const price = saved.price ?? 0;
         await this.bookingsRepository.save(
           this.bookingsRepository.create({
+            jobId: job.id, // Booking↔Job bağı: booking durumu işe senkronlanır.
             customerId: job.customerId,
             workerId: saved.userId,
             category: job.category || 'Genel',
@@ -348,6 +349,15 @@ export class OffersService {
             agreedPriceMinor: Math.round(price * 100),
           }),
         );
+        // İş "Devam ediyor"a geçsin (open→in_progress geçerli) — İşlerim'de
+        // hâlâ "Aktif" sekmesinde ama atanmış olarak görünür. Booking
+        // completed/cancelled olunca BookingsService işi senkronlar.
+        if (job.status === JobStatus.OPEN) {
+          await this.jobsRepository.update(
+            { id: job.id },
+            { status: JobStatus.IN_PROGRESS },
+          );
+        }
       } catch (err) {
         this.logger.warn(
           `Auto-booking from accepted offer ${saved.id} failed: ${(err as Error).message}`,

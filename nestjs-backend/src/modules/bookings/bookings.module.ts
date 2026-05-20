@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Booking } from './booking.entity';
+import { Job } from '../jobs/job.entity';
 import { BookingsService } from './bookings.service';
 import { BookingsController } from './bookings.controller';
 import { BookingsPublicController } from './bookings-public.controller';
@@ -13,7 +14,7 @@ import { EscrowModule } from '../escrow/escrow.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Booking, TokenTransaction]),
+    TypeOrmModule.forFeature([Booking, TokenTransaction, Job]),
     UsersModule,
     NotificationsModule,
     AvailabilityModule,

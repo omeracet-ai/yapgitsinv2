@@ -50,6 +50,12 @@ export class Booking {
   @Column({ type: 'varchar', length: 36, nullable: true })
   tenantId: string | null;
 
+  /// Teklif kabulünden oluşan booking'lerde kaynak request iş id'si. Booking
+  /// completed/cancelled olunca bu iş de senkronize edilir. Direkt randevularda
+  /// (offer→randevu) null.
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  jobId: string | null;
+
   // Müşteri
   @Column({ type: 'varchar', length: 36 })
   customerId: string;

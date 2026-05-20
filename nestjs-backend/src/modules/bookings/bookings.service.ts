@@ -14,6 +14,7 @@ import {
   RefundStatus,
 } from './booking.entity';
 import { User } from '../users/user.entity';
+import { Job, JobStatus } from '../jobs/job.entity';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
@@ -43,6 +44,8 @@ export class BookingsService {
   constructor(
     @InjectRepository(Booking)
     private repo: Repository<Booking>,
+    @InjectRepository(Job)
+    private jobsRepo: Repository<Job>,
     private usersService: UsersService,
     private notificationsService: NotificationsService,
     private availabilityService: AvailabilityService,
@@ -417,6 +420,29 @@ export class BookingsService {
         await this.usersService.bumpStat(booking.workerId, 'asWorkerFail');
         await this.usersService.recalcReputation(booking.customerId);
         await this.usersService.recalcReputation(booking.workerId);
+      }
+    }
+
+    // Booking → Job senkronizasyonu: teklif kabulünden gelen (jobId'li)
+    // booking'lerde booking durumu kaynak request işe yansır → completed iş
+    // İşlerim "Tamamlanan", cancelled iş "İptal Edilen" sekmesine düşer.
+    // Direkt randevularda (jobId null) hiçbir şey yapılmaz. Force update:
+    // booking workflow bu engagement için yetkili (job transition guard bypass).
+    if (
+      booking.jobId &&
+      (status === BookingStatus.COMPLETED ||
+        status === BookingStatus.CANCELLED)
+    ) {
+      const jobStatus =
+        status === BookingStatus.COMPLETED
+          ? JobStatus.COMPLETED
+          : JobStatus.CANCELLED;
+      try {
+        await this.jobsRepo.update({ id: booking.jobId }, { status: jobStatus });
+      } catch (e) {
+        this.logger.warn(
+          `Job status sync failed (booking ${saved.id} -> job ${booking.jobId}): ${(e as Error).message}`,
+        );
       }
     }
 
