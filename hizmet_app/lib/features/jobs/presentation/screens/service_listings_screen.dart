@@ -598,7 +598,7 @@ class _PosterStrip extends StatelessWidget {
                   _miniChip(
                     Icons.military_tech_rounded,
                     AppColors.primary,
-                    '${poster.reputationScore} · ${poster.levelLabel}',
+                    '${poster.effectiveScore} · ${poster.levelLabel}',
                   ),
                   if (rate != null)
                     _miniChip(

@@ -48,9 +48,18 @@ class JobPoster {
   int? get successRate =>
       asWorkerTotal > 0 ? ((asWorkerSuccess / asWorkerTotal) * 100).round() : null;
 
-  /// reputationScore → kısa seviye etiketi (sayı + etiket birlikte gösterilir).
+  /// Gösterilecek itibar/derece puanı. Backend reputationScore > 0 ise onu
+  /// kullan; değilse mevcut sinyallerden türet (rating×20 + başarı×5) — seed/
+  /// eski veride reputationScore 0 kalabildiği için aktif ustaların "0 · Yeni"
+  /// görünmesini önler. (Formül CLAUDE.md reputationScore ile aynı mantıkta.)
+  int get effectiveScore {
+    if (reputationScore > 0) return reputationScore;
+    return (averageRating * 20).round() + asWorkerSuccess * 5;
+  }
+
+  /// effectiveScore → kısa seviye etiketi (sayı + etiket birlikte gösterilir).
   String get levelLabel {
-    final r = reputationScore;
+    final r = effectiveScore;
     if (r >= 140) return 'Pro';
     if (r >= 100) return 'Uzman';
     if (r >= 50) return 'Tecrübeli';
