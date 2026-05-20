@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { api, type AdminUser } from "@/lib/api";
+import { api, refreshAdminToken, type AdminUser } from "@/lib/api";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ConfirmDialogProvider } from "@/components/ui/ConfirmDialog";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -50,24 +50,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [admin, setAdmin]     = useState<AdminUser | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("admin_token");
-    if (!token || !isTokenValid(token)) {
-      localStorage.removeItem("admin_token");
-      localStorage.removeItem("admin_user");
-      router.replace("/login");
-      return;
-    }
-    try {
-      const u = localStorage.getItem("admin_user");
-      if (u) setAdmin(JSON.parse(u));
-    } catch { /* ignore */ }
-    setAuthed(true);
-    setReady(true);
+    let cancelled = false;
+    (async () => {
+      const token = localStorage.getItem("admin_token");
+      let valid = !!token && isTokenValid(token);
+      // Access missing/expired → try the refresh flow before bouncing to login.
+      if (!valid) valid = await refreshAdminToken();
+      if (cancelled) return;
+      if (!valid) {
+        localStorage.removeItem("admin_token");
+        localStorage.removeItem("admin_refresh_token");
+        localStorage.removeItem("admin_user");
+        router.replace("/login");
+        return;
+      }
+      try {
+        const u = localStorage.getItem("admin_user");
+        if (u) setAdmin(JSON.parse(u));
+      } catch { /* ignore */ }
+      setAuthed(true);
+      setReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const logout = async () => {
     await api.adminLogout().catch(() => { /* ignore — pairs with P191/2 backend */ });
     localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_refresh_token");
     localStorage.removeItem("admin_user");
     router.replace("/login");
   };

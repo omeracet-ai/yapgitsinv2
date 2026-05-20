@@ -7,7 +7,76 @@ function getToken(): string | null {
   return localStorage.getItem('admin_token');
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+function getRefreshToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('admin_refresh_token');
+}
+
+/** Admin refresh flow — persist a freshly issued access+refresh pair. */
+export function setAdminTokens(accessToken: string, refreshToken?: string) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('admin_token', accessToken);
+  if (refreshToken) localStorage.setItem('admin_refresh_token', refreshToken);
+}
+
+function clearAdminSession() {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('admin_token');
+  localStorage.removeItem('admin_refresh_token');
+  localStorage.removeItem('admin_user');
+}
+
+// Single-flight refresh lock: parallel 401s share ONE /auth/refresh call so a
+// rotating refresh token isn't burned by concurrent requests.
+let refreshInFlight: Promise<boolean> | null = null;
+
+/**
+ * Exchange the stored refresh token for a new access+refresh pair via the shared
+ * backend /auth/refresh endpoint (rotates tokenVersion). Returns true on success.
+ * On failure clears the session so the guard/redirect can take over.
+ * Backend returns camelCase { accessToken, refreshToken }.
+ */
+export async function refreshAdminToken(): Promise<boolean> {
+  const rt = getRefreshToken();
+  if (!rt) return false;
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    try {
+      const res = await fetch(`${BASE}/auth/refresh`, {
+        method: 'POST',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: rt }),
+      });
+      if (!res.ok) {
+        clearAdminSession();
+        return false;
+      }
+      const data = (await res.json()) as {
+        accessToken?: string;
+        refreshToken?: string;
+      };
+      if (!data.accessToken) {
+        clearAdminSession();
+        return false;
+      }
+      setAdminTokens(data.accessToken, data.refreshToken);
+      return true;
+    } catch {
+      clearAdminSession();
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+  return refreshInFlight;
+}
+
+function redirectToLogin() {
+  if (typeof window !== 'undefined') window.location.href = '/login';
+}
+
+async function request<T>(path: string, init?: RequestInit, _retried = false): Promise<T> {
   const token = getToken();
   const res = await fetch(`${BASE}${path}`, {
     cache: 'no-store',
@@ -17,6 +86,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     },
     ...init,
   });
+  // 401 → try a one-time refresh + retry before failing (admin refresh flow).
+  if (res.status === 401 && !_retried && getRefreshToken()) {
+    if (await refreshAdminToken()) {
+      return request<T>(path, init, true);
+    }
+    redirectToLogin();
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);
     throw new Error(`API ${res.status}: ${text}`);
@@ -25,13 +101,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function uploadFile<T>(path: string, formData: FormData): Promise<T> {
+async function uploadFile<T>(path: string, formData: FormData, _retried = false): Promise<T> {
   const token = getToken();
   const res = await fetch(`${BASE}${path}`, {
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: formData,
   });
+  if (res.status === 401 && !_retried && getRefreshToken()) {
+    if (await refreshAdminToken()) {
+      return uploadFile<T>(path, formData, true);
+    }
+    redirectToLogin();
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);
     throw new Error(`Upload ${res.status}: ${text}`);
@@ -85,7 +167,7 @@ export const api = {
 
   // Auth
   adminLogin: (username: string, password: string) =>
-    request<{ access_token: string; user: AdminUser }>('/auth/admin/login', {
+    request<{ access_token: string; refresh_token?: string; user: AdminUser }>('/auth/admin/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     }),

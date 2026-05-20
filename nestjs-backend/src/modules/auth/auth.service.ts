@@ -998,16 +998,21 @@ export class AuthService implements OnModuleInit {
       throw new ForbiddenException('Hesap askıda');
     }
     await this.resetFailedLogin(user.id);
-    const payload = {
-      email: user.email,
-      sub: user.id,
-      role: user.role,
-      tenantId: user.tenantId ?? null,
-      // Phase P191/4 — token revocation for admin sessions too.
-      tokenVersion: user.tokenVersion ?? 0,
-    };
+    // Admin refresh flow — parity with user login: short-lived access (7d via
+    // signAccessToken) + rotating refresh token. The shared refresh() endpoint
+    // already rotates tokenVersion + revokes on reuse for admin (a User row).
+    // Replaces the previous bespoke 30d single-token issuance (no revocation).
+    const { passwordHash: _ph, ...safe } = user;
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
+      access_token: this.signAccessToken({
+        ...(safe as AuthUser),
+        tokenVersion: user.tokenVersion ?? 0,
+      }),
+      refresh_token: this.signRefreshToken({
+        id: user.id,
+        tenantId: user.tenantId ?? null,
+        tokenVersion: user.tokenVersion ?? 0,
+      }),
       user: {
         id: user.id,
         fullName: user.fullName,

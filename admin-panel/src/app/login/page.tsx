@@ -26,6 +26,9 @@ export default function LoginPage() {
     try {
       const res = await api.adminLogin(username, password);
       localStorage.setItem("admin_token", res.access_token);
+      if (res.refresh_token) {
+        localStorage.setItem("admin_refresh_token", res.refresh_token);
+      }
       localStorage.setItem("admin_user", JSON.stringify(res.user));
       router.replace("/dashboard");
     } catch {
