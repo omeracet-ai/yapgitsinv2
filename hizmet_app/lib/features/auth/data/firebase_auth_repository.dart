@@ -356,8 +356,10 @@ class FirebaseAuthRepository {
   Future<void> deleteAccount(String password) async {
     try {
       // Backend silme dene — başarısız olursa ABORT.
+      // Backend DeleteAccountDto password'ü ZORUNLU kılıyor; body'siz istek 400
+      // döndürüp silmeyi "Hesap silme tamamlanamadı" hatasıyla bloke ediyordu.
       try {
-        await _dio.delete<dynamic>('/users/me');
+        await _dio.delete<dynamic>('/users/me', data: {'password': password});
       } on DioException catch (e) {
         // 404 → backend kayıt zaten yok, Firebase silmeye devam edebiliriz.
         if (e.response?.statusCode != 404) {
