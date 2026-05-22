@@ -25,10 +25,13 @@ import { User } from '../users/user.entity';
     AiModule,
   ],
   controllers: [
-    AdminDisputesController,
-    DisputesController,
+    // Statik-route controller'lar ('mine' / 'list') greedy ':id' controller'larından
+    // ÖNCE kayıtlı olmalı; aksi halde GET /disputes/mine → DisputesController @Get(':id')
+    // tarafından (id="mine") yakalanıp "Dispute not found" fırlatıyordu.
     AdminGeneralDisputesController,
+    AdminDisputesController,
     GeneralDisputesController,
+    DisputesController,
   ],
   providers: [DisputesService, GeneralDisputesService],
   exports: [DisputesService, GeneralDisputesService],
