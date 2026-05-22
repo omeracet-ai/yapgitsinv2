@@ -913,11 +913,11 @@ class _ErrorBanner extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
                 child: Text(message,
-                    style: const TextStyle(fontSize: 11))),
+                    style: TextStyle(fontSize: 11, color: Colors.amber.shade900))),
             TextButton(
               onPressed: onRetry,
-              child: const Text('Yenile',
-                  style: TextStyle(fontSize: 11)),
+              child: Text('Yenile',
+                  style: TextStyle(fontSize: 11, color: Colors.amber.shade900)),
             ),
           ],
         ),

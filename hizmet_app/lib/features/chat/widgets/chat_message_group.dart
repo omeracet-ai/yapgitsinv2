@@ -403,9 +403,9 @@ class _ChatMessageBubbleState extends ConsumerState<ChatMessageBubble> {
     final name = attachmentName ?? 'Belge';
     final size = attachmentSize ?? 0;
     final url = attachmentUrl!;
-    final fg = isMe ? Colors.white : AppColors.textPrimary;
+    final fg = isMe ? Colors.white : AppColors.secondary;
     final fgMuted =
-        isMe ? Colors.white.withValues(alpha: 0.75) : AppColors.textSecondary;
+        isMe ? Colors.white.withValues(alpha: 0.75) : Colors.black54;
     return InkWell(
       onTap: () async {
         final uri = Uri.parse(url);

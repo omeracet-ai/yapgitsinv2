@@ -285,7 +285,7 @@ class _PaymentOption extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: isSelected
                               ? AppColors.primary
-                              : AppColors.textPrimary)),
+                              : AppColors.secondary)),
                   Text(subtitle,
                       style: const TextStyle(
                           fontSize: 12, color: AppColors.textHint)),

@@ -138,7 +138,7 @@ class _SummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Özet',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.secondary)),
           const SizedBox(height: 10),
           _row('Usta', workerName),
           _row('Kategori',
@@ -161,11 +161,11 @@ class _SummaryCard extends StatelessWidget {
                 width: 80,
                 child: Text(k,
                     style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary))),
+                        fontSize: 12, color: Colors.black54))),
             Expanded(
               child: Text(v.isEmpty ? '—' : v,
                   style:
-                      const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.secondary)),
             ),
           ],
         ),

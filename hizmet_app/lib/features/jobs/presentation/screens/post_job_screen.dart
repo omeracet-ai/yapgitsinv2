@@ -645,7 +645,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                 if (_dueDate != null)
                   GestureDetector(
                     onTap: () => setState(() => _dueDate = null),
-                    child: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
+                    child: const Icon(Icons.close, size: 16, color: Colors.black54),
                   ),
               ],
             ),

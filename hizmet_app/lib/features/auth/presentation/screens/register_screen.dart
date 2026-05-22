@@ -371,10 +371,10 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
             title: const Text('Usta olarak kayıt ol',
                 style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary)),
+                    color: AppColors.secondary)),
             subtitle: const Text(
               'Hizmet verirsen kayıt sonrası kısa bir kurulum yapacağız.',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12, color: Colors.black54),
             ),
           ),
         ),
@@ -429,7 +429,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
             SizedBox(width: 12),
             Expanded(child: Text(
               'Kimlik doğrulama için kimlik fotoğrafınızı yükleyin. Görseller şifreli olarak saklanır.',
-              style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 13, color: AppColors.secondary),
             )),
           ]),
         ),

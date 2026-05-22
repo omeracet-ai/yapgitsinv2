@@ -96,7 +96,7 @@ class WorkerOnboardingStep5Identity extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Admin onayından sonra mavi tik kazanırsın — daha fazla teklif alırsın.',
-                  style: TextStyle(fontSize: 12),
+                  style: TextStyle(fontSize: 12, color: AppColors.secondary),
                 ),
               ),
             ]),

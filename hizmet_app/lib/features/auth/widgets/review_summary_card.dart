@@ -81,11 +81,11 @@ class ReviewSummaryCard extends ConsumerWidget {
             const SizedBox(height: 8),
             async.when(
               loading: () => const _ShimmerLines(),
-              error: (e, _) => Text(
+              error: (e, _) => const Text(
                 'Özet şu an oluşturulamadı.',
                 style: TextStyle(
                     fontSize: 12.5,
-                    color: AppColors.textSecondary.withValues(alpha: 0.8),
+                    color: Colors.black54,
                     fontStyle: FontStyle.italic),
               ),
               data: (text) {
@@ -97,7 +97,7 @@ class ReviewSummaryCard extends ConsumerWidget {
                   style: const TextStyle(
                       fontSize: 13,
                       height: 1.5,
-                      color: AppColors.textPrimary),
+                      color: AppColors.secondary),
                 );
               },
             ),

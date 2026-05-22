@@ -476,13 +476,13 @@ class _ConfirmationFlowScreenState
           const SizedBox(height: 12),
           const Text(
             'Ödeme Serbest Bırakıldı',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppColors.secondary),
           ),
           const SizedBox(height: 8),
           const Text(
             'Karşılıklı onay tamamlandı. Ödeme ustanın hesabına aktarıldı.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14),
+            style: TextStyle(fontSize: 14, color: Colors.black54),
           ),
           const SizedBox(height: 16),
           if (_mySide == ConfirmationSide.worker)
