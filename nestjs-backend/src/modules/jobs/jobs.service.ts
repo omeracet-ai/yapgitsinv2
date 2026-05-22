@@ -974,7 +974,10 @@ export class JobsService {
         params.push(category);
       }
 
-      sql += ` ORDER BY distanceKm ASC LIMIT 50`;
+      // "Öne Çıkan" ilanlar her zaman en üstte, sonra mesafeye göre.
+      // featuredOrder camelCase → Postgres'te lowercasing'i önlemek için tırnaklı
+      // (SQLite de çift-tırnaklı tanımlayıcıyı kabul eder).
+      sql += ` ORDER BY (CASE WHEN j."featuredOrder" IS NOT NULL THEN 0 ELSE 1 END) ASC, j."featuredOrder" ASC, distanceKm ASC LIMIT 50`;
 
       const rows = await this.dataSource.query(sql, params);
       return rows as (Job & { distanceKm: number })[];

@@ -23,11 +23,20 @@ import type { AuthenticatedRequest } from '../../common/types/auth.types';
 export class ServiceRequestsController {
   constructor(private readonly svc: ServiceRequestsService) {}
 
-  /** GET /service-requests?category=Temizlik  — herkese açık */
+  /**
+   * GET /service-requests?category=Temizlik&lat=..&lng=..  — herkese açık.
+   * lat/lng verilirse: öne çıkan ilanlar en üstte, ardından en yakın konum.
+   */
   @SkipThrottle()
   @Get()
-  findAll(@Query('category') category?: string) {
-    return this.svc.findAll(category);
+  findAll(
+    @Query('category') category?: string,
+    @Query('lat') lat?: string,
+    @Query('lng') lng?: string,
+  ) {
+    const latNum = lat != null && lat !== '' ? Number(lat) : undefined;
+    const lngNum = lng != null && lng !== '' ? Number(lng) : undefined;
+    return this.svc.findAll(category, latNum, lngNum);
   }
 
   /** GET /service-requests/my  — giriş gerekli */

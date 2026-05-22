@@ -68,16 +68,43 @@ export class ServiceRequestsService {
     });
   }
 
-  findAll(category?: string): Promise<ServiceRequest[]> {
+  findAll(
+    category?: string,
+    lat?: number,
+    lng?: number,
+  ): Promise<ServiceRequest[]> {
     const qb = this.repo
       .createQueryBuilder('sr')
       .leftJoinAndSelect('sr.user', 'user')
-      .where('sr.status = :status', { status: 'open' })
-      .orderBy(
-        `CASE WHEN sr.featuredOrder IS NOT NULL THEN sr.featuredOrder ELSE 999 END`,
+      .where('sr.status = :status', { status: 'open' });
+
+    // Sıralama: 1) "Öne Çıkan" her zaman en üstte, 2) kullanıcı konumu verildiyse
+    // en yakın ilan, 3) en yeni. /jobs findAll ile aynı mantık (tutarlı sıralama).
+    qb.orderBy(
+      'CASE WHEN sr.featuredOrder IS NOT NULL THEN 0 ELSE 1 END',
+      'ASC',
+    ).addOrderBy('sr.featuredOrder', 'ASC');
+
+    const hasGeo =
+      lat != null && lng != null && !Number.isNaN(lat) && !Number.isNaN(lng);
+    if (hasGeo) {
+      // Koordinatsız ilanlar en sona; koordinatlılar Haversine (km) artan.
+      qb.addOrderBy(
+        'CASE WHEN sr.latitude IS NULL OR sr.longitude IS NULL THEN 1 ELSE 0 END',
         'ASC',
       )
-      .addOrderBy('sr.createdAt', 'DESC');
+        .addOrderBy(
+          `(6371 * acos(
+            cos(radians(:ulat)) * cos(radians(sr.latitude)) *
+            cos(radians(sr.longitude) - radians(:ulng)) +
+            sin(radians(:ulat)) * sin(radians(sr.latitude))
+          ))`,
+          'ASC',
+        )
+        .setParameters({ ulat: lat, ulng: lng });
+    }
+
+    qb.addOrderBy('sr.createdAt', 'DESC');
 
     if (category) {
       qb.andWhere('sr.category = :category', { category });

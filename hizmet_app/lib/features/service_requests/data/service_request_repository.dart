@@ -11,12 +11,19 @@ class ServiceRequestRepository {
 
   ServiceRequestRepository({required Dio dio}) : _dio = dio;
 
-  Future<List<Map<String, dynamic>>> getAll({String? category}) async {
+  Future<List<Map<String, dynamic>>> getAll({
+    String? category,
+    double? lat,
+    double? lng,
+  }) async {
     // Phase 281 — /service-requests artık dolu (Phase 266 seed + POST). Phase 152
     // /jobs fallback'i kaldırıldı; doğru tablodan okuyoruz.
+    // Phase 283 — lat/lng verilirse backend öne çıkan + en yakın sıralar.
     try {
       final qp = <String, dynamic>{};
       if (category != null) qp['category'] = category;
+      if (lat != null) qp['lat'] = lat;
+      if (lng != null) qp['lng'] = lng;
       final response = await _dio.get('/service-requests',
           queryParameters: qp.isEmpty ? null : qp);
       final raw = response.data;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -8,17 +9,53 @@ import '../../data/service_request_repository.dart';
 import 'post_service_request_screen.dart';
 import 'service_request_detail_screen.dart';
 
+/// Phase 283 — kullanıcı konumu (varsa). Set edilince serviceRequestsProvider
+/// otomatik yeniden çekilir → ilanlar öne çıkan + en yakın sıralanır.
+final srLocationProvider = StateProvider<(double, double)?>((ref) => null);
+
 final serviceRequestsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
-  return ref.watch(serviceRequestRepositoryProvider).getAll();
+  final loc = ref.watch(srLocationProvider);
+  return ref.watch(serviceRequestRepositoryProvider).getAll(
+        lat: loc?.$1,
+        lng: loc?.$2,
+      );
 });
 
+/// Map'te zaten verilmiş konum iznini yeniden kullanır (yeni izin istemez);
+/// varsa konumu provider'a geçirir → ilanlar yakınlığa göre sıralanır.
+Future<void> _applySrProximity(WidgetRef ref) async {
+  try {
+    final perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied ||
+        perm == LocationPermission.deniedForever) {
+      return;
+    }
+    final pos = await Geolocator.getCurrentPosition()
+        .timeout(const Duration(seconds: 6));
+    ref.read(srLocationProvider.notifier).state = (pos.latitude, pos.longitude);
+  } catch (_) {
+    // konum alınamazsa sessiz geç — liste normal sırada kalır
+  }
+}
+
 /// AppBar'sız versiyon — TabBarView içinde kullanılır
-class ServiceRequestBody extends ConsumerWidget {
+class ServiceRequestBody extends ConsumerStatefulWidget {
   const ServiceRequestBody({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ServiceRequestBody> createState() => _ServiceRequestBodyState();
+}
+
+class _ServiceRequestBodyState extends ConsumerState<ServiceRequestBody> {
+  @override
+  void initState() {
+    super.initState();
+    _applySrProximity(ref);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final requestsAsync = ref.watch(serviceRequestsProvider);
     final isLoggedIn = ref.watch(authStateProvider) is AuthAuthenticated;
     return _ServiceRequestScaffold(
@@ -35,11 +72,23 @@ class ServiceRequestBody extends ConsumerWidget {
   }
 }
 
-class ServiceRequestScreen extends ConsumerWidget {
+class ServiceRequestScreen extends ConsumerStatefulWidget {
   const ServiceRequestScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ServiceRequestScreen> createState() =>
+      _ServiceRequestScreenState();
+}
+
+class _ServiceRequestScreenState extends ConsumerState<ServiceRequestScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _applySrProximity(ref);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final requestsAsync = ref.watch(serviceRequestsProvider);
     final authState = ref.watch(authStateProvider);
     final isLoggedIn = authState is AuthAuthenticated;
