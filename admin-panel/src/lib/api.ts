@@ -306,6 +306,34 @@ export const api = {
       body: JSON.stringify({ adminNote }),
     }),
 
+  // Phase 262 — USDT-TRC20 manuel yatırım talepleri
+  cryptoDeposits: (status?: string) =>
+    request<Array<{
+      id: string;
+      userId: string;
+      network: string;
+      asset: string;
+      amountUsdt: number;
+      txId: string;
+      creditAmount: number;
+      purpose: string;
+      status: 'pending' | 'approved' | 'rejected';
+      adminNote: string | null;
+      reviewedByAdminId: string | null;
+      createdAt: string;
+      reviewedAt: string | null;
+    }>>(`/admin/crypto-deposits${status ? `?status=${status}` : ''}`),
+  approveCryptoDeposit: (id: string, note?: string, creditAmount?: number) =>
+    request<{ id: string; status: string; newBalance?: number }>(
+      `/admin/crypto-deposits/${id}/approve`,
+      { method: 'PATCH', body: JSON.stringify({ note, creditAmount }) },
+    ),
+  rejectCryptoDeposit: (id: string, note?: string) =>
+    request<{ id: string; status: string }>(
+      `/admin/crypto-deposits/${id}/reject`,
+      { method: 'PATCH', body: JSON.stringify({ note }) },
+    ),
+
   // Öne Çıkan İlanlar
   setFeaturedOrder: (id: string, featuredOrder: number | null) =>
     request<void>(`/admin/jobs/${id}/featured`, { method: 'PATCH', body: JSON.stringify({ featuredOrder }) }),

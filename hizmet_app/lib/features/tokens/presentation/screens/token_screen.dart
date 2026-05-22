@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../crypto_deposits/presentation/screens/usdt_deposit_screen.dart';
 import '../../data/token_repository.dart';
 import 'token_checkout_screen.dart';
 
@@ -127,6 +128,27 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
                 onPressed: () => context.push('/promo'),
                 icon: const Icon(Icons.confirmation_number_outlined, size: 18),
                 label: const Text('Promo Kodun Var mı?'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const UsdtDepositScreen(purpose: 'token'),
+                  ),
+                ),
+                icon: const Icon(Icons.currency_bitcoin, size: 18),
+                label: const Text('USDT (TRC-20) ile Yükle'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primary,
                   side: const BorderSide(color: AppColors.primary),

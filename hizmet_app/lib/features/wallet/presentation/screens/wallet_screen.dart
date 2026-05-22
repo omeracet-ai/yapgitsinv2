@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../../tokens/data/token_repository.dart';
+import '../../../crypto_deposits/presentation/screens/usdt_deposit_screen.dart';
 
 final _walletHistoryProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
@@ -113,6 +114,19 @@ class WalletScreen extends ConsumerWidget {
             label: 'Kredi Yükle',
             color: Colors.blue,
             onTap: () => context.push('/jetonlar'),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _ActionButton(
+            icon: Icons.currency_bitcoin,
+            label: 'USDT Yükle',
+            color: Colors.green,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const UsdtDepositScreen(purpose: 'wallet'),
+              ),
+            ),
           ),
         ),
         const SizedBox(width: 16),

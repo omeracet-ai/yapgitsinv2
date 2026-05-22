@@ -109,6 +109,8 @@ import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { WithdrawalsModule } from './modules/withdrawals/withdrawals.module';
 import { ProvidersModule } from './modules/providers/providers.module';
 import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.entity';
+import { CryptoDepositsModule } from './modules/crypto-deposits/crypto-deposits.module';
+import { CryptoDeposit } from './modules/crypto-deposits/crypto-deposit.entity';
 
 @Module({
   imports: [
@@ -241,6 +243,7 @@ import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.enti
           Reputation,
           Badge,
           WithdrawalRequest,
+          CryptoDeposit,
         ];
         if (dbType === 'sqlite') {
           // DB_DATABASE override allows isolated test DBs (e.g. ':memory:'); defaults to dev file.
@@ -347,6 +350,7 @@ import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.enti
     StatsModule,
     MaintenanceModule,
     WithdrawalsModule,
+    CryptoDepositsModule,
     ProvidersModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),

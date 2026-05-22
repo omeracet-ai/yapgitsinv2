@@ -25,6 +25,7 @@ const NAV = [
   { href: "/providers",  label: "Sağlayıcılar",   icon: "👷" },
   { href: "/users",      label: "Kullanıcılar",   icon: "👥" },
   { href: "/revenue",    label: "Gelir",          icon: "💰" },
+  { href: "/crypto-deposits", label: "USDT Yatırım",   icon: "₿" },
   // Komisyon gizlendi — platform per-iş komisyonu devre dışı (restorable).
   // { href: "/komisyon",   label: "Komisyon",       icon: "💸" },
   { href: "/onboarding-mgmt", label: "Onboarding",     icon: "🎯" },
