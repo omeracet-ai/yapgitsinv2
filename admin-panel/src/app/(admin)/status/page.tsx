@@ -49,8 +49,9 @@ export default function StatusPage() {
     return () => clearInterval(id);
   }, [load]);
 
+  const dbOk = data?.checks?.database === "ok";
   const tone = data
-    ? statusTone(data.status, data.database.connected)
+    ? statusTone(data.status, dbOk)
     : statusTone("down", false);
 
   return (
@@ -110,12 +111,17 @@ export default function StatusPage() {
             <Stat label="Çalışma Süresi" value={formatUptime(data.uptime)} hint="gün SS:DD" />
             <Stat
               label="Veritabanı"
-              value={data.database.connected ? "Bağlı" : "Kopuk"}
-              hint={`${data.database.latencyMs} ms gecikme`}
-              valueClass={data.database.connected ? "text-emerald-600" : "text-red-600"}
+              value={dbOk ? "Bağlı" : (data.checks?.database ?? "Bilinmiyor")}
+              hint={`cache: ${data.checks?.cache ?? "—"}`}
+              valueClass={dbOk ? "text-emerald-600" : "text-red-600"}
             />
-            <Stat label="Sürüm" value={data.version} hint="backend version" />
-            <Stat label="Ortam" value={data.env} hint="NODE_ENV" />
+            <Stat label="Sürüm" value={data.version} hint={data.commit ? `commit ${data.commit}` : "backend version"} />
+            <Stat
+              label="Bekleyen Migration"
+              value={String(data.migrationsPending ?? 0)}
+              hint={`iyzipay: ${data.checks?.iyzipay ?? "—"}`}
+              valueClass={(data.migrationsPending ?? 0) > 0 ? "text-amber-600" : undefined}
+            />
           </div>
 
           <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 font-mono">

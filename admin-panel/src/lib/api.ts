@@ -125,8 +125,11 @@ export interface HealthStatus {
   status: 'ok' | 'degraded' | 'down' | string;
   uptime: number;
   version: string;
-  database: { connected: boolean; latencyMs: number };
-  env: string;
+  buildSha?: string;
+  commit?: string;
+  memory?: { rssMb: number; heapUsedMb: number; heapTotalMb: number };
+  checks?: { database?: string; cache?: string; iyzipay?: string };
+  migrationsPending?: number;
   timestamp: string;
 }
 
