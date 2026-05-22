@@ -291,17 +291,15 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
             SliverAppBar(
               expandedHeight: 280,
               pinned: true,
-              backgroundColor: AppColors.background,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               elevation: 0,
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.pin,
                 background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF0C1117), Color(0xFF161B22)],
-                    ),
+                  // Hero arka planı app theme rengine bağlandı (sabit gradient
+                  // yerine) — dark/light moda uyar, sayfayla bütünleşir.
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).scaffoldBackgroundColor,
                   ),
                   child: SafeArea(
                     child: Padding(
