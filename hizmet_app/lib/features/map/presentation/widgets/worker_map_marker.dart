@@ -21,14 +21,15 @@ class WorkerMapMarker extends StatelessWidget {
     this.isApprox = false,
   });
 
-  static const _blue = Color(0xFF0EA5E9);
-  static const _navy = Color(0xFF1A1A2E);
+  // Usta pin'i: normal TURUNCU; aktif (seçili) = app accent yeşili (lightheme).
+  static const _orange = Color(0xFFF97316);
+  static const _active = Color(0xFF4ADE80);
 
   @override
   Widget build(BuildContext context) {
-    final pillBg = isSelected ? _blue : Colors.white;
-    final iconColor = isSelected ? Colors.white : _blue;
-    final textColor = isSelected ? Colors.white : _navy;
+    final pillBg = isSelected ? _active : _orange;
+    const iconColor = Colors.white;
+    const textColor = Colors.white;
     final label = rating != null
         ? rating!.toStringAsFixed(1)
         : (name != null && name!.isNotEmpty ? _firstName(name!) : 'Usta');
@@ -38,13 +39,15 @@ class WorkerMapMarker extends StatelessWidget {
       decoration: BoxDecoration(
         color: pillBg,
         borderRadius: BorderRadius.circular(20),
-        border: isSelected
-            ? null
-            : Border.all(color: const Color(0xFFDDE3EC), width: 1),
+        border: Border.all(
+            color: isSelected
+                ? const Color(0xFF22C55E)
+                : const Color(0xFFC2410C),
+            width: 1),
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: _blue.withValues(alpha: 0.45),
+                  color: _active.withValues(alpha: 0.45),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -60,19 +63,19 @@ class WorkerMapMarker extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.person_pin_rounded, size: 16, color: iconColor),
+          const Icon(Icons.person_pin_rounded, size: 16, color: iconColor),
           const SizedBox(width: 4),
           if (rating != null) ...[
-            Icon(
+            const Icon(
               Icons.star_rounded,
               size: 11,
-              color: isSelected ? Colors.white : Colors.amber,
+              color: Colors.white,
             ),
             const SizedBox(width: 2),
           ],
           Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
               color: textColor,
@@ -90,10 +93,10 @@ class WorkerMapMarker extends StatelessWidget {
         width: 16,
         height: 16,
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : _blue,
+          color: Colors.white,
           shape: BoxShape.circle,
           border: Border.all(
-            color: isSelected ? _blue : Colors.white,
+            color: AppColors.verifiedBlue,
             width: 1.5,
           ),
           boxShadow: [
@@ -105,10 +108,10 @@ class WorkerMapMarker extends StatelessWidget {
           ],
         ),
         alignment: Alignment.center,
-        child: Icon(
+        child: const Icon(
           Icons.check,
           size: 10,
-          color: isSelected ? _blue : Colors.white,
+          color: AppColors.verifiedBlue,
         ),
       ),
     );

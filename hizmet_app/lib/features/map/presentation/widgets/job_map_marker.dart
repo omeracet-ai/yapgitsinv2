@@ -19,16 +19,16 @@ class JobMapMarker extends StatelessWidget {
     this.isApprox = false,
   });
 
-  // Admin palette
-  static const _orangeBg = Color(0xFFF97316);
-  static const _orangeBorder = Color(0xFFC2410C);
+  // İlan pin'i: normal MAVİ; aktif (seçili) = app accent yeşili (lightheme).
   static const _blueBg = Color(0xFF2563EB);
   static const _blueBorder = Color(0xFF1D4ED8);
+  static const _activeBg = Color(0xFF4ADE80);
+  static const _activeBorder = Color(0xFF22C55E);
 
   @override
   Widget build(BuildContext context) {
-    final bg = isSelected ? _blueBg : _orangeBg;
-    final border = isSelected ? _blueBorder : _orangeBorder;
+    final bg = isSelected ? _activeBg : _blueBg;
+    final border = isSelected ? _activeBorder : _blueBorder;
     final opacity = isApprox ? 0.55 : 1.0;
 
     final circle = Opacity(
