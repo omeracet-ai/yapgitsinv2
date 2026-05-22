@@ -15,6 +15,8 @@ class VerifyEmailScreen extends ConsumerStatefulWidget {
 class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   bool _loading = true;
   bool _success = false;
+  bool _noToken = false;
+  bool _resending = false;
   String? _error;
 
   @override
@@ -25,9 +27,13 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
 
   Future<void> _verify() async {
     if (widget.token.isEmpty) {
+      // Bu ekran e-posta doğrulama BAĞLANTISININ callback'i (token ister).
+      // Login akışı "e-postanı doğrula" demek için tokensiz push ediyor;
+      // eskiden bu durum sahte "Geçersiz veya süresi dolmuş kod" hatası
+      // gösteriyordu. Artık nötr "gelen kutunu kontrol et" prompt'u.
       setState(() {
         _loading = false;
-        _error = 'Geçersiz veya süresi dolmuş kod';
+        _noToken = true;
       });
       return;
     }
@@ -44,6 +50,24 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
         _loading = false;
         _error = 'Geçersiz veya süresi dolmuş kod';
       });
+    }
+  }
+
+  Future<void> _resend() async {
+    setState(() => _resending = true);
+    try {
+      await ref.read(firebaseAuthRepositoryProvider).requestEmailVerification();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Doğrulama e-postası tekrar gönderildi.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gönderilemedi, birazdan tekrar deneyin.')),
+      );
+    } finally {
+      if (mounted) setState(() => _resending = false);
     }
   }
 
@@ -84,6 +108,44 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                           child: ElevatedButton(
                             onPressed: () => context.go('/'),
                             child: const Text('Devam Et'),
+                          ),
+                        ),
+                      ],
+                    )
+                  : _noToken
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.mark_email_unread_outlined,
+                            size: 96, color: AppColors.primary),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'E-posta adresinize bir doğrulama bağlantısı '
+                          'gönderdik. Gelen kutunuzu (ve spam klasörünü) '
+                          'kontrol edin.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _resending ? null : _resend,
+                            child: _resending
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white))
+                                : const Text('Tekrar Gönder'),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: TextButton(
+                            onPressed: () => context.go('/'),
+                            child: const Text('Ana Sayfaya Dön'),
                           ),
                         ),
                       ],
