@@ -30,8 +30,10 @@ export class SubscriptionsService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    const count = await this.plansRepo.count();
-    if (count > 0) return;
+    // Phase 262b — Plan tanımları kod kaynaklı (admin düzenlemiyor). Eski
+    // "yalnızca tablo boşsa seed" deseni, metin değişikliklerini (ör. token→kredi)
+    // mevcut DB satırlarına YANSITMIYORDU. Artık her boot'ta key bazında
+    // idempotent upsert: kod = tek kaynak, clobber riski yok.
     const plans: Partial<SubscriptionPlan>[] = [
       {
         key: 'pro_monthly',
@@ -64,9 +66,16 @@ export class SubscriptionsService implements OnModuleInit {
       },
     ];
     for (const p of plans) {
-      await this.plansRepo.save(this.plansRepo.create(p));
+      const existing = await this.plansRepo.findOne({
+        where: { key: p.key! },
+      });
+      if (existing) {
+        await this.plansRepo.save(this.plansRepo.merge(existing, p));
+      } else {
+        await this.plansRepo.save(this.plansRepo.create(p));
+      }
     }
-    this.logger.log('Seeded 2 subscription plans (Pro/Premium)');
+    this.logger.log('Subscription plans reconciled (Pro/Premium)');
   }
 
   async listPlans(): Promise<SubscriptionPlan[]> {
