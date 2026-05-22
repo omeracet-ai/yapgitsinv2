@@ -71,13 +71,22 @@ export class EmailService implements OnModuleInit {
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
     this.from = process.env.EMAIL_FROM ?? this.from;
+    // Plesk/self-hosted mail sunucuları sık sık self-signed sertifika sunar;
+    // STARTTLS sırasında cert doğrulaması varsayılan true olduğu için gönderim
+    // sessizce patlar. SMTP_TLS_REJECT_UNAUTHORIZED=false ile doğrulama kapatılır
+    // (aynı sunucudaki mail relay'i için kabul edilebilir). Varsayılan: doğrula.
+    const rejectUnauthorized =
+      process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false';
     this.transporter = nodemailer.createTransport({
       host,
       port,
       secure,
       auth: user && pass ? { user, pass } : undefined,
+      tls: { rejectUnauthorized },
     });
-    this.logger.log(`Email enabled — ${host}:${port} (secure=${secure})`);
+    this.logger.log(
+      `Email enabled — ${host}:${port} (secure=${secure}, rejectUnauthorized=${rejectUnauthorized})`,
+    );
   }
 
   /** Phase 246 — diagnostic raw send. Returns result instead of swallowing. */
@@ -226,7 +235,10 @@ export class EmailService implements OnModuleInit {
     await this.send(user.email, 'Şifre sıfırlama — Yapgitsin', html);
   }
 
-  async sendEmailVerification(user: MailUser, verifyUrl: string): Promise<void> {
+  async sendEmailVerification(
+    user: MailUser,
+    verifyUrl: string,
+  ): Promise<void> {
     if (!user.email) return;
     const html = shell(
       'E-posta doğrulama',
