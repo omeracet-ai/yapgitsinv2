@@ -47,6 +47,9 @@ export class ProvidersService {
       createdAt: provider.createdAt,
       updatedAt: provider.updatedAt,
       averageRating: this.calcBayesianRating(u),
+      // Phase 261 — Wilson 95% CI lower bound (0-1); Flutter "Güven Skoru" rozeti
+      // ve adil sıralama için. recalcRating tarafından User'a yazılır.
+      wilsonScore: u.wilsonScore ?? 0,
       totalReviews: u.totalReviews ?? 0,
       identityVerified: u.identityVerified === true,
       reputationScore: u.reputationScore ?? 0,
@@ -116,8 +119,17 @@ export class ProvidersService {
       case 'rate_desc':
         qb.orderBy('u.hourlyRateMinMinor', 'DESC');
         break;
-      default:
+      case 'reputation':
         qb.orderBy('u.reputationScore', 'DESC');
+        break;
+      case 'smart':
+      default:
+        // Phase 261 — Adil sıralama: Wilson 95% CI lower bound (istatistiksel
+        // güven) önce, Bayesian-shrunk averageRating sonra, reputation tiebreaker.
+        // 1 yorumlu 5.0, 120 yorumlu 4.8'in arkasına düşer.
+        qb.orderBy('u.wilsonScore', 'DESC')
+          .addOrderBy('u.averageRating', 'DESC')
+          .addOrderBy('u.reputationScore', 'DESC');
     }
     qb.take(200);
 

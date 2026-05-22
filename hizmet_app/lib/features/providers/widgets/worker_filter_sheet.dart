@@ -114,7 +114,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
       _minRating = null;
       _verifiedOnly = false;
       _availableOnly = false;
-      _sortBy = WorkerSortBy.reputation;
+      _sortBy = WorkerSortBy.smart;
       _minRateCtrl.clear();
       _maxRateCtrl.clear();
       _semanticQueryCtrl.clear();

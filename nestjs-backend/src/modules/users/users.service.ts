@@ -198,7 +198,13 @@ export class UsersService {
     verifiedOnly?: boolean;
     availableOnly?: boolean;
     availableDay?: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
-    sortBy?: 'rating' | 'reputation' | 'rate_asc' | 'rate_desc' | 'nearest';
+    sortBy?:
+      | 'smart'
+      | 'rating'
+      | 'reputation'
+      | 'rate_asc'
+      | 'rate_desc'
+      | 'nearest';
     page?: number;
     limit?: number;
     lat?: number;
@@ -273,7 +279,10 @@ export class UsersService {
       // Phase 173 — Top-rated sort uses wilsonScore first (statistically robust),
       // reputationScore as tiebreaker.
       switch (opts.sortBy) {
+        case 'smart':
         case 'rating':
+          // Phase 261 — Adil/akıllı sıralama: Wilson 95% CI lower bound önce,
+          // Bayesian-shrunk averageRating sonra, reputation tiebreaker.
           qb.orderBy('u.wilsonScore', 'DESC')
             .addOrderBy('u.averageRating', 'DESC')
             .addOrderBy('u.reputationScore', 'DESC');
@@ -511,7 +520,7 @@ export class UsersService {
       deletedAt: now,
       scheduledHardDeleteAt: scheduled,
     };
-    await this.repo.update(userId, patch as unknown as Partial<User>);
+    await this.repo.update(userId, patch);
 
     // Invalidate all live tokens for this user
     try {

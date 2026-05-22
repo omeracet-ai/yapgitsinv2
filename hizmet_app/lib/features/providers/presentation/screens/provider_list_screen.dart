@@ -28,7 +28,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
   final _searchCtrl = TextEditingController();
   String _search = '';
   String? _activeCategory;
-  _SortMode _sort = _SortMode.rating;
+  _SortMode _sort = _SortMode.smart;
   List<RecentSearch> _recentSearches = [];
 
   @override
@@ -414,10 +414,22 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
           });
         }
         break;
+      case WorkerSortBy.smart:
       case WorkerSortBy.rating:
       case WorkerSortBy.reputation:
         // Local chip kazanır
         switch (_sort) {
+          case _SortMode.smart:
+            // Phase 261 — Adil sıralama: Wilson skoru (güven) önce, eşitlikte puan.
+            regular.sort((a, b) {
+              final wb = (b['wilsonScore'] as num?) ?? 0;
+              final wa = (a['wilsonScore'] as num?) ?? 0;
+              final c = wb.compareTo(wa);
+              if (c != 0) return c;
+              return ((b['averageRating'] as num?) ?? 0)
+                  .compareTo((a['averageRating'] as num?) ?? 0);
+            });
+            break;
           case _SortMode.rating:
             regular.sort((a, b) => ((b['averageRating'] as num?) ?? 0)
                 .compareTo((a['averageRating'] as num?) ?? 0));
@@ -456,6 +468,8 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
+                      _sortChip(_SortMode.smart, 'Adil Sıralama'),
+                      const SizedBox(width: 8),
                       _sortChip(_SortMode.rating, 'En Yüksek Puan'),
                       const SizedBox(width: 8),
                       _sortChip(_SortMode.reviews, 'En Çok Yorum'),
@@ -807,7 +821,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
   }
 }
 
-enum _SortMode { rating, reviews }
+enum _SortMode { smart, rating, reviews }
 
 // ─── Featured Card (horizontal carousel) ─────────────────────────────────────
 
@@ -945,6 +959,8 @@ class _ProviderCard extends StatelessWidget {
     final bio = (provider['bio'] ?? '').toString();
     final rating = (provider['averageRating'] as num?)?.toDouble() ?? 0.0;
     final reviews = (provider['totalReviews'] as num?)?.toInt() ?? 0;
+    // Phase 261 — Wilson 95% CI lower bound (0-1) → "Güven Skoru" mikro göstergesi
+    final wilson = (provider['wilsonScore'] as num?)?.toDouble() ?? 0.0;
     final isVerified = provider['isVerified'] == true;
     final isAvailable = provider['isAvailable'] == true;
     final cats = provider['categories'] as List? ?? [];
@@ -1083,6 +1099,32 @@ class _ProviderCard extends StatelessWidget {
                                 fontSize: 11, color: AppColors.textHint)),
                       ],
                     ),
+
+                    // Phase 261 — Güven Skoru (Wilson) mikro göstergesi
+                    if (wilson > 0 && reviews > 0) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.verified_user_rounded,
+                                size: 11, color: AppColors.primary),
+                            const SizedBox(width: 3),
+                            Text('Güven Skoru %${(wilson * 100).round()}',
+                                style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary)),
+                          ],
+                        ),
+                      ),
+                    ],
 
                     // Bio
                     if (bio.isNotEmpty) ...[

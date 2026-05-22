@@ -3,6 +3,7 @@
 /// Backend kontratı (/users/workers query params):
 ///   minRating, minRate, maxRate, verifiedOnly, availableOnly, sortBy
 enum WorkerSortBy {
+  smart, // Phase 261 — Adil/akıllı sıralama (Wilson + Bayesian), varsayılan
   reputation,
   rating,
   rateAsc,
@@ -13,6 +14,8 @@ enum WorkerSortBy {
 extension WorkerSortByX on WorkerSortBy {
   String get apiValue {
     switch (this) {
+      case WorkerSortBy.smart:
+        return 'smart';
       case WorkerSortBy.reputation:
         return 'reputation';
       case WorkerSortBy.rating:
@@ -28,6 +31,8 @@ extension WorkerSortByX on WorkerSortBy {
 
   String get label {
     switch (this) {
+      case WorkerSortBy.smart:
+        return 'Adil Sıralama (Akıllı)';
       case WorkerSortBy.reputation:
         return 'En İtibarlı';
       case WorkerSortBy.rating:
@@ -63,7 +68,7 @@ class WorkerFilter {
     this.maxRate,
     this.verifiedOnly = false,
     this.availableOnly = false,
-    this.sortBy = WorkerSortBy.reputation,
+    this.sortBy = WorkerSortBy.smart,
     this.nearMe = false,
     this.userLat,
     this.userLng,
@@ -116,7 +121,8 @@ class WorkerFilter {
     if (maxRate != null) m['maxRate'] = maxRate;
     if (verifiedOnly) m['verifiedOnly'] = true;
     if (availableOnly) m['availableOnly'] = true;
-    if (sortBy != WorkerSortBy.reputation) m['sortBy'] = sortBy.apiValue;
+    // Phase 261 — sortBy her zaman gönderilir (default 'smart' backend'e ulaşsın).
+    m['sortBy'] = sortBy.apiValue;
     if (nearMe && userLat != null && userLng != null) {
       m['lat'] = userLat;
       m['lng'] = userLng;
@@ -135,7 +141,7 @@ class WorkerFilter {
     if (minRate != null || maxRate != null) n++;
     if (verifiedOnly) n++;
     if (availableOnly) n++;
-    if (sortBy != WorkerSortBy.reputation) n++;
+    if (sortBy != WorkerSortBy.smart) n++;
     if (nearMe) n++;
     if (semanticQuery != null && semanticQuery!.trim().isNotEmpty) n++;
     return n;

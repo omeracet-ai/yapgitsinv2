@@ -687,6 +687,7 @@ export class UsersController {
 
     const minRatingN = parseNum(minRating);
     const sortAllowed = [
+      'smart',
       'rating',
       'reputation',
       'rate_asc',
@@ -696,6 +697,7 @@ export class UsersController {
     const sortByVal =
       sortBy && sortAllowed.includes(sortBy)
         ? (sortBy as
+            | 'smart'
             | 'rating'
             | 'reputation'
             | 'rate_asc'
