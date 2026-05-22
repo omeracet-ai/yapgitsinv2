@@ -273,18 +273,17 @@ describe('EscrowConfirmationService (v2 flow)', () => {
     expect(h.escrowService.release).not.toHaveBeenCalled();
   });
 
-  // 7. Tier removed in v2: a <500 TL amount still requires before+after photos.
-  it('v2 ignores tiers — a small (LITE-range) amount still requires photos to approve', async () => {
+  // 7. v2 hides photos: approve has NO photo requirement and succeeds with zero photos.
+  it('v2 has no photo requirement — approve succeeds without any photos', async () => {
     const escrow = makeEscrow({
-      amountMinor: 10_000, // 100 TL → tierFor() = LITE
+      amountMinor: 10_000, // 100 TL → tierFor() = LITE; v2 ignores tiers anyway
       confirmationTier: ConfirmationTier.LITE,
     });
-    // No photos at all → approve must fail with missing photo requirements.
-    const h = buildV2(escrow, []);
-    await expect(
-      h.service.approve(ESCROW_ID, WORKER_ID),
-    ).rejects.toBeInstanceOf(BadRequestException);
-    expect(escrow.workerConfirmedAt).toBeNull();
+    const h = buildV2(escrow, []); // zero photos
+    const res = await h.service.approve(ESCROW_ID, WORKER_ID);
+    expect(escrow.workerConfirmedAt).toBeInstanceOf(Date);
+    expect(res.bothApproved).toBe(false);
+    expect(h.escrowService.release).not.toHaveBeenCalled();
   });
 
   // 8 (Task 8). addPhoto requires gps in v2.

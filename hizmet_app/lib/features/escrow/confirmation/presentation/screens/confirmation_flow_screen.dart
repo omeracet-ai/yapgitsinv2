@@ -192,7 +192,7 @@ class _ConfirmationFlowScreenState
       builder: (ctx) => AlertDialog(
         title: const Text('Onayla'),
         content: const Text(
-            'Fotoğraflar yüklendi. Onayladığınızda karşı tarafın onayı '
+            'İşi onaylıyorsunuz. Onayladığınızda karşı tarafın onayı '
             'beklenir; her iki taraf onaylayınca QR ile ödeme adımı açılır.'),
         actions: [
           TextButton(
@@ -322,8 +322,7 @@ class _ConfirmationFlowScreenState
           title: 'Onay Sürecini Başlat',
           subtitle:
               'İşi tamamladıktan sonra onay sürecini başlat. Ardından her iki '
-              'taraf önce/sonra fotoğraflarını yükleyip onaylayacak; en son '
-              'müşteri QR oluşturup sen okutacaksın.',
+              'taraf onaylayacak; en son müşteri QR oluşturup sen okutacaksın.',
           action: ElevatedButton.icon(
             onPressed: _startProcess,
             icon: const Icon(Icons.play_arrow_rounded),
@@ -341,7 +340,7 @@ class _ConfirmationFlowScreenState
           title: 'Usta Onay Sürecini Başlatmadı',
           subtitle:
               'Usta iş tamamlandığında onay sürecini başlatacak. Ardından '
-              'fotoğraf yükleme adımını burada göreceksiniz.',
+              'onay adımını burada göreceksiniz.',
         );
       }
     }
@@ -447,8 +446,8 @@ class _ConfirmationFlowScreenState
     return _stepCard(
       icon: Icons.verified_user_rounded,
       title: 'Onayla',
-      subtitle: 'Fotoğraflar yüklendi. Onaylayın; her iki taraf onayladıktan '
-          'sonra QR ile ödeme adımı açılır.',
+      subtitle: 'İşi onaylayın; her iki taraf onayladıktan sonra QR ile '
+          'ödeme adımı açılır.',
       action: ElevatedButton.icon(
         onPressed: iConfirmed ? null : _confirm,
         icon: const Icon(Icons.check_circle_outline),

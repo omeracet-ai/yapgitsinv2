@@ -16,27 +16,17 @@ class ConfirmationProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tier = state.tier;
-    final req = state.requirements.photosPerPhase;
 
     String workerLabel = '';
     String customerLabel = '';
 
-    // v2 sırası: Foto → Onay → QR & Ödeme
+    // v2 sırası: Onay → QR & Ödeme (foto adımı kaldırıldı)
 
-    // 1) Foto (önce + sonra, her iki taraf)
-    if (req > 0) {
-      workerLabel += state.photosCompleteFor("worker") ? "✅" : "❌";
-      customerLabel += state.photosCompleteFor("customer") ? "✅" : "❌";
-    } else {
-      workerLabel += '✅';
-      customerLabel += '✅';
-    }
+    // 1) Onay
+    workerLabel += state.workerConfirmed ? '✅' : '⏳';
+    customerLabel += state.customerConfirmed ? '✅' : '⏳';
 
-    // 2) Onay
-    workerLabel += ' ${state.workerConfirmed ? "✅" : "⏳"}';
-    customerLabel += ' ${state.customerConfirmed ? "✅" : "⏳"}';
-
-    // 3) QR & Ödeme (worker scan = ödeme serbest)
+    // 2) QR & Ödeme (worker scan = ödeme serbest)
     final qrDone = state.qrScanned || state.escrowReleased;
     workerLabel += ' ${qrDone ? "✅" : "⏳"}';
     customerLabel += ' ${qrDone ? "✅" : "⏳"}';
@@ -91,7 +81,7 @@ class ConfirmationProgress extends StatelessWidget {
             children: [
               SizedBox(width: 70),
               Text(
-                'Foto · Onay · QR & Ödeme',
+                'Onay · QR & Ödeme',
                 style: TextStyle(
                     fontSize: 10.5, color: AppColors.textSecondary),
               ),

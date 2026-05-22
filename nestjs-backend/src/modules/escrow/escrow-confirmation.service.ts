@@ -73,9 +73,10 @@ function tierFor(amountMinor: number): ConfirmationTier {
   return ConfirmationTier.PREMIUM;
 }
 
-// v2: all amounts are treated as full-requirement (no LITE bypass).
+// v2: photos hidden — confirmation is approve (both sides) + QR handshake only.
+// GPS is still enforced at the worker's QR scan (scanV2), not at approve.
 const STANDARD_REQUIREMENTS: TierRequirements = {
-  photosPerPhase: 1,
+  photosPerPhase: 0,
   videoRequired: false,
   gpsMatchRequired: true,
 };
@@ -693,9 +694,9 @@ export class EscrowConfirmationService {
   }
 
   /**
-   * v2 approval. Either side approves after uploading own before+after photos
-   * (with GPS proximity match). Sets `<side>ConfirmedAt`. Crucially this does
-   * NOT release payment — release is deferred to the worker's QR scan.
+   * v2 approval. Either side approves (no photo requirement — photos are hidden
+   * in v2). Sets `<side>ConfirmedAt`. Crucially this does NOT release payment —
+   * release is deferred to the worker's QR scan, where GPS proximity is checked.
    */
   async approve(
     escrowId: string,
@@ -729,15 +730,8 @@ export class EscrowConfirmationService {
       throw new ConflictException('Customer already approved');
     }
 
-    const photos = await this.photoRepo.find({ where: { escrowId } });
-    const missing = this.computeMissingV2(escrow, photos, side);
-    if (missing.length > 0) {
-      throw new BadRequestException({
-        message: 'Requirements not met',
-        missing,
-      });
-    }
-
+    // v2: no photo/GPS gate at approval — approval is just the explicit "Onayla".
+    // GPS proximity is enforced later when the worker scans the payer's QR.
     const now = new Date();
     if (side === 'worker') escrow.workerConfirmedAt = now;
     else escrow.customerConfirmedAt = now;
@@ -749,46 +743,6 @@ export class EscrowConfirmationService {
     // NOTE: NO escrowService.release() here — payment is released only when the
     // worker scans the payer's QR (scanV2). This is the core v2 money-flow rule.
     return { side, bothApproved, awaitingQr: bothApproved };
-  }
-
-  /**
-   * v2 requirements: GPS proximity match + each side has own before+after
-   * photos. No `qr_not_scanned` precondition (QR comes AFTER approvals) and no
-   * LITE bypass (tiers are flattened in v2).
-   */
-  private computeMissingV2(
-    escrow: PaymentEscrow,
-    photos: EscrowConfirmationPhoto[],
-    side: ConfirmationSide,
-  ): string[] {
-    const missing: string[] = [];
-
-    // GPS check — both sides must have a recorded position within radius.
-    if (
-      escrow.workerLat == null ||
-      escrow.workerLng == null ||
-      escrow.customerLat == null ||
-      escrow.customerLng == null
-    ) {
-      missing.push('gps_missing');
-    } else {
-      const dist = haversineMeters(
-        escrow.workerLat,
-        escrow.workerLng,
-        escrow.customerLat,
-        escrow.customerLng,
-      );
-      if (dist > GPS_MATCH_RADIUS_M) missing.push('gps_too_far');
-    }
-
-    const sidePhotos = photos.filter((p) => p.side === side);
-    if (!sidePhotos.some((p) => p.phase === 'before')) {
-      missing.push(`${side}_before_photo`);
-    }
-    if (!sidePhotos.some((p) => p.phase === 'after')) {
-      missing.push(`${side}_after_photo`);
-    }
-    return missing;
   }
 
   async confirm(
