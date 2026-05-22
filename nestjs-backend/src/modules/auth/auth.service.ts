@@ -120,10 +120,10 @@ export class AuthService implements OnModuleInit {
       );
     }
     // Kilit süresi dolmuş → tek atomik reset (idempotent)
-    await this.userRepo.update(
-      user.id,
-      { failedLoginAttempts: 0, lockedUntil: null } as unknown as Partial<User>,
-    );
+    await this.userRepo.update(user.id, {
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+    } as unknown as Partial<User>);
     u.failedLoginAttempts = 0;
     (u as { lockedUntil?: Date | null }).lockedUntil = null;
   }
@@ -140,15 +140,14 @@ export class AuthService implements OnModuleInit {
         .createQueryBuilder()
         .update(User)
         .set({
-          failedLoginAttempts: () =>
-            'COALESCE("failedLoginAttempts", 0) + 1',
-        } as unknown as Partial<User>)
+          failedLoginAttempts: () => 'COALESCE("failedLoginAttempts", 0) + 1',
+        })
         .where('id = :id', { id: user.id })
         .execute();
 
-      const fresh = (await this.userRepo.findOne({
+      const fresh = await this.userRepo.findOne({
         where: { id: user.id },
-      })) as UserLockState | null;
+      });
       if (!fresh) return;
       const attempts = fresh.failedLoginAttempts ?? 0;
       if (
@@ -161,7 +160,7 @@ export class AuthService implements OnModuleInit {
         const lockedUntil = new Date(Date.now() + ACCOUNT_LOCK_DURATION_MS);
         await this.userRepo.update(user.id, {
           lockedUntil,
-        } as Partial<User>);
+        });
 
         // Audit log — fire-and-forget; audit failures must not block auth flow.
         void this.adminAudit
@@ -187,10 +186,10 @@ export class AuthService implements OnModuleInit {
   /** Başarılı login → ardışık fail sayacı + kilit alanı sıfırlanır. */
   private async resetFailedLogin(userId: string): Promise<void> {
     try {
-      await this.userRepo.update(
-        userId,
-        { failedLoginAttempts: 0, lockedUntil: null } as unknown as Partial<User>,
-      );
+      await this.userRepo.update(userId, {
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      } as unknown as Partial<User>);
     } catch (e) {
       this.logger.warn(
         `resetFailedLogin failed userId=${userId}: ${(e as Error).message}`,
@@ -554,7 +553,7 @@ export class AuthService implements OnModuleInit {
     const generic = {
       success: true,
       message: 'Eğer bu email kayıtlı ise sıfırlama bağlantısı gönderildi',
-    } as { success: true; message: string; resetUrl?: string };
+    } as { success: true; message: string };
 
     if (!email) return generic;
     const user = await this.usersService.findByEmail(email);
@@ -572,14 +571,10 @@ export class AuthService implements OnModuleInit {
       }),
     );
 
-    // Reset page is served by the backend itself (Next.js marketing domain has
-    // no /reset-password route), so build the URL from the API base.
-    const apiBase =
-      process.env.PASSWORD_RESET_URL_BASE ??
-      process.env.API_BASE_URL ??
-      'https://api.yapgitsin.tr';
-    generic.resetUrl = `${apiBase}/auth/reset-password?token=${plain}`;
-    // Phase 121 — fire-and-forget password reset email
+    // GÜVENLİK: resetUrl/token KESİNLİKLE response'a konmaz. Aksi halde herkes
+    // forgot-password çağırıp dönen token ile herhangi bir hesabın şifresini
+    // sıfırlayabilir (account takeover). Token YALNIZCA e-posta ile gider.
+    // Phase 121 — fire-and-forget password reset email.
     void this.emailService.sendPasswordReset(user, plain);
     return generic;
   }
