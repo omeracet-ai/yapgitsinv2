@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { faker, Faker, tr, base } from '@faker-js/faker';
+import * as nodemailer from 'nodemailer';
 import { User, UserRole } from '../users/user.entity';
 import { Booking, BookingStatus } from '../bookings/booking.entity';
 import { PaymentEscrow, EscrowStatus } from '../escrow/payment-escrow.entity';
@@ -1107,6 +1108,69 @@ export class AdminSeedService {
       const created = await this.populate(count);
       return { wiped, created };
     });
+  }
+
+  /**
+   * SMTP tanılama — env'deki SMTP creds ile 587/465/25 kombinasyonlarını sırayla
+   * dener (TLS cert doğrulaması KAPALI), her birinde verify + gerçek gönderim yapar.
+   * Hangi config'in çalıştığını ve hataları döndürür. ALLOW_SEED-gated.
+   */
+  async emailDiag(to: string): Promise<{
+    host: string;
+    user: string;
+    from: string;
+    passSet: boolean;
+    attempts: Array<{
+      port: number;
+      secure: boolean;
+      ok: boolean;
+      error?: string;
+    }>;
+  }> {
+    const host = process.env.SMTP_HOST || '';
+    const user = process.env.SMTP_USER || '';
+    const pass = process.env.SMTP_PASS || '';
+    const from = process.env.EMAIL_FROM || `Yapgitsin <${user}>`;
+    const combos: Array<{ port: number; secure: boolean }> = [
+      { port: 587, secure: false },
+      { port: 465, secure: true },
+      { port: 25, secure: false },
+    ];
+    const attempts: Array<{
+      port: number;
+      secure: boolean;
+      ok: boolean;
+      error?: string;
+    }> = [];
+    for (const c of combos) {
+      const t = nodemailer.createTransport({
+        host,
+        port: c.port,
+        secure: c.secure,
+        auth: user && pass ? { user, pass } : undefined,
+        connectionTimeout: 12000,
+        greetingTimeout: 8000,
+        tls: { rejectUnauthorized: false },
+      });
+      try {
+        await t.verify();
+        await t.sendMail({
+          from,
+          to,
+          subject: 'Yapgitsin SMTP diag',
+          text: `SMTP diag ${c.port}/${c.secure} — ${new Date().toISOString()}`,
+        });
+        attempts.push({ port: c.port, secure: c.secure, ok: true });
+      } catch (e) {
+        attempts.push({
+          port: c.port,
+          secure: c.secure,
+          ok: false,
+          error: String((e as Error).message).slice(0, 200),
+        });
+      }
+    }
+    return { host, user, from, passSet: !!pass, attempts };
   }
 
   /** Admin/test only — top up a user's token balance by amountMinor (kuruş). */

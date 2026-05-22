@@ -96,6 +96,15 @@ export class AdminSeedController {
     return { ...result, durationMs: Date.now() - t0, warning: this.warning() };
   }
 
+  /** SMTP tanılama — 587/465/25 kombinasyonlarını dener, çalışanı + hataları döndürür. */
+  @Post('email-diag')
+  async emailDiag(@Query('to') to?: string) {
+    this.assertEnabled();
+    const target = to && to.trim() ? to.trim() : 'bysabri0@gmail.com';
+    const result = await this.seed.emailDiag(target);
+    return { to: target, ...result, warning: this.warning() };
+  }
+
   @Post('credit-tokens')
   async creditTokens(
     @Query('email') email: string,
