@@ -98,6 +98,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       // Anasayfa aramasından kategori-hedefli giriş: kategoriyi ön-seç, taslak
       // geri-yükleme istemini atla (kullanıcı yeni, niyetli bir akış başlattı).
       _selectedCategory = widget.initialCategory;
+      // Adım 2 "iş başlığı" alanını filtreyle gelen kategori adıyla otomatik
+      // doldur (kullanıcı isterse düzenler).
+      _titleController.text = widget.initialCategory!;
     } else {
       WidgetsBinding.instance.addPostFrameCallback((_) => _maybeRestoreDraft());
     }
