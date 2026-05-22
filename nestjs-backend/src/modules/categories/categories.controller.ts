@@ -10,7 +10,10 @@ import {
   HttpCode,
   Inject,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { AdminGuard } from '../../common/guards/admin.guard';
 import {
   CACHE_MANAGER,
   CacheInterceptor,
@@ -79,6 +82,7 @@ export class CategoriesController {
     return this.svc.findOne(id);
   }
 
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @Post()
   async create(@Body() body: Partial<Category>) {
     const cat = await this.svc.create(body);
@@ -87,6 +91,7 @@ export class CategoriesController {
     return cat;
   }
 
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @Patch(':id')
   async update(@Param('id') id: string, @Body() body: Partial<Category>) {
     const cat = await this.svc.update(id, body);
@@ -95,6 +100,7 @@ export class CategoriesController {
     return cat;
   }
 
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @Delete(':id')
   @HttpCode(204)
   async remove(@Param('id') id: string) {
