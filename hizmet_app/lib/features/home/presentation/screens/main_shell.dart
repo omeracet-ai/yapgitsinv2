@@ -291,15 +291,15 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
             SliverAppBar(
               expandedHeight: 280,
               pinned: true,
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              backgroundColor: AppColors.primary,
               elevation: 0,
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.pin,
                 background: Container(
-                  // Hero arka planı app theme rengine bağlandı (sabit gradient
-                  // yerine) — dark/light moda uyar, sayfayla bütünleşir.
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).scaffoldBackgroundColor,
+                  // Hero arka planı marka yeşili (AppColors.primary). Ön plan
+                  // (logo + metin) kontrast için koyuya çevrildi.
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
                   ),
                   child: SafeArea(
                     child: Padding(
@@ -318,7 +318,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                         ? 'Merhaba, $userName'
                                         : 'Hoş Geldiniz',
                                     style: GoogleFonts.inter(
-                                      color: AppColors.textSecondary,
+                                      color: Colors.black87,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -327,7 +327,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                   Text(
                                     'En iyi usta, en iyi hizmet',
                                     style: GoogleFonts.playfairDisplay(
-                                      color: AppColors.textPrimary,
+                                      color: AppColors.secondary,
                                       fontSize: 22,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: -0.5,
@@ -414,7 +414,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(7),
                       ),
                       child: Center(
@@ -434,7 +434,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                       'yapgitsin.',
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        color: AppColors.textPrimary,
+                        color: AppColors.secondary,
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         height: 1.0,
