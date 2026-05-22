@@ -5,6 +5,7 @@ import {
   Body,
   Header,
   HttpCode,
+  Query,
   UnauthorizedException,
   UseGuards,
   Req,
@@ -179,6 +180,19 @@ export class AuthController {
     return this.authService.confirmEmailVerification(dto.token);
   }
 
+  /** GET verify-email — maildeki bağlantı; token'ı tek tıkla onaylar, sonucu HTML gösterir. */
+  @Get('verify-email')
+  @Header('Content-Type', 'text/html; charset=utf-8')
+  @Header('Cache-Control', 'no-store')
+  async verifyEmailPage(@Query('token') token?: string): Promise<string> {
+    try {
+      await this.authService.confirmEmailVerification(token ?? '');
+      return VERIFY_EMAIL_OK_HTML;
+    } catch {
+      return VERIFY_EMAIL_FAIL_HTML;
+    }
+  }
+
   /** Phase 123 — SMS OTP iste — Phase 170: 10 req/dk (sms cost koruma) */
   @Throttle({ 'auth-login': { limit: 10, ttl: 60_000 } })
   @UseGuards(LoginThrottleGuard)
@@ -226,6 +240,61 @@ export class AuthController {
     return typeof ip === 'string' && ip.length > 0 ? ip : 'unknown';
   }
 }
+
+/** Verify-email result pages served by GET /auth/verify-email.
+ *  Self-contained (no external assets); no untrusted values rendered. */
+const VERIFY_EMAIL_OK_HTML = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>E-posta Dogrulandi - Yapgitsin</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #0C1117 0%, #161B22 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; color: #fff; }
+.card { background: #161B22; border: 1px solid #2a3441; border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); text-align: center; }
+.logo { font-size: 28px; font-weight: 800; color: #4ADE80; margin-bottom: 24px; }
+.icon { font-size: 56px; margin-bottom: 16px; }
+h1 { margin: 0 0 12px; font-size: 22px; color: #4ADE80; }
+p { color: #8b949e; font-size: 15px; margin: 0; }
+</style>
+</head>
+<body>
+<div class="card">
+<div class="logo">Yapgitsin</div>
+<div class="icon">&#9989;</div>
+<h1>E-posta adresin dogrulandi</h1>
+<p>Uygulamaya donebilirsin.</p>
+</div>
+</body>
+</html>`;
+
+/** Verify-email failure page served by GET /auth/verify-email on invalid/expired token. */
+const VERIFY_EMAIL_FAIL_HTML = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dogrulama Basarisiz - Yapgitsin</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #0C1117 0%, #161B22 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; color: #fff; }
+.card { background: #161B22; border: 1px solid #2a3441; border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); text-align: center; }
+.logo { font-size: 28px; font-weight: 800; color: #4ADE80; margin-bottom: 24px; }
+.icon { font-size: 56px; margin-bottom: 16px; }
+h1 { margin: 0 0 12px; font-size: 22px; color: #f85149; }
+p { color: #8b949e; font-size: 15px; margin: 0; }
+</style>
+</head>
+<body>
+<div class="card">
+<div class="logo">Yapgitsin</div>
+<div class="icon">&#10060;</div>
+<h1>Baglanti gecersiz veya suresi dolmus</h1>
+<p>Uygulamadan yeni bir dogrulama baglantisi iste.</p>
+</div>
+</body>
+</html>`;
 
 /** Reset-password HTML page served by GET /auth/reset-password.
  *  Self-contained (no external assets); form POSTs to /auth/reset-password.

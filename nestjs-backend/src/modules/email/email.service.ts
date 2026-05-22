@@ -226,6 +226,19 @@ export class EmailService implements OnModuleInit {
     await this.send(user.email, 'Şifre sıfırlama — Yapgitsin', html);
   }
 
+  async sendEmailVerification(user: MailUser, verifyUrl: string): Promise<void> {
+    if (!user.email) return;
+    const html = shell(
+      'E-posta doğrulama',
+      `<p>Merhaba <b>${user.fullName ?? ''}</b>,</p>
+       <p>Hesabını etkinleştirmek için e-postanı doğrula. Bağlantı 24 saat geçerlidir.</p>
+       <p style="margin:24px 0"><a href="${verifyUrl}" style="background:${BRAND};color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">E-postamı Doğrula</a></p>
+       <p style="color:#6b7280;font-size:13px">Bu hesabı sen oluşturmadıysan bu mesajı görmezden gelebilirsin.</p>
+       <p style="color:#6b7280;font-size:12px;word-break:break-all">${verifyUrl}</p>`,
+    );
+    await this.send(user.email, 'E-posta doğrulama — Yapgitsin', html);
+  }
+
   // Phase 160 — Job Lead Notifications
   async sendJobLeadNotification(
     worker: MailUser,

@@ -514,8 +514,9 @@ export class AuthService implements OnModuleInit {
         usedAt: null,
       }),
     );
-    const base = process.env.FRONTEND_URL ?? 'https://yapgitsin.tr';
-    const verifyUrl = `${base}/verify-email?token=${plain}`;
+    const base = process.env.API_BASE_URL ?? 'https://api.yapgitsin.tr';
+    const verifyUrl = `${base}/auth/verify-email?token=${plain}`;
+    void this.emailService.sendEmailVerification(user, verifyUrl);
     return {
       success: true,
       verifyUrl,
@@ -1151,6 +1152,10 @@ export class AuthService implements OnModuleInit {
     const { passwordHash: _hash2, ...result } = newUser;
     // Phase 121 — fire-and-forget welcome email
     void this.emailService.sendWelcome(newUser);
+    // Kayıtta e-posta doğrulama bağlantısını otomatik gönder (fire-and-forget).
+    this.requestEmailVerification(newUser.id).catch(() => {
+      /* doğrulama maili gönderilemese de kayıt tamamlanır */
+    });
     const access_token = this.signAccessToken(result);
     const refresh_token = this.signRefreshToken({
       id: result.id,
