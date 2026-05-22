@@ -369,10 +369,12 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
             onChanged: (v) => setState(() => _registerAsWorker = v),
             activeThumbColor: AppColors.primary,
             title: const Text('Usta olarak kayıt ol',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary)),
             subtitle: const Text(
               'Hizmet verirsen kayıt sonrası kısa bir kurulum yapacağız.',
-              style: TextStyle(fontSize: 12),
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
           ),
         ),

@@ -200,7 +200,15 @@ class FirebaseAuthRepository {
       String? serverCode;
       if (body is Map) {
         final m = body['message'] ?? body['error'];
-        if (m is String && m.isNotEmpty) serverMsg = m;
+        if (m is String && m.isNotEmpty) {
+          serverMsg = m;
+        } else if (m is List && m.isNotEmpty) {
+          // NestJS ValidationPipe 400 returns `message` as a string[] of
+          // per-field errors. Only the String case was handled before, so
+          // validation failures fell through to the generic "Geçersiz
+          // bilgiler." and the user never saw which field was wrong.
+          serverMsg = m.whereType<String>().join('\n');
+        }
         final c = body['code'];
         if (c is String && c.isNotEmpty) serverCode = c;
       }
