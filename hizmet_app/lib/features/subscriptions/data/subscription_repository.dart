@@ -101,8 +101,12 @@ class SubscriptionRepository {
 
   Future<UserSubscription?> getMySubscription() async {
     final res = await _dio.get('/subscriptions/my');
-    if (res.data == null) return null;
-    return UserSubscription.fromJson(Map<String, dynamic>.from(res.data as Map));
+    // Abonelik yoksa backend boş gövde döner; Dio bunu null DEĞİL boş String ""
+    // olarak verebilir → eski `res.data as Map` cast'i patlıyordu. Map değilse
+    // (null / "" / başka) "abonelik yok" kabul et.
+    final data = res.data;
+    if (data is! Map) return null;
+    return UserSubscription.fromJson(Map<String, dynamic>.from(data));
   }
 
   /// Phase 188 — start iyzipay Checkout Form, return URL + token for WebView.
