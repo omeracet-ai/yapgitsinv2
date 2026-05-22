@@ -9,7 +9,7 @@ import '../providers/job_provider.dart';
 import '../../../categories/data/category_repository.dart';
 import '../../../photos/data/photo_repository.dart';
 import '../../../photos/presentation/widgets/job_photo_picker.dart';
-import '../../../photos/presentation/widgets/job_video_picker.dart';
+// import '../../../photos/presentation/widgets/job_video_picker.dart'; // video upload UI hidden
 import '../../../ai/data/ai_repository.dart';
 import '../../../job_templates/data/job_template_repository.dart';
 import '../../data/job_draft_storage.dart';
@@ -925,11 +925,12 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           initialFiles: _selectedPhotos,
           onChanged: (files) => setState(() => _selectedPhotos = files),
         ),
-        const SizedBox(height: 16),
-        JobVideoPicker(
-          initialFiles: _selectedVideos,
-          onChanged: (files) => setState(() => _selectedVideos = files),
-        ),
+        // Video upload UI hidden — restore by uncommenting below.
+        // const SizedBox(height: 16),
+        // JobVideoPicker(
+        //   initialFiles: _selectedVideos,
+        //   onChanged: (files) => setState(() => _selectedVideos = files),
+        // ),
         const SizedBox(height: 20),
         const Divider(),
         const SizedBox(height: 16),

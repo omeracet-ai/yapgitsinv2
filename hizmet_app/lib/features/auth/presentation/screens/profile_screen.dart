@@ -21,7 +21,7 @@ import '../../../../core/network/api_client_provider.dart';
 import '../../../calendar/presentation/calendar_screen.dart';
 import '../../../calendar/presentation/earnings_screen.dart';
 import '../../../profile/widgets/profile_completion_card.dart';
-import '../../../profile/presentation/widgets/profile_video_uploader.dart';
+// import '../../../profile/presentation/widgets/profile_video_uploader.dart'; // video upload UI hidden
 import '../../widgets/availability_editor_sheet.dart';
 import '../../../users/widgets/badge_row.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
@@ -70,9 +70,10 @@ class ProfileScreen extends ConsumerWidget {
             children: [
               const ProfileCompletionCard(),
               _buildProfileHeader(user),
-              ProfileVideoUploader(
-                onUploadSuccess: () => ref.invalidate(myPublicProfileProvider),
-              ),
+              // Video upload UI hidden — restore by uncommenting below.
+              // ProfileVideoUploader(
+              //   onUploadSuccess: () => ref.invalidate(myPublicProfileProvider),
+              // ),
               _buildTokenBanner(context, ref),
               _buildSubscriptionBanner(context, ref, user),
               _buildIdentityStatus(user),

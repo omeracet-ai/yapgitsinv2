@@ -292,7 +292,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               _personalSection(missing),
               _contactSection(missing),
               _addressSection(missing),
-              if (_isWorker) _introVideoSection(),
+              // Video upload UI hidden — restore by uncommenting below.
+              // if (_isWorker) _introVideoSection(),
               if (_isWorker) _workerSection(missing),
               if (_isWorker) _insuranceSection(),
               if (_isWorker) _certificationsSection(),
@@ -540,6 +541,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   // Phase 152 — Tanıtım Videosu (worker only, max 60sn)
+  // ignore: unused_element
   Widget _introVideoSection() {
     final user = ref.read(authStateProvider) is AuthAuthenticated
         ? (ref.read(authStateProvider) as AuthAuthenticated).user
