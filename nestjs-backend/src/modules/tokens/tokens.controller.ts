@@ -16,7 +16,6 @@ import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { TokensService } from './tokens.service';
 import { WalletPdfService } from './wallet-pdf.service';
-import { PaymentMethod } from './token-transaction.entity';
 import { GiftTokensDto } from './dto/gift-tokens.dto';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
@@ -66,16 +65,11 @@ export class TokensController {
     return this.svc.getHistory(req.user.id);
   }
 
-  @Post('purchase')
-  @UseGuards(AuthGuard('jwt'))
-  purchase(
-    @Request() req: AuthenticatedRequest,
-    @Body() body: { amount: number; paymentMethod: 'bank' | 'crypto' },
-  ) {
-    const method =
-      body.paymentMethod === 'bank' ? PaymentMethod.BANK : PaymentMethod.CRYPTO;
-    return this.svc.purchase(req.user.id, body.amount, method);
-  }
+  // Phase 260 — Serbest /tokens/purchase KALDIRILDI.
+  // Eski endpoint hiçbir gerçek tahsilat yapmadan tokenBalance'ı doğrudan
+  // artırıyordu (bedava jeton). Kullanıcı jeton satın alma artık YALNIZCA
+  // iyzipay üzerinden: POST /tokens/checkout → ödeme → /tokens/iyzipay/callback.
+  // Manuel jeton yetkilendirmesi YALNIZCA admin'e ait: POST /admin/users/:id/tokens/grant.
 
   @Post('gift')
   @UseGuards(AuthGuard('jwt'))

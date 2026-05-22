@@ -30,7 +30,7 @@ import { UpdateReportStatusDto } from '../user-blocks/dto/report-user.dto';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { SystemSettingsService } from '../system-settings/system-settings.service';
 import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
-import { OFFER_TOKEN_COST } from '../tokens/tokens.service';
+import { OFFER_TOKEN_COST, TokensService } from '../tokens/tokens.service';
 import { UpdateCommissionDto } from './dto/commission-settings.dto';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
 import { AdminListQueryDto } from './dto/admin-list-query.dto';
@@ -49,6 +49,7 @@ import { SettingValueDto } from './dto/setting-value.dto';
 import { FeaturedOrderDto } from './dto/featured-order.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { UserBadgesDto, BadgeKeyDto } from './dto/user-badges.dto';
+import { GrantTokensDto } from './dto/grant-tokens.dto';
 import { UserSkillsDto } from './dto/user-skills.dto';
 import { ModerationActionDto } from './dto/moderation-action.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
@@ -86,6 +87,7 @@ export class AdminController {
     private readonly certificationSvc: WorkerCertificationService,
     private readonly dataPrivacy: DataPrivacyService,
     private readonly emailService: EmailService,
+    private readonly tokensService: TokensService,
   ) {}
 
   // ── Phase 246 — SMTP diagnostic ───────────────────────────────────
@@ -599,6 +601,23 @@ export class AdminController {
   @Post('users/:id/badges/revoke')
   async revokeManualBadge(@Param('id') id: string, @Body() body: BadgeKeyDto) {
     return this.adminService.revokeManualBadge(id, body.badgeKey);
+  }
+
+  // ── Phase 260 — Manuel jeton tanımlama (YALNIZCA admin) ─────────────
+  // Serbest /tokens/purchase kaldırıldı; jeton tanımlama tek yetkili kanal burası.
+  @Audit('user.tokens.grant')
+  @Post('users/:id/tokens/grant')
+  async grantTokens(
+    @Param('id') id: string,
+    @Body() body: GrantTokensDto,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    return this.tokensService.adminGrant(
+      id,
+      body.amount,
+      body.reason ?? '',
+      req.user.id,
+    );
   }
 
   /** Set tasker skills (granular tags beyond workerCategories). */

@@ -83,6 +83,11 @@ export default function UsersPage() {
   const [badgeTarget,  setBadgeTarget]  = useState<User | null>(null);
   const [badgeChecked, setBadgeChecked] = useState<Set<string>>(new Set());
   const [badgeBusy,    setBadgeBusy]    = useState(false);
+  // Phase 260 — manuel jeton tanımlama
+  const [tokenTarget,  setTokenTarget]  = useState<User | null>(null);
+  const [tokenAmount,  setTokenAmount]  = useState("");
+  const [tokenReason,  setTokenReason]  = useState("");
+  const [tokenBusy,    setTokenBusy]    = useState(false);
 
   function openBadgeModal(u: User) {
     setBadgeTarget(u);
@@ -110,6 +115,31 @@ export default function UsersPage() {
       toast.error(`Hata: ${(e as Error).message}`);
     } finally {
       setBadgeBusy(false);
+    }
+  }
+
+  async function doGrantTokens() {
+    if (!tokenTarget) return;
+    const amount = Number(tokenAmount);
+    if (!Number.isInteger(amount) || amount === 0) {
+      toast.error("Geçerli bir tam sayı gir (0 olamaz)");
+      return;
+    }
+    const reason = tokenReason.trim();
+    setTokenBusy(true);
+    try {
+      const res = await api.grantTokens(tokenTarget.id, amount, reason || undefined);
+      toast.success(
+        `${tokenTarget.fullName}: ${amount > 0 ? "+" : ""}${amount} jeton • yeni bakiye ${res.balance}`,
+      );
+      setTokenTarget(null);
+      setTokenAmount("");
+      setTokenReason("");
+      load();
+    } catch (e) {
+      toast.error(`Hata: ${(e as Error).message}`);
+    } finally {
+      setTokenBusy(false);
     }
   }
 
@@ -294,6 +324,46 @@ export default function UsersPage() {
                 disabled={badgeBusy}
                 className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >{badgeBusy ? "Kaydediliyor…" : "Kaydet"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {tokenTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
+            <h3 className="text-base font-semibold mb-1">Manuel Jeton Tanımla</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              <span className="font-medium">{tokenTarget.fullName}</span>
+              {typeof tokenTarget.tokenBalance === "number" ? ` — mevcut bakiye: ${tokenTarget.tokenBalance}` : ""}.
+              Pozitif değer ekler, negatif değer düşer.
+            </p>
+            <input
+              type="number"
+              value={tokenAmount}
+              onChange={(e) => setTokenAmount(e.target.value)}
+              placeholder="Miktar (örn. 100 veya -50)"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              autoFocus
+            />
+            <input
+              type="text"
+              value={tokenReason}
+              onChange={(e) => setTokenReason(e.target.value.slice(0, 200))}
+              placeholder="Sebep (opsiyonel)"
+              maxLength={200}
+              className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => { setTokenTarget(null); setTokenAmount(""); setTokenReason(""); }}
+                disabled={tokenBusy}
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >İptal</button>
+              <button
+                onClick={doGrantTokens}
+                disabled={tokenBusy || !tokenAmount.trim()}
+                className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >{tokenBusy ? "İşleniyor…" : "Uygula"}</button>
             </div>
           </div>
         </div>
@@ -493,6 +563,11 @@ export default function UsersPage() {
                           className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
                           title={(u.manualBadges ?? []).join(", ") || "Rozet yok"}
                         >🏅 Rozet{(u.manualBadges?.length ?? 0) > 0 ? ` (${u.manualBadges!.length})` : ""}</button>
+                        <button
+                          onClick={() => { setTokenTarget(u); setTokenAmount(""); setTokenReason(""); }}
+                          className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                          title="Manuel jeton tanımla/düzelt"
+                        >🪙 Jeton{typeof u.tokenBalance === "number" ? ` (${u.tokenBalance})` : ""}</button>
                         {u.suspended ? (
                           <button
                             onClick={() => doUnsuspend(u)}

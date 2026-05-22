@@ -3,7 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/token_repository.dart';
+import 'token_checkout_screen.dart';
 
+/// Phase 260 — Jeton satın alma ekranı.
+///
+/// Serbest manuel yükleme (bank/crypto, sahte ödeme) KALDIRILDI. Kullanıcı
+/// yalnızca sunucu katalogundan bir paket seçip iyzipay üzerinden öder. Manuel
+/// jeton tanımlama yalnızca admin yetkisindedir (admin panel).
 class TokenScreen extends ConsumerStatefulWidget {
   const TokenScreen({super.key});
 
@@ -12,23 +18,46 @@ class TokenScreen extends ConsumerStatefulWidget {
 }
 
 class _TokenScreenState extends ConsumerState<TokenScreen> {
-  String _paymentMethod = 'bank';
-  int _selectedAmount = 50;
-  bool _loading = false;
+  String? _busyPackageId;
 
-  final List<int> _presets = [10, 25, 50, 100, 250, 500];
+  String _priceLabel(num priceMinor) {
+    final tl = priceMinor / 100;
+    final isWhole = tl == tl.truncateToDouble();
+    return isWhole ? '${tl.toInt()} ₺' : '${tl.toStringAsFixed(2)} ₺';
+  }
 
-  Future<void> _purchase() async {
-    setState(() => _loading = true);
+  Future<void> _buy(Map<String, dynamic> pkg) async {
+    final packageId = pkg['id'] as String;
+    setState(() => _busyPackageId = packageId);
     try {
-      await ref.read(tokenRepositoryProvider).purchase(_selectedAmount, _paymentMethod);
-      ref.invalidate(tokenBalanceProvider);
-      if (mounted) {
+      final checkout =
+          await ref.read(tokenRepositoryProvider).createIyzipayCheckout(packageId);
+      final token = checkout['token'] as String?;
+      if (token == null || token.isEmpty) {
+        throw Exception('Ödeme başlatılamadı');
+      }
+      if (!mounted) return;
+      final ok = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => TokenCheckoutScreen(
+            paymentToken: token,
+            paymentUrl: checkout['paymentPageUrl'] as String?,
+            formContent: checkout['checkoutFormContent'] as String?,
+          ),
+        ),
+      );
+      if (!mounted) return;
+      if (ok == true) {
+        ref.invalidate(tokenBalanceProvider);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('$_selectedAmount token başarıyla yüklendi!'),
+          content: Text('${pkg['tokens']} jeton hesabına yüklendi!'),
           backgroundColor: AppColors.success,
         ));
         Navigator.pop(context);
+      } else if (ok == false) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Ödeme tamamlanmadı.'),
+        ));
       }
     } catch (e) {
       if (mounted) {
@@ -38,18 +67,19 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
         ));
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() => _busyPackageId = null);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final balanceAsync = ref.watch(tokenBalanceProvider);
+    final packagesAsync = ref.watch(tokenPackagesProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Token Yükle'),
+        title: const Text('Jeton Satın Al'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -77,21 +107,15 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
                       style: TextStyle(color: Colors.white70, fontSize: 13)),
                   const SizedBox(height: 8),
                   balanceAsync.when(
-                    data: (b) => Text('$b Token',
+                    data: (b) => Text('$b Jeton',
                         style: const TextStyle(
                             color: Colors.white,
                             fontSize: 32,
                             fontWeight: FontWeight.bold)),
-                    loading: () => const CircularProgressIndicator(color: Colors.white),
+                    loading: () =>
+                        const CircularProgressIndicator(color: Colors.white),
                     error: (_, __) => const Text('--',
                         style: TextStyle(color: Colors.white, fontSize: 32)),
-                  ),
-                  const SizedBox(height: 4),
-                  balanceAsync.when(
-                    data: (b) => Text('≈ $b ₺',
-                        style: const TextStyle(color: Colors.white54, fontSize: 13)),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
                   ),
                 ],
               ),
@@ -126,7 +150,7 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '1 Token = 1 ₺  •  Teklif başına 5 Token',
+                      '1 Jeton = 1 ₺  •  Teklif başına 5 Jeton',
                       style: TextStyle(fontSize: 13, color: Colors.amber),
                     ),
                   ),
@@ -135,94 +159,48 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
             ),
             const SizedBox(height: 24),
 
-            const Text('Miktar Seç',
+            const Text('Paket Seç',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: _presets.map((amt) {
-                final isSelected = _selectedAmount == amt;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedAmount = amt),
-                  child: Container(
-                    width: (MediaQuery.of(context).size.width - 60) / 3,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: isSelected ? AppColors.primary : AppColors.border),
-                    ),
-                    child: Column(
-                      children: [
-                        Text('$amt',
-                            style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected ? Colors.white : AppColors.textPrimary)),
-                        Text('Token',
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: isSelected ? Colors.white70 : AppColors.textHint)),
-                        Text('$amt ₺',
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: isSelected ? Colors.white70 : AppColors.primary)),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 28),
 
-            const Text('Ödeme Yöntemi',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            _PaymentOption(
-              icon: Icons.account_balance,
-              title: 'Banka Transferi',
-              subtitle: 'EFT / Havale — Türk Lirası',
-              value: 'bank',
-              groupValue: _paymentMethod,
-              onChanged: (v) => setState(() => _paymentMethod = v!),
-            ),
-            const SizedBox(height: 10),
-            _PaymentOption(
-              icon: Icons.currency_bitcoin,
-              title: 'Kripto Para',
-              subtitle: 'BTC / ETH / USDT',
-              value: 'crypto',
-              groupValue: _paymentMethod,
-              onChanged: (v) => setState(() => _paymentMethod = v!),
-            ),
-            const SizedBox(height: 32),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _loading ? null : _purchase,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+            packagesAsync.when(
+              data: (packages) => Column(
+                children: packages
+                    .map((pkg) => _PackageCard(
+                          label: pkg['label'] as String? ?? '',
+                          tokens: (pkg['tokens'] as num?)?.toInt() ?? 0,
+                          priceLabel:
+                              _priceLabel((pkg['priceMinor'] as num?) ?? 0),
+                          badge: pkg['badge'] as String?,
+                          loading: _busyPackageId == pkg['id'],
+                          disabled: _busyPackageId != null,
+                          onTap: () => _buy(pkg),
+                        ))
+                    .toList(),
+              ),
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 32),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, __) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Column(
+                  children: [
+                    Text('Paketler yüklenemedi: $e',
+                        style: const TextStyle(color: AppColors.error)),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: () => ref.invalidate(tokenPackagesProvider),
+                      child: const Text('Tekrar Dene'),
+                    ),
+                  ],
                 ),
-                child: _loading
-                    ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                    : Text(
-                        '$_selectedAmount Token Satın Al ($_selectedAmount ₺)',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             const Center(
               child: Text(
-                'Ödeme simüle edilmektedir. Gerçek ödeme entegrasyonu için iletişime geçin.',
+                'Ödemeler iyzico güvenli ödeme altyapısı ile alınır.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 11, color: AppColors.textHint),
               ),
@@ -234,70 +212,100 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
   }
 }
 
-class _PaymentOption extends StatelessWidget {
-  final IconData icon;
-  final String title, subtitle, value, groupValue;
-  final ValueChanged<String?> onChanged;
+class _PackageCard extends StatelessWidget {
+  final String label;
+  final int tokens;
+  final String priceLabel;
+  final String? badge;
+  final bool loading;
+  final bool disabled;
+  final VoidCallback onTap;
 
-  const _PaymentOption({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.groupValue,
-    required this.onChanged,
+  const _PackageCard({
+    required this.label,
+    required this.tokens,
+    required this.priceLabel,
+    required this.badge,
+    required this.loading,
+    required this.disabled,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isSelected = value == groupValue;
-    return GestureDetector(
-      onTap: () => onChanged(value),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryLight : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: isSelected ? AppColors.primary : AppColors.border,
-              width: isSelected ? 2 : 1),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.border.withValues(alpha: 0.3),
-                  shape: BoxShape.circle),
-              child: Icon(icon,
-                  color: isSelected ? Colors.white : AppColors.textHint,
-                  size: 22),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: const BoxDecoration(
+              color: AppColors.primaryLight,
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.secondary)),
-                  Text(subtitle,
-                      style: const TextStyle(
-                          fontSize: 12, color: AppColors.textHint)),
-                ],
-              ),
+            child: const Icon(Icons.toll, color: AppColors.primary, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text('$tokens Jeton',
+                        style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary)),
+                    if (badge != null && badge!.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(badge!,
+                            style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.accent)),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(priceLabel,
+                    style: const TextStyle(
+                        fontSize: 14, color: AppColors.textSecondary)),
+              ],
             ),
-            Icon(
-              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: isSelected ? AppColors.primary : AppColors.textHint,
+          ),
+          ElevatedButton(
+            onPressed: disabled ? null : onTap,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
-          ],
-        ),
+            child: loading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2),
+                  )
+                : const Text('Satın Al'),
+          ),
+        ],
       ),
     );
   }

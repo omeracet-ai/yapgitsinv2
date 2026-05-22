@@ -738,6 +738,7 @@ export class AdminService {
         'asWorkerTotal',
         'asWorkerSuccess',
         'responseTimeMinutes',
+        'tokenBalance',
         'createdAt',
       ],
     });
@@ -802,6 +803,7 @@ export class AdminService {
         'suspendedAt',
         'suspendedReason',
         'suspendedBy',
+        'tokenBalance',
         'createdAt',
       ],
     });

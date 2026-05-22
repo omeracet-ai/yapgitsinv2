@@ -328,6 +328,14 @@ export const api = {
   revokeBadge: (userId: string, badgeKey: string) =>
     request<{ id: string; manualBadges: string[] }>(`/admin/users/${userId}/badges/revoke`, { method: 'POST', body: JSON.stringify({ badgeKey }) }),
 
+  // Phase 260 — Manuel jeton tanımlama/düzeltme (serbest kullanıcı satın alma kaldırıldı).
+  // amount: pozitif = ekle, negatif = düş (bakiye floor 0).
+  grantTokens: (userId: string, amount: number, reason?: string) =>
+    request<{ balance: number; amount: number }>(`/admin/users/${userId}/tokens/grant`, {
+      method: 'POST',
+      body: JSON.stringify({ amount, ...(reason ? { reason } : {}) }),
+    }),
+
   // Onboarding slides
   onboardingSlides:       ()                                          => request<OnboardingSlide[]>('/onboarding-slides/all'),
   createOnboardingSlide:  (data: Partial<OnboardingSlide>)           => request<OnboardingSlide>('/onboarding-slides',         { method: 'POST',   body: JSON.stringify(data) }),
@@ -729,6 +737,7 @@ export interface User {
   latitude?: number | null;
   longitude?: number | null;
   city?: string | null;
+  tokenBalance?: number;
 }
 
 export interface BulkVerifyResult {

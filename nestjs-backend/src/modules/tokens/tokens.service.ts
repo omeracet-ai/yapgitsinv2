@@ -306,26 +306,86 @@ export class TokensService {
     });
   }
 
-  async purchase(
+  /**
+   * Phase 260 — Manuel jeton yetkilendirmesi (YALNIZCA admin).
+   *
+   * Serbest `purchase()` kaldırıldı; kullanıcılar artık jetonu yalnızca iyzipay
+   * (checkout) üzerinden satın alabilir. Bu metot admin panelinden çağrılır:
+   * pozitif `amount` jeton ekler, negatif `amount` düzeltme için jeton düşer
+   * (bakiyenin altına inilemez — atomik koşullu UPDATE ile garanti edilir).
+   *
+   * `paymentMethod = SYSTEM`, `paymentRef = ADMINGRANT-...`, `adminId` audit izi
+   * için description'a yazılır. Alıcıya bir SYSTEM bildirimi gönderilir.
+   */
+  async adminGrant(
     userId: string,
     amount: number,
-    paymentMethod: PaymentMethod,
-  ): Promise<TokenTransaction> {
-    if (amount <= 0) throw new BadRequestException('Geçersiz miktar');
+    reason: string,
+    adminId: string,
+  ): Promise<{ balance: number; amount: number; tx: TokenTransaction }> {
+    if (!Number.isInteger(amount) || amount === 0) {
+      throw new BadRequestException(
+        'Geçersiz miktar (0 olmayan tam sayı gerekli)',
+      );
+    }
+    const note = (reason ?? '').trim();
 
-    await this.userRepo.increment({ id: userId }, 'tokenBalance', amount);
+    return this.dataSource.transaction(async (manager) => {
+      const user = await manager.findOne(User, { where: { id: userId } });
+      if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
 
-    const tx = this.txRepo.create({
-      userId,
-      type: TxType.PURCHASE,
-      amount,
-      amountMinor: tlToMinor(amount) ?? 0,
-      description: `${amount} token satın alındı (${paymentMethod === PaymentMethod.BANK ? 'Banka' : 'Kripto'})`,
-      status: TxStatus.COMPLETED,
-      paymentMethod,
-      paymentRef: `REF-${Date.now()}`,
+      if (amount > 0) {
+        await manager.increment(User, { id: userId }, 'tokenBalance', amount);
+      } else {
+        // Negatif (düzeltme/iade) — atomik koşullu düşüm, bakiye floor 0.
+        const deduct = -amount;
+        const res = await manager
+          .createQueryBuilder()
+          .update(User)
+          .set({ tokenBalance: () => 'tokenBalance - :deduct' })
+          .where('id = :id AND tokenBalance >= :deduct', { id: userId, deduct })
+          .execute();
+        if (!res.affected) {
+          throw new BadRequestException(
+            `Yetersiz bakiye. Düşülecek: ${deduct}, Mevcut: ${user.tokenBalance}`,
+          );
+        }
+      }
+
+      const isCredit = amount > 0;
+      const tx = await manager.save(
+        manager.create(TokenTransaction, {
+          userId,
+          type: isCredit ? TxType.PURCHASE : TxType.SPEND,
+          amount,
+          amountMinor: tlToMinor(amount) ?? 0,
+          description:
+            `Admin ${isCredit ? 'jeton tanımladı' : 'jeton düştü'} (${Math.abs(amount)})` +
+            `${note ? ` — ${note}` : ''} [admin:${adminId}]`,
+          status: TxStatus.COMPLETED,
+          paymentMethod: PaymentMethod.SYSTEM,
+          paymentRef: `ADMINGRANT-${Date.now()}`,
+        }),
+      );
+
+      await manager.save(
+        manager.create(Notification, {
+          userId,
+          type: NotificationType.SYSTEM,
+          title: isCredit ? 'Jeton Tanımlandı' : 'Jeton Düzeltmesi',
+          body: isCredit
+            ? `Hesabınıza ${amount} jeton tanımlandı${note ? `: ${note}` : ''}`
+            : `Hesabınızdan ${Math.abs(amount)} jeton düşüldü${note ? `: ${note}` : ''}`,
+          refId: adminId,
+        }),
+      );
+
+      const fresh = await manager.findOne(User, { where: { id: userId } });
+      this.logger.log(
+        `Admin token grant: admin=${adminId} user=${userId} amount=${amount} balance=${fresh?.tokenBalance ?? 0}`,
+      );
+      return { balance: fresh?.tokenBalance ?? 0, amount, tx };
     });
-    return this.txRepo.save(tx);
   }
 
   async spend(

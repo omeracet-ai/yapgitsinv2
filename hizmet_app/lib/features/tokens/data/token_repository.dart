@@ -13,6 +13,13 @@ final tokenBalanceProvider = FutureProvider<int>((ref) async {
   return ref.watch(tokenRepositoryProvider).getBalance();
 });
 
+/// Phase 260 — Sunucu jeton paket katalogu (tek kaynak). Fiyat/jeton miktarı
+/// client'ta hardcode EDİLMEZ; satın alma yalnızca iyzipay üzerinden.
+final tokenPackagesProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  return ref.watch(tokenRepositoryProvider).fetchPackages();
+});
+
 class TokenRepository {
   final Dio _dio;
 
@@ -26,13 +33,6 @@ class TokenRepository {
   Future<List<Map<String, dynamic>>> getHistory() async {
     final res = await _dio.get('/tokens/history');
     return List<Map<String, dynamic>>.from(res.data as List);
-  }
-
-  Future<void> purchase(int amount, String paymentMethod) async {
-    await _dio.post(
-      '/tokens/purchase',
-      data: {'amount': amount, 'paymentMethod': paymentMethod},
-    );
   }
 
   /// Phase 195 — Jeton paket katalogu (server-side single source of truth).
@@ -50,6 +50,17 @@ class TokenRepository {
     final res = await _dio.post(
       '/tokens/checkout',
       data: {'packageId': packageId},
+    );
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  /// Phase 260 — Ödeme tamamlandıktan sonra checkout'u doğrula ve bakiyeyi
+  /// kredilendir. WebView callback URL'ini yakalayınca çağrılır. Idempotent —
+  /// iyzipay token'ı sunucuda re-verify edilir.
+  Future<Map<String, dynamic>> confirmCheckout(String paymentToken) async {
+    final res = await _dio.post(
+      '/tokens/iyzipay/callback',
+      data: {'token': paymentToken},
     );
     return Map<String, dynamic>.from(res.data as Map);
   }
