@@ -23,13 +23,21 @@ class AppTheme {
   /// Voldi-darkmode-global: lightTheme remapped to darkTheme so the entire
   /// app is dark-first regardless of system brightness. White backgrounds
   /// are eliminated; brand green tokens are preserved.
-  static ThemeData get lightTheme => darkTheme;
+  // "Açık" tema modu için gerçek light tema. Sistem/Koyu dark kalır (main.dart
+  // system→dark map'ler); yalnızca kullanıcı "Açık" seçince bu uygulanır.
+  static ThemeData get lightTheme => _lightThemeLegacy;
 
-  // ignore: unused_element
   static ThemeData get _lightThemeLegacy {
-    // Light-mode local tokens (project palette is dark-first; AppColors.light*
-    // covers the basics, these fill the gaps without bloating AppColors).
+    // Gerçek açık palet — YEREL sabitler. AppColors.light* KULLANILMAZ çünkü
+    // onlar dark-first app için koyuya remap edildi (inline beyaz zeminler
+    // kaybolsun diye). Burada gerçek açık değerlerle kuruyoruz; AppColors'a
+    // dokunmadığımız için dark tasarım ve light* referanslı ekranlar bozulmaz.
+    const lightBg = Color(0xFFF8F9FA);
+    const lightSurface = Color(0xFFFFFFFF);
     const lightSurfaceElevated = Color(0xFFF1F3F5);
+    const lightText = Color(0xFF161B22);
+    const lightTextSecondary = Color(0xFF6B7280);
+    const lightBorder = Color(0xFFE5E7EB);
 
     final baseTextTheme = GoogleFonts.interTextTheme();
     final serifTextTheme = GoogleFonts.playfairDisplayTextTheme();
@@ -40,40 +48,40 @@ class AppTheme {
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.primary,
-        surface: AppColors.lightSurface,
+        surface: lightSurface,
         error: AppColors.error,
         onPrimary: Colors.black,
-        onSurface: AppColors.lightText,
+        onSurface: lightText,
       ),
-      scaffoldBackgroundColor: AppColors.lightBackground,
+      scaffoldBackgroundColor: lightBg,
       textTheme: baseTextTheme.copyWith(
         headlineLarge: serifTextTheme.headlineLarge?.copyWith(
           fontSize: 32,
           fontWeight: FontWeight.bold,
-          color: AppColors.lightText,
+          color: lightText,
           letterSpacing: -0.5,
         ),
         headlineMedium: serifTextTheme.headlineMedium?.copyWith(
           fontSize: 26,
           fontWeight: FontWeight.bold,
-          color: AppColors.lightText,
+          color: lightText,
         ),
         titleLarge: baseTextTheme.titleLarge?.copyWith(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: AppColors.lightText,
+          color: lightText,
         ),
         bodyLarge: baseTextTheme.bodyLarge?.copyWith(
           fontSize: 16,
-          color: AppColors.lightText,
+          color: lightText,
         ),
         bodyMedium: baseTextTheme.bodyMedium?.copyWith(
           fontSize: 14,
-          color: AppColors.lightTextSecondary,
+          color: lightTextSecondary,
         ),
         bodySmall: baseTextTheme.bodySmall?.copyWith(
           fontSize: 12,
-          color: AppColors.lightTextSecondary,
+          color: lightTextSecondary,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -101,18 +109,18 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.lightText,
-          side: const BorderSide(color: AppColors.lightBorder, width: 1.5),
+          foregroundColor: lightText,
+          side: const BorderSide(color: lightBorder, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
-          backgroundColor: AppColors.lightSurface,
+          backgroundColor: lightSurface,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.lightText,
+          foregroundColor: lightText,
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
@@ -121,19 +129,19 @@ class AppTheme {
         fillColor: lightSurfaceElevated,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.medium),
-          borderSide: const BorderSide(color: AppColors.lightBorder),
+          borderSide: const BorderSide(color: lightBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.medium),
-          borderSide: const BorderSide(color: AppColors.lightBorder),
+          borderSide: const BorderSide(color: lightBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.medium),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        hintStyle: const TextStyle(color: AppColors.lightTextSecondary),
-        labelStyle: const TextStyle(color: AppColors.lightTextSecondary),
+        hintStyle: const TextStyle(color: lightTextSecondary),
+        labelStyle: const TextStyle(color: lightTextSecondary),
       ),
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: AppColors.primary,
@@ -142,58 +150,58 @@ class AppTheme {
       ),
       appBarTheme: const AppBarTheme(
         // White bg + BLACK title/icons (brand green on white is WCAG fail).
-        backgroundColor: AppColors.lightSurface,
-        foregroundColor: AppColors.lightText,
+        backgroundColor: lightSurface,
+        foregroundColor: lightText,
         elevation: 0,
         centerTitle: false,
-        iconTheme: IconThemeData(color: AppColors.lightText),
+        iconTheme: IconThemeData(color: lightText),
         titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: AppColors.lightText,
+          color: lightText,
         ),
       ),
-      iconTheme: const IconThemeData(color: AppColors.lightText),
+      iconTheme: const IconThemeData(color: lightText),
       cardTheme: CardThemeData(
-        color: AppColors.lightSurface,
+        color: lightSurface,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.medium),
-          side: const BorderSide(color: AppColors.lightBorder, width: 1),
+          side: const BorderSide(color: lightBorder, width: 1),
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        selectedItemColor: AppColors.lightText,
-        unselectedItemColor: AppColors.lightTextSecondary,
-        backgroundColor: AppColors.lightSurface,
+        selectedItemColor: lightText,
+        unselectedItemColor: lightTextSecondary,
+        backgroundColor: lightSurface,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
         selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
         unselectedLabelStyle: TextStyle(fontSize: 12),
       ),
-      dividerColor: AppColors.lightBorder,
+      dividerColor: lightBorder,
       dividerTheme: const DividerThemeData(
-        color: AppColors.lightBorder,
+        color: lightBorder,
         thickness: 1,
         space: 1,
       ),
       chipTheme: ChipThemeData(
         backgroundColor: lightSurfaceElevated,
-        disabledColor: AppColors.lightBackground,
+        disabledColor: lightBg,
         selectedColor: AppColors.primary,
         secondarySelectedColor: AppColors.primary,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        labelStyle: const TextStyle(color: AppColors.lightText),
+        labelStyle: const TextStyle(color: lightText),
         secondaryLabelStyle: const TextStyle(color: Colors.black),
         brightness: Brightness.light,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          side: const BorderSide(color: AppColors.lightBorder),
+          side: const BorderSide(color: lightBorder),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.lightText,
+        backgroundColor: lightText,
         contentTextStyle: const TextStyle(color: Colors.white),
         actionTextColor: AppColors.primary,
         behavior: SnackBarBehavior.floating,
@@ -202,13 +210,13 @@ class AppTheme {
         ),
       ),
       tabBarTheme: const TabBarThemeData(
-        labelColor: AppColors.lightText,
-        unselectedLabelColor: AppColors.lightTextSecondary,
+        labelColor: lightText,
+        unselectedLabelColor: lightTextSecondary,
         indicatorColor: AppColors.primary,
         labelStyle: TextStyle(fontWeight: FontWeight.w600),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.lightSurface,
+        backgroundColor: lightSurface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.large),
@@ -216,11 +224,11 @@ class AppTheme {
         titleTextStyle: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: AppColors.lightText,
+          color: lightText,
         ),
         contentTextStyle: const TextStyle(
           fontSize: 14,
-          color: AppColors.lightText,
+          color: lightText,
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(

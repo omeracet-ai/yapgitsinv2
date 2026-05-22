@@ -67,7 +67,9 @@ class YapgitsinApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
+      // Sistem ve Koyu → dark (mevcut tasarım korunur); yalnızca "Açık" → light.
+      themeMode:
+          themeMode == ThemeMode.light ? ThemeMode.light : ThemeMode.dark,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
