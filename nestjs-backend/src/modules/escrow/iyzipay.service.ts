@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports */
-import { Injectable, Logger } from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 
 // iyzipay official Node SDK (CommonJS)
 const Iyzipay = require('iyzipay');
@@ -180,13 +180,28 @@ export class IyzipayService {
       this.client.checkoutFormInitialize.create(
         request,
         (err: any, result: any) => {
+          // Phase 261 — iyzipay hatalarını opak 500 yerine 502 + gerçek mesaj
+          // olarak yüzeye çıkar. Aksi halde callback'ten reject edilen düz Error
+          // Nest tarafından "Internal server error" diye maskeleniyor ve sebep
+          // (geçersiz key, ağ hatası, errorCode) görünmez oluyordu.
           if (err) {
-            reject(err instanceof Error ? err : new Error(String(err)));
+            const msg = err instanceof Error ? err.message : String(err);
+            this.logger.error(`iyzipay checkout transport error: ${msg}`);
+            reject(
+              new BadGatewayException(`Ödeme sağlayıcı hatası (ağ): ${msg}`),
+            );
             return;
           }
           if (result && result.status === 'failure') {
+            const code = result.errorCode ?? '?';
+            const detail = result.errorMessage || 'iyzipay checkout init failed';
+            this.logger.error(
+              `iyzipay checkout failure code=${code} msg=${detail}`,
+            );
             reject(
-              new Error(result.errorMessage || 'iyzipay checkout init failed'),
+              new BadGatewayException(
+                `Ödeme başlatılamadı (iyzipay ${code}): ${detail}`,
+              ),
             );
             return;
           }
