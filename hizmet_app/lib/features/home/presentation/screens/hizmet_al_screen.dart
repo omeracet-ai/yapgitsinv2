@@ -65,7 +65,7 @@ class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          tabAlignment: TabAlignment.start,
+          tabAlignment: TabAlignment.center,
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white60,
