@@ -7,6 +7,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import {
@@ -56,9 +57,11 @@ export interface ConfirmationStateResponse {
 }
 
 export interface ConfirmationStartResponse {
-  qrToken: string;
-  qrIssuedAt: Date;
-  expiresAt: Date;
+  // v2: QR is not minted at start (payer mints it after both approvals), so
+  // these are null in the v2 branch and non-null in the legacy branch.
+  qrToken: string | null;
+  qrIssuedAt: Date | null;
+  expiresAt: Date | null;
   tier: ConfirmationTier;
   requirements: TierRequirements;
   confirmationDeadline: Date;
@@ -69,6 +72,13 @@ function tierFor(amountMinor: number): ConfirmationTier {
   if (amountMinor < 500_000) return ConfirmationTier.STANDARD;
   return ConfirmationTier.PREMIUM;
 }
+
+// v2: all amounts are treated as full-requirement (no LITE bypass).
+const STANDARD_REQUIREMENTS: TierRequirements = {
+  photosPerPhase: 1,
+  videoRequired: false,
+  gpsMatchRequired: true,
+};
 
 function requirementsFor(tier: ConfirmationTier): TierRequirements {
   if (tier === ConfirmationTier.LITE) {
@@ -158,7 +168,17 @@ export class EscrowConfirmationService {
     private readonly videoRepo: Repository<EscrowConfirmationVideo>,
     private readonly escrowService: EscrowService,
     private readonly notificationsService: NotificationsService,
+    private readonly config: ConfigService,
   ) {}
+
+  /**
+   * Phase 2 — Confirmation v2 flag. When true: photo+approval first, then the
+   * payer (customer) mints the QR and the worker scans it to release payment.
+   * When false (default), ALL legacy behavior is preserved byte-for-byte.
+   */
+  private get v2(): boolean {
+    return this.config.get<string>('CONFIRMATION_V2_ENABLED') === 'true';
+  }
 
   // ------------- helpers -------------
 
@@ -270,8 +290,10 @@ export class EscrowConfirmationService {
 
     const now = Date.now();
     const tier = tierFor(escrow.amountMinor || 0);
-    const token = mintQrToken(escrow.id, now);
-    const issuedAt = new Date(now);
+    // v2: NO QR mint here — the QR is minted later by the payer (customer) via
+    // getQr() after BOTH parties approve. Legacy: worker mints the QR on start.
+    const token = this.v2 ? null : mintQrToken(escrow.id, now);
+    const issuedAt = this.v2 ? null : new Date(now);
     const deadline = new Date(now + CONFIRMATION_DEADLINE_MS);
 
     escrow.confirmationStatus = ConfirmationStatus.AWAITING_CONFIRMATION;
@@ -303,9 +325,10 @@ export class EscrowConfirmationService {
     return {
       qrToken: token,
       qrIssuedAt: issuedAt,
-      expiresAt: new Date(now + QR_TTL_MS),
+      expiresAt: this.v2 ? null : new Date(now + QR_TTL_MS),
       tier,
-      requirements: requirementsFor(tier),
+      // v2: tiers are flattened — always full (before+after photos + GPS).
+      requirements: this.v2 ? STANDARD_REQUIREMENTS : requirementsFor(tier),
       confirmationDeadline: deadline,
     };
   }
@@ -313,8 +336,47 @@ export class EscrowConfirmationService {
   async getQr(
     escrowId: string,
     userId: string,
+    lat?: number | null,
+    lng?: number | null,
   ): Promise<{ qrToken: string; expiresAt: Date; tier: ConfirmationTier }> {
     const { escrow, save } = await this.findEscrowAnywhere(escrowId);
+
+    if (this.v2) {
+      // v2: PAYER (customer) mints the QR, allowed only after BOTH approvals.
+      if (escrow.customerId !== userId) {
+        throw new ForbiddenException('Only payer may generate QR');
+      }
+      if (
+        escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION
+      ) {
+        throw new BadRequestException('Confirmation not started');
+      }
+      if (!escrow.workerConfirmedAt || !escrow.customerConfirmedAt) {
+        throw new BadRequestException('approvals incomplete');
+      }
+      const nowMs = Date.now();
+      const issuedMs = escrow.qrIssuedAt?.getTime() ?? 0;
+      let token = escrow.qrToken;
+      let issuedAt = escrow.qrIssuedAt;
+      if (!token || nowMs - issuedMs > QR_TTL_MS) {
+        token = mintQrToken(escrow.id, nowMs);
+        issuedAt = new Date(nowMs);
+        escrow.qrToken = token;
+        escrow.qrIssuedAt = issuedAt;
+      }
+      // Record the payer's GPS so the worker scan can be proximity-matched.
+      if (lat != null && lng != null) {
+        escrow.customerLat = lat;
+        escrow.customerLng = lng;
+      }
+      await save();
+      return {
+        qrToken: token,
+        expiresAt: new Date(issuedAt!.getTime() + QR_TTL_MS),
+        tier: escrow.confirmationTier ?? ConfirmationTier.STANDARD,
+      };
+    }
+
     if (escrow.taskerId !== userId) {
       throw new ForbiddenException('Only worker may fetch QR');
     }
@@ -384,8 +446,18 @@ export class EscrowConfirmationService {
     qrToken: string,
     lat: number,
     lng: number,
-  ): Promise<{ ok: true; gpsMatch: boolean; distanceM: number | null }> {
+  ): Promise<{
+    ok: true;
+    gpsMatch: boolean;
+    distanceM: number | null;
+    released?: boolean;
+  }> {
     const { escrow, save } = await this.findEscrowAnywhere(escrowId);
+
+    if (this.v2) {
+      return this.scanV2(escrow, save, userId, qrToken, lat, lng);
+    }
+
     if (escrow.customerId !== userId) {
       throw new ForbiddenException('Only customer may scan');
     }
@@ -428,6 +500,89 @@ export class EscrowConfirmationService {
     return { ok: true, gpsMatch, distanceM: distance };
   }
 
+  /**
+   * v2 scan: WORKER scans the payer's QR. Allowed only after BOTH approvals.
+   * On a valid token + GPS proximity match this is the SINGLE place that
+   * releases the held payment — guarded against double release.
+   */
+  private async scanV2(
+    escrow: PaymentEscrow,
+    save: () => Promise<void>,
+    userId: string,
+    qrToken: string,
+    lat: number,
+    lng: number,
+  ): Promise<{
+    ok: true;
+    gpsMatch: boolean;
+    distanceM: number | null;
+    released: boolean;
+  }> {
+    if (escrow.taskerId !== userId) {
+      throw new ForbiddenException('Only worker may scan');
+    }
+    if (
+      escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION
+    ) {
+      throw new BadRequestException('Confirmation not active');
+    }
+    if (!escrow.workerConfirmedAt || !escrow.customerConfirmedAt) {
+      throw new BadRequestException('approvals incomplete');
+    }
+    if (!escrow.qrToken || escrow.qrToken !== qrToken) {
+      throw new BadRequestException('QR token mismatch');
+    }
+    const issuedMs = escrow.qrIssuedAt?.getTime() ?? 0;
+    if (Date.now() - issuedMs > QR_TTL_MS) {
+      throw new BadRequestException('QR expired');
+    }
+    if (!verifyQrToken(qrToken, escrow.id)) {
+      throw new BadRequestException('QR signature invalid');
+    }
+
+    // GPS: worker scan position (lat/lng) vs the payer's recorded position.
+    let distance: number | null = null;
+    let gpsMatch = true;
+    if (
+      escrow.customerLat != null &&
+      escrow.customerLng != null &&
+      lat != null &&
+      lng != null
+    ) {
+      distance = haversineMeters(
+        escrow.customerLat,
+        escrow.customerLng,
+        lat,
+        lng,
+      );
+      gpsMatch = distance <= GPS_MATCH_RADIUS_M;
+    }
+    if (!gpsMatch) {
+      throw new BadRequestException('gps_too_far');
+    }
+
+    // Idempotency guard: if already scanned/released, do not release again.
+    if (escrow.qrScannedAt) {
+      return { ok: true, gpsMatch, distanceM: distance, released: false };
+    }
+
+    escrow.qrScannedAt = new Date();
+    escrow.workerLat = lat;
+    escrow.workerLng = lng;
+    await save();
+
+    // SINGLE release point for v2 — both parties have approved and the QR
+    // handshake is complete. adminRole='admin' bypasses the customer-only guard.
+    await this.escrowService.release(
+      escrow.id,
+      'system',
+      'qr handshake complete',
+      'admin',
+    );
+
+    return { ok: true, gpsMatch, distanceM: distance, released: true };
+  }
+
   async addPhoto(args: {
     escrowId: string;
     userId: string;
@@ -444,7 +599,12 @@ export class EscrowConfirmationService {
     ) {
       throw new BadRequestException('Confirmation not active');
     }
-    if (escrow.confirmationTier === ConfirmationTier.LITE) {
+    if (this.v2) {
+      // v2: tiers flattened — photos always required, and each photo must carry GPS.
+      if (args.lat == null || args.lng == null) {
+        throw new BadRequestException('photo_gps_required');
+      }
+    } else if (escrow.confirmationTier === ConfirmationTier.LITE) {
       throw new BadRequestException('Photos not required for lite tier');
     }
     if (args.phase !== 'before' && args.phase !== 'after') {
@@ -530,6 +690,105 @@ export class EscrowConfirmationService {
     const hasBefore = sidePhotos.some((p) => p.phase === 'before');
     const hasAfter = sidePhotos.some((p) => p.phase === 'after');
     return hasBefore && hasAfter;
+  }
+
+  /**
+   * v2 approval. Either side approves after uploading own before+after photos
+   * (with GPS proximity match). Sets `<side>ConfirmedAt`. Crucially this does
+   * NOT release payment — release is deferred to the worker's QR scan.
+   */
+  async approve(
+    escrowId: string,
+    userId: string,
+  ): Promise<{
+    side: ConfirmationSide;
+    bothApproved: boolean;
+    awaitingQr: boolean;
+  }> {
+    if (!this.v2) {
+      // Defensive: approve() is the v2 entry point. If the flag is off, route
+      // callers to the legacy confirm() so behavior stays unchanged.
+      const legacy = await this.confirm(escrowId, userId);
+      const bothApproved = legacy.escrowReleased;
+      return { side: legacy.side, bothApproved, awaitingQr: false };
+    }
+
+    const { escrow, save } = await this.findEscrowAnywhere(escrowId);
+    const side = this.sideOf(escrow, userId);
+    if (
+      escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION
+    ) {
+      throw new BadRequestException('Confirmation not active');
+    }
+
+    // Block double-approve by same side.
+    if (side === 'worker' && escrow.workerConfirmedAt) {
+      throw new ConflictException('Worker already approved');
+    }
+    if (side === 'customer' && escrow.customerConfirmedAt) {
+      throw new ConflictException('Customer already approved');
+    }
+
+    const photos = await this.photoRepo.find({ where: { escrowId } });
+    const missing = this.computeMissingV2(escrow, photos, side);
+    if (missing.length > 0) {
+      throw new BadRequestException({
+        message: 'Requirements not met',
+        missing,
+      });
+    }
+
+    const now = new Date();
+    if (side === 'worker') escrow.workerConfirmedAt = now;
+    else escrow.customerConfirmedAt = now;
+    await save();
+
+    const bothApproved = !!(
+      escrow.workerConfirmedAt && escrow.customerConfirmedAt
+    );
+    // NOTE: NO escrowService.release() here — payment is released only when the
+    // worker scans the payer's QR (scanV2). This is the core v2 money-flow rule.
+    return { side, bothApproved, awaitingQr: bothApproved };
+  }
+
+  /**
+   * v2 requirements: GPS proximity match + each side has own before+after
+   * photos. No `qr_not_scanned` precondition (QR comes AFTER approvals) and no
+   * LITE bypass (tiers are flattened in v2).
+   */
+  private computeMissingV2(
+    escrow: PaymentEscrow,
+    photos: EscrowConfirmationPhoto[],
+    side: ConfirmationSide,
+  ): string[] {
+    const missing: string[] = [];
+
+    // GPS check — both sides must have a recorded position within radius.
+    if (
+      escrow.workerLat == null ||
+      escrow.workerLng == null ||
+      escrow.customerLat == null ||
+      escrow.customerLng == null
+    ) {
+      missing.push('gps_missing');
+    } else {
+      const dist = haversineMeters(
+        escrow.workerLat,
+        escrow.workerLng,
+        escrow.customerLat,
+        escrow.customerLng,
+      );
+      if (dist > GPS_MATCH_RADIUS_M) missing.push('gps_too_far');
+    }
+
+    const sidePhotos = photos.filter((p) => p.side === side);
+    if (!sidePhotos.some((p) => p.phase === 'before')) {
+      missing.push(`${side}_before_photo`);
+    }
+    if (!sidePhotos.some((p) => p.phase === 'after')) {
+      missing.push(`${side}_after_photo`);
+    }
+    return missing;
   }
 
   async confirm(

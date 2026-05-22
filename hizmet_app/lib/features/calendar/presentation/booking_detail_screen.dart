@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/models/booking_model.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../escrow/data/escrow_repository.dart'; // escrowByBookingProvider, EscrowStatus
 import '../data/booking_repository.dart';
 
 class BookingDetailScreen extends ConsumerStatefulWidget {
@@ -119,12 +120,37 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
             ],
             if (widget.asWorker &&
                 b.status == BookingStatus.confirmed) ...[
-              const Padding(
-                padding: EdgeInsets.all(12),
-                child: Text(
-                  'Müşteri ödemeyi yaptıktan sonra "İşi Başlat" butonu görünecek.',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
+              Consumer(
+                builder: (context, ref, _) {
+                  final escrowAsync = ref.watch(escrowByBookingProvider(b.id));
+                  final held = escrowAsync.maybeWhen(
+                    data: (e) => e != null && e.status == EscrowStatus.held,
+                    orElse: () => false,
+                  );
+                  if (!held) {
+                    return const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text(
+                        'Müşteri ödemeyi yaptıktan sonra "İşi Başlat" butonu görünecek.',
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    );
+                  }
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed:
+                          _busy ? null : () => _updateStatus('in_progress'),
+                      icon: const Icon(Icons.play_arrow_rounded),
+                      label: const Text('İşi Başlat'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ],

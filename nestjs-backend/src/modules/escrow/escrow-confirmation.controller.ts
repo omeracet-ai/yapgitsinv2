@@ -4,6 +4,7 @@ import {
   Get,
   Body,
   Param,
+  Query,
   Request,
   UseGuards,
   UseInterceptors,
@@ -91,8 +92,15 @@ export class EscrowConfirmationController {
   }
 
   @Get('qr')
-  qr(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
-    return this.svc.getQr(id, req.user.id);
+  qr(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+    @Query('lat') lat?: string,
+    @Query('lng') lng?: string,
+  ) {
+    const latN = lat != null && lat !== '' ? Number(lat) : null;
+    const lngN = lng != null && lng !== '' ? Number(lng) : null;
+    return this.svc.getQr(id, req.user.id, latN, lngN);
   }
 
   @Get('state')
@@ -200,6 +208,17 @@ export class EscrowConfirmationController {
       lng,
     });
     return { id: row.id, url: row.videoUrl, durationSec: row.durationSec };
+  }
+
+  // v2 — both parties approve (photo+GPS gated, no release). Legacy `confirm`
+  // below is kept for back-compat when CONFIRMATION_V2_ENABLED is off.
+  @Post('approve')
+  approve(
+    @Param('id') id: string,
+    @Body() _dto: ConfirmDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.svc.approve(id, req.user.id);
   }
 
   @Post('confirm')
