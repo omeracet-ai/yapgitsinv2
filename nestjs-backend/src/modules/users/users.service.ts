@@ -654,7 +654,9 @@ export class UsersService {
       const qb = this.repo
         .createQueryBuilder('u')
         .where("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'")
-        .andWhere('u.isAvailable = :av', { av: true })
+        // Karar A: "yakındaki MÜSAİT usta" → "konumu olan TÜM usta". isAvailable
+        // filtresi gizli tutuldu (B'yi geri açmak için aşağıdaki satırı aç):
+        // .andWhere('u.isAvailable = :av', { av: true })
         .andWhere('u.homeGeohash IS NOT NULL');
       qb.andWhere(
         '(' +
