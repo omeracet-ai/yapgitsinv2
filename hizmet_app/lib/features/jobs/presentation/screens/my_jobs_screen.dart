@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
+import '../../../../core/widgets/notification_bell.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/job_repository.dart';
 import '../../data/offer_repository.dart';
@@ -100,6 +101,7 @@ class _DualRoleView extends ConsumerWidget {
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 actions: [
+                  const NotificationBell(),
                   IconButton(
                     icon: const Icon(Icons.bookmark_border),
                     tooltip: 'Şablonlarım',

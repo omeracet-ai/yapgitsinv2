@@ -20,6 +20,7 @@ import '../../../providers/presentation/screens/provider_profile_screen.dart';
 import 'hizmet_al_screen.dart';
 import '../../../notifications/data/unread_count_provider.dart';
 import '../../../../core/widgets/category_card.dart';
+import '../../../../core/widgets/notification_bell.dart';
 import '../../../../core/widgets/job_status_badge.dart';
 import '../../../../core/widgets/section_header.dart';
 
@@ -300,7 +301,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               expandedHeight: 280,
               pinned: true,
               backgroundColor: heroBg,
+              foregroundColor: heroTitle,
               elevation: 0,
+              actions: const [
+                NotificationBell(),
+                SizedBox(width: 4),
+              ],
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.pin,
                 background: Container(

@@ -7,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
+import '../../../../core/widgets/notification_bell.dart';
 import '../../../../features/categories/data/category_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/job_filter.dart';
@@ -96,6 +97,10 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
               title: const Text('İş İlanları'),
               backgroundColor: AppColors.background,
               foregroundColor: AppColors.textPrimary,
+              actions: const [
+                NotificationBell(),
+                SizedBox(width: 4),
+              ],
             )
           : null,
       body: Column(

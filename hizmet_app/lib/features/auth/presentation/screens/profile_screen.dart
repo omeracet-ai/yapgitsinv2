@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/turkish_text.dart';
+import '../../../../core/widgets/notification_bell.dart';
 import '../../../wallet/presentation/screens/wallet_screen.dart';
 import '../../../tokens/data/token_repository.dart';
 // Gizlendi (Para Birimi menüsü kapalı): currency_picker_sheet importu.
@@ -61,6 +62,10 @@ class ProfileScreen extends ConsumerWidget {
         title: Text(AppLocalizations.of(context).tabProfil),
         backgroundColor: AppColors.primary,
         elevation: 0,
+        actions: const [
+          NotificationBell(),
+          SizedBox(width: 4),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(myPublicProfileProvider),
