@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/turkish_text.dart';
 
 /// 3-dot bouncing typing indicator. Used inside ChatScreen body
 /// when the peer is typing. Phase 66 scaffold — animation only,
@@ -44,7 +45,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
             backgroundColor: AppColors.primaryLight,
             child: Text(
               (widget.peerName?.isNotEmpty ?? false)
-                  ? widget.peerName![0].toUpperCase()
+                  ? trUpper(widget.peerName![0])
                   : '?',
               style: const TextStyle(
                 fontSize: 11,

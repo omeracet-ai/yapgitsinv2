@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/service_request_repository.dart';
@@ -281,12 +282,11 @@ class _RequestCard extends StatelessWidget {
     final user = item['user'] as Map<String, dynamic>?;
     final name = (user?['fullName'] ?? 'Kullanıcı') as String;
     final isVerified = user?['identityVerified'] == true;
-    final initials = name
+    final initials = trUpper(name
         .split(' ')
         .take(2)
         .map((w) => w.isNotEmpty ? w[0] : '')
-        .join()
-        .toUpperCase();
+        .join());
     final category = (item['category'] ?? '') as String;
     final timeAgo = _timeAgo(item['createdAt'] as String?);
     final location = (item['location'] ?? '') as String;

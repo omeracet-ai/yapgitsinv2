@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/services/chat_toast_hook.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/turkish_text.dart';
 import '../../data/chat_repository.dart';
 import '../../data/chat_service.dart';
 import '../../data/presence_provider.dart';
@@ -314,7 +315,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   backgroundColor: AppColors.surface.withValues(alpha: 0.2),
                   child: Text(
                     widget.peerName.isNotEmpty
-                        ? widget.peerName[0].toUpperCase()
+                        ? trUpper(widget.peerName[0])
                         : '?',
                     style: const TextStyle(
                       color: Colors.white,

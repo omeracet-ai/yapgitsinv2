@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/turkish_text.dart';
 import '../data/chat_repository.dart';
 import 'audio_player_widget.dart';
 
@@ -209,7 +210,7 @@ class _ChatMessageBubbleState extends ConsumerState<ChatMessageBubble> {
                       backgroundColor: AppColors.primaryLight,
                       child: Text(
                         peerName.isNotEmpty
-                            ? peerName[0].toUpperCase()
+                            ? trUpper(peerName[0])
                             : '?',
                         style: const TextStyle(
                           fontSize: 11,

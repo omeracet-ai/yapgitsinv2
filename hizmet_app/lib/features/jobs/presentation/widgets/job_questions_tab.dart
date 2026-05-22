@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/turkish_text.dart';
 import '../../data/job_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -324,7 +325,7 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                   backgroundColor: AppColors.primaryLight,
                   backgroundImage: imgUrl != null ? NetworkImage(imgUrl) : null,
                   child: imgUrl == null
-                      ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
+                      ? Text(name.isNotEmpty ? trUpper(name[0]) : '?',
                           style: const TextStyle(
                               color: AppColors.primary,
                               fontWeight: FontWeight.bold))
@@ -495,7 +496,7 @@ class _ReplyTile extends StatelessWidget {
             backgroundColor: AppColors.primaryLight,
             backgroundImage: imgUrl != null ? NetworkImage(imgUrl) : null,
             child: imgUrl == null
-                ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
+                ? Text(name.isNotEmpty ? trUpper(name[0]) : '?',
                     style: const TextStyle(
                         fontSize: 10,
                         color: AppColors.primary,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/providers/navigation_provider.dart';
 import '../../../auth/presentation/screens/profile_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -763,12 +764,11 @@ class _HomeProviderCard extends StatelessWidget {
         ? cats.first.toString()
         : '';
     final initials = name.isNotEmpty
-        ? name
+        ? trUpper(name
             .split(' ')
             .take(2)
             .map((w) => w.isNotEmpty ? w[0] : '')
-            .join()
-            .toUpperCase()
+            .join())
         : '?';
     final isFeatured = provider['featuredOrder'] != null;
 

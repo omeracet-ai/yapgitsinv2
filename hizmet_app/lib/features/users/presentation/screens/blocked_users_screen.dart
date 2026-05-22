@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../data/blocked_users_provider.dart';
 
@@ -106,7 +107,7 @@ class _BlockedRowState extends ConsumerState<_BlockedRow> {
     final id = (widget.record['blockedId'] ?? user['id'] ?? '').toString();
     final name = (user['fullName'] ?? 'Kullanıcı').toString();
     final imgUrl = user['profileImageUrl'] as String?;
-    final initials = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    final initials = name.isNotEmpty ? trUpper(name[0]) : '?';
 
     return Container(
       decoration: BoxDecoration(color: AppColors.surface,

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../categories/data/category_repository.dart';
@@ -605,7 +606,7 @@ class _PosterStrip extends StatelessWidget {
               child: poster.profileImageUrl == null
                   ? Text(
                       poster.fullName.isNotEmpty
-                          ? poster.fullName[0].toUpperCase()
+                          ? trUpper(poster.fullName[0])
                           : '?',
                       style: const TextStyle(
                           fontWeight: FontWeight.bold,

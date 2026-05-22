@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/turkish_text.dart';
 import '../../../wallet/presentation/screens/wallet_screen.dart';
 import '../../../tokens/data/token_repository.dart';
 import '../../../currencies/presentation/currency_picker_sheet.dart';
@@ -125,12 +126,11 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildProfileHeader(Map<String, dynamic> user) {
     final name = user['fullName'] ?? 'Kullanıcı';
     final city = user['city'] as String?;
-    final initials = name
+    final initials = trUpper(name
         .split(' ')
         .take(2)
         .map((w) => w.isNotEmpty ? w[0] : '')
-        .join()
-        .toUpperCase();
+        .join());
 
     return Consumer(
       builder: (context, ref, _) {
@@ -946,12 +946,11 @@ class ProfileScreen extends ConsumerWidget {
       }
     }
 
-    final initials = name
+    final initials = trUpper(name
         .split(' ')
         .take(2)
         .map((w) => w.isNotEmpty ? w[0] : '')
-        .join()
-        .toUpperCase();
+        .join());
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),

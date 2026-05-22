@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/service_request_repository.dart';
@@ -139,12 +140,11 @@ class _ServiceRequestDetailScreenState
 
     final user = item['user'] as Map<String, dynamic>?;
     final ownerName = user?['fullName'] as String? ?? 'Kullanıcı';
-    final ownerInitials = ownerName
+    final ownerInitials = trUpper(ownerName
         .split(' ')
         .take(2)
         .map((w) => w.isNotEmpty ? w[0] : '')
-        .join()
-        .toUpperCase();
+        .join());
 
     final title = item['title'] as String? ?? '';
     final description = item['description'] as String? ?? '';

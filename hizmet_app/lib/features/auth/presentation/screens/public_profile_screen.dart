@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../profile/data/user_profile_repository.dart';
 import '../../../users/widgets/user_action_menu.dart';
@@ -187,7 +188,7 @@ class _ProfileView extends ConsumerWidget {
                                   imgUrl != null ? NetworkImage(imgUrl) : null,
                               child: imgUrl == null
                                   ? Text(
-                                      name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                      name.isNotEmpty ? trUpper(name[0]) : '?',
                                       style: const TextStyle(
                                           fontSize: 40,
                                           color: Colors.white,
@@ -762,7 +763,7 @@ class _ReviewTile extends ConsumerWidget {
             backgroundColor: AppColors.primaryLight,
             backgroundImage: imgUrl != null ? NetworkImage(imgUrl) : null,
             child: imgUrl == null
-                ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
+                ? Text(name.isNotEmpty ? trUpper(name[0]) : '?',
                     style: const TextStyle(
                         fontSize: 13, color: AppColors.primary,
                         fontWeight: FontWeight.bold))

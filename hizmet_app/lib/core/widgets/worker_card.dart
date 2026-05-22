@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/app_colors.dart';
+import '../utils/turkish_text.dart';
 
 class WorkerCard extends StatelessWidget {
   final String name;
@@ -166,7 +167,7 @@ class _AvatarPlaceholder extends StatelessWidget {
       color: AppColors.primaryLight,
       alignment: Alignment.center,
       child: Text(
-        name.isNotEmpty ? name[0].toUpperCase() : '?',
+        name.isNotEmpty ? trUpper(name[0]) : '?',
         style: const TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.bold,

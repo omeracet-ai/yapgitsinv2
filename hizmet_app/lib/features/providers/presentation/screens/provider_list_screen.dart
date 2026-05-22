@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../categories/data/category_repository.dart';
@@ -824,7 +825,7 @@ class _FeaturedCard extends StatelessWidget {
     final isVerified = provider['isVerified'] == true;
     final cats = provider['categories'] as List? ?? [];
     final initials = name.isNotEmpty
-        ? name.split(' ').take(2).map((w) => w.isNotEmpty ? w[0] : '').join().toUpperCase()
+        ? trUpper(name.split(' ').take(2).map((w) => w.isNotEmpty ? w[0] : '').join())
         : '?';
 
     return GestureDetector(
@@ -952,7 +953,7 @@ class _ProviderCard extends StatelessWidget {
     final rateMin = (provider['hourlyRateMin'] as num?)?.toInt();
     final rateMax = (provider['hourlyRateMax'] as num?)?.toInt();
     final initials = name.isNotEmpty
-        ? name.split(' ').take(2).map((w) => w.isNotEmpty ? w[0] : '').join().toUpperCase()
+        ? trUpper(name.split(' ').take(2).map((w) => w.isNotEmpty ? w[0] : '').join())
         : '?';
 
     return GestureDetector(

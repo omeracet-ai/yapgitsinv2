@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../../core/services/intl_formatter.dart';
@@ -163,12 +164,11 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     bool isOnline = false,
     String? lastSeenLabel,
   }) {
-    final initials = name
+    final initials = trUpper(name
         .split(' ')
         .take(2)
         .map((w) => w.isNotEmpty ? w[0] : '')
-        .join()
-        .toUpperCase();
+        .join());
 
     return InkWell(
       onTap: onTap,

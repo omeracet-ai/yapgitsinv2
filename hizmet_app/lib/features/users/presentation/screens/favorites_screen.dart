@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../providers/presentation/screens/provider_profile_screen.dart';
@@ -79,12 +80,11 @@ class _FavoriteWorkerCard extends ConsumerWidget {
     final isVerified = worker['identityVerified'] == true;
     final isAvailable = worker['isAvailable'] == true;
     final initials = name.isNotEmpty
-        ? name
+        ? trUpper(name
             .split(' ')
             .take(2)
             .map((w) => w.isNotEmpty ? w[0] : '')
-            .join()
-            .toUpperCase()
+            .join())
         : '?';
 
     return GestureDetector(

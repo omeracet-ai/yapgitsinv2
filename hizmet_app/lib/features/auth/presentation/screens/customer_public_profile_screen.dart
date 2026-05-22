@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../data/customer_profile_repository.dart';
 
@@ -65,7 +66,7 @@ class _Body extends StatelessWidget {
                   : null,
               child: (imgUrl == null || imgUrl.isEmpty)
                   ? Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : '?',
+                      name.isNotEmpty ? trUpper(name[0]) : '?',
                       style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
