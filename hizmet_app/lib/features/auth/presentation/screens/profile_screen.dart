@@ -7,7 +7,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../wallet/presentation/screens/wallet_screen.dart';
 import '../../../tokens/data/token_repository.dart';
-import '../../../currencies/presentation/currency_picker_sheet.dart';
+// Gizlendi (Para Birimi menüsü kapalı): currency_picker_sheet importu.
+// import '../../../currencies/presentation/currency_picker_sheet.dart';
 import '../../../subscriptions/data/subscription_repository.dart';
 import '../../../promo/widgets/promo_redeem_sheet.dart';
 import '../providers/auth_provider.dart';
@@ -1072,9 +1073,10 @@ class ProfileScreen extends ConsumerWidget {
           _menuItem(Icons.notifications_active_outlined, '🔔 Kategori Abonelikleri', () {
             context.push('/kategori-abonelikleri');
           }),
-          _menuItem(Icons.attach_money_rounded, '💱 Para Birimi', () {
-            CurrencyPickerSheet.show(context);
-          }),
+          // Gizlendi (kullanıcı isteği) — Para Birimi seçeneği:
+          // _menuItem(Icons.attach_money_rounded, '💱 Para Birimi', () {
+          //   CurrencyPickerSheet.show(context);
+          // }),
           _menuItem(Icons.location_on_outlined,
               AppLocalizations.of(context).myAddresses, () {
             Navigator.push(context,
@@ -1087,7 +1089,8 @@ class ProfileScreen extends ConsumerWidget {
           }),
           _build2FAMenuItem(context, ref),
           _buildAppearanceItem(context, ref),
-          _buildLanguageItem(context, ref),
+          // Gizlendi (kullanıcı isteği) — Dil seçeneği:
+          // _buildLanguageItem(context, ref),
           _menuItem(Icons.help_outline, 'Yardım & Destek', () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const HelpScreen()));
@@ -1687,6 +1690,8 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  // Dil menüsü gizlendi (çağrı yorumlu); kod geri açmak için korunuyor.
+  // ignore: unused_element
   Widget _buildLanguageItem(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
     return ListTile(
