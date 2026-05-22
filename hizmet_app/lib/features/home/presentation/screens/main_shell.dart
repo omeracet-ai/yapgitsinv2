@@ -275,6 +275,14 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
     final authState = ref.watch(authStateProvider);
     final userName = authState is AuthAuthenticated ? authState.displayName : null;
 
+    // Hero rengi temaya göre: Açık modda marka yeşili; Sistem/Koyu (dark) modda
+    // koyu tema arka planı + okunur açık ön plan.
+    final heroDark = Theme.of(context).brightness == Brightness.dark;
+    final heroBg = heroDark ? AppColors.background : AppColors.primary;
+    final heroTitle = heroDark ? AppColors.textPrimary : AppColors.secondary;
+    final heroGreeting = heroDark ? AppColors.textSecondary : Colors.black87;
+    final heroBadgeBg = heroDark ? AppColors.primary : Colors.white;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: RefreshIndicator(
@@ -291,15 +299,16 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
             SliverAppBar(
               expandedHeight: 280,
               pinned: true,
-              backgroundColor: AppColors.primary,
+              backgroundColor: heroBg,
               elevation: 0,
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.pin,
                 background: Container(
-                  // Hero arka planı marka yeşili (AppColors.primary). Ön plan
-                  // (logo + metin) kontrast için koyuya çevrildi.
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
+                  // Hero arka planı temaya bağlı: light=marka yeşili,
+                  // Sistem/Koyu (dark)=koyu tema bg. Ön plan da kontrast için
+                  // temaya göre ayarlanır.
+                  decoration: BoxDecoration(
+                    color: heroBg,
                   ),
                   child: SafeArea(
                     child: Padding(
@@ -318,7 +327,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                         ? 'Merhaba, $userName'
                                         : 'Hoş Geldiniz',
                                     style: GoogleFonts.inter(
-                                      color: Colors.black87,
+                                      color: heroGreeting,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -327,7 +336,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                   Text(
                                     'En iyi usta, en iyi hizmet',
                                     style: GoogleFonts.playfairDisplay(
-                                      color: AppColors.secondary,
+                                      color: heroTitle,
                                       fontSize: 22,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: -0.5,
@@ -414,7 +423,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: heroBadgeBg,
                         borderRadius: BorderRadius.circular(7),
                       ),
                       child: Center(
@@ -434,7 +443,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                       'yapgitsin.',
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        color: AppColors.secondary,
+                        color: heroTitle,
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         height: 1.0,
