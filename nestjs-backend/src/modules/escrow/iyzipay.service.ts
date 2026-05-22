@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports */
-import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 
 // iyzipay official Node SDK (CommonJS)
 const Iyzipay = require('iyzipay');
@@ -184,11 +188,18 @@ export class IyzipayService {
           // olarak yüzeye çıkar. Aksi halde callback'ten reject edilen düz Error
           // Nest tarafından "Internal server error" diye maskeleniyor ve sebep
           // (geçersiz key, ağ hatası, errorCode) görünmez oluyordu.
+          // Not: 422 kullanıyoruz (5xx değil) çünkü Cloudflare tüm 5xx
+          // gövdelerini kendi "error code: 5xx" sayfasıyla değiştirip gerçek
+          // mesajı gizliyor. 422 istemciye (ve loglara) iyzipay'in asıl
+          // sebebini taşır — kullanıcı için de "tekrar dene" yerine eyleme
+          // dönük mesaj olur.
           if (err) {
             const msg = err instanceof Error ? err.message : String(err);
             this.logger.error(`iyzipay checkout transport error: ${msg}`);
             reject(
-              new BadGatewayException(`Ödeme sağlayıcı hatası (ağ): ${msg}`),
+              new UnprocessableEntityException(
+                `Ödeme sağlayıcıya ulaşılamadı: ${msg}`,
+              ),
             );
             return;
           }
@@ -199,7 +210,7 @@ export class IyzipayService {
               `iyzipay checkout failure code=${code} msg=${detail}`,
             );
             reject(
-              new BadGatewayException(
+              new UnprocessableEntityException(
                 `Ödeme başlatılamadı (iyzipay ${code}): ${detail}`,
               ),
             );
