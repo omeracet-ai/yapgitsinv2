@@ -50,7 +50,7 @@ class _JobPhotosBulkSectionState extends ConsumerState<JobPhotosBulkSection> {
     setState(() => _pending.addAll(picked.take(remaining)));
     if (picked.length > remaining && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('En fazla $_maxPhotos fotoğraf eklenebilir.'),
           backgroundColor: AppColors.warning,
         ),

@@ -553,7 +553,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                 _selectedCategory != null &&
                     cats.any((c) => c['name'] == _selectedCategory);
             return DropdownButtonFormField<String>(
-              value: valueExists ? _selectedCategory : null,
+              initialValue: valueExists ? _selectedCategory : null,
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Kategori Seç',

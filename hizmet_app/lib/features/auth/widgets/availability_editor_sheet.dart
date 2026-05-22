@@ -304,7 +304,7 @@ class _DayRow extends StatelessWidget {
           Switch(
             value: slot.isAvailable,
             onChanged: saving ? null : onToggle,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
           ),
           if (slot.isAvailable) ...[
             const SizedBox(width: 8),

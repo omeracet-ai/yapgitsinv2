@@ -97,6 +97,9 @@ dependencies:
 # record 5.2.1's transitive record_linux 0.7.2 doesn't implement the
 # record_platform_interface 1.5.0 API pulled in by record_android/darwin,
 # breaking compilation. Override record_linux to a compatible version.
+  http: any
+  flutter_web_plugins:
+    sdk: flutter
 dependency_overrides:
   record_linux: ^1.1.0
   file_picker: ^12.0.0-beta.2
@@ -110,6 +113,7 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   build_runner: ^2.4.7
 
+  firebase_core_platform_interface: any
 flutter:
   uses-material-design: true
   generate: true

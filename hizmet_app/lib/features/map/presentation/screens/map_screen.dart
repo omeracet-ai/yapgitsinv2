@@ -544,9 +544,7 @@ class _MapView extends StatelessWidget {
             // Phase 254 — Admin parity: 18x18 circle + 14x14 ~ badge için 28x28 hit area.
             const w = 28.0;
             const h = 28.0;
-            final price = j.budgetMin != null
-                ? j.budgetMin!.toStringAsFixed(0)
-                : null;
+            final price = j.budgetMin?.toStringAsFixed(0);
             return Marker(
               point: LatLng(j.latitude!, j.longitude!),
               width: w,

@@ -77,7 +77,7 @@ class ConfirmationProgress extends StatelessWidget {
               if (state.deadline != null)
                 Text(
                   _deadlineText(state.deadline!),
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontSize: 11, color: AppColors.textSecondary),
                 ),
             ],

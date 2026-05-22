@@ -128,7 +128,7 @@ class _PhotoCaptureStepState extends ConsumerState<PhotoCaptureStep> {
               const SizedBox(width: 10),
               Text(
                 '${widget.currentCount}/${widget.requiredCount} fotoğraf',
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
                 ),

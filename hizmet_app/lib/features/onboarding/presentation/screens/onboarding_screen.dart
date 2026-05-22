@@ -113,7 +113,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         throw Exception('Invalid format');
       }
 
-      String? _fixUrl(String? img) {
+      String? fixUrl(String? img) {
         if (img == null) return null;
         // Android emulator: localhost → 10.0.2.2 (without dart:io Platform)
         if (!kIsWeb) {
@@ -124,7 +124,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
       final slides = rawList.map((e) {
         final j = e as Map<String, dynamic>;
-        return _Slide.fromJson({...j, 'imageUrl': _fixUrl(j['imageUrl'] as String?)});
+        return _Slide.fromJson({...j, 'imageUrl': fixUrl(j['imageUrl'] as String?)});
       }).where((s) => s.title.isNotEmpty).toList();
 
       if (slides.isNotEmpty && mounted) {
@@ -162,7 +162,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (_loadingSlides) {
       return const Scaffold(
         backgroundColor: AppColors.background,
-        body: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
 

@@ -79,7 +79,7 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded,
+                  const Icon(Icons.warning_amber_rounded,
                       color: AppColors.error, size: 24),
                   const SizedBox(width: 8),
                   Expanded(
@@ -171,16 +171,16 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
             border: Border.all(color: AppColors.error, width: 1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Row(
+          child: const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.error_outline,
+              Icon(Icons.error_outline,
                   color: AppColors.error, size: 20),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Bu işlem geri alınamaz. Onaylamak için aşağıya "$_confirmPhrase" yazın.',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.error,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -236,12 +236,12 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
         color: AppColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
+      child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline, color: AppColors.primary, size: 16),
-          const SizedBox(width: 8),
-          const Expanded(
+          Icon(Icons.info_outline, color: AppColors.primary, size: 16),
+          SizedBox(width: 8),
+          Expanded(
             child: Text(
               '30 gün içinde geri alabilirsiniz',
               style: TextStyle(

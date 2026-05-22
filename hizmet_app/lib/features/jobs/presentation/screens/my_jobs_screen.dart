@@ -121,12 +121,12 @@ class _DualRoleView extends ConsumerWidget {
                 ),
               )
             : null,
-        body: TabBarView(
+        body: const TabBarView(
           children: [
             _CustomerTabContentWrapper(kindFilter: 'request'),
             _CustomerTabContentWrapper(kindFilter: 'offer'),
-            const _WorkerTabContent(),
-            const JobOpportunitiesBody(),
+            _WorkerTabContent(),
+            JobOpportunitiesBody(),
           ],
         ),
       ),

@@ -264,11 +264,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // ─────────────────────────────────────────────────────────
               // Phase 191 — Social Sign-In divider + buttons
               // ─────────────────────────────────────────────────────────
-              Row(
+              const Row(
                 children: [
-                  const Expanded(child: Divider(color: AppColors.border)),
+                  Expanded(child: Divider(color: AppColors.border)),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       'veya',
                       style: TextStyle(
@@ -277,7 +277,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                   ),
-                  const Expanded(child: Divider(color: AppColors.border)),
+                  Expanded(child: Divider(color: AppColors.border)),
                 ],
               ).animate().fade(delay: 650.ms),
               const SizedBox(height: 16),

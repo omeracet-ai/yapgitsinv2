@@ -365,13 +365,13 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
 
           // Yanıtlar
           if (replies.isNotEmpty) ...[
-            Divider(height: 1, color: AppColors.border),
+            const Divider(height: 1, color: AppColors.border),
             ...replies.map((r) => _ReplyTile(reply: r)),
           ],
 
           // Yanıt kutusu
           if (canReply) ...[
-            Divider(height: 1, color: AppColors.border),
+            const Divider(height: 1, color: AppColors.border),
             if (_showReplyBox)
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),

@@ -7,7 +7,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/providers/navigation_provider.dart';
 import '../../../auth/presentation/screens/profile_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../categories/data/category_repository.dart';
 import '../../../jobs/presentation/providers/job_provider.dart' as jp;
 import '../../../jobs/presentation/providers/job_provider.dart' show jobsProvider, Job;
@@ -22,7 +21,6 @@ import '../../../notifications/data/unread_count_provider.dart';
 import '../../../../core/widgets/category_card.dart';
 import '../../../../core/widgets/job_status_badge.dart';
 import '../../../../core/widgets/section_header.dart';
-import '../../../ai/presentation/widgets/ai_recommendations_section.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});

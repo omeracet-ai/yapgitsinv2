@@ -148,7 +148,7 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
               'Yalnızca ⭐ öne çıkarılmış ilanları göster',
               style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             value: _featuredOnly,
             onChanged: (v) => setState(() => _featuredOnly = v),
           ),

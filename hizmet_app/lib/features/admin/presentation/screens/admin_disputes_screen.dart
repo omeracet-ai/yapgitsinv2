@@ -153,23 +153,26 @@ class _DisputeCard extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  RadioListTile<String>(
-                    title: const Text('Ustaya öde (release)'),
-                    value: 'release',
+                  RadioGroup<String>(
                     groupValue: action,
                     onChanged: (v) => setSt(() => action = v!),
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('Müşteriye iade (refund)'),
-                    value: 'refund',
-                    groupValue: action,
-                    onChanged: (v) => setSt(() => action = v!),
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('Paylaş (split)'),
-                    value: 'split',
-                    groupValue: action,
-                    onChanged: (v) => setSt(() => action = v!),
+                    child: const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        RadioListTile<String>(
+                          title: Text('Ustaya öde (release)'),
+                          value: 'release',
+                        ),
+                        RadioListTile<String>(
+                          title: Text('Müşteriye iade (refund)'),
+                          value: 'refund',
+                        ),
+                        RadioListTile<String>(
+                          title: Text('Paylaş (split)'),
+                          value: 'split',
+                        ),
+                      ],
+                    ),
                   ),
                   if (action == 'split') ...[
                     const SizedBox(height: 8),
