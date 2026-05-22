@@ -150,12 +150,195 @@ function buildTurkishBio(cats: string[]): string {
   return bio;
 }
 
+/** Tek-seferlik temizlik — KORUNACAK yapısal/sistem tabloları (asla silinmez). */
+const CLEANUP_KEEP_TABLES = new Set<string>([
+  'categories',
+  'subscription_plans',
+  'onboarding_slides',
+  'currencies',
+  'tenants',
+  'platform_settings',
+  'system_settings',
+  'cancellation_policies',
+  'blog_posts',
+  'promo_codes',
+  'admin_audit_logs',
+]);
+
+/** Tek-seferlik temizlik — TAMAMI boşaltılacak işlemsel / per-user tablolar. */
+const CLEANUP_WIPE_TABLES = new Set<string>([
+  'jobs',
+  'offers',
+  'job_questions',
+  'job_question_replies',
+  'saved_jobs',
+  'service_requests',
+  'service_request_applications',
+  'bookings',
+  'reviews',
+  'review_helpfuls',
+  'payment_escrows',
+  'booking_escrows',
+  'escrow_confirmation_photos',
+  'escrow_confirmation_videos',
+  'payments',
+  'withdrawal_requests',
+  'token_transactions',
+  'job_disputes',
+  'disputes',
+  'notifications',
+  'chat_messages',
+  'worker_boosts',
+  'promo_redemptions',
+  'user_subscriptions',
+  'category_subscriptions',
+  'favorite_providers',
+  'favorite_workers',
+  'saved_job_searches',
+  'job_templates',
+  'worker_insurances',
+  'worker_certifications',
+  'user_consents',
+  'data_deletion_requests',
+  'user_blocks',
+  'user_reports',
+  'reputations',
+  'badges',
+  'availability_slots',
+  'availability_blackouts',
+  'sms_otps',
+  'password_reset_tokens',
+  'email_verification_tokens',
+  'ip_otp_lockouts',
+  'providers',
+  'leads',
+  'lead_responses',
+  'lead_requests',
+]);
+
+/** TypeORM iç tabloları — dokunma. */
+const CLEANUP_SYSTEM_TABLES = new Set<string>(['migrations', 'typeorm_metadata']);
+
+export interface CleanupResult {
+  driver: string;
+  keptUsers: string[];
+  missingKeepEmails: string[];
+  usersDeleted: number;
+  wiped: Record<string, number>;
+  remainingUsers: string[];
+}
+
 @Injectable()
 export class AdminSeedService {
   private readonly logger = new Logger(AdminSeedService.name);
   private readonly trFaker = new Faker({ locale: [tr, base] });
 
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
+
+  /**
+   * Tek-seferlik veri temizliği: `keepEmails` dışındaki TÜM kullanıcıları ve
+   * HERKESİN tüm ilan/işlemsel verisini siler; yapısal seed korunur.
+   * Sınıflandırılmamış bir entity tablosu bulunursa (yeni tablo) HATA atar.
+   */
+  async cleanupKeepUsers(keepEmails: string[]): Promise<CleanupResult> {
+    const driver = this.dataSource.options.type as string;
+    const q = (id: string) => (driver === 'mysql' ? `\`${id}\`` : `"${id}"`);
+    const ph = (n: number) =>
+      Array.from({ length: n }, (_, i) =>
+        driver === 'postgres' ? `$${i + 1}` : '?',
+      ).join(', ');
+
+    // Sınıflandırma güvenlik kontrolü — her entity tablosu KEEP/WIPE/system/users olmalı.
+    const meta = this.dataSource.entityMetadatas.map((m) => m.tableName);
+    const unclassified = meta.filter(
+      (t) =>
+        t !== 'users' &&
+        !CLEANUP_KEEP_TABLES.has(t) &&
+        !CLEANUP_WIPE_TABLES.has(t) &&
+        !CLEANUP_SYSTEM_TABLES.has(t),
+    );
+    if (unclassified.length) {
+      throw new Error(
+        `Sınıflandırılmamış tablo(lar) — temizlik durduruldu: ${unclassified.join(', ')}`,
+      );
+    }
+
+    const qr = this.dataSource.createQueryRunner();
+    await qr.connect();
+    try {
+      // Fiziksel olarak var olan boşaltılacak tablolar
+      const wipeList: string[] = [];
+      for (const t of [...CLEANUP_WIPE_TABLES].sort()) {
+        if (meta.includes(t) && (await qr.hasTable(t))) wipeList.push(t);
+      }
+
+      // Korunacak kullanıcılar gerçekten var mı?
+      const keptRows: Array<{ email: string }> = await qr.query(
+        `SELECT email FROM ${q('users')} WHERE email IN (${ph(keepEmails.length)})`,
+        keepEmails,
+      );
+      const keptUsers = keptRows.map((r) => r.email);
+      const missingKeepEmails = keepEmails.filter((e) => !keptUsers.includes(e));
+
+      // Silmeden önce satır sayıları (rapor için)
+      const wiped: Record<string, number> = {};
+      for (const t of wipeList) {
+        const r: Array<{ c: number }> = await qr.query(
+          `SELECT COUNT(*) AS c FROM ${q(t)}`,
+        );
+        wiped[t] = Number(r[0].c);
+      }
+      const ud: Array<{ c: number }> = await qr.query(
+        `SELECT COUNT(*) AS c FROM ${q('users')} WHERE email NOT IN (${ph(keepEmails.length)})`,
+        keepEmails,
+      );
+      const usersDeleted = Number(ud[0].c);
+
+      // FK kontrollerini geçici kapat (dialect'e göre)
+      if (driver === 'mysql') await qr.query('SET FOREIGN_KEY_CHECKS = 0');
+      else if (driver === 'sqlite') await qr.query('PRAGMA foreign_keys = OFF');
+      else if (driver === 'postgres')
+        await qr.query("SET session_replication_role = 'replica'");
+
+      await qr.startTransaction();
+      try {
+        for (const t of wipeList) {
+          await qr.query(`DELETE FROM ${q(t)}`);
+        }
+        await qr.query(
+          `DELETE FROM ${q('users')} WHERE email NOT IN (${ph(keepEmails.length)})`,
+          keepEmails,
+        );
+        await qr.commitTransaction();
+      } catch (e) {
+        await qr.rollbackTransaction();
+        throw e;
+      } finally {
+        if (driver === 'mysql') await qr.query('SET FOREIGN_KEY_CHECKS = 1');
+        else if (driver === 'sqlite')
+          await qr.query('PRAGMA foreign_keys = ON');
+        else if (driver === 'postgres')
+          await qr.query("SET session_replication_role = 'origin'");
+      }
+
+      const remaining: Array<{ email: string }> = await qr.query(
+        `SELECT email FROM ${q('users')}`,
+      );
+      this.logger.warn(
+        `[cleanup] ${usersDeleted} kullanıcı + ${Object.values(wiped).reduce((a, b) => a + b, 0)} işlem satırı silindi. Kalan kullanıcı: ${remaining.length}`,
+      );
+      return {
+        driver,
+        keptUsers,
+        missingKeepEmails,
+        usersDeleted,
+        wiped,
+        remainingUsers: remaining.map((r) => r.email),
+      };
+    } finally {
+      await qr.release();
+    }
+  }
 
   /**
    * Wipe order — leaves to roots, respecting FK chains.

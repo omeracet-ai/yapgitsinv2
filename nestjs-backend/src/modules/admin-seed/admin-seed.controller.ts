@@ -77,6 +77,25 @@ export class AdminSeedController {
     return { ...result, durationMs: Date.now() - t0, warning: this.warning() };
   }
 
+  /**
+   * Tek-seferlik temizlik: `keep` dışındaki TÜM kullanıcıları + herkesin tüm
+   * ilan/işlem verisini siler; yapısal seed korunur.
+   * Varsayılan korunanlar: omer.acet@gmail.com, demo@yapgitsin.tr, admin@yapgitsin.tr
+   * Override: ?keep=a@x.com,b@y.com
+   */
+  @Post('cleanup-keep-users')
+  async cleanupKeepUsers(@Query('keep') keep?: string) {
+    this.assertEnabled();
+    const keepEmails = (
+      keep
+        ? keep.split(',').map((e) => e.trim())
+        : ['omer.acet@gmail.com', 'demo@yapgitsin.tr', 'admin@yapgitsin.tr']
+    ).filter(Boolean);
+    const t0 = Date.now();
+    const result = await this.seed.cleanupKeepUsers(keepEmails);
+    return { ...result, durationMs: Date.now() - t0, warning: this.warning() };
+  }
+
   @Post('credit-tokens')
   async creditTokens(
     @Query('email') email: string,
