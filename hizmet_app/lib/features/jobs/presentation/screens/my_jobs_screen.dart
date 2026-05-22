@@ -826,9 +826,13 @@ class _WorkerOfferCard extends ConsumerWidget {
                 const Icon(Icons.location_on_outlined,
                     size: 12, color: AppColors.textHint),
                 const SizedBox(width: 2),
-                Text(jobLocation,
-                    style: const TextStyle(
-                        color: AppColors.textHint, fontSize: 12)),
+                Expanded(
+                  child: Text(jobLocation,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          color: AppColors.textHint, fontSize: 12)),
+                ),
               ],
             ),
           ],
