@@ -82,7 +82,7 @@ export class QuestionsService {
     });
     if (!hasOffer) {
       throw new ForbiddenException(
-        'Soru sormak için önce bu ilana teklif vermeniz gerekiyor (5 token).',
+        'Soru sormak için önce bu ilana teklif vermeniz gerekiyor (5 kredi).',
       );
     }
 

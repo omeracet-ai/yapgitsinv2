@@ -83,11 +83,11 @@ class WalletScreen extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          const Text('Token Bakiyesi',
+          const Text('Kredi Bakiyesi',
               style: TextStyle(color: Colors.white70, fontSize: 14)),
           const SizedBox(height: 8),
           balanceAsync.when(
-            data: (b) => Text('$b Token',
+            data: (b) => Text('$b Kredi',
                 style: const TextStyle(
                     color: Colors.white,
                     fontSize: 36,
@@ -97,7 +97,7 @@ class WalletScreen extends ConsumerWidget {
                 style: TextStyle(color: Colors.white, fontSize: 36)),
           ),
           const SizedBox(height: 8),
-          const Text('Her teklif 5 token harcar',
+          const Text('Her teklif 5 kredi harcar',
               style: TextStyle(color: Colors.white54, fontSize: 12)),
         ],
       ),
@@ -110,7 +110,7 @@ class WalletScreen extends ConsumerWidget {
         Expanded(
           child: _ActionButton(
             icon: Icons.add_card,
-            label: 'Token Yükle',
+            label: 'Kredi Yükle',
             color: Colors.blue,
             onTap: () => context.push('/jetonlar'),
           ),
@@ -226,7 +226,7 @@ class _TxCard extends StatelessWidget {
 
     final isCredit = type == 'purchase' || type == 'refund';
     final (label, icon, color) = switch (type) {
-      'purchase' => ('Token Yükleme', Icons.add_circle_outline, Colors.green),
+      'purchase' => ('Kredi Yükleme', Icons.add_circle_outline, Colors.green),
       'refund' => ('İade', Icons.undo_rounded, Colors.teal),
       _ => ('Teklif Ücreti', Icons.remove_circle_outline, Colors.red),
     };

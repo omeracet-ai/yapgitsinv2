@@ -86,7 +86,7 @@ class _PromoRedeemSheetState extends ConsumerState<PromoRedeemSheet> {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Promosyon kodunuz token, indirim veya deneme süresi olarak uygulanabilir.',
+              'Promosyon kodunuz kredi, indirim veya deneme süresi olarak uygulanabilir.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 16),

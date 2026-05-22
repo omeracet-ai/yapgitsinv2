@@ -191,7 +191,7 @@ export class JobsService {
       if (!tokenResult.affected) {
         const u = await manager.findOne(User, { where: { id: userId } });
         throw new BadRequestException(
-          `Yetersiz token bakiyesi. Gerekli: ${cost}, Mevcut: ${u?.tokenBalance ?? 0}`,
+          `Yetersiz kredi bakiyesi. Gerekli: ${cost}, Mevcut: ${u?.tokenBalance ?? 0}`,
         );
       }
 

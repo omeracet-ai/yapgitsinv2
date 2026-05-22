@@ -173,7 +173,7 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
                 const Icon(Icons.token, size: 13, color: AppColors.accent),
                 const SizedBox(width: 4),
                 Text(
-                  'Soru sormak için bu ilana teklif vermiş olmanız gerekir (5 token)',
+                  'Soru sormak için bu ilana teklif vermiş olmanız gerekir (5 kredi)',
                   style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 ),
               ],

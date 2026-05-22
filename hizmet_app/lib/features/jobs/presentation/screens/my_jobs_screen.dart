@@ -697,7 +697,7 @@ class _WorkerOfferCard extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         title: Text(AppLocalizations.of(context).myJobsWithdrawOffer),
         content: const Text(
-            'Bu teklifi geri çekiyorsun. 5 token iade alacaksın. Devam edilsin mi?'),
+            'Bu teklifi geri çekiyorsun. 5 kredi iade alacaksın. Devam edilsin mi?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -725,7 +725,7 @@ class _WorkerOfferCard extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         backgroundColor: refunded ? Colors.green : Colors.orange,
         content: Text(refunded
-            ? 'Teklif geri çekildi. $amount token iade edildi.'
+            ? 'Teklif geri çekildi. $amount kredi iade edildi.'
             : 'Teklif geri çekildi.'),
       ));
     } catch (e) {

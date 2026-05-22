@@ -499,10 +499,10 @@ class ProfileScreen extends ConsumerWidget {
           Expanded(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Sanal Token Bakiyesi',
+              const Text('Sanal Kredi Bakiyesi',
                   style: TextStyle(color: Colors.white70, fontSize: 12)),
               balanceAsync.when(
-                data: (b) => Text('$b Token',
+                data: (b) => Text('$b Kredi',
                     style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,

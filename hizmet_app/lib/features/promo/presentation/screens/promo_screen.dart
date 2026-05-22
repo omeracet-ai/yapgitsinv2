@@ -59,7 +59,7 @@ class _PromoScreenState extends ConsumerState<PromoScreen> {
       if (!mounted) return;
       final tokens = result.tokensAdded;
       final msg = tokens != null
-          ? 'Promo uygulandı! $tokens token eklendi'
+          ? 'Promo uygulandı! $tokens kredi eklendi'
           : 'Promo kodu uygulandı';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(msg),

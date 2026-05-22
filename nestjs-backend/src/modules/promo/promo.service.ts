@@ -302,7 +302,7 @@ export class PromoService {
         result = {
           type: PromoEffectType.BONUS_TOKEN,
           value: val,
-          message: `${val} token hesabınıza eklendi`,
+          message: `${val} kredi hesabınıza eklendi`,
         };
       } else if (effect === PromoEffectType.DISCOUNT_PERCENT) {
         result = {

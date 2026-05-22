@@ -130,7 +130,7 @@ export default function UsersPage() {
     try {
       const res = await api.grantTokens(tokenTarget.id, amount, reason || undefined);
       toast.success(
-        `${tokenTarget.fullName}: ${amount > 0 ? "+" : ""}${amount} jeton • yeni bakiye ${res.balance}`,
+        `${tokenTarget.fullName}: ${amount > 0 ? "+" : ""}${amount} kredi • yeni bakiye ${res.balance}`,
       );
       setTokenTarget(null);
       setTokenAmount("");
@@ -331,7 +331,7 @@ export default function UsersPage() {
       {tokenTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
-            <h3 className="text-base font-semibold mb-1">Manuel Jeton Tanımla</h3>
+            <h3 className="text-base font-semibold mb-1">Manuel Kredi Tanımla</h3>
             <p className="text-sm text-gray-600 mb-3">
               <span className="font-medium">{tokenTarget.fullName}</span>
               {typeof tokenTarget.tokenBalance === "number" ? ` — mevcut bakiye: ${tokenTarget.tokenBalance}` : ""}.
@@ -566,8 +566,8 @@ export default function UsersPage() {
                         <button
                           onClick={() => { setTokenTarget(u); setTokenAmount(""); setTokenReason(""); }}
                           className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
-                          title="Manuel jeton tanımla/düzelt"
-                        >🪙 Jeton{typeof u.tokenBalance === "number" ? ` (${u.tokenBalance})` : ""}</button>
+                          title="Manuel kredi tanımla/düzelt"
+                        >🪙 Kredi{typeof u.tokenBalance === "number" ? ` (${u.tokenBalance})` : ""}</button>
                         {u.suspended ? (
                           <button
                             onClick={() => doUnsuspend(u)}

@@ -24,7 +24,7 @@ Be concise, practical, and focused on helping users of this marketplace.`;
 const GEMINI_SYSTEM_PROMPT = `Sen Yapgitsin marketplace platformunun yardımcı asistanısın.
 Türkçe yanıt ver (kullanıcı İngilizce yazarsa İngilizce yanıt ver). Kısa, net ve pratik ol.
 Platform: müşteriler iş ilanı açar, ustalar teklif verir; ödeme platform dışı (escrow opsiyonel),
-her hesap 100 jeton ile başlar, teklif vermek 5 jeton harcar.`;
+her hesap 100 kredi ile başlar, teklif vermek 5 kredi harcar.`;
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_MAX_INPUT_CHARS = 8000; // ~2k tokens
@@ -49,7 +49,7 @@ const CATEGORIES = [
 
 const FAQ: Record<string, string> = {
   token:
-    'Platform üzerinde teklif vermek için token kullanılır. Her yeni hesap 100 token ile başlar. Bir teklif vermek 5 token harcar.',
+    'Platform üzerinde teklif vermek için kredi kullanılır. Her yeni hesap 100 kredi ile başlar. Bir teklif vermek 5 kredi harcar.',
   ödeme:
     'Ödeme doğrudan müşteri ile usta arasında yapılır. Platform şu an ödeme aracılığı yapmamaktadır.',
   ilan: 'İlan vermek ücretsizdir. Ustalar ilanınızı görür ve teklif verebilir. En fazla 20 fotoğraf ekleyebilirsiniz.',

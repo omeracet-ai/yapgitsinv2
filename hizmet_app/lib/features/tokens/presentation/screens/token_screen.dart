@@ -50,7 +50,7 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
       if (ok == true) {
         ref.invalidate(tokenBalanceProvider);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('${pkg['tokens']} jeton hesabına yüklendi!'),
+          content: Text('${pkg['tokens']} kredi hesabına yüklendi!'),
           backgroundColor: AppColors.success,
         ));
         Navigator.pop(context);
@@ -79,7 +79,7 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Jeton Satın Al'),
+        title: const Text('Kredi Satın Al'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -107,7 +107,7 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
                       style: TextStyle(color: Colors.white70, fontSize: 13)),
                   const SizedBox(height: 8),
                   balanceAsync.when(
-                    data: (b) => Text('$b Jeton',
+                    data: (b) => Text('$b Kredi',
                         style: const TextStyle(
                             color: Colors.white,
                             fontSize: 32,
@@ -150,7 +150,7 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '1 Jeton = 1 ₺  •  Teklif başına 5 Jeton',
+                      '1 Kredi = 1 ₺  •  Teklif başına 5 Kredi',
                       style: TextStyle(fontSize: 13, color: Colors.amber),
                     ),
                   ),
@@ -258,7 +258,7 @@ class _PackageCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text('$tokens Jeton',
+                    Text('$tokens Kredi',
                         style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.bold,

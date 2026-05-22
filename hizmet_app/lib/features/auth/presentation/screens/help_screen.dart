@@ -53,8 +53,8 @@ class _HelpScreenState extends State<HelpScreen> {
     ),
     (
       'Teklif verirken hata alıyorum?',
-      'Token bakiyenizin yeterli olduğundan emin olun. '
-      'Her teklif belirli miktarda token gerektirir. '
+      'Kredi bakiyenizin yeterli olduğundan emin olun. '
+      'Her teklif belirli miktarda kredi gerektirir. '
       'Sorun devam ederse destek ekibimizle iletişime geçin.',
     ),
   ];

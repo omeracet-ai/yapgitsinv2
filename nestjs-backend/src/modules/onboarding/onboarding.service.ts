@@ -56,8 +56,8 @@ export class OnboardingService implements OnModuleInit {
         isActive: true,
       },
       {
-        title: 'Token = Teklif',
-        body: 'Hoş geldin hediyesi 100 token. Her teklif 5 token, kazandıkça yenisini al.',
+        title: 'Kredi = Teklif',
+        body: 'Hoş geldin hediyesi 100 kredi. Her teklif 5 kredi, kazandıkça yenisini al.',
         emoji: '🎟️',
         imageUrl: null,
         gradientStart: '#FFA000',

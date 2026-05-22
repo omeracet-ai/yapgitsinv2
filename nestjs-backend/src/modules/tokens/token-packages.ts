@@ -22,24 +22,24 @@ export interface TokenPackage {
 }
 
 export const TOKEN_PACKAGES: readonly TokenPackage[] = Object.freeze([
-  { id: 'pkg_100', label: '100 Jeton', tokens: 100, priceMinor: 9900 },
+  { id: 'pkg_100', label: '100 Kredi', tokens: 100, priceMinor: 9900 },
   {
     id: 'pkg_250',
-    label: '250 Jeton',
+    label: '250 Kredi',
     tokens: 250,
     priceMinor: 22900,
     badge: 'En Popüler',
   },
   {
     id: 'pkg_500',
-    label: '500 Jeton',
+    label: '500 Kredi',
     tokens: 500,
     priceMinor: 42900,
     badge: '%14 Bonus',
   },
   {
     id: 'pkg_1000',
-    label: '1000 Jeton',
+    label: '1000 Kredi',
     tokens: 1000,
     priceMinor: 79900,
     badge: '%20 Bonus',

@@ -84,7 +84,7 @@ class BoostScreen extends ConsumerWidget {
       child: Row(children: [
         const Icon(Icons.toll_rounded, color: AppColors.primary),
         const SizedBox(width: 10),
-        Text('Bakiye: $balance Token',
+        Text('Bakiye: $balance Kredi',
             style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -198,7 +198,7 @@ class BoostScreen extends ConsumerWidget {
                 color: AppColors.primaryLight,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Text('$cost Token',
+              child: Text('$cost Kredi',
                   style: const TextStyle(
                       color: AppColors.primaryDark,
                       fontWeight: FontWeight.bold)),
@@ -243,7 +243,7 @@ class BoostScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Boost Onayı'),
-        content: Text('$name paketi için $cost token harcanacak. Onaylıyor musunuz?'),
+        content: Text('$name paketi için $cost kredi harcanacak. Onaylıyor musunuz?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),

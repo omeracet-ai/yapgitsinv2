@@ -617,7 +617,7 @@ async function bootstrap() {
       .addTag('Bookings', 'Randevu yönetimi')
       .addTag('Reviews', 'Değerlendirme ve puanlama')
       .addTag('Categories', 'Hizmet kategorileri')
-      .addTag('Tokens', 'Token bakiyesi ve satın alma')
+      .addTag('Tokens', 'Kredi bakiyesi ve satın alma')
       .addTag('Notifications', 'Bildirim yönetimi')
       .addTag('Uploads', 'Dosya yükleme (fotoğraf)')
       .addTag('AI', 'Yapay zeka özellikleri')

@@ -39,7 +39,7 @@ export class SubscriptionsService implements OnModuleInit {
         price: 99,
         period: SubscriptionPeriod.MONTHLY,
         features: [
-          'Sınırsız teklif (token tüketmez)',
+          'Sınırsız teklif (kredi tüketmez)',
           'Öncelikli listeleme',
           'Pro rozet',
           'Detaylı istatistikler',

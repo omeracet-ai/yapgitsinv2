@@ -70,7 +70,7 @@ class _GiftTokensSheetState extends ConsumerState<GiftTokensSheet> {
         SnackBar(
           backgroundColor: AppColors.success,
           content: Text(
-            '${res['amount']} token ${res['recipientName']} kullanıcısına gönderildi',
+            '${res['amount']} kredi ${res['recipientName']} kullanıcısına gönderildi',
           ),
         ),
       );
@@ -122,7 +122,7 @@ class _GiftTokensSheetState extends ConsumerState<GiftTokensSheet> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '${widget.recipientName} kullanıcısına token hediye et',
+                    '${widget.recipientName} kullanıcısına kredi hediye et',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -134,7 +134,7 @@ class _GiftTokensSheetState extends ConsumerState<GiftTokensSheet> {
             ),
             const SizedBox(height: 8),
             balanceAsync.when(
-              data: (b) => Text('Mevcut bakiyen: $b token',
+              data: (b) => Text('Mevcut bakiyen: $b kredi',
                   style: const TextStyle(
                       fontSize: 13, color: AppColors.textSecondary)),
               loading: () => const Text('Bakiye yükleniyor...',

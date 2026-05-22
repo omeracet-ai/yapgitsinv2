@@ -179,7 +179,7 @@ export class TokensService {
         fresh.amount,
       );
       fresh.status = TxStatus.COMPLETED;
-      fresh.description = `${fresh.amount} jeton satın alındı (iyzipay paymentId=${result.paymentId ?? 'n/a'})`;
+      fresh.description = `${fresh.amount} kredi satın alındı (iyzipay paymentId=${result.paymentId ?? 'n/a'})`;
       await manager.save(TokenTransaction, fresh);
       const u = await manager.findOne(User, {
         where: { id: fresh.userId ?? '' },
@@ -205,7 +205,7 @@ export class TokensService {
     recipientName: string;
   }> {
     if (senderId === dto.recipientId) {
-      throw new BadRequestException('Kendine token hediye edemezsin');
+      throw new BadRequestException('Kendine kredi hediye edemezsin');
     }
     const amount = dto.amount;
     const note = dto.note ?? '';
@@ -278,8 +278,8 @@ export class TokensService {
         manager.create(Notification, {
           userId: recipient.id,
           type: NotificationType.SYSTEM,
-          title: 'Token Hediyesi',
-          body: `${sender.fullName} size ${amount} token gönderdi${note ? `: ${note}` : ''}`,
+          title: 'Kredi Hediyesi',
+          body: `${sender.fullName} size ${amount} kredi gönderdi${note ? `: ${note}` : ''}`,
           refId: senderId,
         }),
       );
@@ -360,7 +360,7 @@ export class TokensService {
           amount,
           amountMinor: tlToMinor(amount) ?? 0,
           description:
-            `Admin ${isCredit ? 'jeton tanımladı' : 'jeton düştü'} (${Math.abs(amount)})` +
+            `Admin ${isCredit ? 'kredi tanımladı' : 'kredi düştü'} (${Math.abs(amount)})` +
             `${note ? ` — ${note}` : ''} [admin:${adminId}]`,
           status: TxStatus.COMPLETED,
           paymentMethod: PaymentMethod.SYSTEM,
@@ -372,10 +372,10 @@ export class TokensService {
         manager.create(Notification, {
           userId,
           type: NotificationType.SYSTEM,
-          title: isCredit ? 'Jeton Tanımlandı' : 'Jeton Düzeltmesi',
+          title: isCredit ? 'Kredi Tanımlandı' : 'Kredi Düzeltmesi',
           body: isCredit
-            ? `Hesabınıza ${amount} jeton tanımlandı${note ? `: ${note}` : ''}`
-            : `Hesabınızdan ${Math.abs(amount)} jeton düşüldü${note ? `: ${note}` : ''}`,
+            ? `Hesabınıza ${amount} kredi tanımlandı${note ? `: ${note}` : ''}`
+            : `Hesabınızdan ${Math.abs(amount)} kredi düşüldü${note ? `: ${note}` : ''}`,
           refId: adminId,
         }),
       );
@@ -412,7 +412,7 @@ export class TokensService {
       // Either user yok, or bakiye yetersiz — current balance'ı raporla.
       const user = await this.userRepo.findOne({ where: { id: userId } });
       throw new BadRequestException(
-        `Yetersiz token bakiyesi. Gerekli: ${amount}, Mevcut: ${user?.tokenBalance ?? 0}`,
+        `Yetersiz kredi bakiyesi. Gerekli: ${amount}, Mevcut: ${user?.tokenBalance ?? 0}`,
       );
     }
 

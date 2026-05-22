@@ -226,7 +226,7 @@ export default function PromoCodesPage() {
                 <select value={form.appliesTo} onChange={e => setForm(f => ({ ...f, appliesTo: e.target.value as FormState["appliesTo"] }))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="all">Tümü</option>
-                  <option value="tokens">Token alımı</option>
+                  <option value="tokens">Kredi alımı</option>
                   <option value="offer">Teklif</option>
                 </select>
               </div>

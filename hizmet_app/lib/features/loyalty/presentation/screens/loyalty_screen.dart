@@ -59,7 +59,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen> {
           await ref.read(loyaltyRepositoryProvider).redeem(code);
       final bonus = (result['bonusTokens'] as num?)?.toInt() ?? 0;
       messenger.showSnackBar(SnackBar(
-          content: Text('🎁 +$bonus token hesabınıza eklendi'),
+          content: Text('🎁 +$bonus kredi hesabınıza eklendi'),
           backgroundColor: AppColors.success));
       _codeController.clear();
       ref.invalidate(loyaltyProvider);
@@ -193,7 +193,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen> {
           ]),
           const SizedBox(height: 8),
           const Text(
-              'Arkadaşların kodunu kullandığında ikiniz de 50 token kazanırsınız.',
+              'Arkadaşların kodunu kullandığında ikiniz de 50 kredi kazanırsınız.',
               style: TextStyle(fontSize: 13, color: Colors.black54)),
           const SizedBox(height: 14),
           Row(children: [
@@ -235,7 +235,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen> {
                 SharePlus.instance.share(
                   ShareParams(
                     text:
-                        'Yapgitsin\'e davet kodum: ${info.referralCode}\nKodu kullan, 50 token kazan!',
+                        'Yapgitsin\'e davet kodum: ${info.referralCode}\nKodu kullan, 50 kredi kazan!',
                     subject: 'Yapgitsin Davet Kodu',
                   ),
                 );
@@ -266,7 +266,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen> {
                     TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ]),
           const SizedBox(height: 8),
-          const Text('Bir arkadaşının kodunu girip 50 token kazan.',
+          const Text('Bir arkadaşının kodunu girip 50 kredi kazan.',
               style: TextStyle(fontSize: 13, color: Colors.black54)),
           const SizedBox(height: 14),
           TextField(

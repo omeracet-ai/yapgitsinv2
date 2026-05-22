@@ -141,13 +141,13 @@ export class LoyaltyService {
         userId: referrer.id,
         type: NotificationType.SYSTEM,
         title: '🎁 Referansınız kullanıldı',
-        body: `${me.fullName} davet kodunuzu kullandı. +${REFERRAL_BONUS_TOKENS} token kazandınız!`,
+        body: `${me.fullName} davet kodunuzu kullandı. +${REFERRAL_BONUS_TOKENS} kredi kazandınız!`,
       });
       await this.notificationsService.send({
         userId: me.id,
         type: NotificationType.SYSTEM,
         title: '🎁 Hoş geldin bonusu',
-        body: `Davet kodu kullanıldı. +${REFERRAL_BONUS_TOKENS} token hesabınıza eklendi.`,
+        body: `Davet kodu kullanıldı. +${REFERRAL_BONUS_TOKENS} kredi hesabınıza eklendi.`,
       });
     } catch {
       // ignore notification failures

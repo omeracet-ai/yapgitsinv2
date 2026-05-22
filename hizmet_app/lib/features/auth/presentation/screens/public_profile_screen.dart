@@ -111,7 +111,7 @@ class _ProfileView extends ConsumerWidget {
             actions: [
               if (!isSelf) ...[
                 IconButton(
-                  tooltip: 'Token hediye et',
+                  tooltip: 'Kredi hediye et',
                   icon: const Text('🎁', style: TextStyle(fontSize: 20)),
                   onPressed: () => GiftTokensSheet.show(
                     context,

@@ -77,7 +77,7 @@ class _BoostDialogState extends ConsumerState<BoostDialog> {
               // ignore: deprecated_member_use
               onChanged: _loading ? null : (v) => setState(() => _days = v!),
               title: Text('${opt.$1} gün'),
-              subtitle: Text('${opt.$2} token'),
+              subtitle: Text('${opt.$2} kredi'),
             ),
         ],
       ),

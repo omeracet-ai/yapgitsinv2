@@ -134,7 +134,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Token, ödeme, ilan yönetimi veya platform hakkında her türlü sorunuzu sorabilirsiniz.',
+              'Kredi, ödeme, ilan yönetimi veya platform hakkında her türlü sorunuzu sorabilirsiniz.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -144,7 +144,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
               runSpacing: 8,
               alignment: WrapAlignment.center,
               children: [
-                _QuickChip('Token nasıl kullanılır?', onTap: _sendQuick),
+                _QuickChip('Kredi nasıl kullanılır?', onTap: _sendQuick),
                 _QuickChip('Ödeme nasıl yapılır?', onTap: _sendQuick),
                 _QuickChip('İlan nasıl veririm?', onTap: _sendQuick),
               ],
