@@ -9,13 +9,14 @@ import 'confirmation_state.dart';
 ///
 /// Base path: /escrow/:id/confirmation/*
 /// Endpoints (her biri JWT'li):
-///   POST   /start    worker  → QR + tier + requirements
-///   GET    /qr       worker  → mevcut QR (5dk geçerli)
-///   GET    /state    both    → polling için tam durum
-///   POST   /scan     customer → QR'ı tarat + GPS match
-///   POST   /photos   both    → multipart photo + phase + gps + takenAt
-///   POST   /video    both    → multipart video + gps (premium)
-///   POST   /confirm  both    → onay (escrow'u tetikler)
+///   POST   /start    worker   → QR + tier + requirements
+///   GET    /qr       customer → payer QR oluşturur (her iki taraf onayladıktan sonra, 5dk geçerli)
+///   GET    /state    both     → polling için tam durum
+///   POST   /scan     worker   → QR'ı tarat + GPS match → ödeme serbest bırakılır
+///   POST   /photos   both     → multipart photo + phase + gps + takenAt
+///   POST   /video    both     → multipart video + gps (premium)
+///   POST   /approve  both     → onay (release tetiklemez; QR aşaması açılır)
+///   POST   /confirm  both     → (legacy) onay
 final confirmationRepositoryProvider = Provider((ref) {
   return ConfirmationRepository(dio: ref.read(apiClientProvider).dio);
 });
@@ -42,9 +43,15 @@ class ConfirmationRepository {
     }
   }
 
-  Future<QrToken> getQr(String escrowId) async {
+  /// Customer (payer) QR oluşturur. Backend v2 GPS için opsiyonel lat/lng kabul eder.
+  Future<QrToken> getQr(String escrowId, {double? lat, double? lng}) async {
     try {
-      final res = await _dio.get('${_base(escrowId)}/qr');
+      final res = await _dio.get(
+        '${_base(escrowId)}/qr',
+        queryParameters: (lat != null && lng != null)
+            ? {'lat': lat, 'lng': lng}
+            : null,
+      );
       return QrToken.fromJson(Map<String, dynamic>.from(res.data as Map));
     } on DioException catch (e) {
       throw Exception(_msg(e, 'QR alınamadı'));
@@ -119,6 +126,16 @@ class ConfirmationRepository {
       return Map<String, dynamic>.from(res.data as Map);
     } on DioException catch (e) {
       throw Exception(_msg(e, 'Video yüklenemedi'));
+    }
+  }
+
+  /// v2 onay: kendi tarafının onayını set eder. Release tetiklemez —
+  /// her iki taraf onayladıktan sonra QR aşaması açılır.
+  Future<void> approve(String escrowId) async {
+    try {
+      await _dio.post('${_base(escrowId)}/approve', data: <String, dynamic>{});
+    } on DioException catch (e) {
+      throw Exception(_msg(e, 'Onay gönderilemedi'));
     }
   }
 

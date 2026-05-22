@@ -17,25 +17,29 @@ class ConfirmationProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     final tier = state.tier;
     final req = state.requirements.photosPerPhase;
-    final isLite = tier == ConfirmationTier.lite;
 
     String workerLabel = '';
     String customerLabel = '';
 
-    // QR step
-    final qrDone = state.qrScanned;
-    workerLabel += qrDone ? '✅' : '⏳';
-    customerLabel += qrDone ? '✅' : '⏳';
+    // v2 sırası: Foto → Onay → QR & Ödeme
 
-    // Photo step (standard+)
-    if (!isLite && req > 0) {
-      workerLabel += ' ${state.photosCompleteFor("worker") ? "✅" : "❌"}';
-      customerLabel += ' ${state.photosCompleteFor("customer") ? "✅" : "❌"}';
+    // 1) Foto (önce + sonra, her iki taraf)
+    if (req > 0) {
+      workerLabel += state.photosCompleteFor("worker") ? "✅" : "❌";
+      customerLabel += state.photosCompleteFor("customer") ? "✅" : "❌";
+    } else {
+      workerLabel += '✅';
+      customerLabel += '✅';
     }
 
-    // Confirm step
+    // 2) Onay
     workerLabel += ' ${state.workerConfirmed ? "✅" : "⏳"}';
     customerLabel += ' ${state.customerConfirmed ? "✅" : "⏳"}';
+
+    // 3) QR & Ödeme (worker scan = ödeme serbest)
+    final qrDone = state.qrScanned || state.escrowReleased;
+    workerLabel += ' ${qrDone ? "✅" : "⏳"}';
+    customerLabel += ' ${qrDone ? "✅" : "⏳"}';
 
     final tierLabel = switch (tier) {
       ConfirmationTier.lite => 'Lite (< ₺500)',
@@ -83,6 +87,17 @@ class ConfirmationProgress extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+          const Row(
+            children: [
+              SizedBox(width: 70),
+              Text(
+                'Foto · Onay · QR & Ödeme',
+                style: TextStyle(
+                    fontSize: 10.5, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
           _row('Usta', workerLabel, highlight: mySide == 'worker'),
           const SizedBox(height: 4),
           _row('Müşteri', customerLabel, highlight: mySide == 'customer'),
