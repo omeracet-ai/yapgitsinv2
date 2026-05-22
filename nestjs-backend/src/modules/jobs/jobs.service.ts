@@ -223,6 +223,12 @@ export class JobsService {
   }
 
   async onModuleInit() {
+    // Örnek veri (seed kullanıcı + demo ilanlar) yalnızca ALLOW_SEED=1 iken eklenir.
+    // Aksi halde veri temizliği sonrası bir restart, boş `jobs` tablosunu görüp
+    // demo ilanları + seed@yapgitsin.tr kullanıcısını geri ekler ve temizliği bozardı.
+    // admin-seed ile aynı konvansiyon (ALLOW_SEED === '1').
+    if (process.env.ALLOW_SEED !== '1') return;
+
     const seedUser = await this.usersService.findByEmail('seed@yapgitsin.tr');
     if (!seedUser) {
       await this.usersService.create({
