@@ -275,7 +275,6 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final userName = authState is AuthAuthenticated ? authState.displayName : null;
-    final isLoggedIn = authState is AuthAuthenticated;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -365,8 +364,6 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                 hintText: 'Hangi hizmete ihtiyacınız var?',
                                 hintStyle: const TextStyle(
                                     color: AppColors.darkTextSecondary, fontSize: 14),
-                                prefixIcon: const Icon(Icons.search,
-                                    color: AppColors.darkPrimary),
                                 suffixIcon: IconButton(
                                   icon: const Icon(Icons.arrow_forward_rounded,
                                       color: AppColors.primary),
@@ -374,22 +371,19 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                       _onSearch(_searchController.text),
                                 ),
                                 border: InputBorder.none,
-                                contentPadding:
-                                    const EdgeInsets.symmetric(vertical: 14),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
                               ),
                             ),
                           ),
                           const SizedBox(height: 6),
                           // ── Hizmet İlanı Ver butonu — search'in hemen altında
                           ElevatedButton.icon(
-                            onPressed: () {
-                              if (isLoggedIn) {
-                                context.push('/ilan-ver');
-                              } else {
-                                context.push('/giris-yap',
-                                    extra: {'returnTo': '/ilan-ver'});
-                              }
-                            },
+                            // Buton da text-box filtresini kullanir: yazili metni
+                            // _onSearch'e gecirir -> kategori eslesir, /ilan-ver o
+                            // kategori secili acilir (giris kontrolu _onSearch'te).
+                            onPressed: () =>
+                                _onSearch(_searchController.text),
                             icon: const Icon(Icons.add_circle_outline,
                                 color: Colors.white),
                             label: const Text('Hizmet İlanı Ver',
