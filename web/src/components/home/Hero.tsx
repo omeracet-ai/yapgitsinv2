@@ -42,7 +42,7 @@ export default function Hero({
           </span>
           <h1 className="h-display mt-5 text-4xl sm:text-5xl md:text-6xl">
             Halletmek istediğiniz <br className="hidden sm:block" />
-            <span className="text-[#FFE6DC]">her iş için doğru usta.</span>
+            <span className="text-[#BBF7D0]">her iş için doğru usta.</span>
           </h1>
           <p className="mt-5 text-base md:text-lg text-white/90 max-w-2xl mx-auto leading-relaxed">
             Temizlikten tadilata, tesisattan nakliyeye — ilan açın, dakikalar içinde teklif alın.

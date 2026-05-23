@@ -12,7 +12,7 @@ export default function TrustBand() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {STATS.map((s) => (
             <div key={s.label} className="text-center">
-              <div className="h-display text-3xl md:text-4xl text-[var(--accent)]">
+              <div className="h-display text-3xl md:text-4xl text-white">
                 {s.value}
               </div>
               <div className="text-xs md:text-sm text-white/70 mt-1.5">

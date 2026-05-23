@@ -49,7 +49,7 @@ export default async function Footer() {
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-12 md:py-14 grid grid-cols-2 md:grid-cols-3 gap-8 text-sm">
         <div className="col-span-2 md:col-span-1">
           <div className="flex items-center gap-2 font-extrabold text-xl mb-4">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-[var(--primary)] text-white text-sm">
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white text-[var(--secondary)] text-sm font-bold">
               Y
             </span>
             Yapgitsin

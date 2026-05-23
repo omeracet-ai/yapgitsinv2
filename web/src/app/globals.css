@@ -14,26 +14,26 @@
   --muted: #FFFFFF;
   --text-muted: #6B7280;
 
-  --primary: #6D4AFF;
-  --primary-dark: #5A3AE6;
-  --primary-light: rgba(109, 74, 255, 0.12);
-  --primary-soft: rgba(109, 74, 255, 0.06);
+  --primary: #16A34A;
+  --primary-dark: #15803D;
+  --primary-light: rgba(22, 163, 74, 0.12);
+  --primary-soft: rgba(22, 163, 74, 0.06);
 
-  --secondary: #F97316;
-  --secondary-muted: rgba(249, 115, 22, 0.12);
-  --accent: #F97316;
+  --secondary: #16A34A;
+  --secondary-muted: rgba(22, 163, 74, 0.12);
+  --accent: #16A34A;
   --error: #DE4437;
 
   --surface: #FFFFFF;
   --surface-glass: rgba(255, 255, 255, 0.85);
   --border: rgba(15, 18, 25, 0.08);
-  --border-active: rgba(109, 74, 255, 0.35);
+  --border-active: rgba(22, 163, 74, 0.35);
 
   /* Effects (tema-bağımsız) */
   --blur: blur(12px);
   --radius-card: 24px;
   --radius-pill: 999px;
-  --shadow-neon: 0 8px 30px rgba(109, 74, 255, 0.12);
+  --shadow-neon: 0 8px 30px rgba(22, 163, 74, 0.15);
 }
 
 html.dark {
@@ -43,21 +43,21 @@ html.dark {
   --muted: #151A23;
   --text-muted: #9CA3AF;
 
-  --primary: #8B72FF;
-  --primary-dark: #6D4AFF;
-  --primary-light: rgba(139, 114, 255, 0.20);
-  --primary-soft: rgba(139, 114, 255, 0.10);
+  --primary: #4ADE80;
+  --primary-dark: #22C55E;
+  --primary-light: rgba(74, 222, 128, 0.20);
+  --primary-soft: rgba(74, 222, 128, 0.10);
 
-  --secondary: #FF9A2E;
-  --secondary-muted: rgba(255, 154, 46, 0.16);
-  --accent: #FF9A2E;
+  --secondary: #4ADE80;
+  --secondary-muted: rgba(74, 222, 128, 0.16);
+  --accent: #4ADE80;
   --error: #FF6B5E;
 
   --surface: #1A1F2B;
   --surface-glass: rgba(26, 31, 43, 0.85);
   --border: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(139, 114, 255, 0.40);
-  --shadow-neon: 0 0 20px rgba(139, 114, 255, 0.25);
+  --border-active: rgba(74, 222, 128, 0.40);
+  --shadow-neon: 0 0 20px rgba(74, 222, 128, 0.25);
 }
 
 body {
@@ -129,9 +129,9 @@ body {
    ────────────────────────────────────────────────────────────── */
 .hero-gradient {
   background:
-    radial-gradient(1100px 480px at 12% -12%, rgba(139, 114, 255, 0.40), transparent 60%),
-    radial-gradient(900px 500px at 100% 0%, rgba(249, 115, 22, 0.20), transparent 55%),
-    linear-gradient(160deg, #1c1442 0%, #140d2e 45%, #0c0a18 100%);
+    radial-gradient(1100px 480px at 12% -12%, rgba(74, 222, 128, 0.38), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(34, 197, 94, 0.22), transparent 55%),
+    linear-gradient(160deg, #0f2e1c 0%, #0c2417 45%, #07150d 100%);
   color: #fff;
 }
 
@@ -142,8 +142,8 @@ body {
 html.dark body {
   background-color: var(--background);
   background-image:
-    radial-gradient(820px 420px at 0% 0%, rgba(139, 114, 255, 0.07), transparent 60%),
-    radial-gradient(720px 420px at 100% 8%, rgba(255, 154, 46, 0.05), transparent 55%);
+    radial-gradient(820px 420px at 0% 0%, rgba(74, 222, 128, 0.08), transparent 60%),
+    radial-gradient(720px 420px at 100% 8%, rgba(34, 197, 94, 0.05), transparent 55%);
   background-attachment: fixed;
 }
 
@@ -168,8 +168,8 @@ html.dark :where([class~="rounded-2xl"], [class~="rounded-3xl"]):hover {
 html:not(.dark) body {
   background-color: var(--background);
   background-image:
-    radial-gradient(820px 420px at 0% 0%, rgba(109, 74, 255, 0.05), transparent 60%),
-    radial-gradient(720px 420px at 100% 8%, rgba(249, 115, 22, 0.04), transparent 55%);
+    radial-gradient(820px 420px at 0% 0%, rgba(22, 163, 74, 0.05), transparent 60%),
+    radial-gradient(720px 420px at 100% 8%, rgba(34, 197, 94, 0.04), transparent 55%);
   background-attachment: fixed;
 }
 html:not(.dark) :where([class~="rounded-2xl"], [class~="rounded-3xl"]) {
