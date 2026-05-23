@@ -9,6 +9,7 @@ import { Between, Repository } from 'typeorm';
 import { LeadRequest, LeadSource, LeadStatus } from './lead-request.entity';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class LeadsService {
@@ -17,7 +18,42 @@ export class LeadsService {
   constructor(
     @InjectRepository(LeadRequest)
     private readonly repo: Repository<LeadRequest>,
+    private readonly emailService: EmailService,
   ) {}
+
+  /** Yeni talep bildirimi gönderilecek adres (env ile override edilebilir). */
+  private leadNotifyEmail(): string {
+    return process.env.LEAD_NOTIFY_EMAIL || 'bysabri0@gmail.com';
+  }
+
+  /** Yeni talep geldiğinde yöneticiye e-posta bildirimi (fire-and-forget). */
+  private notifyNewLead(lead: LeadRequest): void {
+    const to = this.leadNotifyEmail();
+    const esc = (s: string | null | undefined) =>
+      (s ?? '—').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const html = `
+      <h2>Yeni Talep — Yapgitsin</h2>
+      <p><b>Ad:</b> ${esc(lead.name)}</p>
+      <p><b>Telefon:</b> ${esc(lead.phoneNumber)}</p>
+      <p><b>E-posta:</b> ${esc(lead.email)}</p>
+      <p><b>Kategori:</b> ${esc(lead.category)}</p>
+      <p><b>Kaynak:</b> ${esc(lead.source)}</p>
+      <p><b>Mesaj:</b><br/>${esc(lead.message)}</p>
+      <hr/>
+      <p style="color:#6b7280;font-size:12px">Talep ID: ${lead.id} · ${new Date(lead.createdAt).toLocaleString('tr-TR')}</p>`;
+    const text =
+      `Yeni Talep — Yapgitsin\n` +
+      `Ad: ${lead.name}\nTelefon: ${lead.phoneNumber}\n` +
+      `E-posta: ${lead.email ?? '—'}\nKategori: ${lead.category ?? '—'}\n` +
+      `Kaynak: ${lead.source}\nMesaj: ${lead.message}\nID: ${lead.id}`;
+    void this.emailService
+      .send(to, 'Yeni Talep — Yapgitsin', html, text)
+      .catch((e) =>
+        this.logger.error(
+          `[leads] bildirim e-postası başarısız (${to}): ${(e as Error).message}`,
+        ),
+      );
+  }
 
   async create(
     dto: CreateLeadDto,
@@ -43,6 +79,8 @@ export class LeadsService {
       userAgent: meta.userAgent || null,
     });
     const saved = await this.repo.save(entity);
+    // Yeni talep → yöneticiye e-posta bildirimi (engellemez).
+    this.notifyNewLead(saved);
     return { id: saved.id, status: saved.status };
   }
 
