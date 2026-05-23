@@ -46,13 +46,13 @@ class OfferLineItemsView extends StatelessWidget {
                   Expanded(
                     child: Text(
                       label.isEmpty ? '—' : label,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textPrimary),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Text(
                     '${qty.toStringAsFixed(qty.truncateToDouble() == qty ? 0 : 2)} × ₺${unit.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 11, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 11, color: AppColors.textPrimary),
                   ),
                   const SizedBox(width: 8),
                   Text(

@@ -155,10 +155,10 @@ class _ServiceRequestScaffold extends StatelessWidget {
                 children: [
                   Icon(Icons.handshake_outlined, size: 72, color: Colors.grey.shade300),
                   const SizedBox(height: 16),
-                  const Text('Henüz hizmet ilanı yok',
+                  Text('Henüz hizmet ilanı yok',
                       style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
                   const SizedBox(height: 8),
-                  const Text('İlk ilanı siz verin!',
+                  Text('İlk ilanı siz verin!',
                       style: TextStyle(color: AppColors.textHint)),
                 ],
               ),
@@ -201,7 +201,7 @@ class _ServiceRequestScaffold extends StatelessWidget {
   Widget _sectionHeader(String title) => Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
         child: Text(title,
-            style: const TextStyle(
+            style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
                 color: AppColors.textPrimary)),
@@ -278,14 +278,14 @@ class _FeaturedCard extends StatelessWidget {
                         fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(height: 4),
                 Row(children: [
-                  const Icon(Icons.location_on_outlined,
+                  Icon(Icons.location_on_outlined,
                       size: 12, color: AppColors.textHint),
                   const SizedBox(width: 2),
                   Expanded(
                       child: Text(item['location'] ?? '',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 11, color: AppColors.textSecondary))),
                 ]),
                 const SizedBox(height: 4),
@@ -436,7 +436,7 @@ class _RequestCard extends StatelessWidget {
                         const Spacer(),
                         if (timeAgo.isNotEmpty)
                           Text(timeAgo,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 11, color: AppColors.textHint)),
                       ],
                     ),
@@ -448,14 +448,14 @@ class _RequestCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(item['title'] ?? '',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                                 color: AppColors.textPrimary)),
                       ),
                       if (imageUrl != null && timeAgo.isNotEmpty)
                         Text(timeAgo,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 11, color: AppColors.textHint)),
                     ],
                   ),
@@ -465,13 +465,13 @@ class _RequestCard extends StatelessWidget {
                   Text(item['description'] ?? '',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
                           height: 1.4)),
 
                   const SizedBox(height: 12),
-                  const Divider(height: 1, color: AppColors.border),
+                  Divider(height: 1, color: AppColors.border),
                   const SizedBox(height: 10),
 
                   // Footer: user + location
@@ -509,26 +509,26 @@ class _RequestCard extends StatelessWidget {
                       Expanded(
                         child: Text(name,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.textPrimary)),
                       ),
                       if (location.isNotEmpty) ...[
-                        const Icon(Icons.location_on_outlined,
+                        Icon(Icons.location_on_outlined,
                             size: 13, color: AppColors.textHint),
                         const SizedBox(width: 2),
                         Flexible(
                           child: Text(location,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.textSecondary)),
                         ),
                       ],
                       const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right,
+                      Icon(Icons.chevron_right,
                           size: 18, color: AppColors.textHint),
                     ],
                   ),

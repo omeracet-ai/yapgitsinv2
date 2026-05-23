@@ -420,7 +420,7 @@ void _showCancelSheet(BuildContext context, WidgetRef ref, Booking b) {
                 // Dark tema: açılan menü zemini + metin rengini açıkça ver,
                 // yoksa metin zeminle aynı renge düşüp okunmuyordu.
                 dropdownColor: AppColors.surface,
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppColors.textPrimary, fontSize: 14),
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
@@ -430,7 +430,7 @@ void _showCancelSheet(BuildContext context, WidgetRef ref, Booking b) {
                     .map((e) => DropdownMenuItem(
                           value: e.key,
                           child: Text(e.value,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: AppColors.textPrimary)),
                         ))
                     .toList(),

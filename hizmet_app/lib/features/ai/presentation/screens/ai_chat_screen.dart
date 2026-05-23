@@ -112,8 +112,8 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
             ),
           ),
           if (_loading)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Row(
                 children: [
                   SizedBox(

@@ -168,7 +168,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       ),
                       child: Text(
                         '${state.jobs.length} ilan',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary),
@@ -680,9 +680,9 @@ class _AirtaskerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
+      decoration: BoxDecoration(color: AppColors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: const [
           BoxShadow(
               color: Color(0x28000000),
               blurRadius: 20,
@@ -764,7 +764,7 @@ class _AirtaskerCard extends StatelessWidget {
                     children: [
                       Text(
                         job.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                           color: AppColors.textPrimary,

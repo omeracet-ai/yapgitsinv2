@@ -666,7 +666,7 @@ class _QrStepCustomerState extends ConsumerState<_QrStepCustomer> {
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Yan yanayken bu kodu ustaya okutun. Usta okuttuğunda ödeme '
             'serbest bırakılır.',
             textAlign: TextAlign.center,

@@ -81,9 +81,9 @@ class EscrowListScreen extends ConsumerWidget {
         ),
         data: (list) {
           if (list.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(32),
+                padding: const EdgeInsets.all(32),
                 child: Text(
                   'Henüz escrow işleminiz yok.',
                   textAlign: TextAlign.center,
@@ -138,7 +138,7 @@ class EscrowListScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 jobTitle,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
                                   color: AppColors.textPrimary,

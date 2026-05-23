@@ -202,7 +202,7 @@ class _ProfileView extends ConsumerWidget {
                               right: 2,
                               child: Container(
                                 padding: const EdgeInsets.all(3),
-                                decoration: const BoxDecoration(color: AppColors.surface,
+                                decoration: BoxDecoration(color: AppColors.surface,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(Icons.verified_rounded,
@@ -343,7 +343,7 @@ class _ProfileView extends ConsumerWidget {
                   _section(
                     title: 'Hakkında',
                     child: Text(bio,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 14, height: 1.6, color: AppColors.textSecondary)),
                   ),
                   const SizedBox(height: 8),
@@ -556,7 +556,7 @@ class _ProfileView extends ConsumerWidget {
                                       color: AppColors.success)),
                               const SizedBox(height: 2),
                               Text('$provider · $coverage₺ teminat',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 13,
                                       color: AppColors.textSecondary)),
                             ],
@@ -601,7 +601,7 @@ class _ProfileView extends ConsumerWidget {
                                             fontWeight: FontWeight.w600)),
                                     const SizedBox(height: 2),
                                     Text((c['issuer'] ?? '') as String,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             fontSize: 12,
                                             color:
                                                 AppColors.textSecondary)),
@@ -655,10 +655,10 @@ class _ProfileView extends ConsumerWidget {
           Icon(icon, color: iconColor, size: 22),
           const SizedBox(height: 4),
           Text(label,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary)),
-          Text(sub, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+          Text(sub, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
         ],
       ),
     );
@@ -673,7 +673,7 @@ class _ProfileView extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 15, fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary)),
           const SizedBox(height: 12),
@@ -687,7 +687,7 @@ class _ProfileView extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
         Text(value,
             style: TextStyle(
                 fontSize: 13,
@@ -777,7 +777,7 @@ class _ReviewTile extends ConsumerWidget {
                 Row(
                   children: [
                     Text(name,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 13, fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary)),
                     const Spacer(),
@@ -796,7 +796,7 @@ class _ReviewTile extends ConsumerWidget {
                 if (comment.isNotEmpty) ...[
                   const SizedBox(height: 3),
                   Text(comment,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13, height: 1.4,
                           color: AppColors.textSecondary)),
                 ],
@@ -817,10 +817,10 @@ class _ReviewTile extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.reply_rounded,
+                            Icon(Icons.reply_rounded,
                                 size: 14, color: AppColors.textSecondary),
                             const SizedBox(width: 4),
-                            const Expanded(
+                            Expanded(
                               child: Text('Yanıt',
                                   style: TextStyle(
                                       fontSize: 11,
@@ -844,7 +844,7 @@ class _ReviewTile extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(replyText,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12.5,
                                 height: 1.4,
                                 color: AppColors.textSecondary)),

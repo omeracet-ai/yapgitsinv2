@@ -148,17 +148,17 @@ class _OfferTemplatesScreenState extends ConsumerState<OfferTemplatesScreen> {
                 if (list.isEmpty) {
                   return ListView(
                     padding: const EdgeInsets.all(32),
-                    children: const [
-                      SizedBox(height: 40),
+                    children: [
+                      const SizedBox(height: 40),
                       Icon(Icons.note_alt_outlined,
                           size: 56, color: AppColors.textSecondary),
-                      SizedBox(height: 12),
-                      Text('Henüz şablon yok',
+                      const SizedBox(height: 12),
+                      const Text('Henüz şablon yok',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600)),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       Text(
                         'Sık kullandığın teklif mesajlarını buraya kaydet, teklif verirken tek tıkla yapıştır.',
                         textAlign: TextAlign.center,

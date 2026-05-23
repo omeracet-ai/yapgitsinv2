@@ -1011,7 +1011,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       right: 0, bottom: 0,
                       child: Container(
                         padding: const EdgeInsets.all(1),
-                        decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+                        decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
                         child: const Icon(Icons.verified,
                             color: Colors.blue, size: 14),
                       ),
@@ -1382,8 +1382,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(color: AppColors.surface,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+      decoration: BoxDecoration(color: AppColors.surface,
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
       ),
       child: isOwner
               ? Row(
@@ -1553,8 +1553,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => Container(
-          decoration: const BoxDecoration(color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(color: AppColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           padding: EdgeInsets.only(
             left: 20, right: 20, top: 20,

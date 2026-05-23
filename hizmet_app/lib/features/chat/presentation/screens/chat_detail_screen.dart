@@ -439,12 +439,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           ),
           const SizedBox(height: 14),
           Text(l.chatEmpty,
-              style: const TextStyle(
+              style: TextStyle(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500)),
           const SizedBox(height: 4),
           Text(l.chatEmptyHint,
-              style: const TextStyle(color: AppColors.textHint, fontSize: 13)),
+              style: TextStyle(color: AppColors.textHint, fontSize: 13)),
         ],
       ),
     );
@@ -524,7 +524,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   onChanged: _onTextChanged,
                   decoration: InputDecoration(
                     hintText: AppLocalizations.of(context).chatTypeMessage,
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                         color: AppColors.textHint, fontSize: 14),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(

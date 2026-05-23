@@ -14,17 +14,32 @@ class AppColors {
   static const Color secondary     = Color(0xFF161B22);
   static const Color accent        = Color(0xFF4ADE80);
 
-  // ── Background (deep dark) ─────────────────────────────────────────────
-  static const Color background       = Color(0xFF0C1117);
-  static const Color surface          = Color(0xFF161B22);
-  static const Color surfaceElevated  = Color(0xFF1C2128);
-  static const Color border           = Color(0xFF30363D);
+  // ── Phase 264 — Tema-duyarlı yüzey/metin token'ları ─────────────────────
+  // Aktif tema parlaklığı; main.dart kökte themeMode'dan set eder.
+  // Dark VE sistem modu → Brightness.dark; yalnızca "Açık" → Brightness.light.
+  static Brightness brightness = Brightness.dark;
+  static bool get _isDark => brightness == Brightness.dark;
+  static Color _pick(Color dark, Color light) => _isDark ? dark : light;
 
-  // ── Text ───────────────────────────────────────────────────────────────
-  static const Color textPrimary   = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFF9CA3AF);
-  static const Color textMuted     = Color(0xFF6B7280);
-  static const Color textHint      = Color(0xFF6B7280);
+  // ── Background / surface (tema-duyarlı) ────────────────────────────────
+  static Color get background      =>
+      _pick(const Color(0xFF0C1117), const Color(0xFFF8F9FA));
+  static Color get surface         =>
+      _pick(const Color(0xFF161B22), const Color(0xFFFFFFFF));
+  static Color get surfaceElevated =>
+      _pick(const Color(0xFF1C2128), const Color(0xFFF1F3F5));
+  static Color get border          =>
+      _pick(const Color(0xFF30363D), const Color(0xFFE5E7EB));
+
+  // ── Text (tema-duyarlı) ─────────────────────────────────────────────────
+  static Color get textPrimary   =>
+      _pick(const Color(0xFFFFFFFF), const Color(0xFF161B22));
+  static Color get textSecondary =>
+      _pick(const Color(0xFF9CA3AF), const Color(0xFF6B7280));
+  static Color get textMuted     =>
+      _pick(const Color(0xFF6B7280), const Color(0xFF6B7280));
+  static Color get textHint      =>
+      _pick(const Color(0xFF6B7280), const Color(0xFF9CA3AF));
 
   // ── Accents ────────────────────────────────────────────────────────────
   static const Color accentYellow  = Color(0xFFFCD34D);
@@ -41,14 +56,12 @@ class AppColors {
   static const Color statusClosed  = Color(0xFF6B7280);
   static const Color statusError   = Color(0xFFEF4444);
 
-  // ── Light theme tokens (Voldi-darkmode-global: remapped to dark) ───────
-  // Direct references to AppColors.light* now resolve to dark surfaces so
-  // every inline white background disappears without touching call sites.
-  static const Color lightBackground     = background;       // 0xFF0C1117
-  static const Color lightSurface        = surface;          // 0xFF161B22
-  static const Color lightText           = textPrimary;      // 0xFFFFFFFF
-  static const Color lightTextSecondary  = textSecondary;    // 0xFF9CA3AF
-  static const Color lightBorder         = border;           // 0xFF30363D
+  // ── Light* aliases — artık tema-duyarlı token'lara yönlenir ────────────
+  static Color get lightBackground     => background;
+  static Color get lightSurface        => surface;
+  static Color get lightText           => textPrimary;
+  static Color get lightTextSecondary  => textSecondary;
+  static Color get lightBorder         => border;
 
   // ── Dark theme tokens (current premium palette) ────────────────────────
   static const Color darkBackground       = Color(0xFF0C1117);

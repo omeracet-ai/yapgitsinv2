@@ -27,7 +27,7 @@ class BlockedUsersScreen extends ConsumerWidget {
             child: Text(
               e.toString().replaceFirst('Exception: ', ''),
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textHint),
+              style: TextStyle(color: AppColors.textHint),
             ),
           ),
         ),
@@ -67,7 +67,7 @@ class _EmptyState extends StatelessWidget {
                 size: 48, color: AppColors.primary),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Engellediğin kullanıcı yok',
             style: TextStyle(
               fontSize: 16,
@@ -76,8 +76,8 @@ class _EmptyState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
               'Profil ekranındaki menüden bir kullanıcıyı engelleyebilirsin.',
               textAlign: TextAlign.center,

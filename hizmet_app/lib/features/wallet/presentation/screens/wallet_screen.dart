@@ -154,12 +154,12 @@ class WalletScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const Icon(Icons.wifi_off_outlined,
+              Icon(Icons.wifi_off_outlined,
                   size: 40, color: AppColors.textHint),
               const SizedBox(height: 8),
               Text('İşlem geçmişi yüklenemedi: $e',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13, color: AppColors.textSecondary)),
             ],
           ),
@@ -167,13 +167,13 @@ class WalletScreen extends ConsumerWidget {
       ),
       data: (txList) {
         if (txList.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 32),
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 32),
             child: Column(
               children: [
                 Icon(Icons.receipt_long_outlined,
                     size: 48, color: AppColors.textHint),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Text('Henüz işlem yok.',
                     style: TextStyle(
                         color: AppColors.textSecondary, fontSize: 14)),
@@ -283,11 +283,11 @@ class _TxCard extends StatelessWidget {
                   Text(statusLabel,
                       style: TextStyle(fontSize: 12, color: statusColor)),
                   if (dateStr.isNotEmpty) ...[
-                    const Text(' · ',
+                    Text(' · ',
                         style: TextStyle(
                             fontSize: 12, color: AppColors.textHint)),
                     Text(dateStr,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 12, color: AppColors.textHint)),
                   ],
                 ]),

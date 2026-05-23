@@ -31,7 +31,7 @@ class FavoritesScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(24),
             child: Text(e.toString(),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textHint)),
+                style: TextStyle(color: AppColors.textHint)),
           ),
         ),
         data: (favs) {
@@ -150,7 +150,7 @@ class _FavoriteWorkerCard extends ConsumerWidget {
                             style: const TextStyle(
                                 fontSize: 12, fontWeight: FontWeight.w600)),
                         Text(' ($reviews)',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 11, color: AppColors.textHint)),
                       ],
                     ),
@@ -168,7 +168,7 @@ class _FavoriteWorkerCard extends ConsumerWidget {
                       const SizedBox(height: 3),
                       Text(
                         [district, city].where((s) => s.isNotEmpty).join(', '),
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 11, color: AppColors.textHint),
                       ),
                     ],

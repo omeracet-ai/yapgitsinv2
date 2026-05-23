@@ -31,7 +31,7 @@ class SavedJobsScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(24),
             child: Text(e.toString(),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textHint)),
+                style: TextStyle(color: AppColors.textHint)),
           ),
         ),
         data: (jobs) {
@@ -152,14 +152,14 @@ class _SavedJobCard extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_rounded,
+                      Icon(Icons.location_on_rounded,
                           size: 12, color: AppColors.textHint),
                       const SizedBox(width: 2),
                       Expanded(
                         child: Text(location,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12, color: AppColors.textHint)),
                       ),
                     ],
@@ -190,7 +190,7 @@ class _SavedJobCard extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(status,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 11,
                                   color: AppColors.textHint,
                                   fontWeight: FontWeight.w600)),

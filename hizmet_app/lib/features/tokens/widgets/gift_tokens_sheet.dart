@@ -97,8 +97,8 @@ class _GiftTokensSheetState extends ConsumerState<GiftTokensSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: inset),
       child: Container(
-        decoration: const BoxDecoration(color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(color: AppColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         child: Column(
@@ -123,7 +123,7 @@ class _GiftTokensSheetState extends ConsumerState<GiftTokensSheet> {
                 Expanded(
                   child: Text(
                     '${widget.recipientName} kullanıcısına kredi hediye et',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
@@ -135,9 +135,9 @@ class _GiftTokensSheetState extends ConsumerState<GiftTokensSheet> {
             const SizedBox(height: 8),
             balanceAsync.when(
               data: (b) => Text('Mevcut bakiyen: $b kredi',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13, color: AppColors.textSecondary)),
-              loading: () => const Text('Bakiye yükleniyor...',
+              loading: () => Text('Bakiye yükleniyor...',
                   style:
                       TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               error: (_, __) => const SizedBox.shrink(),

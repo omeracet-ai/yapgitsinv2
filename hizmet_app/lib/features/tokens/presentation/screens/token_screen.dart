@@ -220,7 +220,7 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Center(
+            Center(
               child: Text(
                 'Ödemeler iyzico güvenli ödeme altyapısı ile alınır.',
                 textAlign: TextAlign.center,
@@ -281,7 +281,7 @@ class _PackageCard extends StatelessWidget {
                 Row(
                   children: [
                     Text('$tokens Kredi',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary)),
@@ -305,7 +305,7 @@ class _PackageCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(priceLabel,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 14, color: AppColors.textSecondary)),
               ],
             ),

@@ -88,7 +88,7 @@ class _TwoFactorChallengeScreenState
               const SizedBox(height: 8),
               Text(
                 l.twoFactorPrompt,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
               ),
               const SizedBox(height: 32),
               TextField(

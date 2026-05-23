@@ -27,7 +27,7 @@ class WorkerOnboardingStep4Location extends StatelessWidget {
           const Text('📍 Hizmet bölgen',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          const Text('Müşteriler seni bu bölgede bulacak.',
+          Text('Müşteriler seni bu bölgede bulacak.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
           const SizedBox(height: 20),
           TextField(
@@ -71,7 +71,7 @@ class WorkerOnboardingStep4Location extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text('Seçili: $radiusKm km — bu mesafeye kadar iş tekliflerini alırsın.',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 12, color: AppColors.textSecondary)),
         ],
       ),

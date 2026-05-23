@@ -96,7 +96,7 @@ class _BookingStep2DateTimeState extends ConsumerState<BookingStep2DateTime> {
           const Text('Tarih & Saat',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          const Text('Müsait günü seçin (gri günler dolu/kapalı)',
+          Text('Müsait günü seçin (gri günler dolu/kapalı)',
               style: TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 16),
           if (_loading)
@@ -149,7 +149,7 @@ class _BookingStep2DateTimeState extends ConsumerState<BookingStep2DateTime> {
           if (widget.scheduledDate != null)
             Text(
               'Seçilen: ${DateFormat('d MMMM yyyy, EEEE', 'tr_TR').format(widget.scheduledDate!)}',
-              style: const TextStyle(
+              style: TextStyle(
                   fontWeight: FontWeight.w600, color: AppColors.textPrimary),
             ),
           const SizedBox(height: 12),
@@ -221,7 +221,7 @@ class _PickerCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 12, color: AppColors.textSecondary)),
                   const SizedBox(height: 2),
                   Text(value,

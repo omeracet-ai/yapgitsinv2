@@ -150,8 +150,8 @@ class _MessageTemplatesScreenState
                 if (list.isEmpty) {
                   return ListView(
                     padding: const EdgeInsets.all(32),
-                    children: const [
-                      SizedBox(height: 40),
+                    children: [
+                      const SizedBox(height: 40),
                       Icon(Icons.chat_bubble_outline,
                           size: 56, color: AppColors.textSecondary),
                       SizedBox(height: 12),

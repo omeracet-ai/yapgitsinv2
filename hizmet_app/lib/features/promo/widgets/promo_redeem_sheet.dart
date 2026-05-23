@@ -61,7 +61,7 @@ class _PromoRedeemSheetState extends ConsumerState<PromoRedeemSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: pad),
       child: Container(
-        decoration: const BoxDecoration(color: AppColors.surface,
+        decoration: BoxDecoration(color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -85,7 +85,7 @@ class _PromoRedeemSheetState extends ConsumerState<PromoRedeemSheet> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Promosyon kodunuz kredi, indirim veya deneme süresi olarak uygulanabilir.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),

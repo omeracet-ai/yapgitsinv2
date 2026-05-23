@@ -29,7 +29,7 @@ class ProviderProfileScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               Text('Yüklenemedi: $e',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary)),
+                  style: TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => ref.invalidate(providerDetailProvider(providerId)),
@@ -120,7 +120,7 @@ class _ProviderContent extends ConsumerWidget {
                           bottom: 0,
                           child: Container(
                             padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+                            decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
                             child: const Icon(Icons.verified,
                                 color: Colors.blue, size: 20),
                           ),
@@ -221,7 +221,7 @@ class _ProviderContent extends ConsumerWidget {
                         );
                       })),
                       Text('$totalReviews değerlendirme',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12, color: AppColors.textHint)),
                     ],
                   ),
@@ -260,7 +260,7 @@ class _ProviderContent extends ConsumerWidget {
                         width: 32,
                         child: Text('$c',
                             textAlign: TextAlign.right,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary)),
                       ),
@@ -283,7 +283,7 @@ class _ProviderContent extends ConsumerWidget {
       Text(value,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
       Text(label,
-          style: const TextStyle(color: AppColors.textHint, fontSize: 12)),
+          style: TextStyle(color: AppColors.textHint, fontSize: 12)),
     ]);
   }
 
@@ -302,7 +302,7 @@ class _ProviderContent extends ConsumerWidget {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           Text(bio,
-              style: const TextStyle(
+              style: TextStyle(
                   color: AppColors.textSecondary, height: 1.6)),
         ],
       ),
@@ -362,7 +362,7 @@ class _ProviderContent extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(left: 22),
               child: Text(category,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: AppColors.textSecondary, fontSize: 12)),
             ),
           ],
@@ -466,11 +466,11 @@ class _ProviderContent extends ConsumerWidget {
           reviewsAsync.when(
             loading: () =>
                 const Center(child: CircularProgressIndicator()),
-            error: (_, __) => const Text('Yorumlar yüklenemedi.',
+            error: (_, __) => Text('Yorumlar yüklenemedi.',
                 style: TextStyle(color: AppColors.textHint)),
             data: (reviews) => reviews.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     child: Text('Henüz yorum yok.',
                         style: TextStyle(color: AppColors.textHint)),
                   )
@@ -609,7 +609,7 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
           if (widget.comment.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(widget.comment,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
           ],
           // Phase 212: fotoğraf thumbnails
           if (widget.photos.isNotEmpty) ...[
@@ -631,7 +631,7 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
                       width: 80,
                       height: 80,
                       color: AppColors.border,
-                      child: const Icon(Icons.broken_image, color: AppColors.textHint),
+                      child: Icon(Icons.broken_image, color: AppColors.textHint),
                     ),
                   ),
                 ),

@@ -80,7 +80,7 @@ class _JobVideoPickerState extends State<JobVideoPicker> {
           ],
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'Opsiyonel. İşinizi anlatan kısa videolar ekleyebilirsiniz. (Max 50MB)',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
@@ -169,11 +169,11 @@ class _VideoSlotTile extends StatelessWidget {
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.video_call_outlined,
+                    Icon(Icons.video_call_outlined,
                         color: AppColors.textHint, size: 28),
                     const SizedBox(height: 4),
                     Text('Video $index',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 11, color: AppColors.textHint)),
                   ],
                 ),

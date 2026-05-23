@@ -7,6 +7,7 @@ import 'l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/app_colors.dart';
 import 'core/theme/theme_mode_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/services/in_app_notification_service.dart';
@@ -59,6 +60,11 @@ class YapgitsinApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
+    // Phase 264 — inline AppColors.* token'ları için aktif parlaklığı kökte set
+    // et (themeMode mapping ile birebir: Açık → light, Sistem/Koyu → dark).
+    // Böylece tüm inline yüzey/metin renkleri açık temada otomatik açılır.
+    AppColors.brightness =
+        themeMode == ThemeMode.light ? Brightness.light : Brightness.dark;
     // Phase 80 — bind real-time chat → toast hook (idempotent, auth-gated).
     ref.watch(chatToastHookProvider);
 

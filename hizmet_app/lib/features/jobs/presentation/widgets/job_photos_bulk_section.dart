@@ -156,7 +156,7 @@ class _JobPhotosBulkSectionState extends ConsumerState<JobPhotosBulkSection> {
               // Seçilen (henüz yüklenmemiş) fotoğraflar — önizleme
               if (_pending.isNotEmpty) ...[
                 if (_photos.isNotEmpty) const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Yüklenecekler:',
                   style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),

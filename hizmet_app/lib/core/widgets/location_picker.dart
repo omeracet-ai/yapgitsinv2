@@ -341,9 +341,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             bottom: 0, left: 0, right: 0,
             child: Container(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
-              decoration: const BoxDecoration(color: AppColors.surface,
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 12)],
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              decoration: BoxDecoration(color: AppColors.surface,
+                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 12)],
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: _loading
                   ? const Center(

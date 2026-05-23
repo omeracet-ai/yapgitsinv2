@@ -176,8 +176,8 @@ class _UsdtDepositScreenState extends ConsumerState<UsdtDepositScreen> {
             error: (e, _) => Text('$e',
                 style: const TextStyle(color: AppColors.error)),
             data: (list) => list.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Text('Henüz yatırım yok.',
                         style: TextStyle(color: AppColors.textSecondary)))
                 : Column(children: list.map(_historyTile).toList()),
@@ -251,7 +251,7 @@ class _UsdtDepositScreenState extends ConsumerState<UsdtDepositScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(note,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 12, color: AppColors.textPrimary)),
                   ),
                 ],
@@ -291,7 +291,7 @@ class _UsdtDepositScreenState extends ConsumerState<UsdtDepositScreen> {
                 const SizedBox(height: 2),
                 if ((d['adminNote'] ?? '').toString().isNotEmpty)
                   Text(d['adminNote'].toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11, color: AppColors.textSecondary)),
               ],
             ),

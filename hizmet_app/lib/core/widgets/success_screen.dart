@@ -46,7 +46,7 @@ class SuccessScreen extends ConsumerWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
               ).animate().fade(delay: 200.ms).slideY(begin: 0.1),
               const SizedBox(height: 48),
               SizedBox(

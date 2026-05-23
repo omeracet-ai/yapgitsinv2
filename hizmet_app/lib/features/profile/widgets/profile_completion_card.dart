@@ -134,7 +134,7 @@ class ProfileCompletionCard extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     'Profilini %$percent tamamla',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -174,7 +174,7 @@ class ProfileCompletionCard extends ConsumerWidget {
               missing.isEmpty
                   ? 'Az kaldı, devam et!'
                   : '${missing.length} alan eksik',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
@@ -256,7 +256,7 @@ class ProfileCompletionCard extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Text(
                     'Eksik Alanlar (${missing.length})',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -277,7 +277,7 @@ class ProfileCompletionCard extends ConsumerWidget {
                             color: AppColors.error, size: 20),
                         title: Text(
                           labelForField(key),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w500,
                             color: AppColors.textPrimary,
                           ),

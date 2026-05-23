@@ -554,7 +554,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       isMissing: false,
       missingFields: const [],
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text(
+        Text(
           'Profilinizde öne çıkacak 60 saniyelik tanıtım videosu.',
           style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
@@ -693,7 +693,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               errorBuilder: (_, __, ___) => Container(
                   height: 140,
                   color: Colors.grey.shade100,
-                  child: const Icon(Icons.broken_image_outlined,
+                  child: Icon(Icons.broken_image_outlined,
                       color: AppColors.textHint, size: 40)),
             ),
           ),

@@ -71,7 +71,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   const Icon(Icons.lock_outline,
                       size: 48, color: AppColors.primary),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Güvenli Escrow Ödemesi',
                     style: TextStyle(
                       fontSize: 18,
@@ -80,7 +80,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Ödemeniz güvende tutulur ve iş tamamlandığında ustaya aktarılır.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -92,7 +92,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         'Tutar: ',
                         style: TextStyle(
                           fontSize: 16,

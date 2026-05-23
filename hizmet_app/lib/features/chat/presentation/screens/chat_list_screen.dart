@@ -288,7 +288,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                     const SizedBox(height: 2),
                     Text(
                       lastSeenLabel,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11, color: AppColors.textHint),
                     ),
                   ],

@@ -125,7 +125,7 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
               const SizedBox(height: 12),
               Text(e.toString(),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary)),
+                  style: TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => ref.invalidate(_myPortfolioProvider),
@@ -136,7 +136,7 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
         ),
         data: (items) {
           if (items.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -203,7 +203,7 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
                         },
                         errorBuilder: (_, __, ___) => Container(
                           color: AppColors.border,
-                          child: const Icon(Icons.broken_image_outlined,
+                          child: Icon(Icons.broken_image_outlined,
                               color: AppColors.textHint),
                         ),
                       ),

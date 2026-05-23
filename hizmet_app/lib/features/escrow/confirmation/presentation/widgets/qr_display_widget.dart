@@ -113,7 +113,7 @@ class _QrDisplayWidgetState extends State<QrDisplayWidget> {
           label: Text(_refreshing ? 'Yenileniyor…' : 'Yeni QR oluştur'),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'Müşterinin telefonuyla bu kodu okutun.\nQR 5 dakika geçerlidir.',
           textAlign: TextAlign.center,
           style: TextStyle(color: AppColors.textSecondary, fontSize: 13),

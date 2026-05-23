@@ -56,9 +56,9 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: EdgeInsets.fromLTRB(
         20,
@@ -83,7 +83,7 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
           ),
           Row(
             children: [
-              const Text('Filtrele',
+              Text('Filtrele',
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -98,14 +98,14 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
           const SizedBox(height: 8),
 
           // ── Bütçe Aralığı ───────────────────────────────────────────
-          const Text('Bütçe Aralığı',
+          Text('Bütçe Aralığı',
               style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary)),
           const SizedBox(height: 4),
           Text(
             '${_budget.start.toInt()} – ${_budget.end.toInt()} ₺',
-            style: const TextStyle(
+            style: TextStyle(
                 color: AppColors.textSecondary, fontSize: 13),
           ),
           RangeSlider(
@@ -123,7 +123,7 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
           ),
 
           const SizedBox(height: 8),
-          const Text('Sıralama',
+          Text('Sıralama',
               style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary)),
@@ -140,11 +140,11 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
           const SizedBox(height: 16),
           SwitchListTile.adaptive(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Sadece Öne Çıkanlar',
+            title: Text('Sadece Öne Çıkanlar',
                 style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary)),
-            subtitle: const Text(
+            subtitle: Text(
               'Yalnızca ⭐ öne çıkarılmış ilanları göster',
               style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),

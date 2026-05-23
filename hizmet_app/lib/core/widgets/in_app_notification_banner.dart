@@ -144,7 +144,7 @@ class _InAppNotificationBannerState extends State<InAppNotificationBanner>
                             widget.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                               color: AppColors.textPrimary,
@@ -155,7 +155,7 @@ class _InAppNotificationBannerState extends State<InAppNotificationBanner>
                             widget.message,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
                               height: 1.25,
@@ -165,7 +165,7 @@ class _InAppNotificationBannerState extends State<InAppNotificationBanner>
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close,
+                      icon: Icon(Icons.close,
                           size: 18, color: AppColors.textHint),
                       onPressed: _handleDismiss,
                       splashRadius: 18,

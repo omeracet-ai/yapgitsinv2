@@ -71,15 +71,15 @@ class ConfirmationProgress extends StatelessWidget {
               if (state.deadline != null)
                 Text(
                   _deadlineText(state.deadline!),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 11, color: AppColors.textSecondary),
                 ),
             ],
           ),
           const SizedBox(height: 10),
-          const Row(
+          Row(
             children: [
-              SizedBox(width: 70),
+              const SizedBox(width: 70),
               Text(
                 'Onay · QR & Ödeme',
                 style: TextStyle(

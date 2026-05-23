@@ -83,7 +83,7 @@ class _CertificationsScreenState extends ConsumerState<CertificationsScreen> {
                   ),
                 )
               : _certs.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

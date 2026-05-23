@@ -24,7 +24,7 @@ class WorkerOnboardingStep1Categories extends ConsumerWidget {
           const Text('🛠️ Hangi hizmetleri veriyorsun?',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          const Text('En az 1 kategori seç. İstediğin kadar ekleyebilirsin.',
+          Text('En az 1 kategori seç. İstediğin kadar ekleyebilirsin.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
           const SizedBox(height: 20),
           Expanded(

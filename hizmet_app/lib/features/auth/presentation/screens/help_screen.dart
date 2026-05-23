@@ -147,11 +147,11 @@ class _HelpScreenState extends State<HelpScreen> {
             const SizedBox(height: 28),
 
             // SSS başlık
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(children: [
-                Icon(Icons.quiz_outlined, size: 18, color: AppColors.primary),
-                SizedBox(width: 8),
+                const Icon(Icons.quiz_outlined, size: 18, color: AppColors.primary),
+                const SizedBox(width: 8),
                 Text('Sıkça Sorulan Sorular',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary)),
@@ -201,7 +201,7 @@ class _HelpScreenState extends State<HelpScreen> {
                           const Divider(height: 1),
                           const SizedBox(height: 10),
                           Text(a,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textSecondary,
                                   height: 1.6)),
@@ -241,7 +241,7 @@ class _HelpScreenState extends State<HelpScreen> {
                           fontWeight: FontWeight.bold, color: AppColors.primary)),
                     ]),
                     const SizedBox(height: 8),
-                    const Text('Uygulama hakkındaki görüşleriniz bizim için değerli.',
+                    Text('Uygulama hakkındaki görüşleriniz bizim için değerli.',
                         style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                     const SizedBox(height: 14),
                     OutlinedButton.icon(
@@ -268,16 +268,16 @@ class _HelpScreenState extends State<HelpScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _textLink('Gizlilik Politikası', () => _launchUrl('https://yapgitsin.tr/privacy')),
-                  const Text(' · ', style: TextStyle(color: AppColors.textHint)),
+                  Text(' · ', style: TextStyle(color: AppColors.textHint)),
                   _textLink('Kullanım Koşulları', () => _launchUrl('https://yapgitsin.tr/terms')),
-                  const Text(' · ', style: TextStyle(color: AppColors.textHint)),
+                  Text(' · ', style: TextStyle(color: AppColors.textHint)),
                   _textLink('Çerez Politikası', () => _launchUrl('https://yapgitsin.tr/cookies')),
                 ],
               ),
             ),
 
             const SizedBox(height: 8),
-            const Center(
+            Center(
               child: Text('Hizmet Uygulaması v1.0.0',
                   style: TextStyle(fontSize: 11, color: AppColors.textHint)),
             ),
@@ -323,10 +323,10 @@ class _HelpScreenState extends State<HelpScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: const TextStyle(fontWeight: FontWeight.bold,
+                      style: TextStyle(fontWeight: FontWeight.bold,
                           fontSize: 13, color: AppColors.textPrimary)),
                   Text(sub,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                 ],
               ),
             ),

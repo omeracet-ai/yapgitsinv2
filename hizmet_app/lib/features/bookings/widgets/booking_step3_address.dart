@@ -41,7 +41,7 @@ class BookingStep3Address extends StatelessWidget {
           const Text('Adres & Onay',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          const Text('Hizmet nereye verilecek?',
+          Text('Hizmet nereye verilecek?',
               style: TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 20),
           const Text('Adres *', style: TextStyle(fontWeight: FontWeight.w600)),

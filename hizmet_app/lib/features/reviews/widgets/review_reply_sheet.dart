@@ -89,7 +89,7 @@ class _ReviewReplySheetState extends ConsumerState<ReviewReplySheet> {
               const SizedBox(width: 8),
               Text(
                 isEdit ? 'Yanıtı düzenle' : 'Yoruma yanıtla',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,

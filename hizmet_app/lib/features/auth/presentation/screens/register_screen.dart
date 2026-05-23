@@ -23,7 +23,7 @@ class RegisterScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
       ),
@@ -38,7 +38,7 @@ class RegisterScreen extends ConsumerWidget {
                       fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               Text(l.registerSubtitle,
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
               const SizedBox(height: 28),
               const _RegisterForm(),
             ],
@@ -280,7 +280,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         const Divider(),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(l.registerPersonalInfo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
+          child: Text(l.registerPersonalInfo, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
         ),
 
         // Doğum tarihi
@@ -299,7 +299,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
             decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppColors.border)),
             child: Row(children: [
-              const Icon(Icons.cake_outlined, color: AppColors.textHint),
+              Icon(Icons.cake_outlined, color: AppColors.textHint),
               const SizedBox(width: 12),
               Text(
                 _birthDate != null
@@ -515,7 +515,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         const SizedBox(height: 12),
         TextButton(
           onPressed: _loading ? null : _skipStep2,
-          child: const Text('ޞimdi Değil, Atla', style: TextStyle(color: AppColors.textSecondary)),
+          child: Text('ޞimdi Değil, Atla', style: TextStyle(color: AppColors.textSecondary)),
         ),
       ],
     );
@@ -544,7 +544,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
                 children: [
                   Icon(icon, size: 36, color: AppColors.textHint),
                   const SizedBox(height: 8),
-                  Text(label, style: const TextStyle(color: AppColors.textHint, fontSize: 13)),
+                  Text(label, style: TextStyle(color: AppColors.textHint, fontSize: 13)),
                   const SizedBox(height: 4),
                   Text(required ? 'Zorunlu' : 'Opsiyonel',
                       style: TextStyle(fontSize: 11, color: required ? Colors.orange.shade600 : AppColors.textHint)),

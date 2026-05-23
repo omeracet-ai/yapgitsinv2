@@ -66,7 +66,7 @@ class PortfolioGrid extends ConsumerWidget {
                 },
                 errorBuilder: (_, __, ___) => Container(
                   color: AppColors.border,
-                  child: const Icon(Icons.broken_image_outlined,
+                  child: Icon(Icons.broken_image_outlined,
                       color: AppColors.textHint),
                 ),
               ),

@@ -200,14 +200,14 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                   color: color, fontWeight: FontWeight.w700, fontSize: 14)),
           const SizedBox(height: 8),
           Text(lines[0],
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
           const SizedBox(height: 2),
           Text(lines[1],
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           if (subtitle != null) ...[
             const SizedBox(height: 6),
             Text(subtitle,
-                style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                style: TextStyle(fontSize: 11, color: AppColors.textHint)),
           ],
         ],
       ),
@@ -249,14 +249,14 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(date,
-                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
             ),
           ],
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text('İş: ${(it['jobId'] ?? '-').toString()}',
-              style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
+              style: TextStyle(fontSize: 11, color: AppColors.textHint)),
         ),
         trailing: Text(
           isCustomer ? _fmt(amount) : _fmt(net),

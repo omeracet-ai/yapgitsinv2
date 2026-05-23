@@ -103,11 +103,11 @@ class ConsentSection extends StatelessWidget {
             activeColor: AppColors.primary,
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-            title: const Text(
+            title: Text(
               'Pazarlama ve kampanya bildirimleri almak istiyorum.',
               style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
             ),
-            subtitle: const Text(
+            subtitle: Text(
               'Opsiyonel — istediğiniz zaman ayarlardan kapatabilirsiniz.',
               style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
             ),
@@ -156,7 +156,7 @@ class _MandatoryConsentText extends StatelessWidget {
       decoration: TextDecoration.underline,
       decorationColor: AppColors.primary,
     );
-    const baseStyle = TextStyle(fontSize: 13, color: AppColors.textPrimary);
+    final baseStyle = TextStyle(fontSize: 13, color: AppColors.textPrimary);
 
     return Text.rich(
       TextSpan(
@@ -218,7 +218,7 @@ class _LegalSheet extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
@@ -226,7 +226,7 @@ class _LegalSheet extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                    icon: Icon(Icons.close, color: AppColors.textSecondary),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -251,7 +251,7 @@ class _LegalSheet extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
                     child: SelectableText(
                       text,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         height: 1.5,
                         color: AppColors.textPrimary,

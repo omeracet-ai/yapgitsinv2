@@ -69,7 +69,7 @@ class WorkerCard extends StatelessWidget {
                     right: -4,
                     child: Container(
                       padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(color: AppColors.surface,
+                      decoration: BoxDecoration(color: AppColors.surface,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -90,7 +90,7 @@ class WorkerCard extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                       color: AppColors.textPrimary,
@@ -102,7 +102,7 @@ class WorkerCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       category!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
                       ),
@@ -118,7 +118,7 @@ class WorkerCard extends StatelessWidget {
                       const SizedBox(width: 2),
                       Text(
                         rating.toStringAsFixed(1),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -127,7 +127,7 @@ class WorkerCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         '($reviewCount)',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           color: AppColors.textSecondary,
                         ),

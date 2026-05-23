@@ -28,8 +28,8 @@ class AiRecommendationsSection extends ConsumerWidget {
         jobsAsync.when(
           data: (jobs) {
             if (jobs.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   'Henüz öneri yok. Profilini tamamla!',
                   style: TextStyle(color: AppColors.textHint, fontSize: 13),
@@ -110,7 +110,7 @@ class _RecommendedJobCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     job['category'] as String? ?? '',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 11, color: AppColors.textHint),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -121,7 +121,7 @@ class _RecommendedJobCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               job['title'] as String? ?? '',
-              style: const TextStyle(
+              style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                   color: AppColors.textPrimary),
@@ -141,14 +141,14 @@ class _RecommendedJobCard extends StatelessWidget {
                 ),
                 Row(
                   children: [
-                    const Icon(Icons.location_on_rounded,
+                    Icon(Icons.location_on_rounded,
                         size: 11, color: AppColors.textHint),
                     const SizedBox(width: 2),
                     SizedBox(
                       width: 60,
                       child: Text(
                         job['location'] as String? ?? '',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 10, color: AppColors.textHint),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

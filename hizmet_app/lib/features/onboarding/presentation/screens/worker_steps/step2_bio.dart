@@ -23,7 +23,7 @@ class WorkerOnboardingStep2Bio extends StatelessWidget {
           const Text('📝 Kendinden bahset',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          const Text(
+          Text(
               'Müşteriler seni daha iyi tanısın. Tecrübe, uzmanlık ve hizmet alanlarını anlat (min 50 karakter).',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
           const SizedBox(height: 20),

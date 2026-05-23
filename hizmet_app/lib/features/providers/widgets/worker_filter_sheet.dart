@@ -151,8 +151,8 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
       child: Container(
-        decoration: const BoxDecoration(color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         constraints: BoxConstraints(maxHeight: mq.size.height * 0.85),
         child: Column(
@@ -173,7 +173,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
               padding: const EdgeInsets.fromLTRB(20, 8, 12, 4),
               child: Row(
                 children: [
-                  const Text('Filtrele',
+                  Text('Filtrele',
                       style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -293,11 +293,11 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
                       onPressed: _reset,
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: AppColors.border),
+                        side: BorderSide(color: AppColors.border),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Sıfırla',
+                      child: Text('Sıfırla',
                           style: TextStyle(
                               color: AppColors.textSecondary,
                               fontWeight: FontWeight.w600)),
@@ -330,7 +330,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
 
   Widget _sectionTitle(String s) => Text(
         s,
-        style: const TextStyle(
+        style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary),
@@ -381,11 +381,11 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
       maxLength: 200,
       decoration: InputDecoration(
         hintText: 'örn: gece geç saat çalışan tesisatçı',
-        hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 13),
+        hintStyle: TextStyle(color: AppColors.textHint, fontSize: 13),
         prefixIcon: const Icon(Icons.auto_awesome_rounded,
             size: 18, color: AppColors.primary),
         helperText: 'AI ile sonuçları akıllı sırala',
-        helperStyle: const TextStyle(fontSize: 11, color: AppColors.textHint),
+        helperStyle: TextStyle(fontSize: 11, color: AppColors.textHint),
         counterText: '',
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -393,11 +393,11 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
         fillColor: AppColors.background,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -424,8 +424,8 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.textHint),
-        prefixIcon: const Icon(Icons.payments_outlined,
+        hintStyle: TextStyle(color: AppColors.textHint),
+        prefixIcon: Icon(Icons.payments_outlined,
             size: 18, color: AppColors.textHint),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -433,11 +433,11 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
         fillColor: AppColors.background,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -506,13 +506,13 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary)),
                 const SizedBox(height: 2),
                 Text(subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 11, color: AppColors.textHint)),
               ],
             ),

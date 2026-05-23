@@ -61,7 +61,7 @@ class _BoostDialogState extends ConsumerState<BoostDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Daha fazla teklif almak için ilanı öne çıkar.',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),

@@ -106,7 +106,7 @@ class _ReportUserSheetState extends ConsumerState<ReportUserSheet> {
               Expanded(
                 child: Text(
                   '${widget.userName} şikayet et',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -116,7 +116,7 @@ class _ReportUserSheetState extends ConsumerState<ReportUserSheet> {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Sebep seç',
             style: TextStyle(
               fontSize: 13,
@@ -148,7 +148,7 @@ class _ReportUserSheetState extends ConsumerState<ReportUserSheet> {
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Açıklama (opsiyonel)',
             style: TextStyle(
               fontSize: 13,

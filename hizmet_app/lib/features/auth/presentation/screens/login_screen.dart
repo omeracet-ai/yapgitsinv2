@@ -160,7 +160,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary),
           tooltip: 'Anasayfa',
           onPressed: () {
             if (context.canPop()) {
@@ -188,7 +188,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 8),
               Text(
                 l.loginSubtitle,
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppColors.textSecondary, fontSize: 16),
               ).animate().fade(delay: 200.ms).slideX(begin: -0.1),
               const SizedBox(height: 48),
@@ -264,11 +264,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // ─────────────────────────────────────────────────────────
               // Phase 191 — Social Sign-In divider + buttons
               // ─────────────────────────────────────────────────────────
-              const Row(
+              Row(
                 children: [
                   Expanded(child: Divider(color: AppColors.border)),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       'veya',
                       style: TextStyle(

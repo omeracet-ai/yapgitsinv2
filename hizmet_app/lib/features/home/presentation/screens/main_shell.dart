@@ -606,8 +606,8 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                 .take(5)
                 .toList();
             if (open.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 child: Text('Henüz açık ilan yok.',
                     style: TextStyle(
                         color: AppColors.textHint, fontSize: 13)),
@@ -708,7 +708,7 @@ class _RecentJobRow extends StatelessWidget {
               children: [
                 Text(
                   job.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                     color: AppColors.textPrimary,
@@ -719,13 +719,13 @@ class _RecentJobRow extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.location_on_rounded,
+                    Icon(Icons.location_on_rounded,
                         size: 11, color: AppColors.textHint),
                     const SizedBox(width: 2),
                     Expanded(
                       child: Text(
                         job.location,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 11, color: AppColors.textHint),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -847,7 +847,7 @@ class _HomeProviderCard extends StatelessWidget {
             Text(name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                     color: AppColors.textPrimary)),
@@ -856,7 +856,7 @@ class _HomeProviderCard extends StatelessWidget {
               Text(firstCat,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 11, color: AppColors.textHint)),
             ],
             const SizedBox(height: 8),
@@ -866,13 +866,13 @@ class _HomeProviderCard extends StatelessWidget {
                     size: 14, color: Colors.amber.shade400),
                 const SizedBox(width: 3),
                 Text(rating.toStringAsFixed(1),
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary)),
                 const SizedBox(width: 3),
                 Text('($reviews)',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 11, color: AppColors.textHint)),
               ],
             ),

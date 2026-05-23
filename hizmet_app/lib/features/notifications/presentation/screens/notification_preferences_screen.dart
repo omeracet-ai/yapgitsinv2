@@ -97,7 +97,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
                               style:
                                   const TextStyle(fontWeight: FontWeight.w600)),
                           subtitle: Text(_items[i].subtitle,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.textSecondary)),
                           activeThumbColor: AppColors.primary,

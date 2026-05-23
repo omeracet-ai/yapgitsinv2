@@ -146,14 +146,14 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                           size: 40, color: AppColors.error),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Bağlantı hatası',
+                    Text('Bağlantı hatası',
                         style: TextStyle(
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.w600,
                             fontSize: 15)),
                     const SizedBox(height: 6),
                     Text('$e',
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: AppColors.textSecondary, fontSize: 13),
                         textAlign: TextAlign.center),
                     const SizedBox(height: 20),
@@ -255,8 +255,8 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                   child: TextField(
                     controller: _searchController,
                     onChanged: _onSearchChanged,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
+                    style: TextStyle(color: AppColors.textPrimary),
+                    decoration: InputDecoration(
                       hintText: 'Fırsat ara...',
                       hintStyle: TextStyle(color: AppColors.textHint),
                       prefixIcon:
@@ -409,12 +409,12 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
           ),
           const SizedBox(height: 18),
           Text(hasSearch ? 'Sonuç bulunamadı' : 'Bu kategoride açık ilan yok.',
-              style: const TextStyle(
+              style: TextStyle(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
                   fontSize: 15)),
           const SizedBox(height: 6),
-          const Text('Farklı bir kategori ya da kelime deneyin.',
+          Text('Farklı bir kategori ya da kelime deneyin.',
               style: TextStyle(color: AppColors.textHint, fontSize: 13)),
           const SizedBox(height: 16),
           OutlinedButton.icon(
@@ -552,7 +552,7 @@ class _OpportunityCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(job.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 15,
                               color: AppColors.textPrimary),
@@ -598,7 +598,7 @@ class _OpportunityCard extends ConsumerWidget {
                 children: [
                   // ── Açıklama ─────────────────────────────────────────────
                   Text(job.description ?? '',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
                           height: 1.45),
@@ -620,7 +620,7 @@ class _OpportunityCard extends ConsumerWidget {
                               width: 60, height: 60, fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => Container(
                                   width: 60, height: 60, color: AppColors.border,
-                                  child: const Icon(Icons.broken_image_rounded,
+                                  child: Icon(Icons.broken_image_rounded,
                                       size: 20, color: AppColors.textHint))),
                         ),
                       ),
@@ -631,18 +631,18 @@ class _OpportunityCard extends ConsumerWidget {
 
                   // ── Alt bilgi + CTA ────────────────────────────────────────
                   Row(children: [
-                    const Icon(Icons.location_on_rounded, size: 14, color: AppColors.textHint),
+                    Icon(Icons.location_on_rounded, size: 14, color: AppColors.textHint),
                     const SizedBox(width: 3),
                     Expanded(
                       child: Text(job.location,
-                          style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                          style: TextStyle(fontSize: 12, color: AppColors.textHint),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                     ),
                     const SizedBox(width: 6),
                     Icon(Icons.schedule_rounded, size: 13, color: Colors.grey.shade400),
                     const SizedBox(width: 2),
                     Text(postedAgo,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+                        style: TextStyle(fontSize: 12, color: AppColors.textHint)),
                     const SizedBox(width: 8),
                     // Teklif sayısı rozeti
                     Container(

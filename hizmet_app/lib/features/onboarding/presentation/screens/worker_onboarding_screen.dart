@@ -182,7 +182,7 @@ class _WorkerOnboardingScreenState
         actions: [
           TextButton(
             onPressed: _saving ? null : _skip,
-            child: const Text('Atla',
+            child: Text('Atla',
                 style: TextStyle(color: AppColors.textSecondary)),
           ),
         ],
@@ -247,7 +247,7 @@ class _WorkerOnboardingScreenState
             top: false,
             child: Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-              decoration: const BoxDecoration(color: AppColors.surface,
+              decoration: BoxDecoration(color: AppColors.surface,
                 border: Border(top: BorderSide(color: AppColors.border)),
               ),
               child: Row(

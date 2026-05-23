@@ -98,7 +98,7 @@ class _PromoScreenState extends ConsumerState<PromoScreen> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Kodunu gir, doğrula; ardından uygula.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
@@ -157,7 +157,7 @@ class _PromoScreenState extends ConsumerState<PromoScreen> {
                     if (_validated!.description.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(_validated!.description,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary)),
                     ],

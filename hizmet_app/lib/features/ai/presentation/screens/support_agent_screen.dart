@@ -95,8 +95,8 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
               ),
             ),
           if (_loading)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Row(
                 children: [
                   SizedBox(
@@ -133,7 +133,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
                   ?.copyWith(color: AppColors.textPrimary),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Kredi, ödeme, ilan yönetimi veya platform hakkında her türlü sorunuzu sorabilirsiniz.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary),

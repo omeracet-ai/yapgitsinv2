@@ -80,14 +80,14 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
             _section('Ücret', priceLabel, Icons.payments_outlined,
                 emphasize: true),
             const Divider(height: 32),
-            const Text('Açıklama',
+            Text('Açıklama',
                 style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textSecondary)),
             const SizedBox(height: 6),
             Text(b.description,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 15, color: AppColors.textPrimary, height: 1.4)),
             const SizedBox(height: 24),
             if (widget.asWorker && b.status == BookingStatus.pending) ...[
@@ -128,8 +128,8 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                     orElse: () => false,
                   );
                   if (!held) {
-                    return const Padding(
-                      padding: EdgeInsets.all(12),
+                    return Padding(
+                      padding: const EdgeInsets.all(12),
                       child: Text(
                         'Müşteri ödemeyi yaptıktan sonra "İşi Başlat" butonu görünecek.',
                         style: TextStyle(color: AppColors.textSecondary),
@@ -173,7 +173,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12, color: AppColors.textSecondary)),
                 const SizedBox(height: 2),
                 Text(

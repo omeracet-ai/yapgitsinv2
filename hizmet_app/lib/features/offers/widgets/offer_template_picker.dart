@@ -71,13 +71,13 @@ class OfferTemplatePickerSheet extends ConsumerWidget {
                 ),
                 data: (list) {
                   if (list.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 28),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 28),
                       child: Column(
                         children: [
                           Icon(Icons.note_alt_outlined,
                               size: 48, color: AppColors.textSecondary),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text('Henüz şablon yok',
                               style: TextStyle(
                                   fontSize: 14,

@@ -108,10 +108,10 @@ class ProfileScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.account_circle_outlined,
+              Icon(Icons.account_circle_outlined,
                   size: 80, color: AppColors.textHint),
               const SizedBox(height: 24),
-              const Text('Profilinizi görüntülemek için giriş yapın.',
+              Text('Profilinizi görüntülemek için giriş yapın.',
                   textAlign: TextAlign.center,
                   style:
                       TextStyle(fontSize: 16, color: AppColors.textSecondary)),
@@ -358,7 +358,7 @@ class ProfileScreen extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.email_outlined, color: AppColors.textSecondary),
+          Icon(Icons.email_outlined, color: AppColors.textSecondary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -434,7 +434,7 @@ class ProfileScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                   'SMTP henüz aktif değil — bağlantıyı manuel açın',
                   style: TextStyle(
                       fontSize: 12, color: AppColors.textSecondary)),
@@ -672,7 +672,7 @@ class ProfileScreen extends ConsumerWidget {
           Text('$rate%',
               style: TextStyle(
                   fontSize: 28, fontWeight: FontWeight.bold, color: color)),
-          const Text('başarı oranı',
+          Text('başarı oranı',
               style: TextStyle(fontSize: 11, color: AppColors.textHint)),
           const SizedBox(height: 10),
           _statRow('Toplam', total, AppColors.textSecondary),
@@ -703,7 +703,7 @@ class ProfileScreen extends ConsumerWidget {
       children: [
         Text(label,
             style:
-                const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                TextStyle(fontSize: 12, color: AppColors.textSecondary)),
         Text('$value',
             style: TextStyle(
                 fontSize: 12, fontWeight: FontWeight.bold, color: color)),
@@ -731,7 +731,7 @@ class ProfileScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Rozetlerim',
                 style: TextStyle(
                   fontSize: 16,
@@ -793,7 +793,7 @@ class ProfileScreen extends ConsumerWidget {
                                   style: const TextStyle(
                                       fontWeight: FontWeight.w600, fontSize: 14)),
                               Text(c.issuer,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 12, color: AppColors.textSecondary)),
                             ],
                           ),
@@ -844,7 +844,7 @@ class ProfileScreen extends ConsumerWidget {
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   Text('${photos.length} fotoğraf',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 12, color: AppColors.textHint)),
                 ],
               ),
@@ -876,7 +876,7 @@ class ProfileScreen extends ConsumerWidget {
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => Container(
           color: AppColors.surfaceElevated,
-          child: const Icon(Icons.image_not_supported_outlined,
+          child: Icon(Icons.image_not_supported_outlined,
               color: AppColors.textHint),
         ),
         loadingBuilder: (_, child, progress) {
@@ -919,7 +919,7 @@ class ProfileScreen extends ConsumerWidget {
                 Icon(Icons.star, size: 16, color: Colors.amber.shade600),
                 const SizedBox(width: 2),
                 Text('${avg.toStringAsFixed(1)} ($total)',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSecondary)),
@@ -989,7 +989,7 @@ class ProfileScreen extends ConsumerWidget {
                             fontWeight: FontWeight.w600, fontSize: 13)),
                     if (timeAgo.isNotEmpty)
                       Text(timeAgo,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 11, color: AppColors.textHint)),
                   ]),
             ),
@@ -1007,7 +1007,7 @@ class ProfileScreen extends ConsumerWidget {
           if (comment.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(comment,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13, color: AppColors.textSecondary, height: 1.4)),
           ],
         ],
@@ -1426,7 +1426,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   '30 gün içinde hesabınızı geri yükleyebilirsiniz. Süre dolduğunda veriler kalıcı olarak silinir.',
                   style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                 ),
@@ -1541,7 +1541,7 @@ class ProfileScreen extends ConsumerWidget {
         color: enabled ? AppColors.verifiedGreen : AppColors.textPrimary,
         size: 22,
       ),
-      title: const Text('İki Adımlı Doğrulama',
+      title: Text('İki Adımlı Doğrulama',
           style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 15,
@@ -1554,7 +1554,7 @@ class ProfileScreen extends ConsumerWidget {
             fontWeight: FontWeight.w600),
       ),
       trailing:
-          const Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
+          Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
       onTap: () async {
         if (!enabled) {
           final result = await context.push<bool>('/2fa-setup');
@@ -1633,20 +1633,20 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildAppearanceItem(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
     return ListTile(
-      leading: const Icon(Icons.brightness_6_outlined,
+      leading: Icon(Icons.brightness_6_outlined,
           color: AppColors.textPrimary, size: 22),
-      title: const Text('Görünüm',
+      title: Text('Görünüm',
           style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 15,
               fontWeight: FontWeight.w500)),
       subtitle: Text(themeModeLabel(mode),
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 12,
               color: AppColors.textHint,
               fontWeight: FontWeight.w600)),
       trailing:
-          const Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
+          Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
       onTap: () => _showAppearanceSheet(context, ref),
     );
   }
@@ -1703,20 +1703,20 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildLanguageItem(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
     return ListTile(
-      leading: const Icon(Icons.language_outlined,
+      leading: Icon(Icons.language_outlined,
           color: AppColors.textPrimary, size: 22),
-      title: const Text('Dil / Language',
+      title: Text('Dil / Language',
           style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 15,
               fontWeight: FontWeight.w500)),
       subtitle: Text(localeLabel(locale),
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 12,
               color: AppColors.textHint,
               fontWeight: FontWeight.w600)),
       trailing:
-          const Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
+          Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
       onTap: () => _showLanguageSheet(context, ref),
     );
   }
@@ -1791,7 +1791,7 @@ class ProfileScreen extends ConsumerWidget {
               fontSize: 15,
               fontWeight: FontWeight.w500)),
       trailing:
-          const Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
+          Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
       onTap: onTap,
     );
   }

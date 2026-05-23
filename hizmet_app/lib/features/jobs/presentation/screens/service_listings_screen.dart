@@ -173,7 +173,7 @@ class _ServiceListingsScreenState
                   padding: const EdgeInsets.all(24),
                   child: Text('Hata: $e',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.textSecondary)),
+                      style: TextStyle(color: AppColors.textSecondary)),
                 ),
               ),
             ),
@@ -203,8 +203,8 @@ class _ServiceListingsScreenState
                   child: TextField(
                     controller: _searchController,
                     onChanged: _onSearchChanged,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
+                    style: TextStyle(color: AppColors.textPrimary),
+                    decoration: InputDecoration(
                       hintText: 'Hizmet ara...',
                       hintStyle: TextStyle(color: AppColors.textHint),
                       prefixIcon:
@@ -440,19 +440,19 @@ class _ServiceListingCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(job.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 15,
                               color: AppColors.textPrimary)),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.location_on_rounded,
+                          Icon(Icons.location_on_rounded,
                               size: 12, color: AppColors.textHint),
                           const SizedBox(width: 2),
                           Expanded(
                             child: Text(job.location,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.textHint),
                                 maxLines: 1,
@@ -482,7 +482,7 @@ class _ServiceListingCard extends StatelessWidget {
             Text(job.desc,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
                     height: 1.45)),
@@ -507,7 +507,7 @@ class _ServiceListingCard extends StatelessWidget {
                       errorWidget: (_, __, ___) => Container(
                           width: 90,
                           color: AppColors.surfaceElevated,
-                          child: const Icon(Icons.broken_image_outlined,
+                          child: Icon(Icons.broken_image_outlined,
                               color: AppColors.textHint, size: 20)),
                     ),
                   ),
@@ -637,7 +637,7 @@ class _PosterStrip extends StatelessWidget {
                 poster.fullName.isEmpty ? 'Usta' : poster.fullName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 13.5,
                     color: AppColors.textPrimary),

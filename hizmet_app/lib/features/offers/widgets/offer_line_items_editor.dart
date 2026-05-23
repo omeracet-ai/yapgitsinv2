@@ -187,7 +187,7 @@ class _OfferLineItemsEditorState extends State<OfferLineItemsEditor> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Σ Toplam',
+              Text('Σ Toplam',
                   style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
               Text('₺${_grandTotal.toStringAsFixed(2)}',
                   style: const TextStyle(

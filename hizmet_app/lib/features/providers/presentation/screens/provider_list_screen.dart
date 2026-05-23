@@ -145,7 +145,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
       elevation: 0,
       automaticallyImplyLeading: false,
       titleSpacing: 16,
-      flexibleSpace: const ColoredBox(color: AppColors.background),
+      flexibleSpace: ColoredBox(color: AppColors.background),
       title: const Text(
         'Ustalar',
         style: TextStyle(
@@ -177,8 +177,8 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                   decoration: InputDecoration(
                     hintText: 'İsim veya hizmet ara...',
                     hintStyle:
-                        const TextStyle(color: AppColors.textHint, fontSize: 14),
-                    prefixIcon: const Icon(Icons.search,
+                        TextStyle(color: AppColors.textHint, fontSize: 14),
+                    prefixIcon: Icon(Icons.search,
                         color: AppColors.textHint, size: 20),
                     suffixIcon: _search.isNotEmpty
                         ? IconButton(
@@ -460,7 +460,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('${providers.length} usta bulundu',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13, color: AppColors.textSecondary)),
                 const SizedBox(height: 8),
                 SizedBox(
@@ -536,7 +536,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                           fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 8),
                   Text('(${regular.length})',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13, color: AppColors.textHint)),
                 ],
               ),
@@ -566,10 +566,10 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.history_rounded,
+              Icon(Icons.history_rounded,
                   size: 16, color: AppColors.textSecondary),
               const SizedBox(width: 6),
-              const Text('Son Aramalar',
+              Text('Son Aramalar',
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -725,9 +725,9 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textHint),
+            Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textHint),
             const SizedBox(height: 12),
-            Text(msg, style: const TextStyle(color: AppColors.textHint)),
+            Text(msg, style: TextStyle(color: AppColors.textHint)),
           ],
         ),
       );
@@ -904,7 +904,7 @@ class _FeaturedCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                       color: AppColors.textPrimary)),
@@ -917,7 +917,7 @@ class _FeaturedCard extends StatelessWidget {
                   Text(rating.toStringAsFixed(1),
                       style: const TextStyle(
                           fontSize: 12, fontWeight: FontWeight.w600)),
-                  Text(' ($reviews)', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                  Text(' ($reviews)', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
                 ],
               ),
               if (bio.isNotEmpty) ...[
@@ -926,7 +926,7 @@ class _FeaturedCard extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                    style: TextStyle(fontSize: 11, color: AppColors.textHint)),
               ],
               if (cats.isNotEmpty) ...[
                 const Spacer(),
@@ -1044,7 +1044,7 @@ class _ProviderCard extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
                                   color: AppColors.textPrimary),
@@ -1090,12 +1090,12 @@ class _ProviderCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(rating.toStringAsFixed(1),
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary)),
                         Text(' ($reviews yorum)',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 11, color: AppColors.textHint)),
                       ],
                     ),
@@ -1132,7 +1132,7 @@ class _ProviderCard extends StatelessWidget {
                       Text(bio,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
                               height: 1.4)),
@@ -1174,14 +1174,14 @@ class _ProviderCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.payments_outlined,
+                          Icon(Icons.payments_outlined,
                               size: 13, color: AppColors.textHint),
                           const SizedBox(width: 4),
                           Text(
                             rateMax != null
                                 ? '$rateMin–$rateMax ₺/sa'
                                 : '$rateMin ₺/sa',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textSecondary),
@@ -1201,7 +1201,7 @@ class _ProviderCard extends StatelessWidget {
                     FavoriteButton(workerId: user!['id'].toString())
                   else
                     const SizedBox(height: 34),
-                  const Icon(Icons.chevron_right,
+                  Icon(Icons.chevron_right,
                       color: AppColors.textHint, size: 20),
                 ],
               ),

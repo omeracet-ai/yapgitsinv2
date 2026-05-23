@@ -30,7 +30,7 @@ class WorkerOnboardingStep5Identity extends StatelessWidget {
           const Text('🪪 Kimlik doğrulama',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          const Text(
+          Text(
               'Güvenli marketplace için kimlik fotoğrafı zorunlu. Şifreli saklanır.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
           const SizedBox(height: 20),

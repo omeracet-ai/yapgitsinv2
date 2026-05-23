@@ -22,7 +22,7 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
           const Text('💰 Saatlik ücret aralığın',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          const Text(
+          Text(
               'Opsiyonel — istersen şimdi atla, profil ayarlarından sonra düzenle.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
           const SizedBox(height: 24),

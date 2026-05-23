@@ -102,7 +102,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
         const Text('İki Adımlı Doğrulama Kur',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           'Hesabınıza ek güvenlik katmanı ekleyin. Google Authenticator, '
           'Authy veya 1Password gibi bir uygulama gerekecek.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
@@ -153,7 +153,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
           const Text('QR Kodu Tarayın',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Authenticator uygulamanızla aşağıdaki QR kodu tarayın.',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             textAlign: TextAlign.center,
@@ -166,7 +166,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
           ),
           const SizedBox(height: 24),
           if (_secret != null) ...[
-            const Text('Veya bu kodu manuel girin:',
+            Text('Veya bu kodu manuel girin:',
                 style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
             const SizedBox(height: 8),
             SelectableText(
@@ -208,7 +208,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
         const Text('Doğrulama Kodu',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'Authenticator uygulamanızdaki 6 haneli kodu girin.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),

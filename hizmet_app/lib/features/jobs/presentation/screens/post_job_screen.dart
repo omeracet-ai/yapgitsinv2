@@ -367,7 +367,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     final isLastStep = _currentStep == 2;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.border)),
       ),
@@ -506,7 +506,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(AppLocalizations.of(context).postJobCategorySelect,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
@@ -545,7 +545,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                     Expanded(
                       child: Text(name,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 14, color: AppColors.textPrimary)),
                     ),
                   ],
@@ -563,7 +563,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                 prefixIcon: Icon(Icons.category_outlined),
               ),
               dropdownColor: AppColors.surface,
-              style: const TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: AppColors.textPrimary),
               items: items,
               onChanged: (v) {
                 setState(() => _selectedCategory = v);
@@ -612,7 +612,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Ne zaman yapılmasını istiyorsunuz?',
+        Text('Ne zaman yapılmasını istiyorsunuz?',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
         const SizedBox(height: 10),
@@ -917,7 +917,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Fotoğraf & Video',
+        Text('Fotoğraf & Video',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
         const SizedBox(height: 10),
@@ -937,7 +937,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         Row(
           children: [
             Text(AppLocalizations.of(context).postJobLocation,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary)),
             const SizedBox(width: 4),
             const Text('*',
@@ -948,7 +948,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           ],
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Doğru ustaya hızlı ulaşmak için konum zorunlu — harita pin\'i veya "Konumumu Kullan".',
           style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
         ),

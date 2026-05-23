@@ -49,7 +49,7 @@ class _Slide {
 
 // ─── Fallback slides (Match temp1.jpg) ─────────────────────────────────────────────
 
-const _fallback = [
+final _fallback = [
   _Slide(
     title: 'Bir işin mi var?\nBu gece\nbiri yapsın.',
     body: 'Türkiye, Azerbaycan, Kıbrıs ve Özbekistan\'da binlerce güvenilir profesyonele saniyeler içinde ulaş.',
@@ -160,9 +160,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loadingSlides) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
 
@@ -303,7 +303,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.textPrimary,
                       backgroundColor: AppColors.surface,
-                      side: const BorderSide(
+                      side: BorderSide(
                           color: AppColors.border, width: 1),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(28)),

@@ -150,11 +150,11 @@ class _PostServiceRequestScreenState
                     return DropdownMenuItem(
                       value: name,
                       child: Text(name,
-                          style: const TextStyle(color: AppColors.textPrimary)),
+                          style: TextStyle(color: AppColors.textPrimary)),
                     );
                   }).toList(),
                   dropdownColor: AppColors.surface,
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: AppColors.textPrimary),
                   onChanged: (v) {
                     final cat = cats.firstWhere((c) => c['name'] == v,
                         orElse: () => {});
@@ -278,12 +278,12 @@ class _PostServiceRequestScreenState
                               : Image.file(io.File(_image!.path),
                                   fit: BoxFit.cover, width: double.infinity),
                         )
-                      : const Column(
+                      : Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.add_photo_alternate_outlined,
                                 size: 40, color: AppColors.textHint),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text('Fotoğraf Ekle (opsiyonel)',
                                 style: TextStyle(color: AppColors.textHint)),
                           ],

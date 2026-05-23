@@ -52,10 +52,10 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(32),
-      children: const [
-        SizedBox(height: 80),
+      children: [
+        const SizedBox(height: 80),
         Icon(Icons.bookmark_border, size: 64, color: AppColors.textSecondary),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Text(
           'Henüz şablon yok.',
           textAlign: TextAlign.center,
@@ -65,7 +65,7 @@ class _EmptyState extends StatelessWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           "İlan açtıktan sonra üst kısmındaki 'Şablon olarak kaydet' kutusunu işaretleyerek hızlıca tekrar kullanabilirsin.",
           textAlign: TextAlign.center,
@@ -128,7 +128,7 @@ class _TemplateCardState extends ConsumerState<_TemplateCard> {
             ),
             const SizedBox(height: 6),
             Text(title,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13, color: AppColors.textSecondary),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis),

@@ -122,19 +122,19 @@ class _JobQuestionsTabState extends ConsumerState<JobQuestionsTab> {
                     controller: _questionCtrl,
                     maxLines: 3,
                     minLines: 1,
-                    style: const TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Soru sor...',
-                      hintStyle: const TextStyle(color: AppColors.textHint),
+                      hintStyle: TextStyle(color: AppColors.textHint),
                       filled: true,
                       fillColor: AppColors.surfaceElevated,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 10),
@@ -339,21 +339,21 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                       Row(
                         children: [
                               Text(name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
                                   color: AppColors.textPrimary)),
                           const Spacer(),
                           if (createdAt != null)
                             Text(_timeAgo(createdAt),
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 11,
                                     color: AppColors.textHint)),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(text,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 14,
                               height: 1.4,
                               color: AppColors.textPrimary)),
@@ -366,13 +366,13 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
 
           // Yanıtlar
           if (replies.isNotEmpty) ...[
-            const Divider(height: 1, color: AppColors.border),
+            Divider(height: 1, color: AppColors.border),
             ...replies.map((r) => _ReplyTile(reply: r)),
           ],
 
           // Yanıt kutusu
           if (canReply) ...[
-            const Divider(height: 1, color: AppColors.border),
+            Divider(height: 1, color: AppColors.border),
             if (_showReplyBox)
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
@@ -384,19 +384,19 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                         controller: _replyCtrl,
                         maxLines: 2,
                         minLines: 1,
-                        style: const TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(color: AppColors.textPrimary),
                         decoration: InputDecoration(
                           hintText: 'Yanıtınız...',
-                          hintStyle: const TextStyle(color: AppColors.textHint),
+                          hintStyle: TextStyle(color: AppColors.textHint),
                           filled: true,
                           fillColor: AppColors.surfaceElevated,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: AppColors.border),
+                            borderSide: BorderSide(color: AppColors.border),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: AppColors.border),
+                            borderSide: BorderSide(color: AppColors.border),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 8),
@@ -510,19 +510,19 @@ class _ReplyTile extends StatelessWidget {
               children: [
                 Row(children: [
                   Text(name,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                           color: AppColors.textPrimary)),
                   const Spacer(),
                   if (createdAt != null)
                     Text(_timeAgo(createdAt),
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 10, color: AppColors.textHint)),
                 ]),
                 const SizedBox(height: 2),
                 Text(text,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13,
                         height: 1.4,
                         color: AppColors.textSecondary)),

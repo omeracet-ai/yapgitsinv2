@@ -208,8 +208,8 @@ class _AvailabilityEditorSheetState
                 ],
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 4, 20, 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
               child: Text(
                 'Hangi gün ve saatlerde iş alabileceğinizi belirleyin.',
                 style:
@@ -315,8 +315,8 @@ class _DayRow extends StatelessWidget {
                     label: formatTime(slot.startTime),
                     onTap: saving ? null : onPickStart,
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Text('–',
                         style: TextStyle(color: AppColors.textSecondary)),
                   ),
@@ -328,7 +328,7 @@ class _DayRow extends StatelessWidget {
               ),
             ),
           ] else
-            const Expanded(
+            Expanded(
               child: Text('Kapalı',
                   style: TextStyle(
                       color: AppColors.textHint, fontSize: 13)),

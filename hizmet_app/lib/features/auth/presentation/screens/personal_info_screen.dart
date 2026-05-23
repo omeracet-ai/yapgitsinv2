@@ -615,7 +615,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                         Row(children: [
                           Expanded(
                             child: Text(title,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14,
                                     color: AppColors.textPrimary)),
@@ -625,7 +625,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                                 color: Colors.blue, size: 18),
                         ]),
                         Text(subtitle,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12, color: AppColors.textSecondary)),
                         const SizedBox(height: 4),
                         if (hasFile)
@@ -664,7 +664,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                       width: double.infinity,
                       errorBuilder: (_, __, ___) => Container(
                             color: Colors.grey.shade100,
-                            child: const Icon(Icons.broken_image_outlined,
+                            child: Icon(Icons.broken_image_outlined,
                                 color: AppColors.textHint, size: 40),
                           )),
             ),

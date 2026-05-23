@@ -64,7 +64,7 @@ class _CertificationsSectionState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Doğrulanmış sertifikalar profilinizde "Sertifikalı" rozeti olarak görünür.',
           style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
@@ -75,8 +75,8 @@ class _CertificationsSectionState
             child: Center(child: CircularProgressIndicator()),
           )
         else if (_items.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
               'Henüz sertifika eklemediniz.',
               style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
@@ -119,7 +119,7 @@ class _CertificationsSectionState
                         fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
                 Text(c.issuer,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12, color: AppColors.textSecondary)),
                 const SizedBox(height: 2),
                 Row(children: [

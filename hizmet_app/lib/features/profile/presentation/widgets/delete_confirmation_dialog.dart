@@ -85,7 +85,7 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
                   Expanded(
                     child: Text(
                       _step == 0 ? 'Hesabı Sil' : 'Son Onay',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -93,7 +93,7 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close,
+                    icon: Icon(Icons.close,
                         color: AppColors.textSecondary, size: 20),
                     onPressed: () => Navigator.of(context).pop(),
                     padding: EdgeInsets.zero,
@@ -118,7 +118,7 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Devam etmek için mevcut şifrenizi girin.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
         ),
@@ -126,21 +126,21 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
         TextField(
           controller: _passwordCtrl,
           obscureText: _obscure,
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: 'Şifreniz',
-            hintStyle: const TextStyle(color: AppColors.textHint),
+            hintStyle: TextStyle(color: AppColors.textHint),
             filled: true,
             fillColor: AppColors.surfaceElevated,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -195,7 +195,7 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
         TextField(
           controller: _confirmCtrl,
           textCapitalization: TextCapitalization.characters,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textPrimary,
             letterSpacing: 1.2,
           ),
@@ -211,11 +211,11 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -236,11 +236,11 @@ class _DeleteConfirmationDialogState extends State<DeleteConfirmationDialog> {
         color: AppColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, color: AppColors.primary, size: 16),
-          SizedBox(width: 8),
+          const Icon(Icons.info_outline, color: AppColors.primary, size: 16),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               '30 gün içinde geri alabilirsiniz',

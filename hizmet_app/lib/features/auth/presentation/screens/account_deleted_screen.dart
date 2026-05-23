@@ -44,7 +44,7 @@ class AccountDeletedScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 '30 gün içinde aynı bilgilerle giriş yaparak hesabınızı geri yükleyebilirsiniz.\n\nBu süre dolduğunda verileriniz kalıcı olarak silinecektir.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -107,7 +107,7 @@ class AccountDeletedScreen extends StatelessWidget {
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => context.go('/'),
-                child: const Text(
+                child: Text(
                   'Ana Sayfaya Dön',
                   style: TextStyle(color: AppColors.textSecondary),
                 ),

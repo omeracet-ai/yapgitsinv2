@@ -164,7 +164,7 @@ class _ProfileVideoUploaderState extends ConsumerState<ProfileVideoUploader> {
             ],
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Hizmetlerinizi tanıtan kısa bir video ekleyin',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
@@ -219,15 +219,15 @@ class _ProfileVideoUploaderState extends ConsumerState<ProfileVideoUploader> {
           borderRadius: BorderRadius.circular(12),
           color: AppColors.primary.withValues(alpha: 0.05),
         ),
-        child: const Column(
+        child: Column(
           children: [
-            Icon(
+            const Icon(
               Icons.cloud_upload_outlined,
               size: 40,
               color: AppColors.primary,
             ),
-            SizedBox(height: 12),
-            Text(
+            const SizedBox(height: 12),
+            const Text(
               'Video Seç',
               style: TextStyle(
                 color: AppColors.primary,
@@ -235,7 +235,7 @@ class _ProfileVideoUploaderState extends ConsumerState<ProfileVideoUploader> {
                 fontSize: 14,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               'mp4, mov, avi, mpeg • Max 50MB',
               style: TextStyle(
@@ -288,7 +288,7 @@ class _ProfileVideoUploaderState extends ConsumerState<ProfileVideoUploader> {
                         snap.hasData
                             ? '${(snap.data! / (1024 * 1024)).toStringAsFixed(1)} MB'
                             : '...',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 11,
                         ),
@@ -300,7 +300,7 @@ class _ProfileVideoUploaderState extends ConsumerState<ProfileVideoUploader> {
               if (!_isUploading)
                 GestureDetector(
                   onTap: _clearSelection,
-                  child: const Icon(Icons.close, color: AppColors.textSecondary),
+                  child: Icon(Icons.close, color: AppColors.textSecondary),
                 ),
             ],
           ),
@@ -318,7 +318,7 @@ class _ProfileVideoUploaderState extends ConsumerState<ProfileVideoUploader> {
             const SizedBox(height: 8),
             Text(
               '${(_uploadProgress * 100).toStringAsFixed(0)}% yükleniyor',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 11,
               ),

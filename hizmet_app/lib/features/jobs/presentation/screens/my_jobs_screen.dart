@@ -188,9 +188,9 @@ class _CustomerTabContent extends ConsumerWidget {
         length: 3,
         child: Column(
           children: [
-            const Material(color: AppColors.surface,
+            Material(color: AppColors.surface,
               child: TabBar(
-                tabs: [
+                tabs: const [
                   Tab(text: 'Aktif'),
                   Tab(text: 'Tamamlanan'),
                   Tab(text: 'İptal Edilen'),
@@ -274,10 +274,10 @@ class _WorkerTabContent extends ConsumerWidget {
           length: 4,
           child: Column(
             children: [
-              const Material(color: AppColors.surface,
+              Material(color: AppColors.surface,
                 child: TabBar(
                   isScrollable: true,
-                  tabs: [
+                  tabs: const [
                     Tab(text: 'Bekleyen'),
                     Tab(text: 'Kabul Edilen'),
                     Tab(text: 'Reddedilen'),
@@ -592,7 +592,7 @@ class _CustomerJobCard extends ConsumerWidget {
                       ),
                     const SizedBox(width: 8),
                     Text(dateStr,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: AppColors.textHint, fontSize: 12)),
                   ],
                 ),
@@ -600,13 +600,13 @@ class _CustomerJobCard extends ConsumerWidget {
             ),
             const SizedBox(height: 10),
             Text(title,
-                style: const TextStyle(
+                style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
                     color: AppColors.textPrimary)),
             const SizedBox(height: 4),
             Text(category,
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppColors.textSecondary, fontSize: 12)),
             if (photos.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -627,7 +627,7 @@ class _CustomerJobCard extends ConsumerWidget {
                         width: 56,
                         height: 56,
                         color: AppColors.border,
-                        child: const Icon(Icons.image_not_supported,
+                        child: Icon(Icons.image_not_supported,
                             size: 18, color: AppColors.textHint),
                       ),
                     ),
@@ -801,7 +801,7 @@ class _WorkerOfferCard extends ConsumerWidget {
                   border: OutlineInputBorder()),
             ),
             const SizedBox(height: 8),
-            const Text('Yeniden pazarlık 2.5 kredi keser.',
+            Text('Yeniden pazarlık 2.5 kredi keser.',
                 style: TextStyle(fontSize: 12, color: AppColors.textHint)),
           ],
         ),
@@ -911,7 +911,7 @@ class _WorkerOfferCard extends ConsumerWidget {
               ),
               Text(dateStr,
                   style:
-                      const TextStyle(color: AppColors.textHint, fontSize: 12)),
+                      TextStyle(color: AppColors.textHint, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 10),
@@ -921,20 +921,20 @@ class _WorkerOfferCard extends ConsumerWidget {
           const SizedBox(height: 4),
           if (jobCategory.isNotEmpty)
             Text(jobCategory,
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppColors.textSecondary, fontSize: 12)),
           if (jobLocation.isNotEmpty) ...[
             const SizedBox(height: 2),
             Row(
               children: [
-                const Icon(Icons.location_on_outlined,
+                Icon(Icons.location_on_outlined,
                     size: 12, color: AppColors.textHint),
                 const SizedBox(width: 2),
                 Expanded(
                   child: Text(jobLocation,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: AppColors.textHint, fontSize: 12)),
                 ),
               ],
@@ -949,7 +949,7 @@ class _WorkerOfferCard extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(message,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12, color: AppColors.textSecondary)),
             ),
           ],

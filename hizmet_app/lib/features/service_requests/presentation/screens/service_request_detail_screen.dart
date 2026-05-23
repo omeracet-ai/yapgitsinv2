@@ -222,21 +222,21 @@ class _ServiceRequestDetailScreenState
                         ),
                       const Spacer(),
                       Text(dateStr,
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: AppColors.textHint, fontSize: 12)),
                     ],
                   ),
 
                   const SizedBox(height: 12),
                   Text(title,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 20,
                           color: AppColors.textPrimary)),
 
                   const SizedBox(height: 8),
                   Row(children: [
-                    const Icon(Icons.location_on_outlined,
+                    Icon(Icons.location_on_outlined,
                         size: 14, color: AppColors.textHint),
                     const SizedBox(width: 4),
                     Expanded(
@@ -244,21 +244,21 @@ class _ServiceRequestDetailScreenState
                         address != null && address.isNotEmpty
                             ? '$location · $address'
                             : location,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: AppColors.textSecondary, fontSize: 13),
                       ),
                     ),
                   ]),
 
                   const SizedBox(height: 16),
-                  const Text('Açıklama',
+                  Text('Açıklama',
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                           color: AppColors.textPrimary)),
                   const SizedBox(height: 6),
                   Text(description,
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 14,
                           height: 1.5)),
@@ -290,7 +290,7 @@ class _ServiceRequestDetailScreenState
                             Text(ownerName,
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w600, fontSize: 14)),
-                            const Text('İlan Sahibi',
+                            Text('İlan Sahibi',
                                 style: TextStyle(
                                     color: AppColors.textHint, fontSize: 12)),
                           ],
@@ -379,10 +379,10 @@ class _ServiceRequestDetailScreenState
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.grey.shade200),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(Icons.person_outline, color: AppColors.textHint),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Text('Bu sizin ilanınız.',
                               style: TextStyle(
                                   color: AppColors.textSecondary,
@@ -419,7 +419,7 @@ class _ServiceRequestDetailScreenState
                         ),
                       ),
                       const SizedBox(height: 6),
-                      const Text(
+                      Text(
                         'İlanını açık-teklif sistemine çevir; ustalar fiyat verir.',
                         style: TextStyle(
                             color: AppColors.textHint, fontSize: 12),
@@ -455,7 +455,7 @@ class _ServiceRequestDetailScreenState
           TextField(
             controller: _priceCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Fiyat Teklifi ₺ (opsiyonel)',
               prefixIcon: Icon(Icons.attach_money),
               filled: true,
@@ -469,7 +469,7 @@ class _ServiceRequestDetailScreenState
             controller: _messageCtrl,
             maxLines: 4,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Mesajınız *',
               prefixIcon: Icon(Icons.message_outlined),
               alignLabelWithHint: true,

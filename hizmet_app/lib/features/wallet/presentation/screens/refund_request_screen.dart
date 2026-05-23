@@ -213,7 +213,7 @@ class _RefundRequestScreenState extends ConsumerState<RefundRequestScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Talebin onaylanırsa tutar 1-3 iş günü içinde kartına iade edilir.',
                 style: TextStyle(
                   fontSize: 12,
@@ -243,7 +243,7 @@ class _RefundRequestScreenState extends ConsumerState<RefundRequestScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Ödeme Bilgisi',
             style: TextStyle(
               fontSize: 13,
@@ -270,11 +270,11 @@ class _RefundRequestScreenState extends ConsumerState<RefundRequestScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
         ),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,

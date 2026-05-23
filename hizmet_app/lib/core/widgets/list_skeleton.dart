@@ -99,7 +99,7 @@ class ProviderCardSkeleton extends StatelessWidget {
           Container(
             width: 56,
             height: 56,
-            decoration: const BoxDecoration(color: AppColors.surface,
+            decoration: BoxDecoration(color: AppColors.surface,
               shape: BoxShape.circle,
             ),
           ),

@@ -31,7 +31,7 @@ class BookingStep1Service extends StatelessWidget {
           const Text('Hizmet Seçimi',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          const Text('Hangi hizmet için randevu almak istiyorsunuz?',
+          Text('Hangi hizmet için randevu almak istiyorsunuz?',
               style: TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 20),
           const Text('Kategori', style: TextStyle(fontWeight: FontWeight.w600)),

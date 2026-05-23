@@ -218,13 +218,13 @@ class AddressesScreen extends ConsumerWidget {
             Icon(Icons.location_off_outlined,
                 size: 72, color: Colors.grey.shade300),
             const SizedBox(height: 20),
-            const Text('Kayıtlı adresiniz yok',
+            Text('Kayıtlı adresiniz yok',
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary)),
             const SizedBox(height: 8),
-            const Text('Hızlı sipariş için adres ekleyin.',
+            Text('Hızlı sipariş için adres ekleyin.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary)),
             const SizedBox(height: 28),
@@ -347,7 +347,7 @@ class _AddressCard extends StatelessWidget {
                     children: [
                       Row(children: [
                         Text(addr.title,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary)),
@@ -371,7 +371,7 @@ class _AddressCard extends StatelessWidget {
                       if (addr.city.isNotEmpty)
                         Text(
                             '${addr.city}${addr.district.isNotEmpty ? ", ${addr.district}" : ""}',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12, color: AppColors.textSecondary)),
                     ]),
               ),
@@ -390,7 +390,7 @@ class _AddressCard extends StatelessWidget {
                       value: 'delete',
                       child: Text('Sil', style: TextStyle(color: Colors.red))),
                 ],
-                child: const Icon(Icons.more_vert, color: AppColors.textHint),
+                child: Icon(Icons.more_vert, color: AppColors.textHint),
               ),
             ]),
             if (addr.address.isNotEmpty) ...[
@@ -398,12 +398,12 @@ class _AddressCard extends StatelessWidget {
               const Divider(height: 1),
               const SizedBox(height: 8),
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Icon(Icons.map_outlined,
+                Icon(Icons.map_outlined,
                     size: 14, color: AppColors.textHint),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(addr.address,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
                           height: 1.4)),
@@ -485,8 +485,8 @@ class _AddressFormState extends State<_AddressForm> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(color: AppColors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
         left: 24,
@@ -515,7 +515,7 @@ class _AddressFormState extends State<_AddressForm> {
             const SizedBox(height: 20),
 
             // Etiket seçimi
-            const Text('Adres Etiketi',
+            Text('Adres Etiketi',
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

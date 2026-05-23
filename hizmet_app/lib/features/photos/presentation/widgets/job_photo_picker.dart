@@ -103,7 +103,7 @@ class _JobPhotoPickerState extends State<JobPhotoPicker> {
           ],
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'En az 1, en fazla ${JobPhotoPicker.maxPhotos} fotoğraf. "Toplu Ekle" ile birden fazla seçebilirsiniz.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
@@ -175,7 +175,7 @@ class _SlotTile extends StatelessWidget {
                               fit: BoxFit.cover,
                               width: 90,
                               height: 90,
-                              errorBuilder: (_, __, ___) => const Center(
+                              errorBuilder: (_, __, ___) => Center(
                                 child: Icon(Icons.image, color: AppColors.textHint),
                               ),
                             )
@@ -208,11 +208,11 @@ class _SlotTile extends StatelessWidget {
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.add_photo_alternate_outlined,
+                    Icon(Icons.add_photo_alternate_outlined,
                         color: AppColors.textHint, size: 28),
                     const SizedBox(height: 4),
                     Text('Foto $index',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 11, color: AppColors.textHint)),
                   ],
                 ),
@@ -255,7 +255,7 @@ class PhotoGalleryView extends StatelessWidget {
               errorBuilder: (_, __, ___) => Container(
                 width: height * 0.8,
                 color: AppColors.border,
-                child: const Icon(Icons.broken_image, color: AppColors.textHint),
+                child: Icon(Icons.broken_image, color: AppColors.textHint),
               ),
             ),
           ),

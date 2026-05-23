@@ -55,7 +55,7 @@ class NotificationScreen extends ConsumerWidget {
         ),
         body: Center(
           child: Text(l.notificationsLoginPrompt,
-              style: const TextStyle(color: AppColors.textHint)),
+              style: TextStyle(color: AppColors.textHint)),
         ),
       );
     }
@@ -276,12 +276,12 @@ class _NotifCard extends StatelessWidget {
                   ]),
                   const SizedBox(height: 4),
                   Text(body,
-                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                       maxLines: 2, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 6),
                   Row(children: [
                     Text(timeStr,
-                        style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                        style: TextStyle(fontSize: 11, color: AppColors.textHint)),
                     if (refId != null) ...[
                       const Spacer(),
                       const Text('Detaya Git',
