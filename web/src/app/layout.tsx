@@ -9,7 +9,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 import { getDict } from '@/i18n';
 import './globals.css';
 
-const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme')||'system';var m=window.matchMedia('(prefers-color-scheme: dark)').matches;var d=t==='dark'||(t==='system'&&m);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
+const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme')||'dark';var m=window.matchMedia('(prefers-color-scheme: dark)').matches;var d=t==='dark'||(t==='system'&&m);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

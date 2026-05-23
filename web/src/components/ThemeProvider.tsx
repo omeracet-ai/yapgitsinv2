@@ -29,12 +29,12 @@ function apply(actual: Resolved) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>('system');
-  const [actual, setActual] = useState<Resolved>('light');
+  const [theme, setThemeState] = useState<ThemeMode>('dark');
+  const [actual, setActual] = useState<Resolved>('dark');
 
   useEffect(() => {
     const stored = (typeof window !== 'undefined' &&
-      (localStorage.getItem('theme') as ThemeMode | null)) || 'system';
+      (localStorage.getItem('theme') as ThemeMode | null)) || 'dark';
     setThemeState(stored);
     const r = resolve(stored);
     setActual(r);

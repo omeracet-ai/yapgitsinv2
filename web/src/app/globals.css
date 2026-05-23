@@ -1,32 +1,63 @@
 @import "tailwindcss";
 
+/* Tailwind v4 — class tabanlı dark mode (.dark on <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ──────────────────────────────────────────────────────────────
+   Tema: :root = LIGHT (class yok), html.dark = DARK override.
+   ThemeProvider <html>'e .dark ekler. Varsayılan koyu (dark).
+   ────────────────────────────────────────────────────────────── */
 :root {
-  /* Yapgitsin Dark Soft Premium Theme */
-  --background: #0F1219;
-  --foreground: #FFFFFF;
+  /* LIGHT — modern marketplace */
+  --background: #F7F8FA;
+  --foreground: #1A1F2B;
+  --muted: #FFFFFF;
+  --text-muted: #6B7280;
 
-  /* Neon Purple Primary */
-  --primary: #7B61FF;
-  --primary-dark: #5E44FF;
-  --primary-light: rgba(123, 97, 255, 0.2);
-  --primary-soft: rgba(123, 97, 255, 0.1);
+  --primary: #6D4AFF;
+  --primary-dark: #5A3AE6;
+  --primary-light: rgba(109, 74, 255, 0.12);
+  --primary-soft: rgba(109, 74, 255, 0.06);
 
-  /* Emergency Orange (SOS) */
-  --secondary: #FF8A00;
-  
-  /* Surfaces & Glassmorphism */
-  --surface: #1A1F2B;
-  --surface-glass: rgba(26, 31, 43, 0.8);
-  --border: rgba(255, 255, 255, 0.05);
-  --border-active: rgba(123, 97, 255, 0.3);
+  --secondary: #F97316;
+  --secondary-muted: rgba(249, 115, 22, 0.12);
+  --accent: #F97316;
+  --error: #DE4437;
 
-  /* Effects */
+  --surface: #FFFFFF;
+  --surface-glass: rgba(255, 255, 255, 0.85);
+  --border: rgba(15, 18, 25, 0.08);
+  --border-active: rgba(109, 74, 255, 0.35);
+
+  /* Effects (tema-bağımsız) */
   --blur: blur(12px);
   --radius-card: 24px;
   --radius-pill: 999px;
-  
-  /* Shadows */
-  --shadow-neon: 0 0 20px rgba(123, 97, 255, 0.3);
+  --shadow-neon: 0 8px 30px rgba(109, 74, 255, 0.12);
+}
+
+html.dark {
+  /* DARK Soft Premium */
+  --background: #0F1219;
+  --foreground: #FFFFFF;
+  --muted: #151A23;
+  --text-muted: #9CA3AF;
+
+  --primary: #8B72FF;
+  --primary-dark: #6D4AFF;
+  --primary-light: rgba(139, 114, 255, 0.20);
+  --primary-soft: rgba(139, 114, 255, 0.10);
+
+  --secondary: #FF9A2E;
+  --secondary-muted: rgba(255, 154, 46, 0.16);
+  --accent: #FF9A2E;
+  --error: #FF6B5E;
+
+  --surface: #1A1F2B;
+  --surface-glass: rgba(26, 31, 43, 0.85);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(139, 114, 255, 0.40);
+  --shadow-neon: 0 0 20px rgba(139, 114, 255, 0.25);
 }
 
 body {
@@ -90,4 +121,57 @@ body {
   align-items: center;
   justify-content: center;
   border: none;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Hero gradient — her iki temada da koyu/markalı (text-white okunaklı).
+   (Tanımsızdı → light modda hero metni görünmüyordu; düzeltildi.)
+   ────────────────────────────────────────────────────────────── */
+.hero-gradient {
+  background:
+    radial-gradient(1100px 480px at 12% -12%, rgba(139, 114, 255, 0.40), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(249, 115, 22, 0.20), transparent 55%),
+    linear-gradient(160deg, #1c1442 0%, #140d2e 45%, #0c0a18 100%);
+  color: #fff;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   3D DARK — derinlik: ambient ışık + katmanlı gölge + cam kenar.
+   :where() ile özgüllük 0 → bileşen gölgeleri ezebilir.
+   ────────────────────────────────────────────────────────────── */
+html.dark body {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(820px 420px at 0% 0%, rgba(139, 114, 255, 0.07), transparent 60%),
+    radial-gradient(720px 420px at 100% 8%, rgba(255, 154, 46, 0.05), transparent 55%);
+  background-attachment: fixed;
+}
+
+/* Kartlara (büyük yuvarlatılmış öğeler) yüzen 3D his */
+html.dark :where([class~="rounded-2xl"], [class~="rounded-3xl"]) {
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+    0 12px 32px -14px rgba(0, 0, 0, 0.7),
+    0 4px 12px -6px rgba(0, 0, 0, 0.55);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+html.dark :where([class~="rounded-2xl"], [class~="rounded-3xl"]):hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+    0 20px 44px -14px rgba(0, 0, 0, 0.75),
+    0 0 0 1px var(--border-active),
+    var(--shadow-neon);
+}
+
+/* Light modda da kartlara hafif yükseklik (bg-white açık zeminde belirgin olsun) */
+html:not(.dark) :where([class~="rounded-2xl"], [class~="rounded-3xl"]) {
+  box-shadow: 0 10px 28px -16px rgba(15, 18, 25, 0.18), 0 2px 8px -4px rgba(15, 18, 25, 0.08);
+}
+
+/* card-premium 3D yükseltme */
+.card-premium {
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+    0 14px 36px -16px rgba(0, 0, 0, 0.6);
 }
