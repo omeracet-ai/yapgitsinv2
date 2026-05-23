@@ -245,7 +245,11 @@ class _WorkerTabContent extends ConsumerWidget {
         itemBuilder: (_) => const JobCardSkeleton(),
       ),
       error: (e, _) => Center(child: Text('Hata: $e')),
-      data: (offers) {
+      data: (allOffers) {
+        // Phase 262 — pazarlık zincirinde sadece KÖK teklifi göster (re-counter
+        // child halkaları köke senkronlandı; mükerrer kart önlenir).
+        final offers =
+            allOffers.where((o) => o['parentOfferId'] == null).toList();
         if (offers.isEmpty) {
           return EmptyState(
             icon: Icons.handyman_rounded,
@@ -288,8 +292,12 @@ class _WorkerTabContent extends ConsumerWidget {
                 child: TabBarView(
                   children: [
                     _OfferList(
+                      // Phase 262 — countered (karşı teklif bekleyen) da burada
+                      // görünsün ki usta/müşteri aksiyon alabilsin.
                       offers: offers
-                          .where((o) => o['status'] == 'pending')
+                          .where((o) =>
+                              o['status'] == 'pending' ||
+                              o['status'] == 'countered')
                           .toList(),
                       emptyMsg: 'Bekleyen teklifiniz yok.',
                     ),
@@ -737,6 +745,100 @@ class _WorkerOfferCard extends ConsumerWidget {
     }
   }
 
+  // Phase 262 — gelen karşı teklifi kabul et (anlaşılan fiyatla iş başlar).
+  Future<void> _acceptCounter(BuildContext context, WidgetRef ref) async {
+    final jobId = (offer['jobId'] as String?) ??
+        (offer['job'] as Map<String, dynamic>?)?['id'] as String?;
+    final offerId = offer['id'] as String?;
+    if (jobId == null || offerId == null) return;
+    try {
+      await ref.read(offerRepositoryProvider).acceptCounter(jobId, offerId);
+      ref.invalidate(myOffersProvider);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        backgroundColor: Colors.green,
+        content: Text('Karşı teklif kabul edildi!'),
+      ));
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: AppColors.error,
+        content: Text(e.toString().replaceFirst('Exception: ', '')),
+      ));
+    }
+  }
+
+  // Phase 262 — yeniden pazarlık (teklif veren taraf için yarım kredi keser).
+  Future<void> _recounter(BuildContext context, WidgetRef ref) async {
+    final jobId = (offer['jobId'] as String?) ??
+        (offer['job'] as Map<String, dynamic>?)?['id'] as String?;
+    final offerId = offer['id'] as String?;
+    if (jobId == null || offerId == null) return;
+    final controller = TextEditingController(
+      text: ((offer['counterPrice'] as num?) ?? (offer['price'] as num?))
+              ?.toStringAsFixed(0) ??
+          '',
+    );
+    final msgController = TextEditingController();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tekrar Teklif'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                  labelText: 'Yeni fiyat (₺)', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: msgController,
+              decoration: const InputDecoration(
+                  labelText: 'Mesaj (opsiyonel)',
+                  border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 8),
+            const Text('Yeniden pazarlık 2.5 kredi keser.',
+                style: TextStyle(fontSize: 12, color: AppColors.textHint)),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(AppLocalizations.of(context).cancel)),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Gönder')),
+        ],
+      ),
+    );
+    if (result != true) return;
+    final price = double.tryParse(controller.text.trim().replaceAll(',', '.'));
+    if (price == null || price <= 0) return;
+    if (!context.mounted) return;
+    try {
+      await ref
+          .read(offerRepositoryProvider)
+          .counterOffer(jobId, offerId, price, msgController.text.trim());
+      ref.invalidate(myOffersProvider);
+      ref.invalidate(tokenBalanceProvider);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        backgroundColor: Colors.blue,
+        content: Text('Karşı teklif gönderildi.'),
+      ));
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: AppColors.error,
+        content: Text(e.toString().replaceFirst('Exception: ', '')),
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final status = offer['status'] as String? ?? 'pending';
@@ -882,6 +984,41 @@ class _WorkerOfferCard extends ConsumerWidget {
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,
                   fontSize: 13)),
+          // Phase 262 — karşı teklif geldiğinde: Kabul Et + Tekrar Teklif.
+          if (status == 'countered') ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _acceptCounter(context, ref),
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: const Text('Kabul Et'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _recounter(context, ref),
+                    icon: const Icon(Icons.handshake_outlined, size: 16),
+                    label: const Text('Tekrar Teklif'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                      side: const BorderSide(color: Colors.blue),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (status == 'pending' || status == 'countered') ...[
             const SizedBox(height: 4),
             Align(

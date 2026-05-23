@@ -81,6 +81,14 @@ export class OffersController {
     return this.offersService.reject(id);
   }
 
+  // Phase 262 — Teklif veren taraf (veya ilan sahibi) kendisine gelen son karşı
+  // teklifi kabul eder. Her iki marketplace yönünde de çalışır.
+  @UseGuards(AuthGuard('jwt'))
+  @Patch(':id/accept-counter')
+  acceptCounter(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    return this.offersService.acceptCounter(id, req.user.id);
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id/counter')
   counter(

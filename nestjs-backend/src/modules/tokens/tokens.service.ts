@@ -25,6 +25,9 @@ import { TOKEN_PACKAGES, findPackage, TokenPackage } from './token-packages';
 export const OFFER_TOKEN_COST = 5;
 // Phase 174c — Integer minor (kuruş): 5 TL = 500 kuruş
 export const OFFER_TOKEN_COST_MINOR = 500;
+// Phase 262 — Yeniden pazarlık (re-counter) ilk teklifin yarısı kadar kredi keser.
+// Yalnızca teklif veren taraf öder; ilan sahibi (job.customerId) bedava.
+export const OFFER_COUNTER_TOKEN_COST = OFFER_TOKEN_COST / 2;
 
 @Injectable()
 export class TokensService {

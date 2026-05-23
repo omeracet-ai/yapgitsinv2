@@ -874,7 +874,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           offersAsync.when(
-            data: (offers) => Column(
+            data: (allOffers) {
+              // Phase 262 — pazarlık zincirinde sadece KÖK teklifi göster (child
+              // halkalar köke senkronlandı). Mükerrer kart/karışıklık önlenir.
+              final offers = allOffers
+                  .where((o) => o['parentOfferId'] == null)
+                  .toList();
+              return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
@@ -907,7 +913,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 else
                   ...offers.map((o) => _buildOfferCard(o, canMakeOffer, currentUserId)),
               ],
-            ),
+            );
+            },
             loading: () =>
                 const Center(child: CircularProgressIndicator()),
             error: (err, _) => Text('Hata: $err',
@@ -1174,9 +1181,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       color: Colors.green,
                       loading: _actionLoading,
                       onTap: () => _doAction(() async {
+                        // Phase 262 — anlaşılan (varsa karşı teklif) fiyatla kabul.
                         await ref
                             .read(offerRepositoryProvider)
-                            .acceptOffer(widget.id!, offerId);
+                            .acceptCounter(widget.id!, offerId);
                         _showSnack('Teklif kabul edildi!');
                         ref.read(jobsProvider.notifier).fetchJobs();
                       }),
@@ -1207,6 +1215,63 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                             .read(offerRepositoryProvider)
                             .rejectOffer(widget.id!, offerId);
                         _showSnack('Teklif reddedildi.');
+                      }),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Phase 262 — Teklif veren taraf: kendisine gelen karşı teklife yanıt.
+          // Role-agnostik: request'te usta, offer-ilanında müşteri burayı görür.
+          if (isOfferOwner && status == 'countered' && widget.id != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Row(
+                children: [
+                  // Karşı teklifi kabul et
+                  Expanded(
+                    child: _ActionButton(
+                      label: 'Kabul Et',
+                      icon: Icons.check_circle_outline,
+                      color: Colors.green,
+                      loading: _actionLoading,
+                      onTap: () => _doAction(() async {
+                        await ref
+                            .read(offerRepositoryProvider)
+                            .acceptCounter(widget.id!, offerId);
+                        _showSnack('Karşı teklif kabul edildi!');
+                        ref.read(jobsProvider.notifier).fetchJobs();
+                      }),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Yeniden pazarlık (yarım kredi)
+                  Expanded(
+                    child: _ActionButton(
+                      label: 'Tekrar Teklif',
+                      icon: Icons.handshake_outlined,
+                      color: Colors.blue,
+                      loading: _actionLoading,
+                      onTap: () => _showCounterDialog(
+                          offerId,
+                          (counterPrice ?? price)?.toString() ?? ''),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Geri çek
+                  Expanded(
+                    child: _ActionButton(
+                      label: 'Geri Çek',
+                      icon: Icons.undo,
+                      color: Colors.red,
+                      loading: _actionLoading,
+                      onTap: () => _doAction(() async {
+                        await ref
+                            .read(offerRepositoryProvider)
+                            .withdrawOffer(widget.id!, offerId);
+                        _showSnack('Teklif geri çekildi.');
+                        ref.read(jobsProvider.notifier).fetchJobs();
                       }),
                     ),
                   ),

@@ -89,6 +89,16 @@ class OfferRepository {
     }
   }
 
+  /// Phase 262 — Karşı tarafın yaptığı son karşı teklifi kabul eder
+  /// (anlaşılan fiyatla iş başlar). Her iki marketplace yönünde de çalışır.
+  Future<void> acceptCounter(String jobId, String offerId) async {
+    try {
+      await _dio.patch('/jobs/$jobId/offers/$offerId/accept-counter');
+    } on DioException catch (e) {
+      throw Exception(_dioMsg(e, 'Karşı teklif kabul edilemedi'));
+    }
+  }
+
   Future<void> updateJob(String jobId, Map<String, dynamic> data) async {
     try {
       await _dio.patch('/jobs/$jobId', data: data);

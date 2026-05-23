@@ -9,7 +9,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Offer, OfferStatus } from './offer.entity';
 import { Job, JobStatus } from './job.entity';
-import { TokensService, OFFER_TOKEN_COST } from '../tokens/tokens.service';
+import {
+  TokensService,
+  OFFER_TOKEN_COST,
+  OFFER_COUNTER_TOKEN_COST,
+} from '../tokens/tokens.service';
 import {
   TokenTransaction,
   TxType,
@@ -416,37 +420,66 @@ export class OffersService {
     }>,
   ): Promise<Offer> {
     this._assertLineItemsMatchPrice(lineItems, counterPrice);
-    const parent = await this._getOffer(offerId);
 
-    // Eski API geriye dönük: parent satırına da counterPrice/Message yaz, status COUNTERED
-    // Phase 174b — counterPriceMinor sync
-    parent.status = OfferStatus.COUNTERED;
-    parent.counterPrice = counterPrice;
-    parent.counterPriceMinor = tlToMinor(counterPrice);
-    parent.counterMessage = counterMessage;
-    await this.offersRepository.save(parent);
+    // Phase 262 — zincirin kökü ve son halkası. Re-counter daima leaf'e eklenir
+    // (yanlış halkaya fork açılmasın); kök offer UI için tek anchor olarak senkronlanır.
+    const root = await this._getChainRoot(offerId);
+    const leaf = await this._getChainLeaf(root.id);
+    const job = await this.jobsRepository.findOne({
+      where: { id: root.jobId },
+    });
+
+    // Phase 262 — yeniden pazarlık kredisi: yalnızca TEKLİF VEREN taraf öder
+    // (ilan sahibi = job.customerId bedava). Aboneler muaf (create() ile aynı kural).
+    // İki marketplace yönünde de simetrik: teklif veren taraf kim ise o öder.
+    const isListingOwner = !!job && byUserId === job.customerId;
+    if (!isListingOwner) {
+      const isSubscriber =
+        await this.subscriptionsService.isActiveSubscriber(byUserId);
+      if (!isSubscriber) {
+        await this.tokensService.spend(
+          byUserId,
+          OFFER_COUNTER_TOKEN_COST,
+          `İlan #${root.jobId.slice(0, 8)} için karşı teklif (${counterPrice} ₺)`,
+        );
+      }
+    }
+
+    // Son halkayı COUNTERED yap + counter alanlarını yaz (geriye dönük uyumluluk)
+    leaf.status = OfferStatus.COUNTERED;
+    leaf.counterPrice = counterPrice;
+    leaf.counterPriceMinor = tlToMinor(counterPrice);
+    leaf.counterMessage = counterMessage;
+    await this.offersRepository.save(leaf);
 
     // Yeni teklif satırı (zincirin yeni halkası)
     const child = this.offersRepository.create({
-      jobId: parent.jobId,
+      jobId: leaf.jobId,
       userId: byUserId,
       price: counterPrice,
       priceMinor: tlToMinor(counterPrice) ?? 0,
       message: counterMessage,
-      parentOfferId: parent.id,
-      negotiationRound: (parent.negotiationRound ?? 0) + 1,
+      parentOfferId: leaf.id,
+      negotiationRound: (leaf.negotiationRound ?? 0) + 1,
       lineItems: lineItems && lineItems.length > 0 ? lineItems : null,
       status: OfferStatus.PENDING,
     });
     const saved = await this.offersRepository.save(child);
 
+    // Kök offer'ı son tura senkronla — UI root-only kart gösterir, en güncel
+    // karşı teklif fiyatı/mesajı kökte tutulur.
+    if (root.id !== leaf.id) {
+      root.status = OfferStatus.COUNTERED;
+      root.counterPrice = counterPrice;
+      root.counterPriceMinor = tlToMinor(counterPrice);
+      root.counterMessage = counterMessage;
+      await this.offersRepository.save(root);
+    }
+
     // Notify the OTHER party — usta counter'lıyorsa müşteriye, müşteri counter'lıyorsa ustaya
     try {
-      const job = await this.jobsRepository.findOne({
-        where: { id: parent.jobId },
-      });
       const recipientId =
-        byUserId === job?.customerId ? parent.userId : job?.customerId;
+        byUserId === job?.customerId ? root.userId : job?.customerId;
       if (recipientId && job) {
         await this.notificationsService.send({
           userId: recipientId,
@@ -464,6 +497,77 @@ export class OffersService {
     }
 
     return saved;
+  }
+
+  /**
+   * Phase 262 — Karşı tarafın yaptığı en son (leaf) karşı teklifi kabul eder.
+   * İki marketplace yönünde de çalışır: teklif veren VEYA ilan sahibi, kendisine
+   * gelen son teklifi kabul edebilir. Anlaşılan fiyat (leaf.price) kök teklife
+   * yazılır, ara halkalar REJECTED yapılır ve mevcut accept() çağrılır — booking,
+   * escrow, bildirim ve istatistik bump'ı aynen çalışır (rol atamasına dokunulmaz).
+   */
+  async acceptCounter(offerId: string, byUserId: string): Promise<Offer> {
+    const root = await this._getChainRoot(offerId);
+    const leaf = await this._getChainLeaf(root.id);
+
+    if (leaf.status !== OfferStatus.PENDING) {
+      throw new BadRequestException('Kabul edilecek aktif bir karşı teklif yok');
+    }
+    if (leaf.userId === byUserId) {
+      throw new BadRequestException(
+        'Kendi teklifinizi kabul edemezsiniz; karşı tarafın yanıtını bekleyin',
+      );
+    }
+
+    const agreedPrice = leaf.price;
+
+    // Zincirdeki tüm halkaları (kök hariç) REJECTED yap — dangling pending kalmasın.
+    const chain = await this.getNegotiationChain(leaf.id); // root..leaf
+    for (const link of chain) {
+      if (link.id === root.id) continue;
+      if (link.status !== OfferStatus.REJECTED) {
+        link.status = OfferStatus.REJECTED;
+        await this.offersRepository.save(link);
+      }
+    }
+
+    // Anlaşılan fiyatı köke yaz; accept() PENDING→ACCEPTED geçişini ve
+    // booking/escrow'u kök offer (= asıl teklif veren) üzerinden yürütür.
+    root.price = agreedPrice;
+    root.priceMinor = tlToMinor(agreedPrice) ?? 0;
+    if (root.status === OfferStatus.COUNTERED) {
+      root.status = OfferStatus.PENDING;
+    }
+    await this.offersRepository.save(root);
+
+    return this.accept(root.id, byUserId);
+  }
+
+  /** Phase 262 — Zincirin kökü (parentOfferId == null) — yukarı yürü. */
+  private async _getChainRoot(offerId: string): Promise<Offer> {
+    let current = await this._getOffer(offerId);
+    while (current.parentOfferId) {
+      const parent = await this.offersRepository.findOne({
+        where: { id: current.parentOfferId },
+      });
+      if (!parent) break;
+      current = parent;
+    }
+    return current;
+  }
+
+  /** Phase 262 — Zincirin son halkası (child'ı olmayan) — aşağı yürü. */
+  private async _getChainLeaf(offerId: string): Promise<Offer> {
+    let current = await this._getOffer(offerId);
+    for (;;) {
+      const child = await this.offersRepository.findOne({
+        where: { parentOfferId: current.id },
+        order: { negotiationRound: 'DESC', createdAt: 'DESC' },
+      });
+      if (!child) break;
+      current = child;
+    }
+    return current;
   }
 
   /**
