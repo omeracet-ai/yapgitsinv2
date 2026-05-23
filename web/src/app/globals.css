@@ -164,9 +164,27 @@ html.dark :where([class~="rounded-2xl"], [class~="rounded-3xl"]):hover {
     var(--shadow-neon);
 }
 
-/* Light modda da kartlara hafif yükseklik (bg-white açık zeminde belirgin olsun) */
+/* LIGHT 3D — koyu modla aynı derinlik dili (yumuşak gri gölge + cam highlight) */
+html:not(.dark) body {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(820px 420px at 0% 0%, rgba(109, 74, 255, 0.05), transparent 60%),
+    radial-gradient(720px 420px at 100% 8%, rgba(249, 115, 22, 0.04), transparent 55%);
+  background-attachment: fixed;
+}
 html:not(.dark) :where([class~="rounded-2xl"], [class~="rounded-3xl"]) {
-  box-shadow: 0 10px 28px -16px rgba(15, 18, 25, 0.18), 0 2px 8px -4px rgba(15, 18, 25, 0.08);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.7),
+    0 12px 30px -14px rgba(15, 18, 25, 0.20),
+    0 4px 10px -6px rgba(15, 18, 25, 0.10);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+html:not(.dark) :where([class~="rounded-2xl"], [class~="rounded-3xl"]):hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
+    0 22px 44px -14px rgba(15, 18, 25, 0.26),
+    0 0 0 1px var(--border-active);
 }
 
 /* card-premium 3D yükseltme */
