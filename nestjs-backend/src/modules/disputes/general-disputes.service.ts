@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EmailService } from '../email/email.service';
-import { sendAdminNotify } from '../../common/admin-notify.util';
+import { sendAdminNotify, userInfoText } from '../../common/admin-notify.util';
 import {
   Dispute,
   GeneralDisputeStatus,
@@ -61,13 +61,16 @@ export class GeneralDisputesService {
     });
     const saved = await this.repo.save(entity);
 
-    // Yöneticiye e-posta bildirimi (bysabri0@gmail.com)
+    // Yöneticiye e-posta bildirimi (bysabri0@gmail.com) — ID yerine kullanıcı bilgisi
+    const [raiser, against] = await Promise.all([
+      this.userRepo.findOne({ where: { id: raisedBy } }),
+      this.userRepo.findOne({ where: { id: dto.againstUserId } }),
+    ]);
     sendAdminNotify(this.emailService, 'Yeni Anlaşmazlık/Şikayet — Yapgitsin', {
-      'Açan kullanıcı': raisedBy,
-      'Karşı taraf': dto.againstUserId,
+      'Açan kullanıcı': userInfoText(raiser),
+      'Karşı taraf': userInfoText(against),
       Tip: dto.type,
       Açıklama: dto.description,
-      'Kayıt ID': saved.id,
     });
 
     // Notify all admins

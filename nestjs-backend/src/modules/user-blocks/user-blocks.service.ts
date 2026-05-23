@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { EmailService } from '../email/email.service';
-import { sendAdminNotify } from '../../common/admin-notify.util';
+import { sendAdminNotify, userInfoText } from '../../common/admin-notify.util';
 import { UserBlock } from './user-block.entity';
 import {
   UserReport,
@@ -170,12 +170,15 @@ export class UserBlocksService {
       status: 'pending',
     });
     const saved = await this.reportsRepo.save(row);
+    const [reporter, reported] = await Promise.all([
+      this.usersRepo.findOne({ where: { id: reporterId } }),
+      this.usersRepo.findOne({ where: { id: reportedUserId } }),
+    ]);
     sendAdminNotify(this.emailService, 'Yeni Şikayet — Yapgitsin', {
-      'Şikayet eden': reporterId,
-      'Şikayet edilen': reportedUserId,
+      'Şikayet eden': userInfoText(reporter),
+      'Şikayet edilen': userInfoText(reported),
       Sebep: reason,
-      Açıklama: description,
-      'Kayıt ID': saved.id,
+      Açıklama: description ?? '—',
     });
     return saved;
   }

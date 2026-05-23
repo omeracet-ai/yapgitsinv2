@@ -7,7 +7,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { EmailService } from '../email/email.service';
-import { sendAdminNotify } from '../../common/admin-notify.util';
+import { sendAdminNotify, userInfoText } from '../../common/admin-notify.util';
+import { User } from '../users/user.entity';
 import {
   DisputeResolutionStatus,
   DisputeType,
@@ -42,6 +43,8 @@ export class DisputesService {
   constructor(
     @InjectRepository(JobDispute)
     private readonly repo: Repository<JobDispute>,
+    @InjectRepository(User)
+    private readonly usersRepo: Repository<User>,
     private readonly escrowService: EscrowService,
     private readonly emailService: EmailService,
   ) {}
@@ -58,13 +61,16 @@ export class DisputesService {
       resolutionStatus: DisputeResolutionStatus.OPEN,
     });
     const saved = await this.repo.save(entity);
+    const [raiser, counter] = await Promise.all([
+      this.usersRepo.findOne({ where: { id: dto.raisedByUserId } }),
+      this.usersRepo.findOne({ where: { id: dto.counterPartyUserId } }),
+    ]);
     sendAdminNotify(this.emailService, 'Yeni İş Anlaşmazlığı — Yapgitsin', {
-      'Açan kullanıcı': dto.raisedByUserId,
-      'Karşı taraf': dto.counterPartyUserId,
+      'Açan kullanıcı': userInfoText(raiser),
+      'Karşı taraf': userInfoText(counter),
       İlan: dto.jobId,
       Tip: dto.disputeType,
       Sebep: dto.reason,
-      'Kayıt ID': saved.id,
     });
     return saved;
   }

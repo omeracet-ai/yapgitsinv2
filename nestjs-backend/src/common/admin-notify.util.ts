@@ -16,6 +16,36 @@ export function adminNotifyEmail(): string {
 const esc = (s: unknown): string =>
   String(s ?? '—').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+/** Bildirim e-postalarında ID yerine kullanılan kullanıcı bilgisi. */
+export interface NotifyUser {
+  fullName?: string | null;
+  email?: string | null;
+  phoneNumber?: string | null;
+  city?: string | null;
+  district?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+/** Kullanıcıyı Ad Soyad / E-posta / Telefon / Adres / Konum olarak çok satırlı metne çevirir. */
+export function userInfoText(u: NotifyUser | null | undefined): string {
+  if (!u) return '—';
+  const addr =
+    [u.city, u.district, u.address].filter(Boolean).join(', ') || '—';
+  const coord =
+    u.latitude != null && u.longitude != null
+      ? `${u.latitude}, ${u.longitude}`
+      : '—';
+  return [
+    `Ad Soyad: ${u.fullName ?? '—'}`,
+    `E-posta: ${u.email ?? '—'}`,
+    `Telefon: ${u.phoneNumber ?? '—'}`,
+    `Adres: ${addr}`,
+    `Konum (koordinat): ${coord}`,
+  ].join('\n');
+}
+
 /**
  * Yöneticiye fire-and-forget bildirim e-postası (Resend SMTP).
  * Gönderim başarısız olsa bile çağıran akışı engellemez.
@@ -27,7 +57,10 @@ export function sendAdminNotify(
 ): void {
   const to = adminNotifyEmail();
   const rows = Object.entries(fields)
-    .map(([k, v]) => `<p><b>${esc(k)}:</b> ${esc(v)}</p>`)
+    .map(
+      ([k, v]) =>
+        `<p style="margin:0 0 10px"><b>${esc(k)}:</b><br/>${esc(v).replace(/\n/g, '<br/>')}</p>`,
+    )
     .join('');
   const html =
     `<h2>${esc(subject)}</h2>${rows}` +
