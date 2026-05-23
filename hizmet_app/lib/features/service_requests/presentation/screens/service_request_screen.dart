@@ -130,7 +130,7 @@ class _ServiceRequestScaffold extends StatelessWidget {
           ? AppBar(
               title: const Text('Hizmet Al',
                   style: TextStyle(fontWeight: FontWeight.bold)),
-              backgroundColor: AppColors.primary,
+              backgroundColor: AppColors.headerBackground(context),
               foregroundColor: Colors.white,
               elevation: 0,
             )

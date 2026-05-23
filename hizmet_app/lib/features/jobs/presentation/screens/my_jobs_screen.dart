@@ -98,7 +98,7 @@ class _DualRoleView extends ConsumerWidget {
         appBar: showAppBar
             ? AppBar(
                 title: Text(AppLocalizations.of(context).myJobsTitle),
-                backgroundColor: AppColors.primary,
+                backgroundColor: AppColors.headerBackground(context),
                 foregroundColor: Colors.white,
                 actions: [
                   const NotificationBell(),
@@ -346,7 +346,7 @@ class _CustomerJobsView extends ConsumerWidget {
         appBar: showAppBar
             ? AppBar(
                 title: Text(AppLocalizations.of(context).myJobsListings),
-                backgroundColor: AppColors.primary,
+                backgroundColor: AppColors.headerBackground(context),
                 foregroundColor: Colors.white,
                 actions: [
                   IconButton(

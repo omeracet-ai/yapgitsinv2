@@ -60,7 +60,7 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).tabProfil),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         elevation: 0,
         actions: const [
           NotificationBell(),
@@ -101,7 +101,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
           title: Text(AppLocalizations.of(context).tabProfil),
-          backgroundColor: AppColors.primary),
+          backgroundColor: AppColors.headerBackground(context)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32.0),

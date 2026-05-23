@@ -50,7 +50,7 @@ class NotificationScreen extends ConsumerWidget {
         backgroundColor: AppColors.background,
         appBar: AppBar(
           title: Text(l.notificationsTitle),
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.headerBackground(context),
           foregroundColor: Colors.white,
         ),
         body: Center(

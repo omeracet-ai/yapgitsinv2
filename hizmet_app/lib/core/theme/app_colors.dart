@@ -62,4 +62,11 @@ class AppColors {
   // ── Legacy orange (deprecated — eski referanslar yeşile yönlendirilir) ─
   @Deprecated('Eski turuncu marka kapatıldı; AppColors.primary kullanın.')
   static const Color legacyOrange = primary;
+
+  // ── Phase 263 — Ana sekme header arka planı ────────────────────────────
+  /// Ana sekmelerin üst container/AppBar zemini. Dark VE sistem modunda koyu
+  /// tasarım rengi (background), yalnızca "Açık" temada marka yeşili.
+  /// (Home hero'daki heroBg davranışıyla tutarlı.)
+  static Color headerBackground(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? background : primary;
 }
