@@ -4,6 +4,7 @@ import { jsonLd, alternateLinks, ogLocaleFor, localBusinessLD, websiteLD } from 
 import SwRegister from '@/components/SwRegister';
 import SentryInit from '@/components/SentryInit';
 import PlausibleScript from '@/components/PlausibleScript';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
 import PwaInstallBanner from '@/components/PwaInstallBanner';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { getDict } from '@/i18n';
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main-content" className="skip-link">İçeriğe geç</a>
         <ThemeProvider>
           {children}
+          <GoogleAnalytics />
           <SwRegister />
           <SentryInit />
           <PwaInstallBanner

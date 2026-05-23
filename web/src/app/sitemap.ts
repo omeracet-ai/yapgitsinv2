@@ -52,6 +52,38 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     alternates: { languages: altLanguages('/') },
   });
 
+  // Statik sayfalar (Phase 265 — SEO sitemap genişletme)
+  const staticPages: {
+    path: string;
+    priority: number;
+    freq: 'weekly' | 'monthly' | 'yearly';
+  }[] = [
+    { path: '/usta', priority: 0.8, freq: 'weekly' },
+    { path: '/ilan', priority: 0.7, freq: 'weekly' },
+    { path: '/ara', priority: 0.5, freq: 'weekly' },
+    { path: '/kvkk', priority: 0.3, freq: 'yearly' },
+    { path: '/kullanim-kosullari', priority: 0.3, freq: 'yearly' },
+    { path: '/cerez-politikasi', priority: 0.3, freq: 'yearly' },
+    { path: '/gizlilik-politikasi', priority: 0.3, freq: 'yearly' },
+  ];
+  for (const p of staticPages) {
+    urls.push({
+      url: `${SITE}${p.path}`,
+      lastModified: now,
+      changeFrequency: p.freq,
+      priority: p.priority,
+      alternates: { languages: altLanguages(p.path) },
+    });
+  }
+
+  // Uygulama haritası — Flutter web app (/app), locale-agnostic
+  urls.push({
+    url: `${SITE}/app`,
+    lastModified: now,
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  });
+
   for (const c of cats) {
     const slug = slugify(c.name);
     const tier = tierOf(slug);
