@@ -25,11 +25,11 @@ export default function TopProviders({ workers }: { workers: Worker[] }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto">
+        <div className="flex flex-wrap justify-center gap-4 md:gap-6 max-w-4xl mx-auto">
           {workers.slice(0, 3).map((w, i) => (
             <div
               key={w.id}
-              className="relative bg-white border border-[var(--border)] rounded-2xl p-5 hover:shadow-xl hover:shadow-blue-900/5 hover:-translate-y-1 transition-all duration-200 flex flex-col"
+              className="relative bg-white border border-[var(--border)] rounded-2xl p-5 hover:shadow-xl hover:shadow-blue-900/5 hover:-translate-y-1 transition-all duration-200 flex flex-col w-full sm:w-72"
             >
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--accent)] text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
                 #{i + 1} En İyi
