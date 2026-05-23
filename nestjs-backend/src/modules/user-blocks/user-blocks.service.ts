@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { EmailService } from '../email/email.service';
+import { sendAdminNotify } from '../../common/admin-notify.util';
 import { UserBlock } from './user-block.entity';
 import {
   UserReport,
@@ -23,6 +25,7 @@ export class UserBlocksService {
     private reportsRepo: Repository<UserReport>,
     @InjectRepository(User)
     private usersRepo: Repository<User>,
+    private readonly emailService: EmailService,
   ) {}
 
   async block(blockerId: string, blockedUserId: string): Promise<UserBlock> {
@@ -166,7 +169,15 @@ export class UserBlocksService {
       description: description ?? null,
       status: 'pending',
     });
-    return this.reportsRepo.save(row);
+    const saved = await this.reportsRepo.save(row);
+    sendAdminNotify(this.emailService, 'Yeni Şikayet — Yapgitsin', {
+      'Şikayet eden': reporterId,
+      'Şikayet edilen': reportedUserId,
+      Sebep: reason,
+      Açıklama: description,
+      'Kayıt ID': saved.id,
+    });
+    return saved;
   }
 
   async findReports(status?: UserReportStatus): Promise<UserReport[]> {

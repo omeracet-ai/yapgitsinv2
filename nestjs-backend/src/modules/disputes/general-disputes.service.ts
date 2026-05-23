@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EmailService } from '../email/email.service';
+import { sendAdminNotify } from '../../common/admin-notify.util';
 import {
   Dispute,
   GeneralDisputeStatus,
@@ -38,6 +40,7 @@ export class GeneralDisputesService {
     private readonly userRepo: Repository<User>,
     private readonly notifications: NotificationsService,
     private readonly mediation: DisputeMediationService,
+    private readonly emailService: EmailService,
   ) {}
 
   async create(raisedBy: string, dto: CreateDisputeDto): Promise<Dispute> {
@@ -57,6 +60,15 @@ export class GeneralDisputesService {
       status: GeneralDisputeStatus.OPEN,
     });
     const saved = await this.repo.save(entity);
+
+    // Yöneticiye e-posta bildirimi (bysabri0@gmail.com)
+    sendAdminNotify(this.emailService, 'Yeni Anlaşmazlık/Şikayet — Yapgitsin', {
+      'Açan kullanıcı': raisedBy,
+      'Karşı taraf': dto.againstUserId,
+      Tip: dto.type,
+      Açıklama: dto.description,
+      'Kayıt ID': saved.id,
+    });
 
     // Notify all admins
     const admins = await this.userRepo.find({

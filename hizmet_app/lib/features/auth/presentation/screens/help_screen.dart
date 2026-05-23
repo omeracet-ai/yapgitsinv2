@@ -48,7 +48,8 @@ class _HelpScreenState extends State<HelpScreen> {
     ),
     (
       'Hesabımı nasıl silerim?',
-      'Hesap silme işlemi için support@yapgitsin.tr adresine e-posta gönderiniz. '
+      'Profil ekranından "Hesabı Sil" ile hesabınızı silebilir veya '
+      'bysabri0@gmail.com adresine e-posta gönderebilirsiniz. '
       'Talebiniz 5 iş günü içinde işleme alınır.',
     ),
     (
@@ -113,9 +114,9 @@ class _HelpScreenState extends State<HelpScreen> {
                   Expanded(child: _contactCard(
                     icon: Icons.email_outlined,
                     label: 'E-posta',
-                    sub: 'support@yapgitsin.tr',
+                    sub: 'bysabri0@gmail.com',
                     color: Colors.blue,
-                    onTap: () => _launchUrl('mailto:support@yapgitsin.tr'),
+                    onTap: () => _launchUrl('mailto:bysabri0@gmail.com'),
                   )),
                   const SizedBox(width: 12),
                   Expanded(child: _contactCard(
@@ -244,7 +245,7 @@ class _HelpScreenState extends State<HelpScreen> {
                         style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                     const SizedBox(height: 14),
                     OutlinedButton.icon(
-                      onPressed: () => _launchUrl('mailto:geri-bildirim@yapgitsin.tr?subject=Uygulama%20Geri%20Bildirimi'),
+                      onPressed: () => _launchUrl('mailto:bysabri0@gmail.com?subject=Uygulama%20Geri%20Bildirimi'),
                       icon: const Icon(Icons.send_outlined, size: 16),
                       label: const Text('Geri Bildirim Gönder'),
                       style: OutlinedButton.styleFrom(

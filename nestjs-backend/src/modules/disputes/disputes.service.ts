@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { EmailService } from '../email/email.service';
+import { sendAdminNotify } from '../../common/admin-notify.util';
 import {
   DisputeResolutionStatus,
   DisputeType,
@@ -41,6 +43,7 @@ export class DisputesService {
     @InjectRepository(JobDispute)
     private readonly repo: Repository<JobDispute>,
     private readonly escrowService: EscrowService,
+    private readonly emailService: EmailService,
   ) {}
 
   async create(dto: CreateDisputeDto): Promise<JobDispute> {
@@ -54,7 +57,16 @@ export class DisputesService {
       evidenceUrls: dto.evidenceUrls ?? null,
       resolutionStatus: DisputeResolutionStatus.OPEN,
     });
-    return this.repo.save(entity);
+    const saved = await this.repo.save(entity);
+    sendAdminNotify(this.emailService, 'Yeni İş Anlaşmazlığı — Yapgitsin', {
+      'Açan kullanıcı': dto.raisedByUserId,
+      'Karşı taraf': dto.counterPartyUserId,
+      İlan: dto.jobId,
+      Tip: dto.disputeType,
+      Sebep: dto.reason,
+      'Kayıt ID': saved.id,
+    });
+    return saved;
   }
 
   findOpenDisputes(): Promise<JobDispute[]> {
