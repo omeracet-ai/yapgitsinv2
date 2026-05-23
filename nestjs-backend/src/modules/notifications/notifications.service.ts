@@ -31,10 +31,23 @@ export class NotificationsService {
     title: string,
     body: string,
   ): Promise<void> {
+    // Phase 266 — müşteri↔usta işlemsel bildirimleri çift yönlü e-posta.
+    // SYSTEM (broadcast) ve düşük-değerli tipler HARİÇ (toplu mail/spam önleme).
     const emailTypes: NotificationType[] = [
+      NotificationType.BOOKING_REQUEST,
       NotificationType.BOOKING_CONFIRMED,
+      NotificationType.BOOKING_CANCELLED,
+      NotificationType.BOOKING_COMPLETED,
+      NotificationType.NEW_OFFER,
       NotificationType.OFFER_ACCEPTED,
       NotificationType.OFFER_REJECTED,
+      NotificationType.COUNTER_OFFER,
+      NotificationType.NEW_REVIEW,
+      NotificationType.JOB_PENDING_COMPLETION,
+      NotificationType.JOB_COMPLETED,
+      NotificationType.JOB_CANCELLED,
+      NotificationType.DISPUTE_OPENED,
+      NotificationType.DISPUTE_RESOLVED,
     ];
     if (!emailTypes.includes(type)) return;
     const user = await this.usersRepo.findOne({
