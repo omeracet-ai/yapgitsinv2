@@ -1,6 +1,7 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { OffersService } from './offers.service';
 import { Offer, OfferStatus } from './offer.entity';
+import { Job } from './job.entity';
 import { OFFER_COUNTER_TOKEN_COST } from '../tokens/tokens.service';
 
 /**
@@ -47,31 +48,73 @@ interface Harness {
 function build(offers: Offer[], job: any): Harness {
   let seq = offers.length;
 
-  const offersRepo = {
-    findOne: jest.fn(async ({ where, order }: any) => {
-      if (where.id) return offers.find((o) => o.id === where.id) ?? null;
-      if ('parentOfferId' in where) {
-        let matches = offers.filter(
-          (o) => o.parentOfferId === where.parentOfferId,
+  const findOneImpl = ({ where, order }: any) => {
+    if (where.id) return offers.find((o) => o.id === where.id) ?? null;
+    if ('parentOfferId' in where) {
+      let matches = offers.filter(
+        (o) => o.parentOfferId === where.parentOfferId,
+      );
+      if (order?.negotiationRound === 'DESC') {
+        matches = matches.sort(
+          (a, b) => (b.negotiationRound ?? 0) - (a.negotiationRound ?? 0),
         );
-        if (order?.negotiationRound === 'DESC') {
-          matches = matches.sort(
-            (a, b) => (b.negotiationRound ?? 0) - (a.negotiationRound ?? 0),
-          );
-        }
-        return matches[0] ?? null;
       }
-      return null;
-    }),
+      return matches[0] ?? null;
+    }
+    return null;
+  };
+  const saveImpl = (row: any) => {
+    if (!row.id) row.id = `gen-${++seq}`;
+    const idx = offers.findIndex((o) => o.id === row.id);
+    if (idx >= 0) offers[idx] = row;
+    else offers.push(row);
+    return row;
+  };
+
+  const offersRepo = {
+    findOne: jest.fn(async (opts: any) => findOneImpl(opts)),
     create: jest.fn((row: any) => ({ ...row })),
-    save: jest.fn(async (row: any) => {
-      if (!row.id) row.id = `gen-${++seq}`;
-      const idx = offers.findIndex((o) => o.id === row.id);
-      if (idx >= 0) offers[idx] = row;
-      else offers.push(row);
-      return row;
-    }),
+    save: jest.fn(async (row: any) => saveImpl(row)),
     find: jest.fn(async () => offers),
+    // Phase 262 — accept() atomik claim: UPDATE ... WHERE id AND status != accepted
+    createQueryBuilder: jest.fn(() => {
+      let _set: any = {};
+      let _params: any = {};
+      const qb: any = {
+        update: () => qb,
+        set: (v: any) => {
+          _set = v;
+          return qb;
+        },
+        where: (_cond: string, params: any) => {
+          _params = params;
+          return qb;
+        },
+        execute: async () => {
+          const o = offers.find((x) => x.id === _params.id);
+          if (!o || o.status === _params.accepted) return { affected: 0 };
+          Object.assign(o, _set);
+          return { affected: 1 };
+        },
+      };
+      return qb;
+    }),
+  };
+
+  // withdrawOffer dataSource.transaction(manager => ...) için minimal manager.
+  const manager = {
+    findOne: jest.fn(async (_entity: any, opts: any) => {
+      if (_entity === Job) return job;
+      return findOneImpl(opts);
+    }),
+    save: jest.fn(async (_entity: any, row: any) =>
+      _entity === Offer ? saveImpl(row) : row,
+    ),
+    increment: jest.fn(async () => undefined),
+    create: jest.fn((_entity: any, row: any) => row),
+  };
+  const dataSource = {
+    transaction: jest.fn(async (cb: any) => cb(manager)),
   };
 
   const spend = jest.fn(async () => undefined);
@@ -98,7 +141,7 @@ function build(offers: Offer[], job: any): Harness {
     { hold: escrowHold } as any, // escrowService
     { listBlockedIds: jest.fn(async () => []) } as any, // userBlocksService
     { isActiveSubscriber: isSubscriber } as any, // subscriptionsService
-    {} as any, // dataSource
+    dataSource as any, // dataSource
   );
 
   return { service, offers, spend, escrowHold, bookingSave, isSubscriber };
@@ -170,6 +213,28 @@ describe('OffersService — Phase 262 counter & acceptCounter', () => {
     expect(h.bookingSave).toHaveBeenCalledWith(expect.objectContaining({ agreedPrice: 1600 }));
   });
 
+  it('acceptCounter() DÜZ pending teklifi (karşı teklif yokken) normal kabul gibi çalışır', async () => {
+    // En çok kullanılan yol: ilan sahibi, gelen ilk teklifi kabul eder (counter yok).
+    const root = makeOffer({ id: 'o1', userId: WORKER, price: 1950, status: OfferStatus.PENDING });
+    const h = build([root], job);
+
+    const result = await h.service.acceptCounter('o1', CUSTOMER);
+
+    expect(result.status).toBe(OfferStatus.ACCEPTED);
+    expect(result.price).toBe(1950); // orijinal fiyat korunur
+    expect(h.escrowHold).toHaveBeenCalledWith(expect.objectContaining({ amount: 1950 }));
+    expect(h.bookingSave).toHaveBeenCalledWith(expect.objectContaining({ agreedPrice: 1950 }));
+  });
+
+  it('acceptCounter() ikinci çağrıda (çift-tık) çift booking YAPMAZ', async () => {
+    const root = makeOffer({ id: 'o1', userId: WORKER, price: 1950, status: OfferStatus.PENDING });
+    const h = build([root], job);
+
+    await h.service.acceptCounter('o1', CUSTOMER);
+    await expect(h.service.acceptCounter('o1', CUSTOMER)).rejects.toBeInstanceOf(BadRequestException);
+    expect(h.bookingSave).toHaveBeenCalledTimes(1);
+  });
+
   it('acceptCounter() kendi teklifini kabul etmeyi reddeder', async () => {
     // Usta son turu attı (leaf userId = WORKER); yine usta kabul etmeye çalışıyor.
     const root = makeOffer({ id: 'o1', userId: WORKER, price: 1950, status: OfferStatus.COUNTERED });
@@ -178,5 +243,25 @@ describe('OffersService — Phase 262 counter & acceptCounter', () => {
     const h = build([root, c1, c2], job);
 
     await expect(h.service.acceptCounter('o1', WORKER)).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('acceptCounter() pazarlığa taraf olmayan üçüncü şahsı reddeder (Forbidden)', async () => {
+    const root = makeOffer({ id: 'o1', userId: WORKER, price: 1950, status: OfferStatus.COUNTERED });
+    const c1 = makeOffer({ id: 'c1', userId: CUSTOMER, price: 1600, parentOfferId: 'o1', negotiationRound: 1 });
+    const h = build([root, c1], job);
+
+    await expect(h.service.acceptCounter('o1', 'stranger-99')).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('withdrawOffer kökü geri çekince zincirin açık child halkalarını da kapatır (#1)', async () => {
+    const root = makeOffer({ id: 'o1', userId: WORKER, price: 1950, status: OfferStatus.COUNTERED });
+    const c1 = makeOffer({ id: 'c1', userId: CUSTOMER, price: 1600, status: OfferStatus.PENDING, parentOfferId: 'o1', negotiationRound: 1 });
+    const h = build([root, c1], job);
+
+    await h.service.withdrawOffer('job-1', 'o1', WORKER);
+
+    expect(h.offers.find((o) => o.id === 'o1')!.status).toBe(OfferStatus.WITHDRAWN);
+    // dangling PENDING child de kapatıldı → acceptCounter ile diriltilemez
+    expect(h.offers.find((o) => o.id === 'c1')!.status).toBe(OfferStatus.WITHDRAWN);
   });
 });

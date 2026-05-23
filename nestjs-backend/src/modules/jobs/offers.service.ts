@@ -94,6 +94,26 @@ export class OffersService {
       offer.status = OfferStatus.WITHDRAWN;
       await manager.save(Offer, offer);
 
+      // Phase 262 — pazarlık zincirinin alt halkalarını da kapat. Aksi halde
+      // karşı tarafın açık (PENDING) karşı teklifi dangling kalır ve geri
+      // çekilmiş kök, acceptCounter ile diriltilip booking/escrow yaratabilirdi.
+      let cursor: Offer = offer;
+      for (;;) {
+        const child: Offer | null = await manager.findOne(Offer, {
+          where: { parentOfferId: cursor.id },
+          order: { negotiationRound: 'DESC' },
+        });
+        if (!child) break;
+        if (
+          child.status === OfferStatus.PENDING ||
+          child.status === OfferStatus.COUNTERED
+        ) {
+          child.status = OfferStatus.WITHDRAWN;
+          await manager.save(Offer, child);
+        }
+        cursor = child;
+      }
+
       // Phase 110 — Aboneler token harcamadığı için iade yok
       const isSubscriber =
         await this.subscriptionsService.isActiveSubscriber(userId);
@@ -263,12 +283,24 @@ export class OffersService {
   }
 
   async accept(offerId: string, _requestUserId: string): Promise<Offer> {
+    // Phase 262 — ATOMİK idempotency claim. Eski pattern (findOne→check→save)
+    // read-then-write yarışına açıktı: eşzamanlı çift-tıkta iki çağrı da
+    // PENDING görüp ikisi de booking + escrow hold + stat bump yapardı.
+    // Tek koşullu UPDATE: yalnızca ilk çağrı ACCEPTED'a geçer (affected=1).
+    // (tokens.service.spend() ile aynı atomik yaklaşım.)
+    const claim = await this.offersRepository
+      .createQueryBuilder()
+      .update(Offer)
+      .set({ status: OfferStatus.ACCEPTED })
+      .where('id = :id AND status != :accepted', {
+        id: offerId,
+        accepted: OfferStatus.ACCEPTED,
+      })
+      .execute();
     const offer = await this._getOffer(offerId);
-    // Idempotency — zaten kabul edilmişse tekrar işleme (mükerrer booking /
-    // escrow / bildirim / istatistik bump'ını önler).
-    if (offer.status === OfferStatus.ACCEPTED) return offer;
-    offer.status = OfferStatus.ACCEPTED;
-    const saved = await this.offersRepository.save(offer);
+    // affected=0 → zaten kabul edilmiş; idempotent dön (booking/escrow tekrarlanmaz).
+    if (!claim.affected) return offer;
+    const saved = offer; // status artık ACCEPTED
     await this.usersService.bumpStat(offer.userId, 'asWorkerSuccess');
 
     const job = await this.jobsRepository.findOne({
@@ -509,6 +541,17 @@ export class OffersService {
   async acceptCounter(offerId: string, byUserId: string): Promise<Offer> {
     const root = await this._getChainRoot(offerId);
     const leaf = await this._getChainLeaf(root.id);
+
+    // Phase 262 — yetki: yalnızca pazarlığın iki tarafı (ilan sahibi VEYA asıl
+    // teklif veren) kabul edebilir. Üçüncü şahıs offerId'yi bilse de kabul edemez.
+    const job = await this.jobsRepository.findOne({
+      where: { id: root.jobId },
+    });
+    const isParty =
+      !!job && (byUserId === job.customerId || byUserId === root.userId);
+    if (!isParty) {
+      throw new ForbiddenException('Bu pazarlığa taraf değilsiniz');
+    }
 
     if (leaf.status !== OfferStatus.PENDING) {
       throw new BadRequestException('Kabul edilecek aktif bir karşı teklif yok');
