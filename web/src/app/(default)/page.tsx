@@ -7,15 +7,19 @@ import CategoryGrid from '@/components/home/CategoryGrid';
 import PopularJobs from '@/components/home/PopularJobs';
 import HowItWorks from '@/components/home/HowItWorks';
 import TrustBand from '@/components/home/TrustBand';
+import TopProviders from '@/components/home/TopProviders';
 
 export const revalidate = 3600;
 
 export default async function HomePage() {
-  const [cats, statsData] = await Promise.all([
+  const [cats, statsData, workersData] = await Promise.all([
     getCategories(),
     getPublicStats(),
+    // Phase 263 — akıllı/adil sıralamayla (Wilson + Bayesian) en iyi ustalar
+    getWorkers({ sortBy: 'smart' }),
   ]);
   const allCats = cats || [];
+  const topWorkers = unwrap(workersData).slice(0, 3);
   const gridCats = allCats.slice(0, 12);
   const searchCats = allCats.map((c) => ({
     name: c.name,
@@ -39,6 +43,8 @@ export default async function HomePage() {
       <HowItWorks />
 
       <TrustBand />
+
+      <TopProviders workers={topWorkers} />
 
       {/* Quick lead form */}
       <section className="container mx-auto px-4 md:px-6 lg:px-8 py-14 md:py-20">
