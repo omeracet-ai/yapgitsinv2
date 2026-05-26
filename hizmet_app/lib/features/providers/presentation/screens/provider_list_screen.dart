@@ -87,6 +87,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
   Future<void> _openFilterSheet() async {
     final current = ref.read(workerFilterProvider);
     final result = await showModalBottomSheet<WorkerFilter>(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

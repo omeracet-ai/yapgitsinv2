@@ -512,6 +512,7 @@ class _ProviderContent extends ConsumerWidget {
     }
     final userId = provider['userId'] as String? ?? '';
     showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(

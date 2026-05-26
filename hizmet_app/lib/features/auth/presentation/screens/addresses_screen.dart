@@ -250,6 +250,7 @@ class AddressesScreen extends ConsumerWidget {
   void _showAddressForm(
       BuildContext context, WidgetRef ref, SavedAddress? existing) {
     showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

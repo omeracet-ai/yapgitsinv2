@@ -26,6 +26,7 @@ class _WorkerDocumentsScreenState extends ConsumerState<WorkerDocumentsScreen> {
     if (!mounted || cats.isEmpty) return;
 
     final selectedCategory = await showModalBottomSheet<String>(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       builder: (_) => _CategoryPickerSheet(categories: cats),

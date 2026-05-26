@@ -14,6 +14,7 @@ class AvailabilityEditorSheet extends ConsumerStatefulWidget {
   static Future<void> show(BuildContext context,
       {List<Map<String, dynamic>>? initialSlots}) {
     return showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,

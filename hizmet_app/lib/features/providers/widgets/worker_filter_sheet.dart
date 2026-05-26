@@ -9,6 +9,7 @@ import '../data/worker_filter.dart';
 /// Kullanım:
 /// ```dart
 /// final result = await showModalBottomSheet<WorkerFilter>(
+///   useSafeArea: true,
 ///   context: context,
 ///   isScrollControlled: true,
 ///   backgroundColor: Colors.transparent,

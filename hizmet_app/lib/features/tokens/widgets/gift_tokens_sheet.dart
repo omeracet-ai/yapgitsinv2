@@ -20,6 +20,7 @@ class GiftTokensSheet extends ConsumerStatefulWidget {
     required String recipientName,
   }) {
     return showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

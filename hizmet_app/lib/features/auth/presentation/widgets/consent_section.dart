@@ -126,6 +126,7 @@ class ConsentSection extends StatelessWidget {
     required String assetPath,
   }) {
     return showModalBottomSheet<void>(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surfaceElevated,

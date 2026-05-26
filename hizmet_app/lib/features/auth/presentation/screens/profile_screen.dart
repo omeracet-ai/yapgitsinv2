@@ -1671,6 +1671,7 @@ class ProfileScreen extends ConsumerWidget {
 
   void _showAppearanceSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet<void>(
+      useSafeArea: true,
       context: context,
       builder: (ctx) {
         return Consumer(builder: (ctx, ref2, _) {
@@ -1741,6 +1742,7 @@ class ProfileScreen extends ConsumerWidget {
 
   void _showLanguageSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet<void>(
+      useSafeArea: true,
       context: context,
       builder: (ctx) {
         return Consumer(builder: (ctx, ref2, _) {

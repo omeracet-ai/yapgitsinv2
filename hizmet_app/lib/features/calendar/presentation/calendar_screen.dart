@@ -389,6 +389,7 @@ void _showCancelSheet(BuildContext context, WidgetRef ref, Booking b) {
   final refundAmount = (price * percent / 100).toStringAsFixed(2);
 
   showModalBottomSheet<void>(
+      useSafeArea: true,
     context: context,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(

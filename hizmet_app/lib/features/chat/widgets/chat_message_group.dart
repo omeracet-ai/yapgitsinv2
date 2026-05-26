@@ -109,6 +109,7 @@ class _ChatMessageBubbleState extends ConsumerState<ChatMessageBubble> {
   Future<void> _onLongPress() async {
     if (widget.messageId == null || widget.text.trim().isEmpty) return;
     final lang = await showModalBottomSheet<String>(
+      useSafeArea: true,
       context: context,
       builder: (ctx) => SafeArea(
         child: Column(

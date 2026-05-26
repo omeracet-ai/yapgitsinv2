@@ -42,7 +42,7 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
       iconTheme: iconTheme ?? const IconThemeData(color: Colors.white),
       backgroundColor: Colors.transparent,
       flexibleSpace: Container(
-        decoration: BoxDecoration(gradient: AppColors.headerGradient),
+        decoration: const BoxDecoration(color: AppColors.headerDark),
       ),
     );
   }

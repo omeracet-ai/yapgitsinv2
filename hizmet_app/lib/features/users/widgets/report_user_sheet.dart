@@ -21,6 +21,7 @@ class ReportUserSheet extends ConsumerStatefulWidget {
     required String userName,
   }) {
     return showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,

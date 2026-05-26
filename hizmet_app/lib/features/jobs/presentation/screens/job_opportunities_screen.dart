@@ -90,6 +90,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
   Future<void> _openFilterSheet() async {
     final current = ref.read(jobFilterProvider);
     final result = await showModalBottomSheet<JobFilter>(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

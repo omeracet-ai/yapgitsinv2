@@ -239,6 +239,7 @@ class ProfileCompletionCard extends ConsumerWidget {
     List<String> missing,
   ) {
     showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),

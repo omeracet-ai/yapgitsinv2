@@ -39,6 +39,7 @@ class _CertificationsScreenState extends ConsumerState<CertificationsScreen> {
 
   Future<void> _addCertification() async {
     await showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(

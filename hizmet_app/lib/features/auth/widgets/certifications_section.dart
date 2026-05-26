@@ -52,6 +52,7 @@ class _CertificationsSectionState
 
   Future<void> _openAddSheet() async {
     final added = await showModalBottomSheet<bool>(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       builder: (_) => const _AddCertificationSheet(),

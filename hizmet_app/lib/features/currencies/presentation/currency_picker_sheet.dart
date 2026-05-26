@@ -9,6 +9,7 @@ class CurrencyPickerSheet extends ConsumerWidget {
 
   static Future<void> show(BuildContext context) {
     return showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(

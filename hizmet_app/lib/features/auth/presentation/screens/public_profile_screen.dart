@@ -734,6 +734,7 @@ class _ReviewTile extends ConsumerWidget {
     if (reviewId == null) return;
     final existing = review['replyText'] as String?;
     final saved = await showModalBottomSheet<bool>(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,

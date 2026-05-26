@@ -11,6 +11,7 @@ class OfferTemplatePickerSheet extends ConsumerWidget {
 
   static Future<String?> show(BuildContext context) {
     return showModalBottomSheet<String>(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(

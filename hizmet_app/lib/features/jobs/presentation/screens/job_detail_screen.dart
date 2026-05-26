@@ -1353,6 +1353,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                     final revieweeUserId = userMap?['id'] as String?;
                     if (revieweeUserId == null) return;
                     showModalBottomSheet(
+      useSafeArea: true,
                       context: context,
                       isScrollControlled: true,
                       shape: const RoundedRectangleBorder(
@@ -1494,6 +1495,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final msgCtrl = TextEditingController();
     final lineItemsRef = <List<Map<String, dynamic>>>[[]];
     showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -1542,6 +1544,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         TextEditingController(text: currentPrice.replaceAll(' ₺', ''));
     final msgCtrl = TextEditingController();
     showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -1597,6 +1600,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     ];
 
     showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
