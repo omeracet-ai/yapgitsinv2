@@ -14,7 +14,13 @@ class CustomerPublicProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(customerProfileProvider(userId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Müşteri Profili')),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Müşteri Profili'),
+        backgroundColor: AppColors.headerBackground(context),
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
       body: asyncData.when(
         loading: () => ListSkeleton(itemCount: 4, itemBuilder: (_) => const ProviderCardSkeleton()),
         error: (e, _) => Center(child: Text('Hata: $e')),
@@ -99,8 +105,8 @@ class _Body extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         'Üyelik: ${_formatDate(joinedAt)}',
-                        style: const TextStyle(
-                            fontSize: 12, color: Colors.black54),
+                        style: TextStyle(
+                            fontSize: 12, color: AppColors.textSecondary),
                       ),
                     ),
                 ],
@@ -208,10 +214,10 @@ class _Body extends StatelessWidget {
         const SizedBox(height: 8),
 
         if (reviews.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
             child: Text('Henüz yorum yok.',
-                style: TextStyle(color: Colors.black54)),
+                style: TextStyle(color: AppColors.textSecondary)),
           )
         else
           ...reviews.map((r) => _reviewTile(r)),
@@ -233,7 +239,7 @@ class _Body extends StatelessWidget {
                   fontSize: 15, fontWeight: FontWeight.bold)),
           const SizedBox(height: 2),
           Text(label,
-              style: const TextStyle(fontSize: 11, color: Colors.black54),
+              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
               textAlign: TextAlign.center),
         ],
       ),
@@ -287,7 +293,7 @@ class _Body extends StatelessWidget {
             const SizedBox(height: 6),
             Text(_formatDate(createdAt),
                 style:
-                    const TextStyle(fontSize: 11, color: Colors.black45)),
+                    TextStyle(fontSize: 11, color: AppColors.textHint)),
           ],
         ],
       ),
@@ -306,9 +312,9 @@ class _Body extends StatelessWidget {
         child: Row(children: [
           Icon(Icons.show_chart_rounded, color: Colors.grey.shade400),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Text('Henüz aktivite verisi yok.',
-                style: TextStyle(color: Colors.black54)),
+                style: TextStyle(color: AppColors.textSecondary)),
           ),
         ]),
       );
@@ -328,9 +334,9 @@ class _Body extends StatelessWidget {
         child: Row(children: [
           Icon(Icons.show_chart_rounded, color: Colors.grey.shade400),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Text('Son 6 ayda tamamlanan iş yok.',
-                style: TextStyle(color: Colors.black54, fontSize: 13)),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
           ),
         ]),
       );
@@ -370,8 +376,8 @@ class _Body extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(mm,
-                        style: const TextStyle(
-                            fontSize: 10, color: Colors.black54)),
+                        style: TextStyle(
+                            fontSize: 10, color: AppColors.textSecondary)),
                   ],
                 ),
               ),
@@ -410,8 +416,8 @@ class _Body extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                     '$cat${completedAt != null ? " · ${_formatDate(completedAt)}" : ""}',
-                    style: const TextStyle(
-                        fontSize: 11, color: Colors.black54)),
+                    style: TextStyle(
+                        fontSize: 11, color: AppColors.textSecondary)),
               ],
             ),
           ),
