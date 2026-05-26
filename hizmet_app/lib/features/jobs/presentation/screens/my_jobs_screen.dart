@@ -97,18 +97,13 @@ class _DualRoleView extends ConsumerWidget {
         backgroundColor: AppColors.background,
         appBar: showAppBar
             ? AppBar(
-                title: Text(AppLocalizations.of(context).myJobsTitle),
+                automaticallyImplyLeading: false,
+                titleSpacing: 0,
                 backgroundColor: AppColors.headerBackground(context),
                 foregroundColor: Colors.white,
-                actions: [
-                  const NotificationBell(),
-                  IconButton(
-                    icon: const Icon(Icons.bookmark_border),
-                    tooltip: 'Şablonlarım',
-                    onPressed: () => context.push('/sablonlarim'),
-                  ),
-                ],
-                bottom: const TabBar(
+                // "İşlerim" başlığı kaldırıldı; TabBar üstte tek satır olarak
+                // gözükür ve sağda bildirim + şablonlarım hizalı.
+                title: const TabBar(
                   isScrollable: true,
                   tabAlignment: TabAlignment.start,
                   tabs: [
@@ -120,6 +115,15 @@ class _DualRoleView extends ConsumerWidget {
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.white70,
                 ),
+                actions: [
+                  const NotificationBell(),
+                  IconButton(
+                    icon: const Icon(Icons.bookmark_border),
+                    tooltip: 'Şablonlarım',
+                    onPressed: () => context.push('/sablonlarim'),
+                  ),
+                  const SizedBox(width: 4),
+                ],
               )
             : null,
         body: const TabBarView(

@@ -234,11 +234,11 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
 
     // Hero rengi temaya göre: Açık modda marka yeşili; Sistem/Koyu (dark) modda
     // koyu tema arka planı + okunur açık ön plan.
-    // Yaptır hero header → proje yeşili.
-    final heroBg = AppColors.primary;
+    // Yaptır hero header → koyu renk (gradient kaldırıldı).
+    final heroBg = AppColors.headerDark;
     final heroTitle = Colors.white;
     final heroGreeting = Colors.white70;
-    final heroBadgeBg = Colors.white;
+    final heroBadgeBg = AppColors.primary;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -266,9 +266,9 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.pin,
                 background: Container(
-                  // Hero gradient: light theme yeşil → siyah (diagonal, 3D).
-                  decoration: BoxDecoration(
-                    gradient: AppColors.headerGradient,
+                  // Hero zemini: solid dark.
+                  decoration: const BoxDecoration(
+                    color: AppColors.headerDark,
                   ),
                   child: SafeArea(
                     child: Padding(

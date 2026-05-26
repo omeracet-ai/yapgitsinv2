@@ -9,23 +9,9 @@ class AppColors {
   static const Color primary       = Color(0xFF4ADE80);
   static const Color primaryDark   = Color(0xFF22C55E);
   static const Color primaryLight  = Color(0xFFDCFCE7);
-  /// Header zemini — proje light theme yeşili (#4ADE80 = primary).
-  /// Geriye uyum için `headerDark` adıyla tutuluyor; artık dark değil.
-  static const Color headerDark    = primary;
-
-  /// Header gradient: light theme yeşil (üst) → siyah (alt).
-  /// 3D derinlik için topLeft → bottomRight diagonal + iki ara stop.
-  static LinearGradient get headerGradient => const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          primary,         // #4ADE80
-          Color(0xFF1F8047), // ortada koyulaşma
-          Color(0xFF0A0A0A), // neredeyse siyah
-          Colors.black,     // siyah
-        ],
-        stops: [0.0, 0.45, 0.85, 1.0],
-      );
+  /// Header zemini — koyu renk (2026-05-26 kullanıcı isteği).
+  /// Tüm AppBar/top header için tek dark token.
+  static const Color headerDark    = Color(0xFF161B22);
   static Color get   primaryGlow   => primary.withValues(alpha: 0.15);
 
   static const Color secondary     = Color(0xFF161B22);
@@ -94,7 +80,7 @@ class AppColors {
   static const Color legacyOrange = primary;
 
   // ── Phase 263 — Ana sekme header arka planı ────────────────────────────
-  /// Tüm uygulama AppBar/header zemini — proje yeşili (primary).
-  /// Tema fark etmeden aynı light green; foreground beyaz olmalı.
-  static Color headerBackground(BuildContext context) => primary;
+  /// Tüm uygulama AppBar/header zemini — koyu renk (#161B22).
+  /// Foreground beyaz olmalı.
+  static Color headerBackground(BuildContext context) => headerDark;
 }

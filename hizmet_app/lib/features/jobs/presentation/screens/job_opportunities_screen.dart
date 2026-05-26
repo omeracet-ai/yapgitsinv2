@@ -8,6 +8,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../categories/data/category_repository.dart';
+import '../../../notifications/data/unread_count_provider.dart';
+import '../../../notifications/presentation/screens/notification_screen.dart';
 import '../../data/job_filter.dart';
 import '../../data/offer_repository.dart';
 import '../../widgets/job_filter_sheet.dart';
@@ -273,6 +275,8 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
               ),
               const SizedBox(width: 6),
               _filterButton(activeFilterCount),
+              const SizedBox(width: 6),
+              _notifButton(context),
             ],
           ),
           const SizedBox(height: 6),
@@ -343,6 +347,55 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
           ),
         ),
       );
+
+  Widget _notifButton(BuildContext context) {
+    final count = ref.watch(unreadCountBadgeProvider);
+    final loggedIn = ref.watch(authStateProvider) is AuthAuthenticated;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Material(
+          color: AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const NotificationScreen()),
+            ),
+            child: Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              child: Icon(Icons.notifications_outlined,
+                  color: AppColors.textPrimary, size: 22),
+            ),
+          ),
+        ),
+        if (loggedIn && count > 0)
+          Positioned(
+            top: -4,
+            right: -4,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              constraints:
+                  const BoxConstraints(minWidth: 18, minHeight: 18),
+              decoration: BoxDecoration(
+                color: AppColors.error,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.background, width: 1.5),
+              ),
+              child: Text(count > 99 ? '99+' : '$count',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold)),
+            ),
+          ),
+      ],
+    );
+  }
 
   Widget _filterButton(int activeCount) {
     final hasActive = activeCount > 0;
