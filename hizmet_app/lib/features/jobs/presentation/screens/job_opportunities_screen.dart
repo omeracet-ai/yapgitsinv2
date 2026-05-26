@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/card_3d.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../categories/data/category_repository.dart';
@@ -562,11 +563,8 @@ class _OpportunityCard extends ConsumerWidget {
         ),
       )),
       child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
-        ),
+        // Phase 265c — 3D sıkılaştırılmış kart efekti (theme-aware).
+        decoration: card3d(context, radius: 12, elevation: 1.0),
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

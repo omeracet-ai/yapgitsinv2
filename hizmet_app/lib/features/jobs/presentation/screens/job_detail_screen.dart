@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/card_3d.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../data/job_repository.dart';
@@ -980,20 +981,19 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     };
     final sc = statusColors[status] ?? [Colors.grey.shade100, Colors.grey];
 
+    // Phase 265c — 3D sıkılaştırılmış kart efekti; accepted/countered için
+    // status border override eklenir.
+    final accentBorder = status == 'accepted'
+        ? Border.all(color: Colors.green.shade400, width: 2)
+        : status == 'countered'
+            ? Border.all(color: Colors.blue.shade300, width: 1)
+            : null;
+    final deco = accentBorder != null
+        ? card3d(context, radius: 10, elevation: 0.8).copyWith(border: accentBorder)
+        : card3d(context, radius: 10, elevation: 0.8);
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      decoration: BoxDecoration(
-        color: _surfaceColor2,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: status == 'accepted'
-              ? Colors.green.shade400
-              : status == 'countered'
-                  ? Colors.blue.shade300
-                  : _borderColor,
-          width: status == 'accepted' ? 2 : 1,
-        ),
-      ),
+      decoration: deco,
       child: Column(
         children: [
           // Ana teklif satırı — kompakt
