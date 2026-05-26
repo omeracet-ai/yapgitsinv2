@@ -299,39 +299,8 @@ class _ProfileView extends ConsumerWidget {
                   ),
                 ),
 
-                // ── Teklif Yap CTA (sadece usta profili + isSelf değil) ────────
-                // PostJobScreen'e workerCats listesi extra ile geçer; form
-                // kategori chip'ini sadece bu listeyle daraltır → kullanıcı
-                // ustanın yapmadığı kategoride ilan veremez.
-                if (isWorker && !isSelf) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    child: ElevatedButton.icon(
-                      onPressed: () => context.push(
-                        '/ilan-ver',
-                        extra: {'allowedCategories': workerCats},
-                      ),
-                      icon: const Icon(Icons.handshake_outlined,
-                          color: Colors.white),
-                      label: const Text(
-                        'Teklif Yap',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        minimumSize: const Size(double.infinity, 52),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-
+                // Eski "Teklif Yap" CTA Phase 265e'de tek "Bu Ustaya Teklif
+                // Ver" butonuyla birleştirildi (aşağıda).
                 const SizedBox(height: 8),
 
                 // ── Rozetler ─────────────────────────────────────────────
@@ -437,13 +406,10 @@ class _ProfileView extends ConsumerWidget {
                         ),
                         icon: const Icon(Icons.send_rounded,
                             size: 18, color: Colors.white),
-                        label: Text(
-                            workerCats.isEmpty
-                                ? 'Bu Ustaya Teklif Ver'
-                                : 'Bu Ustaya Teklif Ver • ${workerCats.first}',
+                        label: const Text('Bu Ustaya Teklif Ver',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.bold)),
                         onPressed: () {
                           if (currentUserId == null) {
@@ -631,8 +597,8 @@ class _ProfileView extends ConsumerWidget {
                       style: TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 8),
-                  ...((data['certifications'] as List)
-                      .cast<Map>()
+                  ...(((data['certifications'] as List?) ?? const [])
+                      .whereType<Map>()
                       .map((m) => Map<String, dynamic>.from(m))
                       .map((c) => Container(
                             margin: const EdgeInsets.only(bottom: 8),

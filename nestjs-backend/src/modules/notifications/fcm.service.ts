@@ -77,6 +77,14 @@ export class FcmService implements OnModuleInit {
         token,
         notification: { title, body },
         data: data ?? {},
+        // Phase 265e — sistem bildirim sesi (real device'larda sessizlik fix).
+        android: {
+          priority: 'high',
+          notification: { sound: 'default', defaultSound: true },
+        },
+        apns: {
+          payload: { aps: { sound: 'default', contentAvailable: true } },
+        },
       });
       return true;
     } catch (err) {
@@ -124,6 +132,8 @@ export class FcmService implements OnModuleInit {
           tokens: chunk,
           notification: { title, body },
           data: data ?? {},
+          android: { priority: 'high', notification: { sound: 'default', defaultSound: true } },
+          apns: { payload: { aps: { sound: 'default', contentAvailable: true } } },
         });
         successCount += response.successCount;
         failureCount += response.failureCount;
@@ -203,6 +213,14 @@ export class FcmService implements OnModuleInit {
         tokens,
         notification: { title, body },
         data: data ?? {},
+        // Phase 265e — sistem bildirim sesi (real device'larda sessizlik fix).
+        android: {
+          priority: 'high',
+          notification: { sound: 'default', defaultSound: true },
+        },
+        apns: {
+          payload: { aps: { sound: 'default', contentAvailable: true } },
+        },
       });
 
       if (response.failureCount > 0) {
@@ -266,6 +284,8 @@ export class FcmService implements OnModuleInit {
             tokens,
             notification: { title, body },
             data: data ?? {},
+          android: { priority: 'high', notification: { sound: 'default', defaultSound: true } },
+          apns: { payload: { aps: { sound: 'default', contentAvailable: true } } },
           });
           totalSuccess += response.successCount;
 

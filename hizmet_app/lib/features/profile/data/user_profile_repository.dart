@@ -28,9 +28,14 @@ class UserProfileRepository {
   }
 
   /// GET /users/:id/profile — public profile (Phase 170 cached 60s).
+  /// Phase 265e — defensive: prod cache bazen boş body döndürüyor (Omer Acet).
+  /// res.data string/null gelirse exception yerine NotFoundException fırlat.
   Future<Map<String, dynamic>> getPublicProfile(String userId) async {
     final res = await _dio.get('/users/$userId/profile');
-    return Map<String, dynamic>.from(res.data as Map);
+    final raw = res.data;
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    // Boş body / yanıt yok → profil bulunamadı
+    throw Exception('Profil bulunamadı veya geçici olarak erişilemiyor.');
   }
 
   /// GET /users/:id/availability — public availability slots (Phase 211).
