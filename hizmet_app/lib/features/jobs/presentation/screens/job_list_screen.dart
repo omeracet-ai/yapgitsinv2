@@ -126,16 +126,7 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          final isLoggedIn = ref.read(authStateProvider) is AuthAuthenticated;
-          context.push(isLoggedIn ? '/ilan-ver' : '/giris-yap');
-        },
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.black,
-        icon: const Icon(Icons.add),
-        label: const Text('İlan Ver', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
+      // "+ İlan Ver" FAB kaldırıldı.
     );
   }
 
@@ -346,24 +337,10 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
         message: 'Başka bir kelime ya da kategori deneyin.',
       );
     }
-    return EmptyState(
+    return const EmptyState(
       icon: Icons.work_off_rounded,
       title: 'Henüz ilan yok',
-      message: 'İlk ilanı sen aç, ustalar teklif vermeye başlasın!',
-      action: ElevatedButton.icon(
-        onPressed: () {
-          final isLoggedIn = ref.read(authStateProvider) is AuthAuthenticated;
-          context.push(isLoggedIn ? '/ilan-ver' : '/giris-yap');
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('İlan Aç'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          padding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        ),
-      ),
+      message: 'Yeni ilanlar yayınlandığında burada görünecek.',
     );
   }
 }

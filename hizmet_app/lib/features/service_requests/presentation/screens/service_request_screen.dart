@@ -135,15 +135,7 @@ class _ServiceRequestScaffold extends StatelessWidget {
               elevation: 0,
             )
           : null,
-      floatingActionButton: isLoggedIn
-          ? FloatingActionButton.extended(
-              onPressed: onAddTap,
-              backgroundColor: AppColors.primary,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text('İlan Ver',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            )
-          : null,
+      // "+ İlan Ver" FAB kaldırıldı.
       body: requestsAsync.when(
         loading: () => ListSkeleton(itemCount: 6, itemBuilder: (_) => const JobCardSkeleton()),
         error: (e, _) => Center(child: Text('Hata: $e')),

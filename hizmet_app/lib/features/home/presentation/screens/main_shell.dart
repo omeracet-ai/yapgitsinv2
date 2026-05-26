@@ -11,7 +11,6 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../categories/data/category_repository.dart';
 import '../../../jobs/presentation/providers/job_provider.dart' as jp;
 import '../../../jobs/presentation/providers/job_provider.dart' show jobsProvider, Job;
-import '../../../jobs/presentation/screens/job_list_screen.dart';
 import '../../../jobs/presentation/screens/job_detail_screen.dart';
 import '../../../jobs/presentation/screens/my_jobs_screen.dart';
 import '../../../providers/data/provider_repository.dart';
@@ -62,28 +61,13 @@ class _MainShellState extends ConsumerState<MainShell>
   void _onItemTapped(int index) {
     final authState = ref.read(authStateProvider);
     final isLoggedIn = authState is AuthAuthenticated;
-    // index 2 — "+" İlan Ver kısa yolu: usta hizmet ilanı (offer) akışı.
-    // Müşteri talebi (request) anasayfadaki "Hizmet İlanı Ver"den verilir;
-    // bu sekme ustaların hizmet SUNDUĞU offer ilanları içindir → "Hizmet
-    // İlanları" sekmesinde listelenir. Kısıtlama yok, herkes açabilir.
-    if (index == 2) {
-      if (isLoggedIn) {
-        context.push('/hizmet-ilani-ver');
-      } else {
-        context.push('/giris-yap', extra: {'returnTo': '/hizmet-ilani-ver'});
-      }
-      return;
-    }
-    // Bildirimler (index 3) giriş gerektiriyor
-    if (index == 3 && !isLoggedIn) {
+    // "+ İlan Ver" sekmesi kaldırıldı. Yeni index'ler:
+    //   0 Yaptır · 1 Yapgitsin · 2 İşlerim · 3 Profil
+    if (index == 2 && !isLoggedIn) {
       context.push('/giris-yap', extra: {'returnTo': '/'});
       return;
     }
     ref.read(selectedTabProvider.notifier).state = index;
-    if (index == 3 && isLoggedIn) {
-      // Refresh badge when entering notifications tab.
-      ref.read(unreadCountBadgeProvider.notifier).refresh();
-    }
   }
 
   @override
@@ -99,7 +83,6 @@ class _MainShellState extends ConsumerState<MainShell>
     final List<Widget> pages = [
       _HomeTab(onSeeAllRequests: () => _onItemTapped(1)),
       const HizmetAlScreen(),
-      const JobListScreen(),
       const MyJobsScreen(showAppBar: true),
       const ProfileScreen(),
     ];
@@ -140,49 +123,20 @@ class _MainShellState extends ConsumerState<MainShell>
             selectedLabelStyle: const TextStyle(
                 fontSize: 11, fontWeight: FontWeight.bold),
             unselectedLabelStyle: const TextStyle(fontSize: 11),
-            items: [
-              const BottomNavigationBarItem(
+            items: const [
+              BottomNavigationBarItem(
                   icon: Icon(Icons.home_outlined),
                   activeIcon: Icon(Icons.home_rounded),
                   label: 'Yaptır'),
-              const BottomNavigationBarItem(
+              BottomNavigationBarItem(
                   icon: Icon(Icons.search_outlined),
                   activeIcon: Icon(Icons.search_rounded),
                   label: 'Yapgitsin'),
               BottomNavigationBarItem(
-                  icon: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: AppColors.darkPrimary,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.darkPrimary.withValues(alpha: 0.35),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(Icons.add_rounded,
-                        color: Colors.black, size: 24),
-                  ),
-                  activeIcon: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: AppColors.darkPrimary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.add_rounded,
-                        color: Colors.black, size: 24),
-                  ),
-                  label: 'İlan Ver'),
-              const BottomNavigationBarItem(
                   icon: Icon(Icons.work_outline_rounded),
                   activeIcon: Icon(Icons.work_rounded),
                   label: 'İşlerim'),
-              const BottomNavigationBarItem(
+              BottomNavigationBarItem(
                   icon: Icon(Icons.person_outline_rounded),
                   activeIcon: Icon(Icons.person_rounded),
                   label: 'Profil'),
