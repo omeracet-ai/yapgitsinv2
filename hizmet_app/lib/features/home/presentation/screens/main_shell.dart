@@ -12,7 +12,6 @@ import '../../../categories/data/category_repository.dart';
 import '../../../jobs/presentation/providers/job_provider.dart' as jp;
 import '../../../jobs/presentation/providers/job_provider.dart' show jobsProvider, Job;
 import '../../../jobs/presentation/screens/job_detail_screen.dart';
-import '../../../jobs/presentation/screens/my_jobs_screen.dart';
 import '../../../providers/data/provider_repository.dart';
 import '../../../providers/presentation/screens/provider_list_screen.dart';
 import '../../../providers/presentation/screens/provider_profile_screen.dart';
@@ -80,10 +79,12 @@ class _MainShellState extends ConsumerState<MainShell>
 
     final selectedIndex = ref.watch(selectedTabProvider);
 
+    // Kullanıcı isteği: Yapgitsin ve İşlerim aynı içeriği gösterir
+    // ("Hizmet İlanı Ver" + Fırsatlar). Sadece AppBar başlığı farklı.
     final List<Widget> pages = [
       _HomeTab(onSeeAllRequests: () => _onItemTapped(1)),
-      const HizmetAlScreen(),
-      const MyJobsScreen(showAppBar: true),
+      const HizmetAlScreen(appBarTitle: 'Yapgitsin'),
+      const HizmetAlScreen(appBarTitle: 'İşlerim'),
       const ProfileScreen(),
     ];
 

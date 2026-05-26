@@ -1,46 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../jobs/presentation/screens/job_opportunities_screen.dart';
-import '../../../jobs/presentation/screens/service_listings_screen.dart';
-import '../../../map/presentation/screens/map_screen.dart';
 import '../../../notifications/presentation/screens/notification_screen.dart';
 import '../../../notifications/data/unread_count_provider.dart';
 
-class HizmetAlScreen extends ConsumerStatefulWidget {
-  const HizmetAlScreen({super.key});
+/// Yapgitsin sekmesi (sadeleşmiş — 2026-05-26):
+///   • Üstte "Hizmet İlanı Ver" CTA
+///   • Altta "Fırsatlar" listesi (JobOpportunitiesBody)
+///
+/// Eski "Hizmet İlanları" (usta offer listings) ve "Harita" sekmeleri
+/// kullanıcı isteği ile gizlendi. Aynı widget hem Yapgitsin hem İşlerim
+/// alt-sekmesinde kullanılır (içerik = paylaşımlı).
+class HizmetAlScreen extends ConsumerWidget {
+  const HizmetAlScreen({super.key, this.appBarTitle = 'Yapgitsin'});
+
+  final String appBarTitle;
 
   @override
-  ConsumerState<HizmetAlScreen> createState() => _HizmetAlScreenState();
-}
-
-class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
-  // Phase Two-Sided — Ustalar tab kullanıcı isteğiyle gizlendi.
-  // İşlerim ana navigasyona taşındı; bu ekranda artık 3 tab.
-  static const _tabs = [
-    Tab(text: 'Hizmet İlanları'),
-    Tab(text: 'Fırsatlar'),
-    Tab(text: 'Harita'),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isLoggedIn = ref.watch(authStateProvider) is AuthAuthenticated;
     final unreadCount = ref.watch(unreadCountBadgeProvider);
 
@@ -49,42 +29,89 @@ class _HizmetAlScreenState extends ConsumerState<HizmetAlScreen>
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Yapgitsin',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(appBarTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           _NotifAppBarButton(
             count: isLoggedIn ? unreadCount : 0,
             onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const NotificationScreen(),
-              ),
+              MaterialPageRoute(builder: (_) => const NotificationScreen()),
             ),
           ),
           const SizedBox(width: 4),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabAlignment: TabAlignment.center,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
-          labelStyle:
-              const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          unselectedLabelStyle: const TextStyle(fontSize: 13),
-          tabs: _tabs,
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _PostJobCta(isLoggedIn: isLoggedIn),
+          const _SectionHeader(text: 'Fırsatlar'),
+          const Expanded(child: JobOpportunitiesBody()),
+        ],
+      ),
+    );
+  }
+}
+
+class _PostJobCta extends StatelessWidget {
+  final bool isLoggedIn;
+  const _PostJobCta({required this.isLoggedIn});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      color: AppColors.primary,
+      child: SizedBox(
+        height: 44,
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: AppColors.primary,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+            elevation: 0,
+          ),
+          icon: const Icon(Icons.add_rounded, size: 20),
+          label: const Text('Hizmet İlanı Ver',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          onPressed: () {
+            if (!isLoggedIn) {
+              context.push('/giris-yap', extra: {'returnTo': '/ilan-ver'});
+            } else {
+              context.push('/ilan-ver');
+            }
+          },
         ),
       ),
-      body: SafeArea(
-        top: false,
-        child: TabBarView(
-          controller: _tabController,
-          children: const [
-            ServiceListingsBody(),
-            JobOpportunitiesBody(),
-            MapScreen(),
-          ],
-        ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String text;
+  const _SectionHeader({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+      color: AppColors.background,
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 16,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(text,
+              style: const TextStyle(
+                  fontSize: 15, fontWeight: FontWeight.bold)),
+        ],
       ),
     );
   }
@@ -109,21 +136,22 @@ class _NotifAppBarButton extends StatelessWidget {
               right: -6,
               top: -4,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 decoration: BoxDecoration(
                   color: AppColors.error,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.primary, width: 1),
                 ),
-                constraints: const BoxConstraints(minWidth: 18, minHeight: 16),
+                constraints:
+                    const BoxConstraints(minWidth: 18, minHeight: 16),
                 child: Text(
                   count > 99 ? '99+' : '$count',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
             ),
