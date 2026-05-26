@@ -42,6 +42,7 @@ import '../../../features/bookings/presentation/screens/booking_create_screen.da
 import '../../../features/disputes/presentation/screens/my_disputes_screen.dart';
 import '../../../features/disputes/presentation/screens/dispute_create_screen.dart';
 import '../../../features/certifications/presentation/certifications_screen.dart';
+import '../../../features/users/presentation/screens/worker_documents_screen.dart';
 import '../../../features/photos/presentation/screens/portfolio_screen.dart';
 import '../../../features/map/presentation/screens/map_screen.dart';
 import '../providers/navigation_provider.dart';
@@ -338,6 +339,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/sertifikalarim',
         builder: (context, state) => const CertificationsScreen(),
+      ),
+      GoRoute(
+        path: '/belgelerim',
+        builder: (context, state) => const WorkerDocumentsScreen(),
       ),
       GoRoute(
         path: '/mesaj-sablonlarim',

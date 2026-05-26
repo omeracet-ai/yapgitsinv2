@@ -185,6 +185,33 @@ export class UsersController {
     return this.svc.removeOfferTemplate(req.user.id, index);
   }
 
+  // ── Ustalık belgeleri (OPSİYONEL) — "Belgelerim" bölümü ────────────────
+  // Belge yüklenince o kategoride "Usta" ünvanı + doğrulama kartı kazanılır.
+  // Belge zorunlu DEĞİL — kullanıcı belge olmadan da ilan/teklif verebilir.
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/documents')
+  getWorkerDocuments(@Request() req: AuthenticatedRequest) {
+    return this.svc.getWorkerDocuments(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('me/documents')
+  addWorkerDocument(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { category: string; url: string; title?: string },
+  ) {
+    return this.svc.addWorkerDocument(req.user.id, body);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('me/documents/:id')
+  removeWorkerDocument(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ) {
+    return this.svc.removeWorkerDocument(req.user.id, id);
+  }
+
   // ── Phase 138: Customer message templates (max 5) ─────────────────
   @UseGuards(AuthGuard('jwt'))
   @Get('me/message-templates')
@@ -843,7 +870,12 @@ export class UsersController {
   @Get(':id/customer-profile')
   async getCustomerProfile(@Param('id') id: string) {
     const user = await this.svc.findById(id);
-    if (!user) return null;
+    if (!user) {
+      // Phase 263 — fix: önceden null dönüyordu; Flutter `Map.from(null)` ile
+      // crash ediyor ve "içerik gelmiyor" görüntüsü oluşuyordu. Artık 404 +
+      // minimal payload dönüyoruz; istemci hatayı net görür.
+      throw new BadRequestException('Kullanıcı bulunamadı');
+    }
 
     const reviews = await this.reviewsRepo.find({
       where: { revieweeId: id },
@@ -1088,6 +1120,11 @@ export class UsersController {
       certifications: verifiedCerts.map((c) =>
         this.certificationSvc.toPublic(c),
       ),
+      // Ustalık belgeleri — sadece aktif (revoked olmayan) olanlar profilde
+      // "Usta" ünvanı + doğrulama kartı için gösterilir. Belge opsiyonel.
+      workerDocuments: Array.isArray(user.workerDocuments)
+        ? user.workerDocuments.filter((d) => d.status === 'active')
+        : [],
     };
   }
 }

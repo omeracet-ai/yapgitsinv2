@@ -25,6 +25,7 @@ import '../../../profile/widgets/profile_completion_card.dart';
 // import '../../../profile/presentation/widgets/profile_video_uploader.dart'; // video upload UI hidden
 import '../../widgets/availability_editor_sheet.dart';
 import '../../../users/widgets/badge_row.dart';
+import '../../../users/widgets/worker_documents_card.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../core/services/locale_provider.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -75,6 +76,19 @@ class ProfileScreen extends ConsumerWidget {
             children: [
               const ProfileCompletionCard(),
               _buildProfileHeader(user),
+              Consumer(builder: (context, ref, _) {
+                final p = ref.watch(myPublicProfileProvider);
+                return p.maybeWhen(
+                  data: (d) => WorkerDocumentsCard(
+                    documents: ((d['workerDocuments'] as List?) ?? const [])
+                        .whereType<Map>()
+                        .map((m) => Map<String, dynamic>.from(m))
+                        .toList(),
+                    isSelf: true,
+                  ),
+                  orElse: () => const SizedBox.shrink(),
+                );
+              }),
               // Video upload UI hidden — restore by uncommenting below.
               // ProfileVideoUploader(
               //   onUploadSuccess: () => ref.invalidate(myPublicProfileProvider),
@@ -1041,6 +1055,10 @@ class ProfileScreen extends ConsumerWidget {
           }),
           _menuItem(Icons.event_available_outlined, 'Müsaitlik Takvimi', () {
             AvailabilityEditorSheet.show(context);
+          }),
+          _menuItem(Icons.workspace_premium_outlined,
+              '🪪 Belgelerim (Usta Ünvanı)', () {
+            context.push('/belgelerim');
           }),
           ..._buildWorkerOnlyItems(context, ref),
           ..._buildCustomerOnlyItems(context, ref),

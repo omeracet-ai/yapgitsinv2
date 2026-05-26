@@ -14,6 +14,7 @@ import '../../../photos/presentation/widgets/portfolio_grid.dart';
 import '../../widgets/availability_editor_sheet.dart';
 import '../../widgets/review_summary_card.dart';
 import '../../../users/widgets/badge_row.dart';
+import '../../../users/widgets/worker_documents_card.dart';
 import 'package:go_router/go_router.dart';
 
 final publicProfileProvider =
@@ -348,6 +349,15 @@ class _ProfileView extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                 ],
+
+                // ── Ustalık belgeleri (varsa "Usta" title + belge kartı) ──
+                WorkerDocumentsCard(
+                  documents: ((data['workerDocuments'] as List?) ?? const [])
+                      .whereType<Map>()
+                      .map((m) => Map<String, dynamic>.from(m))
+                      .toList(),
+                  isSelf: isSelf,
+                ),
 
                 // ── Kategoriler ───────────────────────────────────────────
                 if (workerCats.isNotEmpty) ...[
