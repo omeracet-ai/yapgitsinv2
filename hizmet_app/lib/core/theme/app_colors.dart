@@ -9,9 +9,10 @@ class AppColors {
   static const Color primary       = Color(0xFF4ADE80);
   static const Color primaryDark   = Color(0xFF22C55E);
   static const Color primaryLight  = Color(0xFFDCFCE7);
-  /// Header zemini — siyah (2026-05-26 kullanıcı isteği: black header).
-  /// Tüm AppBar/top header için tek token.
-  static const Color headerDark    = Color(0xFF000000);
+  /// Header zemini — content surface tonu (2026-05-26: kullanıcı pure
+  /// siyah ezici buldu, content ile uyumlu dark). Tüm AppBar/top header
+  /// için tek token.
+  static const Color headerDark    = Color(0xFF161B22);
   static Color get   primaryGlow   => primary.withValues(alpha: 0.15);
 
   static const Color secondary     = Color(0xFF161B22);

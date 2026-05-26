@@ -234,8 +234,9 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
 
     // Hero rengi temaya göre: Açık modda marka yeşili; Sistem/Koyu (dark) modda
     // koyu tema arka planı + okunur açık ön plan.
-    // Yaptır hero header → koyu renk (gradient kaldırıldı).
-    final heroBg = AppColors.headerDark;
+    // Yaptır hero header → content/body ile aynı dark surface (AppColors.surface
+    // = #161B22). Pure black ezici geliyordu; surface tonu içerikle uyumlu.
+    final heroBg = AppColors.surface;
     final heroTitle = Colors.white;
     final heroGreeting = Colors.white70;
     final heroBadgeBg = AppColors.primary;
@@ -266,9 +267,10 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.pin,
                 background: Container(
-                  // Hero zemini: solid dark.
-                  decoration: const BoxDecoration(
-                    color: AppColors.headerDark,
+                  // Hero zemini: content surface tonu (siyah üzerine siyah
+                  // problemini çözmek için).
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
                   ),
                   child: SafeArea(
                     child: Padding(
