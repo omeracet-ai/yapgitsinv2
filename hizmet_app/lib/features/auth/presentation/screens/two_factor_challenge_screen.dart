@@ -47,7 +47,8 @@ class _TwoFactorChallengeScreenState
           .read(authStateProvider.notifier)
           .verify2FALogin(widget.tempToken, code);
       if (!mounted) return;
-      ref.read(selectedTabProvider.notifier).state = 4;
+      // Phase 265e fix: BottomNav 4 sekmeye düştü; Profile = index 3.
+      ref.read(selectedTabProvider.notifier).state = 3;
       context.go(widget.returnTo ?? '/');
     } catch (e) {
       if (!mounted) return;

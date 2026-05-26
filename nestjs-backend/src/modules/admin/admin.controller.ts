@@ -492,6 +492,15 @@ export class AdminController {
     return this.adminService.setFeaturedWorker(id, order);
   }
 
+  // Phase 265e — Admin hard-delete: kullanıcıyı + bağlı kayıtları derhal sil.
+  // Soft-delete + 30-gün cron yerine; kullanıcı isteği ile kalıcı silme.
+  // Audit log + onDelete:CASCADE FK'leri tetikler.
+  @Audit('user.hard_delete')
+  @Delete('users/:id/hard-delete')
+  async hardDeleteUser(@Param('id') id: string) {
+    return this.adminService.hardDeleteUser(id);
+  }
+
   @Post('users/bulk-feature')
   async bulkFeatureUsers(
     @Body() dto: BulkFeatureDto,

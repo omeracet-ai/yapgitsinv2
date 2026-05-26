@@ -837,6 +837,19 @@ export class AdminService {
     return this.usersRepo.update(id, { featuredOrder });
   }
 
+  // Phase 265e — Admin hard-delete: kalıcı sil. FK CASCADE bağlı kayıtları
+  // (offers, jobs[customerId], reviews, notifications vb.) ON DELETE CASCADE
+  // ile temizler. Audit log kalır.
+  async hardDeleteUser(id: string): Promise<{ deleted: boolean; id: string }> {
+    const u = await this.usersRepo.findOne({ where: { id } });
+    if (!u) throw new NotFoundException(`Kullanıcı bulunamadı: ${id}`);
+    if (u.role === UserRole.ADMIN) {
+      throw new BadRequestException('Admin hesabı silinemez');
+    }
+    await this.usersRepo.delete(id);
+    return { deleted: true, id };
+  }
+
   async verifyUser(id: string, identityVerified: boolean) {
     return this.usersRepo.update(id, { identityVerified });
   }

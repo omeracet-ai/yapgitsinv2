@@ -52,7 +52,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             duration: const Duration(seconds: 3),
           ),
         );
-        ref.read(selectedTabProvider.notifier).state = 4;
+        // Phase 265e fix: BottomNav 5→4 sekmeye düştü; Profile artık index 3.
+        // Eskiden 4 olarak set ediliyordu → IndexedStack overflow → null screen.
+        ref.read(selectedTabProvider.notifier).state = 3;
         context.go(widget.returnTo ?? '/');
       } else if (next is AuthError) {
         ScaffoldMessenger.of(context).showSnackBar(
