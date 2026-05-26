@@ -1,0 +1,148 @@
+- generic [active] [ref=e1]:
+  - complementary [ref=e2]:
+    - generic [ref=e3]:
+      - text: Yaprakzade
+      - generic [ref=e4]: admin
+    - navigation [ref=e5]:
+      - link "📊 Panel" [ref=e6] [cursor=pointer]:
+        - /url: index.php
+      - link "📦 Ürünler" [ref=e7] [cursor=pointer]:
+        - /url: products.php
+      - link "🏷️ Kategoriler" [ref=e8] [cursor=pointer]:
+        - /url: categories.php
+      - link "🖼️ Slider" [ref=e9] [cursor=pointer]:
+        - /url: sliders.php
+      - link "🌿 Galeri" [ref=e10] [cursor=pointer]:
+        - /url: gallery.php
+      - link "📝 Blog" [ref=e11] [cursor=pointer]:
+        - /url: blog.php
+      - link "⭐ Yorumlar" [ref=e12] [cursor=pointer]:
+        - /url: reviews.php
+      - link "❓ SSS" [ref=e13] [cursor=pointer]:
+        - /url: faq.php
+      - link "✏️ İçerik & Ayarlar" [ref=e14] [cursor=pointer]:
+        - /url: content.php
+    - generic [ref=e15]:
+      - generic [ref=e16]: admin
+      - link "Çıkış" [ref=e17] [cursor=pointer]:
+        - /url: logout.php
+  - main [ref=e18]:
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - heading "İçerik & Ayarlar" [level=1] [ref=e21]
+        - paragraph [ref=e22]: Sitedeki tüm metin, görsel ve logo buradan yönetilir.
+      - searchbox "🔍 Alan ara (ör. logo, telefon, hero)…" [ref=e23]
+    - generic [ref=e24]: "✏️ Düzenle: her alanın üst kutusu = etiket, alt kutusu = değer (ikisi de değiştirilebilir). | 🗑 Sil: alanın sağındaki Sil kutusunu işaretle. | ➕ Ekle: sol alttaki Yeni Alan sekmesini kullan. | Hepsi tek “Tüm Değişiklikleri Kaydet” ile uygulanır."
+    - generic [ref=e25]:
+      - generic [ref=e26]:
+        - complementary [ref=e27]:
+          - button "Anasayfa 6" [ref=e28] [cursor=pointer]:
+            - text: Anasayfa
+            - generic [ref=e29]: "6"
+          - button "Biz Kimiz 5" [ref=e30] [cursor=pointer]:
+            - text: Biz Kimiz
+            - generic [ref=e31]: "5"
+          - button "Blog Bölümü 2" [ref=e32] [cursor=pointer]:
+            - text: Blog Bölümü
+            - generic [ref=e33]: "2"
+          - button "Footer 2" [ref=e34] [cursor=pointer]:
+            - text: Footer
+            - generic [ref=e35]: "2"
+          - button "Galeri 3" [ref=e36] [cursor=pointer]:
+            - text: Galeri
+            - generic [ref=e37]: "3"
+          - button "Genel 6" [ref=e38] [cursor=pointer]:
+            - text: Genel
+            - generic [ref=e39]: "6"
+          - button "Hakkimizda 3" [ref=e40] [cursor=pointer]:
+            - text: Hakkimizda
+            - generic [ref=e41]: "3"
+          - button "Hero 9" [ref=e42] [cursor=pointer]:
+            - text: Hero
+            - generic [ref=e43]: "9"
+          - button "Iletisim 10" [ref=e44] [cursor=pointer]:
+            - text: Iletisim
+            - generic [ref=e45]: "10"
+          - button "SEO 3" [ref=e46] [cursor=pointer]:
+            - text: SEO
+            - generic [ref=e47]: "3"
+          - button "SSS 1" [ref=e48] [cursor=pointer]:
+            - text: SSS
+            - generic [ref=e49]: "1"
+          - button "Ürünler Bölümü 2" [ref=e50] [cursor=pointer]:
+            - text: Ürünler Bölümü
+            - generic [ref=e51]: "2"
+          - button "Yorumlar 2" [ref=e52] [cursor=pointer]:
+            - text: Yorumlar
+            - generic [ref=e53]: "2"
+          - button "🧭 Üst Menü 5" [ref=e54] [cursor=pointer]:
+            - text: 🧭 Üst Menü
+            - generic [ref=e55]: "5"
+          - button "🛡️ Güven Şeridi 4" [ref=e56] [cursor=pointer]:
+            - text: 🛡️ Güven Şeridi
+            - generic [ref=e57]: "4"
+          - button "➕ Yeni Alan" [ref=e58] [cursor=pointer]
+        - generic [ref=e60]:
+          - heading "Anasayfa" [level=2] [ref=e61]
+          - generic [ref=e62]:
+            - generic [ref=e63]:
+              - textbox "Alan etiketini düzenle" [ref=e64]: Duyuru Cubugu Metni
+              - code [ref=e65]: announcement_text
+              - generic "Bu alanı sil" [ref=e66] [cursor=pointer]:
+                - checkbox "🗑 Sil" [ref=e67]
+                - text: 🗑 Sil
+            - textbox [ref=e68]: Yaprakzade 🌿 Rize'den Doğrudan Sofranıza
+            - button "✨ AI öner" [ref=e69] [cursor=pointer]
+          - generic [ref=e70]:
+            - generic [ref=e71]:
+              - textbox "Alan etiketini düzenle" [ref=e72]: Duyuru Buton Yazisi
+              - code [ref=e73]: announcement_cta
+              - generic "Bu alanı sil" [ref=e74] [cursor=pointer]:
+                - checkbox "🗑 Sil" [ref=e75]
+                - text: 🗑 Sil
+            - textbox [ref=e76]: Hemen Keşfet
+            - button "✨ AI öner" [ref=e77] [cursor=pointer]
+          - generic [ref=e78]:
+            - generic [ref=e79]:
+              - textbox "Alan etiketini düzenle" [ref=e80]: Urunler Baslik
+              - code [ref=e81]: products_heading
+              - generic "Bu alanı sil" [ref=e82] [cursor=pointer]:
+                - checkbox "🗑 Sil" [ref=e83]
+                - text: 🗑 Sil
+            - textbox [ref=e84]: Yaprakzade Çaylar
+            - button "✨ AI öner" [ref=e85] [cursor=pointer]
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - textbox "Alan etiketini düzenle" [ref=e88]: Miras - Baslik
+              - code [ref=e89]: heritage_title
+              - generic "Bu alanı sil" [ref=e90] [cursor=pointer]:
+                - checkbox "🗑 Sil" [ref=e91]
+                - text: 🗑 Sil
+            - textbox [ref=e92]: Doğaya Saygı, İnsana Sağlık
+            - button "✨ AI öner" [ref=e93] [cursor=pointer]
+          - generic [ref=e94]:
+            - generic [ref=e95]:
+              - textbox "Alan etiketini düzenle" [ref=e96]: Miras - Metin
+              - code [ref=e97]: heritage_body
+              - generic "Bu alanı sil" [ref=e98] [cursor=pointer]:
+                - checkbox "🗑 Sil" [ref=e99]
+                - text: 🗑 Sil
+            - textbox [ref=e100]: <p>Çay yapraklarımız, Rize'nin 1200 metre rakımlı, her daim puslu ve taze bahçelerinden toplanır. Sadece doğanın sunduğu saflıkla, hiçbir katkı maddesi eklemeden işlenir. Her yaprakta kaliteyi, her yudumda huzuru vaat ederiz.</p>
+            - generic [ref=e101]: "HTML kullanabilirsin: <p> <b> <br> <h3> <ul><li>"
+            - button "✨ AI öner" [ref=e102] [cursor=pointer]
+          - generic [ref=e103]:
+            - generic [ref=e104]:
+              - textbox "Alan etiketini düzenle" [ref=e105]: Miras - Gorsel
+              - code [ref=e106]: heritage_image
+              - generic "Bu alanı sil" [ref=e107] [cursor=pointer]:
+                - checkbox "🗑 Sil" [ref=e108]
+                - text: 🗑 Sil
+            - generic [ref=e111]:
+              - button "Choose File" [ref=e112]
+              - generic [ref=e113]: Yeni dosya seçmezsen mevcut görsel korunur. (Otomatik WebP)
+              - generic [ref=e114] [cursor=pointer]:
+                - checkbox "Bu görseli kaldır" [ref=e115]
+                - text: Bu görseli kaldır
+      - generic [ref=e116]:
+        - generic [ref=e117]: Değişiklikler tüm gruplarda tek kaydet ile uygulanır.
+        - button "💾 Tüm Değişiklikleri Kaydet" [ref=e118] [cursor=pointer]

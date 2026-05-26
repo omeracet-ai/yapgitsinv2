@@ -1,0 +1,162 @@
+- generic [active] [ref=e1]:
+  - complementary [ref=e2]:
+    - generic [ref=e3]:
+      - text: Yaprakzade
+      - generic [ref=e4]: admin
+    - navigation [ref=e5]:
+      - link "📊 Panel" [ref=e6] [cursor=pointer]:
+        - /url: index.php
+      - link "📦 Ürünler" [ref=e7] [cursor=pointer]:
+        - /url: products.php
+      - link "🏷️ Kategoriler" [ref=e8] [cursor=pointer]:
+        - /url: categories.php
+      - link "🖼️ Slider" [ref=e9] [cursor=pointer]:
+        - /url: sliders.php
+      - link "🌿 Galeri" [ref=e10] [cursor=pointer]:
+        - /url: gallery.php
+      - link "📝 Blog" [ref=e11] [cursor=pointer]:
+        - /url: blog.php
+      - link "⭐ Yorumlar" [ref=e12] [cursor=pointer]:
+        - /url: reviews.php
+      - link "❓ SSS" [ref=e13] [cursor=pointer]:
+        - /url: faq.php
+      - link "✏️ İçerik & Ayarlar" [ref=e14] [cursor=pointer]:
+        - /url: content.php
+    - generic [ref=e15]:
+      - generic [ref=e16]: admin
+      - link "Çıkış" [ref=e17] [cursor=pointer]:
+        - /url: logout.php
+  - main [ref=e18]:
+    - generic [ref=e19]: İçerikler kaydedildi.
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - heading "İçerik & Ayarlar" [level=1] [ref=e22]
+        - paragraph [ref=e23]: Sitedeki tüm metin, görsel ve logo buradan yönetilir.
+      - searchbox "🔍 Alan ara (ör. logo, telefon, hero)…" [ref=e24]
+    - generic [ref=e25]: "✏️ Düzenle: her alanın üst kutusu = etiket, alt kutusu = değer (ikisi de değiştirilebilir). | 🗑 Sil: alanın sağındaki Sil kutusunu işaretle. | ➕ Ekle: sol alttaki Yeni Alan sekmesini kullan. | Hepsi tek “Tüm Değişiklikleri Kaydet” ile uygulanır."
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - complementary [ref=e28]:
+          - button "3D / İnteraktif 7" [ref=e29] [cursor=pointer]:
+            - text: 3D / İnteraktif
+            - generic [ref=e30]: "7"
+          - button "Anasayfa 6" [ref=e31] [cursor=pointer]:
+            - text: Anasayfa
+            - generic [ref=e32]: "6"
+          - button "Biz Kimiz 5" [ref=e33] [cursor=pointer]:
+            - text: Biz Kimiz
+            - generic [ref=e34]: "5"
+          - button "Blog Bölümü 2" [ref=e35] [cursor=pointer]:
+            - text: Blog Bölümü
+            - generic [ref=e36]: "2"
+          - button "Footer 2" [ref=e37] [cursor=pointer]:
+            - text: Footer
+            - generic [ref=e38]: "2"
+          - button "Galeri 3" [ref=e39] [cursor=pointer]:
+            - text: Galeri
+            - generic [ref=e40]: "3"
+          - button "Genel 6" [ref=e41] [cursor=pointer]:
+            - text: Genel
+            - generic [ref=e42]: "6"
+          - button "Hakkimizda 3" [ref=e43] [cursor=pointer]:
+            - text: Hakkimizda
+            - generic [ref=e44]: "3"
+          - button "Hero 9" [ref=e45] [cursor=pointer]:
+            - text: Hero
+            - generic [ref=e46]: "9"
+          - button "Iletisim 10" [ref=e47] [cursor=pointer]:
+            - text: Iletisim
+            - generic [ref=e48]: "10"
+          - button "SEO 3" [ref=e49] [cursor=pointer]:
+            - text: SEO
+            - generic [ref=e50]: "3"
+          - button "SSS 1" [ref=e51] [cursor=pointer]:
+            - text: SSS
+            - generic [ref=e52]: "1"
+          - button "Test Alan 1" [ref=e53] [cursor=pointer]:
+            - text: Test Alan
+            - generic [ref=e54]: "1"
+          - button "Ürünler Bölümü 2" [ref=e55] [cursor=pointer]:
+            - text: Ürünler Bölümü
+            - generic [ref=e56]: "2"
+          - button "Yorumlar 2" [ref=e57] [cursor=pointer]:
+            - text: Yorumlar
+            - generic [ref=e58]: "2"
+          - button "🧭 Üst Menü 5" [ref=e59] [cursor=pointer]:
+            - text: 🧭 Üst Menü
+            - generic [ref=e60]: "5"
+          - button "🛡️ Güven Şeridi 4" [ref=e61] [cursor=pointer]:
+            - text: 🛡️ Güven Şeridi
+            - generic [ref=e62]: "4"
+          - button "➕ Yeni Alan" [ref=e63] [cursor=pointer]
+        - generic [ref=e65]:
+          - heading "3D / İnteraktif" [level=2] [ref=e66]
+          - generic [ref=e67]:
+            - generic [ref=e68]:
+              - textbox "Alan etiketini düzenle" [ref=e69]: 3D — Üst Etiket
+              - code [ref=e70]: r3d_eyebrow
+              - generic "Bu alanı sil" [ref=e71] [cursor=pointer]:
+                - checkbox "🗑 Sil" [ref=e72]
+                - text: 🗑 Sil
+            - textbox [ref=e73]: İnteraktif Deneyim
+            - button "✨ AI öner" [ref=e74] [cursor=pointer]
+          - generic [ref=e75]:
+            - generic [ref=e76]:
+              - textbox "Alan etiketini düzenle" [ref=e77]: 3D — Başlık
+              - code [ref=e78]: r3d_heading
+              - generic "Bu alanı sil" [ref=e79] [cursor=pointer]:
+                - checkbox "🗑 Sil" [ref=e80]
+                - text: 🗑 Sil
+            - textbox [ref=e81]: Ürünü 3 Boyutlu Keşfet
+            - button "✨ AI öner" [ref=e82] [cursor=pointer]
+          - generic [ref=e83]:
+            - generic [ref=e84]:
+              - textbox "Alan etiketini düzenle" [ref=e85]: 3D — Açıklama
+              - code [ref=e86]: r3d_intro
+              - generic "Bu alanı sil" [ref=e87] [cursor=pointer]:
+                - checkbox "🗑 Sil" [ref=e88]
+                - text: 🗑 Sil
+            - textbox [ref=e89]: Çaylarımızı ve ambalajlarımızı her açıdan inceleyin; sürükleyip döndürün.
+            - button "✨ AI öner" [ref=e90] [cursor=pointer]
+          - generic [ref=e91]:
+            - generic [ref=e92]:
+              - textbox "Alan etiketini düzenle" [ref=e93]: 3D Model (.glb URL — model-viewer)
+              - code [ref=e94]: r3d_glb
+              - generic "Bu alanı sil" [ref=e95] [cursor=pointer]:
+                - checkbox "🗑 Sil" [ref=e96]
+                - text: 🗑 Sil
+            - textbox [ref=e97]: https://modelviewer.dev/shared-assets/models/Astronaut.glb
+            - button "✨ AI öner" [ref=e98] [cursor=pointer]
+          - generic [ref=e99]:
+            - generic [ref=e100]:
+              - textbox "Alan etiketini düzenle" [ref=e101]: 3D Model Poster (görsel)
+              - code [ref=e102]: r3d_poster
+              - generic "Bu alanı sil" [ref=e103] [cursor=pointer]:
+                - checkbox "🗑 Sil" [ref=e104]
+                - text: 🗑 Sil
+            - generic [ref=e105]:
+              - generic [ref=e106]: 🖼️
+              - generic [ref=e107]:
+                - button "Choose File" [ref=e108]
+                - generic [ref=e109]: Yeni dosya seçmezsen mevcut görsel korunur. (Otomatik WebP)
+          - generic [ref=e110]:
+            - generic [ref=e111]:
+              - textbox "Alan etiketini düzenle" [ref=e112]: Spline Embed URL (iframe)
+              - code [ref=e113]: r3d_spline
+              - generic "Bu alanı sil" [ref=e114] [cursor=pointer]:
+                - checkbox "🗑 Sil" [ref=e115]
+                - text: 🗑 Sil
+            - textbox [ref=e116]
+            - button "✨ AI öner" [ref=e117] [cursor=pointer]
+          - generic [ref=e118]:
+            - generic [ref=e119]:
+              - textbox "Alan etiketini düzenle" [ref=e120]: 360° Sanal Tur URL (iframe)
+              - code [ref=e121]: r3d_tour
+              - generic "Bu alanı sil" [ref=e122] [cursor=pointer]:
+                - checkbox "🗑 Sil" [ref=e123]
+                - text: 🗑 Sil
+            - textbox [ref=e124]
+            - button "✨ AI öner" [ref=e125] [cursor=pointer]
+      - generic [ref=e126]:
+        - generic [ref=e127]: Değişiklikler tüm gruplarda tek kaydet ile uygulanır.
+        - button "💾 Tüm Değişiklikleri Kaydet" [ref=e128] [cursor=pointer]

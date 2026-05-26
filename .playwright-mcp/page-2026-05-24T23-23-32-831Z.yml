@@ -1,0 +1,80 @@
+- generic [active] [ref=e1]:
+  - complementary [ref=e2]:
+    - generic [ref=e3]:
+      - text: Yaprakzade
+      - generic [ref=e4]: admin
+    - navigation [ref=e5]:
+      - link "📊 Panel" [ref=e6] [cursor=pointer]:
+        - /url: index.php
+      - link "📦 Ürünler" [ref=e7] [cursor=pointer]:
+        - /url: products.php
+      - link "🏷️ Kategoriler" [ref=e8] [cursor=pointer]:
+        - /url: categories.php
+      - link "🖼️ Slider" [ref=e9] [cursor=pointer]:
+        - /url: sliders.php
+      - link "🌿 Galeri" [ref=e10] [cursor=pointer]:
+        - /url: gallery.php
+      - link "📝 Blog" [ref=e11] [cursor=pointer]:
+        - /url: blog.php
+      - link "⭐ Yorumlar" [ref=e12] [cursor=pointer]:
+        - /url: reviews.php
+      - link "❓ SSS" [ref=e13] [cursor=pointer]:
+        - /url: faq.php
+      - link "✏️ İçerik & Ayarlar" [ref=e14] [cursor=pointer]:
+        - /url: content.php
+    - generic [ref=e15]:
+      - generic [ref=e16]: admin
+      - link "Çıkış" [ref=e17] [cursor=pointer]:
+        - /url: logout.php
+  - main [ref=e18]:
+    - generic [ref=e19]:
+      - heading "Sıkça Sorulan Sorular" [level=1] [ref=e20]
+      - link "+ Yeni Soru" [ref=e21] [cursor=pointer]:
+        - /url: faq.php?action=new
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - text: 🔎
+        - searchbox "Soru / cevap ara…" [ref=e24]
+      - combobox [ref=e25]:
+        - option "Tüm durumlar" [selected]
+        - option "✅ Aktif"
+        - option "⛔ Pasif"
+      - generic [ref=e26]: 3 / 3 kayıt
+    - table [ref=e27]:
+      - rowgroup [ref=e28]:
+        - row "Sıra Soru Cevap Durum" [ref=e29]:
+          - columnheader "Sıra" [ref=e30]
+          - columnheader "Soru" [ref=e31]
+          - columnheader "Cevap" [ref=e32]
+          - columnheader "Durum" [ref=e33]
+          - columnheader [ref=e34]
+        - row "1 Çaylarınız organik ve doğal mı? Evet. Ürünlerimiz Rize'nin yüksek bahçelerinden katkısız, doğal olarak toplanır… ✅ Aktif Düzenle Sil" [ref=e35]:
+          - cell "1" [ref=e36]
+          - cell "Çaylarınız organik ve doğal mı?" [ref=e37]
+          - cell "Evet. Ürünlerimiz Rize'nin yüksek bahçelerinden katkısız, doğal olarak toplanır…" [ref=e38]
+          - cell "✅ Aktif" [ref=e39]:
+            - button "✅ Aktif" [ref=e40] [cursor=pointer]
+          - cell "Düzenle Sil" [ref=e41]:
+            - link "Düzenle" [ref=e42] [cursor=pointer]:
+              - /url: faq.php?action=edit&id=1
+            - button "Sil" [ref=e44] [cursor=pointer]
+        - row "2 Kargo ne kadar sürede gelir? Siparişleriniz 1-3 iş günü içinde özenle paketlenip kargoya verilir. ✅ Aktif Düzenle Sil" [ref=e45]:
+          - cell "2" [ref=e46]
+          - cell "Kargo ne kadar sürede gelir?" [ref=e47]
+          - cell "Siparişleriniz 1-3 iş günü içinde özenle paketlenip kargoya verilir." [ref=e48]
+          - cell "✅ Aktif" [ref=e49]:
+            - button "✅ Aktif" [ref=e50] [cursor=pointer]
+          - cell "Düzenle Sil" [ref=e51]:
+            - link "Düzenle" [ref=e52] [cursor=pointer]:
+              - /url: faq.php?action=edit&id=2
+            - button "Sil" [ref=e54] [cursor=pointer]
+        - row "3 Toptan / kurumsal satış yapıyor musunuz? Evet; cafe, otel ve işletmelere özel toplu alım ve özel harman seçenekleri sunu… ✅ Aktif Düzenle Sil" [ref=e55]:
+          - cell "3" [ref=e56]
+          - cell "Toptan / kurumsal satış yapıyor musunuz?" [ref=e57]
+          - cell "Evet; cafe, otel ve işletmelere özel toplu alım ve özel harman seçenekleri sunu…" [ref=e58]
+          - cell "✅ Aktif" [ref=e59]:
+            - button "✅ Aktif" [ref=e60] [cursor=pointer]
+          - cell "Düzenle Sil" [ref=e61]:
+            - link "Düzenle" [ref=e62] [cursor=pointer]:
+              - /url: faq.php?action=edit&id=3
+            - button "Sil" [ref=e64] [cursor=pointer]

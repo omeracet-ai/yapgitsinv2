@@ -150,6 +150,15 @@ export class Job {
   @Column({ type: 'varchar', length: 36, nullable: true, default: null })
   targetWorkerId: string | null;
 
+  /**
+   * Phase 265 — Saat dilimi esnekliği.
+   *   'flexible' = ustaya zaman seçimi bırakır (default)
+   *   'specific' = belirli dueDate + saat
+   *   'urgent'   = aynı gün
+   */
+  @Column({ type: 'varchar', length: 16, default: 'flexible' })
+  scheduleFlexibility: 'flexible' | 'specific' | 'urgent';
+
   /** İlan fotoğrafları (URL dizisi) */
   @Column({ type: 'simple-json', nullable: true, default: null })
   photos: string[] | null;

@@ -1,0 +1,115 @@
+- generic [active] [ref=e1]:
+  - complementary [ref=e2]:
+    - generic [ref=e3]:
+      - text: Yaprakzade
+      - generic [ref=e4]: admin
+    - navigation [ref=e5]:
+      - link "📊 Panel" [ref=e6] [cursor=pointer]:
+        - /url: index.php
+      - link "📦 Ürünler" [ref=e7] [cursor=pointer]:
+        - /url: products.php
+      - link "🏷️ Kategoriler" [ref=e8] [cursor=pointer]:
+        - /url: categories.php
+      - link "🖼️ Slider" [ref=e9] [cursor=pointer]:
+        - /url: sliders.php
+      - link "🌿 Galeri" [ref=e10] [cursor=pointer]:
+        - /url: gallery.php
+      - link "📝 Blog" [ref=e11] [cursor=pointer]:
+        - /url: blog.php
+      - link "⭐ Yorumlar" [ref=e12] [cursor=pointer]:
+        - /url: reviews.php
+      - link "✏️ İçerik & Ayarlar" [ref=e13] [cursor=pointer]:
+        - /url: content.php
+    - generic [ref=e14]:
+      - generic [ref=e15]: admin
+      - link "Çıkış" [ref=e16] [cursor=pointer]:
+        - /url: logout.php
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - heading "Ürünler" [level=1] [ref=e19]
+      - link "+ Yeni Ürün" [ref=e20] [cursor=pointer]:
+        - /url: products.php?action=new
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - text: 🔎
+        - searchbox "Ürün adı / kategori ara…" [ref=e23]
+      - combobox [ref=e24]:
+        - option "Tüm durumlar" [selected]
+        - option "✅ Aktif"
+        - option "⛔ Pasif"
+      - generic [ref=e25]: 6 / 6 kayıt
+    - table [ref=e26]:
+      - rowgroup [ref=e27]:
+        - row "Görsel Ad Kategori Fiyat Durum" [ref=e28]:
+          - columnheader "Görsel" [ref=e29]
+          - columnheader "Ad" [ref=e30]
+          - columnheader "Kategori" [ref=e31]
+          - columnheader "Fiyat" [ref=e32]
+          - columnheader "Durum" [ref=e33]
+          - columnheader [ref=e34]
+        - row "— Test Çay — 250,00 ₺ ✅ Aktif Düzenle Sil" [ref=e35]:
+          - cell "—" [ref=e36]
+          - cell "Test Çay" [ref=e37]
+          - cell "—" [ref=e38]
+          - cell "250,00 ₺" [ref=e39]
+          - cell "✅ Aktif" [ref=e40]:
+            - button "✅ Aktif" [ref=e41] [cursor=pointer]
+          - cell "Düzenle Sil" [ref=e42]:
+            - link "Düzenle" [ref=e43] [cursor=pointer]:
+              - /url: products.php?action=edit&id=6
+            - button "Sil" [ref=e45] [cursor=pointer]
+        - row "Yaprakzade Siyah Çay Siyah Çay 129,90 ₺ ✅ Aktif Düzenle Sil" [ref=e46]:
+          - cell [ref=e47]
+          - cell "Yaprakzade Siyah Çay" [ref=e48]
+          - cell "Siyah Çay" [ref=e49]
+          - cell "129,90 ₺" [ref=e50]
+          - cell "✅ Aktif" [ref=e51]:
+            - button "✅ Aktif" [ref=e52] [cursor=pointer]
+          - cell "Düzenle Sil" [ref=e53]:
+            - link "Düzenle" [ref=e54] [cursor=pointer]:
+              - /url: products.php?action=edit&id=1
+            - button "Sil" [ref=e56] [cursor=pointer]
+        - row "Yaprakzade Organik Yeşil Çay Yeşil Çay 159,90 ₺ ✅ Aktif Düzenle Sil" [ref=e57]:
+          - cell [ref=e58]
+          - cell "Yaprakzade Organik Yeşil Çay" [ref=e59]
+          - cell "Yeşil Çay" [ref=e60]
+          - cell "159,90 ₺" [ref=e61]
+          - cell "✅ Aktif" [ref=e62]:
+            - button "✅ Aktif" [ref=e63] [cursor=pointer]
+          - cell "Düzenle Sil" [ref=e64]:
+            - link "Düzenle" [ref=e65] [cursor=pointer]:
+              - /url: products.php?action=edit&id=2
+            - button "Sil" [ref=e67] [cursor=pointer]
+        - row "Yaprakzade Demlik Poşet Çay Bitki Harmanları 159,00 ₺ ✅ Aktif Düzenle Sil" [ref=e68]:
+          - cell [ref=e69]
+          - cell "Yaprakzade Demlik Poşet Çay" [ref=e70]
+          - cell "Bitki Harmanları" [ref=e71]
+          - cell "159,00 ₺" [ref=e72]
+          - cell "✅ Aktif" [ref=e73]:
+            - button "✅ Aktif" [ref=e74] [cursor=pointer]
+          - cell "Düzenle Sil" [ref=e75]:
+            - link "Düzenle" [ref=e76] [cursor=pointer]:
+              - /url: products.php?action=edit&id=3
+            - button "Sil" [ref=e78] [cursor=pointer]
+        - row "Yaprakzade Beyaz Çay Özel Seri 189,00 ₺ ✅ Aktif Düzenle Sil" [ref=e79]:
+          - cell [ref=e80]
+          - cell "Yaprakzade Beyaz Çay" [ref=e81]
+          - cell "Özel Seri" [ref=e82]
+          - cell "189,00 ₺" [ref=e83]
+          - cell "✅ Aktif" [ref=e84]:
+            - button "✅ Aktif" [ref=e85] [cursor=pointer]
+          - cell "Düzenle Sil" [ref=e86]:
+            - link "Düzenle" [ref=e87] [cursor=pointer]:
+              - /url: products.php?action=edit&id=4
+            - button "Sil" [ref=e89] [cursor=pointer]
+        - row "Yaprakzade Bitki Çayı Özel Seri 139,00 ₺ ✅ Aktif Düzenle Sil" [ref=e90]:
+          - cell [ref=e91]
+          - cell "Yaprakzade Bitki Çayı" [ref=e92]
+          - cell "Özel Seri" [ref=e93]
+          - cell "139,00 ₺" [ref=e94]
+          - cell "✅ Aktif" [ref=e95]:
+            - button "✅ Aktif" [ref=e96] [cursor=pointer]
+          - cell "Düzenle Sil" [ref=e97]:
+            - link "Düzenle" [ref=e98] [cursor=pointer]:
+              - /url: products.php?action=edit&id=5
+            - button "Sil" [ref=e100] [cursor=pointer]

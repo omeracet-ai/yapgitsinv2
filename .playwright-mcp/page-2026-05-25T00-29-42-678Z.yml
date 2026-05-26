@@ -1,0 +1,168 @@
+- generic [active] [ref=e1]:
+  - complementary [ref=e2]:
+    - generic [ref=e3]:
+      - text: Yaprakzade
+      - generic [ref=e4]: admin
+    - navigation [ref=e5]:
+      - link "📊 Panel" [ref=e6] [cursor=pointer]:
+        - /url: index.php
+      - link "📦 Ürünler" [ref=e7] [cursor=pointer]:
+        - /url: products.php
+      - link "🏷️ Kategoriler" [ref=e8] [cursor=pointer]:
+        - /url: categories.php
+      - link "🖼️ Slider" [ref=e9] [cursor=pointer]:
+        - /url: sliders.php
+      - link "🌿 Galeri" [ref=e10] [cursor=pointer]:
+        - /url: gallery.php
+      - link "📝 Blog" [ref=e11] [cursor=pointer]:
+        - /url: blog.php
+      - link "⭐ Yorumlar" [ref=e12] [cursor=pointer]:
+        - /url: reviews.php
+      - link "❓ SSS" [ref=e13] [cursor=pointer]:
+        - /url: faq.php
+      - link "✏️ İçerik & Ayarlar" [ref=e14] [cursor=pointer]:
+        - /url: content.php
+    - generic [ref=e15]:
+      - generic [ref=e16]: admin
+      - link "Çıkış" [ref=e17] [cursor=pointer]:
+        - /url: logout.php
+  - main [ref=e18]:
+    - heading "Panel" [level=1] [ref=e19]
+    - heading "📈 Ziyaret İstatistikleri (Toplam)" [level=2] [ref=e20]
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e23]: "65"
+        - generic [ref=e24]: Giriş Sayısı (toplam)
+      - generic [ref=e25]:
+        - generic [ref=e26]: "3"
+        - generic [ref=e27]: Tekil Ziyaretçi (IP)
+      - generic [ref=e28]:
+        - generic [ref=e29]: "65"
+        - generic [ref=e30]: Bugün
+      - generic [ref=e31]:
+        - generic [ref=e32]: "65"
+        - generic [ref=e33]: Son 7 Gün
+    - heading "🌐 Siteye (Alan Adına) Göre Giriş Sayısı" [level=2] [ref=e34]
+    - table [ref=e35]:
+      - rowgroup [ref=e36]:
+        - row "Site / Alan adı Giriş Sayısı Tekil Ziyaretçi (IP) Bugün" [ref=e37]:
+          - columnheader "Site / Alan adı" [ref=e38]
+          - columnheader "Giriş Sayısı" [ref=e39]
+          - columnheader "Tekil Ziyaretçi (IP)" [ref=e40]
+          - columnheader "Bugün" [ref=e41]
+        - row "yaprakcay.com 65 3 65" [ref=e42]:
+          - cell "yaprakcay.com" [ref=e43]
+          - cell "65" [ref=e44]
+          - cell "3" [ref=e45]
+          - cell "65" [ref=e46]
+    - heading "📦 İçerik Özeti" [level=2] [ref=e47]
+    - generic [ref=e48]:
+      - generic [ref=e49]:
+        - generic [ref=e50]: "6"
+        - generic [ref=e51]: Ürün
+      - generic [ref=e52]:
+        - generic [ref=e53]: "4"
+        - generic [ref=e54]: Kategori
+      - generic [ref=e55]:
+        - generic [ref=e56]: "3"
+        - generic [ref=e57]: Slider
+      - generic [ref=e58]:
+        - generic [ref=e59]: "0"
+        - generic [ref=e60]: Galeri
+    - heading "Hızlı Erişim" [level=2] [ref=e61]
+    - generic [ref=e62]:
+      - link "+ Ürün Ekle" [ref=e63] [cursor=pointer]:
+        - /url: products.php?action=new
+      - link "🧭 Üst Menü" [ref=e64] [cursor=pointer]:
+        - /url: content.php?tab=menu
+      - link "🏷️ Kategoriler" [ref=e65] [cursor=pointer]:
+        - /url: categories.php
+      - link "🖼️ Slider" [ref=e66] [cursor=pointer]:
+        - /url: sliders.php
+      - link "✏️ İçerik & Ayarlar" [ref=e67] [cursor=pointer]:
+        - /url: content.php
+      - link "Siteyi Gör" [ref=e68] [cursor=pointer]:
+        - /url: ../index.php
+    - generic [ref=e69]:
+      - generic [ref=e70]:
+        - heading "🧭 Üst Menü Düzenle" [level=2] [ref=e71]:
+          - text: 🧭 Üst Menü
+          - link "Düzenle" [ref=e72] [cursor=pointer]:
+            - /url: content.php?tab=menu
+        - table [ref=e73]:
+          - rowgroup [ref=e74]:
+            - row "Sıra Ad Bağlantı Durum" [ref=e75]:
+              - columnheader "Sıra" [ref=e76]
+              - columnheader "Ad" [ref=e77]
+              - columnheader "Bağlantı" [ref=e78]
+              - columnheader "Durum" [ref=e79]
+            - row "1 Ana Sayfa index.php Aktif" [ref=e80]:
+              - cell "1" [ref=e81]
+              - cell "Ana Sayfa" [ref=e82]
+              - cell "index.php" [ref=e83]
+              - cell "Aktif" [ref=e84]:
+                - generic [ref=e85]: Aktif
+            - row "2 Ürünlerimiz urunler.php Aktif" [ref=e86]:
+              - cell "2" [ref=e87]
+              - cell "Ürünlerimiz" [ref=e88]
+              - cell "urunler.php" [ref=e89]
+              - cell "Aktif" [ref=e90]:
+                - generic [ref=e91]: Aktif
+            - row "3 Hakkımızda hakkimizda.php Aktif" [ref=e92]:
+              - cell "3" [ref=e93]
+              - cell "Hakkımızda" [ref=e94]
+              - cell "hakkimizda.php" [ref=e95]
+              - cell "Aktif" [ref=e96]:
+                - generic [ref=e97]: Aktif
+            - row "4 Blog blog.php Aktif" [ref=e98]:
+              - cell "4" [ref=e99]
+              - cell "Blog" [ref=e100]
+              - cell "blog.php" [ref=e101]
+              - cell "Aktif" [ref=e102]:
+                - generic [ref=e103]: Aktif
+            - row "5 İletişim iletisim.php Aktif" [ref=e104]:
+              - cell "5" [ref=e105]
+              - cell "İletişim" [ref=e106]
+              - cell "iletisim.php" [ref=e107]
+              - cell "Aktif" [ref=e108]:
+                - generic [ref=e109]: Aktif
+      - generic [ref=e110]:
+        - heading "🏷️ Kategoriler Düzenle" [level=2] [ref=e111]:
+          - text: 🏷️ Kategoriler
+          - link "Düzenle" [ref=e112] [cursor=pointer]:
+            - /url: categories.php
+        - table [ref=e113]:
+          - rowgroup [ref=e114]:
+            - row "Ad Slug Ürün Durum" [ref=e115]:
+              - columnheader "Ad" [ref=e116]
+              - columnheader "Slug" [ref=e117]
+              - columnheader "Ürün" [ref=e118]
+              - columnheader "Durum" [ref=e119]
+            - row "Siyah Çay siyah-cay 1 Aktif" [ref=e120]:
+              - cell "Siyah Çay" [ref=e121]
+              - cell "siyah-cay" [ref=e122]
+              - cell "1" [ref=e123]
+              - cell "Aktif" [ref=e124]:
+                - generic [ref=e125]: Aktif
+            - row "Yeşil Çay yesil-cay 1 Aktif" [ref=e126]:
+              - cell "Yeşil Çay" [ref=e127]
+              - cell "yesil-cay" [ref=e128]
+              - cell "1" [ref=e129]
+              - cell "Aktif" [ref=e130]:
+                - generic [ref=e131]: Aktif
+            - row "Bitki Harmanları bitki-harmanlari 1 Aktif" [ref=e132]:
+              - cell "Bitki Harmanları" [ref=e133]
+              - cell "bitki-harmanlari" [ref=e134]
+              - cell "1" [ref=e135]
+              - cell "Aktif" [ref=e136]:
+                - generic [ref=e137]: Aktif
+            - row "Özel Seri ozel-seri 2 Aktif" [ref=e138]:
+              - cell "Özel Seri" [ref=e139]
+              - cell "ozel-seri" [ref=e140]
+              - cell "2" [ref=e141]
+              - cell "Aktif" [ref=e142]:
+                - generic [ref=e143]: Aktif
+    - heading "Güvenlik Hatırlatması" [level=2] [ref=e144]
+    - paragraph [ref=e145]:
+      - code [ref=e146]: admin/install.php
+      - text: hâlâ duruyorsa silin. Şifrenizi düzenli değiştirin. Tüm site metin/görselleri İçerik & Ayarlar'dan, üst menü ise oradaki 🧭 Üst Menü sekmesinden yönetilir.

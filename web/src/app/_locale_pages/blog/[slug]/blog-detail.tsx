@@ -8,9 +8,11 @@ import { localePath, type Locale } from '@/i18n';
 import { jsonLd, breadcrumbLD, siteUrl, clip } from '@/lib/seo';
 
 export async function getBlogStaticSlugs(): Promise<string[]> {
-  // Blog gizlendi — backend'e dokunma, hiç statik sayfa üretme (tümü 404).
+  // Blog gizlendi — backend'e dokunma. output:export bir [slug] route'u için
+  // en az 1 statik param ister; placeholder dönüyoruz, renderBlogDetail zaten
+  // notFound() yaptığı için bu sayfa da 404 olur. (restorable: BLOG_HIDDEN=false)
   const BLOG_HIDDEN: boolean = true;
-  if (BLOG_HIDDEN) return [];
+  if (BLOG_HIDDEN) return ['bulunamadi'];
   const result = await getBlogPosts({ page: '1', limit: '100' });
   const posts: BlogPost[] = result?.data ?? [];
   return posts.length > 0 ? posts.map((p) => p.slug) : ['bulunamadi'];

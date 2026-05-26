@@ -1,0 +1,225 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]: Yaprakzade 🌿 Rize'den Doğrudan Sofranıza
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "🌿 Yaprakzade" [ref=e7] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e8]:
+        - link "Ana Sayfa" [ref=e9] [cursor=pointer]:
+          - /url: /
+        - link "Ürünlerimiz" [ref=e10] [cursor=pointer]:
+          - /url: /urunler
+        - link "Hakkımızda" [ref=e11] [cursor=pointer]:
+          - /url: /hakkimizda
+        - link "Blog" [ref=e12] [cursor=pointer]:
+          - /url: /blog
+        - link "İletişim" [ref=e13] [cursor=pointer]:
+          - /url: /iletisim
+      - generic [ref=e14]:
+        - button "Ara" [ref=e15] [cursor=pointer]:
+          - img [ref=e16]
+        - link "Alışverişe Başla" [ref=e19] [cursor=pointer]:
+          - /url: /urunler
+  - generic [ref=e20]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - heading "Doğanın En Saf Hali" [level=1] [ref=e25]
+        - paragraph [ref=e26]: Her yaprakta tazelik, her yudumda huzur.
+        - generic [ref=e27]:
+          - link "Alışverişe Başla" [ref=e28] [cursor=pointer]:
+            - /url: /urunler
+          - link "Hikayemiz" [ref=e29] [cursor=pointer]:
+            - /url: /hakkimizda
+        - generic [ref=e30]:
+          - generic [ref=e31]: ★★★★★
+          - text: 5/5.0 — binlerce mutlu müşterinin tercihi
+      - generic [ref=e32]:
+        - img "Yaprakzade çay" [ref=e33]
+        - generic [ref=e34]: "%100 Doğal"
+    - button "Önceki" [ref=e35] [cursor=pointer]: ❮
+    - button "Sonraki" [ref=e36] [cursor=pointer]: ❯
+    - generic [ref=e37]:
+      - button "Slayt 1" [ref=e38] [cursor=pointer]
+      - button "Slayt 2" [ref=e39] [cursor=pointer]
+      - button "Slayt 3" [ref=e40] [cursor=pointer]
+  - generic [ref=e43]:
+    - generic [ref=e44]:
+      - generic [ref=e45]: 🌿
+      - generic [ref=e46]:
+        - heading "%100 Doğal" [level=4] [ref=e47]
+        - paragraph [ref=e48]: Katkısız, saf çay yaprağı
+    - generic [ref=e49]:
+      - generic [ref=e50]: 🍃
+      - generic [ref=e51]:
+        - heading "Taze & El Yapımı" [level=4] [ref=e52]
+        - paragraph [ref=e53]: Her paket el ile özenle hazırlanır
+    - generic [ref=e54]:
+      - generic [ref=e55]: 🔒
+      - generic [ref=e56]:
+        - heading "Güvenli Alışveriş" [level=4] [ref=e57]
+        - paragraph [ref=e58]: 256-bit SSL ile korumalı ödeme
+    - generic [ref=e59]:
+      - generic [ref=e60]: 🚚
+      - generic [ref=e61]:
+        - heading "Hızlı Teslimat" [level=4] [ref=e62]
+        - paragraph [ref=e63]: Siparişiniz kapınıza kadar
+  - generic [ref=e65]:
+    - generic [ref=e66]:
+      - generic [ref=e67]:
+        - text: En Çok Tercih Edilen
+        - heading "Yaprakzade Çaylar" [level=2] [ref=e68]
+        - paragraph [ref=e69]: Doğanın eşsiz tadını sofranıza taşıyan özel koleksiyonumuz.
+      - link "Tüm Ürünleri Gör" [ref=e70] [cursor=pointer]:
+        - /url: /urunler
+    - generic [ref=e71]:
+      - generic [ref=e72]:
+        - link "Test Çay" [ref=e73] [cursor=pointer]:
+          - /url: /urun/test-cay-8e37
+        - generic [ref=e74]:
+          - generic [ref=e75]: Çay
+          - heading "Test Çay" [level=3] [ref=e76]:
+            - link "Test Çay" [ref=e77] [cursor=pointer]:
+              - /url: /urun/test-cay-8e37
+          - generic [ref=e78]:
+            - generic [ref=e79]: 250,00 ₺
+            - link "→" [ref=e80] [cursor=pointer]:
+              - /url: /urun/test-cay-8e37
+      - generic [ref=e81]:
+        - link "Yaprakzade Siyah Çay" [ref=e82] [cursor=pointer]:
+          - /url: /urun/premium-siyah-cay
+        - generic [ref=e83]:
+          - generic [ref=e84]: Siyah Çay
+          - heading "Yaprakzade Siyah Çay" [level=3] [ref=e85]:
+            - link "Yaprakzade Siyah Çay" [ref=e86] [cursor=pointer]:
+              - /url: /urun/premium-siyah-cay
+          - generic [ref=e87]:
+            - generic [ref=e88]: 129,90 ₺
+            - link "→" [ref=e89] [cursor=pointer]:
+              - /url: /urun/premium-siyah-cay
+      - generic [ref=e90]:
+        - link "Yaprakzade Organik Yeşil Çay" [ref=e91] [cursor=pointer]:
+          - /url: /urun/zen-yesil-cay
+        - generic [ref=e92]:
+          - generic [ref=e93]: Yeşil Çay
+          - heading "Yaprakzade Organik Yeşil Çay" [level=3] [ref=e94]:
+            - link "Yaprakzade Organik Yeşil Çay" [ref=e95] [cursor=pointer]:
+              - /url: /urun/zen-yesil-cay
+          - generic [ref=e96]:
+            - generic [ref=e97]: 159,90 ₺
+            - link "→" [ref=e98] [cursor=pointer]:
+              - /url: /urun/zen-yesil-cay
+      - generic [ref=e99]:
+        - link "Yaprakzade Demlik Poşet Çay" [ref=e100] [cursor=pointer]:
+          - /url: /urun/botanist-harmani
+        - generic [ref=e101]:
+          - generic [ref=e102]: Bitki Harmanları
+          - heading "Yaprakzade Demlik Poşet Çay" [level=3] [ref=e103]:
+            - link "Yaprakzade Demlik Poşet Çay" [ref=e104] [cursor=pointer]:
+              - /url: /urun/botanist-harmani
+          - generic [ref=e105]:
+            - generic [ref=e106]: 159,00 ₺
+            - link "→" [ref=e107] [cursor=pointer]:
+              - /url: /urun/botanist-harmani
+  - generic [ref=e110]:
+    - generic [ref=e111]:
+      - img "Çay bahçesi" [ref=e112]
+      - generic [ref=e113]: "%100 DOĞAL"
+    - generic [ref=e114]:
+      - text: Biz Kimiz?
+      - heading "Doğaya Saygı, İnsana Sağlık" [level=2] [ref=e115]
+      - paragraph [ref=e117]: Çay yapraklarımız, Rize'nin 1200 metre rakımlı, her daim puslu ve taze bahçelerinden toplanır. Sadece doğanın sunduğu saflıkla, hiçbir katkı maddesi eklemeden işlenir. Her yaprakta kaliteyi, her yudumda huzuru vaat ederiz.
+      - generic [ref=e118]:
+        - generic [ref=e119]: ✓ Sürdürülebilir Tarım
+        - generic [ref=e120]: ✓ Doğa Dostu
+        - generic [ref=e121]: ✓ Kalite Kontrol
+      - generic [ref=e122]:
+        - link "İletişime Geç" [ref=e123] [cursor=pointer]:
+          - /url: /iletisim
+        - link "Daha Fazla" [ref=e124] [cursor=pointer]:
+          - /url: /hakkimizda
+  - generic [ref=e126]:
+    - generic [ref=e127]:
+      - generic [ref=e128]:
+        - text: Çay Dünyasından
+        - heading "Son Yazılar" [level=2] [ref=e129]
+      - link "Tüm Blog Yazıları" [ref=e130] [cursor=pointer]:
+        - /url: /blog
+    - link "24.05.2026 Çay Nasıl Demlenir? Mükemmel Demin Sırrı Doğru su sıcaklığı, demleme süresi ve oran ile evde profesyonel lezzet. Devamını Oku →" [ref=e132] [cursor=pointer]:
+      - /url: /blog/cay-nasil-demlenir
+      - generic [ref=e134]:
+        - text: 24.05.2026
+        - heading "Çay Nasıl Demlenir? Mükemmel Demin Sırrı" [level=3] [ref=e135]
+        - paragraph [ref=e136]: Doğru su sıcaklığı, demleme süresi ve oran ile evde profesyonel lezzet.
+        - text: Devamını Oku →
+  - generic [ref=e138]:
+    - generic [ref=e139]:
+      - text: Müşteri Yorumları
+      - heading "Müşterilerimiz Ne Diyor?" [level=2] [ref=e140]
+    - generic [ref=e141]:
+      - figure "Ahmet R. — Yaprakzade Organik Yeşil Çay" [ref=e142]:
+        - generic [ref=e143]: ★★★★★
+        - blockquote [ref=e144]: “Müşteri hizmetleri ilgili, ürün açıklamadaki gibi geldi.”
+        - generic [ref=e145]:
+          - strong [ref=e146]: Ahmet R.
+          - text: — Yaprakzade Organik Yeşil Çay
+      - button "Önceki" [ref=e147] [cursor=pointer]: ❮
+      - button "Sonraki" [ref=e148] [cursor=pointer]: ❯
+      - generic [ref=e149]:
+        - button "Yorum 1" [ref=e150] [cursor=pointer]
+        - button "Yorum 2" [ref=e151] [cursor=pointer]
+        - button "Yorum 3" [ref=e152] [cursor=pointer]
+        - button "Yorum 4" [ref=e153] [cursor=pointer]
+        - button "Yorum 5" [ref=e154] [cursor=pointer]
+        - button "Yorum 6" [ref=e155] [cursor=pointer]
+        - button "Yorum 7" [ref=e156] [cursor=pointer]
+        - button "Yorum 8" [ref=e157] [cursor=pointer]
+        - button "Yorum 9" [ref=e158] [cursor=pointer]
+  - generic [ref=e161]:
+    - heading "🌿 Bahar Kampanyası" [level=2] [ref=e162]
+    - paragraph [ref=e163]: Tüm çay çeşitlerinde bu hafta sona özel %10 indirim — Rize'den sofranıza taze lezzet.
+  - generic [ref=e165]:
+    - generic [ref=e166]:
+      - text: Sıkça Sorulan Sorular
+      - heading "Aklınızdaki Sorular" [level=2] [ref=e167]
+    - generic [ref=e168]:
+      - group [ref=e169]:
+        - generic "Çaylarınız organik ve doğal mı? +" [ref=e170] [cursor=pointer]
+      - group [ref=e171]:
+        - generic "Kargo ne kadar sürede gelir? +" [ref=e172] [cursor=pointer]
+      - group [ref=e173]:
+        - generic "Toptan / kurumsal satış yapıyor musunuz? +" [ref=e174] [cursor=pointer]
+  - contentinfo [ref=e175]:
+    - generic [ref=e176]:
+      - generic [ref=e177]:
+        - generic [ref=e178]:
+          - generic [ref=e179]: Yaprakzade
+          - paragraph [ref=e180]: Doğadan gelen saf lezzet. Rize'nin en seçkin çaylarını özenle sofranıza getiriyoruz.
+        - generic [ref=e181]:
+          - heading "Kategoriler" [level=4] [ref=e182]
+          - link "Siyah Çay" [ref=e183] [cursor=pointer]:
+            - /url: /siyah-cay
+          - link "Yeşil Çay" [ref=e184] [cursor=pointer]:
+            - /url: /yesil-cay
+          - link "Bitki Harmanları" [ref=e185] [cursor=pointer]:
+            - /url: /bitki-harmanlari
+          - link "Özel Seri" [ref=e186] [cursor=pointer]:
+            - /url: /ozel-seri
+        - generic [ref=e187]:
+          - heading "Kurumsal" [level=4] [ref=e188]
+          - link "Hakkımızda" [ref=e189] [cursor=pointer]:
+            - /url: /hakkimizda
+          - link "Blog" [ref=e190] [cursor=pointer]:
+            - /url: /blog
+          - link "İletişim" [ref=e191] [cursor=pointer]:
+            - /url: /iletisim
+          - link "Ürünler" [ref=e192] [cursor=pointer]:
+            - /url: /urunler
+        - generic [ref=e193]:
+          - heading "İletişim" [level=4] [ref=e194]
+          - paragraph [ref=e195]: 📞 0212 000 00 00
+          - paragraph [ref=e196]: ✉️ info@yaprakzade.com
+          - paragraph [ref=e197]: 📍 Yakuplu Mah. 88. Sokak No:14/b Beylikdüzü, 34524 İstanbul
+          - generic [ref=e199]:
+            - textbox "E-posta adresiniz" [ref=e200]
+            - button "Abone Ol" [ref=e201] [cursor=pointer]
+      - generic [ref=e203]: © 2026 Yaprakzade. Tüm hakları saklıdır.

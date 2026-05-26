@@ -1,0 +1,9 @@
+- generic [ref=e2]:
+  - heading "Yaprakzade" [level=1] [ref=e3]
+  - generic [ref=e4]: Yönetim Paneli
+  - generic [ref=e5]:
+    - generic [ref=e6]: Kullanıcı adı
+    - textbox [active] [ref=e7]
+    - generic [ref=e8]: Şifre
+    - textbox [ref=e9]
+    - button "Giriş Yap" [ref=e10] [cursor=pointer]

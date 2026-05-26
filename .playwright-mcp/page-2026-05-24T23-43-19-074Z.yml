@@ -1,0 +1,180 @@
+- generic [ref=e1]:
+  - complementary [ref=e2]:
+    - generic [ref=e3]:
+      - text: Yaprakzade
+      - generic [ref=e4]: admin
+    - navigation [ref=e5]:
+      - link "📊 Panel" [ref=e6] [cursor=pointer]:
+        - /url: index.php
+      - link "📦 Ürünler" [ref=e7] [cursor=pointer]:
+        - /url: products.php
+      - link "🏷️ Kategoriler" [ref=e8] [cursor=pointer]:
+        - /url: categories.php
+      - link "🖼️ Slider" [ref=e9] [cursor=pointer]:
+        - /url: sliders.php
+      - link "🌿 Galeri" [ref=e10] [cursor=pointer]:
+        - /url: gallery.php
+      - link "📝 Blog" [ref=e11] [cursor=pointer]:
+        - /url: blog.php
+      - link "⭐ Yorumlar" [ref=e12] [cursor=pointer]:
+        - /url: reviews.php
+      - link "❓ SSS" [ref=e13] [cursor=pointer]:
+        - /url: faq.php
+      - link "✏️ İçerik & Ayarlar" [ref=e14] [cursor=pointer]:
+        - /url: content.php
+    - generic [ref=e15]:
+      - generic [ref=e16]: admin
+      - link "Çıkış" [ref=e17] [cursor=pointer]:
+        - /url: logout.php
+  - main [ref=e18]:
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - heading "İçerik & Ayarlar" [level=1] [ref=e21]
+        - paragraph [ref=e22]: Sitedeki tüm metin, görsel ve logo buradan yönetilir.
+      - searchbox "🔍 Alan ara (ör. logo, telefon, hero)…" [ref=e23]
+    - generic [ref=e24]: "✏️ Düzenle: her alanın üst kutusu = etiket, alt kutusu = değer (ikisi de değiştirilebilir). | 🗑 Sil: alanın sağındaki Sil kutusunu işaretle. | ➕ Ekle: sol alttaki Yeni Alan sekmesini kullan. | Hepsi tek “Tüm Değişiklikleri Kaydet” ile uygulanır."
+    - generic [ref=e25]:
+      - generic [ref=e26]:
+        - complementary [ref=e27]:
+          - button "Anasayfa 6" [ref=e28] [cursor=pointer]:
+            - text: Anasayfa
+            - generic [ref=e29]: "6"
+          - button "Biz Kimiz 5" [ref=e30] [cursor=pointer]:
+            - text: Biz Kimiz
+            - generic [ref=e31]: "5"
+          - button "Blog Bölümü 2" [ref=e32] [cursor=pointer]:
+            - text: Blog Bölümü
+            - generic [ref=e33]: "2"
+          - button "Footer 2" [ref=e34] [cursor=pointer]:
+            - text: Footer
+            - generic [ref=e35]: "2"
+          - button "Galeri 3" [ref=e36] [cursor=pointer]:
+            - text: Galeri
+            - generic [ref=e37]: "3"
+          - button "Genel 6" [ref=e38] [cursor=pointer]:
+            - text: Genel
+            - generic [ref=e39]: "6"
+          - button "Hakkimizda 3" [ref=e40] [cursor=pointer]:
+            - text: Hakkimizda
+            - generic [ref=e41]: "3"
+          - button "Hero 9" [ref=e42] [cursor=pointer]:
+            - text: Hero
+            - generic [ref=e43]: "9"
+          - button "Iletisim 10" [ref=e44] [cursor=pointer]:
+            - text: Iletisim
+            - generic [ref=e45]: "10"
+          - button "SEO 3" [ref=e46] [cursor=pointer]:
+            - text: SEO
+            - generic [ref=e47]: "3"
+          - button "SSS 1" [ref=e48] [cursor=pointer]:
+            - text: SSS
+            - generic [ref=e49]: "1"
+          - button "Test Alan 1" [ref=e50] [cursor=pointer]:
+            - text: Test Alan
+            - generic [ref=e51]: "1"
+          - button "Ürünler Bölümü 2" [ref=e52] [cursor=pointer]:
+            - text: Ürünler Bölümü
+            - generic [ref=e53]: "2"
+          - button "Yorumlar 2" [ref=e54] [cursor=pointer]:
+            - text: Yorumlar
+            - generic [ref=e55]: "2"
+          - button "🧭 Üst Menü 5" [ref=e56] [cursor=pointer]:
+            - text: 🧭 Üst Menü
+            - generic [ref=e57]: "5"
+          - button "🛡️ Güven Şeridi 4" [active] [ref=e58] [cursor=pointer]:
+            - text: 🛡️ Güven Şeridi
+            - generic [ref=e59]: "4"
+          - button "➕ Yeni Alan" [ref=e60] [cursor=pointer]
+        - generic [ref=e121]:
+          - heading "🛡️ Güven Şeridi" [level=2] [ref=e122]
+          - paragraph [ref=e123]: Anasayfada ürünlerin üstündeki güven rozetleri (ör. %100 Doğal, Hızlı Teslimat). İkon bir emoji olabilir (🌿 🍃 🔒 🚚 ✅). Görünür kapalıysa sitede çıkmaz.
+          - table [ref=e124]:
+            - rowgroup [ref=e125]:
+              - row "Sıra İkon Başlık Açıklama Görünür Sil" [ref=e126]:
+                - columnheader "Sıra" [ref=e127]
+                - columnheader "İkon" [ref=e128]
+                - columnheader "Başlık" [ref=e129]
+                - columnheader "Açıklama" [ref=e130]
+                - columnheader "Görünür" [ref=e131]
+                - columnheader "Sil" [ref=e132]
+            - rowgroup [ref=e133]:
+              - row "1 🌿 %100 Doğal Katkısız, saf çay yaprağı" [ref=e134]:
+                - cell "1" [ref=e135]:
+                  - spinbutton [ref=e136]: "1"
+                - cell "🌿" [ref=e137]:
+                  - textbox [ref=e138]: 🌿
+                - cell "%100 Doğal" [ref=e139]:
+                  - textbox [ref=e140]: "%100 Doğal"
+                - cell "Katkısız, saf çay yaprağı" [ref=e141]:
+                  - textbox [ref=e142]: Katkısız, saf çay yaprağı
+                - cell [ref=e143]:
+                  - checkbox [checked] [ref=e144]
+                - cell [ref=e145]:
+                  - checkbox [ref=e146]
+              - row "2 🍃 Taze & El Yapımı Her paket el ile özenle hazırlanır" [ref=e147]:
+                - cell "2" [ref=e148]:
+                  - spinbutton [ref=e149]: "2"
+                - cell "🍃" [ref=e150]:
+                  - textbox [ref=e151]: 🍃
+                - cell "Taze & El Yapımı" [ref=e152]:
+                  - textbox [ref=e153]: Taze & El Yapımı
+                - cell "Her paket el ile özenle hazırlanır" [ref=e154]:
+                  - textbox [ref=e155]: Her paket el ile özenle hazırlanır
+                - cell [ref=e156]:
+                  - checkbox [checked] [ref=e157]
+                - cell [ref=e158]:
+                  - checkbox [ref=e159]
+              - row "3 🔒 Güvenli Alışveriş 256-bit SSL ile korumalı ödeme" [ref=e160]:
+                - cell "3" [ref=e161]:
+                  - spinbutton [ref=e162]: "3"
+                - cell "🔒" [ref=e163]:
+                  - textbox [ref=e164]: 🔒
+                - cell "Güvenli Alışveriş" [ref=e165]:
+                  - textbox [ref=e166]: Güvenli Alışveriş
+                - cell "256-bit SSL ile korumalı ödeme" [ref=e167]:
+                  - textbox [ref=e168]: 256-bit SSL ile korumalı ödeme
+                - cell [ref=e169]:
+                  - checkbox [checked] [ref=e170]
+                - cell [ref=e171]:
+                  - checkbox [ref=e172]
+              - row "4 🚚 Hızlı Teslimat Siparişiniz kapınıza kadar" [ref=e173]:
+                - cell "4" [ref=e174]:
+                  - spinbutton [ref=e175]: "4"
+                - cell "🚚" [ref=e176]:
+                  - textbox [ref=e177]: 🚚
+                - cell "Hızlı Teslimat" [ref=e178]:
+                  - textbox [ref=e179]: Hızlı Teslimat
+                - cell "Siparişiniz kapınıza kadar" [ref=e180]:
+                  - textbox [ref=e181]: Siparişiniz kapınıza kadar
+                - cell [ref=e182]:
+                  - checkbox [checked] [ref=e183]
+                - cell [ref=e184]:
+                  - checkbox [ref=e185]
+              - row "5" [ref=e186]:
+                - cell "5" [ref=e187]:
+                  - spinbutton [ref=e188]: "5"
+                - cell [ref=e189]:
+                  - textbox "🌿" [ref=e190]
+                - cell [ref=e191]:
+                  - textbox "+ Yeni rozet başlığı" [ref=e192]
+                - cell [ref=e193]:
+                  - textbox "Kısa açıklama" [ref=e194]
+                - cell [ref=e195]:
+                  - checkbox [checked] [ref=e196]
+                - cell [ref=e197]
+              - row "6" [ref=e198]:
+                - cell "6" [ref=e199]:
+                  - spinbutton [ref=e200]: "6"
+                - cell [ref=e201]:
+                  - textbox "🌿" [ref=e202]
+                - cell [ref=e203]:
+                  - textbox "+ Yeni rozet başlığı" [ref=e204]
+                - cell [ref=e205]:
+                  - textbox "Kısa açıklama" [ref=e206]
+                - cell [ref=e207]:
+                  - checkbox [checked] [ref=e208]
+                - cell [ref=e209]
+          - paragraph [ref=e210]: Yeni rozet eklemek için boş satırları doldur. Boş bırakılanlar kaydedilmez.
+      - generic [ref=e118]:
+        - generic [ref=e119]: Değişiklikler tüm gruplarda tek kaydet ile uygulanır.
+        - button "💾 Tüm Değişiklikleri Kaydet" [ref=e120] [cursor=pointer]

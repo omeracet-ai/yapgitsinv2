@@ -399,9 +399,9 @@ class _ProfileView extends ConsumerWidget {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),
                           ),
-                          icon:
-                              const Text('📅', style: TextStyle(fontSize: 18)),
-                          label: const Text('Randevu Al',
+                          icon: const Icon(Icons.send_rounded,
+                              size: 18, color: Colors.white),
+                          label: const Text('Teklif Ver',
                               style: TextStyle(
                                   fontSize: 15, fontWeight: FontWeight.bold)),
                           onPressed: () {

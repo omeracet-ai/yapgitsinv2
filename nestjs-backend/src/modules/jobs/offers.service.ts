@@ -205,6 +205,21 @@ export class OffersService {
     }>;
   }): Promise<Offer> {
     this._assertLineItemsMatchPrice(data.lineItems, data.price);
+
+    // Phase 265 — Özel ilan gating: targetWorkerId set ise SADECE hedef teklif verebilir.
+    const job = await this.jobsRepository.findOne({
+      where: { id: data.jobId },
+    });
+    if (
+      job?.targetWorkerId &&
+      job.targetWorkerId !== data.userId &&
+      job.customerId !== data.userId
+    ) {
+      throw new ForbiddenException(
+        'Bu ilan başka bir ustaya özel açılmış; teklif veremezsiniz.',
+      );
+    }
+
     // Phase 110 — Pro/Premium aboneler için token kesimi yapılmaz (sınırsız teklif)
     const isSubscriber = await this.subscriptionsService.isActiveSubscriber(
       data.userId,

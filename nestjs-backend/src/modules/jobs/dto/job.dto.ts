@@ -86,6 +86,11 @@ export class CreateJobDto {
   @IsOptional()
   @IsString()
   targetWorkerId?: string;
+
+  /** Phase 265 — saat esnekliği: 'flexible' | 'specific' | 'urgent' */
+  @IsOptional()
+  @IsString()
+  scheduleFlexibility?: 'flexible' | 'specific' | 'urgent';
 }
 
 export class UpdateJobDto {

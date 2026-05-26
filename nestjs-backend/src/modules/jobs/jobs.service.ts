@@ -565,6 +565,7 @@ export class JobsService {
       kind,
       customerId,
       targetWorkerId,
+      scheduleFlexibility: createJobDto.scheduleFlexibility ?? 'flexible',
       status: JobStatus.OPEN,
       // Phase 174b — minor sync: TL float → integer kuruş
       budgetMinMinor: tlToMinor(createJobDto.budgetMin),
@@ -613,6 +614,26 @@ export class JobsService {
       });
     // Phase 143 — fire-and-forget category subscription notifications
     void this._notifyCategorySubscribers(saved);
+
+    // Phase 265 — özel ilan ise hedef ustaya davet bildirimi.
+    if (targetWorkerId) {
+      void this.notificationsService
+        .send({
+          userId: targetWorkerId,
+          type: NotificationType.PRIVATE_LISTING_INVITE,
+          title: 'Sana özel bir ilan açıldı',
+          body: `"${saved.title}" ilanını sadece sen görebilirsin. Teklifini ver.`,
+          refId: saved.id,
+          relatedType: 'job',
+          relatedId: saved.id,
+        })
+        .catch((e) =>
+          this.logger.warn(
+            `Private listing invite notify failed for ${saved.id}: ${(e as Error).message}`,
+          ),
+        );
+    }
+
     return saved;
   }
 

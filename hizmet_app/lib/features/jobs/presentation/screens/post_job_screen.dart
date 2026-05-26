@@ -72,6 +72,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   double? _lat;
   double? _lng;
   DateTime? _dueDate;
+  /// Phase 265 — saat dilimi esneklik durumu.
+  /// 'flexible' = esnek, 'specific' = belirli saat, 'urgent' = acil/aynı gün.
+  String _scheduleFlexibility = 'flexible';
 
   // Fotoğraf & Video adımı için
   List<XFile> _selectedPhotos = [];
@@ -950,10 +953,61 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     }
   }
 
+  Widget _scheduleChip(String value, String label, IconData icon) {
+    final active = _scheduleFlexibility == value;
+    return GestureDetector(
+      onTap: () => setState(() => _scheduleFlexibility = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary : AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+              color: active ? AppColors.primary : AppColors.border),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon,
+              size: 16,
+              color: active ? Colors.white : AppColors.textPrimary),
+          const SizedBox(width: 6),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: active ? Colors.white : AppColors.textPrimary)),
+        ]),
+      ),
+    );
+  }
+
   Widget _buildStep3Body() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Phase 265 — Saat dilimi esneklik durumu
+        Text('Saat dilimi esnekliği',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary)),
+        const SizedBox(height: 4),
+        Text(
+          'Ustanın seninle saatte uyuşma esnekliği. Esnek → ustaya zaman kalır; '
+          'belirli → seçtiğin tarih/saat; acil → aynı gün.',
+          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _scheduleChip('flexible', 'Esnek', Icons.event_available_rounded),
+            _scheduleChip('specific', 'Belirli', Icons.schedule_rounded),
+            _scheduleChip('urgent',   'Acil',    Icons.bolt_rounded),
+          ],
+        ),
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 16),
         Text('Fotoğraf & Video',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
@@ -1143,6 +1197,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       // Phase 265 — özel ilan hedef ustası (backend kredi düşer).
       if (widget.targetWorkerId != null)
         'targetWorkerId': widget.targetWorkerId,
+      // Phase 265 — saat dilimi esnekliği
+      'scheduleFlexibility': _scheduleFlexibility,
     };
 
     try {

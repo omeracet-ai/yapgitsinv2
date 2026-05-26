@@ -1,0 +1,68 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]: Yaprakzade 🌿 Rize'den Doğrudan Sofranıza
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "🌿 Yaprakzade" [ref=e7] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e8]:
+        - link "Ana Sayfa" [ref=e9] [cursor=pointer]:
+          - /url: /
+        - link "Ürünlerimiz" [ref=e10] [cursor=pointer]:
+          - /url: /urunler
+        - link "Hakkımızda" [ref=e11] [cursor=pointer]:
+          - /url: /hakkimizda
+        - link "Blog" [ref=e12] [cursor=pointer]:
+          - /url: /blog
+        - link "İletişim" [ref=e13] [cursor=pointer]:
+          - /url: /iletisim
+      - button [ref=e15] [cursor=pointer]
+  - main [ref=e19]:
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]:
+          - link "Anasayfa" [ref=e23] [cursor=pointer]:
+            - /url: /
+          - generic [ref=e24]: /
+          - generic [ref=e25]: Galeri
+        - heading "Galeri" [level=1] [ref=e26]
+        - paragraph [ref=e27]: Çay bahçelerimizden, hasattan ve ürünlerimizden kareler.
+      - link "Ek iş" [ref=e30] [cursor=pointer]:
+        - /url: /uploads/521c1bbe8cc69e9c.webp
+        - generic [ref=e32]: Ek iş
+  - contentinfo [ref=e33]:
+    - generic [ref=e34]:
+      - generic [ref=e35]:
+        - generic [ref=e36]:
+          - generic [ref=e37]: Yaprakzade
+          - paragraph [ref=e38]: Doğadan gelen saf lezzet. Rize'nin en seçkin çaylarını özenle sofranıza getiriyoruz.
+        - generic [ref=e39]:
+          - heading "Kategoriler" [level=4] [ref=e40]
+          - link "Siyah Çay" [ref=e41] [cursor=pointer]:
+            - /url: /siyah-cay
+          - link "Yeşil Çay" [ref=e42] [cursor=pointer]:
+            - /url: /yesil-cay
+          - link "Bitki Harmanları" [ref=e43] [cursor=pointer]:
+            - /url: /bitki-harmanlari
+          - link "Özel Seri" [ref=e44] [cursor=pointer]:
+            - /url: /ozel-seri
+        - generic [ref=e45]:
+          - heading "Kurumsal" [level=4] [ref=e46]
+          - link "Hakkımızda" [ref=e47] [cursor=pointer]:
+            - /url: /hakkimizda
+          - link "Blog" [ref=e48] [cursor=pointer]:
+            - /url: /blog
+          - link "Galeri" [ref=e49] [cursor=pointer]:
+            - /url: /galeri
+          - link "İletişim" [ref=e50] [cursor=pointer]:
+            - /url: /iletisim
+          - link "Ürünler" [ref=e51] [cursor=pointer]:
+            - /url: /urunler
+        - generic [ref=e52]:
+          - heading "İletişim" [level=4] [ref=e53]
+          - paragraph [ref=e54]: 📞 0212 000 00 00
+          - paragraph [ref=e55]: ✉️ info@yaprakzade.com
+          - paragraph [ref=e56]: 📍 Yakuplu Mah. 88. Sokak No:14/b Beylikdüzü, 34524 İstanbul
+          - generic [ref=e58]:
+            - textbox "E-posta adresiniz" [ref=e59]
+            - button "Abone Ol" [ref=e60] [cursor=pointer]
+      - generic [ref=e62]: © 2026 Yaprakzade. Tüm hakları saklıdır.

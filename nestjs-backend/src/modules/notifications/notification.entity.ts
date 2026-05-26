@@ -28,6 +28,7 @@ export enum NotificationType {
   JOB_CANCELLED = 'job_cancelled', // İş iptal edildi (job lifecycle)
   REVIEW_REMINDER = 'review_reminder', // 7 gün geçti, değerlendirme hatırlatması
   SAVED_SEARCH_MATCH = 'saved_search_match', // Kayıtlı aramaya uyan yeni ilan
+  PRIVATE_LISTING_INVITE = 'private_listing_invite', // Phase 265: sana özel açılan ilan davet
 }
 
 @Entity('notifications')
