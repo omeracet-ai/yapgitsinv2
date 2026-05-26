@@ -51,8 +51,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    // 2026-05-26 — splash her zaman dark (tema fark etmez, marka tutarlılığı).
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFF0C1117),
       body: Stack(
         children: [
           // Subtle green radial glow
@@ -93,7 +94,8 @@ class _SplashScreenState extends State<SplashScreen>
                     Text(
                       'yapgitsin.',
                       style: GoogleFonts.inter(
-                        color: AppColors.textPrimary,
+                        // Splash her zaman dark — beyaz tipografi.
+                        color: Colors.white,
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.5,
@@ -103,7 +105,7 @@ class _SplashScreenState extends State<SplashScreen>
                     Text(
                       'PREMIUM HİZMET PLATFORMU',
                       style: GoogleFonts.inter(
-                        color: AppColors.textMuted,
+                        color: Colors.white60,
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 2.5,
