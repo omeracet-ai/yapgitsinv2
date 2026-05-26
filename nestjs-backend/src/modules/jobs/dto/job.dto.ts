@@ -81,6 +81,11 @@ export class CreateJobDto {
   @IsOptional()
   @IsEnum(JobKind)
   kind?: JobKind;
+
+  /** Phase 265 — özel hedef usta (varsa ekstra kredi düşer). */
+  @IsOptional()
+  @IsString()
+  targetWorkerId?: string;
 }
 
 export class UpdateJobDto {

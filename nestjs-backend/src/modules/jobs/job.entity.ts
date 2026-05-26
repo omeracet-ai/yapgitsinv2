@@ -141,6 +141,15 @@ export class Job {
   @JoinColumn({ name: 'customerId' })
   customer: User;
 
+  /**
+   * Phase 265 — "Bu Ustaya Özel İlan" hedef ustası.
+   * Doluysa ilan yalnız bu user'a görünür; başkası teklif veremez.
+   * Müşteriden ekstra kredi düşülür (SystemSettings.private_listing_cost,
+   * default 10). null = public ilan (standart akış).
+   */
+  @Column({ type: 'varchar', length: 36, nullable: true, default: null })
+  targetWorkerId: string | null;
+
   /** İlan fotoğrafları (URL dizisi) */
   @Column({ type: 'simple-json', nullable: true, default: null })
   photos: string[] | null;

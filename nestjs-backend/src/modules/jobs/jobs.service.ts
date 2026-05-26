@@ -29,6 +29,7 @@ import { DisputesService } from '../disputes/disputes.service';
 import { DisputeType } from '../disputes/job-dispute.entity';
 import { FraudDetectionService } from '../ai/fraud-detection.service';
 import { CategorySubscriptionsService } from '../subscriptions/category-subscriptions.service';
+import { SystemSettingsService } from '../system-settings/system-settings.service';
 import { encodeGeohash } from '../../common/geohash.util';
 import { tlToMinor } from '../../common/money.util';
 import { join } from 'path';
@@ -64,6 +65,7 @@ export class JobsService {
     private tokensService: TokensService,
     private fraudDetection: FraudDetectionService,
     private categorySubsService: CategorySubscriptionsService,
+    private systemSettings: SystemSettingsService,
   ) {}
 
   /**
@@ -530,10 +532,39 @@ export class JobsService {
         );
       }
     }
+
+    // Phase 265 — "Bu Ustaya Özel İlan": ekstra kredi düş + hedef usta var mı doğrula.
+    const targetWorkerId = createJobDto.targetWorkerId?.trim() || null;
+    if (targetWorkerId) {
+      if (targetWorkerId === customerId) {
+        throw new BadRequestException(
+          'Kendinize özel ilan açamazsınız.',
+        );
+      }
+      const target = await this.usersService.findById(targetWorkerId);
+      if (!target) {
+        throw new BadRequestException('Seçilen usta bulunamadı.');
+      }
+      // Admin panel SystemSettings.private_listing_cost'tan oku (default 10).
+      const costStr = await this.systemSettings.get(
+        'private_listing_cost',
+        '10',
+      );
+      const cost = Math.max(0, parseInt(costStr, 10) || 0);
+      if (cost > 0) {
+        await this.tokensService.spend(
+          customerId,
+          cost,
+          `Özel ilan: ${target.fullName ?? target.id.slice(0, 8)} için`,
+        );
+      }
+    }
+
     const job = this.jobsRepository.create({
       ...createJobDto,
       kind,
       customerId,
+      targetWorkerId,
       status: JobStatus.OPEN,
       // Phase 174b — minor sync: TL float → integer kuruş
       budgetMinMinor: tlToMinor(createJobDto.budgetMin),

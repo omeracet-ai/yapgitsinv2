@@ -23,6 +23,7 @@ import { DisputesModule } from '../disputes/disputes.module';
 import { UserBlocksModule } from '../user-blocks/user-blocks.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { AiModule } from '../ai/ai.module';
+import { SystemSettingsModule } from '../system-settings/system-settings.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { AiModule } from '../ai/ai.module';
     UserBlocksModule,
     SubscriptionsModule,
     AiModule,
+    SystemSettingsModule,
   ],
   providers: [JobsService, OffersService, QuestionsService, SavedJobsService],
   controllers: [

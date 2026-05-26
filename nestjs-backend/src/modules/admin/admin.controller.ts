@@ -427,6 +427,57 @@ export class AdminController {
     return this.adminService.bulkVerifyUsers(dto, req.user.id);
   }
 
+  // Phase 265 — Token cost configuration (admin panelden manuel ayar).
+  // Şu an yönetilen anahtarlar:
+  //   private_listing_cost — "Bu Ustaya Özel İlan" başına ek kredi (default 10)
+  //   offer_token_cost     — Standart teklif kredisi (default 5)
+  @Get('settings/token-costs')
+  async getTokenCosts() {
+    const privateListingCost = await this.systemSettings.get(
+      'private_listing_cost',
+      '10',
+    );
+    const offerTokenCost = await this.systemSettings.get(
+      'offer_token_cost',
+      String(OFFER_TOKEN_COST),
+    );
+    return {
+      privateListingCost: parseInt(privateListingCost, 10),
+      offerTokenCost: parseInt(offerTokenCost, 10),
+    };
+  }
+
+  @Patch('settings/token-costs')
+  async setTokenCosts(
+    @Body() body: { privateListingCost?: number; offerTokenCost?: number },
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const adminId = req.user.id;
+    if (body.privateListingCost != null) {
+      const v = body.privateListingCost;
+      if (typeof v !== 'number' || v < 0 || v > 1000) {
+        throw new BadRequestException('privateListingCost 0-1000 arası olmalı');
+      }
+      await this.systemSettings.set(
+        'private_listing_cost',
+        String(Math.floor(v)),
+        adminId,
+      );
+    }
+    if (body.offerTokenCost != null) {
+      const v = body.offerTokenCost;
+      if (typeof v !== 'number' || v < 0 || v > 1000) {
+        throw new BadRequestException('offerTokenCost 0-1000 arası olmalı');
+      }
+      await this.systemSettings.set(
+        'offer_token_cost',
+        String(Math.floor(v)),
+        adminId,
+      );
+    }
+    return this.getTokenCosts();
+  }
+
   // Phase 264 — Provider tablosu deprecate edildi; admin featured slot artık
   // doğrudan User.featuredWorkerOrder üzerinden yönetilir.
   @Patch('users/:id/featured-worker')
