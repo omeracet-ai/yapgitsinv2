@@ -12,6 +12,11 @@ class SuccessScreen extends ConsumerWidget {
   final String btnText;
   final String targetRoute;
   final int targetTab;
+  /// İsteğe bağlı ikincil CTA (örn. "Yeni İlan Ver"). Verilirse ana
+  /// CTA'nın altında outlined buton olarak çıkar.
+  final String? secondaryBtnText;
+  final String? secondaryTargetRoute;
+  final int? secondaryTargetTab;
 
   const SuccessScreen({
     super.key,
@@ -20,6 +25,9 @@ class SuccessScreen extends ConsumerWidget {
     required this.btnText,
     this.targetRoute = '/',
     this.targetTab = 0,
+    this.secondaryBtnText,
+    this.secondaryTargetRoute,
+    this.secondaryTargetTab,
   });
 
   @override
@@ -67,6 +75,31 @@ class SuccessScreen extends ConsumerWidget {
                           color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ).animate().fade(delay: 400.ms).scale(),
+              if (secondaryBtnText != null) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      if (secondaryTargetTab != null) {
+                        ref.read(selectedTabProvider.notifier).state =
+                            secondaryTargetTab!;
+                      }
+                      context.go(secondaryTargetRoute ?? targetRoute);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: BorderSide(
+                          color: AppColors.primary.withValues(alpha: 0.6)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: Text(secondaryBtnText!,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ).animate().fade(delay: 500.ms).slideY(begin: 0.1),
+              ],
             ],
           ),
         ),

@@ -38,12 +38,20 @@ class PostJobScreen extends ConsumerStatefulWidget {
   /// geri-yükleme istemi atlanır. null = normal akış.
   final String? initialCategory;
 
+  /// İş detayı offer kartındaki "Bu Ustaya Özel İlan Aç" CTA'sından gelir.
+  /// Verilirse form üstünde "Bu ilan sadece [name] için" bilgi banner'ı
+  /// gösterilir. Backend gating bekleniyor (Phase TBD); şu an yalnız UI hint.
+  final String? targetWorkerId;
+  final String? targetWorkerName;
+
   const PostJobScreen({
     super.key,
     this.initialJob,
     this.kind = 'request',
     this.allowedCategories,
     this.initialCategory,
+    this.targetWorkerId,
+    this.targetWorkerName,
   });
 
   @override
@@ -345,6 +353,35 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         key: _formKey,
         child: Column(
           children: [
+            if (widget.targetWorkerId != null && widget.targetWorkerName != null)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.30)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.person_pin_rounded,
+                        color: AppColors.primary, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Bu ilan ${widget.targetWorkerName} için özel olarak '
+                        'açılıyor.',
+                        style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             JobWizardProgress(currentStep: _currentStep),
             Expanded(
               child: IndexedStack(

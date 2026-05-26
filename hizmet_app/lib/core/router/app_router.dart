@@ -261,10 +261,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               ? allowed.map((e) => e.toString()).toList()
               : null;
           final initialCategory = extra?['initialCategory'] as String?;
+          final targetWorkerId = extra?['targetWorkerId'] as String?;
+          final targetWorkerName = extra?['targetWorkerName'] as String?;
           return PostJobScreen(
             kind: 'request',
             allowedCategories: cats,
             initialCategory: initialCategory,
+            targetWorkerId: targetWorkerId,
+            targetWorkerName: targetWorkerName,
           );
         },
       ),
@@ -488,9 +492,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SuccessScreen(
           title: 'İlanınız Yayında!',
           message: 'İlanınız başarıyla yayınlandı. Şimdi ustalardan teklif bekleyebilirsiniz.',
-          btnText: "Yaptır'a Dön",
+          btnText: 'İşlerime Git',
           targetRoute: '/',
-          targetTab: 0,
+          targetTab: 2, // İşlerim sekmesi
+          secondaryBtnText: 'Yeni İlan Ver',
+          secondaryTargetRoute: '/ilan-ver',
         ),
       ),
     ],
