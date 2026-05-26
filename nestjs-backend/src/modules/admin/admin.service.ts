@@ -837,17 +837,80 @@ export class AdminService {
     return this.usersRepo.update(id, { featuredOrder });
   }
 
-  // Phase 265e — Admin hard-delete: kalıcı sil. FK CASCADE bağlı kayıtları
-  // (offers, jobs[customerId], reviews, notifications vb.) ON DELETE CASCADE
-  // ile temizler. Audit log kalır.
-  async hardDeleteUser(id: string): Promise<{ deleted: boolean; id: string }> {
+  // Phase 265f — Admin hard-delete: kalıcı sil + manuel cascade. SQLite FK
+  // CASCADE deploy'da garantili değil; transaction içinde tüm bağlı tabloları
+  // tek tek temizler. admin_audit_logs tarihçesi KORUNUR.
+  async hardDeleteUser(
+    id: string,
+  ): Promise<{
+    deleted: boolean;
+    id: string;
+    affected: Record<string, number>;
+  }> {
     const u = await this.usersRepo.findOne({ where: { id } });
     if (!u) throw new NotFoundException(`Kullanıcı bulunamadı: ${id}`);
     if (u.role === UserRole.ADMIN) {
       throw new BadRequestException('Admin hesabı silinemez');
     }
-    await this.usersRepo.delete(id);
-    return { deleted: true, id };
+    const affected: Record<string, number> = {};
+    const phone = u.phoneNumber ?? '';
+    await this.dataSource.transaction(async (manager) => {
+      await manager.query('PRAGMA foreign_keys = OFF');
+      const ops: Array<[string, string, unknown[]]> = [
+        ['availability_slots', 'DELETE FROM availability_slots WHERE userId = ?', [id]],
+        ['availability_blackouts', 'DELETE FROM availability_blackouts WHERE userId = ?', [id]],
+        ['booking_escrows', 'DELETE FROM booking_escrows WHERE customerId = ? OR workerId = ? OR taskerId = ?', [id, id, id]],
+        ['bookings', 'DELETE FROM bookings WHERE customerId = ? OR workerId = ?', [id, id]],
+        ['email_verification_tokens', 'DELETE FROM email_verification_tokens WHERE userId = ?', [id]],
+        ['favorite_providers', 'DELETE FROM favorite_providers WHERE userId = ? OR providerId = ?', [id, id]],
+        ['favorite_workers', 'DELETE FROM favorite_workers WHERE userId = ? OR workerId = ?', [id, id]],
+        ['job_questions', 'DELETE FROM job_questions WHERE userId = ?', [id]],
+        ['job_question_replies', 'DELETE FROM job_question_replies WHERE userId = ?', [id]],
+        ['notifications', 'DELETE FROM notifications WHERE userId = ?', [id]],
+        ['offers', 'DELETE FROM offers WHERE userId = ?', [id]],
+        ['password_reset_tokens', 'DELETE FROM password_reset_tokens WHERE userId = ?', [id]],
+        ['payment_escrows', 'DELETE FROM payment_escrows WHERE customerId = ? OR taskerId = ?', [id, id]],
+        ['providers', 'DELETE FROM providers WHERE userId = ?', [id]],
+        ['reviews', 'DELETE FROM reviews WHERE reviewerId = ? OR revieweeId = ?', [id, id]],
+        ['review_helpful', 'DELETE FROM review_helpful WHERE userId = ?', [id]],
+        ['token_transactions', 'DELETE FROM token_transactions WHERE userId = ?', [id]],
+        ['user_reports', 'DELETE FROM user_reports WHERE reporterUserId = ? OR reportedUserId = ?', [id, id]],
+        ['user_subscriptions', 'DELETE FROM user_subscriptions WHERE userId = ?', [id]],
+        ['user_blocks', 'DELETE FROM user_blocks WHERE blockerId = ? OR blockedId = ?', [id, id]],
+        ['saved_jobs', 'DELETE FROM saved_jobs WHERE userId = ?', [id]],
+        ['saved_job_searches', 'DELETE FROM saved_job_searches WHERE userId = ?', [id]],
+        ['worker_boosts', 'DELETE FROM worker_boosts WHERE userId = ?', [id]],
+        ['boosts', 'DELETE FROM boosts WHERE userId = ?', [id]],
+        ['chat_messages', 'DELETE FROM chat_messages WHERE senderId = ? OR receiverId = ?', [id, id]],
+        ['sms_otps', 'DELETE FROM sms_otps WHERE userId = ? OR phoneNumber = ?', [id, phone]],
+        ['lead_requests', 'DELETE FROM lead_requests WHERE userId = ?', [id]],
+        ['payments', 'DELETE FROM payments WHERE userId = ? OR customerId = ?', [id, id]],
+        ['promo_redemptions', 'DELETE FROM promo_redemptions WHERE userId = ?', [id]],
+        ['crypto_deposits', 'DELETE FROM crypto_deposits WHERE userId = ?', [id]],
+        ['withdrawal_requests', 'DELETE FROM withdrawal_requests WHERE userId = ?', [id]],
+        ['job_disputes', 'DELETE FROM job_disputes WHERE customerId = ? OR workerId = ? OR raisedByUserId = ?', [id, id, id]],
+        ['disputes', 'DELETE FROM disputes WHERE raisedByUserId = ? OR againstUserId = ?', [id, id]],
+        ['service_request_applications', 'DELETE FROM service_request_applications WHERE userId = ?', [id]],
+        ['service_requests', 'DELETE FROM service_requests WHERE userId = ?', [id]],
+        ['jobs', 'DELETE FROM jobs WHERE customerId = ? OR targetWorkerId = ?', [id, id]],
+        ['category_subscriptions', 'DELETE FROM category_subscriptions WHERE userId = ?', [id]],
+        ['users', 'DELETE FROM users WHERE id = ?', [id]],
+      ];
+      for (const [table, sql, params] of ops) {
+        try {
+          await manager.query(sql, params);
+          const r = (await manager.query('SELECT changes() as c')) as Array<{
+            c: number;
+          }>;
+          const c = r?.[0]?.c ?? 0;
+          if (c > 0) affected[table] = c;
+        } catch {
+          // Tablo yoksa atla (entity yok veya migration eksik)
+        }
+      }
+      await manager.query('PRAGMA foreign_keys = ON');
+    });
+    return { deleted: true, id, affected };
   }
 
   async verifyUser(id: string, identityVerified: boolean) {
