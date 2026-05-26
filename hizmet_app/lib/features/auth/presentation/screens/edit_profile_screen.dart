@@ -279,7 +279,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         slivers: [
           const SliverAppBar(
             pinned: true,
-            backgroundColor: AppColors.primary,
+            backgroundColor: AppColors.headerDark,
             foregroundColor: Colors.white,
             title: Text('Profilimi Düzenle'),
           ),

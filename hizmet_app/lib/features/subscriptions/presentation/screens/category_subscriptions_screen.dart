@@ -15,7 +15,7 @@ class CategorySubscriptionsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerDark,
         foregroundColor: Colors.white,
         title: const Text('🔔 Kategori Abonelikleri'),
       ),

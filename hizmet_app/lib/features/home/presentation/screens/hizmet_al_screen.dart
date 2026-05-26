@@ -26,7 +26,7 @@ class HizmetAlScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerDark,
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(appBarTitle,
@@ -61,13 +61,13 @@ class _PostJobCta extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
-      color: AppColors.primary,
+      color: AppColors.headerDark,
       child: SizedBox(
         height: 36,
         child: ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.white,
-            foregroundColor: AppColors.primary,
+            foregroundColor: AppColors.headerDark,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10)),
             elevation: 0,

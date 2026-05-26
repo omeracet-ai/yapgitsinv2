@@ -9,6 +9,9 @@ class AppColors {
   static const Color primary       = Color(0xFF4ADE80);
   static const Color primaryDark   = Color(0xFF22C55E);
   static const Color primaryLight  = Color(0xFFDCFCE7);
+  /// Koyu yeşil — tüm uygulama header/AppBar zemini için kullanılır
+  /// (2026-05-26 kullanıcı isteği: top header yeşil dark color).
+  static const Color headerDark    = Color(0xFF0F5132);
   static Color get   primaryGlow   => primary.withValues(alpha: 0.15);
 
   static const Color secondary     = Color(0xFF161B22);
@@ -77,9 +80,7 @@ class AppColors {
   static const Color legacyOrange = primary;
 
   // ── Phase 263 — Ana sekme header arka planı ────────────────────────────
-  /// Ana sekmelerin üst container/AppBar zemini. Dark VE sistem modunda koyu
-  /// tasarım rengi (background), yalnızca "Açık" temada marka yeşili.
-  /// (Home hero'daki heroBg davranışıyla tutarlı.)
-  static Color headerBackground(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? background : primary;
+  /// Tüm uygulama AppBar/header zemini — koyu yeşil (2026-05-26).
+  /// Tema fark etmeden aynı dark green; foreground beyaz olmalı.
+  static Color headerBackground(BuildContext context) => headerDark;
 }

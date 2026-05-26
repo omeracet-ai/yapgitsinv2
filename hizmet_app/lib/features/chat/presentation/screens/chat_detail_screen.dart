@@ -298,7 +298,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerDark,
         elevation: 0,
         titleSpacing: 0,
         leading: IconButton(
