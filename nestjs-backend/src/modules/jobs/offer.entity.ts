@@ -109,7 +109,7 @@ export class Offer {
   @Column({ type: 'integer', default: 0 })
   refreshCount: number;
 
-  @Column({ type: 'timestamp', nullable: true, default: null })
+  @Column({ type: 'datetime', nullable: true, default: null })
   refreshedAt: Date | null;
 
   @CreateDateColumn()
