@@ -30,7 +30,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get subTabHizmetIlanlari => 'Hizmet İlanları';
 
   @override
-  String get subTabFirsatlar => 'Fırsatlar';
+  String get subTabFirsatlar => 'Yapgitsin';
 
   @override
   String get subTabHarita => 'Harita';
@@ -228,7 +228,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get myJobsListings => 'İlanlarım';
 
   @override
-  String get myJobsExplore => 'Fırsatları Keşfet';
+  String get myJobsExplore => 'Yapgitsin\'i Keşfet';
 
   @override
   String get myJobsViewDetails => 'Detayları Gör';

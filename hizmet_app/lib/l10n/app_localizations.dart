@@ -143,7 +143,7 @@ abstract class AppLocalizations {
   /// No description provided for @subTabFirsatlar.
   ///
   /// In tr, this message translates to:
-  /// **'Fırsatlar'**
+  /// **'Yapgitsin'**
   String get subTabFirsatlar;
 
   /// No description provided for @subTabHarita.
@@ -539,7 +539,7 @@ abstract class AppLocalizations {
   /// No description provided for @myJobsExplore.
   ///
   /// In tr, this message translates to:
-  /// **'Fırsatları Keşfet'**
+  /// **'Yapgitsin\'i Keşfet'**
   String get myJobsExplore;
 
   /// No description provided for @myJobsViewDetails.

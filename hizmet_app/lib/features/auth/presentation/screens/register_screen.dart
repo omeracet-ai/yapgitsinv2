@@ -70,7 +70,6 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
   String _gender        = 'other';
   DateTime? _birthDate;
   // Phase 129 — Worker onboarding routing flag.
-  bool   _registerAsWorker = false;
 
   // Phase 256 — KVKK consent state.
   // _mandatoryConsent: tek kutu hem kvkkConsent hem termsConsent'i set eder.
@@ -215,13 +214,9 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         if (docUrl != null) 'documentPhotoUrl': docUrl,
       });
       if (mounted) {
-        // Phase 129 — Worker registration â ' wizard. Customer â ' main shell.
-        if (_registerAsWorker) {
-          context.go('/usta-baslangic');
-        } else {
-          ref.read(selectedTabProvider.notifier).state = 0;
-          context.go('/');
-        }
+        // Herkes düz kullanıcı olarak kaydolur → ana ekran. Usta olma sonradan belge ile.
+        ref.read(selectedTabProvider.notifier).state = 0;
+        context.go('/');
       }
     } catch (e) {
       setState(() { _error = e.toString().replaceFirst('Exception: ', ''); _loading = false; });
@@ -230,13 +225,8 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
 
   Future<void> _skipStep2() async {
     if (mounted) {
-      // Phase 129 — Worker'lar identity skip etse de wizard'a yönlendirilir.
-      if (_registerAsWorker) {
-        context.go('/usta-baslangic');
-      } else {
-        ref.read(selectedTabProvider.notifier).state = 0;
-        context.go('/');
-      }
+      ref.read(selectedTabProvider.notifier).state = 0;
+      context.go('/');
     }
   }
 
@@ -350,34 +340,8 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
           ),
         ),
 
-        const SizedBox(height: 16),
-        // Phase 129 — Usta olarak kayıt ol toggle.
-        Container(
-          decoration: BoxDecoration(
-            color: _registerAsWorker
-                ? AppColors.primaryLight
-                : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: _registerAsWorker
-                  ? AppColors.primary
-                  : AppColors.border,
-            ),
-          ),
-          child: SwitchListTile(
-            value: _registerAsWorker,
-            onChanged: (v) => setState(() => _registerAsWorker = v),
-            activeThumbColor: AppColors.primary,
-            title: const Text('Usta olarak kayıt ol',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.secondary)),
-            subtitle: const Text(
-              'Hizmet verirsen kayıt sonrası kısa bir kurulum yapacağız.',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
-            ),
-          ),
-        ),
+        // "Usta olarak kayıt ol" toggle KALDIRILDI — herkes düz kullanıcı olarak
+        // kayıt olur; usta ünvanı sonradan yüklenen yeterlilik belgesiyle kazanılır.
         const SizedBox(height: 20),
         // Phase 256 — KVKK uyumluluk onay bölümü (gönder butonunun üzerinde).
         ConsentSection(

@@ -133,5 +133,6 @@ flutter:
   assets:
     - assets/sounds/
     - assets/legal/
+    - assets/icons/
 
 

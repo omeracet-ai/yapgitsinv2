@@ -1,163 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../jobs/presentation/screens/job_opportunities_screen.dart';
-import '../../../notifications/presentation/screens/notification_screen.dart';
-import '../../../notifications/data/unread_count_provider.dart';
 
-/// Yapgitsin sekmesi (sadeleşmiş — 2026-05-26):
-///   • Üstte "Hizmet İlanı Ver" CTA
-///   • Altta "Fırsatlar" listesi (JobOpportunitiesBody)
-///
-/// Eski "Hizmet İlanları" (usta offer listings) ve "Harita" sekmeleri
-/// kullanıcı isteği ile gizlendi. Aynı widget hem Yapgitsin hem İşlerim
-/// alt-sekmesinde kullanılır (içerik = paylaşımlı).
+/// Yapgitsin sekmesi — sadeleştirildi (2026-05-26):
+/// Top header (AppBar + "Hizmet İlanı Ver" CTA) kullanıcı isteği ile
+/// kaldırıldı. Sekme artık doğrudan ilan listesini (eski "Fırsatlar",
+/// güncel adıyla "Yapgitsin" içeriği) gösterir.
 class HizmetAlScreen extends ConsumerWidget {
-  const HizmetAlScreen({super.key, this.appBarTitle = 'Yapgitsin'});
+  const HizmetAlScreen({super.key, this.appBarTitle});
 
-  final String appBarTitle;
+  /// Geriye uyumluluk için tutulan parametre; artık kullanılmıyor (header yok).
+  final String? appBarTitle;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isLoggedIn = ref.watch(authStateProvider) is AuthAuthenticated;
-    final unreadCount = ref.watch(unreadCountBadgeProvider);
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.headerDark,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: Text(appBarTitle,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        actions: [
-          _NotifAppBarButton(
-            count: isLoggedIn ? unreadCount : 0,
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const NotificationScreen()),
-            ),
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _PostJobCta(isLoggedIn: isLoggedIn),
-          const _SectionHeader(text: 'Fırsatlar'),
-          const Expanded(child: JobOpportunitiesBody()),
-        ],
-      ),
-    );
-  }
-}
-
-class _PostJobCta extends StatelessWidget {
-  final bool isLoggedIn;
-  const _PostJobCta({required this.isLoggedIn});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
-      color: AppColors.headerDark,
-      child: SizedBox(
-        height: 36,
-        child: ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: AppColors.headerDark,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-          ),
-          icon: const Icon(Icons.add_rounded, size: 18),
-          label: const Text('Hizmet İlanı Ver',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-          onPressed: () {
-            if (!isLoggedIn) {
-              context.push('/giris-yap', extra: {'returnTo': '/ilan-ver'});
-            } else {
-              context.push('/ilan-ver');
-            }
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String text;
-  const _SectionHeader({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 2),
-      color: AppColors.background,
-      child: Row(
-        children: [
-          Container(
-            width: 3,
-            height: 12,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(text,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-}
-
-class _NotifAppBarButton extends StatelessWidget {
-  final int count;
-  final VoidCallback onTap;
-  const _NotifAppBarButton({required this.count, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: 'Bildirimler',
-      onPressed: onTap,
-      icon: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          const Icon(Icons.notifications_outlined),
-          if (count > 0)
-            Positioned(
-              right: -6,
-              top: -4,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: AppColors.error,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.primary, width: 1),
-                ),
-                constraints:
-                    const BoxConstraints(minWidth: 18, minHeight: 16),
-                child: Text(
-                  count > 99 ? '99+' : '$count',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-        ],
-      ),
+    return const Scaffold(
+      body: SafeArea(child: JobOpportunitiesBody()),
     );
   }
 }

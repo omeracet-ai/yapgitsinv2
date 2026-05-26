@@ -113,7 +113,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
       backgroundColor: AppColors.background,
       appBar: _showAppBar
           ? AppBar(
-              title: const Text('İş Fırsatları'),
+              title: const Text('Yapgitsin'),
               backgroundColor: AppColors.background,
               foregroundColor: AppColors.textPrimary,
               elevation: 0,
