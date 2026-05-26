@@ -79,31 +79,14 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // "Y" rounded square logo (temp1.jpg style)
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.30),
-                            blurRadius: 32,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Y',
-                          style: GoogleFonts.playfairDisplay(
-                            color: Colors.black,
-                            fontSize: 46,
-                            fontWeight: FontWeight.w900,
-                            height: 1.0,
-                          ),
-                        ),
+                    // Launcher icon (assets/icons/app_icon.png)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset(
+                        'assets/icons/app_icon.png',
+                        width: 96,
+                        height: 96,
+                        fit: BoxFit.cover,
                       ),
                     ),
                     const SizedBox(height: 24),

@@ -379,23 +379,13 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: heroBadgeBg,
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Y',
-                          style: GoogleFonts.playfairDisplay(
-                            color: Colors.black,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w900,
-                            height: 1.0,
-                          ),
-                        ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(7),
+                      child: Image.asset(
+                        'assets/icons/app_icon.png',
+                        width: 28,
+                        height: 28,
+                        fit: BoxFit.cover,
                       ),
                     ),
                     const SizedBox(width: 8),
