@@ -309,6 +309,12 @@ export class User {
       }[]
     | null;
 
+  // ── Admin "öne çıkarılan usta" slot (Phase 264 — Provider tablosu deprecate)
+  // Eski `providers.featuredOrder` yerine User üzerinden tek kaynak. 1, 2, 3
+  // veya null. AdminService.bulkFeatureWorkers + setFeaturedWorker bunu yazar.
+  @Column({ type: 'integer', nullable: true, default: null })
+  featuredOrder: number | null;
+
   // ── Phase 138 — Customer message templates (max 5, each up to 500 chars) ──
   @Column({ type: 'simple-json', nullable: true })
   customerMessageTemplates: string[] | null;

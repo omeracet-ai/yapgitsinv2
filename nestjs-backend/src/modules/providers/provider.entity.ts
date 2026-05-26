@@ -9,6 +9,20 @@ import {
 } from 'typeorm';
 import { User } from '../users/user.entity';
 
+/**
+ * @deprecated Phase 264 (2026-05-26) — Provider tablosu kullanım dışı.
+ *
+ * Tüm sağlayıcı/usta verisi `User` üzerinden çalışır:
+ *   - `User.workerCategories` (simple-json) → usta listesi/filtre
+ *   - `User.workerDocuments` (simple-json) → kategori-özel belge + Usta ünvanı
+ *   - `User.identityVerified` → kimlik doğrulama (mavi tik karşılığı)
+ *   - `User.featuredOrder` → admin "öne çıkarılan usta" slot (1/2/3/null)
+ *   - `User.workerBio`, `hourlyRateMin/Max`, `serviceRadiusKm` → meta
+ *
+ * Bu entity yalnız geriye uyumluluk için duruyor; yeni geliştirmelerde
+ * dokunma. Mevcut `/providers/*` endpoint'leri User-projeksiyonu döner
+ * (providers.service `findPublic` üzerinden).
+ */
 @Entity('providers')
 export class Provider {
   @PrimaryGeneratedColumn('uuid')

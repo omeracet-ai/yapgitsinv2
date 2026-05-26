@@ -831,6 +831,12 @@ export class AdminService {
     return this.jobsRepo.update(id, { featuredOrder });
   }
 
+  // Phase 264 — tek bir user'ın featured slot'unu yaz.
+  // Provider.featuredOrder yerine User.featuredOrder.
+  async setFeaturedWorker(id: string, featuredOrder: number | null) {
+    return this.usersRepo.update(id, { featuredOrder });
+  }
+
   async verifyUser(id: string, identityVerified: boolean) {
     return this.usersRepo.update(id, { identityVerified });
   }

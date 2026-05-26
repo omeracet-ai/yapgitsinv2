@@ -12,6 +12,7 @@ import {
   Req,
   Res,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { EmailService } from '../email/email.service';
@@ -424,6 +425,20 @@ export class AdminController {
     @Req() req: Request & { user: AuthUser },
   ) {
     return this.adminService.bulkVerifyUsers(dto, req.user.id);
+  }
+
+  // Phase 264 — Provider tablosu deprecate edildi; admin featured slot artık
+  // doğrudan User.featuredWorkerOrder üzerinden yönetilir.
+  @Patch('users/:id/featured-worker')
+  async setFeaturedWorker(
+    @Param('id') id: string,
+    @Body() body: { order: number | null },
+  ) {
+    const order = body?.order;
+    if (order !== null && (typeof order !== 'number' || order < 1 || order > 3)) {
+      throw new BadRequestException('order 1, 2, 3 veya null olmalı');
+    }
+    return this.adminService.setFeaturedWorker(id, order);
   }
 
   @Post('users/bulk-feature')
