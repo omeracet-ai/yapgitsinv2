@@ -972,10 +972,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final sc = statusColors[status] ?? [Colors.grey.shade100, Colors.grey];
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
         color: _surfaceColor2,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: status == 'accepted'
               ? Colors.green.shade400
@@ -987,10 +987,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       ),
       child: Column(
         children: [
-          // Ana teklif satırı
+          // Ana teklif satırı — kompakt
           ListTile(
+            dense: true,
+            minVerticalPadding: 4,
+            visualDensity: const VisualDensity(vertical: -2),
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
             leading: GestureDetector(
               onTap: offerUserId.isEmpty
                   ? null
@@ -1125,6 +1128,43 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
               ],
             ),
           ),
+
+          // Bu ustaya özel ilan aç — sadece ilan sahibi (müşteri) görür,
+          // teklif vereni daha sonra özel iş için davet etmek isteyebilir.
+          if (isCustomerView && offerUserId.isNotEmpty && !isOfferOwner) ...[
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+              child: SizedBox(
+                width: double.infinity,
+                height: 32,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  icon: const Icon(Icons.send_to_mobile_outlined, size: 14),
+                  label: Text('Bu Ustaya Özel İlan Aç ($name)',
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  onPressed: () {
+                    final cats = (userMap?['workerCategories'] as List?)
+                            ?.map((e) => e.toString())
+                            .toList() ??
+                        <String>[];
+                    context.push('/ilan-ver', extra: {
+                      'targetWorkerId': offerUserId,
+                      'targetWorkerName': name,
+                      if (cats.isNotEmpty) 'allowedCategories': cats,
+                    });
+                  },
+                ),
+              ),
+            ),
+          ],
 
           // Pazarlık detayı
           if (status == 'countered' && counterPrice != null && canSeePrice)

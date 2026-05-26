@@ -296,15 +296,46 @@ class _Body extends StatelessWidget {
 
   Widget _activityChart(List<Map<String, dynamic>> monthly) {
     if (monthly.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Text('Veri yok.', style: TextStyle(color: Colors.black54)),
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(children: [
+          Icon(Icons.show_chart_rounded, color: Colors.grey.shade400),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text('Henüz aktivite verisi yok.',
+                style: TextStyle(color: Colors.black54)),
+          ),
+        ]),
       );
     }
     final maxCount = monthly
         .map((m) => (m['count'] as num?)?.toInt() ?? 0)
         .fold<int>(0, (a, b) => a > b ? a : b);
-    final maxBar = maxCount == 0 ? 1 : maxCount;
+    if (maxCount == 0) {
+      // Tüm aylar 0 → boş bar yığını yerine bilgilendirici state.
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(children: [
+          Icon(Icons.show_chart_rounded, color: Colors.grey.shade400),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text('Son 6 ayda tamamlanan iş yok.',
+                style: TextStyle(color: Colors.black54, fontSize: 13)),
+          ),
+        ]),
+      );
+    }
+    final maxBar = maxCount;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(color: AppColors.surface,

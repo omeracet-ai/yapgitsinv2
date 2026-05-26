@@ -116,12 +116,12 @@ class _DualRoleView extends ConsumerWidget {
                   unselectedLabelColor: Colors.white70,
                 ),
                 actions: [
-                  const NotificationBell(),
                   IconButton(
                     icon: const Icon(Icons.bookmark_border),
                     tooltip: 'Şablonlarım',
                     onPressed: () => context.push('/sablonlarim'),
                   ),
+                  const NotificationBell(),
                   const SizedBox(width: 4),
                 ],
               )
