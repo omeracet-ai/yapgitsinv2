@@ -220,6 +220,47 @@ export class OffersService {
       );
     }
 
+    // Phase 265c — REFRESH-OR-INSERT: kullanıcının bu ilanda zaten PENDING root
+    // teklifi varsa yeni satır oluşturmak yerine onu günceller (kredi düşmez,
+    // refreshCount++ + refreshedAt). Diğer kullanıcılar "Güncellendi" rozeti görür.
+    const existing = await this.offersRepository.findOne({
+      where: {
+        jobId: data.jobId,
+        userId: data.userId,
+        parentOfferId: null as unknown as string,
+        status: OfferStatus.PENDING,
+      },
+    });
+    if (existing) {
+      existing.price = data.price;
+      existing.priceMinor = tlToMinor(data.price) ?? 0;
+      if (data.message !== undefined) existing.message = data.message;
+      existing.attachmentUrls = this._sanitizeAttachments(data.attachmentUrls);
+      existing.lineItems =
+        data.lineItems && data.lineItems.length > 0 ? data.lineItems : null;
+      existing.refreshCount = (existing.refreshCount ?? 0) + 1;
+      existing.refreshedAt = new Date();
+      const updated = await this.offersRepository.save(existing);
+
+      // İlan sahibine bildirim (teklif güncellendi).
+      try {
+        if (job && job.customerId && job.customerId !== data.userId) {
+          await this.notificationsService.send({
+            userId: job.customerId,
+            type: NotificationType.NEW_OFFER,
+            title: 'Teklif yenilendi',
+            body: `"${job.title}" ilanında bir teklif ${data.price} ₺ olarak güncellendi`,
+            refId: updated.id,
+            relatedType: 'job',
+            relatedId: job.id,
+          });
+        }
+      } catch {
+        /* notification opsiyonel */
+      }
+      return updated;
+    }
+
     // Phase 110 — Pro/Premium aboneler için token kesimi yapılmaz (sınırsız teklif)
     const isSubscriber = await this.subscriptionsService.isActiveSubscriber(
       data.userId,

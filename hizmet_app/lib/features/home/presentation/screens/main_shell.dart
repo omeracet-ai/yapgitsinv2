@@ -13,6 +13,7 @@ import '../../../jobs/presentation/providers/job_provider.dart' as jp;
 import '../../../jobs/presentation/providers/job_provider.dart' show jobsProvider, Job;
 import '../../../jobs/presentation/screens/job_detail_screen.dart';
 import '../../../jobs/presentation/screens/my_jobs_screen.dart';
+import '../../../../core/widgets/yapgitsin_loader.dart';
 import '../../../providers/data/provider_repository.dart';
 import '../../../providers/presentation/screens/provider_list_screen.dart';
 import '../../../providers/presentation/screens/provider_profile_screen.dart';
@@ -75,7 +76,10 @@ class _MainShellState extends ConsumerState<MainShell>
     final authState = ref.watch(authStateProvider);
 
     if (authState is AuthInitial || authState is AuthLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: const Color(0xFF0C1117),
+        body: const YapgitsinLoader(size: 72),
+      );
     }
 
     final selectedIndex = ref.watch(selectedTabProvider);

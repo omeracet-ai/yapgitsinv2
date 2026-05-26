@@ -102,6 +102,16 @@ export class Offer {
     total: number;
   }> | null;
 
+  /**
+   * Phase 265c — Kullanıcı kendi pending teklifini "Teklifi Yenile" ile her
+   * güncellediğinde +1. >0 ise diğer kullanıcılara "Güncellendi" rozeti.
+   */
+  @Column({ type: 'integer', default: 0 })
+  refreshCount: number;
+
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  refreshedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -319,6 +319,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           jobStatus: jobStatus,
           isWorker: isWorker,
           detail: detail,
+          // Phase 265c — kullanıcının bu ilanda aktif PENDING root teklifi
+          // varsa CTA label "Teklifi Yenile" olarak çıkar.
+          hasMyPendingOffer: offersAsync.maybeWhen(
+            data: (offers) => currentUserId != null &&
+                offers.any((o) =>
+                    o['userId'] == currentUserId &&
+                    o['status'] == 'pending' &&
+                    o['parentOfferId'] == null),
+            orElse: () => false,
+          ),
         ),
       ),
     );
@@ -1049,6 +1059,28 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                     child: UserActionMenu(userId: offerUserId, userName: name),
                   ),
                 const SizedBox(width: 4),
+                // Phase 265c — Yenilenmiş teklif rozeti (refreshCount > 0)
+                if (((offer['refreshCount'] as num?)?.toInt() ?? 0) > 0) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.refresh_rounded,
+                          size: 11, color: Colors.blue.shade700),
+                      const SizedBox(width: 3),
+                      Text('Güncellendi',
+                          style: TextStyle(
+                              color: Colors.blue.shade700,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold)),
+                    ]),
+                  ),
+                  const SizedBox(width: 4),
+                ],
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 3),
@@ -1381,6 +1413,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     required String jobStatus,
     required bool isWorker,
     required Map<String, dynamic> detail,
+    bool hasMyPendingOffer = false,
   }) {
     if (jobStatus == 'in_progress') {
       if (isOwner) {
@@ -1471,15 +1504,22 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 )
               : canMakeOffer
                   ? ElevatedButton.icon(
-                      onPressed: () => _showBidDialog(),
-                      icon: const Icon(Icons.send, color: Colors.white),
-                      label: const Text('Teklif Ver',
-                          style: TextStyle(
+                      onPressed: () => _showBidDialog(refresh: hasMyPendingOffer),
+                      icon: Icon(
+                          hasMyPendingOffer
+                              ? Icons.refresh_rounded
+                              : Icons.send,
+                          color: Colors.white),
+                      label: Text(
+                          hasMyPendingOffer ? 'Teklifi Yenile' : 'Teklif Ver',
+                          style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 16)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: hasMyPendingOffer
+                            ? Colors.blue
+                            : AppColors.primary,
                         minimumSize: const Size(double.infinity, 52),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
@@ -1490,7 +1530,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   }
 
   // ── Dialogs ───────────────────────────────────────────────────────────────
-  void _showBidDialog() {
+  void _showBidDialog({bool refresh = false}) {
     final priceCtrl = TextEditingController();
     final msgCtrl = TextEditingController();
     final lineItemsRef = <List<Map<String, dynamic>>>[[]];
@@ -1501,7 +1541,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => _BidSheet(
-        title: 'Teklif Ver',
+        title: refresh ? 'Teklifi Yenile' : 'Teklif Ver',
         priceLabel: 'Fiyatınız (₺)',
         priceCtrl: priceCtrl,
         msgCtrl: msgCtrl,
