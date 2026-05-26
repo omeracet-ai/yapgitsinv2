@@ -106,6 +106,9 @@ class Job {
   final int? featuredOrder;
   final String kind; // 'request' | 'offer'
   final JobPoster? poster; // ilan sahibinin kompakt profili (liste kartı)
+  /// Phase 265e — listeden gelen public root-only offer sayısı.
+  /// Logout user da bu sayıyı görür; per-card /offers fetch gerekmez.
+  final int offerCount;
 
   Job({
     required this.id,
@@ -128,6 +131,7 @@ class Job {
     this.featuredOrder,
     this.kind = JobKind.request,
     this.poster,
+    this.offerCount = 0,
   });
 
   factory Job.fromMap(Map<String, dynamic> map) {
@@ -164,6 +168,7 @@ class Job {
       featuredOrder: map['featuredOrder'] as int?,
       kind: (map['kind'] as String?) ?? JobKind.request,
       poster: JobPoster.fromMap(map['poster']),
+      offerCount: (map['offerCount'] as num?)?.toInt() ?? 0,
     );
   }
 

@@ -55,10 +55,33 @@ class JobRepository {
   }
 
   Future<Map<String, dynamic>> createJob(Map<String, dynamic> jobData) async {
+    // Phase 265e — Backend Phase 263+ deploy edilmediyse `targetWorkerId` ve
+    // `scheduleFlexibility` alanlarını "should not exist" diye reddediyor.
+    // 400 + bilinmeyen-alan hatası gelirse opsiyonel alanları çıkar, yeniden
+    // dene. Eski/yeni backend ikisinde de çalışır.
+    Future<Map<String, dynamic>> post(Map<String, dynamic> body) async {
+      final res = await _dio.post('/jobs', data: body);
+      return res.data as Map<String, dynamic>;
+    }
+
     try {
-      final response = await _dio.post('/jobs', data: jobData);
-      return response.data;
+      return await post(jobData);
     } on DioException catch (e) {
+      final msgs = e.response?.data?['message'];
+      final unknownField = msgs is List &&
+          msgs.any((m) =>
+              m is String && m.contains('should not exist'));
+      if (e.response?.statusCode == 400 && unknownField) {
+        // Geriye uyumluluk fallback — Phase 265 field'larını çıkar
+        final clean = Map<String, dynamic>.from(jobData)
+          ..remove('targetWorkerId')
+          ..remove('scheduleFlexibility');
+        try {
+          return await post(clean);
+        } on DioException catch (e2) {
+          throw Exception(_dioMsg(e2, 'İlan oluşturulamadı'));
+        }
+      }
       throw Exception(_dioMsg(e, 'İlan oluşturulamadı'));
     }
   }

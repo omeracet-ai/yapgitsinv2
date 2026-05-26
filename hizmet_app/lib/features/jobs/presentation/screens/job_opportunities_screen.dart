@@ -532,8 +532,10 @@ class _OpportunityCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final offersAsync = ref.watch(jobOffersProvider(job.id));
-    final offerCount  = offersAsync.maybeWhen(data: (o) => o.length, orElse: () => 0);
+    // Phase 265e — backend liste yanıtı offerCount içeriyor (logout user
+    // dahil herkes görür). jobOffersProvider per-card fetch kaldırıldı —
+    // gereksiz network çağrısı + logout'ta 401 ile pasif rozet oluşturuyordu.
+    final offerCount = job.offerCount;
     final isOwner = myUserId != null && job.customerId == myUserId;
 
     final budgetStr = (job.budgetMin != null && job.budgetMax != null)

@@ -415,6 +415,9 @@ export class JobsService {
 
       const [data, total] = await query.getManyAndCount();
       await this._attachPosters(data);
+      // Phase 265e — offerCount herkese açık: logout user da kart üzerinde
+      // teklif sayısını görür (badge pasif kalmaz).
+      await this._attachOfferCounts(data);
       return { data, total, page, limit, pages: Math.ceil(total / limit) };
     } catch (err) {
       const e = err as Error;
@@ -471,6 +474,35 @@ export class JobsService {
       }
     } catch (e) {
       this.logger.warn(`_attachPosters failed: ${(e as Error).message}`);
+    }
+  }
+
+  /**
+   * Phase 265e — Her job için root-only PENDING/COUNTERED offer sayısını
+   * tek batch sorguyla çıkarıp `(job as any).offerCount = N` yazar.
+   * Public listede çıkıyor → logout user da Yapgitsin kartlarında badge görür.
+   */
+  private async _attachOfferCounts(jobs: Job[]): Promise<void> {
+    try {
+      const ids = jobs.map((j) => j.id);
+      if (ids.length === 0) return;
+      const rows = await this.offersRepository
+        .createQueryBuilder('o')
+        .select('o.jobId', 'jobId')
+        .addSelect('COUNT(*)', 'cnt')
+        .where('o.jobId IN (:...ids)', { ids })
+        .andWhere('o.parentOfferId IS NULL')
+        .andWhere('o.status IN (:...active)', {
+          active: ['pending', 'countered', 'accepted'],
+        })
+        .groupBy('o.jobId')
+        .getRawMany<{ jobId: string; cnt: string }>();
+      const byId = new Map(rows.map((r) => [r.jobId, parseInt(r.cnt, 10) || 0]));
+      for (const j of jobs) {
+        (j as Job & { offerCount?: number }).offerCount = byId.get(j.id) ?? 0;
+      }
+    } catch (e) {
+      this.logger.warn(`_attachOfferCounts failed: ${(e as Error).message}`);
     }
   }
 
