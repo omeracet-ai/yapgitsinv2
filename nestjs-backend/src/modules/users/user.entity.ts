@@ -293,6 +293,22 @@ export class User {
   @Column({ type: 'simple-json', nullable: true })
   offerTemplates: string[] | null;
 
+  // ── Ustalık belgeleri (OPSİYONEL) — "Belgelerim" bölümünden yüklenir.
+  // Belge yüklenince o kategoride "Usta" ünvanı + doğrulama kartı kazanılır
+  // (otomatik aktif; admin status='revoked' ile iptal edebilir). Belge ZORUNLU DEĞİL;
+  // gating yok — kullanıcı belge olmadan da serbestçe ilan/teklif verir.
+  @Column({ type: 'simple-json', nullable: true })
+  workerDocuments:
+    | {
+        id: string;
+        category: string;
+        url: string;
+        title?: string;
+        status: 'active' | 'revoked';
+        createdAt: string;
+      }[]
+    | null;
+
   // ── Phase 138 — Customer message templates (max 5, each up to 500 chars) ──
   @Column({ type: 'simple-json', nullable: true })
   customerMessageTemplates: string[] | null;

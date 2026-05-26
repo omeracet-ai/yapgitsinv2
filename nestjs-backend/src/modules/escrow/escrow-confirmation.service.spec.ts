@@ -1,7 +1,4 @@
-import {
-  ForbiddenException,
-  BadRequestException,
-} from '@nestjs/common';
+import { ForbiddenException, BadRequestException } from '@nestjs/common';
 import { EscrowConfirmationService } from './escrow-confirmation.service';
 import {
   PaymentEscrow,
@@ -81,10 +78,7 @@ interface Harness {
 /**
  * Build the service with v2 enabled and a mutable escrow that the repo returns.
  */
-function buildV2(
-  escrow: PaymentEscrow,
-  photos: any[] = [],
-): Harness {
+function buildV2(escrow: PaymentEscrow, photos: any[] = []): Harness {
   const current = escrow;
 
   const escrowRepo = {
@@ -204,9 +198,9 @@ describe('EscrowConfirmationService (v2 flow)', () => {
       customerConfirmedAt: new Date(),
     });
     const hW = buildV2(escrowW);
-    await expect(
-      hW.service.getQr(ESCROW_ID, WORKER_ID),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(hW.service.getQr(ESCROW_ID, WORKER_ID)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
 
     // both approved → customer mints token
     const escrowOk = makeEscrow({

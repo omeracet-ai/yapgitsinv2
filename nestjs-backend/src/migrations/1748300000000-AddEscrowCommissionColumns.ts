@@ -31,9 +31,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  *
  * Idempotent on all paths.
  */
-export class AddEscrowCommissionColumns1748300000000
-  implements MigrationInterface
-{
+export class AddEscrowCommissionColumns1748300000000 implements MigrationInterface {
   name = 'AddEscrowCommissionColumns1748300000000';
 
   private async safeAdd(

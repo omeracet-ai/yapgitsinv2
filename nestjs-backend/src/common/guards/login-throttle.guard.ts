@@ -81,8 +81,15 @@ export class LoginThrottleGuard implements CanActivate, OnModuleDestroy {
 
     // Layer 2 first — broader signal (single IP hammering many accounts).
     const umbBucket = this.umbrella.get(umbrellaKey);
-    if (umbBucket && umbBucket.resetAt > now && umbBucket.count >= UMBRELLA_MAX) {
-      const retryAfter = Math.max(1, Math.ceil((umbBucket.resetAt - now) / 1000));
+    if (
+      umbBucket &&
+      umbBucket.resetAt > now &&
+      umbBucket.count >= UMBRELLA_MAX
+    ) {
+      const retryAfter = Math.max(
+        1,
+        Math.ceil((umbBucket.resetAt - now) / 1000),
+      );
       res.setHeader('Retry-After', String(retryAfter));
       res.setHeader('X-Throttle-Reason', 'ip-umbrella');
       this.logger.warn(
@@ -102,8 +109,15 @@ export class LoginThrottleGuard implements CanActivate, OnModuleDestroy {
 
     // Layer 1 — granular (ip + identifier)
     const granBucket = this.granular.get(granularKey);
-    if (granBucket && granBucket.resetAt > now && granBucket.count >= GRANULAR_MAX) {
-      const retryAfter = Math.max(1, Math.ceil((granBucket.resetAt - now) / 1000));
+    if (
+      granBucket &&
+      granBucket.resetAt > now &&
+      granBucket.count >= GRANULAR_MAX
+    ) {
+      const retryAfter = Math.max(
+        1,
+        Math.ceil((granBucket.resetAt - now) / 1000),
+      );
       res.setHeader('Retry-After', String(retryAfter));
       this.logger.warn(
         `LoginThrottle GRANULAR key=${this.redact(granularKey)} retryAfter=${retryAfter}s`,

@@ -112,20 +112,60 @@ export class CreateBlogPosts1748500000000 implements MigrationInterface {
       // Table exists (e.g. created by an older synchronize:true deploy) but may
       // be missing columns added in later phases. Guard-add each one.
       await this.safeAdd(qr, 'blog_posts', 'tenantId', 'varchar(36) NULL');
-      await this.safeAdd(qr, 'blog_posts', 'slug', "varchar(200) NOT NULL DEFAULT ''");
-      await this.safeAdd(qr, 'blog_posts', 'title', "varchar(200) NOT NULL DEFAULT ''");
-      await this.safeAdd(qr, 'blog_posts', 'content', "text NOT NULL DEFAULT ''");
-      await this.safeAdd(qr, 'blog_posts', 'excerpt', "varchar(500) NOT NULL DEFAULT ''");
+      await this.safeAdd(
+        qr,
+        'blog_posts',
+        'slug',
+        "varchar(200) NOT NULL DEFAULT ''",
+      );
+      await this.safeAdd(
+        qr,
+        'blog_posts',
+        'title',
+        "varchar(200) NOT NULL DEFAULT ''",
+      );
+      await this.safeAdd(
+        qr,
+        'blog_posts',
+        'content',
+        "text NOT NULL DEFAULT ''",
+      );
+      await this.safeAdd(
+        qr,
+        'blog_posts',
+        'excerpt',
+        "varchar(500) NOT NULL DEFAULT ''",
+      );
       await this.safeAdd(qr, 'blog_posts', 'coverImageUrl', 'varchar NULL');
       await this.safeAdd(qr, 'blog_posts', 'authorId', 'varchar NULL');
       await this.safeAdd(qr, 'blog_posts', 'category', 'varchar NULL');
       await this.safeAdd(qr, 'blog_posts', 'tags', 'text NULL');
-      await this.safeAdd(qr, 'blog_posts', 'status', "varchar(32) NOT NULL DEFAULT 'draft'");
+      await this.safeAdd(
+        qr,
+        'blog_posts',
+        'status',
+        "varchar(32) NOT NULL DEFAULT 'draft'",
+      );
       await this.safeAdd(qr, 'blog_posts', 'publishedAt', `${dtType} NULL`);
       await this.safeAdd(qr, 'blog_posts', 'seoTitle', 'varchar(200) NULL');
-      await this.safeAdd(qr, 'blog_posts', 'seoDescription', 'varchar(500) NULL');
-      await this.safeAdd(qr, 'blog_posts', 'createdAt', `${dtType} NOT NULL DEFAULT ${nowDefault}`);
-      await this.safeAdd(qr, 'blog_posts', 'updatedAt', `${dtType} NOT NULL DEFAULT ${nowDefault}`);
+      await this.safeAdd(
+        qr,
+        'blog_posts',
+        'seoDescription',
+        'varchar(500) NULL',
+      );
+      await this.safeAdd(
+        qr,
+        'blog_posts',
+        'createdAt',
+        `${dtType} NOT NULL DEFAULT ${nowDefault}`,
+      );
+      await this.safeAdd(
+        qr,
+        'blog_posts',
+        'updatedAt',
+        `${dtType} NOT NULL DEFAULT ${nowDefault}`,
+      );
     }
 
     // Indexes (idempotent — IF NOT EXISTS, try/catch covers MySQL).

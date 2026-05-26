@@ -245,9 +245,9 @@ export class HealthService {
       // showMigrations() returns true if there are pending migrations.
       // For an exact count, diff registered vs executed.
       if (!pending) return 0;
-      const executed = await this.dataSource.query(
-        "SELECT name FROM migrations",
-      ).catch(() => [] as Array<{ name: string }>);
+      const executed = await this.dataSource
+        .query('SELECT name FROM migrations')
+        .catch(() => [] as Array<{ name: string }>);
       const executedNames = new Set(
         (executed as Array<{ name: string }>).map((r) => r.name),
       );

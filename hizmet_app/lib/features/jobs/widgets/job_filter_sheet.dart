@@ -64,7 +64,10 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
         20,
         12,
         20,
-        20 + MediaQuery.of(context).viewInsets.bottom,
+        // Sistem gesture/nav bar yüksekliği + klavye + ekstra boşluk
+        20 +
+            MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).padding.bottom,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

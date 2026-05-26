@@ -153,7 +153,8 @@ export class EscrowService {
     // Phase 174c — Integer minor sync (kuruş). Fee pct via FeeService (Phase 169).
     // Phase 257 — routed through splitMinor() (single FeeService authority).
     const amountMinor = tlToMinor(args.amount) ?? 0;
-    const { platformFeeMinor, workerPayoutMinor } = this.splitMinor(amountMinor);
+    const { platformFeeMinor, workerPayoutMinor } =
+      this.splitMinor(amountMinor);
 
     const escrow = this.repo.create({
       jobId: args.jobId,

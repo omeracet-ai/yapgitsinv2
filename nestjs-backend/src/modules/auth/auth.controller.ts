@@ -35,7 +35,8 @@ import type { Request } from 'express';
 /** Phase 255b — extract first XFF / remote address for account-lock attribution. */
 function extractIp(req: Request): string {
   const xff = req.headers['x-forwarded-for'];
-  if (typeof xff === 'string' && xff.length > 0) return xff.split(',')[0].trim();
+  if (typeof xff === 'string' && xff.length > 0)
+    return xff.split(',')[0].trim();
   if (Array.isArray(xff) && xff.length > 0) return xff[0];
   return req.ip || req.socket?.remoteAddress || 'unknown';
 }
@@ -53,7 +54,11 @@ export class AuthController {
   @Post('login')
   async login(@Body() dto: LoginDto, @Req() req: Request) {
     const ip = extractIp(req);
-    const user = await this.authService.validateUser(dto.email, dto.password, ip);
+    const user = await this.authService.validateUser(
+      dto.email,
+      dto.password,
+      ip,
+    );
     if (!user) throw new UnauthorizedException('E-posta veya şifre hatalı');
     return this.authService.login(user);
   }
@@ -102,7 +107,11 @@ export class AuthController {
   @UseGuards(LoginThrottleGuard)
   @Post('admin/login')
   adminLogin(@Body() dto: AdminLoginDto, @Req() req: Request) {
-    return this.authService.adminLogin(dto.username, dto.password, extractIp(req));
+    return this.authService.adminLogin(
+      dto.username,
+      dto.password,
+      extractIp(req),
+    );
   }
 
   /** Yeni kullanıcı / işçi kaydı — Phase 170: 3 req/saat per IP (spam koruma) */

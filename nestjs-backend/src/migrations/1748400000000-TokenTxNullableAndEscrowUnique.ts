@@ -28,9 +28,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  *
  * Idempotent on all paths (IF NOT EXISTS / try-catch on "already exists").
  */
-export class TokenTxNullableAndEscrowUnique1748400000000
-  implements MigrationInterface
-{
+export class TokenTxNullableAndEscrowUnique1748400000000 implements MigrationInterface {
   name = 'TokenTxNullableAndEscrowUnique1748400000000';
 
   public async up(qr: QueryRunner): Promise<void> {

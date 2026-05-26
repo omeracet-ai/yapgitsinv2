@@ -430,15 +430,17 @@ export class BookingsService {
     // booking workflow bu engagement için yetkili (job transition guard bypass).
     if (
       booking.jobId &&
-      (status === BookingStatus.COMPLETED ||
-        status === BookingStatus.CANCELLED)
+      (status === BookingStatus.COMPLETED || status === BookingStatus.CANCELLED)
     ) {
       const jobStatus =
         status === BookingStatus.COMPLETED
           ? JobStatus.COMPLETED
           : JobStatus.CANCELLED;
       try {
-        await this.jobsRepo.update({ id: booking.jobId }, { status: jobStatus });
+        await this.jobsRepo.update(
+          { id: booking.jobId },
+          { status: jobStatus },
+        );
       } catch (e) {
         this.logger.warn(
           `Job status sync failed (booking ${saved.id} -> job ${booking.jobId}): ${(e as Error).message}`,

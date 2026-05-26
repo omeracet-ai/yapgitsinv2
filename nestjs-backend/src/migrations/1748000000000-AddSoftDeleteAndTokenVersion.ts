@@ -22,9 +22,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * Idempotent on all paths (ADD COLUMN wrapped in try/catch on "duplicate column",
  * CREATE INDEX uses IF NOT EXISTS).
  */
-export class AddSoftDeleteAndTokenVersion1748000000000
-  implements MigrationInterface
-{
+export class AddSoftDeleteAndTokenVersion1748000000000 implements MigrationInterface {
   name = 'AddSoftDeleteAndTokenVersion1748000000000';
 
   private async safeAdd(
@@ -58,9 +56,7 @@ export class AddSoftDeleteAndTokenVersion1748000000000
 
     try {
       if (driver === 'mysql' || driver === 'mariadb') {
-        await qr.query(
-          `CREATE INDEX idx_users_deletedAt ON users (deletedAt)`,
-        );
+        await qr.query(`CREATE INDEX idx_users_deletedAt ON users (deletedAt)`);
       } else {
         await qr.query(
           `CREATE INDEX IF NOT EXISTS idx_users_deletedAt ` +

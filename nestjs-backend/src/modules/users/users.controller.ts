@@ -891,6 +891,20 @@ export class UsersController {
       return Array.isArray(wc) && wc.length > 0;
     });
 
+    // 2026-05-26 — Canlı toplam yorum/ilan sayısı. `take: 10` listeyi kısıtlar;
+    // toplam görüntü için ayrı sayım yap.
+    const allCustomerReviews = await this.reviewsRepo.find({
+      where: { revieweeId: id },
+      relations: ['reviewer'],
+    });
+    const totalCustomerReviews = allCustomerReviews.filter((r) => {
+      const wc = r.reviewer?.workerCategories;
+      return Array.isArray(wc) && wc.length > 0;
+    }).length;
+    const totalCustomerListings = await this.jobsRepo.count({
+      where: { customerId: id },
+    });
+
     const completedJobsCount = await this.jobsRepo.count({
       where: { customerId: id, status: JobStatus.COMPLETED },
     });
@@ -972,6 +986,8 @@ export class UsersController {
       asCustomerSuccess: success,
       customerSuccessRate: successRate,
       completedJobsCount,
+      totalCustomerReviews,
+      totalCustomerListings,
       monthlyActivity: months,
       topCategories,
       avgBudget,

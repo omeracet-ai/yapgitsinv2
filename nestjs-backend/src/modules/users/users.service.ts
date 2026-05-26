@@ -973,6 +973,91 @@ export class UsersService {
     return { templates: next };
   }
 
+  // ── Ustalık belgeleri (OPSİYONEL) ────────────────────────────────────────
+  // Belge yüklemek zorunlu değil; yüklenince o kategoride "Usta" ünvanı kazanılır
+  // (workerCategories'e eklenir). Gating yok — belge olmadan da ilan/teklif serbest.
+  async getWorkerDocuments(userId: string): Promise<{ documents: any[] }> {
+    const user = await this.repo.findOne({
+      where: { id: userId },
+      select: ['id', 'workerDocuments'],
+    });
+    return {
+      documents: Array.isArray(user?.workerDocuments)
+        ? user!.workerDocuments
+        : [],
+    };
+  }
+
+  async addWorkerDocument(
+    userId: string,
+    input: { category: string; url: string; title?: string },
+  ): Promise<{ documents: any[] }> {
+    const category = (input.category ?? '').trim();
+    const url = (input.url ?? '').trim();
+    const title = (input.title ?? '').trim();
+    if (!category) throw new BadRequestException('category zorunlu');
+    if (!url) throw new BadRequestException('url zorunlu (önce belgeyi yükleyin)');
+    const user = await this.repo.findOne({
+      where: { id: userId },
+      select: ['id', 'workerDocuments', 'workerCategories'],
+    });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    const docs = Array.isArray(user.workerDocuments)
+      ? [...user.workerDocuments]
+      : [];
+    if (docs.length >= 20) {
+      throw new BadRequestException('En fazla 20 belge eklenebilir');
+    }
+    docs.push({
+      id: 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+      category,
+      url,
+      title: title || undefined,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+    });
+    // Belge yüklenen kategoriyi workerCategories'e ekle (usta ünvanı)
+    const cats = Array.isArray(user.workerCategories)
+      ? [...user.workerCategories]
+      : [];
+    if (!cats.includes(category)) cats.push(category);
+    await this.repo.update(userId, {
+      workerDocuments: docs,
+      workerCategories: cats.length ? cats : null,
+    });
+    return { documents: docs };
+  }
+
+  async removeWorkerDocument(
+    userId: string,
+    docId: string,
+  ): Promise<{ documents: any[] }> {
+    const user = await this.repo.findOne({
+      where: { id: userId },
+      select: ['id', 'workerDocuments', 'workerCategories'],
+    });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    const docs = Array.isArray(user.workerDocuments)
+      ? [...user.workerDocuments]
+      : [];
+    const removed = docs.find((d) => d.id === docId);
+    if (!removed) throw new NotFoundException('Belge bulunamadı');
+    const next = docs.filter((d) => d.id !== docId);
+    // O kategoride başka aktif belge kalmadıysa kategoriyi workerCategories'ten çıkar
+    let cats = Array.isArray(user.workerCategories)
+      ? [...user.workerCategories]
+      : [];
+    const stillHas = next.some(
+      (d) => d.category === removed.category && d.status === 'active',
+    );
+    if (!stillHas) cats = cats.filter((c) => c !== removed.category);
+    await this.repo.update(userId, {
+      workerDocuments: next.length ? next : null,
+      workerCategories: cats.length ? cats : null,
+    });
+    return { documents: next };
+  }
+
   /** Phase 138 — customer message templates (max 5, each up to 500 chars) */
   async getMessageTemplates(userId: string): Promise<{ templates: string[] }> {
     const user = await this.repo.findOne({

@@ -205,7 +205,8 @@ export class IyzipayService {
           }
           if (result && result.status === 'failure') {
             const code = result.errorCode ?? '?';
-            const detail = result.errorMessage || 'iyzipay checkout init failed';
+            const detail =
+              result.errorMessage || 'iyzipay checkout init failed';
             this.logger.error(
               `iyzipay checkout failure code=${code} msg=${detail}`,
             );

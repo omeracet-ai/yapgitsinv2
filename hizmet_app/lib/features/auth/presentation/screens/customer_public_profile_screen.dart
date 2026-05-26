@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/network/api_client_provider.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../data/customer_profile_repository.dart';
@@ -47,6 +48,12 @@ class _Body extends StatelessWidget {
     final reviews = (data['reviewsReceivedAsCustomer'] as List?)
             ?.cast<Map<String, dynamic>>() ??
         [];
+    // 2026-05-26 — canlı DB sayıları; reviews listesi 10 ile sınırlı.
+    final totalReviewsCount =
+        (data['totalCustomerReviews'] as num?)?.toInt() ?? reviews.length;
+    final totalListingsCount =
+        (data['totalCustomerListings'] as num?)?.toInt() ?? total;
+    final userId = (data['id'] as String?) ?? '';
     final monthly = (data['monthlyActivity'] as List?)
             ?.cast<Map<String, dynamic>>() ??
         [];
@@ -130,14 +137,37 @@ class _Body extends StatelessWidget {
               _divider(),
               _stat('Başarı', '%$rate', Icons.trending_up_rounded),
               _divider(),
-              _stat('Toplam İlan', '$total', Icons.list_alt_rounded),
+              _stat('Toplam İlan', '$totalListingsCount',
+                  Icons.list_alt_rounded),
               _divider(),
-              _stat('Yorum', '${reviews.length}', Icons.rate_review_outlined),
+              _stat('Yorum', '$totalReviewsCount',
+                  Icons.rate_review_outlined),
             ],
           ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
+
+        // Yorum Yaz ve Değerlendir CTA — 2026-05-26
+        if (userId.isNotEmpty)
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.6)),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              icon: const Icon(Icons.rate_review_outlined, size: 18),
+              label: const Text('Yorum Yaz ve Değerlendir',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              onPressed: () => _ReviewSheet.show(context, userId, name),
+            ),
+          ),
+
+        const SizedBox(height: 16),
 
         // Phase 145 — Aktivite (son 6 ay)
         const Text('Aktivite (Son 6 Ay)',
@@ -439,5 +469,159 @@ class _Body extends StatelessWidget {
     } catch (_) {
       return iso.substring(0, iso.length.clamp(0, 10));
     }
+  }
+}
+
+// ── Yorum Yaz ve Değerlendir sheet ─────────────────────────────────────────
+class _ReviewSheet extends ConsumerStatefulWidget {
+  final String revieweeId;
+  final String revieweeName;
+  const _ReviewSheet({required this.revieweeId, required this.revieweeName});
+
+  static Future<void> show(
+      BuildContext context, String revieweeId, String revieweeName) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => _ReviewSheet(
+        revieweeId: revieweeId,
+        revieweeName: revieweeName,
+      ),
+    );
+  }
+
+  @override
+  ConsumerState<_ReviewSheet> createState() => _ReviewSheetState();
+}
+
+class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
+  int _rating = 5;
+  final _commentCtrl = TextEditingController();
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _commentCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_rating < 1) return;
+    setState(() => _saving = true);
+    try {
+      final dio = ref.read(apiClientProvider).dio;
+      await dio.post('/reviews', data: {
+        'revieweeId': widget.revieweeId,
+        'rating': _rating,
+        if (_commentCtrl.text.trim().isNotEmpty)
+          'comment': _commentCtrl.text.trim(),
+      });
+      ref.invalidate(customerProfileProvider(widget.revieweeId));
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: AppColors.success,
+        content: const Text('Yorumun yayınlandı, teşekkürler!'),
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: AppColors.error,
+        content: Text(e.toString().replaceFirst('Exception: ', '')),
+      ));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        20 +
+            MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).padding.bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade500,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Text('${widget.revieweeName} için yorum',
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (i) {
+              final v = i + 1;
+              return IconButton(
+                icon: Icon(
+                  v <= _rating
+                      ? Icons.star_rounded
+                      : Icons.star_border_rounded,
+                  color: AppColors.accent,
+                  size: 36,
+                ),
+                onPressed: () => setState(() => _rating = v),
+              );
+            }),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _commentCtrl,
+            maxLines: 4,
+            maxLength: 500,
+            decoration: InputDecoration(
+              hintText: 'Yorumun (opsiyonel)',
+              filled: true,
+              fillColor: AppColors.surfaceElevated,
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none),
+            ),
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: _saving ? null : _submit,
+              child: _saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.black))
+                  : const Text('Gönder',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

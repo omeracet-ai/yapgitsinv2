@@ -109,7 +109,7 @@ export class UsersCleanupTask {
       defaultAccountHolderName: null,
       deactivated: true,
     };
-    await this.repo.update(user.id, patch as unknown as Partial<User>);
+    await this.repo.update(user.id, patch);
   }
 
   private async safeAudit(
