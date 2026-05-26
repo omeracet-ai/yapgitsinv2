@@ -85,8 +85,12 @@ class _ProfileView extends ConsumerWidget {
     final portfolioVideos = (data['portfolioVideos']  as List?)?.cast<String>() ?? [];
     final introVideoUrl   = data['introVideoUrl']     as String?;
     final introVideoDur   = (data['introVideoDuration'] as num?)?.toInt();
-    final reviewList      = (data['reviews']          as List?)
-                                ?.cast<Map<String, dynamic>>() ?? [];
+    // Phase 265d — defensive: bazı kayıtlar reviewer field'ını string
+    // verebilir; whereType<Map> ile filtrele, sonra Map.from ile copy.
+    final reviewList      = ((data['reviews'] as List?) ?? const [])
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList();
     final badges          = data['badges']            as List?;
     final isWorker        = workerCats.isNotEmpty;
     // Phase 211 — slot-based availability
@@ -795,7 +799,11 @@ class _ReviewTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final reviewer  = review['reviewer'] as Map<String, dynamic>?;
+    // Phase 265d — reviewer string ya da Map gelebilir; defensive cast.
+    final reviewerRaw = review['reviewer'];
+    final reviewer = reviewerRaw is Map
+        ? Map<String, dynamic>.from(reviewerRaw)
+        : null;
     final name      = reviewer?['fullName']       as String? ?? 'Kullanıcı';
     final imgUrl    = reviewer?['profileImageUrl'] as String?;
     final rating    = (review['rating'] as num?)?.toInt() ?? 0;

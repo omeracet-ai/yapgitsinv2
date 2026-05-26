@@ -287,14 +287,18 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
 
   @override
   Widget build(BuildContext context) {
-    final user = widget.question['user'] as Map<String, dynamic>?;
+    // Phase 265d — defensive cast (string vs Map) + logout lure
+    final userRaw = widget.question['user'];
+    final user = userRaw is Map ? Map<String, dynamic>.from(userRaw) : null;
     final name = user?['fullName'] as String? ?? 'Kullanıcı';
     final imgUrl = user?['profileImageUrl'] as String?;
     final text = widget.question['text'] as String? ?? '';
     final createdAt = widget.question['createdAt'] as String?;
-    final replies =
-        (widget.question['replies'] as List?)?.cast<Map<String, dynamic>>() ??
-            [];
+    final replies = ((widget.question['replies'] as List?) ?? const [])
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList();
+    final maskForLogout = widget.currentUserId == null;
 
     final isQuestionOwner = widget.currentUserId != null &&
         widget.currentUserId == (user?['id'] as String?);
@@ -323,13 +327,17 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                 CircleAvatar(
                   radius: 18,
                   backgroundColor: AppColors.primaryLight,
-                  backgroundImage: imgUrl != null ? NetworkImage(imgUrl) : null,
-                  child: imgUrl == null
-                      ? Text(name.isNotEmpty ? trUpper(name[0]) : '?',
-                          style: const TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold))
-                      : null,
+                  backgroundImage:
+                      (maskForLogout || imgUrl == null) ? null : NetworkImage(imgUrl),
+                  child: maskForLogout
+                      ? const Icon(Icons.lock_outline,
+                          color: AppColors.primary, size: 16)
+                      : (imgUrl == null
+                          ? Text(name.isNotEmpty ? trUpper(name[0]) : '?',
+                              style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold))
+                          : null),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -338,13 +346,21 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                     children: [
                       Row(
                         children: [
-                              Text(name,
+                          Text(
+                              maskForLogout
+                                  ? 'İçerik görmek için lütfen üye olun'
+                                  : name,
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  color: AppColors.textPrimary)),
+                                  fontSize: maskForLogout ? 12 : 13,
+                                  color: maskForLogout
+                                      ? AppColors.primary
+                                      : AppColors.textPrimary,
+                                  decoration: maskForLogout
+                                      ? TextDecoration.underline
+                                      : TextDecoration.none)),
                           const Spacer(),
-                          if (createdAt != null)
+                          if (createdAt != null && !maskForLogout)
                             Text(_timeAgo(createdAt),
                                 style: TextStyle(
                                     fontSize: 11,
@@ -352,11 +368,26 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text(text,
-                          style: TextStyle(
-                              fontSize: 14,
-                              height: 1.4,
-                              color: AppColors.textPrimary)),
+                      if (maskForLogout)
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).pushNamed('/giris-yap'),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            const Icon(Icons.person_add_alt_1,
+                                size: 14, color: AppColors.primary),
+                            const SizedBox(width: 6),
+                            Text('Üye ol → sorular ve teklifler',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600)),
+                          ]),
+                        )
+                      else
+                        Text(text,
+                            style: TextStyle(
+                                fontSize: 14,
+                                height: 1.4,
+                                color: AppColors.textPrimary)),
                     ],
                   ),
                 ),
@@ -364,8 +395,8 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
             ),
           ),
 
-          // Yanıtlar
-          if (replies.isNotEmpty) ...[
+          // Yanıtlar — logout user'da gizli (üye olma çağrısı yeterli)
+          if (replies.isNotEmpty && !maskForLogout) ...[
             Divider(height: 1, color: AppColors.border),
             ...replies.map((r) => _ReplyTile(reply: r)),
           ],

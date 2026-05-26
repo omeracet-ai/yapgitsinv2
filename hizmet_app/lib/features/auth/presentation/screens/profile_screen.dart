@@ -948,7 +948,11 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _reviewCard(Map<String, dynamic> r) {
-    final reviewer = r['reviewer'] as Map<String, dynamic>? ?? {};
+    // Phase 265d — reviewer field bazen string gelebilir; defensive cast.
+    final reviewerRaw = r['reviewer'];
+    final reviewer = reviewerRaw is Map
+        ? Map<String, dynamic>.from(reviewerRaw)
+        : <String, dynamic>{};
     final name = reviewer['fullName'] ?? 'Kullanıcı';
     final rating = (r['rating'] ?? 0) as int;
     final comment = r['comment'] as String? ?? '';

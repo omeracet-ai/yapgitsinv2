@@ -969,11 +969,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     String _fmtTl(double? v) =>
         v == null ? '—' : '${v.toStringAsFixed(0)} ₺';
 
-    // Fiyat görünürlüğü: sadece ilan sahibi VEYA teklif sahibi görebilir
+    // Fiyat görünürlüğü: sadece ilan sahibi VEYA teklif sahibi görebilir.
+    // Phase 265d — logout user'lar için fiyat AÇIK (üye olmaya cazip kıl);
+    // ama isim/mesaj "üye olun" maskesi altında.
+    final isLoggedIn     = currentUserId != null;
     final isOwnerView    = !canMakeOffer;
-    final isOfferOwner   = currentUserId != null && currentUserId == offerUserId;
+    final isOfferOwner   = isLoggedIn && currentUserId == offerUserId;
     final canSeePrice    = isOwnerView || isOfferOwner;
-    final isCustomerView = isOwnerView;
+    final isCustomerView = isLoggedIn && isOwnerView;
+    // Logout maskesi: isim ve mesaj gizlenir, fiyat açık.
+    final maskForLogout  = !isLoggedIn;
 
     final Map<String, List<Color>> statusColors = {
       'pending':   [Colors.orange.shade100, Colors.orange.shade700],
@@ -1013,7 +1018,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             visualDensity: const VisualDensity(vertical: -2),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-            leading: GestureDetector(
+            leading: maskForLogout
+                ? GestureDetector(
+                    onTap: () => context.push('/giris-yap'),
+                    child: CircleAvatar(
+                      backgroundColor: AppColors.primaryLight,
+                      child: const Icon(Icons.lock_outline,
+                          color: AppColors.primary, size: 18),
+                    ),
+                  )
+                : GestureDetector(
               onTap: offerUserId.isEmpty
                   ? null
                   : () => context.push('/usta/$offerUserId'),
@@ -1045,15 +1059,23 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: offerUserId.isEmpty
-                        ? null
-                        : () => context.push('/usta/$offerUserId'),
-                    child: Text(name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14, color: _textPrimary)),
+                    onTap: maskForLogout
+                        ? () => context.push('/giris-yap')
+                        : (offerUserId.isEmpty
+                            ? null
+                            : () => context.push('/usta/$offerUserId')),
+                    child: Text(
+                        maskForLogout ? 'İçerik görmek için lütfen üye olun' : name,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: maskForLogout ? 12 : 14,
+                            color: maskForLogout ? AppColors.primary : _textPrimary,
+                            decoration: maskForLogout
+                                ? TextDecoration.underline
+                                : TextDecoration.none)),
                   ),
                 ),
-                if (!isOfferOwner && offerUserId.isNotEmpty)
+                if (!isOfferOwner && offerUserId.isNotEmpty && !maskForLogout)
                   SizedBox(
                     width: 32, height: 32,
                     child: UserActionMenu(userId: offerUserId, userName: name),
@@ -1135,15 +1157,42 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   Text('$wFail başarısız iş',
                       style: TextStyle(fontSize: 10, color: Colors.red.shade400)),
                 ],
-                if (workerBio.isNotEmpty) ...[
+                if (workerBio.isNotEmpty && !maskForLogout) ...[
                   const SizedBox(height: 4),
                   Text(workerBio, maxLines: 2, overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 11, color: _textSecondary)),
                 ],
-                if (offer['message'] != null && offer['message'].toString().isNotEmpty) ...[
+                if (offer['message'] != null &&
+                    offer['message'].toString().isNotEmpty &&
+                    !maskForLogout) ...[
                   const SizedBox(height: 4),
                   Text(offer['message'].toString(), maxLines: 2, overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 12, color: _textHint)),
+                ],
+                // Phase 265d — logout lure: bio/message yerine üye olma çağrısı
+                if (maskForLogout) ...[
+                  const SizedBox(height: 4),
+                  GestureDetector(
+                    onTap: () => context.push('/giris-yap'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.person_add_alt_1,
+                            size: 12, color: AppColors.primary),
+                        SizedBox(width: 4),
+                        Text('İçerik görmek için lütfen üye olun',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600)),
+                      ]),
+                    ),
+                  ),
                 ],
                 const SizedBox(height: 6),
                 // Fiyat — sadece ilan sahibi veya teklif sahibi görür
