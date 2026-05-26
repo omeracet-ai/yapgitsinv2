@@ -215,9 +215,9 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                         q: _searchQuery.isEmpty ? null : _searchQuery,
                       ),
                   child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
                     itemCount: filtered.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, __) => const SizedBox(height: 6),
                     itemBuilder: (ctx, i) =>
                         _OpportunityCard(job: filtered[i], myUserId: myUserId),
                   ),
@@ -240,7 +240,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
   ) {
     return Container(
       color: AppColors.background,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
       child: Column(
         children: [
           Row(
@@ -249,32 +249,35 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                 child: Container(
                   decoration: BoxDecoration(
                     color: AppColors.surfaceElevated,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: AppColors.border),
                   ),
                   child: TextField(
                     controller: _searchController,
                     onChanged: _onSearchChanged,
-                    style: TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
                     decoration: InputDecoration(
                       hintText: 'Fırsat ara...',
-                      hintStyle: TextStyle(color: AppColors.textHint),
+                      hintStyle: TextStyle(color: AppColors.textHint, fontSize: 13),
                       prefixIcon:
-                          Icon(Icons.search, color: AppColors.textHint),
+                          Icon(Icons.search, color: AppColors.textHint, size: 18),
+                      prefixIconConstraints: const BoxConstraints(
+                          minWidth: 32, minHeight: 32),
+                      isDense: true,
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 8),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _filterButton(activeFilterCount),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           SizedBox(
-            height: 34,
+            height: 28,
             child: categoriesAsync.when(
               data: (cats) {
                 final mySet = myCategories.toSet();
@@ -348,13 +351,13 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
       children: [
         Material(
           color: hasActive ? AppColors.primary : AppColors.surfaceElevated,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           child: InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             onTap: _openFilterSheet,
             child: Container(
-              width: 48,
-              height: 48,
+              width: 36,
+              height: 36,
               alignment: Alignment.center,
               child: Icon(Icons.tune_rounded,
                   color: hasActive ? Colors.black : AppColors.textPrimary,
@@ -505,235 +508,129 @@ class _OpportunityCard extends ConsumerWidget {
         ),
       )),
       child: Container(
-        decoration: BoxDecoration(color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border.withValues(alpha: 0.8)),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.055),
-                blurRadius: 14,
-                offset: const Offset(0, 4)),
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 2,
-                offset: const Offset(0, 1)),
-          ],
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
         ),
-        child: Column(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Üst renkli şerit + başlık ─────────────────────────────────
+            // Kategori ikonu
             Container(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: job.color.withValues(alpha: 0.06),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
+                color: job.color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Row(children: [
-                Container(
-                  width: 48, height: 48,
-                  decoration: BoxDecoration(color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                          color: job.color.withValues(alpha: 0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2)),
-                    ],
-                  ),
-                  child: Icon(job.icon, color: job.color, size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(job.title,
-                          style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                              color: AppColors.textPrimary),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 3),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: job.color.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(job.category,
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: job.color,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.2)),
-                      ),
-                    ],
-                  ),
-                ),
-                // Fiyat rozeti
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(budgetStr,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12)),
-                ),
-              ]),
+              child: Icon(job.icon, color: job.color, size: 18),
             ),
-
-            // ── İçerik ────────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+            const SizedBox(width: 10),
+            // Başlık + meta + alt satır
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Açıklama ─────────────────────────────────────────────
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(job.title,
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: AppColors.textPrimary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(budgetStr,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
                   Text(job.description ?? '',
                       style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 11,
                           color: AppColors.textSecondary,
-                          height: 1.45),
-                      maxLines: 2,
+                          height: 1.3),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis),
-
-                  // ── Fotoğraflar ───────────────────────────────────────────
-                  if (job.photos != null && job.photos!.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      height: 60,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: job.photos!.length.clamp(0, 4),
-                        separatorBuilder: (_, __) => const SizedBox(width: 6),
-                        itemBuilder: (_, i) => ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.network(job.photos![i],
-                              width: 60, height: 60, fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                  width: 60, height: 60, color: AppColors.border,
-                                  child: Icon(Icons.broken_image_rounded,
-                                      size: 20, color: AppColors.textHint))),
-                        ),
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 12),
-
-                  // ── Alt bilgi + CTA ────────────────────────────────────────
+                  const SizedBox(height: 4),
                   Row(children: [
-                    Icon(Icons.location_on_rounded, size: 14, color: AppColors.textHint),
-                    const SizedBox(width: 3),
+                    Icon(Icons.location_on_rounded,
+                        size: 11, color: AppColors.textHint),
+                    const SizedBox(width: 2),
                     Expanded(
                       child: Text(job.location,
-                          style: TextStyle(fontSize: 12, color: AppColors.textHint),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                          style: TextStyle(
+                              fontSize: 10, color: AppColors.textHint),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
                     ),
+                    const SizedBox(width: 4),
+                    Text('· $postedAgo',
+                        style: TextStyle(
+                            fontSize: 10, color: AppColors.textHint)),
                     const SizedBox(width: 6),
-                    Icon(Icons.schedule_rounded, size: 13, color: Colors.grey.shade400),
-                    const SizedBox(width: 2),
-                    Text(postedAgo,
-                        style: TextStyle(fontSize: 12, color: AppColors.textHint)),
-                    const SizedBox(width: 8),
-                    // Teklif sayısı rozeti
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
                         color: offerCount > 0
-                            ? AppColors.primary.withValues(alpha: 0.1)
+                            ? AppColors.primary.withValues(alpha: 0.12)
                             : AppColors.border,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.people_rounded,
-                              size: 12,
-                              color: offerCount > 0 ? AppColors.primary : AppColors.textHint),
-                          const SizedBox(width: 3),
+                              size: 10,
+                              color: offerCount > 0
+                                  ? AppColors.primary
+                                  : AppColors.textHint),
+                          const SizedBox(width: 2),
                           Text('$offerCount',
                               style: TextStyle(
-                                  fontSize: 11,
-                                  color: offerCount > 0 ? AppColors.primary : AppColors.textHint,
+                                  fontSize: 10,
+                                  color: offerCount > 0
+                                      ? AppColors.primary
+                                      : AppColors.textHint,
                                   fontWeight: FontWeight.w700)),
                         ],
                       ),
                     ),
+                    if (isOwner) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text('Sizin',
+                            style: TextStyle(
+                                fontSize: 9,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700)),
+                      ),
+                    ],
                   ]),
                 ],
-              ),
-            ),
-
-            // ── Alt CTA: kendi ilanımsa rozet, değilse "Teklif Ver" ───────
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-              child: SizedBox(
-                width: double.infinity,
-                child: isOwner
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(vertical: 11),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                              color: AppColors.primary.withValues(alpha: 0.3)),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.person_rounded,
-                                size: 16, color: AppColors.primary),
-                            SizedBox(width: 6),
-                            Text('Bu sizin ilanınız',
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary)),
-                          ],
-                        ),
-                      )
-                    : ElevatedButton.icon(
-                        onPressed: () =>
-                            Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => JobDetailScreen(
-                            id: job.id,
-                            title: job.title,
-                            description: job.description ?? '',
-                            location: job.location,
-                            budget: budgetStr,
-                            category: job.category,
-                            postedAt: postedAgo,
-                            icon: Job.getIconForCategory(job.category),
-                            color: Job.getColorForCategory(job.category),
-                            isFeatured: job.featuredOrder != null,
-                            customerId: job.customerId,
-                            photos: job.photos ?? [],
-                          ),
-                        )),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 11),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                        icon: const Icon(Icons.send_rounded, size: 16),
-                        label: const Text('Teklif Ver',
-                            style: TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.bold)),
-                      ),
               ),
             ),
           ],

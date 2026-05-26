@@ -60,21 +60,22 @@ class _PostJobCta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
       color: AppColors.primary,
       child: SizedBox(
-        height: 44,
+        height: 36,
         child: ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.white,
             foregroundColor: AppColors.primary,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(10)),
             elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
           ),
-          icon: const Icon(Icons.add_rounded, size: 20),
+          icon: const Icon(Icons.add_rounded, size: 18),
           label: const Text('Hizmet İlanı Ver',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           onPressed: () {
             if (!isLoggedIn) {
               context.push('/giris-yap', extra: {'returnTo': '/ilan-ver'});
@@ -95,22 +96,22 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 2),
       color: AppColors.background,
       child: Row(
         children: [
           Container(
-            width: 4,
-            height: 16,
+            width: 3,
+            height: 12,
             decoration: BoxDecoration(
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Text(text,
               style: const TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.bold)),
+                  fontSize: 13, fontWeight: FontWeight.bold)),
         ],
       ),
     );
