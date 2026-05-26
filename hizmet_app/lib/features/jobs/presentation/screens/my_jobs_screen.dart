@@ -844,9 +844,14 @@ class _WorkerOfferCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final status = offer['status'] as String? ?? 'pending';
-    final price = (offer['price'] as num?)?.toDouble() ?? 0.0;
+    // Phase 174 fallback — price null gelirse priceMinor (kuruş) → TL'ye çevir.
+    final priceMinor = (offer['priceMinor'] as num?)?.toInt();
+    final counterMinor = (offer['counterPriceMinor'] as num?)?.toInt();
+    final price = (offer['price'] as num?)?.toDouble()
+        ?? (priceMinor != null ? priceMinor / 100 : 0.0);
     final message = offer['message'] as String? ?? '';
-    final counterPrice = (offer['counterPrice'] as num?)?.toDouble();
+    final counterPrice = (offer['counterPrice'] as num?)?.toDouble()
+        ?? (counterMinor != null ? counterMinor / 100 : null);
     final counterMessage = offer['counterMessage'] as String?;
     final job = offer['job'] as Map<String, dynamic>?;
     final jobTitle = job?['title'] as String? ?? 'Bilinmeyen İlan';

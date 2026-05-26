@@ -945,9 +945,18 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
 
     final offerId      = offer['id']            as String;
     final status       = offer['status']        as String? ?? 'pending';
-    final price        = offer['price'];
-    final counterPrice = offer['counterPrice'];
+    // Phase 174 — `price` (float) deprecated; `priceMinor` (kuruş int) canonical.
+    // Backend bazen eski kayıtlar için price=null dönüyor → priceMinor'dan üret.
+    final priceMinor   = (offer['priceMinor']        as num?)?.toInt();
+    final counterMinor = (offer['counterPriceMinor'] as num?)?.toInt();
+    double? _toTl(num? n) => n == null ? null : (n / 100);
+    final price        = (offer['price'] as num?)?.toDouble()
+        ?? _toTl(priceMinor);
+    final counterPrice = (offer['counterPrice'] as num?)?.toDouble()
+        ?? _toTl(counterMinor);
     final counterMessage = offer['counterMessage'] as String?;
+    String _fmtTl(double? v) =>
+        v == null ? '—' : '${v.toStringAsFixed(0)} ₺';
 
     // Fiyat görünürlüğü: sadece ilan sahibi VEYA teklif sahibi görebilir
     final isOwnerView    = !canMakeOffer;
@@ -1107,7 +1116,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 const SizedBox(height: 6),
                 // Fiyat — sadece ilan sahibi veya teklif sahibi görür
                 if (canSeePrice)
-                  Text('$price ₺',
+                  Text(_fmtTl(price),
                       style: const TextStyle(color: AppColors.primary,
                           fontWeight: FontWeight.bold, fontSize: 16))
                 else
@@ -1186,7 +1195,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Müşteri teklifi: $counterPrice ₺',
+                          'Müşteri teklifi: ${_fmtTl(counterPrice)}',
                           style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.blue,
