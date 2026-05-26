@@ -1140,6 +1140,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       if (_dueDate != null)
         'dueDate':
             '${_dueDate!.year}-${_dueDate!.month.toString().padLeft(2, '0')}-${_dueDate!.day.toString().padLeft(2, '0')}',
+      // Phase 265 — özel ilan hedef ustası (backend kredi düşer).
+      if (widget.targetWorkerId != null)
+        'targetWorkerId': widget.targetWorkerId,
     };
 
     try {

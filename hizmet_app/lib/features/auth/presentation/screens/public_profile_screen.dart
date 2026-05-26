@@ -383,39 +383,81 @@ class _ProfileView extends ConsumerWidget {
                   const SizedBox(height: 8),
                 ],
 
-                // ── Randevu Al CTA ────────────────────────────────────────
+                // ── Randevu Al + Özel İlan Aç CTA'ları ────────────────────
                 if (isWorker && !isSelf) ...[
-                  Container(color: AppColors.surface,
+                  Container(
+                    color: AppColors.surface,
                     padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                    child: Column(children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon:
+                              const Text('📅', style: TextStyle(fontSize: 18)),
+                          label: const Text('Randevu Al',
+                              style: TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.bold)),
+                          onPressed: () {
+                            if (currentUserId == null) {
+                              context.push('/giris-yap');
+                              return;
+                            }
+                            context.push(
+                              '/randevu-olustur/$userId',
+                              extra: {
+                                'workerName': name,
+                                'workerCategories': workerCats,
+                              },
+                            );
+                          },
                         ),
-                        icon: const Text('📅', style: TextStyle(fontSize: 18)),
-                        label: const Text('Randevu Al',
-                            style: TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.bold)),
-                        onPressed: () {
-                          if (currentUserId == null) {
-                            context.push('/giris-yap');
-                            return;
-                          }
-                          context.push(
-                            '/randevu-olustur/$userId',
-                            extra: {
-                              'workerName': name,
-                              'workerCategories': workerCats,
-                            },
-                          );
-                        },
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      // Phase 265 — bu ustaya özel ilan aç (kredi düşer).
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: BorderSide(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.5)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: const Icon(Icons.send_to_mobile_outlined,
+                              size: 18),
+                          label: Text(
+                              'Bu Ustaya Özel İlan Aç • $name',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 13, fontWeight: FontWeight.w600)),
+                          onPressed: () {
+                            if (currentUserId == null) {
+                              context.push('/giris-yap', extra: {
+                                'returnTo': '/usta/$userId',
+                              });
+                              return;
+                            }
+                            context.push('/ilan-ver', extra: {
+                              'targetWorkerId': userId,
+                              'targetWorkerName': name,
+                              if (workerCats.isNotEmpty)
+                                'allowedCategories': workerCats,
+                            });
+                          },
+                        ),
+                      ),
+                    ]),
                   ),
                   const SizedBox(height: 8),
                 ],
