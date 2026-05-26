@@ -259,7 +259,7 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                     onChanged: _onSearchChanged,
                     style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
                     decoration: InputDecoration(
-                      hintText: 'Fırsat ara...',
+                      hintText: 'Yapgitsin\'de ara...',
                       hintStyle: TextStyle(color: AppColors.textHint, fontSize: 13),
                       prefixIcon:
                           Icon(Icons.search, color: AppColors.textHint, size: 18),
