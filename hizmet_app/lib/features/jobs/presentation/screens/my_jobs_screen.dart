@@ -92,7 +92,7 @@ class _DualRoleView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DefaultTabController(
-      length: 4,
+      length: 3,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: showAppBar
@@ -115,7 +115,6 @@ class _DualRoleView extends ConsumerWidget {
                     Tab(icon: Icon(Icons.assignment_outlined), text: 'Taleplerim'),
                     Tab(icon: Icon(Icons.workspace_premium_outlined), text: 'Hizmetlerim'),
                     Tab(icon: Icon(Icons.handyman_outlined), text: 'Tekliflerim'),
-                    Tab(icon: Icon(Icons.work_outline), text: 'Fırsatlar'),
                   ],
                   indicatorColor: Colors.white,
                   labelColor: Colors.white,
@@ -128,7 +127,6 @@ class _DualRoleView extends ConsumerWidget {
             _CustomerTabContentWrapper(kindFilter: 'request'),
             _CustomerTabContentWrapper(kindFilter: 'offer'),
             _WorkerTabContent(),
-            JobOpportunitiesBody(),
           ],
         ),
       ),
