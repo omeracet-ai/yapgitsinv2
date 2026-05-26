@@ -363,105 +363,106 @@ class _ProfileView extends ConsumerWidget {
                   isSelf: isSelf,
                 ),
 
-                // ── Kategoriler ───────────────────────────────────────────
+                // ── Hizmet Kategorileri (Phase 265e — tıklanabilir,
+                // birleşik buton ile auto-fill PostJob)
                 if (workerCats.isNotEmpty) ...[
                   _section(
                     title: 'Hizmet Kategorileri',
                     child: Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: workerCats
-                          .map((c) => Chip(
-                                label: Text(c,
+                      children: workerCats.map((c) {
+                        return InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: isSelf
+                              ? null
+                              : () {
+                                  if (currentUserId == null) {
+                                    context.push('/giris-yap', extra: {
+                                      'returnTo': '/usta/$userId',
+                                    });
+                                    return;
+                                  }
+                                  context.push('/ilan-ver', extra: {
+                                    'targetWorkerId': userId,
+                                    'targetWorkerName': name,
+                                    'initialCategory': c,
+                                    'allowedCategories': workerCats,
+                                  });
+                                },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryLight,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(c,
                                     style: const TextStyle(
-                                        fontSize: 12, color: AppColors.primary)),
-                                backgroundColor: AppColors.primaryLight,
-                                side: BorderSide.none,
-                                padding: EdgeInsets.zero,
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                              ))
-                          .toList(),
+                                        fontSize: 12,
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w600)),
+                                if (!isSelf) ...[
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.arrow_forward_rounded,
+                                      size: 12, color: AppColors.primary),
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
                   const SizedBox(height: 8),
                 ],
 
-                // ── Randevu Al + Özel İlan Aç CTA'ları ────────────────────
+                // ── Birleşik "Teklif Ver" CTA (Phase 265e — tek buton) ────
                 if (isWorker && !isSelf) ...[
                   Container(
                     color: AppColors.surface,
                     padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-                    child: Column(children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                          icon: const Icon(Icons.send_rounded,
-                              size: 18, color: Colors.white),
-                          label: const Text('Teklif Ver',
-                              style: TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.bold)),
-                          onPressed: () {
-                            if (currentUserId == null) {
-                              context.push('/giris-yap');
-                              return;
-                            }
-                            context.push(
-                              '/randevu-olustur/$userId',
-                              extra: {
-                                'workerName': name,
-                                'workerCategories': workerCats,
-                              },
-                            );
-                          },
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Phase 265 — bu ustaya özel ilan aç (kredi düşer).
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.primary,
-                            side: BorderSide(
-                                color:
-                                    AppColors.primary.withValues(alpha: 0.5)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                          icon: const Icon(Icons.send_to_mobile_outlined,
-                              size: 18),
-                          label: Text(
-                              'Bu Ustaya Özel İlan Aç • $name',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 13, fontWeight: FontWeight.w600)),
-                          onPressed: () {
-                            if (currentUserId == null) {
-                              context.push('/giris-yap', extra: {
-                                'returnTo': '/usta/$userId',
-                              });
-                              return;
-                            }
-                            context.push('/ilan-ver', extra: {
-                              'targetWorkerId': userId,
-                              'targetWorkerName': name,
-                              if (workerCats.isNotEmpty)
-                                'allowedCategories': workerCats,
+                        icon: const Icon(Icons.send_rounded,
+                            size: 18, color: Colors.white),
+                        label: Text(
+                            workerCats.isEmpty
+                                ? 'Bu Ustaya Teklif Ver'
+                                : 'Bu Ustaya Teklif Ver • ${workerCats.first}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.bold)),
+                        onPressed: () {
+                          if (currentUserId == null) {
+                            context.push('/giris-yap', extra: {
+                              'returnTo': '/usta/$userId',
                             });
-                          },
-                        ),
+                            return;
+                          }
+                          context.push('/ilan-ver', extra: {
+                            'targetWorkerId': userId,
+                            'targetWorkerName': name,
+                            if (workerCats.isNotEmpty) ...{
+                              'initialCategory': workerCats.first,
+                              'allowedCategories': workerCats,
+                            },
+                          });
+                        },
                       ),
-                    ]),
+                    ),
                   ),
                   const SizedBox(height: 8),
                 ],

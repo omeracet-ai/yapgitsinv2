@@ -126,7 +126,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     // İlan sahibi tespiti — navigasyondan gelen widget.customerId garantisiz
     // olabilir (her açılış yolu geçirmiyor), bu yüzden çekilen detay yetkili
     // kaynak. Sahip kendi ilanında "Teklif Ver" görmemeli.
-    final customer = detail['customer'] as Map<String, dynamic>?;
+    // Phase 265d — backend bazen customer'ı string id olarak dönebilir;
+    // defensive cast (is Map check).
+    final customerRaw = detail['customer'];
+    final customer = customerRaw is Map
+        ? Map<String, dynamic>.from(customerRaw)
+        : null;
     final ownerId = (detail['customerId'] as String?) ??
         (customer?['id'] as String?) ??
         widget.customerId;
@@ -941,7 +946,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     bool canMakeOffer,
     String? currentUserId,
   ) {
-    final userMap         = offer['user'] as Map<String, dynamic>?;
+    // Phase 265d — offer.user kimi serializer'da string id dönebiliyor.
+    final userRaw         = offer['user'];
+    final userMap         = userRaw is Map
+        ? Map<String, dynamic>.from(userRaw)
+        : null;
     final offerUserId     = offer['userId'] as String? ?? userMap?['id'] as String? ?? '';
     final name            = userMap?['fullName']        as String? ?? 'Teklif Sahibi';
     final workerBio       = userMap?['workerBio']       as String? ?? '';

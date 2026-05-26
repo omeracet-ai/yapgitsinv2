@@ -853,7 +853,9 @@ class _WorkerOfferCard extends ConsumerWidget {
     final counterPrice = (offer['counterPrice'] as num?)?.toDouble()
         ?? (counterMinor != null ? counterMinor / 100 : null);
     final counterMessage = offer['counterMessage'] as String?;
-    final job = offer['job'] as Map<String, dynamic>?;
+    // Phase 265d — defensive cast (string id vs Map)
+    final jobRaw = offer['job'];
+    final job = jobRaw is Map ? Map<String, dynamic>.from(jobRaw) : null;
     final jobTitle = job?['title'] as String? ?? 'Bilinmeyen İlan';
     final jobCategory = job?['category'] as String? ?? '';
     final jobLocation = job?['location'] as String? ?? '';

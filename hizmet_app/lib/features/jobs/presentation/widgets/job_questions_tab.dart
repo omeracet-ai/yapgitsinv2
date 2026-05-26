@@ -506,7 +506,9 @@ class _ReplyTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = reply['user'] as Map<String, dynamic>?;
+    // Phase 265d — defensive cast
+    final userRaw = reply['user'];
+    final user = userRaw is Map ? Map<String, dynamic>.from(userRaw) : null;
     final name = user?['fullName'] as String? ?? 'Kullanıcı';
     final imgUrl = user?['profileImageUrl'] as String?;
     final text = reply['text'] as String? ?? '';
