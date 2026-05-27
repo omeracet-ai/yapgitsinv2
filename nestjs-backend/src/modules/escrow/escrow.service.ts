@@ -368,9 +368,11 @@ export class EscrowService {
         where: { id: escrowId },
       });
       if (bookingEscrow) {
+        // Phase 278d — pass actor role so booking-escrow.release admin/system bypass etkin.
         return this.bookingEscrowService.release(
           bookingEscrow.bookingId,
           byUserId,
+          { actorRole: byUserRole },
         );
       }
       throw new NotFoundException('Escrow not found');

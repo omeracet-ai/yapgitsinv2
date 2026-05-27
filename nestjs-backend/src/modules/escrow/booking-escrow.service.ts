@@ -116,8 +116,14 @@ export class BookingEscrowService {
     });
   }
 
-  /** Customer onayı: held → released. Worker'a token gider. Atomic + idempotent. */
-  async release(bookingId: string, actorId: string): Promise<BookingEscrow> {
+  /** Customer onayı: held → released. Worker'a token gider. Atomic + idempotent.
+   *  Phase 278d: 'system'/'admin' actor bypass (grace finalize'in cascade
+   *  release tetiklemesi için). */
+  async release(
+    bookingId: string,
+    actorId: string,
+    opts?: { actorRole?: string },
+  ): Promise<BookingEscrow> {
     return this.dataSource.transaction(async (em) => {
       let escrow: BookingEscrow | null;
       try {
@@ -129,7 +135,8 @@ export class BookingEscrowService {
         escrow = await em.findOne(BookingEscrow, { where: { bookingId } });
       }
       if (!escrow) throw new NotFoundException('Escrow bulunamadı');
-      if (escrow.customerId !== actorId) {
+      const isAdmin = opts?.actorRole === 'admin' || actorId === 'system';
+      if (escrow.customerId !== actorId && !isAdmin) {
         throw new ForbiddenException('Sadece müşteri release edebilir');
       }
       if (escrow.status !== BookingEscrowStatus.HELD) {
