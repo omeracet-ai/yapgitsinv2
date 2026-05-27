@@ -45,7 +45,10 @@ const targets = {
   },
   admin: {
     local: path.join(REPO, 'admin-panel/dist/standalone'),
-    remote: `${REMOTE}/admin`,
+    // 2026-05-27 fix: Plesk Node.js admin app root =
+    // /httpdocs/nestjs-backend/admin-panel/dist/standalone
+    // (not /httpdocs/admin — eski path stale, iisnode oradan çalışmıyor)
+    remote: `${REMOTE}/nestjs-backend/admin-panel/dist/standalone`,
     description: 'Next.js admin standalone',
   },
   web: {
