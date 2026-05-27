@@ -15,7 +15,7 @@
  * Pure Tailwind + inline-style. No extra deps.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   api,
@@ -63,7 +63,28 @@ const SCREENS = [
   { key: "settings",   label: "Ayarlar" },
 ];
 
-const COMPONENT_TYPES = ["tab", "card", "button", "text", "label", "section", "icon"];
+const COMPONENT_TYPES = ["button", "tab", "card", "label", "section", "menu", "popup", "table", "text", "icon"];
+
+/** Default props template per element type — fills sensible starter values
+ * when the user clicks the "+ Add element" dropdown. */
+const TYPE_DEFAULTS: Record<string, Record<string, unknown>> = {
+  button:  { type: "button", label: "Buton",   icon: "▶️", color: "" },
+  tab:     { type: "tab",    label: "Sekme",   icon: "▫️" },
+  card:    { type: "card",   label: "Kart",    icon: "🟦" },
+  label:   { type: "label",  label: "Etiket" },
+  section: { type: "section",label: "Bölüm",   icon: "📂" },
+  menu:    { type: "menu",   label: "Menü",    icon: "≡" },
+  popup:   { type: "popup",  label: "Popup",   icon: "💬", content: "İçerik" },
+  table:   { type: "table",  label: "Tablo",   icon: "▦" },
+  text:    { type: "text",   label: "Metin" },
+  icon:    { type: "icon",   label: "İkon",    icon: "★" },
+};
+
+interface HistoryEntry {
+  ts: number;
+  summary: string;
+  snapshot: AppConfigLayoutItem[];
+}
 
 const FALLBACK_THEME: AppConfigThemeTokens = {
   primary: "#FF5A1F",
@@ -122,6 +143,35 @@ export default function ApkBuilderPage() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
+  // ── Brief gap-fill state ─────────────────────────────────────────────────
+  /** Undo/redo stacks store layout snapshots (without _idx/_dndId). */
+  const [undoStack, setUndoStack] = useState<HistoryEntry[]>([]);
+  const [redoStack, setRedoStack] = useState<HistoryEntry[]>([]);
+  /** History panel — last N edits with revert support. */
+  const [historyPanel, setHistoryPanel] = useState<HistoryEntry[]>([]);
+  /** Locked items can't be edited/moved/deleted — stored as `_dndId` set. */
+  const [lockedIds, setLockedIds] = useState<Set<string>>(new Set());
+  /** Zoom level for phone mockup (0.5 – 1.5). */
+  const [zoom, setZoom] = useState(1);
+  /** Autosave debounce ref so rapid edits collapse into one PUT. */
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Suppress autosave during initial load / undo apply. */
+  const suppressAutosaveRef = useRef(false);
+  /** Right drawer toggle for selected element details. */
+  const [drawerOpen, setDrawerOpen] = useState(true);
+
+  /**
+   * Push a snapshot to undo stack + record in history panel.
+   * Always called BEFORE mutating items, so the previous state is recoverable.
+   */
+  const pushHistory = useCallback((summary: string, prev: EditableItem[]) => {
+    const snapshot = prev.map(({ _idx: _a, _dndId: _b, ...rest }) => { void _a; void _b; return rest; });
+    const entry: HistoryEntry = { ts: Date.now(), summary, snapshot };
+    setUndoStack((s) => [...s.slice(-49), entry]);
+    setRedoStack([]);
+    setHistoryPanel((p) => [entry, ...p].slice(0, 10));
+  }, []);
+
   // Load admin config (full state) + filter to the active screen layout.
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -140,8 +190,11 @@ export default function ApkBuilderPage() {
         _idx: idx,
         _dndId: nextDndId(),
       }));
+      suppressAutosaveRef.current = true;
       setItems(next);
       setSelectedIdx(next.length > 0 ? 0 : null);
+      setUndoStack([]);
+      setRedoStack([]);
     } catch (e) {
       setMsg({ kind: "err", text: `Yüklenemedi: ${(e as Error).message}` });
     } finally {
@@ -158,19 +211,108 @@ export default function ApkBuilderPage() {
     return () => clearTimeout(id);
   }, [refresh]);
 
+  // ── Autosave (debounced 2s) ──────────────────────────────────────────────
+  useEffect(() => {
+    if (suppressAutosaveRef.current) {
+      // First load or undo apply — skip this cycle, re-enable after.
+      const id = setTimeout(() => { suppressAutosaveRef.current = false; }, 0);
+      return () => clearTimeout(id);
+    }
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(() => {
+      void (async () => {
+        try {
+          const payload: AppConfigLayoutItem[] = items.map(
+            ({ _idx: _a, _dndId: _b, ...rest }) => { void _a; void _b; return rest; },
+          );
+          await api.putLayout(screen, payload);
+          setMsg({ kind: "ok", text: "Otomatik kaydedildi ✓" });
+        } catch (e) {
+          setMsg({ kind: "err", text: `Autosave: ${(e as Error).message}` });
+        }
+      })();
+    }, 2000);
+    return () => { if (autosaveTimer.current) clearTimeout(autosaveTimer.current); };
+  }, [items, screen]);
+
+  // ── Undo / Redo ───────────────────────────────────────────────────────────
+  const undo = useCallback(() => {
+    setUndoStack((stack) => {
+      if (stack.length === 0) return stack;
+      const top = stack[stack.length - 1];
+      const current: HistoryEntry = {
+        ts: Date.now(),
+        summary: "current",
+        snapshot: items.map(({ _idx: _a, _dndId: _b, ...rest }) => { void _a; void _b; return rest; }),
+      };
+      setRedoStack((r) => [...r, current]);
+      suppressAutosaveRef.current = true;
+      setItems(top.snapshot.map((it, i) => ({ ...it, _idx: i, _dndId: nextDndId() })));
+      return stack.slice(0, -1);
+    });
+  }, [items]);
+
+  const redo = useCallback(() => {
+    setRedoStack((stack) => {
+      if (stack.length === 0) return stack;
+      const top = stack[stack.length - 1];
+      const current: HistoryEntry = {
+        ts: Date.now(),
+        summary: "current",
+        snapshot: items.map(({ _idx: _a, _dndId: _b, ...rest }) => { void _a; void _b; return rest; }),
+      };
+      setUndoStack((u) => [...u, current]);
+      suppressAutosaveRef.current = true;
+      setItems(top.snapshot.map((it, i) => ({ ...it, _idx: i, _dndId: nextDndId() })));
+      return stack.slice(0, -1);
+    });
+  }, [items]);
+
+  // Keyboard shortcuts Ctrl+Z / Ctrl+Y (or Cmd on mac).
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      const key = e.key.toLowerCase();
+      if (key === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+      else if (key === "y" || (key === "z" && e.shiftKey)) { e.preventDefault(); redo(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [undo, redo]);
+
+  const revertTo = (entry: HistoryEntry) => {
+    pushHistory("revert", items);
+    suppressAutosaveRef.current = false;
+    setItems(entry.snapshot.map((it, i) => ({ ...it, _idx: i, _dndId: nextDndId() })));
+  };
+
+  const toggleLock = (dndId: string) => {
+    setLockedIds((s) => {
+      const n = new Set(s);
+      if (n.has(dndId)) n.delete(dndId); else n.add(dndId);
+      return n;
+    });
+  };
+
   const selected = useMemo(
     () => (selectedIdx !== null ? items[selectedIdx] : null),
     [items, selectedIdx],
   );
+  const selectedLocked = selected ? lockedIds.has(selected._dndId) : false;
 
   const updateSelected = (mut: (it: EditableItem) => EditableItem) => {
     if (selectedIdx === null) return;
+    if (selectedLocked) { setMsg({ kind: "err", text: "Bu öğe kilitli." }); return; }
+    pushHistory("edit", items);
     setItems((prev) => prev.map((it, i) => (i === selectedIdx ? mut(it) : it)));
   };
 
   const move = (idx: number, dir: -1 | 1) => {
     const target = idx + dir;
     if (target < 0 || target >= items.length) return;
+    if (lockedIds.has(items[idx]._dndId)) { setMsg({ kind: "err", text: "Bu öğe kilitli." }); return; }
+    pushHistory("move", items);
     setItems((prev) => {
       const copy = [...prev];
       [copy[idx], copy[target]] = [copy[target], copy[idx]];
@@ -188,6 +330,8 @@ export default function ApkBuilderPage() {
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
+    if (lockedIds.has(String(active.id))) { setMsg({ kind: "err", text: "Bu öğe kilitli." }); return; }
+    pushHistory("reorder", items);
     setItems((prev) => {
       const from = prev.findIndex((it) => it._dndId === active.id);
       const to = prev.findIndex((it) => it._dndId === over.id);
@@ -199,11 +343,13 @@ export default function ApkBuilderPage() {
     });
   };
 
-  const addItem = () => {
+  const addItem = (typeKey: string = "card") => {
+    pushHistory("add", items);
+    const tmpl = TYPE_DEFAULTS[typeKey] ?? TYPE_DEFAULTS.card;
     const newItem: EditableItem = {
-      key: `item_${Date.now()}`,
+      key: `${typeKey}_${Date.now()}`,
       visible: true,
-      props: { type: "card", label: "Yeni Öğe" },
+      props: { ...tmpl },
       _idx: items.length,
       _dndId: nextDndId(),
     };
@@ -213,6 +359,8 @@ export default function ApkBuilderPage() {
 
   const removeSelected = () => {
     if (selectedIdx === null) return;
+    if (selectedLocked) { setMsg({ kind: "err", text: "Bu öğe kilitli." }); return; }
+    pushHistory("remove", items);
     setItems((prev) => prev.filter((_, i) => i !== selectedIdx).map((it, i) => ({ ...it, _idx: i })));
     setSelectedIdx(null);
   };
@@ -264,30 +412,37 @@ export default function ApkBuilderPage() {
               Mobil uygulamadaki ekran düzenlerini canlı önizleme ile düzenle.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <select
-              value={screen}
-              onChange={(e) => setScreen(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-white/70 backdrop-blur-md border border-white/40 text-sm font-medium shadow-sm hover:bg-white transition"
-            >
-              {SCREENS.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.label}
-                </option>
-              ))}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Undo / Redo */}
+            <div className="flex items-center gap-1 bg-white/70 backdrop-blur-md border border-white/40 rounded-lg shadow-sm px-1.5 py-1">
+              <button onClick={undo} disabled={undoStack.length === 0}
+                className="px-2 py-1 text-sm font-bold text-slate-700 hover:bg-white rounded disabled:opacity-30"
+                title="Geri al (Ctrl+Z)">↶</button>
+              <button onClick={redo} disabled={redoStack.length === 0}
+                className="px-2 py-1 text-sm font-bold text-slate-700 hover:bg-white rounded disabled:opacity-30"
+                title="Yinele (Ctrl+Y)">↷</button>
+            </div>
+
+            {/* Zoom */}
+            <div className="flex items-center gap-1.5 bg-white/70 backdrop-blur-md border border-white/40 rounded-lg shadow-sm px-2 py-1">
+              <span className="text-xs text-slate-600">🔍</span>
+              <input type="range" min={50} max={150} value={Math.round(zoom * 100)}
+                onChange={(e) => setZoom(Number(e.target.value) / 100)}
+                className="w-20 accent-orange-500" title="Zoom" />
+              <span className="text-xs font-mono text-slate-600 w-10">{Math.round(zoom * 100)}%</span>
+            </div>
+
+            <select value={screen} onChange={(e) => setScreen(e.target.value)}
+              className="px-3 py-2 rounded-lg bg-white/70 backdrop-blur-md border border-white/40 text-sm font-medium shadow-sm hover:bg-white transition">
+              {SCREENS.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
             </select>
-            <button
-              onClick={() => void refresh()}
-              disabled={loading}
-              className="px-3 py-2 rounded-lg bg-white/70 backdrop-blur-md border border-white/40 text-sm font-medium shadow-sm hover:bg-white transition disabled:opacity-50"
-            >
+
+            <button onClick={() => void refresh()} disabled={loading}
+              className="px-3 py-2 rounded-lg bg-white/70 backdrop-blur-md border border-white/40 text-sm font-medium shadow-sm hover:bg-white transition disabled:opacity-50">
               {loading ? "Yenileniyor…" : "↻ Yenile"}
             </button>
-            <button
-              onClick={() => void save()}
-              disabled={saving || loading}
-              className="px-4 py-2 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition disabled:opacity-50"
-            >
+            <button onClick={() => void save()} disabled={saving || loading}
+              className="px-4 py-2 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition disabled:opacity-50">
               {saving ? "Kaydediliyor…" : "💾 Kaydet"}
             </button>
           </div>
@@ -309,6 +464,7 @@ export default function ApkBuilderPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* LEFT — Phone mockup (60% ≈ 3/5) — interactive 3D rotate */}
         <div className="lg:col-span-3 flex items-start justify-center">
+          <div style={{ transform: `scale(${zoom})`, transformOrigin: "top center", transition: "transform 200ms ease" }}>
           <PhoneFrame3D
             width={360}
             height={780}
@@ -474,20 +630,31 @@ export default function ApkBuilderPage() {
                 </div>
               </div>
           </PhoneFrame3D>
+          </div>
         </div>
 
         {/* RIGHT — Inline editor (40% ≈ 2/5) */}
         <div className="lg:col-span-2 space-y-4">
           {/* Item list / reorder panel */}
           <div className="bg-white/70 backdrop-blur-md border border-white/60 rounded-2xl shadow-lg p-4 hover:shadow-xl transition">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-3 gap-2">
               <h2 className="text-sm font-bold text-slate-900">Öğeler ({items.length})</h2>
-              <button
-                onClick={addItem}
-                className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold hover:bg-emerald-200 transition"
+              <select
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (!v) return;
+                  addItem(v);
+                  e.currentTarget.value = "";
+                }}
+                defaultValue=""
+                className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold hover:bg-emerald-200 transition border border-emerald-200 cursor-pointer"
+                title="Yeni öğe ekle"
               >
-                ＋ Ekle
-              </button>
+                <option value="" disabled>＋ Ekle…</option>
+                {COMPONENT_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
             </div>
             {items.length === 0 ? (
               <p className="text-xs text-slate-500 italic">Liste boş.</p>
@@ -507,8 +674,10 @@ export default function ApkBuilderPage() {
                         label={readLabel(it)}
                         type={deriveType(it)}
                         visible={it.visible !== false}
+                        locked={lockedIds.has(it._dndId)}
                         selected={idx === selectedIdx}
                         onSelect={() => setSelectedIdx(idx)}
+                        onToggleLock={() => toggleLock(it._dndId)}
                         onMoveUp={() => move(idx, -1)}
                         onMoveDown={() => move(idx, 1)}
                       />
@@ -521,12 +690,25 @@ export default function ApkBuilderPage() {
 
           {/* Selected element editor */}
           <div className="bg-white/70 backdrop-blur-md border border-white/60 rounded-2xl shadow-lg p-4 hover:shadow-xl transition">
-            <h2 className="text-sm font-bold text-slate-900 mb-3">Seçili Öğe</h2>
-            {!selected ? (
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-bold text-slate-900">Seçili Öğe Detayı</h2>
+              <button onClick={() => setDrawerOpen((v) => !v)}
+                className="text-xs text-slate-500 hover:text-slate-900"
+                title={drawerOpen ? "Daralt" : "Genişlet"}>
+                {drawerOpen ? "▾" : "▸"}
+              </button>
+            </div>
+            {drawerOpen && selected && selectedLocked && (
+              <div className="mb-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                🔒 Bu öğe kilitli — düzenlemek için soldan kilidi aç.
+              </div>
+            )}
+            {drawerOpen && !selected && (
               <p className="text-xs text-slate-500 italic">
                 Soldaki telefonda bir öğe seç ya da listeye ekle.
               </p>
-            ) : (
+            )}
+            {drawerOpen && selected && (
               <div className="space-y-3">
                 <Field label="Key">
                   <input
@@ -644,6 +826,37 @@ export default function ApkBuilderPage() {
               </div>
             )}
           </div>
+
+          {/* History panel — last 10 edits with revert */}
+          <div className="bg-white/70 backdrop-blur-md border border-white/60 rounded-2xl shadow-lg p-4 hover:shadow-xl transition">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-bold text-slate-900">🕐 Geçmiş ({historyPanel.length})</h2>
+              <div className="text-[10px] text-slate-500">
+                Undo: {undoStack.length} · Redo: {redoStack.length}
+              </div>
+            </div>
+            {historyPanel.length === 0 ? (
+              <p className="text-xs text-slate-500 italic">Henüz değişiklik yok.</p>
+            ) : (
+              <ul className="space-y-1 max-h-48 overflow-y-auto">
+                {historyPanel.map((h) => {
+                  const labels: Record<string, string> = {
+                    edit: "✎ düzenle", move: "↕ taşı", reorder: "↕↕ sırala",
+                    add: "＋ ekle", remove: "🗑 sil", revert: "↺ geri al",
+                  };
+                  return (
+                    <li key={h.ts} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded hover:bg-slate-100 text-xs">
+                      <span className="text-slate-700 truncate flex-1">
+                        {labels[h.summary] ?? h.summary} <span className="text-slate-400 ml-1">({h.snapshot.length} öğe)</span>
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">{new Date(h.ts).toLocaleTimeString("tr-TR")}</span>
+                      <button onClick={() => revertTo(h)} className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold hover:bg-amber-200">↺</button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -657,16 +870,8 @@ export default function ApkBuilderPage() {
  * the handle itself).
  */
 function SortableBuilderItem({
-  id,
-  idx,
-  total,
-  label,
-  type,
-  visible,
-  selected,
-  onSelect,
-  onMoveUp,
-  onMoveDown,
+  id, idx, total, label, type, visible, locked, selected,
+  onSelect, onToggleLock, onMoveUp, onMoveDown,
 }: {
   id: string;
   idx: number;
@@ -674,8 +879,10 @@ function SortableBuilderItem({
   label: string;
   type: string;
   visible: boolean;
+  locked: boolean;
   selected: boolean;
   onSelect: () => void;
+  onToggleLock: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
 }) {
@@ -720,6 +927,14 @@ function SortableBuilderItem({
       <span className="flex-1 truncate font-medium">{label}</span>
       <span className="text-[10px] uppercase text-slate-500">{type}</span>
       {!visible && <span title="gizli">👁️‍🗨️</span>}
+      <button
+        onClick={(e) => { e.stopPropagation(); onToggleLock(); }}
+        className={`w-6 h-6 rounded text-xs ${locked ? "bg-amber-200 text-amber-800" : "hover:bg-white text-slate-400"}`}
+        aria-label={locked ? "Kilidi aç" : "Kilitle"}
+        title={locked ? "Kilitli — düzenlenemez" : "Kilitle"}
+      >
+        {locked ? "🔒" : "🔓"}
+      </button>
       <button
         onClick={(e) => {
           e.stopPropagation();
