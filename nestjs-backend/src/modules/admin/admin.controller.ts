@@ -997,34 +997,43 @@ export class AdminController {
     return this.adminService.listBackups();
   }
 
-  @Get('backup/download/:filename')
+  @Get('backup/download')
   downloadBackup(
-    @Param('filename') filename: string,
+    @Query('filename') filename: string,
     @Res() res: Response,
   ) {
+    // IIS .sqlite uzantısını URL path'inde blokluyor → query param kullan.
+    if (!filename) {
+      return res.status(400).json({ message: 'filename query param zorunlu' });
+    }
     const safePath = this.adminService.resolveBackupPath(filename);
     return res.download(safePath);
   }
 
   @Audit('backup.restore')
-  @Post('backup/restore/:filename')
+  @Post('backup/restore')
   async restoreBackup(
-    @Param('filename') filename: string,
     @Body() body: RestoreBackupDto,
     @Req() req: Request & { user: AuthUser },
   ) {
+    // IIS .sqlite uzantısını URL'de bloklamış (web.config requestFiltering).
+    // Filename body'de — request URL'inde .sqlite görünmez.
     return this.adminService.restoreBackup(
-      filename,
+      body.filename,
       body.confirmToken,
       req.user.id,
     );
   }
 
-  @Delete('backup/:filename')
+  @Delete('backup')
   async deleteBackup(
-    @Param('filename') filename: string,
+    @Query('filename') filename: string,
     @Req() req: Request & { user: AuthUser },
   ) {
+    // IIS .sqlite uzantısını URL path'inde blokluyor → query param kullan.
+    if (!filename) {
+      throw new BadRequestException('filename query param zorunlu');
+    }
     const out = await this.adminService.deleteBackup(filename);
     await this.adminAuditService.logAction(
       req.user.id,

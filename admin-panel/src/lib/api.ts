@@ -597,9 +597,10 @@ export const api = {
    * so we can attach the admin Bearer header (anchor href cannot send it).
    */
   downloadBackup: async (filename: string): Promise<void> => {
+    // IIS .sqlite uzantısını URL path'inde blokluyor → query param kullan.
     const token = getToken();
     const res = await fetch(
-      `${BASE}/admin/backup/download/${encodeURIComponent(filename)}`,
+      `${BASE}/admin/backup/download?filename=${encodeURIComponent(filename)}`,
       {
         cache: 'no-store',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -621,7 +622,7 @@ export const api = {
   },
   deleteBackup: (filename: string) =>
     request<{ deleted: true }>(
-      `/admin/backup/${encodeURIComponent(filename)}`,
+      `/admin/backup?filename=${encodeURIComponent(filename)}`,
       { method: 'DELETE' },
     ),
   restoreBackup: (filename: string, confirmToken: string) =>
@@ -630,9 +631,9 @@ export const api = {
       restoredFrom: string;
       preRestoreSnapshot: string | null;
       note: string;
-    }>(`/admin/backup/restore/${encodeURIComponent(filename)}`, {
+    }>(`/admin/backup/restore`, {
       method: 'POST',
-      body: JSON.stringify({ confirmToken }),
+      body: JSON.stringify({ filename, confirmToken }),
     }),
 
   // Phase 162: Chat & Messaging
