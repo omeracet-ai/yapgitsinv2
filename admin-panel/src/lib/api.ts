@@ -543,7 +543,13 @@ export const api = {
         endsAt?: string | null;
       }>;
     };
-    const raw = await request<RawShape>('/admin/app-config');
+    const [raw, themesRaw] = await Promise.all([
+      request<RawShape>('/admin/app-config'),
+      // Real list of themes (with id + isActive) so the builder and ThemeTab
+      // see live data instead of the placeholder empty array. Falls back to
+      // empty list if the endpoint is unreachable.
+      request<Array<{ id: string; name: string; isActive: boolean; tokens: string | AppConfigThemeTokens }>>('/admin/app-config/themes').catch(() => []),
+    ]);
     // settings dict → array
     const settingsArr: AppConfigSetting[] = Object.entries(raw.settings ?? {}).map(
       ([key, value]) => ({
@@ -584,9 +590,21 @@ export const api = {
         enabled: v.active ?? true,
       }),
     );
+    // Backend stores tokens as a JSON-encoded string; parse defensively here so
+    // the UI consumers always see an object.
+    const themesArr: AppConfigTheme[] = (themesRaw ?? []).map((t) => {
+      let tokens: AppConfigThemeTokens = {};
+      if (typeof t.tokens === 'string') {
+        try { tokens = JSON.parse(t.tokens) as AppConfigThemeTokens; }
+        catch { tokens = {}; }
+      } else if (t.tokens && typeof t.tokens === 'object') {
+        tokens = t.tokens;
+      }
+      return { id: t.id, name: t.name, isActive: !!t.isActive, tokens };
+    });
     return {
       branding: raw.branding ?? {},
-      themes: [],
+      themes: themesArr,
       settings: settingsArr,
       layouts: layoutsArr,
       visibility: visibilityArr,

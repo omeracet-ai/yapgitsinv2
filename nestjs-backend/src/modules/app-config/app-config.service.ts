@@ -126,13 +126,202 @@ export class AppConfigService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    try {
-      await this.seedScreens();
-    } catch (err) {
-      this.logger.warn(
-        `seedScreens failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
+    const seeders: Array<{ name: string; fn: () => Promise<void> }> = [
+      { name: 'seedScreens', fn: () => this.seedScreens() },
+      { name: 'seedTheme', fn: () => this.seedTheme() },
+      { name: 'seedBranding', fn: () => this.seedBranding() },
+      { name: 'seedSettings', fn: () => this.seedSettings() },
+      { name: 'seedLayouts', fn: () => this.seedLayouts() },
+      { name: 'seedVisibility', fn: () => this.seedVisibility() },
+    ];
+    for (const s of seeders) {
+      try {
+        await s.fn();
+      } catch (err) {
+        this.logger.warn(
+          `${s.name} failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
     }
+  }
+
+  // ── Default seeders (Phase 277 — idempotent, never overwrite admin edits) ──
+  /** Phase 277 — Default dark theme matching Flutter `AppColors`. Inserted only
+   * if the `app_themes` table is empty so admin edits to the active theme are
+   * preserved across boots. */
+  private async seedTheme(): Promise<void> {
+    const count = await this.themeRepo.count();
+    if (count > 0) return;
+    const tokens = {
+      colors: {
+        primary: '#4ADE80',
+        primaryDark: '#22C55E',
+        surface: '#161B22',
+        background: '#0C1117',
+        textPrimary: '#FFFFFF',
+        textSecondary: '#9CA3AF',
+        accent: '#FCD34D',
+        error: '#EF4444',
+      },
+      // Flat aliases — the live preview / builder read these directly.
+      primary: '#4ADE80',
+      primaryDark: '#22C55E',
+      surface: '#161B22',
+      background: '#0C1117',
+      text: '#FFFFFF',
+      textMuted: '#9CA3AF',
+      accent: '#FCD34D',
+      error: '#EF4444',
+      typography: {
+        fontFamily: 'Inter',
+        sizes: { xs: 11, sm: 12, md: 14, lg: 16, xl: 20, '2xl': 24 },
+      },
+      font: 'Inter',
+      fontSizeXs: 11,
+      fontSizeSm: 12,
+      fontSizeMd: 14,
+      fontSizeLg: 16,
+      fontSizeXl: 20,
+      radius: { sm: 8, md: 12, lg: 20, xl: 28 },
+      radiusSm: 8,
+      radiusMd: 12,
+      radiusLg: 20,
+      radiusXl: 28,
+      motion: { fast: 120, normal: 200, slow: 400, curve: 'easeOut' },
+      motionFast: 120,
+      motionNormal: 200,
+      motionSlow: 400,
+      curve: 'easeOut',
+      mode: 'dark',
+    };
+    const entity = this.themeRepo.create({
+      name: 'Yapgitsin Default (Dark)',
+      isActive: true,
+      tokens: JSON.stringify(tokens),
+    });
+    await this.themeRepo.save(entity);
+    this.logger.log('Seeded default theme (Yapgitsin Default (Dark))');
+  }
+
+  /** Phase 277 — Default branding row (`id='default'`). Skipped if it already
+   * exists, leaving uploaded logo / icon / splash URLs untouched. */
+  private async seedBranding(): Promise<void> {
+    const existing = await this.brandingRepo.findOne({ where: { id: 'default' } });
+    if (existing) return;
+    const entity = this.brandingRepo.create({
+      id: 'default',
+      appTitle: 'Yapgitsin',
+      logoUrl: null,
+      iconUrl: null,
+      splashUrl: null,
+    });
+    await this.brandingRepo.save(entity);
+    this.logger.log('Seeded default branding');
+  }
+
+  /** Phase 277 — Baseline `app_settings` rows. Inserts only missing keys so
+   * any admin override (e.g. tweaked `offerTokenCost`) is preserved. */
+  private async seedSettings(): Promise<void> {
+    const defaults: Array<{ key: string; value: string; type: string; group: string }> = [
+      { key: 'appTitle', value: 'Yapgitsin', type: 'string', group: 'general' },
+      { key: 'supportPhone', value: '+905550000099', type: 'string', group: 'support' },
+      { key: 'supportEmail', value: 'destek@yapgitsin.tr', type: 'string', group: 'support' },
+      { key: 'minOfferPrice', value: '50', type: 'number', group: 'offers' },
+      { key: 'maxOfferPrice', value: '50000', type: 'number', group: 'offers' },
+      { key: 'offerTokenCost', value: '5', type: 'number', group: 'tokens' },
+      { key: 'initialTokenBalance', value: '100', type: 'number', group: 'tokens' },
+      { key: 'allowGuestBrowsing', value: 'true', type: 'boolean', group: 'access' },
+      { key: 'maintenanceMode', value: 'false', type: 'boolean', group: 'system' },
+      { key: 'featuredJobsCount', value: '3', type: 'number', group: 'jobs' },
+    ];
+    const existing = await this.settingRepo.find({ select: ['key'] });
+    const existingKeys = new Set(existing.map((s) => s.key));
+    const missing = defaults.filter((d) => !existingKeys.has(d.key));
+    if (!missing.length) return;
+    const rows = missing.map((d) =>
+      this.settingRepo.create({ ...d, updatedBy: null }),
+    );
+    await this.settingRepo.save(rows);
+    this.logger.log(`Seeded ${rows.length} app settings`);
+  }
+
+  /** Phase 277 — Default layouts for `main_shell`, `bottom_nav`, `profile_card`.
+   * A screen is seeded only if it has zero rows, so reorderings via the
+   * builder are never clobbered. */
+  private async seedLayouts(): Promise<void> {
+    const navItems = [
+      { key: 'home', sortOrder: 0, props: { type: 'tab', icon: 'home', label: 'Yaptır' } },
+      { key: 'yapgitsin', sortOrder: 1, props: { type: 'tab', icon: 'search', label: 'Yapgitsin' } },
+      { key: 'harita', sortOrder: 2, props: { type: 'tab', icon: 'map', label: 'Harita' } },
+      { key: 'iserim', sortOrder: 3, props: { type: 'tab', icon: 'work', label: 'İşlerim' } },
+      { key: 'profil', sortOrder: 4, props: { type: 'tab', icon: 'person', label: 'Profil' } },
+    ];
+    const profileCardItems = [
+      { key: 'avatar', sortOrder: 0, props: { type: 'field', label: 'Avatar' } },
+      { key: 'fullName', sortOrder: 1, props: { type: 'field', label: 'İsim' } },
+      { key: 'verifiedBadge', sortOrder: 2, props: { type: 'field', label: 'Doğrulanmış' } },
+      { key: 'premiumLabel', sortOrder: 3, props: { type: 'field', label: 'Premium' } },
+      { key: 'averageRating', sortOrder: 4, props: { type: 'field', label: 'Puan' } },
+      { key: 'reviewsCount', sortOrder: 5, props: { type: 'field', label: 'Yorumlar' } },
+      { key: 'jobsCount', sortOrder: 6, props: { type: 'field', label: 'İşler' } },
+      { key: 'completionRate', sortOrder: 7, props: { type: 'field', label: 'Tamamlama' } },
+      { key: 'bio', sortOrder: 8, props: { type: 'field', label: 'Bio' } },
+      { key: 'categories', sortOrder: 9, props: { type: 'field', label: 'Kategoriler' } },
+    ];
+    type LayoutSeedItem = {
+      key: string;
+      sortOrder: number;
+      props: Record<string, unknown>;
+    };
+    const screensToSeed: Array<{ screen: string; items: LayoutSeedItem[] }> = [
+      { screen: 'main_shell', items: navItems },
+      { screen: 'bottom_nav', items: navItems },
+      { screen: 'profile_card', items: profileCardItems },
+    ];
+    for (const { screen, items } of screensToSeed) {
+      const have = await this.layoutRepo.count({ where: { screen } });
+      if (have > 0) continue;
+      const rows = items.map((it) =>
+        this.layoutRepo.create({
+          screen,
+          componentKey: it.key,
+          sortOrder: it.sortOrder,
+          visible: true,
+          props: JSON.stringify(it.props),
+        }),
+      );
+      await this.layoutRepo.save(rows);
+      this.logger.log(`Seeded ${rows.length} layout items for "${screen}"`);
+    }
+  }
+
+  /** Phase 277 — Sample visibility rules. Each moduleKey is upserted only if
+   * absent, so production overrides survive. */
+  private async seedVisibility(): Promise<void> {
+    const defaults: Array<{
+      moduleKey: string;
+      active: boolean;
+      roles: string[] | null;
+    }> = [
+      { moduleKey: 'module:premium_features', active: true, roles: ['admin'] },
+      { moduleKey: 'module:beta_features', active: false, roles: null },
+    ];
+    const existing = await this.visibilityRepo.find({ select: ['moduleKey'] });
+    const existingKeys = new Set(existing.map((v) => v.moduleKey));
+    const missing = defaults.filter((d) => !existingKeys.has(d.moduleKey));
+    if (!missing.length) return;
+    const rows = missing.map((d) =>
+      this.visibilityRepo.create({
+        moduleKey: d.moduleKey,
+        active: d.active,
+        roles: d.roles,
+        devices: null,
+        activeFrom: null,
+        activeUntil: null,
+      }),
+    );
+    await this.visibilityRepo.save(rows);
+    this.logger.log(`Seeded ${rows.length} visibility rules`);
   }
 
   /**
