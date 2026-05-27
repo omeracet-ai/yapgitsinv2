@@ -12,7 +12,6 @@ import '../../../categories/data/category_repository.dart';
 import '../../../notifications/data/unread_count_provider.dart';
 import '../../../notifications/presentation/screens/notification_screen.dart';
 import '../../data/job_filter.dart';
-import '../../data/offer_repository.dart';
 import '../../widgets/job_filter_sheet.dart';
 import '../providers/job_provider.dart';
 import 'job_detail_screen.dart';

@@ -2,14 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../../core/widgets/notification_bell.dart';
 import '../../../../features/categories/data/category_repository.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/job_filter.dart';
 import '../../widgets/job_filter_sheet.dart';
 import '../../widgets/save_job_button.dart';
