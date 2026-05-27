@@ -859,7 +859,7 @@ export class AdminService {
       const ops: Array<[string, string, unknown[]]> = [
         ['availability_slots', 'DELETE FROM availability_slots WHERE userId = ?', [id]],
         ['availability_blackouts', 'DELETE FROM availability_blackouts WHERE userId = ?', [id]],
-        ['booking_escrows', 'DELETE FROM booking_escrows WHERE customerId = ? OR workerId = ? OR taskerId = ?', [id, id, id]],
+        ['booking_escrows', 'DELETE FROM booking_escrows WHERE customerId = ? OR workerId = ?', [id, id]],
         ['bookings', 'DELETE FROM bookings WHERE customerId = ? OR workerId = ?', [id, id]],
         ['email_verification_tokens', 'DELETE FROM email_verification_tokens WHERE userId = ?', [id]],
         ['favorite_providers', 'DELETE FROM favorite_providers WHERE userId = ? OR providerId = ?', [id, id]],
