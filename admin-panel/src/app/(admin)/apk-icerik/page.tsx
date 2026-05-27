@@ -931,13 +931,80 @@ function PagesTab({ flash }: { flash: (k: "ok" | "err", t: string) => void }) {
       ) : filtered.length === 0 ? (
         <div className="py-12 text-center text-slate-500 text-xs">Sayfa bulunamadı</div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          {filtered.map((s) => (
-            <ScreenCard key={s.key} screen={s}
-              onToggle={() => void toggleVisible(s)}
-              onEdit={() => { setEditing(s); setAdding(false); }}
-              onDelete={() => void onDelete(s)} />
-          ))}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Left: 2/3 list — profile-card style row layout */}
+          <div className="lg:col-span-2 space-y-2 max-h-[70vh] overflow-y-auto pr-1">
+            {filtered.map((s) => (
+              <div key={s.key}
+                className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 hover:bg-white/10 transition">
+                {/* Toggle */}
+                <label className="inline-flex items-center cursor-pointer shrink-0">
+                  <input type="checkbox" className="sr-only peer" checked={s.visible}
+                    onChange={() => void toggleVisible(s)} />
+                  <div className="w-9 h-5 bg-slate-700 peer-checked:bg-emerald-500 rounded-full relative transition-colors">
+                    <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${s.visible ? "translate-x-4" : ""}`} />
+                  </div>
+                </label>
+
+                {/* Icon */}
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-emerald-300 text-lg" aria-hidden>
+                    {s.iconName ?? "widgets"}
+                  </span>
+                </div>
+
+                {/* Name + key/category */}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-white truncate">{s.name}</div>
+                  <div className="text-[11px] text-slate-400 font-mono truncate">
+                    {s.key}{s.category ? ` · ${s.category}` : ""}
+                  </div>
+                </div>
+
+                {/* Sort order */}
+                <div className="text-[10px] text-slate-500 font-mono w-8 text-right">#{s.sortOrder}</div>
+
+                {/* Actions */}
+                <button onClick={() => { setEditing(s); setAdding(false); }}
+                  className="text-xs px-2 py-1 rounded bg-white/5 hover:bg-white/15 border border-white/10 text-slate-300">
+                  ✏️
+                </button>
+                <button onClick={() => void onDelete(s)}
+                  className="text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300">
+                  🗑️
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Right: 1/3 preview — mobile mockup with active screens as menu items */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-2">
+              <div className="bg-slate-900 border border-white/10 rounded-2xl p-4">
+                <div className="text-[11px] text-slate-400 mb-2">📱 Aktif Sayfalar Önizleme</div>
+                <div className="bg-gradient-to-br from-slate-950 to-slate-900 rounded-xl border border-white/5 p-3 space-y-1.5 max-h-[60vh] overflow-y-auto">
+                  {filtered.filter((s) => s.visible).length === 0 ? (
+                    <div className="py-6 text-center text-slate-600 text-[11px]">
+                      Hiç aktif sayfa yok
+                    </div>
+                  ) : (
+                    filtered.filter((s) => s.visible).sort((a, b) => a.sortOrder - b.sortOrder).map((s) => (
+                      <div key={s.key}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white/5 border border-white/5">
+                        <span className="material-symbols-outlined text-emerald-300 text-base">
+                          {s.iconName ?? "widgets"}
+                        </span>
+                        <span className="text-[12px] text-slate-200 truncate">{s.name}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="text-[10px] text-slate-500 mt-2 text-center">
+                  {filtered.filter((s) => s.visible).length} aktif / {filtered.length} toplam
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
