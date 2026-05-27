@@ -973,4 +973,51 @@ export class AdminController {
     );
     return result;
   }
+
+  // ── Backup Manager ─────────────────────────────────────────────────────
+  // SQLite veritabanı yedekleme. Restore endpoint YOK (riskli — manuel
+  // SQLite replace gerekir). Audit log her create/delete için yazılır.
+
+  @Post('backup/create')
+  async createBackup(@Req() req: Request & { user: AuthUser }) {
+    const out = await this.adminService.createBackup();
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'backup.create',
+      'backup',
+      out.filename,
+      { size: out.size, createdAt: out.createdAt },
+    );
+    return out;
+  }
+
+  @Get('backup/list')
+  listBackups() {
+    return this.adminService.listBackups();
+  }
+
+  @Get('backup/download/:filename')
+  downloadBackup(
+    @Param('filename') filename: string,
+    @Res() res: Response,
+  ) {
+    const safePath = this.adminService.resolveBackupPath(filename);
+    return res.download(safePath);
+  }
+
+  @Delete('backup/:filename')
+  async deleteBackup(
+    @Param('filename') filename: string,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    const out = await this.adminService.deleteBackup(filename);
+    await this.adminAuditService.logAction(
+      req.user.id,
+      'backup.delete',
+      'backup',
+      filename,
+      {},
+    );
+    return out;
+  }
 }

@@ -4,6 +4,8 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { SuspendUserDto } from './dto/suspend-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -1184,5 +1186,102 @@ export class AdminService {
     user.longitude = longitude;
     await this.usersRepo.save(user);
     return { id };
+  }
+
+  // ── Backup Manager ─────────────────────────────────────────────────────
+  // SQLite DB dosyasını backups/ altına kopyalar. Restore endpoint YOK —
+  // manuel SQLite replace gerekir (riskli).
+  private static readonly BACKUP_FILENAME_RE = /^backup-[\d-]+\.sqlite$/;
+
+  private getBackupDir(): string {
+    const dir = path.join(process.cwd(), 'backups');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    return dir;
+  }
+
+  private getDbPath(): string {
+    // Aynı resolve mantığı app.module/data-source ile uyumlu —
+    // SQLite dosyası process cwd'ye göre `hizmet_db.sqlite`.
+    const fromEnv = process.env.DB_DATABASE || process.env.DB_PATH;
+    if (fromEnv && fs.existsSync(fromEnv)) return fromEnv;
+    const candidate = path.join(process.cwd(), 'hizmet_db.sqlite');
+    return candidate;
+  }
+
+  private sanitizeBackupName(name: string): string {
+    const base = path.basename(name);
+    if (!AdminService.BACKUP_FILENAME_RE.test(base)) {
+      throw new BadRequestException('Geçersiz yedek adı');
+    }
+    return base;
+  }
+
+  async createBackup(): Promise<{
+    filename: string;
+    size: number;
+    path: string;
+    createdAt: string;
+  }> {
+    const dbPath = this.getDbPath();
+    if (!fs.existsSync(dbPath)) {
+      throw new NotFoundException('Veritabanı dosyası bulunamadı');
+    }
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const stamp =
+      `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}` +
+      `-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const filename = `backup-${stamp}.sqlite`;
+    const dir = this.getBackupDir();
+    const dest = path.join(dir, filename);
+    fs.copyFileSync(dbPath, dest);
+    const stat = fs.statSync(dest);
+    return {
+      filename,
+      size: stat.size,
+      path: dest,
+      createdAt: stat.mtime.toISOString(),
+    };
+  }
+
+  async listBackups(): Promise<
+    Array<{ filename: string; size: number; createdAt: string }>
+  > {
+    const dir = this.getBackupDir();
+    const entries = fs.readdirSync(dir);
+    const rows: Array<{ filename: string; size: number; createdAt: string }> =
+      [];
+    for (const name of entries) {
+      if (!AdminService.BACKUP_FILENAME_RE.test(name)) continue;
+      try {
+        const stat = fs.statSync(path.join(dir, name));
+        if (!stat.isFile()) continue;
+        rows.push({
+          filename: name,
+          size: stat.size,
+          createdAt: stat.mtime.toISOString(),
+        });
+      } catch {
+        // tek dosya bozuksa atla
+      }
+    }
+    rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return rows;
+  }
+
+  resolveBackupPath(filename: string): string {
+    const safe = this.sanitizeBackupName(filename);
+    const dir = this.getBackupDir();
+    const full = path.join(dir, safe);
+    if (!fs.existsSync(full)) {
+      throw new NotFoundException('Yedek bulunamadı');
+    }
+    return full;
+  }
+
+  async deleteBackup(filename: string): Promise<{ deleted: true }> {
+    const full = this.resolveBackupPath(filename);
+    fs.unlinkSync(full);
+    return { deleted: true };
   }
 }

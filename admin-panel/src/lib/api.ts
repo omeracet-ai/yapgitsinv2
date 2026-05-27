@@ -582,6 +582,49 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  // ── Backup Manager ─────────────────────────────────────────────────────
+  createBackup: () =>
+    request<{ filename: string; size: number; path: string; createdAt: string }>(
+      '/admin/backup/create',
+      { method: 'POST' },
+    ),
+  listBackups: () =>
+    request<Array<{ filename: string; size: number; createdAt: string }>>(
+      '/admin/backup/list',
+    ),
+  /**
+   * Triggers a browser download for the given backup file. Uses fetch + Blob
+   * so we can attach the admin Bearer header (anchor href cannot send it).
+   */
+  downloadBackup: async (filename: string): Promise<void> => {
+    const token = getToken();
+    const res = await fetch(
+      `${BASE}/admin/backup/download/${encodeURIComponent(filename)}`,
+      {
+        cache: 'no-store',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      },
+    );
+    if (!res.ok) {
+      const text = await res.text().catch(() => res.statusText);
+      throw new Error(`Download ${res.status}: ${text}`);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
+  deleteBackup: (filename: string) =>
+    request<{ deleted: true }>(
+      `/admin/backup/${encodeURIComponent(filename)}`,
+      { method: 'DELETE' },
+    ),
+
   // Phase 162: Chat & Messaging
   sendMessage: (to: string, message: string, jobLeadId?: string) =>
     request<ChatMessageDto>('/messages', {

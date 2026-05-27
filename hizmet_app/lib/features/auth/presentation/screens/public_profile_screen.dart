@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/app_config/app_config_provider.dart';
+import '../../../../core/app_config/app_config_visibility.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -95,6 +97,23 @@ class _ProfileView extends ConsumerWidget {
     final isWorker        = workerCats.isNotEmpty;
     // Phase 211 — slot-based availability
     final availSlotsAsync = ref.watch(publicAvailabilitySlotsProvider(userId));
+
+    // Admin paneldeki /profile-card ekranından gelen field visibility
+    // konfigürasyonu. Kural yoksa varsayılan true (geriye dönük uyumlu).
+    final appCfg = ref.watch(appConfigSyncProvider);
+    final showRating      = isProfileFieldVisible('averageRating',   appCfg);
+    final showReviews     = isProfileFieldVisible('reviewsCount',    appCfg);
+    final showJobs        = isProfileFieldVisible('jobsCount',       appCfg);
+    final showCompletion  = isProfileFieldVisible('completionRate',  appCfg);
+    final showReputation  = isProfileFieldVisible('reputationScore', appCfg);
+    final showBadges      = isProfileFieldVisible('badges',          appCfg);
+    final showVerified    = isProfileFieldVisible('verifiedBadge',   appCfg);
+    // Phase 271+: workerSkills bu ekranda ayrı bir blok değil; ileride
+    // eklendiğinde `isProfileFieldVisible('workerSkills', appCfg)` ile
+    // sarmalanmalı. Şimdilik unused warning'i önlemek için no-op.
+    // ignore: unused_local_variable
+    final showSkills      = isProfileFieldVisible('workerSkills',    appCfg);
+    final showPortfolio   = isProfileFieldVisible('portfolioPhotos', appCfg);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -201,7 +220,7 @@ class _ProfileView extends ConsumerWidget {
                                   : null,
                             ),
                           ),
-                          if (verified)
+                          if (verified && showVerified)
                             Positioned(
                               bottom: 2,
                               right: 2,
@@ -225,7 +244,7 @@ class _ProfileView extends ConsumerWidget {
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white)),
-                          if (verified) ...[
+                          if (verified && showVerified) ...[
                             const SizedBox(width: 6),
                             const Icon(Icons.verified_rounded,
                                 color: Colors.white, size: 18),
@@ -261,50 +280,60 @@ class _ProfileView extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── İstatistikler ────────────────────────────────────────
-                Container(color: AppColors.surface,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Row(
-                    children: [
-                      _bigStat(
-                        label: rating > 0 ? rating.toStringAsFixed(1) : '—',
-                        sub: '$reviews yorum',
-                        icon: Icons.star_rounded,
-                        iconColor: Colors.amber,
-                      ),
-                      _divider(),
-                      _bigStat(
-                        label: '$reputation',
-                        sub: 'Puan',
-                        icon: Icons.emoji_events_rounded,
-                        iconColor: AppColors.accent,
-                      ),
-                      _divider(),
-                      if (isWorker)
-                        _bigStat(
-                          label: totalWorker > 0
-                              ? '%${(successWorker / totalWorker * 100).round()}'
-                              : '—',
-                          sub: 'Tamamlama',
-                          icon: Icons.check_circle_outline_rounded,
-                          iconColor: AppColors.success,
-                        )
-                      else
-                        _bigStat(
-                          label: '$totalCustomer',
-                          sub: 'İş ilanı',
-                          icon: Icons.work_outline_rounded,
-                          iconColor: AppColors.primary,
-                        ),
-                    ],
-                  ),
-                ),
+                // Admin /profile-card ekranı her bir kartı tek tek
+                // gizleyebilir. Tüm kartlar gizliyse Container'ı hiç çizme.
+                Builder(builder: (_) {
+                  final stats = <Widget>[];
+                  if (showRating) {
+                    stats.add(_bigStat(
+                      label: rating > 0 ? rating.toStringAsFixed(1) : '—',
+                      sub: showReviews ? '$reviews yorum' : 'Puan',
+                      icon: Icons.star_rounded,
+                      iconColor: Colors.amber,
+                    ));
+                  }
+                  if (showReputation) {
+                    if (stats.isNotEmpty) stats.add(_divider());
+                    stats.add(_bigStat(
+                      label: '$reputation',
+                      sub: 'Puan',
+                      icon: Icons.emoji_events_rounded,
+                      iconColor: AppColors.accent,
+                    ));
+                  }
+                  if (isWorker && showCompletion) {
+                    if (stats.isNotEmpty) stats.add(_divider());
+                    stats.add(_bigStat(
+                      label: totalWorker > 0
+                          ? '%${(successWorker / totalWorker * 100).round()}'
+                          : '—',
+                      sub: 'Tamamlama',
+                      icon: Icons.check_circle_outline_rounded,
+                      iconColor: AppColors.success,
+                    ));
+                  } else if (!isWorker && showJobs) {
+                    if (stats.isNotEmpty) stats.add(_divider());
+                    stats.add(_bigStat(
+                      label: '$totalCustomer',
+                      sub: 'İş ilanı',
+                      icon: Icons.work_outline_rounded,
+                      iconColor: AppColors.primary,
+                    ));
+                  }
+                  if (stats.isEmpty) return const SizedBox.shrink();
+                  return Container(
+                    color: AppColors.surface,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Row(children: stats),
+                  );
+                }),
 
                 // Eski "Teklif Yap" CTA Phase 265e'de tek "Bu Ustaya Teklif
                 // Ver" butonuyla birleştirildi (aşağıda).
                 const SizedBox(height: 8),
 
                 // ── Rozetler ─────────────────────────────────────────────
-                if (badges != null && badges.isNotEmpty) ...[
+                if (showBadges && badges != null && badges.isNotEmpty) ...[
                   _section(
                     title: 'Rozetler',
                     child: BadgeRow(badges: badges),
@@ -484,9 +513,10 @@ class _ProfileView extends ConsumerWidget {
                 ],
 
                 // ── Portfolyo ────────────────────────────────────────────
-                if (portfolioPhotos.isNotEmpty ||
-                    portfolioVideos.isNotEmpty ||
-                    isSelf) ...[
+                if (showPortfolio &&
+                    (portfolioPhotos.isNotEmpty ||
+                        portfolioVideos.isNotEmpty ||
+                        isSelf)) ...[
                   _section(
                     title: 'Portfolyo',
                     child: PortfolioGallery(
@@ -500,7 +530,7 @@ class _ProfileView extends ConsumerWidget {
                 ],
 
                 // ── Geçmiş fotoğraflar ────────────────────────────────────
-                if (pastPhotos.isNotEmpty) ...[
+                if (showPortfolio && pastPhotos.isNotEmpty) ...[
                   _section(
                     title: 'Geçmiş İşler',
                     child: SizedBox(

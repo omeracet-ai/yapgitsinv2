@@ -48,6 +48,8 @@ const NAV = [
   { href: "/apk-tasarim",     label: "🎨 APK Tasarım",  icon: "📱" },
   { href: "/apk-icerik",      label: "📦 APK İçerik",   icon: "📱" },
   { href: "/apk-builder",     label: "🧩 APK Builder",  icon: "📱" },
+  { href: "/profile-card",    label: "👤 Profil Kartı", icon: "👤" },
+  { href: "/backup",          label: "💾 Yedek Yönetimi", icon: "💾" },
   { href: "/ayarlar",         label: "Ayarlar",        icon: "⚙️" },
 ];
 
