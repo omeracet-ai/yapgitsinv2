@@ -139,6 +139,40 @@ class ConfirmationRepository {
     }
   }
 
+  /// Phase 267 — plain confirm (no QR, no photo, no GPS gating). Returns
+  /// `{ side, bothApproved, graceEndsAt, confirmationStatus }`. When both
+  /// sides have confirmed, server transitions to PENDING_GRACE.
+  Future<Map<String, dynamic>> confirmPlain({
+    required String escrowId,
+    required String side, // accepted but server resolves from JWT
+  }) async {
+    try {
+      final res = await _dio.post(
+        '${_base(escrowId)}/confirm-plain',
+        data: <String, dynamic>{},
+      );
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      throw Exception(_msg(e, 'Onay gönderilemedi'));
+    }
+  }
+
+  /// Phase 267 — cancel during the 1hr grace window. Either party may invoke.
+  Future<Map<String, dynamic>> cancelGrace({
+    required String escrowId,
+    String? reason,
+  }) async {
+    try {
+      final res = await _dio.post(
+        '${_base(escrowId)}/cancel-grace',
+        data: reason == null ? <String, dynamic>{} : {'signature': reason},
+      );
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      throw Exception(_msg(e, 'İptal başarısız'));
+    }
+  }
+
   Future<ConfirmResult> confirm({
     required String escrowId,
     String? signature,

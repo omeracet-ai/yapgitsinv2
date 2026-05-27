@@ -111,6 +111,13 @@ function buildV2(escrow: PaymentEscrow, photos: any[] = []): Harness {
       key === 'CONFIRMATION_V2_ENABLED' ? 'true' : undefined,
     ),
   };
+  // Phase 267 — platform settings stub (defaults used in tests).
+  const platformSettings = {
+    getEscrowGpsRadiusM: jest.fn(async () => 1000),
+    getEscrowGpsRequired: jest.fn(async () => false),
+    getEscrowGraceMs: jest.fn(async () => 60 * 60 * 1000),
+    getEscrowDeadlineMs: jest.fn(async () => 72 * 60 * 60 * 1000),
+  };
 
   const service = new EscrowConfirmationService(
     escrowRepo as any,
@@ -120,6 +127,7 @@ function buildV2(escrow: PaymentEscrow, photos: any[] = []): Harness {
     escrowService as any,
     notificationsService as any,
     config as any,
+    platformSettings as any,
   );
 
   return {

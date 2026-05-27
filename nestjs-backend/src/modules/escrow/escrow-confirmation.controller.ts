@@ -229,4 +229,23 @@ export class EscrowConfirmationController {
   ) {
     return this.svc.confirm(id, req.user.id);
   }
+
+  // Phase 267 — Plain confirm + grace cancel (QR + photos + GPS bypassed).
+  @Post('confirm-plain')
+  confirmPlain(
+    @Param('id') id: string,
+    @Body() _dto: ConfirmDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.svc.confirmPlain(id, req.user.id);
+  }
+
+  @Post('cancel-grace')
+  cancelGrace(
+    @Param('id') id: string,
+    @Body() dto: ConfirmDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.svc.cancelGrace(id, req.user.id, dto?.signature);
+  }
 }

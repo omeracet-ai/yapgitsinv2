@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../auth/presentation/providers/auth_provider.dart';
@@ -8,22 +8,21 @@ import '../../../data/escrow_repository.dart';
 import '../../data/confirmation_repository.dart';
 import '../../data/confirmation_state.dart';
 import '../../providers/confirmation_providers.dart';
-import '../widgets/confirmation_progress.dart';
-import '../widgets/photo_capture_step.dart';
+// NOTE (Phase 267): QR display/scanner widgets retained on disk for backward
+// compat but no longer wired into the flow. The flag below restores them.
+// ignore: unused_import
 import '../widgets/qr_display_widget.dart';
+// ignore: unused_import
 import '../widgets/qr_scanner_screen.dart';
-import '../widgets/video_capture_step.dart';
 
-/// Phase 254 / v2 — Ödeme öncesi karşılıklı onay flow ekranı.
+/// Phase 267 — Plain-confirm flow with 1hr grace window.
 ///
-/// v2 sırası (foto → onay → QR/ödeme):
-///   - Step 0: (worker) Onay sürecini başlat → /start
-///   - Step 1: Foto çek (before + after) — her iki taraf
-///   - Step 2: "Onayla" → /approve (release tetiklemez)
-///   - Step 3: QR & Ödeme — her iki taraf onayladıktan sonra:
-///       • customer (payer) → QR oluşturur (/qr)
-///       • worker → QR'ı okutur (/scan) → ödeme serbest bırakılır
-///   - Step 4: Success — escrow released
+/// Akış:
+///   - Step 0: Her iki taraf "Onayla" butonuna basar (plain, GPS+QR yok).
+///   - Step 1: Her iki taraf onayladığında PENDING_GRACE — 1 saatlik countdown
+///     başlar. Bu süre içinde her iki taraf "İptal Et" basabilir.
+///   - Step 2: Grace bittiğinde sunucu cron'u COMPLETED'a flipler + ödeme
+///     serbest bırakılır.
 class ConfirmationFlowScreen extends ConsumerStatefulWidget {
   final String escrowId;
 
@@ -38,12 +37,13 @@ class _ConfirmationFlowScreenState
     extends ConsumerState<ConfirmationFlowScreen> {
   String? _mySide; // worker | customer
   bool _resolving = true;
-  bool _videoSkipped = false;
   String? _error;
+  bool _submitting = false;
 
-  /// QR ödeme onay akışında video adımı gizlendi (restorable: true yap).
-  /// Kod ve VideoCaptureStep korundu; akış foto sonrası direkt onaya geçer.
-  final bool _escrowVideoEnabled = false;
+  /// Phase 267 — QR akışını gizleyen feature flag. true yapılırsa eski
+  /// QR display + scanner butonları geri gelir. Şu an plain-confirm aktif.
+  // ignore: unused_field
+  static const bool kEnableQrFlow = false;
 
   @override
   void initState() {
@@ -95,109 +95,22 @@ class _ConfirmationFlowScreenState
     }
   }
 
-  Future<Position?> _getPosition() async {
-    try {
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-      }
-      if (perm == LocationPermission.denied ||
-          perm == LocationPermission.deniedForever) {
-        return null;
-      }
-      return await Geolocator.getCurrentPosition(
-        // ignore: deprecated_member_use
-        desiredAccuracy: LocationAccuracy.high,
-      ).timeout(const Duration(seconds: 8));
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<void> _startProcess() async {
-    final pos = await _getPosition();
-    if (pos == null) {
-      _toast('Konum izni gerekli');
-      return;
-    }
-    try {
-      await ref.read(confirmationRepositoryProvider).start(
-            escrowId: widget.escrowId,
-            lat: pos.latitude,
-            lng: pos.longitude,
-          );
-      ref
-          .read(confirmationStateProvider(widget.escrowId).notifier)
-          .refresh();
-    } catch (e) {
-      _toast(e.toString().replaceFirst('Exception: ', ''));
-    }
-  }
-
-  /// Customer (payer) QR oluşturur — GPS ile birlikte gönderir.
-  Future<void> _refreshQr() async {
-    final pos = await _getPosition();
-    try {
-      await ref.read(confirmationRepositoryProvider).getQr(
-            widget.escrowId,
-            lat: pos?.latitude,
-            lng: pos?.longitude,
-          );
-      ref
-          .read(confirmationStateProvider(widget.escrowId).notifier)
-          .refresh();
-    } catch (e) {
-      _toast(e.toString().replaceFirst('Exception: ', ''));
-    }
-  }
-
-  Future<void> _scanQr() async {
-    final scanned = await Navigator.of(context).push<String>(
-      MaterialPageRoute(builder: (_) => const QrScannerScreen()),
-    );
-    if (scanned == null || scanned.isEmpty) return;
-    final pos = await _getPosition();
-    if (pos == null) {
-      _toast('Konum izni gerekli');
-      return;
-    }
-    try {
-      final res = await ref.read(confirmationRepositoryProvider).scan(
-            escrowId: widget.escrowId,
-            qrToken: scanned,
-            lat: pos.latitude,
-            lng: pos.longitude,
-          );
-      if (!res.ok) {
-        _toast(res.gpsMatch
-            ? 'QR doğrulanamadı'
-            : 'Konum eşleşmedi (${res.distanceM?.toStringAsFixed(0)}m uzak)');
-        return;
-      }
-      // v2: geçerli scan ödemeyi serbest bırakır.
-      _toast('✅ QR doğrulandı, ödeme serbest bırakıldı');
-      ref
-          .read(confirmationStateProvider(widget.escrowId).notifier)
-          .refresh();
-    } catch (e) {
-      _toast(e.toString().replaceFirst('Exception: ', ''));
-    }
-  }
-
-  /// v2: kendi onayını gönder (release tetiklemez). Her iki taraf onaylayınca
-  /// QR & ödeme adımı açılır.
-  Future<void> _confirm() async {
+  /// Plain confirm — QR/GPS yok, sadece auth.
+  Future<void> _confirmPlain() async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Onayla'),
         content: const Text(
-            'İşi onaylıyorsunuz. Onayladığınızda karşı tarafın onayı '
-            'beklenir; her iki taraf onaylayınca QR ile ödeme adımı açılır.'),
+          'Hizmetin tamamlandığını onaylıyorsunuz. Her iki taraf onayladıktan '
+          'sonra 1 saatlik bekleme süreci başlar; bu süre içinde iptal '
+          'edebilirsiniz.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('İptal')),
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('İptal'),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Onayla'),
@@ -206,17 +119,62 @@ class _ConfirmationFlowScreenState
       ),
     );
     if (ok != true) return;
+    setState(() => _submitting = true);
     try {
-      await ref
-          .read(confirmationRepositoryProvider)
-          .approve(widget.escrowId);
+      await ref.read(confirmationRepositoryProvider).confirmPlain(
+            escrowId: widget.escrowId,
+            side: _mySide!,
+          );
       if (!mounted) return;
-      _toast('✅ Onayınız kaydedildi');
+      _toast('Onayınız kaydedildi');
       ref
           .read(confirmationStateProvider(widget.escrowId).notifier)
           .refresh();
     } catch (e) {
       _toast(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  /// Grace içinde iptal.
+  Future<void> _cancelGrace() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Onayı İptal Et'),
+        content: const Text(
+          'Hizmet onayını iptal etmek üzeresiniz. Bu işlem geri alınamaz; '
+          'onay süreci sıfırdan başlatılması gerekir.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Vazgeç'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('İptal Et'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => _submitting = true);
+    try {
+      await ref.read(confirmationRepositoryProvider).cancelGrace(
+            escrowId: widget.escrowId,
+          );
+      if (!mounted) return;
+      _toast('Onay iptal edildi');
+      ref
+          .read(confirmationStateProvider(widget.escrowId).notifier)
+          .refresh();
+    } catch (e) {
+      _toast(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
@@ -241,7 +199,7 @@ class _ConfirmationFlowScreenState
             child: Text(
               _error ?? 'Bu işlem için yetkili değilsiniz.',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppColors.error),
             ),
           ),
         ),
@@ -251,7 +209,7 @@ class _ConfirmationFlowScreenState
     final async = ref.watch(confirmationStateProvider(widget.escrowId));
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Karşılıklı Onay'),
+        title: const Text('Hizmet Onayı'),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
       ),
@@ -264,13 +222,12 @@ class _ConfirmationFlowScreenState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline,
-                    color: AppColors.error, size: 48),
+                Icon(Icons.error_outline, color: AppColors.error, size: 48),
                 const SizedBox(height: 12),
                 Text(
                   'Yüklenemedi: $e',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.error),
+                  style: TextStyle(color: AppColors.error),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
@@ -284,205 +241,106 @@ class _ConfirmationFlowScreenState
             ),
           ),
         ),
-        data: (st) => _buildBody(st),
-      ),
-    );
-  }
-
-  Widget _buildBody(ConfirmationState st) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ConfirmationProgress(state: st, mySide: _mySide),
-          const SizedBox(height: 16),
-          _buildStep(st),
-        ],
+        data: (st) => SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [_buildStep(st)],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildStep(ConfirmationState st) {
+    // Tamamlandı.
+    if (st.isCompleted) return _completedCard();
+    // Süresi doldu.
+    if (st.isExpired) return _expiredCard();
+    // İptal edildi.
+    if (st.isCancelled) return _cancelledCard();
+    // Grace içinde — countdown + iptal butonu.
+    if (st.isPendingGrace) return _GraceCountdownCard(
+          graceEndsAt: st.graceEndsAt,
+          onCancel: _submitting ? null : _cancelGrace,
+        );
+    // Default: plain-confirm butonu (kendi tarafın onaylamadıysa).
+    return _confirmCard(st);
+  }
+
+  Widget _confirmCard(ConfirmationState st) {
     final isWorker = _mySide == ConfirmationSide.worker;
-    final isPremium = st.tier == ConfirmationTier.premium;
-    final req = st.requirements.photosPerPhase;
-
-    // Son adım: tamamlandı (ödeme serbest bırakıldı).
-    if (st.escrowReleased) {
-      return _success();
-    }
-
-    // Step 0: süreç başlamamış — sadece worker /start çağırır.
-    // qrScannedAt boş ve deadline da boşsa "henüz başlamadı".
-    if (!st.qrScanned && st.deadline == null) {
-      if (isWorker) {
-        return _stepCard(
-          icon: Icons.handshake_rounded,
-          title: 'Onay Sürecini Başlat',
-          subtitle:
-              'İşi tamamladıktan sonra onay sürecini başlat. Ardından her iki '
-              'taraf onaylayacak; en son müşteri QR oluşturup sen okutacaksın.',
-          action: ElevatedButton.icon(
-            onPressed: _startProcess,
-            icon: const Icon(Icons.play_arrow_rounded),
-            label: const Text('Onay Sürecini Başlat'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-          ),
-        );
-      } else {
-        return _stepCard(
-          icon: Icons.hourglass_top_rounded,
-          title: 'Usta Onay Sürecini Başlatmadı',
-          subtitle:
-              'Usta iş tamamlandığında onay sürecini başlatacak. Ardından '
-              'onay adımını burada göreceksiniz.',
-        );
-      }
-    }
-
-    final bothApproved = st.workerConfirmed && st.customerConfirmed;
-
-    // Her iki taraf onaylamadıysa: önce foto, sonra onay.
-    if (!bothApproved) {
-      // Step 1: Foto adımı (önce + sonra, her iki taraf).
-      final mySidePhotos = isWorker ? st.workerPhotos : st.customerPhotos;
-      if (req > 0) {
-        if (mySidePhotos.before.length < req) {
-          return PhotoCaptureStep(
-            escrowId: widget.escrowId,
-            phase: ConfirmationPhase.before,
-            side: _mySide!,
-            requiredCount: req,
-            currentCount: mySidePhotos.before.length,
-            onUploaded: () => ref
-                .read(confirmationStateProvider(widget.escrowId).notifier)
-                .refresh(),
-          );
-        }
-        if (mySidePhotos.after.length < req) {
-          return PhotoCaptureStep(
-            escrowId: widget.escrowId,
-            phase: ConfirmationPhase.after,
-            side: _mySide!,
-            requiredCount: req,
-            currentCount: mySidePhotos.after.length,
-            onUploaded: () => ref
-                .read(confirmationStateProvider(widget.escrowId).notifier)
-                .refresh(),
-          );
-        }
-      }
-
-      // (Opsiyonel) Premium video — gizlendi (_escrowVideoEnabled=false).
-      if (_escrowVideoEnabled &&
-          isPremium &&
-          !_videoSkipped &&
-          st.videoUrl == null) {
-        return VideoCaptureStep(
-          escrowId: widget.escrowId,
-          alreadyUploaded: false,
-          onUploaded: () {
-            ref
-                .read(confirmationStateProvider(widget.escrowId).notifier)
-                .refresh();
-          },
-          onSkip: () => setState(() => _videoSkipped = true),
-        );
-      }
-
-      // Step 2: Onayla (/approve) — release tetiklemez.
-      return _buildApproveStep(st);
-    }
-
-    // Step 3: QR & Ödeme — her iki taraf onayladı.
-    //   customer (payer) → QR oluşturur; worker → QR'ı okutur (release).
-    if (isWorker) {
-      return _stepCard(
-        icon: Icons.qr_code_scanner_rounded,
-        title: 'Müşterinin QR Kodunu Okut',
-        subtitle:
-            'Müşteri ödeme QR\'ını oluşturdu. Yan yanayken kodu okut; konum '
-            'eşleşmesi doğrulanınca ödeme serbest bırakılır.',
-        action: ElevatedButton.icon(
-          onPressed: _scanQr,
-          icon: const Icon(Icons.qr_code_scanner_rounded),
-          label: const Text('QR Okut'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.black,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-          ),
-        ),
-      );
-    }
-    return _QrStepCustomer(
-      escrowId: widget.escrowId,
-      onRefresh: _refreshQr,
-    );
-  }
-
-  /// v2 onay adımı (/approve). QR'a bağlı DEĞİL; foto sonrası gelir.
-  Widget _buildApproveStep(ConfirmationState st) {
     final iConfirmed =
-        _mySide == 'worker' ? st.workerConfirmed : st.customerConfirmed;
+        isWorker ? st.workerConfirmed : st.customerConfirmed;
     final otherConfirmed =
-        _mySide == 'worker' ? st.customerConfirmed : st.workerConfirmed;
+        isWorker ? st.customerConfirmed : st.workerConfirmed;
 
-    if (iConfirmed && !otherConfirmed) {
-      return _stepCard(
-        icon: Icons.hourglass_top_rounded,
-        title: 'Karşı Tarafın Onayı Bekleniyor',
-        subtitle:
-            'Onayınız kaydedildi. Karşı taraf da onayladığında QR ile ödeme '
-            'adımı açılacak.',
-      );
-    }
+    final title = isWorker
+        ? 'Hizmeti Tamamladım'
+        : 'Hizmetin Tamamlandığını Onayla';
+    final buttonLabel = isWorker
+        ? 'Hizmeti Tamamladım Onayla'
+        : 'Hizmetin Tamamlandığını Onayla';
+    final subtitle = iConfirmed
+        ? 'Onayınız kaydedildi. Karşı tarafın onayı bekleniyor.'
+        : (otherConfirmed
+            ? 'Karşı taraf onayladı. Sizin de onayınızla 1 saatlik bekleme süreci başlar.'
+            : 'Hizmetin tamamlandığını onaylayın. Her iki taraf onayladıktan '
+                'sonra 1 saatlik bekleme süreci başlar.');
 
-    return _stepCard(
-      icon: Icons.verified_user_rounded,
-      title: 'Onayla',
-      subtitle: 'İşi onaylayın; her iki taraf onayladıktan sonra QR ile '
-          'ödeme adımı açılır.',
-      action: ElevatedButton.icon(
-        onPressed: iConfirmed ? null : _confirm,
-        icon: const Icon(Icons.check_circle_outline),
-        label: Text(iConfirmed ? 'Onaylandı' : 'Onayla'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF00C9A7),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-      ),
+    return _baseCard(
+      icon: iConfirmed
+          ? Icons.hourglass_top_rounded
+          : Icons.check_circle_outline,
+      iconColor: iConfirmed ? AppColors.warning : AppColors.success,
+      title: iConfirmed ? 'Karşı Tarafın Onayı Bekleniyor' : title,
+      subtitle: subtitle,
+      action: iConfirmed
+          ? null
+          : SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _submitting ? null : _confirmPlain,
+                icon: const Icon(Icons.verified_rounded),
+                label: Text(buttonLabel),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.success,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
     );
   }
 
-  Widget _success() {
+  Widget _completedCard() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFE3F8EE),
+        color: AppColors.success.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
       ),
       child: Column(
         children: [
-          const Icon(Icons.check_circle_rounded,
+          Icon(Icons.check_circle_rounded,
               color: AppColors.success, size: 64),
           const SizedBox(height: 12),
-          const Text(
-            'Ödeme Serbest Bırakıldı',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppColors.secondary),
+          Text(
+            'Hizmet Tamamlandı',
+            style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Karşılıklı onay tamamlandı. Ödeme ustanın hesabına aktarıldı.',
+          Text(
+            'Onay süreci tamamlandı. Ödeme ustanın hesabına aktarıldı.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.black54),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 16),
           if (_mySide == ConfirmationSide.worker)
@@ -492,7 +350,7 @@ class _ConfirmationFlowScreenState
               label: const Text('Kazançlarımı Gör'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
+                foregroundColor: Colors.white,
               ),
             )
           else
@@ -502,7 +360,7 @@ class _ConfirmationFlowScreenState
               label: const Text('Escrow Listem'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
+                foregroundColor: Colors.white,
               ),
             ),
         ],
@@ -510,8 +368,29 @@ class _ConfirmationFlowScreenState
     );
   }
 
-  Widget _stepCard({
+  Widget _cancelledCard() {
+    return _baseCard(
+      icon: Icons.cancel_outlined,
+      iconColor: AppColors.textHint,
+      title: 'İptal Edildi',
+      subtitle: 'Onay süreci iptal edildi. Yeni bir onay başlatılabilir.',
+    );
+  }
+
+  Widget _expiredCard() {
+    return _baseCard(
+      icon: Icons.timer_off_rounded,
+      iconColor: AppColors.error,
+      title: 'Zaman Aşımı',
+      subtitle:
+          'Onay süresi doldu. Destek ekibimizle iletişime geçin; durum '
+          'incelenecek.',
+    );
+  }
+
+  Widget _baseCard({
     required IconData icon,
+    Color? iconColor,
     required String title,
     required String subtitle,
     Widget? action,
@@ -527,18 +406,24 @@ class _ConfirmationFlowScreenState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
-            Icon(icon, color: AppColors.primary, size: 26),
+            Icon(icon, color: iconColor ?? AppColors.primary, size: 28),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w800, fontSize: 16),
+                style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    color: AppColors.textPrimary),
               ),
             ),
           ]),
           const SizedBox(height: 10),
-          Text(subtitle, style: const TextStyle(fontSize: 13.5, height: 1.4)),
+          Text(subtitle,
+              style: TextStyle(
+                  fontSize: 13.5,
+                  height: 1.4,
+                  color: AppColors.textSecondary)),
           if (action != null) ...[
             const SizedBox(height: 16),
             action,
@@ -549,137 +434,135 @@ class _ConfirmationFlowScreenState
   }
 }
 
-/// Customer (payer) QR step — backend'den qrToken+expiresAt çeker ve display
-/// widget'ı sarar. v2'de QR'ı ödeyen taraf (müşteri) oluşturur; usta okutur.
-class _QrStepCustomer extends ConsumerStatefulWidget {
-  final String escrowId;
-  final Future<void> Function() onRefresh;
-  const _QrStepCustomer({required this.escrowId, required this.onRefresh});
+/// Phase 267 — 1 saatlik grace countdown banner. Her iki taraf "İptal Et"
+/// basabilir; grace bittiğinde sunucu cron'u COMPLETED'a flipler.
+class _GraceCountdownCard extends StatefulWidget {
+  final DateTime? graceEndsAt;
+  final VoidCallback? onCancel;
+
+  const _GraceCountdownCard({
+    required this.graceEndsAt,
+    required this.onCancel,
+  });
 
   @override
-  ConsumerState<_QrStepCustomer> createState() => _QrStepCustomerState();
+  State<_GraceCountdownCard> createState() => _GraceCountdownCardState();
 }
 
-class _QrStepCustomerState extends ConsumerState<_QrStepCustomer> {
-  QrToken? _qr;
-  bool _loading = true;
-  String? _error;
+class _GraceCountdownCardState extends State<_GraceCountdownCard> {
+  Timer? _timer;
+  Duration _remaining = Duration.zero;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _tick();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
   }
 
-  Future<Position?> _position() async {
-    try {
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-      }
-      if (perm == LocationPermission.denied ||
-          perm == LocationPermission.deniedForever) {
-        return null;
-      }
-      return await Geolocator.getCurrentPosition(
-        // ignore: deprecated_member_use
-        desiredAccuracy: LocationAccuracy.high,
-      ).timeout(const Duration(seconds: 8));
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<void> _load() async {
+  void _tick() {
+    if (widget.graceEndsAt == null) return;
+    final diff = widget.graceEndsAt!.difference(DateTime.now());
     setState(() {
-      _loading = true;
-      _error = null;
+      _remaining = diff.isNegative ? Duration.zero : diff;
     });
-    try {
-      // Payer QR'ı kendi konumuyla oluşturur (worker scan'inde GPS eşleşmesi için).
-      final pos = await _position();
-      final qr = await ref.read(confirmationRepositoryProvider).getQr(
-            widget.escrowId,
-            lat: pos?.latitude,
-            lng: pos?.longitude,
-          );
-      if (!mounted) return;
-      setState(() {
-        _qr = qr;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
-        _loading = false;
-      });
-    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _fmt(Duration d) {
+    final mm = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final ss = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final hh = d.inHours.toString().padLeft(2, '0');
+    return '$hh:$mm:$ss';
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Padding(
-        padding: EdgeInsets.all(32),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    if (_error != null || _qr == null) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          children: [
-            const Icon(Icons.error_outline,
-                color: AppColors.error, size: 36),
-            const SizedBox(height: 8),
-            Text(_error ?? 'QR yüklenemedi',
-                style: const TextStyle(color: AppColors.error)),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () async {
-                await widget.onRefresh();
-                _load();
-              },
-              child: const Text('Yeniden Dene'),
-            ),
-          ],
-        ),
-      );
-    }
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.success.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: AppColors.success.withValues(alpha: 0.4),
+          width: 2,
+        ),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Ödeme QR\'ı — Ustanın Okutmasını Bekliyoruz',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+          Row(
+            children: [
+              Icon(Icons.check_circle_rounded,
+                  color: AppColors.success, size: 28),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Onay Tamamlandı',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      color: AppColors.textPrimary),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           Text(
-            'Yan yanayken bu kodu ustaya okutun. Usta okuttuğunda ödeme '
-            'serbest bırakılır.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+            'Bir saatlik onay süreci bekleme uyarısı. Bu süre içinde '
+            'iptal edebilirsiniz; süre sonunda hizmet otomatik tamamlanır.',
+            style: TextStyle(
+                fontSize: 13.5, height: 1.4, color: AppColors.textSecondary),
           ),
-          const SizedBox(height: 12),
-          QrDisplayWidget(
-            qrToken: _qr!.qrToken,
-            expiresAt: _qr!.expiresAt,
-            onRefresh: () async {
-              await widget.onRefresh();
-              await _load();
-            },
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              children: [
+                Text('KALAN SÜRE',
+                    style: TextStyle(
+                        fontSize: 11,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary)),
+                const SizedBox(height: 4),
+                Text(
+                  _fmt(_remaining),
+                  style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                      fontFeatures: const [FontFeature.tabularFigures()]),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: widget.onCancel,
+              icon: const Icon(Icons.close_rounded),
+              label: const Text('İptal Et'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.error,
+                side: BorderSide(color: AppColors.error.withValues(alpha: 0.6)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
           ),
         ],
       ),

@@ -476,14 +476,27 @@ class _CustomerJobCard extends ConsumerWidget {
       _ => ('Bilinmiyor', Colors.grey),
     };
 
+    // Phase 267 — completed/pending_grace job cards: yeşil 2px border + radius
+    // ve sağ üst köşede "Hizmet Tamamlandı" rozet'i.
+    final confirmationStatus = job['confirmationStatus'] as String?;
+    final isCompletedVisual = status == 'completed' ||
+        confirmationStatus == 'pending_grace' ||
+        confirmationStatus == 'completed';
+
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () => JobHistoryDialog.show(context, job),
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isCompletedVisual
+                ? AppColors.success
+                : AppColors.border,
+            width: isCompletedVisual ? 2 : 1,
+          ),
           boxShadow: [
             BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
@@ -497,33 +510,56 @@ class _CustomerJobCard extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: statusColor.withValues(alpha: 0.3), width: 1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        margin: const EdgeInsets.only(right: 5),
+                isCompletedVisual
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                            color: statusColor, shape: BoxShape.circle),
+                          color: AppColors.success,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_circle_rounded,
+                                color: Colors.white, size: 14),
+                            SizedBox(width: 4),
+                            Text('Hizmet Tamamlandı',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      )
+                    : Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: statusColor.withValues(alpha: 0.3),
+                              width: 1),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              margin: const EdgeInsets.only(right: 5),
+                              decoration: BoxDecoration(
+                                  color: statusColor, shape: BoxShape.circle),
+                            ),
+                            Text(statusLabel,
+                                style: TextStyle(
+                                    color: statusColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
-                      Text(statusLabel,
-                          style: TextStyle(
-                              color: statusColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

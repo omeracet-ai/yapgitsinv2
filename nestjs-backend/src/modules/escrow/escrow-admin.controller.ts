@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import {
+  IsBoolean,
   IsIn,
   IsNumber,
   IsOptional,
@@ -20,6 +21,7 @@ import {
   Min,
 } from 'class-validator';
 import { EscrowService } from './escrow.service';
+import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 
 class AdminResolveDto {
@@ -38,6 +40,24 @@ class AdminRefundDto {
   @IsOptional() @IsString() @MaxLength(2000) reason?: string;
 }
 
+// Phase 267 — Escrow settings DTOs.
+class EscrowSettingDto {
+  @IsIn([
+    'escrow.gps_radius_m',
+    'escrow.gps_required',
+    'escrow.grace_ms',
+    'escrow.deadline_ms',
+  ])
+  key!:
+    | 'escrow.gps_radius_m'
+    | 'escrow.gps_required'
+    | 'escrow.grace_ms'
+    | 'escrow.deadline_ms';
+
+  @IsOptional() @IsNumber() valueNumber?: number;
+  @IsOptional() @IsBoolean() valueBoolean?: boolean;
+}
+
 /**
  * Phase 169 — admin-only escrow resolution.
  * Mounted under /admin/escrow to keep semantics aligned with other admin endpoints.
@@ -45,7 +65,10 @@ class AdminRefundDto {
 @Controller('admin/escrow')
 @UseGuards(AuthGuard('jwt'))
 export class EscrowAdminController {
-  constructor(private readonly svc: EscrowService) {}
+  constructor(
+    private readonly svc: EscrowService,
+    private readonly platformSettings: PlatformSettingsService,
+  ) {}
 
   private assertAdmin(req: AuthenticatedRequest) {
     if (req.user.role !== 'admin') {
@@ -109,5 +132,69 @@ export class EscrowAdminController {
       dto?.reason,
       req.user.role,
     );
+  }
+
+  // Phase 267 — Admin-tunable escrow settings (GPS radius/required, grace, deadline).
+  @Get('settings/all')
+  async getEscrowSettings(@Request() req: AuthenticatedRequest) {
+    this.assertAdmin(req);
+    const [gpsRadiusM, gpsRequired, graceMs, deadlineMs] = await Promise.all([
+      this.platformSettings.getEscrowGpsRadiusM(),
+      this.platformSettings.getEscrowGpsRequired(),
+      this.platformSettings.getEscrowGraceMs(),
+      this.platformSettings.getEscrowDeadlineMs(),
+    ]);
+    return {
+      'escrow.gps_radius_m': gpsRadiusM,
+      'escrow.gps_required': gpsRequired,
+      'escrow.grace_ms': graceMs,
+      'escrow.deadline_ms': deadlineMs,
+    };
+  }
+
+  @Patch('settings')
+  async updateEscrowSetting(
+    @Body() dto: EscrowSettingDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    this.assertAdmin(req);
+
+    // Boolean-typed key
+    if (dto.key === 'escrow.gps_required') {
+      if (typeof dto.valueBoolean !== 'boolean') {
+        throw new ForbiddenException(
+          'valueBoolean required for escrow.gps_required',
+        );
+      }
+      await this.platformSettings.setValue(
+        dto.key,
+        dto.valueBoolean ? 'true' : 'false',
+        req.user.id,
+      );
+      return { key: dto.key, value: dto.valueBoolean };
+    }
+
+    // Numeric keys
+    if (typeof dto.valueNumber !== 'number' || !Number.isFinite(dto.valueNumber)) {
+      throw new ForbiddenException(`valueNumber required for ${dto.key}`);
+    }
+    // Sanity bounds — keep admin from typing 0 or absurd values.
+    const bounds: Record<string, [number, number]> = {
+      'escrow.gps_radius_m': [10, 50_000],
+      'escrow.grace_ms': [60_000, 24 * 60 * 60 * 1000],
+      'escrow.deadline_ms': [60 * 60 * 1000, 30 * 24 * 60 * 60 * 1000],
+    };
+    const [lo, hi] = bounds[dto.key] ?? [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
+    if (dto.valueNumber < lo || dto.valueNumber > hi) {
+      throw new ForbiddenException(
+        `${dto.key} out of bounds [${lo}, ${hi}]`,
+      );
+    }
+    await this.platformSettings.setValue(
+      dto.key,
+      String(dto.valueNumber),
+      req.user.id,
+    );
+    return { key: dto.key, value: dto.valueNumber };
   }
 }

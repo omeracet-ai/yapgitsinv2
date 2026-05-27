@@ -25,10 +25,13 @@ import {
 import { EscrowConfirmationVideo } from './escrow-confirmation-video.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
+import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
 
 const QR_TTL_MS = 5 * 60 * 1000; // 5 min QR validity
-const CONFIRMATION_DEADLINE_MS = 72 * 60 * 60 * 1000; // 72h auto-dispute
-const GPS_MATCH_RADIUS_M = 100;
+// Phase 267 — defaults migrated to PlatformSettingsService (admin-tunable).
+// These remain as fallback constants used only if settings lookup fails.
+const DEFAULT_CONFIRMATION_DEADLINE_MS = 72 * 60 * 60 * 1000;
+const DEFAULT_GPS_MATCH_RADIUS_M = 1000;
 
 export interface TierRequirements {
   photosPerPhase: number;
@@ -44,6 +47,8 @@ export interface ConfirmationStateResponse {
   qrIssuedAt: Date | null;
   qrScannedAt: Date | null;
   confirmationDeadline: Date | null;
+  // Phase 267 — exposed for plain-confirm + grace flow.
+  graceEndsAt: Date | null;
   workerLat: number | null;
   workerLng: number | null;
   customerLat: number | null;
@@ -170,6 +175,7 @@ export class EscrowConfirmationService {
     private readonly escrowService: EscrowService,
     private readonly notificationsService: NotificationsService,
     private readonly config: ConfigService,
+    private readonly platformSettings: PlatformSettingsService,
   ) {}
 
   /**
@@ -295,7 +301,10 @@ export class EscrowConfirmationService {
     // getQr() after BOTH parties approve. Legacy: worker mints the QR on start.
     const token = this.v2 ? null : mintQrToken(escrow.id, now);
     const issuedAt = this.v2 ? null : new Date(now);
-    const deadline = new Date(now + CONFIRMATION_DEADLINE_MS);
+    const deadlineMs = await this.platformSettings
+      .getEscrowDeadlineMs()
+      .catch(() => DEFAULT_CONFIRMATION_DEADLINE_MS);
+    const deadline = new Date(now + deadlineMs);
 
     escrow.confirmationStatus = ConfirmationStatus.AWAITING_CONFIRMATION;
     escrow.confirmationTier = tier;
@@ -428,6 +437,7 @@ export class EscrowConfirmationService {
       qrIssuedAt: escrow.qrIssuedAt,
       qrScannedAt: escrow.qrScannedAt,
       confirmationDeadline: escrow.confirmationDeadline,
+      graceEndsAt: escrow.graceEndsAt ?? null,
       workerLat: escrow.workerLat,
       workerLng: escrow.workerLng,
       customerLat: escrow.customerLat,
@@ -490,7 +500,13 @@ export class EscrowConfirmationService {
       const tier = escrow.confirmationTier;
       const requires =
         tier === ConfirmationTier.STANDARD || tier === ConfirmationTier.PREMIUM;
-      gpsMatch = !requires || distance <= GPS_MATCH_RADIUS_M;
+      const settingsRequired = await this.platformSettings
+        .getEscrowGpsRequired()
+        .catch(() => false);
+      const radius = await this.platformSettings
+        .getEscrowGpsRadiusM()
+        .catch(() => DEFAULT_GPS_MATCH_RADIUS_M);
+      gpsMatch = !settingsRequired || !requires || distance <= radius;
     }
 
     escrow.qrScannedAt = new Date();
@@ -556,7 +572,13 @@ export class EscrowConfirmationService {
         lat,
         lng,
       );
-      gpsMatch = distance <= GPS_MATCH_RADIUS_M;
+      const settingsRequired = await this.platformSettings
+        .getEscrowGpsRequired()
+        .catch(() => false);
+      const radius = await this.platformSettings
+        .getEscrowGpsRadiusM()
+        .catch(() => DEFAULT_GPS_MATCH_RADIUS_M);
+      gpsMatch = !settingsRequired || distance <= radius;
     }
     if (!gpsMatch) {
       throw new BadRequestException('gps_too_far');
@@ -685,7 +707,7 @@ export class EscrowConfirmationService {
       escrow.customerLat,
       escrow.customerLng,
     );
-    if (dist > GPS_MATCH_RADIUS_M) return false;
+    if (dist > DEFAULT_GPS_MATCH_RADIUS_M) return false;
 
     const sidePhotos = photos.filter((p) => p.side === side);
     const hasBefore = sidePhotos.some((p) => p.phase === 'before');
@@ -836,7 +858,7 @@ export class EscrowConfirmationService {
         escrow.customerLat,
         escrow.customerLng,
       );
-      if (dist > GPS_MATCH_RADIUS_M) missing.push('gps_too_far');
+      if (dist > DEFAULT_GPS_MATCH_RADIUS_M) missing.push('gps_too_far');
     }
 
     const sidePhotos = photos.filter((p) => p.side === side);
@@ -847,5 +869,153 @@ export class EscrowConfirmationService {
       missing.push(`${side}_after_photo`);
     }
     return missing;
+  }
+
+  // ------------- Phase 267 — Plain confirm + grace period -------------
+
+  /**
+   * Plain confirmation entry. Bypasses QR + photos + GPS — only auth check
+   * and side resolution. Sets workerConfirmedAt/customerConfirmedAt; when
+   * both sides are signed off, transitions into PENDING_GRACE with a
+   * graceEndsAt deadline (1hr default, admin-tunable). Release is deferred
+   * to the cron sweep that flips PENDING_GRACE → COMPLETED.
+   */
+  async confirmPlain(
+    escrowId: string,
+    userId: string,
+  ): Promise<{
+    side: ConfirmationSide;
+    bothApproved: boolean;
+    graceEndsAt: Date | null;
+    confirmationStatus: ConfirmationStatus;
+  }> {
+    const { escrow, save } = await this.findEscrowAnywhere(escrowId);
+    const side = this.sideOf(escrow, userId);
+
+    if (
+      escrow.confirmationStatus !== ConfirmationStatus.AWAITING_CONFIRMATION &&
+      escrow.confirmationStatus !== ConfirmationStatus.NONE
+    ) {
+      throw new BadRequestException(
+        `Cannot confirm from status ${escrow.confirmationStatus}`,
+      );
+    }
+
+    // Lazy-start: if NONE, transition to AWAITING and set deadline.
+    if (escrow.confirmationStatus === ConfirmationStatus.NONE) {
+      const deadlineMs = await this.platformSettings
+        .getEscrowDeadlineMs()
+        .catch(() => DEFAULT_CONFIRMATION_DEADLINE_MS);
+      escrow.confirmationStatus = ConfirmationStatus.AWAITING_CONFIRMATION;
+      escrow.confirmationDeadline = new Date(Date.now() + deadlineMs);
+    }
+
+    // Idempotent double-confirm guard.
+    if (side === 'worker' && escrow.workerConfirmedAt) {
+      throw new ConflictException('Worker already confirmed');
+    }
+    if (side === 'customer' && escrow.customerConfirmedAt) {
+      throw new ConflictException('Customer already confirmed');
+    }
+
+    const now = new Date();
+    if (side === 'worker') escrow.workerConfirmedAt = now;
+    else escrow.customerConfirmedAt = now;
+
+    const bothApproved = !!(
+      escrow.workerConfirmedAt && escrow.customerConfirmedAt
+    );
+
+    if (bothApproved) {
+      const graceMs = await this.platformSettings
+        .getEscrowGraceMs()
+        .catch(() => 60 * 60 * 1000);
+      escrow.confirmationStatus = ConfirmationStatus.PENDING_GRACE;
+      escrow.graceEndsAt = new Date(Date.now() + graceMs);
+    }
+    await save();
+
+    // Notify the other side that their action is awaited (or grace started).
+    try {
+      const targetId = side === 'worker' ? escrow.customerId : escrow.taskerId;
+      if (bothApproved) {
+        await this.notificationsService.send({
+          userId: targetId,
+          type: NotificationType.SYSTEM,
+          title: 'Onay süreci başladı',
+          body: '1 saatlik bekleme süreci başladı. Bu süre içinde iptal edebilirsiniz.',
+          refId: escrow.id,
+        });
+      } else {
+        await this.notificationsService.send({
+          userId: targetId,
+          type: NotificationType.SYSTEM,
+          title: 'Karşı taraf onayladı',
+          body: 'Hizmeti onaylamak için uygulamayı kontrol edin.',
+          refId: escrow.id,
+        });
+      }
+    } catch (err) {
+      this.logger.warn(
+        `confirmPlain notification failed: ${(err as Error).message}`,
+      );
+    }
+
+    return {
+      side,
+      bothApproved,
+      graceEndsAt: escrow.graceEndsAt,
+      confirmationStatus: escrow.confirmationStatus,
+    };
+  }
+
+  /**
+   * Cancel during grace window. Either party may invoke; flips status to
+   * CANCELLED and clears the grace deadline. Payment is NOT released.
+   * After grace elapses (PENDING_GRACE → COMPLETED), this is no longer valid.
+   */
+  async cancelGrace(
+    escrowId: string,
+    userId: string,
+    reason?: string,
+  ): Promise<{ confirmationStatus: ConfirmationStatus }> {
+    const { escrow, save } = await this.findEscrowAnywhere(escrowId);
+    // sideOf throws if not a party.
+    this.sideOf(escrow, userId);
+
+    if (escrow.confirmationStatus !== ConfirmationStatus.PENDING_GRACE) {
+      throw new BadRequestException(
+        `Cannot cancel from status ${escrow.confirmationStatus}`,
+      );
+    }
+    if (escrow.graceEndsAt && escrow.graceEndsAt.getTime() < Date.now()) {
+      throw new BadRequestException('Grace period already elapsed');
+    }
+
+    escrow.confirmationStatus = ConfirmationStatus.CANCELLED;
+    escrow.graceEndsAt = null;
+    // Soft-clear confirmation timestamps so a fresh round can be initiated.
+    escrow.workerConfirmedAt = null;
+    escrow.customerConfirmedAt = null;
+    await save();
+
+    // Notify both parties.
+    for (const uid of [escrow.taskerId, escrow.customerId]) {
+      try {
+        await this.notificationsService.send({
+          userId: uid,
+          type: NotificationType.SYSTEM,
+          title: 'Onay iptal edildi',
+          body: reason ?? 'Bekleme süresi içinde onay iptal edildi.',
+          refId: escrow.id,
+        });
+      } catch (err) {
+        this.logger.warn(
+          `cancelGrace notification ${uid} failed: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    return { confirmationStatus: escrow.confirmationStatus };
   }
 }

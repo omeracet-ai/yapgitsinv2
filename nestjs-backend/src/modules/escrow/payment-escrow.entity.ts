@@ -18,6 +18,11 @@ export enum EscrowStatus {
 export enum ConfirmationStatus {
   NONE = 'none',
   AWAITING_CONFIRMATION = 'awaiting_confirmation',
+  // Phase 267 — escrow simplification (plain confirm + 1hr grace period).
+  PENDING_GRACE = 'pending_grace', // both parties approved; grace timer ticking
+  COMPLETED = 'completed', // grace elapsed → finalized
+  CANCELLED = 'cancelled', // either party cancelled during grace
+  EXPIRED = 'expired', // deadline exceeded without dual approval
 }
 
 export enum ConfirmationTier {
@@ -173,6 +178,11 @@ export class PaymentEscrow {
 
   @Column({ type: 'datetime', nullable: true })
   confirmationDeadline: Date | null;
+
+  // Phase 267 — Grace period deadline (set when both parties approve via
+  // plain-confirm flow). 1hr default; auto-finalize sweep flips COMPLETED.
+  @Column({ type: 'datetime', nullable: true })
+  graceEndsAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -131,6 +131,10 @@ export class BookingEscrow {
   @Column({ type: 'datetime', nullable: true })
   confirmationDeadline: Date | null;
 
+  // Phase 267 — Grace period deadline for plain-confirm flow.
+  @Column({ type: 'datetime', nullable: true })
+  graceEndsAt: Date | null;
+
   // Phase 254a — Platform commission split on release.
   @Column({ type: 'integer', nullable: true })
   platformFeeMinor: number | null;

@@ -106,4 +106,37 @@ export class PlatformSettingsService {
     if (key) this.cache.delete(key);
     else this.cache.clear();
   }
+
+  // ------------- Phase 267 — Escrow typed accessors -------------
+  // Admin-tunable knobs for the simplified confirmation flow. Defaults are
+  // intentionally loose (gpsRequired=false, radius=1000m) to avoid false
+  // negatives during early rollout.
+
+  async getBoolean(key: string, defaultValue: boolean): Promise<boolean> {
+    const raw = await this.getString(key, String(defaultValue));
+    if (raw === 'true' || raw === '1') return true;
+    if (raw === 'false' || raw === '0') return false;
+    return defaultValue;
+  }
+
+  /** Escrow GPS match radius in meters. Default 1000m (loose). */
+  getEscrowGpsRadiusM(): Promise<number> {
+    return this.getNumber('escrow.gps_radius_m', 1000);
+  }
+
+  /** Whether GPS proximity is enforced at all. Default false (bypass). */
+  getEscrowGpsRequired(): Promise<boolean> {
+    return this.getBoolean('escrow.gps_required', false);
+  }
+
+  /** Grace window after both-side approval before finalization. Default 1hr. */
+  getEscrowGraceMs(): Promise<number> {
+    return this.getNumber('escrow.grace_ms', 60 * 60 * 1000);
+  }
+
+  /** Confirmation deadline from /start to mandatory dispute. Default 72hr. */
+  getEscrowDeadlineMs(): Promise<number> {
+    return this.getNumber('escrow.deadline_ms', 72 * 60 * 60 * 1000);
+  }
 }
+

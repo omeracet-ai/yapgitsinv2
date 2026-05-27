@@ -83,6 +83,16 @@ class SidePhotos {
   }
 }
 
+/// Phase 267 — escrow confirmation status (mirrors backend enum).
+class ConfirmationStatusCodes {
+  static const none = 'none';
+  static const awaiting = 'awaiting_confirmation';
+  static const pendingGrace = 'pending_grace';
+  static const completed = 'completed';
+  static const cancelled = 'cancelled';
+  static const expired = 'expired';
+}
+
 class ConfirmationState {
   final String tier;
   final DateTime? deadline;
@@ -96,10 +106,21 @@ class ConfirmationState {
   final ConfirmationRequirements requirements;
   final String? escrowStatus;
   final bool escrowReleased;
+  // Phase 267 — plain-confirm + grace fields.
+  final String confirmationStatus; // 'none' | 'awaiting_confirmation' | 'pending_grace' | 'completed' | 'cancelled' | 'expired'
+  final DateTime? graceEndsAt;
 
   bool get qrScanned => qrScannedAt != null;
   bool get workerConfirmed => workerConfirmedAt != null;
   bool get customerConfirmed => customerConfirmedAt != null;
+  bool get isPendingGrace =>
+      confirmationStatus == ConfirmationStatusCodes.pendingGrace;
+  bool get isCompleted =>
+      confirmationStatus == ConfirmationStatusCodes.completed || escrowReleased;
+  bool get isCancelled =>
+      confirmationStatus == ConfirmationStatusCodes.cancelled;
+  bool get isExpired =>
+      confirmationStatus == ConfirmationStatusCodes.expired;
 
   const ConfirmationState({
     required this.tier,
@@ -114,6 +135,8 @@ class ConfirmationState {
     required this.requirements,
     this.escrowStatus,
     this.escrowReleased = false,
+    this.confirmationStatus = ConfirmationStatusCodes.none,
+    this.graceEndsAt,
   });
 
   factory ConfirmationState.fromJson(Map<String, dynamic> j) {
@@ -148,6 +171,9 @@ class ConfirmationState {
             ),
       escrowStatus: j['escrowStatus']?.toString(),
       escrowReleased: j['escrowReleased'] == true,
+      confirmationStatus: j['confirmationStatus']?.toString() ??
+          ConfirmationStatusCodes.none,
+      graceEndsAt: p(j['graceEndsAt']),
     );
   }
 
