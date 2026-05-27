@@ -508,12 +508,22 @@ class _MapView extends StatelessWidget {
         onTap: (_, __) => onMapTap(),
       ),
       children: [
-        TileLayer(
-          urlTemplate:
-              'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-          subdomains: const ['a', 'b', 'c'],
-          userAgentPackageName: 'com.yapgitsin.hizmet_app',
-          retinaMode: RetinaMode.isHighDensity(context),
+        // Phase 267 — Grayscale OSM (luminance matrix → beyaz-siyah düz görsel).
+        // Markers/circles üzerinde değil, sadece tile layer altında uygulanır.
+        ColorFiltered(
+          colorFilter: const ColorFilter.matrix(<double>[
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0,      0,      0,      1, 0,
+          ]),
+          child: TileLayer(
+            urlTemplate:
+                'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            subdomains: const ['a', 'b', 'c'],
+            userAgentPackageName: 'com.yapgitsin.hizmet_app',
+            retinaMode: RetinaMode.isHighDensity(context),
+          ),
         ),
         if (state.userLocation != null)
           CircleLayer(
@@ -651,7 +661,9 @@ class _JobListView extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Airtasker-style bottom card
+// Phase 267 — Yapgitsin logolu 3D Dark Pop-up
+// Harita grayscale (ColorFiltered), pop-up dark mode (intentional — light tema'da
+// da dark kalır). Gradient bg + üst highlight + alt shadow ile 3D efekt.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _AirtaskerCard extends StatelessWidget {
@@ -679,145 +691,202 @@ class _AirtaskerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 3D dark palette — light/dark temadan bağımsız sabit dark kart.
+    const bgTop = Color(0xFF1A1F2E);
+    const bgBot = Color(0xFF0C1117);
+    final highlight = Colors.white.withValues(alpha: 0.08);
+    final budget = job.budgetMin != null
+        ? '₺${job.budgetMin!.toStringAsFixed(0)}${job.budgetMax != null ? ' - ₺${job.budgetMax!.toStringAsFixed(0)}' : ''}'
+        : null;
+
     return Container(
-      decoration: BoxDecoration(color: AppColors.surface,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [bgTop, bgBot],
+        ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: const [
+        border: Border(top: BorderSide(color: highlight, width: 1)),
+        boxShadow: [
           BoxShadow(
-              color: Color(0x28000000),
-              blurRadius: 20,
-              offset: Offset(0, -4)),
+            color: Colors.black.withValues(alpha: 0.45),
+            blurRadius: 24,
+            offset: const Offset(0, -8),
+          ),
         ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
+          // ── Drag handle ──
           const SizedBox(height: 10),
           Container(
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: const Color(0xFFDDE3EC),
+              color: Colors.white.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 14),
 
-          // Main content row
+          // ── Header: Yapgitsin logo + close ──
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Image.asset(
+                    'assets/icons/app_icon.png',
+                    width: 22,
+                    height: 22,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'yapgitsin.',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: onClose,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.06),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.close_rounded,
+                        size: 16,
+                        color: Colors.white.withValues(alpha: 0.7)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Main content ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Icon box with "Y" badge
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEEF4FF),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        _iconFor(job.category),
-                        size: 32,
-                        color: AppColors.primary,
-                      ),
+                // Category icon — koyu plate + primary glow
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primary.withValues(alpha: 0.25),
+                        AppColors.primary.withValues(alpha: 0.05),
+                      ],
                     ),
-                    // Y brand badge top-right
-                    Positioned(
-                      top: -4,
-                      right: -4,
-                      child: Container(
-                        width: 18,
-                        height: 18,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
-                        ),
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'Y',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            height: 1,
-                          ),
-                        ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.35),
+                        width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    _iconFor(job.category),
+                    size: 26,
+                    color: AppColors.primary,
+                  ),
                 ),
-
                 const SizedBox(width: 14),
-
-                // Job info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         job.title,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: AppColors.textPrimary,
+                          fontSize: 15,
+                          color: Colors.white,
+                          height: 1.2,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Icons.location_on_rounded,
-                              size: 12, color: Colors.grey),
+                          // Category chip — yeşil primary
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary
+                                  .withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                  color: AppColors.primary
+                                      .withValues(alpha: 0.35),
+                                  width: 1),
+                            ),
+                            child: Text(
+                              job.category,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                          if (budget != null) ...[
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                budget,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFFFC542),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Icon(Icons.location_on_rounded,
+                              size: 12,
+                              color: Colors.white.withValues(alpha: 0.55)),
                           const SizedBox(width: 3),
                           Expanded(
                             child: Text(
                               '${job.location} · ${job.distanceKm.toStringAsFixed(1)} km',
-                              style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.white.withValues(alpha: 0.65),
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
-                      // Category chip
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          job.category,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
                     ],
-                  ),
-                ),
-
-                // Close button
-                GestureDetector(
-                  onTap: onClose,
-                  child: const Padding(
-                    padding: EdgeInsets.only(left: 8),
-                    child: Icon(Icons.close_rounded,
-                        size: 20, color: Colors.grey),
                   ),
                 ),
               ],
@@ -826,12 +895,11 @@ class _AirtaskerCard extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // Action buttons
+          // ── Action buttons ──
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Row(
               children: [
-                // Teklif Ver — primary, 60% width
                 Expanded(
                   flex: 6,
                   child: ElevatedButton(
@@ -842,25 +910,29 @@ class _AirtaskerCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
-                      elevation: 0,
+                      elevation: 6,
+                      shadowColor:
+                          AppColors.primary.withValues(alpha: 0.5),
                     ),
                     child: const Text(
-                      'Teklif Ver',
+                      'İlan Detayı',
                       style: TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
-                // Detay — outline, 35% width
                 Expanded(
                   flex: 4,
                   child: OutlinedButton(
                     onPressed: () => context.push('/ilan/${job.id}'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(
-                          color: AppColors.primary, width: 1.5),
+                      foregroundColor: Colors.white,
+                      backgroundColor:
+                          Colors.white.withValues(alpha: 0.04),
+                      side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          width: 1),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
@@ -868,12 +940,14 @@ class _AirtaskerCard extends StatelessWidget {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Detay',
+                        Text('Teklif',
                             style: TextStyle(
                                 fontWeight: FontWeight.w600,
-                                fontSize: 13)),
+                                fontSize: 13,
+                                color: Colors.white)),
                         SizedBox(width: 4),
-                        Icon(Icons.arrow_forward_rounded, size: 14),
+                        Icon(Icons.arrow_forward_rounded,
+                            size: 14, color: Colors.white),
                       ],
                     ),
                   ),

@@ -173,6 +173,23 @@ class ConfirmationRepository {
     }
   }
 
+  /// Phase 267 — finalize the grace window immediately (skip 1hr wait).
+  /// Either party may invoke during PENDING_GRACE; server flips to COMPLETED
+  /// and releases the payment.
+  Future<Map<String, dynamic>> finalizeGraceEarly({
+    required String escrowId,
+  }) async {
+    try {
+      final res = await _dio.post(
+        '${_base(escrowId)}/finalize-grace',
+        data: <String, dynamic>{},
+      );
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (e) {
+      throw Exception(_msg(e, 'Tamamlama başarısız'));
+    }
+  }
+
   Future<ConfirmResult> confirm({
     required String escrowId,
     String? signature,

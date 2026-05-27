@@ -1018,4 +1018,65 @@ export class EscrowConfirmationService {
 
     return { confirmationStatus: escrow.confirmationStatus };
   }
+
+  /**
+   * Phase 267 — finalize the grace window immediately (skip the 1hr wait).
+   * Either party may invoke during PENDING_GRACE; flips status to COMPLETED,
+   * clears graceEndsAt, and releases the payment via EscrowService.
+   */
+  async finalizeGraceEarly(
+    escrowId: string,
+    userId: string,
+  ): Promise<{ confirmationStatus: ConfirmationStatus; released: boolean }> {
+    const { escrow, save } = await this.findEscrowAnywhere(escrowId);
+    // sideOf throws if not a party.
+    const side = this.sideOf(escrow, userId);
+
+    if (escrow.confirmationStatus !== ConfirmationStatus.PENDING_GRACE) {
+      throw new BadRequestException(
+        `Cannot finalize from status ${escrow.confirmationStatus}`,
+      );
+    }
+    if (escrow.graceEndsAt && escrow.graceEndsAt.getTime() < Date.now()) {
+      throw new BadRequestException('Grace period already elapsed');
+    }
+
+    escrow.confirmationStatus = ConfirmationStatus.COMPLETED;
+    escrow.graceEndsAt = null;
+    await save();
+
+    // Release payment (admin role bypasses customer-only guard).
+    let released = false;
+    try {
+      await this.escrowService.release(
+        escrow.id,
+        'system',
+        'grace finalized early by party',
+        'admin',
+      );
+      released = true;
+    } catch (err) {
+      this.logger.warn(
+        `finalizeGraceEarly release ${escrow.id} failed: ${(err as Error).message}`,
+      );
+    }
+
+    // Notify the OTHER party (initiator already knows what they pressed).
+    try {
+      const targetId = side === 'worker' ? escrow.customerId : escrow.taskerId;
+      await this.notificationsService.send({
+        userId: targetId,
+        type: NotificationType.SYSTEM,
+        title: 'Hizmet Tamamlandı',
+        body: 'Karşı taraf onayı hemen tamamladı; ödeme serbest bırakıldı.',
+        refId: escrow.id,
+      });
+    } catch (err) {
+      this.logger.warn(
+        `finalizeGraceEarly notification failed: ${(err as Error).message}`,
+      );
+    }
+
+    return { confirmationStatus: escrow.confirmationStatus, released };
+  }
 }

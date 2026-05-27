@@ -1,3 +1,7 @@
+// Phase 267 — `_HomeTab` ve yardımcıları artık aktif tab listesinde değil
+// (Yapgitsin / Harita / İşlemlerim / Profil). Kod ileride yeniden açılabilir
+// diye saklanıyor; analyzer warning'leri suppress edildi.
+// ignore_for_file: unused_element, unused_field, unused_local_variable, prefer_const_declarations
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +22,7 @@ import '../../../providers/data/provider_repository.dart';
 import '../../../providers/presentation/screens/provider_list_screen.dart';
 import '../../../providers/presentation/screens/provider_profile_screen.dart';
 import 'hizmet_al_screen.dart';
+import '../../../map/presentation/screens/map_screen.dart';
 import '../../../notifications/data/unread_count_provider.dart';
 import '../../../../core/widgets/category_card.dart';
 import '../../../../core/widgets/notification_bell.dart';
@@ -62,8 +67,8 @@ class _MainShellState extends ConsumerState<MainShell>
   void _onItemTapped(int index) {
     final authState = ref.read(authStateProvider);
     final isLoggedIn = authState is AuthAuthenticated;
-    // "+ İlan Ver" sekmesi kaldırıldı. Yeni index'ler:
-    //   0 Yaptır · 1 Yapgitsin · 2 İşlerim · 3 Profil
+    // Phase 267 — "Yaptır" sekmesi kaldırıldı, "Harita" eklendi:
+    //   0 Yapgitsin · 1 Harita · 2 İşlemlerim · 3 Profil
     if (index == 2 && !isLoggedIn) {
       context.push('/giris-yap', extra: {'returnTo': '/'});
       return;
@@ -84,11 +89,10 @@ class _MainShellState extends ConsumerState<MainShell>
 
     final selectedIndex = ref.watch(selectedTabProvider);
 
-    // İşlerim eski 4 sub-tab içeriğine (Taleplerim/Hizmetlerim/Tekliflerim/
-    // Fırsatlar) geri döndü; tema header dark green ile güncellendi.
+    // Phase 267 — Tab düzeni: Yapgitsin · Harita · İşlemlerim · Profil
     final List<Widget> pages = [
-      _HomeTab(onSeeAllRequests: () => _onItemTapped(1)),
       const HizmetAlScreen(appBarTitle: 'Yapgitsin'),
+      const MapScreen(),
       const MyJobsScreen(showAppBar: true),
       const ProfileScreen(),
     ];
@@ -131,17 +135,17 @@ class _MainShellState extends ConsumerState<MainShell>
             unselectedLabelStyle: const TextStyle(fontSize: 11),
             items: const [
               BottomNavigationBarItem(
-                  icon: Icon(Icons.home_outlined),
-                  activeIcon: Icon(Icons.home_rounded),
-                  label: 'Yaptır'),
-              BottomNavigationBarItem(
                   icon: Icon(Icons.search_outlined),
                   activeIcon: Icon(Icons.search_rounded),
                   label: 'Yapgitsin'),
               BottomNavigationBarItem(
+                  icon: Icon(Icons.map_outlined),
+                  activeIcon: Icon(Icons.map_rounded),
+                  label: 'Harita'),
+              BottomNavigationBarItem(
                   icon: Icon(Icons.work_outline_rounded),
                   activeIcon: Icon(Icons.work_rounded),
-                  label: 'İşlerim'),
+                  label: 'İşlemlerim'),
               BottomNavigationBarItem(
                   icon: Icon(Icons.person_outline_rounded),
                   activeIcon: Icon(Icons.person_rounded),

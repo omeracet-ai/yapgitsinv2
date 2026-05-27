@@ -178,6 +178,48 @@ class _ConfirmationFlowScreenState
     }
   }
 
+  /// Grace içinde hemen tamamla (1 saat bekleme atlanır).
+  Future<void> _finalizeGraceEarly() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hemen Tamamla'),
+        content: const Text(
+          'Bu işlemi şimdi tamamlamak istediğine emin misin? '
+          'Karşı taraf onayı verdiği için anında kapanacak ve ödeme '
+          'serbest bırakılacak.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Vazgeç'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Hemen Tamamla'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => _submitting = true);
+    try {
+      await ref.read(confirmationRepositoryProvider).finalizeGraceEarly(
+            escrowId: widget.escrowId,
+          );
+      if (!mounted) return;
+      _toast('Hizmet tamamlandı');
+      ref
+          .read(confirmationStateProvider(widget.escrowId).notifier)
+          .refresh();
+    } catch (e) {
+      _toast(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
   void _toast(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
@@ -263,6 +305,7 @@ class _ConfirmationFlowScreenState
     if (st.isPendingGrace) return _GraceCountdownCard(
           graceEndsAt: st.graceEndsAt,
           onCancel: _submitting ? null : _cancelGrace,
+          onFinalize: _submitting ? null : _finalizeGraceEarly,
         );
     // Default: plain-confirm butonu (kendi tarafın onaylamadıysa).
     return _confirmCard(st);
@@ -439,10 +482,12 @@ class _ConfirmationFlowScreenState
 class _GraceCountdownCard extends StatefulWidget {
   final DateTime? graceEndsAt;
   final VoidCallback? onCancel;
+  final VoidCallback? onFinalize;
 
   const _GraceCountdownCard({
     required this.graceEndsAt,
     required this.onCancel,
+    required this.onFinalize,
   });
 
   @override
@@ -548,19 +593,30 @@ class _GraceCountdownCardState extends State<_GraceCountdownCard> {
             ),
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: widget.onCancel,
-              icon: const Icon(Icons.close_rounded),
-              label: const Text('İptal Et'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: BorderSide(color: AppColors.error.withValues(alpha: 0.6)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+          ElevatedButton.icon(
+            onPressed: widget.onFinalize,
+            icon: const Icon(Icons.check_circle_rounded),
+            label: const Text('Hemen Tamamla'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.success,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: widget.onCancel,
+            icon: const Icon(Icons.close_rounded),
+            label: const Text('İptal Et'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.error,
+              side: BorderSide(color: AppColors.error.withValues(alpha: 0.6)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),

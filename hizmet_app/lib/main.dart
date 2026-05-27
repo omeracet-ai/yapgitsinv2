@@ -16,6 +16,30 @@ import 'core/services/locale_provider.dart';
 import 'core/services/secure_token_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Phase 267 — Tab düzeni değişti (5→4 sekme + Harita eklendi). Eski APK
+/// kullanıcılarının `selectedTabProvider`/cached auth state'i yeni index
+/// haritasına uyumsuz olabileceği için tek seferlik logout zorlaması.
+/// Flag bump edilirse: token silinir → kullanıcı login ekranına düşer.
+const String _kAppVersionGate = '267_map_tab_2026_05_27';
+
+Future<void> _enforceVersionGate() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final last = prefs.getString('last_gate');
+    if (last == _kAppVersionGate) return;
+    // Yeni gate → secure token + SP auth alanlarını temizle.
+    try {
+      await SecureTokenStore().clear();
+    } catch (_) {}
+    await prefs.remove('jwt_token');
+    await prefs.remove('auth_token');
+    await prefs.remove('selected_tab');
+    await prefs.setString('last_gate', _kAppVersionGate);
+  } catch (_) {
+    // Best-effort; auth init kendi recovery'sini yapacak.
+  }
+}
+
 /// Phase 244 — one-shot legacy SharedPreferences `jwt_token` / `auth_token`
 /// → SecureTokenStore migration. After this runs, the SP keys are removed
 /// and all call sites must read from SecureTokenStore.
@@ -41,6 +65,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await _enforceVersionGate();
   await _migrateLegacyJwt();
   await initializeDateFormatting('tr_TR', null);
   await initializeDateFormatting('tr', null);

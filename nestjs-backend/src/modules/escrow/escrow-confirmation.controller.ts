@@ -248,4 +248,13 @@ export class EscrowConfirmationController {
   ) {
     return this.svc.cancelGrace(id, req.user.id, dto?.signature);
   }
+
+  @Post('finalize-grace')
+  finalizeGraceEarly(
+    @Param('id') id: string,
+    @Body() _dto: ConfirmDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.svc.finalizeGraceEarly(id, req.user.id);
+  }
 }
