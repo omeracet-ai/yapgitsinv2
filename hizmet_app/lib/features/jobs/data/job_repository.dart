@@ -75,7 +75,10 @@ class JobRepository {
         // Geriye uyumluluk fallback — Phase 265 field'larını çıkar
         final clean = Map<String, dynamic>.from(jobData)
           ..remove('targetWorkerId')
-          ..remove('scheduleFlexibility');
+          ..remove('scheduleFlexibility')
+          // Phase 266 — eski backend bilinmiyor olabilir
+          ..remove('dueTime')
+          ..remove('dueAnyTime');
         try {
           return await post(clean);
         } on DioException catch (e2) {

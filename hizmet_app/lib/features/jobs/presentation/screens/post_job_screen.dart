@@ -72,6 +72,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   double? _lat;
   double? _lng;
   DateTime? _dueDate;
+  /// Phase 266 — saat (HH:MM, opsiyonel).
+  TimeOfDay? _dueTime;
+  /// Phase 266 — "Tüm saatler" toggle. true ise _dueTime yok sayılır.
+  bool _anyTime = true;
   /// Phase 265 — saat dilimi esneklik durumu.
   /// 'flexible' = esnek, 'specific' = belirli saat, 'urgent' = acil/aynı gün.
   String _scheduleFlexibility = 'flexible';
@@ -139,6 +143,26 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           .map((e) => e.toString())
           .toList();
       // dueDate intentionally NOT cloned — old date likely past.
+      // Phase 266 — saat dilimi esnekliği + saat alanları pre-fill.
+      final flex = j['scheduleFlexibility'] as String?;
+      if (flex == 'flexible' || flex == 'specific' || flex == 'urgent') {
+        _scheduleFlexibility = flex!;
+      }
+      final dueTimeStr = j['dueTime'] as String?;
+      if (dueTimeStr != null && dueTimeStr.isNotEmpty) {
+        final parts = dueTimeStr.split(':');
+        if (parts.length == 2) {
+          final h = int.tryParse(parts[0]);
+          final m = int.tryParse(parts[1]);
+          if (h != null && m != null) {
+            _dueTime = TimeOfDay(hour: h, minute: m);
+          }
+        }
+      }
+      final anyTime = j['dueAnyTime'];
+      if (anyTime is bool) {
+        _anyTime = anyTime;
+      }
     });
     _draftRestored = false;
     if (mounted) {
@@ -225,6 +249,22 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           debugPrint('post_job_screen.restoreDraft.parseDueDate: $e\n$st');
         }
       }
+      // Phase 266 — saat alanları + esneklik
+      final flex = d.scheduleFlexibility;
+      if (flex == 'flexible' || flex == 'specific' || flex == 'urgent') {
+        _scheduleFlexibility = flex!;
+      }
+      _anyTime = d.dueAnyTime;
+      if (d.dueTime != null && d.dueTime!.isNotEmpty) {
+        final parts = d.dueTime!.split(':');
+        if (parts.length == 2) {
+          final h = int.tryParse(parts[0]);
+          final m = int.tryParse(parts[1]);
+          if (h != null && m != null) {
+            _dueTime = TimeOfDay(hour: h, minute: m);
+          }
+        }
+      }
     });
     _draftRestored = false;
   }
@@ -238,6 +278,11 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         dueDate: _dueDate == null
             ? null
             : '${_dueDate!.year}-${_dueDate!.month.toString().padLeft(2, '0')}-${_dueDate!.day.toString().padLeft(2, '0')}',
+        dueTime: (_anyTime || _dueTime == null)
+            ? null
+            : '${_dueTime!.hour.toString().padLeft(2, '0')}:${_dueTime!.minute.toString().padLeft(2, '0')}',
+        dueAnyTime: _anyTime,
+        scheduleFlexibility: _scheduleFlexibility,
         photos: _uploadedPhotoUrls,
         videos: _uploadedVideoUrls,
         latitude: _lat,
@@ -302,6 +347,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       _lat = null;
       _lng = null;
       _dueDate = null;
+      _dueTime = null;
+      _anyTime = true;
+      _scheduleFlexibility = 'flexible';
       _currentStep = 0;
       _saveAsTemplate = false;
     });
@@ -511,6 +559,18 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         );
         return;
       }
+      // Phase 266 — "Belirli" mod → tarih+saat zorunlu
+      if (_scheduleFlexibility == 'specific' &&
+          (_dueDate == null || _dueTime == null)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Belirli saat seçtin — Adım 1\'de tarih ve saat doldur.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
       setState(() => _uploading = true);
       try {
         if (_selectedPhotos.isNotEmpty) {
@@ -643,12 +703,45 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     }
   }
 
+  /// Phase 266 — Saat seçici.
+  Future<void> _pickDueTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _dueTime ?? const TimeOfDay(hour: 9, minute: 0),
+      helpText: 'Saat seç',
+      confirmText: 'Seç',
+      cancelText: 'Vazgeç',
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(primary: AppColors.primary),
+        ),
+        child: MediaQuery(
+          data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        ),
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _dueTime = picked;
+        _anyTime = false; // saat seçildi → "tüm saatler" otomatik kapan
+      });
+      _scheduleDraftSave();
+    }
+  }
+
   Widget _buildDueDateSection() {
     final dueDateLabel = _dueDate == null
         ? 'Esnek (tarih önemli değil)'
         : '${_dueDate!.day.toString().padLeft(2, '0')}/'
             '${_dueDate!.month.toString().padLeft(2, '0')}/'
             '${_dueDate!.year}';
+    final dueTimeLabel = _anyTime
+        ? 'Tüm saatler'
+        : (_dueTime == null
+            ? 'Saat — opsiyonel'
+            : '${_dueTime!.hour.toString().padLeft(2, '0')}:${_dueTime!.minute.toString().padLeft(2, '0')}');
+    final timeActive = !_anyTime && _dueTime != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -656,40 +749,122 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
         const SizedBox(height: 10),
-        GestureDetector(
-          onTap: _pickDueDate,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            decoration: BoxDecoration(
-              color: _dueDate != null ? AppColors.primaryLight : AppColors.surface,
-              border: Border.all(
-                color: _dueDate != null ? AppColors.primary : AppColors.border,
-                width: _dueDate != null ? 1.5 : 1,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.calendar_today_outlined,
-                    size: 18,
-                    color: _dueDate != null ? AppColors.primary : AppColors.textSecondary),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(dueDateLabel,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: _dueDate != null ? AppColors.primary : AppColors.textPrimary,
-                        fontWeight: _dueDate != null ? FontWeight.w600 : FontWeight.normal,
-                      )),
-                ),
-                if (_dueDate != null)
-                  GestureDetector(
-                    onTap: () => setState(() => _dueDate = null),
-                    child: const Icon(Icons.close, size: 16, color: Colors.black54),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Tarih kutusu
+            Expanded(
+              flex: 3,
+              child: GestureDetector(
+                onTap: _pickDueDate,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: _dueDate != null ? AppColors.primaryLight : AppColors.surface,
+                    border: Border.all(
+                      color: _dueDate != null ? AppColors.primary : AppColors.border,
+                      width: _dueDate != null ? 1.5 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-              ],
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined,
+                          size: 18,
+                          color: _dueDate != null ? AppColors.primary : AppColors.textSecondary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(dueDateLabel,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: _dueDate != null ? AppColors.primary : AppColors.textPrimary,
+                              fontWeight: _dueDate != null ? FontWeight.w600 : FontWeight.normal,
+                            )),
+                      ),
+                      if (_dueDate != null)
+                        GestureDetector(
+                          onTap: () => setState(() => _dueDate = null),
+                          child: const Icon(Icons.close, size: 16, color: Colors.black54),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+            // Saat kutusu (Phase 266)
+            Expanded(
+              flex: 2,
+              child: GestureDetector(
+                onTap: _anyTime ? null : _pickDueTime,
+                child: Opacity(
+                  opacity: _anyTime ? 0.55 : 1,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: timeActive ? AppColors.primaryLight : AppColors.surface,
+                      border: Border.all(
+                        color: timeActive ? AppColors.primary : AppColors.border,
+                        width: timeActive ? 1.5 : 1,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.access_time_outlined,
+                            size: 18,
+                            color: timeActive ? AppColors.primary : AppColors.textSecondary),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(dueTimeLabel,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: timeActive ? AppColors.primary : AppColors.textPrimary,
+                                fontWeight: timeActive ? FontWeight.w600 : FontWeight.normal,
+                              )),
+                        ),
+                        if (timeActive)
+                          GestureDetector(
+                            onTap: () => setState(() => _dueTime = null),
+                            child: const Icon(Icons.close, size: 16, color: Colors.black54),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        // Phase 266 — "Tüm saatler" toggle
+        Row(
+          children: [
+            Switch(
+              value: _anyTime,
+              onChanged: (v) {
+                setState(() {
+                  _anyTime = v;
+                  if (v) _dueTime = null;
+                });
+                _scheduleDraftSave();
+              },
+              activeThumbColor: AppColors.primary,
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                'Tüm saatler (saat farketmez)',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: _anyTime ? AppColors.primary : AppColors.textSecondary,
+                  fontWeight: _anyTime ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 6),
         GestureDetector(
@@ -953,10 +1128,53 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     }
   }
 
+  /// Phase 266 — chip tap side effects (flexible/specific/urgent).
+  void _applyScheduleFlexibility(String value) {
+    setState(() {
+      _scheduleFlexibility = value;
+      switch (value) {
+        case 'flexible':
+          _anyTime = true;
+          _dueTime = null;
+          break;
+        case 'specific':
+          // Belirli saat — Adım 1'de tarih+saat girilmesi beklenir.
+          _anyTime = false;
+          break;
+        case 'urgent':
+          _dueDate ??= DateTime.now();
+          _anyTime = true;
+          _dueTime = null;
+          break;
+      }
+    });
+    _scheduleDraftSave();
+  }
+
+  /// Phase 266 — Adım 3 dinamik özet satırı.
+  String _scheduleSummary() {
+    switch (_scheduleFlexibility) {
+      case 'urgent':
+        return '⚡ Acil — bugün başlamalı, saat esnek.';
+      case 'specific':
+        if (_dueDate == null || _dueTime == null) {
+          return '⚠ Adım 1\'de tarih + saat seç (belirli mod).';
+        }
+        final d =
+            '${_dueDate!.day.toString().padLeft(2, '0')}/${_dueDate!.month.toString().padLeft(2, '0')}/${_dueDate!.year}';
+        final t =
+            '${_dueTime!.hour.toString().padLeft(2, '0')}:${_dueTime!.minute.toString().padLeft(2, '0')}';
+        return '✓ $d • $t';
+      case 'flexible':
+      default:
+        return '✓ Esnek — usta seninle anlaşacak.';
+    }
+  }
+
   Widget _scheduleChip(String value, String label, IconData icon) {
     final active = _scheduleFlexibility == value;
     return GestureDetector(
-      onTap: () => setState(() => _scheduleFlexibility = value),
+      onTap: () => _applyScheduleFlexibility(value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1004,6 +1222,29 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             _scheduleChip('specific', 'Belirli', Icons.schedule_rounded),
             _scheduleChip('urgent',   'Acil',    Icons.bolt_rounded),
           ],
+        ),
+        const SizedBox(height: 8),
+        // Phase 266 — dinamik özet satırı (seçili moda göre)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: _scheduleFlexibility == 'specific' &&
+                    (_dueDate == null || _dueTime == null)
+                ? AppColors.error.withValues(alpha: 0.08)
+                : AppColors.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            _scheduleSummary(),
+            style: TextStyle(
+              fontSize: 12,
+              color: _scheduleFlexibility == 'specific' &&
+                      (_dueDate == null || _dueTime == null)
+                  ? AppColors.error
+                  : AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
         const SizedBox(height: 20),
         const Divider(),
@@ -1194,6 +1435,11 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       if (_dueDate != null)
         'dueDate':
             '${_dueDate!.year}-${_dueDate!.month.toString().padLeft(2, '0')}-${_dueDate!.day.toString().padLeft(2, '0')}',
+      // Phase 266 — saat (HH:MM) + "tüm saatler" toggle
+      if (!_anyTime && _dueTime != null)
+        'dueTime':
+            '${_dueTime!.hour.toString().padLeft(2, '0')}:${_dueTime!.minute.toString().padLeft(2, '0')}',
+      'dueAnyTime': _anyTime,
       // Phase 265 — özel ilan hedef ustası (backend kredi düşer).
       if (widget.targetWorkerId != null)
         'targetWorkerId': widget.targetWorkerId,

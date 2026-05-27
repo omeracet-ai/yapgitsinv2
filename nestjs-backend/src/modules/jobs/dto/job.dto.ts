@@ -6,6 +6,7 @@ import {
   IsEnum,
   IsArray,
   IsBoolean,
+  Matches,
   Min,
   Max,
 } from 'class-validator';
@@ -41,6 +42,19 @@ export class CreateJobDto {
   @IsOptional()
   @IsString()
   dueDate?: string;
+
+  /** Phase 266 — HH:MM 24h saat. */
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'dueTime HH:MM formatında olmalı',
+  })
+  dueTime?: string;
+
+  /** Phase 266 — "Tüm saatler" toggle. */
+  @IsOptional()
+  @IsBoolean()
+  dueAnyTime?: boolean;
 
   @IsOptional()
   @IsArray()
@@ -113,6 +127,19 @@ export class UpdateJobDto {
   @IsOptional()
   @IsString()
   dueDate?: string;
+
+  /** Phase 266 — HH:MM 24h saat. */
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'dueTime HH:MM formatında olmalı',
+  })
+  dueTime?: string;
+
+  /** Phase 266 — "Tüm saatler" toggle. */
+  @IsOptional()
+  @IsBoolean()
+  dueAnyTime?: boolean;
 
   @IsOptional()
   @IsArray()

@@ -181,6 +181,20 @@ export class Job {
   @Column({ type: 'varchar', length: 10, nullable: true, default: null })
   dueDate: string | null;
 
+  /**
+   * Phase 266 — Saat (HH:MM, 24h). null = saat belirsiz.
+   * `dueAnyTime=true` iken UI tarafında yok sayılır.
+   */
+  @Column({ type: 'varchar', length: 5, nullable: true, default: null })
+  dueTime: string | null;
+
+  /**
+   * Phase 266 — "Tüm saatler" toggle. true ise müşteri saat farketmez diyor.
+   * Esnek/acil modlarda default true, belirli modda false.
+   */
+  @Column({ type: 'boolean', default: false })
+  dueAnyTime: boolean;
+
   /** İşi tamamlamak için QR kod */
   @Column({ type: 'varchar', nullable: true, default: null })
   qrCode: string | null;

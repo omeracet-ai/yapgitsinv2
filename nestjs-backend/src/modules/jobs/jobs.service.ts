@@ -598,6 +598,9 @@ export class JobsService {
       customerId,
       targetWorkerId,
       scheduleFlexibility: createJobDto.scheduleFlexibility ?? 'flexible',
+      // Phase 266 — saat alanları. anyTime true ise dueTime null'a düşür.
+      dueTime: createJobDto.dueAnyTime ? null : (createJobDto.dueTime ?? null),
+      dueAnyTime: createJobDto.dueAnyTime ?? false,
       status: JobStatus.OPEN,
       // Phase 174b — minor sync: TL float → integer kuruş
       budgetMinMinor: tlToMinor(createJobDto.budgetMin),

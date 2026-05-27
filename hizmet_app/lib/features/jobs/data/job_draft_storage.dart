@@ -10,6 +10,9 @@ class JobDraft {
   final double? budgetMin;
   final double? budgetMax;
   final String? dueDate; // ISO yyyy-MM-dd
+  final String? dueTime; // HH:MM (Phase 266)
+  final bool dueAnyTime; // "Tüm saatler" toggle (Phase 266)
+  final String? scheduleFlexibility; // flexible|specific|urgent (Phase 266)
   final List<String> photos;
   final List<String> videos;
   final double? latitude;
@@ -25,6 +28,9 @@ class JobDraft {
     this.budgetMin,
     this.budgetMax,
     this.dueDate,
+    this.dueTime,
+    this.dueAnyTime = false,
+    this.scheduleFlexibility,
     this.photos = const [],
     this.videos = const [],
     this.latitude,
@@ -51,6 +57,9 @@ class JobDraft {
         'budgetMin': budgetMin,
         'budgetMax': budgetMax,
         'dueDate': dueDate,
+        'dueTime': dueTime,
+        'dueAnyTime': dueAnyTime,
+        'scheduleFlexibility': scheduleFlexibility,
         'photos': photos,
         'videos': videos,
         'latitude': latitude,
@@ -67,6 +76,9 @@ class JobDraft {
         budgetMin: (j['budgetMin'] as num?)?.toDouble(),
         budgetMax: (j['budgetMax'] as num?)?.toDouble(),
         dueDate: j['dueDate'] as String?,
+        dueTime: j['dueTime'] as String?,
+        dueAnyTime: (j['dueAnyTime'] as bool?) ?? false,
+        scheduleFlexibility: j['scheduleFlexibility'] as String?,
         photos: (j['photos'] as List?)?.cast<String>() ?? const [],
         videos: (j['videos'] as List?)?.cast<String>() ?? const [],
         latitude: (j['latitude'] as num?)?.toDouble(),
