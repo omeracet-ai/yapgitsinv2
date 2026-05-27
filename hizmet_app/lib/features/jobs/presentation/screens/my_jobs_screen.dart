@@ -121,11 +121,10 @@ class _DualRoleView extends ConsumerWidget {
                     onPressed: () => context.push('/sablonlarim'),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.alarm_outlined),
-                    tooltip: 'Alarm',
+                    icon: const Icon(Icons.notifications_outlined),
+                    tooltip: 'Bildirimler',
                     onPressed: () => context.push('/bildirim-ayarlari'),
                   ),
-                  const NotificationBell(),
                   const SizedBox(width: 4),
                 ],
               )
@@ -361,8 +360,8 @@ class _CustomerJobsView extends ConsumerWidget {
                     onPressed: () => context.push('/sablonlarim'),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.alarm_outlined),
-                    tooltip: 'Alarm',
+                    icon: const Icon(Icons.notifications_outlined),
+                    tooltip: 'Bildirimler',
                     onPressed: () => context.push('/bildirim-ayarlari'),
                   ),
                 ],
