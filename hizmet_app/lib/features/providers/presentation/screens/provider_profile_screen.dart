@@ -87,8 +87,10 @@ class _ProviderContent extends ConsumerWidget {
     return SliverAppBar(
       expandedHeight: 220,
       pinned: true,
-      backgroundColor: AppColors.headerDark,
-      foregroundColor: Colors.white,
+      // Gradient zemin koruyor; collapse durumunda tema-duyarlı header rengi gözükür.
+      backgroundColor: AppColors.headerSurface,
+      foregroundColor: AppColors.headerForeground,
+      iconTheme: IconThemeData(color: AppColors.headerForeground),
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,

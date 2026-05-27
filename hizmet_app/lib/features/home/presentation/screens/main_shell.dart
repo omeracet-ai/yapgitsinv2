@@ -77,7 +77,7 @@ class _MainShellState extends ConsumerState<MainShell>
 
     if (authState is AuthInitial || authState is AuthLoading) {
       return Scaffold(
-        backgroundColor: const Color(0xFF0C1117),
+        backgroundColor: AppColors.background,
         body: const YapgitsinLoader(size: 72),
       );
     }
@@ -99,10 +99,10 @@ class _MainShellState extends ConsumerState<MainShell>
         top: false,
         child: Container(
         decoration: BoxDecoration(
-          color: AppColors.darkSurface,
+          color: AppColors.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
+              color: Colors.black.withValues(alpha: 0.12),
               blurRadius: 20,
               offset: const Offset(0, -4),
             ),
@@ -120,11 +120,11 @@ class _MainShellState extends ConsumerState<MainShell>
           child: BottomNavigationBar(
             currentIndex: selectedIndex,
             onTap: _onItemTapped,
-            selectedItemColor: AppColors.darkPrimary,
-            unselectedItemColor: AppColors.darkTextSecondary,
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: AppColors.textSecondary,
             showUnselectedLabels: true,
             type: BottomNavigationBarType.fixed,
-            backgroundColor: AppColors.darkSurface,
+            backgroundColor: AppColors.surface,
             elevation: 0,
             selectedLabelStyle: const TextStyle(
                 fontSize: 11, fontWeight: FontWeight.bold),
@@ -236,13 +236,11 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
     final authState = ref.watch(authStateProvider);
     final userName = authState is AuthAuthenticated ? authState.displayName : null;
 
-    // Hero rengi temaya göre: Açık modda marka yeşili; Sistem/Koyu (dark) modda
-    // koyu tema arka planı + okunur açık ön plan.
-    // Yaptır hero header → content/body ile aynı dark surface (AppColors.surface
-    // = #161B22). Pure black ezici geliyordu; surface tonu içerikle uyumlu.
+    // Hero rengi temaya göre: Açık modda beyaz zemin + koyu metin;
+    // Sistem/Koyu (dark) modda koyu tema arka planı + okunur açık ön plan.
     final heroBg = AppColors.surface;
-    final heroTitle = Colors.white;
-    final heroGreeting = Colors.white70;
+    final heroTitle = AppColors.textPrimary;
+    final heroGreeting = AppColors.textSecondary;
     final heroBadgeBg = AppColors.primary;
 
     return Scaffold(
@@ -316,12 +314,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                           // Search bar
                           Container(
                             decoration: BoxDecoration(
-                              color: AppColors.darkSurfaceElevated,
+                              color: AppColors.surfaceElevated,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.darkBorder),
+                              border: Border.all(color: AppColors.border),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.2),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -331,11 +329,11 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                               controller: _searchController,
                               onSubmitted: _onSearch,
                               textInputAction: TextInputAction.search,
-                              style: const TextStyle(color: AppColors.darkText),
+                              style: TextStyle(color: AppColors.textPrimary),
                               decoration: InputDecoration(
                                 hintText: 'Hangi hizmete ihtiyacınız var?',
-                                hintStyle: const TextStyle(
-                                    color: AppColors.darkTextSecondary, fontSize: 14),
+                                hintStyle: TextStyle(
+                                    color: AppColors.textSecondary, fontSize: 14),
                                 suffixIcon: IconButton(
                                   icon: const Icon(Icons.arrow_forward_rounded,
                                       color: AppColors.primary),
@@ -356,20 +354,20 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                             // kategori secili acilir (giris kontrolu _onSearch'te).
                             onPressed: () =>
                                 _onSearch(_searchController.text),
-                            icon: const Icon(Icons.add_circle_outline,
-                                color: Colors.white),
-                            label: const Text('Hizmet İlanı Ver',
+                            icon: Icon(Icons.add_circle_outline,
+                                color: AppColors.textPrimary),
+                            label: Text('Hizmet İlanı Ver',
                                 style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.textPrimary,
                                     fontWeight: FontWeight.bold)),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.darkSurfaceElevated,
-                              foregroundColor: AppColors.darkPrimary,
+                              backgroundColor: AppColors.surfaceElevated,
+                              foregroundColor: AppColors.primary,
                               minimumSize: const Size(double.infinity, 50),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
-                                  side: const BorderSide(
-                                      color: AppColors.darkBorder)),
+                                  side: BorderSide(
+                                      color: AppColors.border)),
                               elevation: 0,
                             ),
                           ),
@@ -466,7 +464,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                     child: CategoryCard(
                       label: name,
                       emoji: icon,
-                      bgColor: AppColors.darkSurfaceElevated,
+                      bgColor: AppColors.surfaceElevated,
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -636,9 +634,9 @@ class _RecentJobRow extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.darkSurface,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.darkBorder, width: 1),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Row(
         children: [
@@ -747,12 +745,12 @@ class _HomeProviderCard extends StatelessWidget {
         width: 158,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.darkSurface,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
               color: isFeatured
                   ? Colors.amber.shade400.withValues(alpha: 0.6)
-                  : AppColors.darkBorder),
+                  : AppColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -849,16 +847,16 @@ class _GroupChip extends StatelessWidget {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.darkPrimary : Colors.black,
+          color: isActive ? AppColors.primary : AppColors.surfaceElevated,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
-            color: isActive ? AppColors.darkPrimary : Colors.white24,
+            color: isActive ? AppColors.primary : AppColors.border,
             width: 1.5,
           ),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                      color: AppColors.darkPrimary.withValues(alpha: 0.2),
+                      color: AppColors.primary.withValues(alpha: 0.2),
                       blurRadius: 8,
                       offset: const Offset(0, 2))
                 ]
@@ -869,7 +867,7 @@ class _GroupChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: isActive ? Colors.black : Colors.white,
+            color: isActive ? Colors.black : AppColors.textPrimary,
           ),
         ),
       ),

@@ -31,6 +31,9 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Tema-duyarlı: light → beyaz zemin + koyu foreground; dark → koyu zemin + beyaz foreground.
+    final bg = AppColors.headerSurface;
+    final fg = AppColors.headerForeground;
     return AppBar(
       title: title,
       actions: actions,
@@ -38,11 +41,11 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
       bottom: bottom,
       elevation: elevation,
       centerTitle: centerTitle,
-      foregroundColor: Colors.white,
-      iconTheme: iconTheme ?? const IconThemeData(color: Colors.white),
+      foregroundColor: fg,
+      iconTheme: iconTheme ?? IconThemeData(color: fg),
       backgroundColor: Colors.transparent,
       flexibleSpace: Container(
-        decoration: const BoxDecoration(color: AppColors.headerDark),
+        decoration: BoxDecoration(color: bg),
       ),
     );
   }

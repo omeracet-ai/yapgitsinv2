@@ -9,10 +9,19 @@ class AppColors {
   static const Color primary       = Color(0xFF4ADE80);
   static const Color primaryDark   = Color(0xFF22C55E);
   static const Color primaryLight  = Color(0xFFDCFCE7);
-  /// Header zemini — content surface tonu (2026-05-26: kullanıcı pure
-  /// siyah ezici buldu, content ile uyumlu dark). Tüm AppBar/top header
-  /// için tek token.
+  /// @Deprecated — kullanım: `AppColors.headerBackground(context)` veya
+  /// `AppColors.headerSurface`. Bu sabit her zaman koyu zemin döner ve
+  /// light mode'da AppBar'ı bozar. Yeni kod tema-duyarlı getter kullanmalı.
   static const Color headerDark    = Color(0xFF161B22);
+
+  /// Tema-duyarlı header zemini — light'ta beyaz, dark'ta #161B22.
+  /// Const olmayan getter; `AppColors.headerSurface` şeklinde çağrılır.
+  static Color get headerSurface =>
+      _pick(const Color(0xFF161B22), const Color(0xFFFFFFFF));
+
+  /// Header üzerindeki başlık/ikon foreground rengi — light'ta koyu, dark'ta beyaz.
+  static Color get headerForeground =>
+      _pick(const Color(0xFFFFFFFF), const Color(0xFF161B22));
   static Color get   primaryGlow   => primary.withValues(alpha: 0.15);
 
   static const Color secondary     = Color(0xFF161B22);
@@ -80,8 +89,8 @@ class AppColors {
   @Deprecated('Eski turuncu marka kapatıldı; AppColors.primary kullanın.')
   static const Color legacyOrange = primary;
 
-  // ── Phase 263 — Ana sekme header arka planı ────────────────────────────
-  /// Tüm uygulama AppBar/header zemini — koyu renk (#161B22).
-  /// Foreground beyaz olmalı.
-  static Color headerBackground(BuildContext context) => headerDark;
+  // ── Phase 263/264 — Ana sekme header arka planı (tema-duyarlı) ─────────
+  /// Tüm uygulama AppBar/header zemini. Light → beyaz, Dark → #161B22.
+  /// Foreground rengi için `AppColors.headerForeground` kullanın.
+  static Color headerBackground(BuildContext context) => headerSurface;
 }

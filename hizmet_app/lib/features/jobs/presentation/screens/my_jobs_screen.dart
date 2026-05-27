@@ -10,12 +10,11 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/job_repository.dart';
 import '../../data/offer_repository.dart';
 import '../../../tokens/data/token_repository.dart';
-import 'job_detail_screen.dart';
 import 'job_opportunities_screen.dart';
 import 'post_job_screen.dart';
-import '../providers/job_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../widgets/boost_dialog.dart';
+import '../widgets/job_history_dialog.dart';
 
 // ─── Providers ────────────────────────────────────────────────────────────────
 
@@ -479,28 +478,7 @@ class _CustomerJobCard extends ConsumerWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => JobDetailScreen(
-            id: job['id'] as String,
-            title: title,
-            description: job['description'] as String? ?? '',
-            location: job['location'] as String? ?? '',
-            budget: '$budgetMin - $budgetMax ₺',
-            category: category,
-            postedAt: dateStr,
-            icon: Job.getIconForCategory(category),
-            color: Job.getColorForCategory(category),
-            isFeatured: job['featuredOrder'] != null,
-            customerId: job['customerId'] as String?,
-            photos: (job['photos'] as List<dynamic>?)
-                    ?.map((e) => e.toString())
-                    .toList() ??
-                [],
-          ),
-        ),
-      ),
+      onTap: () => JobHistoryDialog.show(context, job),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(color: AppColors.surface,

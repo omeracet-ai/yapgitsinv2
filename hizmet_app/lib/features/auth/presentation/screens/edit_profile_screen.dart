@@ -277,11 +277,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
-          const SliverAppBar(
+          SliverAppBar(
             pinned: true,
-            backgroundColor: AppColors.headerDark,
-            foregroundColor: Colors.white,
-            title: Text('Profilimi Düzenle'),
+            backgroundColor: AppColors.headerSurface,
+            foregroundColor: AppColors.headerForeground,
+            iconTheme: IconThemeData(color: AppColors.headerForeground),
+            title: const Text('Profilimi Düzenle'),
           ),
           SliverToBoxAdapter(
             child: _progressChip(percent, missing.length),

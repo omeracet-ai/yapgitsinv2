@@ -236,6 +236,43 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 2,
       ),
+      canvasColor: lightSurface,
+      popupMenuTheme: PopupMenuThemeData(
+        color: lightSurface,
+        surfaceTintColor: lightSurface,
+        textStyle: const TextStyle(color: lightText),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          side: const BorderSide(color: lightBorder),
+        ),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        textStyle: const TextStyle(color: lightText, fontSize: 14),
+        menuStyle: MenuStyle(
+          backgroundColor: WidgetStateProperty.all(lightSurface),
+          surfaceTintColor: WidgetStateProperty.all(lightSurface),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.medium),
+              side: const BorderSide(color: lightBorder),
+            ),
+          ),
+        ),
+      ),
+      menuTheme: MenuThemeData(
+        style: MenuStyle(
+          backgroundColor: WidgetStateProperty.all(lightSurface),
+          surfaceTintColor: WidgetStateProperty.all(lightSurface),
+        ),
+      ),
+      listTileTheme: const ListTileThemeData(
+        textColor: lightText,
+        iconColor: lightText,
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: lightSurface,
+        surfaceTintColor: lightSurface,
+      ),
     );
   }
 

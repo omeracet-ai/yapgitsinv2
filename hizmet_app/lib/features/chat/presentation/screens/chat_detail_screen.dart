@@ -298,12 +298,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.headerDark,
+        backgroundColor: AppColors.headerSurface,
+        foregroundColor: AppColors.headerForeground,
+        iconTheme: IconThemeData(color: AppColors.headerForeground),
         elevation: 0,
         titleSpacing: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.white, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: AppColors.headerForeground, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
@@ -312,13 +314,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: AppColors.surface.withValues(alpha: 0.2),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.18),
                   child: Text(
                     widget.peerName.isNotEmpty
                         ? trUpper(widget.peerName[0])
                         : '?',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppColors.headerForeground,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -346,10 +348,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(widget.peerName,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white)),
+                        color: AppColors.headerForeground)),
                 Text(subtitle,
                     style: TextStyle(
                         fontSize: 11,
