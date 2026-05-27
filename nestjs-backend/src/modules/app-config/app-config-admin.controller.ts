@@ -18,6 +18,7 @@ import { AdminGuard } from '../../common/guards/admin.guard';
 import type { AuthUser } from '../../common/types/auth.types';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { AppConfigService } from './app-config.service';
+import { AppConfigGateway } from './app-config.gateway';
 import { UpsertSettingDto } from './dto/upsert-setting.dto';
 import { CreateThemeDto, UpdateThemeDto } from './dto/create-theme.dto';
 import { UpdateBrandingDto } from './dto/update-branding.dto';
@@ -36,6 +37,7 @@ export class AppConfigAdminController {
   constructor(
     private readonly service: AppConfigService,
     private readonly audit: AdminAuditService,
+    private readonly gateway: AppConfigGateway,
   ) {}
 
   private actor(req: Request & { user?: AuthUser }) {
@@ -85,6 +87,7 @@ export class AppConfigAdminController {
       payload: { sourceAuditLogId: auditLogId },
       req,
     });
+    this.gateway.pushUpdate({ type: `${out.entityType}.rollback` });
     return out;
   }
 
@@ -103,6 +106,7 @@ export class AppConfigAdminController {
       payload: { key: dto.key, type: dto.type, group: dto.group },
       req,
     });
+    this.gateway.pushUpdate({ type: 'setting' });
     return out;
   }
 
@@ -119,6 +123,7 @@ export class AppConfigAdminController {
       targetId: key,
       req,
     });
+    this.gateway.pushUpdate({ type: 'setting' });
     return out;
   }
 
@@ -137,6 +142,7 @@ export class AppConfigAdminController {
       payload: { name: dto.name, isActive: !!dto.isActive },
       req,
     });
+    this.gateway.pushUpdate({ type: 'theme' });
     return out;
   }
 
@@ -155,6 +161,7 @@ export class AppConfigAdminController {
       payload: { isActive: dto.isActive },
       req,
     });
+    this.gateway.pushUpdate({ type: 'theme' });
     return out;
   }
 
@@ -171,6 +178,7 @@ export class AppConfigAdminController {
       targetId: id,
       req,
     });
+    this.gateway.pushUpdate({ type: 'theme' });
     return out;
   }
 
@@ -189,6 +197,7 @@ export class AppConfigAdminController {
       payload: dto as unknown as Record<string, unknown>,
       req,
     });
+    this.gateway.pushUpdate({ type: 'branding' });
     return out;
   }
 
@@ -207,6 +216,7 @@ export class AppConfigAdminController {
       payload: { screen: dto.screen, itemCount: dto.items.length },
       req,
     });
+    this.gateway.pushUpdate({ type: 'layout' });
     return out;
   }
 
@@ -226,6 +236,7 @@ export class AppConfigAdminController {
       payload: dto as unknown as Record<string, unknown>,
       req,
     });
+    this.gateway.pushUpdate({ type: 'visibility' });
     return out;
   }
 
@@ -242,6 +253,7 @@ export class AppConfigAdminController {
       targetId: moduleKey,
       req,
     });
+    this.gateway.pushUpdate({ type: 'visibility' });
     return out;
   }
 }

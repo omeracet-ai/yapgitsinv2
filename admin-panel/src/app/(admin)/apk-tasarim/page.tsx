@@ -5,7 +5,7 @@
  * Three glass cards: theme tokens, branding, save/preview actions.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type AdminAppConfig, type AppConfigBranding, type AppConfigThemeTokens } from "@/lib/api";
 import { ApkPreviewModal } from "@/components/apk-preview/ApkPreviewModal";
 
@@ -67,6 +67,84 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
           onChange={(e) => onChange(e.target.value)}
           className="flex-1 bg-transparent text-sm font-mono text-white outline-none px-1"
           spellCheck={false}
+        />
+      </div>
+    </label>
+  );
+}
+
+function BrandingUploadField({
+  label,
+  kind,
+  value,
+  onChange,
+  placeholder,
+  onError,
+  onSuccess,
+}: {
+  label: string;
+  kind: "logo" | "icon" | "splash";
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  onError: (msg: string) => void;
+  onSuccess: (msg: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const handlePick = () => inputRef.current?.click();
+
+  const handleFile = async (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      onError("Sadece resim dosyası yükleyin");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      onError("Dosya 5MB'dan büyük olamaz");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { api } = await import("@/lib/api");
+      const out = await api.uploadBranding(file, kind);
+      onChange(out.url);
+      onSuccess(`${label} yüklendi ✓`);
+    } catch (e) {
+      onError(e instanceof Error ? e.message : "Yükleme başarısız");
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <label className="block">
+      <span className="block text-[11px] uppercase tracking-wide text-slate-400 font-semibold mb-1.5">{label}</span>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-emerald-400/40 transition"
+        />
+        <button
+          type="button"
+          onClick={handlePick}
+          disabled={busy}
+          className="shrink-0 px-3 py-2 rounded-lg bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 text-xs font-semibold hover:bg-emerald-500/25 disabled:opacity-50 transition"
+          title={`${label} yükle`}
+        >
+          {busy ? "…" : "📤"}
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => void handleFile(e.target.files?.[0] ?? null)}
         />
       </div>
     </label>
@@ -281,23 +359,32 @@ export default function ApkTasarimPage() {
               onChange={(v) => setBranding((p) => ({ ...p, appTitle: v }))}
               placeholder="Yapgitsin"
             />
-            <TextField
+            <BrandingUploadField
               label="Logo URL"
+              kind="logo"
               value={branding.logoUrl ?? ""}
               onChange={(v) => setBranding((p) => ({ ...p, logoUrl: v }))}
               placeholder="https://…/logo.png"
+              onError={(m) => flash("err", m)}
+              onSuccess={(m) => flash("ok", m)}
             />
-            <TextField
+            <BrandingUploadField
               label="Icon URL"
+              kind="icon"
               value={branding.iconUrl ?? ""}
               onChange={(v) => setBranding((p) => ({ ...p, iconUrl: v }))}
               placeholder="https://…/icon.png"
+              onError={(m) => flash("err", m)}
+              onSuccess={(m) => flash("ok", m)}
             />
-            <TextField
+            <BrandingUploadField
               label="Splash URL"
+              kind="splash"
               value={branding.splashUrl ?? ""}
               onChange={(v) => setBranding((p) => ({ ...p, splashUrl: v }))}
               placeholder="https://…/splash.png"
+              onError={(m) => flash("err", m)}
+              onSuccess={(m) => flash("ok", m)}
             />
             {/* Preview thumbs */}
             <div className="flex gap-2 pt-2">

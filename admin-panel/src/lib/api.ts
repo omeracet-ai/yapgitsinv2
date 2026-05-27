@@ -370,6 +370,15 @@ export const api = {
   updateOnboardingSlide:  (id: string, data: Partial<OnboardingSlide>) => request<OnboardingSlide>(`/onboarding-slides/${id}`, { method: 'PATCH',  body: JSON.stringify(data) }),
   deleteOnboardingSlide:  (id: string)                               => request<void>(`/onboarding-slides/${id}`,              { method: 'DELETE' }),
   reorderOnboardingSlides:(ids: string[])                            => request<void>('/onboarding-slides/reorder',            { method: 'PATCH',  body: JSON.stringify({ ids }) }),
+  // Branding asset upload (admin only) — kind: 'logo' | 'icon' | 'splash'
+  uploadBranding: (file: File, kind: 'logo' | 'icon' | 'splash') => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return uploadFile<{ url: string; kind: string }>(
+      `/uploads/branding?kind=${kind}`,
+      fd,
+    );
+  },
   uploadOnboardingImage:  (file: File)                               => {
     const fd = new FormData();
     fd.append('image', file);

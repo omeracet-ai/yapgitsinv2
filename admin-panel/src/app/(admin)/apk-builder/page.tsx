@@ -22,6 +22,23 @@ import {
   type AppConfigLayoutItem,
   type AppConfigThemeTokens,
 } from "@/lib/api";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const SCREENS = [
   { key: "main_shell", label: "Ana Kabuk (Tab Bar)" },
@@ -43,6 +60,14 @@ const FALLBACK_THEME: AppConfigThemeTokens = {
 interface EditableItem extends AppConfigLayoutItem {
   /** Stable index for selection — items[] has no id; key may repeat across types. */
   _idx: number;
+  /** Stable id for dnd-kit — survives reorder; never reused after deletion. */
+  _dndId: string;
+}
+
+let _dndCounter = 0;
+function nextDndId(): string {
+  _dndCounter += 1;
+  return `dnd-${_dndCounter}-${Date.now().toString(36)}`;
 }
 
 function deriveType(it: AppConfigLayoutItem): string {
@@ -97,6 +122,7 @@ export default function ApkBuilderPage() {
       const next = (layout?.items ?? []).map<EditableItem>((it, idx) => ({
         ...it,
         _idx: idx,
+        _dndId: nextDndId(),
       }));
       setItems(next);
       setSelectedIdx(next.length > 0 ? 0 : null);
@@ -137,12 +163,33 @@ export default function ApkBuilderPage() {
     setSelectedIdx(target);
   };
 
+  // ─── dnd-kit ──────────────────────────────────────────────────────────────
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const onDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    setItems((prev) => {
+      const from = prev.findIndex((it) => it._dndId === active.id);
+      const to = prev.findIndex((it) => it._dndId === over.id);
+      if (from < 0 || to < 0) return prev;
+      const moved = arrayMove(prev, from, to).map((it, i) => ({ ...it, _idx: i }));
+      // Keep selection following the dragged item.
+      setSelectedIdx(to);
+      return moved;
+    });
+  };
+
   const addItem = () => {
     const newItem: EditableItem = {
       key: `item_${Date.now()}`,
       visible: true,
       props: { type: "card", label: "Yeni Öğe" },
       _idx: items.length,
+      _dndId: nextDndId(),
     };
     setItems((prev) => [...prev, newItem]);
     setSelectedIdx(items.length);
@@ -158,10 +205,13 @@ export default function ApkBuilderPage() {
     setSaving(true);
     setMsg(null);
     try {
-      const payload: AppConfigLayoutItem[] = items.map(({ _idx: _drop, ...rest }) => {
-        void _drop;
-        return rest;
-      });
+      const payload: AppConfigLayoutItem[] = items.map(
+        ({ _idx: _drop, _dndId: _drop2, ...rest }) => {
+          void _drop;
+          void _drop2;
+          return rest;
+        },
+      );
       await api.putLayout(screen, payload);
       setMsg({ kind: "ok", text: "Kaydedildi ✓ — APK bir sonraki açılışta yeni düzeni alacak." });
       // touch local copy ref-stable so any re-fetch picks up the saved order
@@ -428,46 +478,30 @@ export default function ApkBuilderPage() {
             {items.length === 0 ? (
               <p className="text-xs text-slate-500 italic">Liste boş.</p>
             ) : (
-              <ol className="space-y-1">
-                {items.map((it, idx) => (
-                  <li
-                    key={`${it.key}-${idx}`}
-                    onClick={() => setSelectedIdx(idx)}
-                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs cursor-pointer transition ${
-                      idx === selectedIdx
-                        ? "bg-orange-100 text-orange-900 ring-1 ring-orange-300"
-                        : "hover:bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    <span className="font-mono text-slate-400 w-5 text-right">{idx + 1}.</span>
-                    <span className="flex-1 truncate font-medium">{readLabel(it)}</span>
-                    <span className="text-[10px] uppercase text-slate-500">{deriveType(it)}</span>
-                    {it.visible === false && <span title="gizli">👁️‍🗨️</span>}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        move(idx, -1);
-                      }}
-                      disabled={idx === 0}
-                      className="w-6 h-6 rounded hover:bg-white disabled:opacity-30"
-                      aria-label="Yukarı"
-                    >
-                      ↑
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        move(idx, 1);
-                      }}
-                      disabled={idx === items.length - 1}
-                      className="w-6 h-6 rounded hover:bg-white disabled:opacity-30"
-                      aria-label="Aşağı"
-                    >
-                      ↓
-                    </button>
-                  </li>
-                ))}
-              </ol>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                <SortableContext
+                  items={items.map((it) => it._dndId)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <ol className="space-y-1">
+                    {items.map((it, idx) => (
+                      <SortableBuilderItem
+                        key={it._dndId}
+                        id={it._dndId}
+                        idx={idx}
+                        total={items.length}
+                        label={readLabel(it)}
+                        type={deriveType(it)}
+                        visible={it.visible !== false}
+                        selected={idx === selectedIdx}
+                        onSelect={() => setSelectedIdx(idx)}
+                        onMoveUp={() => move(idx, -1)}
+                        onMoveDown={() => move(idx, 1)}
+                      />
+                    ))}
+                  </ol>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
 
@@ -599,6 +633,102 @@ export default function ApkBuilderPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * One draggable row in the item list. Drag handle is the leading ⋮⋮ glyph;
+ * the rest of the row stays clickable for selection. Up/down arrow buttons
+ * remain for keyboard accessibility (dnd-kit keyboard sensor also works on
+ * the handle itself).
+ */
+function SortableBuilderItem({
+  id,
+  idx,
+  total,
+  label,
+  type,
+  visible,
+  selected,
+  onSelect,
+  onMoveUp,
+  onMoveDown,
+}: {
+  id: string;
+  idx: number;
+  total: number;
+  label: string;
+  type: string;
+  visible: boolean;
+  selected: boolean;
+  onSelect: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 50 : "auto",
+  };
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      onClick={onSelect}
+      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs cursor-pointer transition ${
+        selected
+          ? "bg-orange-100 text-orange-900 ring-1 ring-orange-300"
+          : "hover:bg-slate-100 text-slate-700"
+      } ${isDragging ? "shadow-lg bg-white" : ""}`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        onClick={(e) => e.stopPropagation()}
+        className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-700 px-1 select-none"
+        aria-label="Sürükle"
+        title="Sürükleyerek sırala"
+      >
+        ⋮⋮
+      </button>
+      <span className="font-mono text-slate-400 w-5 text-right">{idx + 1}.</span>
+      <span className="flex-1 truncate font-medium">{label}</span>
+      <span className="text-[10px] uppercase text-slate-500">{type}</span>
+      {!visible && <span title="gizli">👁️‍🗨️</span>}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onMoveUp();
+        }}
+        disabled={idx === 0}
+        className="w-6 h-6 rounded hover:bg-white disabled:opacity-30"
+        aria-label="Yukarı"
+      >
+        ↑
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onMoveDown();
+        }}
+        disabled={idx === total - 1}
+        className="w-6 h-6 rounded hover:bg-white disabled:opacity-30"
+        aria-label="Aşağı"
+      >
+        ↓
+      </button>
+    </li>
   );
 }
 

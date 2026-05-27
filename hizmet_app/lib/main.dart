@@ -10,6 +10,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/theme_mode_provider.dart';
 import 'core/app_config/app_config_service.dart';
+import 'core/app_config/app_config_socket.dart';
 import 'core/router/app_router.dart';
 import 'core/services/in_app_notification_service.dart';
 import 'core/services/chat_toast_hook.dart';
@@ -123,6 +124,8 @@ class YapgitsinApp extends ConsumerWidget {
         themeMode == ThemeMode.light ? Brightness.light : Brightness.dark;
     // Phase 80 — bind real-time chat → toast hook (idempotent, auth-gated).
     ref.watch(chatToastHookProvider);
+    // App-config socket — admin save → instant config refresh.
+    ref.watch(appConfigSocketProvider);
 
     return MaterialApp.router(
       title: 'Yapgitsin',

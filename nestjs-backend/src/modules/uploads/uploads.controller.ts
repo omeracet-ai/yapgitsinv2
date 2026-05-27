@@ -9,7 +9,9 @@ import {
   Req,
   Request,
   Param,
+  Query,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
@@ -592,6 +594,63 @@ export class UploadsController {
       url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/certifications/${folder}/${filename}`,
       name: file.originalname || filename,
       size: file.size,
+    };
+  }
+
+  /** POST /uploads/branding?kind=logo|icon|splash — admin branding asset (Voldi-fs)
+   * Admin-only. PNG (transparent preserved), boyutlandırma kind'a göre:
+   *   logo   → 256×256 (contain)
+   *   icon   → 1024×1024 (contain)
+   *   splash → 1920×1080 (cover)
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('branding')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      fileFilter: imageFilter,
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  async uploadBranding(
+    @UploadedFile() file: any,
+    @Query('kind') kind: string,
+    @Req() req: any,
+  ): Promise<{ url: string; kind: string }> {
+    if (!req.user || req.user.role !== 'admin') {
+      throw new ForbiddenException('Sadece admin yükleyebilir');
+    }
+    if (!file) throw new BadRequestException('Dosya seçilmedi');
+    const k = (kind || '').toLowerCase();
+    if (!['logo', 'icon', 'splash'].includes(k)) {
+      throw new BadRequestException('kind: logo|icon|splash olmalı');
+    }
+
+    const dir = join(APP_ROOT, 'uploads', 'branding');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    const filename = `${k}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+    const dest = join(dir, filename);
+
+    let pipeline = sharp(file.buffer);
+    if (k === 'logo') {
+      pipeline = pipeline.resize(256, 256, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      });
+    } else if (k === 'icon') {
+      pipeline = pipeline.resize(1024, 1024, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      });
+    } else {
+      pipeline = pipeline.resize(1920, 1080, { fit: 'cover' });
+    }
+    await pipeline.png({ compressionLevel: 9 }).toFile(dest);
+
+    return {
+      url: `${process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`}/uploads/branding/${filename}`,
+      kind: k,
     };
   }
 

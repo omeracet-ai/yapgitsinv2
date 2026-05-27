@@ -6,7 +6,7 @@ import { api, type User, type Paginated } from "@/lib/api";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import { Pager } from "@/components/ui/Pager";
-import { exportCsv, exportJson } from "@/lib/export";
+import { exportCsv, exportJson, exportPdf } from "@/lib/export";
 
 const PAGE_LIMIT = 20;
 
@@ -437,6 +437,32 @@ export default function UsersPage() {
             className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
           >
             📦 JSON
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const stamp = new Date().toISOString().slice(0, 10);
+              void exportPdf(
+                users.map((u) => ({
+                  id: u.id,
+                  fullName: u.fullName,
+                  email: u.email ?? "",
+                  phoneNumber: u.phoneNumber ?? "",
+                  role: u.role,
+                  identityVerified: u.identityVerified ? "evet" : "hayır",
+                  city: u.city ?? "",
+                  createdAt: u.createdAt
+                    ? new Date(u.createdAt).toLocaleDateString("tr-TR")
+                    : "",
+                })),
+                `users-${stamp}.pdf`,
+                { title: "Kullanıcı Listesi" },
+              );
+            }}
+            disabled={!users.length}
+            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+          >
+            📄 PDF
           </button>
           <span className="text-sm text-gray-400">{data.total} kullanıcı</span>
         </div>

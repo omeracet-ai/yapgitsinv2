@@ -10,6 +10,7 @@ import { AdminAuditModule } from '../admin-audit/admin-audit.module';
 import { AppConfigService } from './app-config.service';
 import { AppConfigController } from './app-config.controller';
 import { AppConfigAdminController } from './app-config-admin.controller';
+import { AppConfigGateway } from './app-config.gateway';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { AppConfigAdminController } from './app-config-admin.controller';
     AdminAuditModule,
   ],
   controllers: [AppConfigController, AppConfigAdminController],
-  providers: [AppConfigService],
-  exports: [AppConfigService],
+  providers: [AppConfigService, AppConfigGateway],
+  exports: [AppConfigService, AppConfigGateway],
 })
 export class AppConfigModule {}

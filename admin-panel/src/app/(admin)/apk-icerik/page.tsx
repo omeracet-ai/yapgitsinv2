@@ -15,6 +15,34 @@ import {
   type AppConfigVisibilityRule,
 } from "@/lib/api";
 import { ApkPreviewModal } from "@/components/apk-preview/ApkPreviewModal";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+/** Layout item augmented with a stable id for dnd-kit. Server payload does not
+ * carry an id, and `key` may repeat, so we generate one on load and strip it
+ * before PUT. */
+type SortableLayoutItem = AppConfigLayoutItem & { _dndId: string };
+
+let _icerikDndCounter = 0;
+function nextIcerikDndId(): string {
+  _icerikDndCounter += 1;
+  return `il-${_icerikDndCounter}-${Date.now().toString(36)}`;
+}
 
 type Tab = "settings" | "layout" | "visibility";
 type SettingType = "string" | "number" | "boolean" | "json";
@@ -194,6 +222,82 @@ function parseByType(raw: string, type: string): unknown {
 
 // ─── Layout tab ────────────────────────────────────────────────────────────
 
+/**
+ * One draggable row in the layout list. Drag handle = leading ⋮⋮ glyph.
+ * Up/down arrows stay for keyboard a11y; the rest of the buttons keep
+ * their click handlers and stop propagation so a click inside doesn't
+ * also fire a drag-end.
+ */
+function SortableLayoutRow({
+  item,
+  idx,
+  total,
+  onMoveUp,
+  onMoveDown,
+  onToggleVisible,
+  onOpenProps,
+  onRemove,
+}: {
+  item: SortableLayoutItem;
+  idx: number;
+  total: number;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onToggleVisible: () => void;
+  onOpenProps: () => void;
+  onRemove: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item._dndId });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 50 : "auto",
+  };
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-2 p-2.5 rounded-lg bg-white/5 border border-white/10 ${
+        isDragging ? "shadow-lg shadow-emerald-500/20 bg-white/10" : ""
+      }`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-emerald-300 px-1 select-none"
+        aria-label="Sürükle"
+        title="Sürükleyerek sırala"
+      >
+        ⋮⋮
+      </button>
+      <div className="flex flex-col gap-0.5">
+        <button onClick={onMoveUp} disabled={idx === 0} className="w-6 h-5 rounded bg-white/5 hover:bg-white/15 text-slate-300 text-xs disabled:opacity-30">▲</button>
+        <button onClick={onMoveDown} disabled={idx === total - 1} className="w-6 h-5 rounded bg-white/5 hover:bg-white/15 text-slate-300 text-xs disabled:opacity-30">▼</button>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-mono text-sm text-emerald-200 truncate">{item.key}</div>
+        <div className="text-[10px] text-slate-500 font-mono truncate">{JSON.stringify(item.props ?? {})}</div>
+      </div>
+      <label className="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
+        <input type="checkbox" checked={item.visible} onChange={onToggleVisible} className="accent-emerald-400" />
+        görünür
+      </label>
+      <button onClick={onOpenProps} className="text-xs text-slate-300 hover:text-white px-2 py-1 rounded bg-white/5">props</button>
+      <button onClick={onRemove} className="text-xs text-red-300 hover:text-red-100 px-2 py-1 rounded bg-red-500/10">sil</button>
+    </li>
+  );
+}
+
 function LayoutTab({
   layouts,
   onChanged,
@@ -204,7 +308,7 @@ function LayoutTab({
   flash: (k: "ok" | "err", t: string) => void;
 }) {
   const [screen, setScreen] = useState<string>(SCREENS[0]);
-  const [items, setItems] = useState<AppConfigLayoutItem[]>([]);
+  const [items, setItems] = useState<SortableLayoutItem[]>([]);
   const [propsEditFor, setPropsEditFor] = useState<string | null>(null);
   const [propsRaw, setPropsRaw] = useState("");
 
@@ -213,7 +317,12 @@ function LayoutTab({
     // react-hooks/set-state-in-effect lint rule.
     const id = setTimeout(() => {
       const current = layouts.find((l) => l.screen === screen);
-      setItems(current?.items ?? []);
+      setItems(
+        (current?.items ?? []).map<SortableLayoutItem>((it) => ({
+          ...it,
+          _dndId: nextIcerikDndId(),
+        })),
+      );
     }, 0);
     return () => clearTimeout(id);
   }, [screen, layouts]);
@@ -234,13 +343,13 @@ function LayoutTab({
   const addItem = () => {
     const key = prompt("Yeni item key (örn: featured_jobs)");
     if (!key) return;
-    setItems((p) => [...p, { key, visible: true, props: {} }]);
+    setItems((p) => [...p, { key, visible: true, props: {}, _dndId: nextIcerikDndId() }]);
   };
 
   const removeItem = (idx: number) => setItems((p) => p.filter((_, i) => i !== idx));
 
-  const openPropsEditor = (it: AppConfigLayoutItem) => {
-    setPropsEditFor(it.key);
+  const openPropsEditor = (it: SortableLayoutItem) => {
+    setPropsEditFor(it._dndId);
     setPropsRaw(JSON.stringify(it.props ?? {}, null, 2));
   };
 
@@ -248,19 +357,44 @@ function LayoutTab({
     if (!propsEditFor) return;
     let parsed: Record<string, unknown> = {};
     try { parsed = JSON.parse(propsRaw); } catch { flash("err", "Geçersiz JSON"); return; }
-    setItems((p) => p.map((it) => (it.key === propsEditFor ? { ...it, props: parsed } : it)));
+    setItems((p) => p.map((it) => (it._dndId === propsEditFor ? { ...it, props: parsed } : it)));
     setPropsEditFor(null);
   };
 
   const save = async () => {
     try {
-      await api.putLayout(screen, items);
+      // Strip internal `_dndId` before sending to backend.
+      const payload: AppConfigLayoutItem[] = items.map(({ _dndId: _drop, ...rest }) => {
+        void _drop;
+        return rest;
+      });
+      await api.putLayout(screen, payload);
       await onChanged();
       flash("ok", `${screen} kaydedildi`);
     } catch (e) {
       flash("err", e instanceof Error ? e.message : "Hata");
     }
   };
+
+  // dnd-kit sensors & handler
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const onDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    setItems((prev) => {
+      const from = prev.findIndex((it) => it._dndId === active.id);
+      const to = prev.findIndex((it) => it._dndId === over.id);
+      if (from < 0 || to < 0) return prev;
+      return arrayMove(prev, from, to);
+    });
+  };
+
+  // Find currently edited item by _dndId for the modal header label.
+  const editingItem = propsEditFor ? items.find((it) => it._dndId === propsEditFor) : null;
 
   return (
     <GlassCard>
@@ -285,35 +419,37 @@ function LayoutTab({
         </div>
       </div>
 
-      <ul className="space-y-2">
-        {items.length === 0 && (
+      {items.length === 0 ? (
+        <ul className="space-y-2">
           <li className="py-8 text-center text-slate-500 text-xs">Bu ekranda item yok</li>
-        )}
-        {items.map((it, idx) => (
-          <li key={`${it.key}-${idx}`} className="flex items-center gap-2 p-2.5 rounded-lg bg-white/5 border border-white/10">
-            <div className="flex flex-col gap-0.5">
-              <button onClick={() => move(idx, -1)} disabled={idx === 0} className="w-6 h-5 rounded bg-white/5 hover:bg-white/15 text-slate-300 text-xs disabled:opacity-30">▲</button>
-              <button onClick={() => move(idx, +1)} disabled={idx === items.length - 1} className="w-6 h-5 rounded bg-white/5 hover:bg-white/15 text-slate-300 text-xs disabled:opacity-30">▼</button>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-mono text-sm text-emerald-200 truncate">{it.key}</div>
-              <div className="text-[10px] text-slate-500 font-mono truncate">{JSON.stringify(it.props ?? {})}</div>
-            </div>
-            <label className="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
-              <input type="checkbox" checked={it.visible} onChange={() => toggleVisible(idx)} className="accent-emerald-400" />
-              görünür
-            </label>
-            <button onClick={() => openPropsEditor(it)} className="text-xs text-slate-300 hover:text-white px-2 py-1 rounded bg-white/5">props</button>
-            <button onClick={() => removeItem(idx)} className="text-xs text-red-300 hover:text-red-100 px-2 py-1 rounded bg-red-500/10">sil</button>
-          </li>
-        ))}
-      </ul>
+        </ul>
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+          <SortableContext items={items.map((it) => it._dndId)} strategy={verticalListSortingStrategy}>
+            <ul className="space-y-2">
+              {items.map((it, idx) => (
+                <SortableLayoutRow
+                  key={it._dndId}
+                  item={it}
+                  idx={idx}
+                  total={items.length}
+                  onMoveUp={() => move(idx, -1)}
+                  onMoveDown={() => move(idx, +1)}
+                  onToggleVisible={() => toggleVisible(idx)}
+                  onOpenProps={() => openPropsEditor(it)}
+                  onRemove={() => removeItem(idx)}
+                />
+              ))}
+            </ul>
+          </SortableContext>
+        </DndContext>
+      )}
 
       {/* Props editor */}
       {propsEditFor && (
         <div className="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-6" onClick={() => setPropsEditFor(null)}>
           <div className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-2xl p-5" onClick={(e) => e.stopPropagation()}>
-            <h4 className="text-sm font-bold text-white mb-3">Props — <span className="font-mono text-emerald-300">{propsEditFor}</span></h4>
+            <h4 className="text-sm font-bold text-white mb-3">Props — <span className="font-mono text-emerald-300">{editingItem?.key ?? propsEditFor}</span></h4>
             <textarea
               value={propsRaw}
               onChange={(e) => setPropsRaw(e.target.value)}
