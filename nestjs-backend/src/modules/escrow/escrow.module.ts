@@ -41,8 +41,9 @@ import { Job } from '../jobs/job.entity';
     EscrowController,
     EscrowAdminController,
     BookingEscrowController,
-    EscrowConfirmationController,
+    // Phase 279: list controller'ı :id swallow'undan önce kaydet
     EscrowConfirmationListController,
+    EscrowConfirmationController,
   ],
   providers: [
     EscrowService,
