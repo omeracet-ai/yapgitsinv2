@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, type AppConfigPublic } from "@/lib/api";
+import { PhoneFrame3D } from "./PhoneFrame3D";
 
 interface Props {
   open: boolean;
@@ -102,21 +103,9 @@ export function ApkPreviewModal({ open, onClose }: Props) {
         </button>
       </div>
 
-      {/* Phone mockup */}
-      <div
-        className="animate-in zoom-in-95 fade-in duration-300"
-        onClick={(e) => e.stopPropagation()}
-        style={{ transform: "perspective(1200px) rotateY(-8deg) rotateX(4deg)" }}
-      >
-        <div
-          className="bg-slate-800 shadow-2xl shadow-black/60"
-          style={{
-            width: 390,
-            height: 844,
-            borderRadius: 60,
-            padding: 14,
-          }}
-        >
+      {/* Phone mockup — interactive 3D rotate */}
+      <div onClick={(e) => e.stopPropagation()}>
+        <PhoneFrame3D width={390} height={844} bezelRadius={60} bezelPadding={14}>
           {/* Screen */}
           <div
             className="w-full h-full overflow-hidden relative flex flex-col"
@@ -249,7 +238,7 @@ export function ApkPreviewModal({ open, onClose }: Props) {
               })}
             </div>
           </div>
-        </div>
+        </PhoneFrame3D>
       </div>
     </div>
   );

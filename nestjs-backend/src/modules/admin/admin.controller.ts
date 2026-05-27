@@ -39,6 +39,7 @@ import { BulkVerifyDto } from './dto/bulk-verify.dto';
 import { BulkFeatureDto, BulkUnfeatureDto } from './dto/bulk-feature.dto';
 import { SuspendUserDto } from './dto/suspend-user.dto';
 import { PurgeAuditLogDto } from './dto/purge-audit-log.dto';
+import { RestoreBackupDto } from './dto/restore-backup.dto';
 import { AdminNoteDto } from './dto/admin-note.dto';
 import { DataDeletionActionDto } from './dto/data-deletion-action.dto';
 import {
@@ -1003,6 +1004,20 @@ export class AdminController {
   ) {
     const safePath = this.adminService.resolveBackupPath(filename);
     return res.download(safePath);
+  }
+
+  @Audit('backup.restore')
+  @Post('backup/restore/:filename')
+  async restoreBackup(
+    @Param('filename') filename: string,
+    @Body() body: RestoreBackupDto,
+    @Req() req: Request & { user: AuthUser },
+  ) {
+    return this.adminService.restoreBackup(
+      filename,
+      body.confirmToken,
+      req.user.id,
+    );
   }
 
   @Delete('backup/:filename')

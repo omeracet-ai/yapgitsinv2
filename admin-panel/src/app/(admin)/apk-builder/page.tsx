@@ -22,6 +22,7 @@ import {
   type AppConfigLayoutItem,
   type AppConfigThemeTokens,
 } from "@/lib/api";
+import { PhoneFrame3D } from "@/components/apk-preview/PhoneFrame3D";
 import {
   DndContext,
   PointerSensor,
@@ -291,16 +292,15 @@ export default function ApkBuilderPage() {
 
       {/* Two-column body */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* LEFT — Phone mockup (60% ≈ 3/5) */}
+        {/* LEFT — Phone mockup (60% ≈ 3/5) — interactive 3D rotate */}
         <div className="lg:col-span-3 flex items-start justify-center">
-          <div
-            className="animate-in zoom-in-95 fade-in duration-300"
-            style={{ transform: "perspective(1200px) rotateY(-8deg) rotateX(4deg)" }}
+          <PhoneFrame3D
+            width={360}
+            height={780}
+            bezelRadius={56}
+            bezelPadding={12}
+            bezelClassName="bg-slate-800 shadow-2xl shadow-black/40"
           >
-            <div
-              className="bg-slate-800 shadow-2xl shadow-black/40"
-              style={{ width: 360, height: 780, borderRadius: 56, padding: 12 }}
-            >
               <div
                 className="w-full h-full overflow-hidden relative flex flex-col"
                 style={{
@@ -458,8 +458,7 @@ export default function ApkBuilderPage() {
                   })}
                 </div>
               </div>
-            </div>
-          </div>
+          </PhoneFrame3D>
         </div>
 
         {/* RIGHT — Inline editor (40% ≈ 2/5) */}

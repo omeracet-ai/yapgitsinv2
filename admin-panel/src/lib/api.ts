@@ -624,6 +624,16 @@ export const api = {
       `/admin/backup/${encodeURIComponent(filename)}`,
       { method: 'DELETE' },
     ),
+  restoreBackup: (filename: string, confirmToken: string) =>
+    request<{
+      ok: boolean;
+      restoredFrom: string;
+      preRestoreSnapshot: string | null;
+      note: string;
+    }>(`/admin/backup/restore/${encodeURIComponent(filename)}`, {
+      method: 'POST',
+      body: JSON.stringify({ confirmToken }),
+    }),
 
   // Phase 162: Chat & Messaging
   sendMessage: (to: string, message: string, jobLeadId?: string) =>

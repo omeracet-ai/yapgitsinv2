@@ -3,8 +3,9 @@
 /**
  * /backup — SQLite DB backup manager.
  * - "Yedek Al" CTA → POST /admin/backup/create
- * - List with download / delete actions
- * Restore endpoint YOK (riskli — manuel SQLite replace gerekir).
+ * - List with download / delete / restore actions
+ * - Restore: BUGÜNÜN tarihi (YYYYMMDD) confirm token + pre-restore snapshot.
+ * - Otomatik: günde 1 kez (server-side scheduler, son 7 saklanır).
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -64,6 +65,12 @@ function formatDate(iso: string): string {
   }
 }
 
+function todayToken(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+}
+
 export default function BackupPage() {
   const [rows, setRows] = useState<BackupRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +78,8 @@ export default function BackupPage() {
   const [flash, setFlash] = useState<{ k: "ok" | "err"; t: string } | null>(
     null,
   );
+  const [restoreTarget, setRestoreTarget] = useState<string | null>(null);
+  const [confirmInput, setConfirmInput] = useState("");
 
   const refresh = useCallback(async () => {
     try {
@@ -105,6 +114,34 @@ export default function BackupPage() {
     try {
       setBusy(`dl-${filename}`);
       await api.downloadBackup(filename);
+    } catch (e) {
+      setFlash({ k: "err", t: e instanceof Error ? e.message : "Hata" });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const openRestore = (filename: string) => {
+    setRestoreTarget(filename);
+    setConfirmInput("");
+  };
+
+  const closeRestore = () => {
+    setRestoreTarget(null);
+    setConfirmInput("");
+  };
+
+  const onRestoreConfirm = async () => {
+    if (!restoreTarget) return;
+    try {
+      setBusy(`restore-${restoreTarget}`);
+      const out = await api.restoreBackup(restoreTarget, confirmInput.trim());
+      setFlash({
+        k: "ok",
+        t: `Geri yüklendi: ${out.restoredFrom}. ${out.note}`,
+      });
+      closeRestore();
+      await refresh();
     } catch (e) {
       setFlash({ k: "err", t: e instanceof Error ? e.message : "Hata" });
     } finally {
@@ -162,9 +199,13 @@ export default function BackupPage() {
       >
         <p className="text-xs text-slate-400">
           SQLite veritabanı dosyası <code className="text-slate-300">backups/</code>{" "}
-          klasörüne kopyalanır. Restore otomatik değildir — geri yükleme için
-          dosyayı manuel olarak yerine koyman gerekir.
+          klasörüne kopyalanır. Geri yükleme satır içi <b>↻ Geri Yükle</b>{" "}
+          butonu ile yapılır (önce otomatik pre-restore snapshot alınır).
         </p>
+        <div className="mt-3 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-[11px] text-blue-100">
+          🤖 Otomatik yedekleme: <b>günde 1 kez</b> (sunucu uptime'a bağlı, son{" "}
+          <b>7 yedek</b> tutulur, eskiler silinir).
+        </div>
       </GlassCard>
 
       <GlassCard title="Yedek Listesi" subtitle={`${rows.length} kayıt`}>
@@ -216,6 +257,15 @@ export default function BackupPage() {
                         </button>
                         <button
                           type="button"
+                          onClick={() => openRestore(r.filename)}
+                          disabled={busy === `restore-${r.filename}`}
+                          className="rounded-md border border-red-500/60 text-red-200 hover:bg-red-500/15 disabled:opacity-50 text-xs font-medium px-3 py-1.5 transition-colors"
+                          title="Mevcut DB üzerine bu yedeği yaz"
+                        >
+                          ↻ Geri Yükle
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => onDelete(r.filename)}
                           disabled={busy === `del-${r.filename}`}
                           className="rounded-md bg-red-600/80 hover:bg-red-500 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 transition-colors"
@@ -231,6 +281,62 @@ export default function BackupPage() {
           </div>
         )}
       </GlassCard>
+
+      {restoreTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm"
+          onClick={closeRestore}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-red-500/40 bg-slate-900 p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-bold text-red-200">
+              ⚠️ Yedeği Geri Yükle
+            </h3>
+            <p className="mt-2 text-xs text-slate-300 leading-relaxed">
+              Mevcut veritabanı <code className="text-red-300">{restoreTarget}</code>{" "}
+              ile değiştirilecek. Güvenlik için önce mevcut DB'nin{" "}
+              <b>pre-restore snapshot</b>'ı alınır. Bu işlemden sonra backend{" "}
+              <b>yeniden başlatılmalıdır</b>.
+            </p>
+            <div className="mt-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-2 text-[11px] text-yellow-100">
+              Onay için <b>bugünün tarihini</b> yaz (YYYYMMDD):{" "}
+              <code className="text-yellow-200">{todayToken()}</code>
+            </div>
+            <input
+              type="text"
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value)}
+              placeholder={todayToken()}
+              className="mt-3 w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm font-mono text-white focus:border-red-500/50 outline-none"
+              autoFocus
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeRestore}
+                className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-white/10"
+              >
+                İptal
+              </button>
+              <button
+                type="button"
+                onClick={onRestoreConfirm}
+                disabled={
+                  busy === `restore-${restoreTarget}` ||
+                  confirmInput.trim() !== todayToken()
+                }
+                className="rounded-md bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold px-4 py-1.5 transition-colors"
+              >
+                {busy === `restore-${restoreTarget}`
+                  ? "Geri yükleniyor…"
+                  : "↻ Geri Yükle"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

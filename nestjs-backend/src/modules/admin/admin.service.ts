@@ -3,6 +3,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -64,8 +65,11 @@ export interface FlaggedItem {
 }
 
 @Injectable()
-export class AdminService {
+export class AdminService implements OnModuleInit {
   private readonly logger = new Logger(AdminService.name);
+  private backupSchedulerHandle: NodeJS.Timeout | null = null;
+  private static readonly BACKUP_RETENTION = 7;
+  private static readonly BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
   constructor(
     @InjectRepository(Job) private jobsRepo: Repository<Job>,
     @InjectRepository(User) private usersRepo: Repository<User>,
@@ -1229,6 +1233,108 @@ export class AdminService {
       throw new BadRequestException('Geçersiz yedek adı');
     }
     return base;
+  }
+
+  onModuleInit() {
+    // İlk açılışta hemen 1 backup al (5sn sonra, app fully ready)
+    setTimeout(() => {
+      this.createBackup().catch((e: Error) =>
+        this.logger.error(`Initial backup fail: ${e.message}`),
+      );
+    }, 5000);
+    // Her 24 saatte bir create + retention prune
+    this.backupSchedulerHandle = setInterval(() => {
+      void this.runScheduledBackup();
+    }, AdminService.BACKUP_INTERVAL_MS);
+  }
+
+  private async runScheduledBackup(): Promise<void> {
+    try {
+      await this.createBackup();
+      const all = await this.listBackups();
+      const sorted = all.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const toDelete = sorted.slice(AdminService.BACKUP_RETENTION);
+      for (const old of toDelete) {
+        try {
+          await this.deleteBackup(old.filename);
+        } catch {
+          // skip
+        }
+      }
+      this.logger.log(
+        `Scheduled backup OK — kept ${sorted.length - toDelete.length}, pruned ${toDelete.length}`,
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      this.logger.error(`Scheduled backup fail: ${msg}`);
+    }
+  }
+
+  async restoreBackup(
+    filename: string,
+    confirmToken: string,
+    adminUserId: string,
+  ): Promise<{
+    ok: boolean;
+    restoredFrom: string;
+    preRestoreSnapshot: string | null;
+    note: string;
+  }> {
+    // 1. Token kontrol — bugünün tarihi YYYYMMDD
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const todayToken = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+    if (confirmToken !== todayToken) {
+      throw new BadRequestException(
+        'Geçersiz onay token (bugünün tarihi YYYYMMDD)',
+      );
+    }
+    // 2. Backup dosyasını bul (sanitize + exists)
+    const safe = this.sanitizeBackupName(filename);
+    const dir = this.getBackupDir();
+    const backupPath = path.join(dir, safe);
+    if (!fs.existsSync(backupPath)) {
+      throw new NotFoundException('Backup bulunamadı');
+    }
+    // 3. PRE-RESTORE snapshot (mevcut DB'yi koru)
+    const dbPath = this.getDbPath();
+    let preName: string | null = null;
+    if (fs.existsSync(dbPath)) {
+      const stamp =
+        `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}` +
+        `-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+      preName = `backup-prerestore-${stamp}.sqlite`;
+      // BACKUP_FILENAME_RE pattern'i prerestore'u kabul etmiyor — listBackups
+      // ana yedekleri ayırt edebilsin diye ayrı dosya adı tutuyoruz.
+      try {
+        fs.copyFileSync(dbPath, path.join(dir, preName));
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        this.logger.warn(`Pre-restore snapshot fail: ${msg}`);
+        preName = null;
+      }
+    }
+    // 4. Restore: backup → current DB
+    fs.copyFileSync(backupPath, dbPath);
+    // 5. Audit log
+    await this.auditRepo.save(
+      this.auditRepo.create({
+        adminUserId,
+        action: 'backup.restore',
+        targetType: 'backup',
+        targetId: safe,
+        payload: { restoredFrom: safe, preRestoreSnapshot: preName },
+      }),
+    );
+    this.logger.warn(
+      `[BACKUP RESTORE] adminId=${adminUserId} from=${safe} pre=${preName ?? '-'}`,
+    );
+    return {
+      ok: true,
+      restoredFrom: safe,
+      preRestoreSnapshot: preName,
+      note: 'Backend restart edilmeli — config/cache yeniden yüklenecek',
+    };
   }
 
   async createBackup(): Promise<{
