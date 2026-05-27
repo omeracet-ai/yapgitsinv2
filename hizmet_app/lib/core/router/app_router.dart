@@ -45,6 +45,8 @@ import '../../../features/certifications/presentation/certifications_screen.dart
 import '../../../features/users/presentation/screens/worker_documents_screen.dart';
 import '../../../features/photos/presentation/screens/portfolio_screen.dart';
 import '../../../features/map/presentation/screens/map_screen.dart';
+import '../app_config/app_config_provider.dart';
+import '../app_config/app_config_visibility.dart';
 import '../providers/navigation_provider.dart';
 import '../widgets/success_screen.dart';
 import '../widgets/splash_screen.dart';
@@ -137,6 +139,50 @@ bool _isProtected(String loc) {
   return false;
 }
 
+/// Phase 276 — Route path → registry screen key mapping.
+///
+/// Admin panelden ekran "pasif" edildiğinde router redirect bu eşlemeyi
+/// kullanarak engellenecek route'u tespit eder. Mapping eksikse → screen
+/// gate uygulanmaz (safe default).
+String? _routeToScreenKey(String loc) {
+  // Tam eşleşme öncelikli; sonra prefix.
+  const exact = <String, String>{
+    '/giris-yap': 'login',
+    '/kayit-ol': 'register',
+    '/2fa-challenge': '2fa',
+    '/2fa-setup': '2fa',
+    '/forgot-password': 'forgot_password',
+    '/ilan-ver': 'post_job',
+    '/hizmet-ilani-ver': 'post_job',
+    '/jetonlar': 'tokens',
+    '/para-cek': 'withdrawal',
+    '/portfolyo': 'portfolio',
+    '/sablonlarim': 'templates',
+    '/teklif-sablonlarim': 'templates',
+    '/mesaj-sablonlarim': 'message_templates',
+    '/sertifikalarim': 'certifications',
+    '/belgelerim': 'certifications',
+    '/favorilerim': 'favorites',
+    '/engellenenler': 'blocked',
+    '/kaydedilen-isler': 'saved_jobs',
+    '/bildirim-ayarlari': 'notification_settings',
+    '/escrow-listesi': 'escrow_list',
+    '/sikayetlerim': 'reports',
+    '/sikayet-olustur': 'reports',
+    '/harita': 'harita',
+    '/takvim-sync': 'calendar',
+  };
+  if (exact.containsKey(loc)) return exact[loc];
+  if (loc.startsWith('/profil/') || loc.startsWith('/usta/')) return 'public_profile';
+  if (loc.startsWith('/musteri/')) return 'public_profile';
+  if (loc.startsWith('/ilan/')) return 'job_detail';
+  if (loc.startsWith('/chat/')) return 'chat';
+  if (loc.startsWith('/randevu-olustur')) return 'booking_create';
+  if (loc.startsWith('/escrow/') && loc.contains('/confirmation')) return 'escrow_confirmation';
+  if (loc.startsWith('/escrow/')) return 'escrow_list';
+  return null;
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
   // Auth state değiştiğinde router refresh — login/logout flicker'ı önler.
   final refresh = _AuthRefreshNotifier();
@@ -177,6 +223,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/';
       }
 
+      // Phase 276 — All-Pages Registry screen visibility gate.
+      // Admin panelden pasif edilmiş ekranlar engellenir; kullanıcı home'a
+      // SnackBar uyarısı ile yönlendirilir. Splash, login akışı vb. zaten
+      // mapping dışında olduğu için etkilenmez. Liste boşsa (backend yok)
+      // tüm sayfalar görünür kabul edilir.
+      final screenKey = _routeToScreenKey(loc);
+      if (screenKey != null) {
+        final cfg = ref.read(appConfigSyncProvider);
+        if (!isScreenVisible(screenKey, cfg)) {
+          return '/?inactive=${Uri.encodeQueryComponent(screenKey)}';
+        }
+      }
+
       return null; // no redirect
     },
     routes: [
@@ -202,6 +261,20 @@ final routerProvider = Provider<GoRouter>((ref) {
             final tabIndex = int.tryParse(tabParam) ?? 0;
             Future.microtask(() =>
               ref.read(selectedTabProvider.notifier).state = tabIndex);
+          }
+          // Phase 276 — Screen gate ile yönlendirilmiş kullanıcıya SnackBar.
+          final inactive = state.uri.queryParameters['inactive'];
+          if (inactive != null && inactive.isNotEmpty) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final messenger = ScaffoldMessenger.maybeOf(context);
+              messenger?.showSnackBar(
+                SnackBar(
+                  content: Text('Bu sayfa şu an aktif değil ($inactive)'),
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            });
           }
           return const MainShell();
         },

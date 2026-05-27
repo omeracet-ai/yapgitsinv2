@@ -24,6 +24,7 @@ import { CreateThemeDto, UpdateThemeDto } from './dto/create-theme.dto';
 import { UpdateBrandingDto } from './dto/update-branding.dto';
 import { ReplaceLayoutDto } from './dto/replace-layout.dto';
 import { UpsertVisibilityDto } from './dto/upsert-visibility.dto';
+import { CreateScreenDto, UpdateScreenDto } from './dto/upsert-screen.dto';
 
 @SkipThrottle({
   short: true,
@@ -254,6 +255,66 @@ export class AppConfigAdminController {
       req,
     });
     this.gateway.pushUpdate({ type: 'visibility' });
+    return out;
+  }
+
+  // ── Screens (Phase 276 — All-Pages Registry) ─────────────
+  @Get('screens')
+  listScreens() {
+    return this.service.listScreens();
+  }
+
+  @Post('screen')
+  async createScreen(
+    @Body() dto: CreateScreenDto,
+    @Req() req: Request & { user?: AuthUser },
+  ) {
+    const out = await this.service.createScreen(dto);
+    await this.audit.record({
+      actor: this.actor(req),
+      action: 'app-config.screen.create',
+      targetType: 'app_screen',
+      targetId: dto.key,
+      payload: dto as unknown as Record<string, unknown>,
+      req,
+    });
+    this.gateway.pushUpdate({ type: 'screen' });
+    return out;
+  }
+
+  @Patch('screen/:key')
+  async updateScreen(
+    @Param('key') key: string,
+    @Body() dto: UpdateScreenDto,
+    @Req() req: Request & { user?: AuthUser },
+  ) {
+    const out = await this.service.updateScreen(key, dto);
+    await this.audit.record({
+      actor: this.actor(req),
+      action: 'app-config.screen.update',
+      targetType: 'app_screen',
+      targetId: key,
+      payload: dto as unknown as Record<string, unknown>,
+      req,
+    });
+    this.gateway.pushUpdate({ type: 'screen' });
+    return out;
+  }
+
+  @Delete('screen/:key')
+  async deleteScreen(
+    @Param('key') key: string,
+    @Req() req: Request & { user?: AuthUser },
+  ) {
+    const out = await this.service.deleteScreen(key);
+    await this.audit.record({
+      actor: this.actor(req),
+      action: 'app-config.screen.delete',
+      targetType: 'app_screen',
+      targetId: key,
+      req,
+    });
+    this.gateway.pushUpdate({ type: 'screen' });
     return out;
   }
 }

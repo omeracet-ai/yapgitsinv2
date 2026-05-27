@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
@@ -7,11 +14,13 @@ import { AppTheme } from './entities/app-theme.entity';
 import { AppBranding } from './entities/app-branding.entity';
 import { AppLayout } from './entities/app-layout.entity';
 import { AppVisibilityRule } from './entities/app-visibility-rule.entity';
+import { AppScreen } from './entities/app-screen.entity';
 import { UpsertSettingDto } from './dto/upsert-setting.dto';
 import { CreateThemeDto, UpdateThemeDto } from './dto/create-theme.dto';
 import { UpdateBrandingDto } from './dto/update-branding.dto';
 import { ReplaceLayoutDto } from './dto/replace-layout.dto';
 import { UpsertVisibilityDto } from './dto/upsert-visibility.dto';
+import { CreateScreenDto, UpdateScreenDto } from './dto/upsert-screen.dto';
 
 export interface PublicAppConfig {
   settings: Record<string, unknown>;
@@ -37,10 +46,68 @@ export interface PublicAppConfig {
     activeFrom: string | null;
     activeUntil: string | null;
   }>;
+  screens: Array<{
+    key: string;
+    visible: boolean;
+    sortOrder: number;
+  }>;
 }
 
+/**
+ * Phase 276 — Known Flutter screens. Seeded once on first boot if the
+ * `app_screens` table is empty; missing rows are added on each boot so we can
+ * grow the registry without manual DB edits. `visible: true` keeps existing
+ * routes reachable until an admin explicitly disables them.
+ */
+const KNOWN_SCREENS: Array<{
+  key: string;
+  name: string;
+  iconName: string;
+  category: string;
+  sortOrder?: number;
+}> = [
+  { key: 'home', name: 'Yaptır (Ana)', iconName: 'home', category: 'main_nav', sortOrder: 0 },
+  { key: 'yapgitsin', name: 'Yapgitsin (Keşfet)', iconName: 'search', category: 'main_nav', sortOrder: 1 },
+  { key: 'harita', name: 'Harita', iconName: 'map', category: 'main_nav', sortOrder: 2 },
+  { key: 'iserim', name: 'İşlerim', iconName: 'work', category: 'main_nav', sortOrder: 3 },
+  { key: 'profil', name: 'Profil', iconName: 'person', category: 'main_nav', sortOrder: 4 },
+  { key: 'login', name: 'Giriş Yap', iconName: 'login', category: 'auth' },
+  { key: 'register', name: 'Kayıt Ol', iconName: 'person_add', category: 'auth' },
+  { key: '2fa', name: '2FA Doğrulama', iconName: 'security', category: 'auth' },
+  { key: 'forgot_password', name: 'Şifremi Unuttum', iconName: 'lock_reset', category: 'auth' },
+  { key: 'post_job', name: 'İlan Ver', iconName: 'add_circle', category: 'job' },
+  { key: 'job_detail', name: 'İlan Detayı', iconName: 'description', category: 'job' },
+  { key: 'service_request', name: 'Hizmet Talepleri', iconName: 'support_agent', category: 'job' },
+  { key: 'service_request_detail', name: 'Talep Detayı', iconName: 'fact_check', category: 'job' },
+  { key: 'public_profile', name: 'Usta Profili', iconName: 'badge', category: 'profile' },
+  { key: 'edit_profile', name: 'Profil Düzenle', iconName: 'edit', category: 'profile' },
+  { key: 'portfolio', name: 'Portfolyo', iconName: 'photo_library', category: 'profile' },
+  { key: 'chat', name: 'Sohbet', iconName: 'chat', category: 'communication' },
+  { key: 'notifications', name: 'Bildirimler', iconName: 'notifications', category: 'communication' },
+  { key: 'notification_settings', name: 'Bildirim Ayarları', iconName: 'tune', category: 'settings' },
+  { key: 'tokens', name: 'Token Bakiyem', iconName: 'monetization_on', category: 'wallet' },
+  { key: 'iban_settings', name: 'IBAN', iconName: 'account_balance', category: 'wallet' },
+  { key: 'withdrawal', name: 'Para Çek', iconName: 'payments', category: 'wallet' },
+  { key: 'crypto_deposit', name: 'Kripto Yatır', iconName: 'currency_bitcoin', category: 'wallet' },
+  { key: 'bookings', name: 'Randevular', iconName: 'event', category: 'booking' },
+  { key: 'booking_create', name: 'Randevu Oluştur', iconName: 'event_available', category: 'booking' },
+  { key: 'calendar', name: 'Takvim', iconName: 'calendar_month', category: 'booking' },
+  { key: 'escrow_list', name: 'Garantili Ödemeler', iconName: 'verified_user', category: 'escrow' },
+  { key: 'escrow_confirmation', name: 'Onay Akışı', iconName: 'task_alt', category: 'escrow' },
+  { key: 'reviews', name: 'Yorumlarım', iconName: 'rate_review', category: 'community' },
+  { key: 'favorites', name: 'Favoriler', iconName: 'favorite', category: 'community' },
+  { key: 'saved_jobs', name: 'Kaydedilen İşler', iconName: 'bookmark', category: 'community' },
+  { key: 'blocked', name: 'Engellenenler', iconName: 'block', category: 'community' },
+  { key: 'templates', name: 'Şablonlarım', iconName: 'inventory', category: 'tools' },
+  { key: 'message_templates', name: 'Mesaj Şablonları', iconName: 'mail_outline', category: 'tools' },
+  { key: 'certifications', name: 'Sertifikalarım', iconName: 'school', category: 'tools' },
+  { key: 'reports', name: 'Şikayetlerim', iconName: 'report', category: 'community' },
+];
+
 @Injectable()
-export class AppConfigService {
+export class AppConfigService implements OnModuleInit {
+  private readonly logger = new Logger(AppConfigService.name);
+
   constructor(
     @InjectRepository(AppSetting)
     private readonly settingRepo: Repository<AppSetting>,
@@ -52,9 +119,46 @@ export class AppConfigService {
     private readonly layoutRepo: Repository<AppLayout>,
     @InjectRepository(AppVisibilityRule)
     private readonly visibilityRepo: Repository<AppVisibilityRule>,
+    @InjectRepository(AppScreen)
+    private readonly screenRepo: Repository<AppScreen>,
     @InjectRepository(AdminAuditLog)
     private readonly auditRepo: Repository<AdminAuditLog>,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    try {
+      await this.seedScreens();
+    } catch (err) {
+      this.logger.warn(
+        `seedScreens failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  /**
+   * Idempotent: inserts only screens whose `key` is not already in the table.
+   * Existing rows are never overwritten — admin edits win.
+   */
+  private async seedScreens(): Promise<void> {
+    const existing = await this.screenRepo.find({ select: ['key'] });
+    const existingKeys = new Set(existing.map((s) => s.key));
+    const missing = KNOWN_SCREENS.filter((s) => !existingKeys.has(s.key));
+    if (!missing.length) return;
+    const rows = missing.map((s, idx) =>
+      this.screenRepo.create({
+        key: s.key,
+        name: s.name,
+        iconName: s.iconName,
+        category: s.category,
+        sortOrder: s.sortOrder ?? 100 + idx,
+        visible: true,
+        description: null,
+        previewImageUrl: null,
+      }),
+    );
+    await this.screenRepo.save(rows);
+    this.logger.log(`Seeded ${rows.length} app screens`);
+  }
 
   // ── Version History / Rollback ──────────────────────────────
   /**
@@ -211,13 +315,14 @@ export class AppConfigService {
   }
 
   async getPublicConfig(): Promise<PublicAppConfig> {
-    const [settings, activeTheme, branding, layouts, visibility] =
+    const [settings, activeTheme, branding, layouts, visibility, screens] =
       await Promise.all([
         this.settingRepo.find(),
         this.themeRepo.findOne({ where: { isActive: true } }),
         this.brandingRepo.findOne({ where: { id: 'default' } }),
         this.layoutRepo.find({ order: { screen: 'ASC', sortOrder: 'ASC' } }),
         this.visibilityRepo.find(),
+        this.screenRepo.find({ order: { sortOrder: 'ASC', key: 'ASC' } }),
       ]);
 
     const settingsMap: Record<string, unknown> = {};
@@ -253,7 +358,58 @@ export class AppConfigService {
           ? new Date(v.activeUntil).toISOString()
           : null,
       })),
+      screens: screens.map((s) => ({
+        key: s.key,
+        visible: s.visible,
+        sortOrder: s.sortOrder,
+      })),
     };
+  }
+
+  // ── Screens (Phase 276 — All-Pages Registry) ───────────────────
+  listScreens(): Promise<AppScreen[]> {
+    return this.screenRepo.find({
+      order: { sortOrder: 'ASC', key: 'ASC' },
+    });
+  }
+
+  async createScreen(dto: CreateScreenDto): Promise<AppScreen> {
+    const existing = await this.screenRepo.findOne({ where: { key: dto.key } });
+    if (existing) {
+      throw new ConflictException(`Screen "${dto.key}" already exists`);
+    }
+    const entity = this.screenRepo.create({
+      key: dto.key,
+      name: dto.name,
+      description: dto.description ?? null,
+      iconName: dto.iconName ?? null,
+      category: dto.category ?? null,
+      visible: dto.visible ?? true,
+      sortOrder: dto.sortOrder ?? 0,
+      previewImageUrl: dto.previewImageUrl ?? null,
+    });
+    return this.screenRepo.save(entity);
+  }
+
+  async updateScreen(key: string, dto: UpdateScreenDto): Promise<AppScreen> {
+    const existing = await this.screenRepo.findOne({ where: { key } });
+    if (!existing) throw new NotFoundException(`Screen "${key}" not found`);
+    if (dto.name !== undefined) existing.name = dto.name;
+    if (dto.description !== undefined) existing.description = dto.description;
+    if (dto.iconName !== undefined) existing.iconName = dto.iconName;
+    if (dto.category !== undefined) existing.category = dto.category;
+    if (dto.visible !== undefined) existing.visible = dto.visible;
+    if (dto.sortOrder !== undefined) existing.sortOrder = dto.sortOrder;
+    if (dto.previewImageUrl !== undefined) {
+      existing.previewImageUrl = dto.previewImageUrl;
+    }
+    return this.screenRepo.save(existing);
+  }
+
+  async deleteScreen(key: string): Promise<{ deleted: boolean }> {
+    const r = await this.screenRepo.delete({ key });
+    if (!r.affected) throw new NotFoundException(`Screen "${key}" not found`);
+    return { deleted: true };
   }
 
   // ── Settings ────────────────────────────────────────────────

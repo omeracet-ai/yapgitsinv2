@@ -5,6 +5,7 @@ import { AppTheme } from './entities/app-theme.entity';
 import { AppBranding } from './entities/app-branding.entity';
 import { AppLayout } from './entities/app-layout.entity';
 import { AppVisibilityRule } from './entities/app-visibility-rule.entity';
+import { AppScreen } from './entities/app-screen.entity';
 import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
 import { AdminAuditModule } from '../admin-audit/admin-audit.module';
 import { AppConfigService } from './app-config.service';
@@ -20,6 +21,7 @@ import { AppConfigGateway } from './app-config.gateway';
       AppBranding,
       AppLayout,
       AppVisibilityRule,
+      AppScreen,
       AdminAuditLog,
     ]),
     AdminAuditModule,

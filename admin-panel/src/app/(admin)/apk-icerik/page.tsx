@@ -17,6 +17,7 @@ import {
   type AppConfigLayoutItem,
   type AppConfigSetting,
   type AppConfigVisibilityRule,
+  type AppScreen,
 } from "@/lib/api";
 import { exportCsv } from "@/lib/export";
 
@@ -51,7 +52,7 @@ function nextIcerikDndId(): string {
   return `il-${_icerikDndCounter}-${Date.now().toString(36)}`;
 }
 
-type Tab = "settings" | "layout" | "visibility" | "popups";
+type Tab = "settings" | "layout" | "visibility" | "popups" | "pages";
 type SettingType = "string" | "number" | "boolean" | "json";
 
 const SCREENS = [
@@ -649,6 +650,307 @@ function PopupsTab({
   );
 }
 
+// ─── Pages registry tab (Phase 276) ───────────────────────────────────────
+
+const POPULAR_ICONS = [
+  "home", "search", "map", "work", "person", "login", "person_add",
+  "security", "lock_reset", "add_circle", "description", "support_agent",
+  "fact_check", "badge", "edit", "photo_library", "chat", "notifications",
+  "tune", "monetization_on", "account_balance", "payments", "currency_bitcoin",
+  "event", "event_available", "calendar_month", "verified_user", "task_alt",
+  "rate_review", "favorite", "bookmark", "block", "inventory", "mail_outline",
+  "school", "report", "settings", "help_outline", "info",
+];
+
+const SCREEN_CATEGORIES = [
+  "main_nav", "auth", "job", "profile", "communication", "settings",
+  "wallet", "booking", "escrow", "community", "tools", "admin_only", "other",
+];
+
+function ScreenEditModal({
+  initial, isNew, onClose, onSave,
+}: {
+  initial: AppScreen | null;
+  isNew: boolean;
+  onClose: () => void;
+  onSave: (data: AppScreen) => Promise<void>;
+}) {
+  const [form, setForm] = useState<AppScreen>(
+    initial ?? {
+      key: "", name: "", description: "", iconName: "",
+      category: "other", visible: true, sortOrder: 0, previewImageUrl: "",
+    },
+  );
+  const [busy, setBusy] = useState(false);
+
+  const save = async () => {
+    if (!form.key.trim() || !form.name.trim()) return;
+    setBusy(true);
+    try { await onSave(form); } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}>
+      <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 max-w-lg w-full shadow-2xl"
+        onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-bold text-white mb-4">
+          {isNew ? "➕ Yeni Sayfa Ekle" : `✏️ ${form.key}`}
+        </h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-1">
+            <label className="block text-xs text-slate-400 mb-1">Key (kod)</label>
+            <input value={form.key} disabled={!isNew}
+              onChange={(e) => setForm({ ...form, key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") })}
+              placeholder="ornek_anahtar"
+              className="w-full bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white outline-none focus:border-emerald-400/40 font-mono disabled:opacity-50" />
+          </div>
+          <div className="col-span-1">
+            <label className="block text-xs text-slate-400 mb-1">Sıra (sortOrder)</label>
+            <input type="number" value={form.sortOrder}
+              onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) || 0 })}
+              className="w-full bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white outline-none focus:border-emerald-400/40" />
+          </div>
+          <div className="col-span-2">
+            <label className="block text-xs text-slate-400 mb-1">Ad</label>
+            <input value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="Sayfa adı"
+              className="w-full bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white outline-none focus:border-emerald-400/40" />
+          </div>
+          <div className="col-span-2">
+            <label className="block text-xs text-slate-400 mb-1">Açıklama</label>
+            <textarea value={form.description ?? ""}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={2}
+              className="w-full bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white outline-none focus:border-emerald-400/40" />
+          </div>
+          <div className="col-span-1">
+            <label className="block text-xs text-slate-400 mb-1">İkon</label>
+            <select value={form.iconName ?? ""}
+              onChange={(e) => setForm({ ...form, iconName: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white outline-none">
+              <option value="" className="bg-slate-900">— seç —</option>
+              {POPULAR_ICONS.map((i) => <option key={i} value={i} className="bg-slate-900">{i}</option>)}
+            </select>
+          </div>
+          <div className="col-span-1">
+            <label className="block text-xs text-slate-400 mb-1">Kategori</label>
+            <select value={form.category ?? "other"}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white outline-none">
+              {SCREEN_CATEGORIES.map((c) => <option key={c} value={c} className="bg-slate-900">{c}</option>)}
+            </select>
+          </div>
+          <div className="col-span-2">
+            <label className="block text-xs text-slate-400 mb-1">Önizleme görseli (URL)</label>
+            <input value={form.previewImageUrl ?? ""}
+              onChange={(e) => setForm({ ...form, previewImageUrl: e.target.value })}
+              placeholder="https://…"
+              className="w-full bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white outline-none focus:border-emerald-400/40 font-mono text-xs" />
+          </div>
+          <div className="col-span-2 flex items-center gap-2 mt-1">
+            <label className="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer">
+              <input type="checkbox" checked={form.visible}
+                onChange={(e) => setForm({ ...form, visible: e.target.checked })}
+                className="accent-emerald-400 w-4 h-4" />
+              {form.visible ? "Aktif (görünür)" : "Pasif (gizli)"}
+            </label>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-5">
+          <button onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-slate-200 text-sm">
+            İptal
+          </button>
+          <button onClick={() => void save()} disabled={busy || !form.key.trim() || !form.name.trim()}
+            className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold disabled:opacity-50">
+            {busy ? "…" : "💾 Kaydet"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScreenCard({
+  screen, onToggle, onEdit, onDelete,
+}: {
+  screen: AppScreen;
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className={`relative p-4 rounded-xl border transition ${
+      screen.visible
+        ? "bg-white/5 border-white/10 hover:border-emerald-400/40"
+        : "bg-red-500/5 border-red-400/20 opacity-70"
+    }`}>
+      <div className="flex items-start justify-between mb-2">
+        <div className="text-3xl select-none">
+          <span className="material-symbols-outlined" style={{ fontSize: 32 }}>
+            {screen.iconName || "widgets"}
+          </span>
+        </div>
+        <button onClick={onToggle}
+          className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+            screen.visible
+              ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-200"
+              : "bg-red-500/20 border-red-400/40 text-red-200"
+          }`}>
+          {screen.visible ? "AKTİF" : "PASİF"}
+        </button>
+      </div>
+      <div className="text-sm font-semibold text-white mb-1 truncate" title={screen.name}>
+        {screen.name}
+      </div>
+      <div className="font-mono text-[10px] text-slate-500 mb-2 truncate">{screen.key}</div>
+      {screen.category && (
+        <div className="inline-block px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[9px] uppercase text-slate-400 mb-2">
+          {screen.category}
+        </div>
+      )}
+      <div className="flex items-center gap-1 mt-2">
+        <button onClick={onEdit}
+          className="flex-1 px-2 py-1 rounded-md bg-white/5 hover:bg-white/15 border border-white/10 text-slate-200 text-xs font-semibold">
+          ✏️ Düzenle
+        </button>
+        <button onClick={onDelete}
+          className="px-2 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-400/20 text-red-200 text-xs">
+          🗑️
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PagesTab({ flash }: { flash: (k: "ok" | "err", t: string) => void }) {
+  const [screens, setScreens] = useState<AppScreen[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState<string>("");
+  const [editing, setEditing] = useState<AppScreen | null>(null);
+  const [adding, setAdding] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const list = await api.listScreens();
+      setScreens(list);
+    } catch (e) {
+      flash("err", e instanceof Error ? e.message : "Yüklenemedi");
+    } finally {
+      setLoading(false);
+    }
+  }, [flash]);
+
+  useEffect(() => {
+    const id = setTimeout(() => { void load(); }, 0);
+    return () => clearTimeout(id);
+  }, [load]);
+
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return screens.filter((s) => {
+      if (cat && s.category !== cat) return false;
+      if (needle) {
+        const hay = `${s.key} ${s.name} ${s.description ?? ""}`.toLowerCase();
+        if (!hay.includes(needle)) return false;
+      }
+      return true;
+    });
+  }, [screens, q, cat]);
+
+  const toggleVisible = async (s: AppScreen) => {
+    try {
+      const updated = await api.updateScreen(s.key, { visible: !s.visible });
+      setScreens((prev) => prev.map((x) => (x.key === s.key ? updated : x)));
+      flash("ok", `${s.name}: ${updated.visible ? "aktif" : "pasif"}`);
+    } catch (e) { flash("err", e instanceof Error ? e.message : "Hata"); }
+  };
+
+  const onSave = async (data: AppScreen) => {
+    try {
+      if (adding) {
+        const created = await api.createScreen({
+          key: data.key, name: data.name,
+          description: data.description ?? null,
+          iconName: data.iconName ?? null,
+          category: data.category ?? null,
+          visible: data.visible, sortOrder: data.sortOrder,
+          previewImageUrl: data.previewImageUrl ?? null,
+        });
+        setScreens((prev) => [...prev, created].sort((a, b) => a.sortOrder - b.sortOrder));
+        flash("ok", "Eklendi");
+      } else {
+        const { key, createdAt: _c, updatedAt: _u, ...rest } = data;
+        void _c; void _u;
+        const updated = await api.updateScreen(key, rest);
+        setScreens((prev) => prev.map((x) => (x.key === key ? updated : x)));
+        flash("ok", "Güncellendi");
+      }
+      setEditing(null);
+      setAdding(false);
+    } catch (e) { flash("err", e instanceof Error ? e.message : "Hata"); }
+  };
+
+  const onDelete = async (s: AppScreen) => {
+    if (!confirm(`"${s.name}" sayfasını sil? (${s.key})`)) return;
+    try {
+      await api.deleteScreen(s.key);
+      setScreens((prev) => prev.filter((x) => x.key !== s.key));
+      flash("ok", "Silindi");
+    } catch (e) { flash("err", e instanceof Error ? e.message : "Hata"); }
+  };
+
+  return (
+    <GlassCard>
+      <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+        <h3 className="text-sm font-bold text-white">
+          Tüm Sayfalar ({filtered.length}{filtered.length !== screens.length ? `/${screens.length}` : ""})
+        </h3>
+        <div className="flex items-center gap-2 flex-wrap">
+          <input value={q} onChange={(e) => setQ(e.target.value)}
+            placeholder="🔍 ara…"
+            className="px-2.5 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs text-white outline-none focus:border-emerald-400/40 w-40" />
+          <select value={cat} onChange={(e) => setCat(e.target.value)}
+            className="px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs text-white outline-none">
+            <option value="" className="bg-slate-900">tümü</option>
+            {SCREEN_CATEGORIES.map((c) => <option key={c} value={c} className="bg-slate-900">{c}</option>)}
+          </select>
+          <button onClick={() => { setAdding(true); setEditing(null); }}
+            className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-semibold">
+            ➕ Yeni Sayfa
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="py-12 text-center text-slate-500 text-xs">Yükleniyor…</div>
+      ) : filtered.length === 0 ? (
+        <div className="py-12 text-center text-slate-500 text-xs">Sayfa bulunamadı</div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          {filtered.map((s) => (
+            <ScreenCard key={s.key} screen={s}
+              onToggle={() => void toggleVisible(s)}
+              onEdit={() => { setEditing(s); setAdding(false); }}
+              onDelete={() => void onDelete(s)} />
+          ))}
+        </div>
+      )}
+
+      {(editing || adding) && (
+        <ScreenEditModal initial={adding ? null : editing}
+          isNew={adding}
+          onClose={() => { setEditing(null); setAdding(false); }}
+          onSave={onSave} />
+      )}
+    </GlassCard>
+  );
+}
+
 // ─── Page shell ───────────────────────────────────────────────────────────
 
 export default function ApkIcerikPage() {
@@ -705,6 +1007,7 @@ export default function ApkIcerikPage() {
           { k: "layout",     l: "🧩 Layout" },
           { k: "visibility", l: "👁️ Görünürlük" },
           { k: "popups",     l: "💬 Popups & Menus" },
+          { k: "pages",      l: "📄 Sayfalar" },
         ] as { k: Tab; l: string }[]).map(({ k, l }) => (
           <button key={k} onClick={() => setTab(k)}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${tab === k ? "bg-emerald-500 text-white shadow-md" : "text-slate-300 hover:text-white hover:bg-white/5"}`}>
@@ -717,6 +1020,7 @@ export default function ApkIcerikPage() {
       {tab === "layout"     && <LayoutTab     layouts={layouts} onChanged={load} flash={flash} />}
       {tab === "visibility" && <VisibilityTab rules={rules} onChanged={load} flash={flash} />}
       {tab === "popups"     && <PopupsTab     layouts={layouts} onChanged={load} flash={flash} />}
+      {tab === "pages"      && <PagesTab      flash={flash} />}
 
       {previewOpen && <ApkPreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} />}
     </div>

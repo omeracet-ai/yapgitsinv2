@@ -118,6 +118,7 @@ import { AppTheme } from './modules/app-config/entities/app-theme.entity';
 import { AppBranding } from './modules/app-config/entities/app-branding.entity';
 import { AppLayout } from './modules/app-config/entities/app-layout.entity';
 import { AppVisibilityRule } from './modules/app-config/entities/app-visibility-rule.entity';
+import { AppScreen } from './modules/app-config/entities/app-screen.entity';
 
 @Module({
   imports: [
@@ -256,6 +257,7 @@ import { AppVisibilityRule } from './modules/app-config/entities/app-visibility-
           AppBranding,
           AppLayout,
           AppVisibilityRule,
+          AppScreen,
         ];
         if (dbType === 'sqlite') {
           // DB_DATABASE override allows isolated test DBs (e.g. ':memory:'); defaults to dev file.

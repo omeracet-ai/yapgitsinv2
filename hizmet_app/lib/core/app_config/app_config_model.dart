@@ -7,6 +7,7 @@ class AppConfig {
   final Map<String, dynamic> branding;
   final List<Map<String, dynamic>> layouts;
   final List<Map<String, dynamic>> visibility;
+  final List<Map<String, dynamic>> screens;
 
   const AppConfig({
     this.settings = const {},
@@ -14,6 +15,7 @@ class AppConfig {
     this.branding = const {},
     this.layouts = const [],
     this.visibility = const [],
+    this.screens = const [],
   });
 
   factory AppConfig.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class AppConfig {
       branding: _asMap(json['branding']),
       layouts: _asListOfMap(json['layouts']),
       visibility: _asListOfMap(json['visibility']),
+      screens: _asListOfMap(json['screens']),
     );
   }
 
@@ -32,6 +35,7 @@ class AppConfig {
         'branding': branding,
         'layouts': layouts,
         'visibility': visibility,
+        'screens': screens,
       };
 
   /// Hardcoded defaults — backend yokken app çökmez.

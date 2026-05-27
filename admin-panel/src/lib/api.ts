@@ -653,6 +653,23 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  // Screens registry (Phase 276 — All-Pages Registry)
+  listScreens: () => request<AppScreen[]>('/admin/app-config/screens'),
+  createScreen: (data: Omit<AppScreen, 'createdAt' | 'updatedAt'>) =>
+    request<AppScreen>('/admin/app-config/screen', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateScreen: (key: string, data: Partial<Omit<AppScreen, 'key' | 'createdAt' | 'updatedAt'>>) =>
+    request<AppScreen>(`/admin/app-config/screen/${encodeURIComponent(key)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteScreen: (key: string) =>
+    request<{ deleted: boolean }>(`/admin/app-config/screen/${encodeURIComponent(key)}`, {
+      method: 'DELETE',
+    }),
+
   // ── Backup Manager ─────────────────────────────────────────────────────
   createBackup: () =>
     request<{ filename: string; size: number; path: string; createdAt: string }>(
@@ -1205,4 +1222,18 @@ export interface AdminAppConfig {
   settings: AppConfigSetting[];
   layouts: AppConfigLayout[];
   visibility: AppConfigVisibilityRule[];
+}
+
+/** Phase 276 — All-Pages Registry entry. */
+export interface AppScreen {
+  key: string;
+  name: string;
+  description?: string | null;
+  iconName?: string | null;
+  category?: string | null;
+  visible: boolean;
+  sortOrder: number;
+  previewImageUrl?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }

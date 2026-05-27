@@ -48,6 +48,25 @@ bool isProfileFieldVisible(String fieldKey, AppConfig config) {
   return true;
 }
 
+/// Phase 276 — All-Pages Registry visibility gate.
+///
+/// Admin panelden bir ekran "pasif" edildiyse Flutter router redirect ile
+/// engeller. Liste boşsa (backend yok / eski API) safe default → tüm sayfalar
+/// görünür kabul edilir.
+bool isScreenVisible(String key, AppConfig config) {
+  final screens = config.screens;
+  if (screens.isEmpty) return true;
+  for (final entry in screens) {
+    if (entry['key'] == key) {
+      final v = entry['visible'];
+      if (v is bool) return v;
+      return true;
+    }
+  }
+  // Key listede yoksa: registry'de kayıt yok → default görünür.
+  return true;
+}
+
 /// Profile card için admin tarafından override edilmiş label döner, yoksa null.
 /// Flutter ekran kendi varsayılan Türkçe etiketine fallback eder.
 String? profileFieldLabel(String fieldKey, AppConfig config) {
