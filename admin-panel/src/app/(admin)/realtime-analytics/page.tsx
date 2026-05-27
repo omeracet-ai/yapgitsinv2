@@ -151,10 +151,21 @@ export default function RealtimeAnalyticsPage() {
 
   useEffect(() => {
     void load();
+    // M7 perf — skip ticks while the tab is hidden so we don't burn API
+    // calls + re-renders for a backgrounded admin window. Triggers an
+    // immediate refresh when the tab comes back to surface fresh data.
     const id = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
       void load();
     }, REFRESH_MS);
-    return () => clearInterval(id);
+    const onVisible = () => {
+      if (typeof document !== "undefined" && !document.hidden) void load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   return (

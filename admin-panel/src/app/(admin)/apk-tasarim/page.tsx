@@ -6,8 +6,17 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { api, type AdminAppConfig, type AppConfigBranding, type AppConfigThemeTokens } from "@/lib/api";
-import { ApkPreviewModal } from "@/components/apk-preview/ApkPreviewModal";
+
+// M7 perf — Preview modal pulls a sizeable PhoneFrame3D tree; load only on open.
+const ApkPreviewModal = dynamic(
+  () =>
+    import("@/components/apk-preview/ApkPreviewModal").then(
+      (m) => m.ApkPreviewModal,
+    ),
+  { ssr: false },
+);
 
 interface HistoryEntry {
   id: string;
@@ -397,7 +406,7 @@ export default function ApkTasarimPage() {
                   <div className="aspect-square rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
                     {b.src ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={b.src} alt={b.lbl} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      <img src={b.src} alt={b.lbl} loading="lazy" decoding="async" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                     ) : (
                       <span className="text-[10px] text-slate-500">{b.lbl}</span>
                     )}
@@ -426,7 +435,9 @@ export default function ApkTasarimPage() {
         </button>
       </div>
 
-      <ApkPreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} />
+      {previewOpen && (
+        <ApkPreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} />
+      )}
 
       {/* History modal — last 30 theme+branding audit entries with rollback */}
       {historyOpen && (

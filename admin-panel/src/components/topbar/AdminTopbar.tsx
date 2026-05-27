@@ -1,11 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { NotificationBell } from "@/components/NotificationBell";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
-import { CommandBar } from "@/components/command-bar/CommandBar";
-import { AIAssistantPanel } from "@/components/ai-assistant/AIAssistantPanel";
 import { api } from "@/lib/api";
+
+// M7 perf — Cmd+K modal and AI panel are rarely opened; keep them out of
+// the initial admin bundle. ssr:false because both rely on browser-only APIs
+// (keyboard focus, localStorage). Conditional mount (open state guards) means
+// the chunk is fetched only on first open.
+const CommandBar = dynamic(
+  () => import("@/components/command-bar/CommandBar").then((m) => m.CommandBar),
+  { ssr: false },
+);
+const AIAssistantPanel = dynamic(
+  () =>
+    import("@/components/ai-assistant/AIAssistantPanel").then(
+      (m) => m.AIAssistantPanel,
+    ),
+  { ssr: false },
+);
 
 export function AdminTopbar({
   title,
@@ -122,7 +137,9 @@ export function AdminTopbar({
       {cmdOpen && (
         <CommandBar key={String(cmdOpen)} open={cmdOpen} onClose={() => setCmdOpen(false)} />
       )}
-      <AIAssistantPanel open={aiOpen} onClose={() => setAiOpen(false)} />
+      {aiOpen && (
+        <AIAssistantPanel open={aiOpen} onClose={() => setAiOpen(false)} />
+      )}
     </>
   );
 }

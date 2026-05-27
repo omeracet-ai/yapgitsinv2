@@ -5,7 +5,8 @@
  * Three tabs, all glass cards on animated gradient bg, with shared preview modal.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   api,
   type AdminAppConfig,
@@ -14,7 +15,15 @@ import {
   type AppConfigSetting,
   type AppConfigVisibilityRule,
 } from "@/lib/api";
-import { ApkPreviewModal } from "@/components/apk-preview/ApkPreviewModal";
+
+// M7 perf — modal carries PhoneFrame3D + heavy preview deps; lazy.
+const ApkPreviewModal = dynamic(
+  () =>
+    import("@/components/apk-preview/ApkPreviewModal").then(
+      (m) => m.ApkPreviewModal,
+    ),
+  { ssr: false },
+);
 import {
   DndContext,
   PointerSensor,
@@ -228,7 +237,9 @@ function parseByType(raw: string, type: string): unknown {
  * their click handlers and stop propagation so a click inside doesn't
  * also fire a drag-end.
  */
-function SortableLayoutRow({
+// M7 perf — large layout lists re-render on any tab change; memoize so rows
+// only repaint when their own props change.
+const SortableLayoutRow = memo(function SortableLayoutRow({
   item,
   idx,
   total,
@@ -296,7 +307,7 @@ function SortableLayoutRow({
       <button onClick={onRemove} className="text-xs text-red-300 hover:text-red-100 px-2 py-1 rounded bg-red-500/10">sil</button>
     </li>
   );
-}
+});
 
 function LayoutTab({
   layouts,
@@ -681,7 +692,9 @@ export default function ApkIcerikPage() {
       {tab === "layout"     && <LayoutTab     layouts={layouts} onChanged={load} flash={flash} />}
       {tab === "visibility" && <VisibilityTab rules={rules} onChanged={load} flash={flash} />}
 
-      <ApkPreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} />
+      {previewOpen && (
+        <ApkPreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} />
+      )}
     </div>
   );
 }

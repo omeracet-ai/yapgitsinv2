@@ -16,13 +16,28 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   api,
   type AppConfigLayout,
   type AppConfigLayoutItem,
   type AppConfigThemeTokens,
 } from "@/lib/api";
-import { PhoneFrame3D } from "@/components/apk-preview/PhoneFrame3D";
+
+// M7 perf — PhoneFrame3D ships its own 3D CSS perspective tree; lazy with a
+// lightweight placeholder so the builder shell paints fast.
+const PhoneFrame3D = dynamic(
+  () =>
+    import("@/components/apk-preview/PhoneFrame3D").then((m) => m.PhoneFrame3D),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-full flex items-center justify-center text-slate-500 text-sm">
+        Önizleme yükleniyor…
+      </div>
+    ),
+  },
+);
 import {
   DndContext,
   PointerSensor,

@@ -32,6 +32,9 @@ export function AnimatedGrid() {
             "linear-gradient(135deg, #0c1117 0%, #1a1f2e 50%, #0a3320 100%)",
           backgroundSize: "200% 200%",
           animation: "ygrid-shift 30s ease infinite",
+          // M7 perf — promote to its own compositor layer so the 30s shift
+          // does not invalidate the page during paint.
+          willChange: "background-position",
         }}
       />
 
