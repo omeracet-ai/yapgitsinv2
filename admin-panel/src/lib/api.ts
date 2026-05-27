@@ -507,6 +507,50 @@ export const api = {
       body: JSON.stringify({ value }),
     }),
 
+  // ── APK App Config (Voldi-design+fs) ────────────────────────────────────
+  // Public preview snapshot (no auth) — used by ApkPreviewModal live render.
+  getAppConfig: () => requestNoAuth<AppConfigPublic>('/app-config'),
+  // Admin full state — read-only aggregate of theme/branding/settings/layouts/rules.
+  getAdminAppConfig: () => request<AdminAppConfig>('/admin/app-config'),
+  // Settings CRUD (key/value with type+group). value is stringified at the boundary
+  // by the backend; clients send the native shape.
+  patchSetting: (key: string, value: unknown, opts?: { type?: string; group?: string }) =>
+    request<AppConfigSetting>('/admin/app-config/setting', {
+      method: 'PATCH',
+      body: JSON.stringify({ key, value, ...(opts ?? {}) }),
+    }),
+  deleteSetting: (key: string) =>
+    request<void>(`/admin/app-config/setting/${encodeURIComponent(key)}`, { method: 'DELETE' }),
+  // Theme — create new (name + tokens) or update existing (tokens / isActive flag).
+  postTheme: (data: { name: string; tokens: AppConfigThemeTokens; isActive?: boolean }) =>
+    request<AppConfigTheme>('/admin/app-config/theme', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  patchTheme: (id: string, data: Partial<{ tokens: AppConfigThemeTokens; isActive: boolean }>) =>
+    request<AppConfigTheme>(`/admin/app-config/theme/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  // Branding — logo / icon / splash URLs + app title.
+  patchBranding: (data: Partial<AppConfigBranding>) =>
+    request<AppConfigBranding>('/admin/app-config/branding', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  // Layout — per-screen ordered item list (drag-reorder result).
+  putLayout: (screen: string, items: AppConfigLayoutItem[]) =>
+    request<AppConfigLayout>('/admin/app-config/layout', {
+      method: 'PUT',
+      body: JSON.stringify({ screen, items }),
+    }),
+  // Visibility rules — role / device / date window per moduleKey.
+  patchVisibility: (moduleKey: string, data: Partial<AppConfigVisibilityRule>) =>
+    request<AppConfigVisibilityRule>(`/admin/app-config/visibility/${encodeURIComponent(moduleKey)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
   // Phase 162: Chat & Messaging
   sendMessage: (to: string, message: string, jobLeadId?: string) =>
     request<ChatMessageDto>('/messages', {
@@ -892,3 +936,75 @@ export interface AdminAnalyticsOverview {
 export const adminAnalytics = {
   overview: () => request<AdminAnalyticsOverview>('/admin/analytics/overview'),
 };
+
+// ── APK App Config types (Voldi-design+fs) ─────────────────────────────────
+export interface AppConfigThemeTokens {
+  primary?: string;
+  surface?: string;
+  text?: string;
+  textMuted?: string;
+  radius?: number;
+  font?: string;
+  [k: string]: string | number | undefined;
+}
+
+export interface AppConfigTheme {
+  id: string;
+  name: string;
+  tokens: AppConfigThemeTokens;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AppConfigBranding {
+  logoUrl?: string | null;
+  iconUrl?: string | null;
+  splashUrl?: string | null;
+  appTitle?: string | null;
+}
+
+export interface AppConfigSetting {
+  key: string;
+  value: unknown;
+  type?: 'string' | 'number' | 'boolean' | 'json';
+  group?: string | null;
+  updatedAt?: string;
+}
+
+export interface AppConfigLayoutItem {
+  key: string;
+  visible: boolean;
+  props?: Record<string, unknown>;
+}
+
+export interface AppConfigLayout {
+  screen: string;
+  items: AppConfigLayoutItem[];
+}
+
+export interface AppConfigVisibilityRule {
+  moduleKey: string;
+  roles?: string[];      // ["customer", "worker"]
+  devices?: string[];    // ["ios", "android", "web"]
+  startsAt?: string | null;
+  endsAt?: string | null;
+  enabled?: boolean;
+}
+
+/** Public preview payload — what /app-config returns to the live mobile app. */
+export interface AppConfigPublic {
+  branding: AppConfigBranding;
+  theme: AppConfigThemeTokens;
+  settings: Record<string, unknown>;
+  layouts: AppConfigLayout[];
+}
+
+/** Admin aggregate — full state for the management UI. */
+export interface AdminAppConfig {
+  branding: AppConfigBranding;
+  themes: AppConfigTheme[];
+  settings: AppConfigSetting[];
+  layouts: AppConfigLayout[];
+  visibility: AppConfigVisibilityRule[];
+}

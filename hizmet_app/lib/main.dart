@@ -9,6 +9,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/theme_mode_provider.dart';
+import 'core/app_config/app_config_service.dart';
 import 'core/router/app_router.dart';
 import 'core/services/in_app_notification_service.dart';
 import 'core/services/chat_toast_hook.dart';
@@ -70,11 +71,41 @@ void main() async {
   await initializeDateFormatting('tr_TR', null);
   await initializeDateFormatting('tr', null);
   await initializeDateFormatting('en', null);
+  // Phase 268d — Remote app-config fire-and-forget fetch.
+  // Boot path bloklanmaz; cache/fallback ile UI hemen render olur,
+  // network cevabı geldiğinde override AppColors'a yazılır.
+  // ignore: discarded_futures
+  _bootstrapAppConfig();
   runApp(
     const ProviderScope(
       child: YapgitsinApp(),
     ),
   );
+}
+
+Future<void> _bootstrapAppConfig() async {
+  try {
+    final cfg = await AppConfigService().fetch();
+    final hex = cfg.theme['primary'];
+    if (hex is String) {
+      final parsed = _parseHexColor(hex);
+      if (parsed != null) {
+        AppColors.overridePrimary = parsed;
+      }
+    }
+  } catch (_) {
+    // Sessiz: fallback zaten devrede.
+  }
+}
+
+Color? _parseHexColor(String input) {
+  var s = input.trim();
+  if (s.startsWith('#')) s = s.substring(1);
+  if (s.length == 6) s = 'FF$s';
+  if (s.length != 8) return null;
+  final v = int.tryParse(s, radix: 16);
+  if (v == null) return null;
+  return Color(v);
 }
 
 class YapgitsinApp extends ConsumerWidget {

@@ -42,6 +42,9 @@ const NAV = [
   { href: "/status",          label: "Sistem Durumu",  icon: "🩺" },
   // Phase 267 — Escrow ayarları (placeholder; backend hazır, UI TODO).
   { href: "/escrow-settings", label: "Escrow Ayarları", icon: "🔐" },
+  // 📱 APK Yönetimi — mobile app theme + content control (Voldi-design+fs)
+  { href: "/apk-tasarim",     label: "🎨 APK Tasarım",  icon: "📱" },
+  { href: "/apk-icerik",      label: "📦 APK İçerik",   icon: "📱" },
   { href: "/ayarlar",         label: "Ayarlar",        icon: "⚙️" },
 ];
 

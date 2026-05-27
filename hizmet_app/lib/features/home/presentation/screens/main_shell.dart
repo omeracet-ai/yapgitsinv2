@@ -18,6 +18,7 @@ import '../../../jobs/presentation/providers/job_provider.dart' as jp;
 import '../../../jobs/presentation/providers/job_provider.dart' show jobsProvider, Job;
 import '../../../jobs/presentation/screens/job_detail_screen.dart';
 import '../../../jobs/presentation/screens/my_jobs_screen.dart';
+import '../../../../core/app_config/app_config_provider.dart';
 import '../../../../core/widgets/yapgitsin_loader.dart';
 import '../../../providers/data/provider_repository.dart';
 import '../../../providers/presentation/screens/provider_list_screen.dart';
@@ -91,11 +92,18 @@ class _MainShellState extends ConsumerState<MainShell>
     final selectedIndex = ref.watch(selectedTabProvider);
 
     // Phase 268c — Tab düzeni: Yaptır · Yapgitsin · Harita · İşlerim · Profil
+    // Phase 268d — AppBar başlığı remote app-config branding.appTitle'dan gelir
+    // (yoksa 'Yapgitsin'). Sync provider cache/fallback'i blocking olmadan döner.
+    final appConfig = ref.watch(appConfigSyncProvider);
+    final brandingTitle = appConfig.branding['appTitle'];
+    final appBarTitle = (brandingTitle is String && brandingTitle.isNotEmpty)
+        ? brandingTitle
+        : 'Yapgitsin';
     final List<Widget> pages = [
       _HomeTab(onSeeAllRequests: () {
         ref.read(selectedTabProvider.notifier).state = 1;
       }),
-      const HizmetAlScreen(appBarTitle: 'Yapgitsin'),
+      HizmetAlScreen(appBarTitle: appBarTitle),
       const MapScreen(),
       const MyJobsScreen(showAppBar: true),
       const ProfileScreen(),

@@ -9,6 +9,16 @@ class AppColors {
   static const Color primary       = Color(0xFF4ADE80);
   static const Color primaryDark   = Color(0xFF22C55E);
   static const Color primaryLight  = Color(0xFFDCFCE7);
+
+  /// Phase 268d — Remote app-config override.
+  /// `AppConfigService.fetch()` sonrası `theme.primary` parse edilip set edilir.
+  /// Null kalırsa fallback olarak [primary] döner.
+  ///
+  /// Not: `primary` 54+ yerde `const` context'te (örn. `const Icon(color: ...)`)
+  /// kullanıldığından geriye uyumluluk için `const` bırakıldı. Yeni kod
+  /// remote override'ı istiyorsa [dynamicPrimary] kullanmalı.
+  static Color? overridePrimary;
+  static Color get dynamicPrimary => overridePrimary ?? primary;
   /// @Deprecated — kullanım: `AppColors.headerBackground(context)` veya
   /// `AppColors.headerSurface`. Bu sabit her zaman koyu zemin döner ve
   /// light mode'da AppBar'ı bozar. Yeni kod tema-duyarlı getter kullanmalı.

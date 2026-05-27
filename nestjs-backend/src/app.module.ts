@@ -111,6 +111,12 @@ import { ProvidersModule } from './modules/providers/providers.module';
 import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.entity';
 import { CryptoDepositsModule } from './modules/crypto-deposits/crypto-deposits.module';
 import { CryptoDeposit } from './modules/crypto-deposits/crypto-deposit.entity';
+import { AppConfigModule } from './modules/app-config/app-config.module';
+import { AppSetting } from './modules/app-config/entities/app-setting.entity';
+import { AppTheme } from './modules/app-config/entities/app-theme.entity';
+import { AppBranding } from './modules/app-config/entities/app-branding.entity';
+import { AppLayout } from './modules/app-config/entities/app-layout.entity';
+import { AppVisibilityRule } from './modules/app-config/entities/app-visibility-rule.entity';
 
 @Module({
   imports: [
@@ -244,6 +250,11 @@ import { CryptoDeposit } from './modules/crypto-deposits/crypto-deposit.entity';
           Badge,
           WithdrawalRequest,
           CryptoDeposit,
+          AppSetting,
+          AppTheme,
+          AppBranding,
+          AppLayout,
+          AppVisibilityRule,
         ];
         if (dbType === 'sqlite') {
           // DB_DATABASE override allows isolated test DBs (e.g. ':memory:'); defaults to dev file.
@@ -352,6 +363,7 @@ import { CryptoDeposit } from './modules/crypto-deposits/crypto-deposit.entity';
     WithdrawalsModule,
     CryptoDepositsModule,
     ProvidersModule,
+    AppConfigModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],
