@@ -3,6 +3,45 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client_provider.dart';
 import '../../../core/services/secure_token_store.dart';
 
+// Phase 272 — Pop-up poster mini-card için kompakt ilan sahibi profili.
+// Backend `_attachPosters` 'in döndürdüğü `poster` JSON nesnesinden parse
+// edilir. Eksikse null kalır, UI fallback'i devreye girer.
+class NearbyJobPoster {
+  final String id;
+  final String? fullName;
+  final String? profileImageUrl;
+  final double? averageRating;
+  final int totalReviews;
+  final int reputationScore;
+  final int asCustomerTotal;
+  final int asCustomerSuccess;
+  final bool identityVerified;
+
+  const NearbyJobPoster({
+    required this.id,
+    this.fullName,
+    this.profileImageUrl,
+    this.averageRating,
+    this.totalReviews = 0,
+    this.reputationScore = 0,
+    this.asCustomerTotal = 0,
+    this.asCustomerSuccess = 0,
+    this.identityVerified = false,
+  });
+
+  factory NearbyJobPoster.fromJson(Map<String, dynamic> j) => NearbyJobPoster(
+        id: j['id'] as String,
+        fullName: j['fullName'] as String?,
+        profileImageUrl: j['profileImageUrl'] as String?,
+        averageRating: (j['averageRating'] as num?)?.toDouble(),
+        totalReviews: (j['totalReviews'] as num?)?.toInt() ?? 0,
+        reputationScore: (j['reputationScore'] as num?)?.toInt() ?? 0,
+        asCustomerTotal: (j['asCustomerTotal'] as num?)?.toInt() ?? 0,
+        asCustomerSuccess: (j['asCustomerSuccess'] as num?)?.toInt() ?? 0,
+        identityVerified: j['identityVerified'] == true,
+      );
+}
+
 class NearbyJob {
   final String id;
   final String title;
@@ -19,6 +58,9 @@ class NearbyJob {
   // tarafından net pin değil. UI'da yarı saydam + "~" rozeti gösterilir.
   final bool locationApprox;
   final String? locationSource; // 'user-pin' | 'city-centroid' | 'geocode' ...
+  // Phase 272 — İlan sahibi mini profili (pop-up alt section'da gösterilir).
+  final NearbyJobPoster? poster;
+  final int? featuredOrder;
 
   const NearbyJob({
     required this.id,
@@ -33,6 +75,8 @@ class NearbyJob {
     this.photos = const [],
     this.locationApprox = false,
     this.locationSource,
+    this.poster,
+    this.featuredOrder,
   });
 
   factory NearbyJob.fromJson(Map<String, dynamic> j) => NearbyJob(
@@ -51,6 +95,10 @@ class NearbyJob {
             [],
         locationApprox: j['locationApprox'] == true,
         locationSource: j['locationSource'] as String?,
+        poster: j['poster'] is Map<String, dynamic>
+            ? NearbyJobPoster.fromJson(j['poster'] as Map<String, dynamic>)
+            : null,
+        featuredOrder: (j['featuredOrder'] as num?)?.toInt(),
       );
 }
 

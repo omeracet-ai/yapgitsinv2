@@ -41,9 +41,10 @@ class WorkerDocumentsRepository {
   }
 
   /// `/uploads/document` endpoint'i — JPEG/PNG/WEBP, max 10MB; URL döner.
+  /// Backend FileInterceptor field adı: `photo` (NOT 'file' — Phase 279d fix).
   Future<String> uploadFile(XFile file) async {
     final form = FormData.fromMap({
-      'file': MultipartFile.fromBytes(
+      'photo': MultipartFile.fromBytes(
         await file.readAsBytes(),
         filename: file.name,
       ),

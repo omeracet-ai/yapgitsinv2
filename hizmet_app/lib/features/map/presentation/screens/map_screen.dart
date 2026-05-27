@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../providers/map_provider.dart';
 import '../../data/map_repository.dart';
-import '../widgets/job_map_marker.dart';
+import '../widgets/job_pin_marker.dart';
 import '../widgets/worker_map_marker.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
@@ -473,6 +473,24 @@ class _ToggleBtn extends StatelessWidget {
   }
 }
 
+// Phase 272 — Kategori → ikon eşleştirmesi. Pin + pop-up'ta paylaşılır.
+IconData _categoryIcon(String category) {
+  switch (category) {
+    case 'Elektrikçi':
+      return Icons.bolt_rounded;
+    case 'Tesisat':
+      return Icons.plumbing_rounded;
+    case 'Temizlik':
+      return Icons.cleaning_services_rounded;
+    case 'Boya & Badana':
+      return Icons.format_paint_rounded;
+    case 'Nakliyat':
+      return Icons.local_shipping_rounded;
+    default:
+      return Icons.build_rounded;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Harita görünümü
 // ─────────────────────────────────────────────────────────────────────────────
@@ -551,22 +569,21 @@ class _MapView extends StatelessWidget {
               .where((j) => j.latitude != null && j.longitude != null)
               .map((j) {
             final isSelected = j.id == state.selectedJobId;
-            // Phase 254 — Admin parity: 18x18 circle + 14x14 ~ badge için 28x28 hit area.
-            const w = 28.0;
-            const h = 28.0;
-            final price = j.budgetMin?.toStringAsFixed(0);
+            // Phase 272 — 3D pin marker. ApproxBadge ile birlikte ~50x60 hit area.
+            const w = 50.0;
+            const h = 64.0;
             return Marker(
               point: LatLng(j.latitude!, j.longitude!),
               width: w,
               height: h,
-              child: GestureDetector(
+              alignment: Alignment.topCenter,
+              child: JobPinMarker(
+                icon: _categoryIcon(j.category),
+                color: AppColors.primary,
+                isSelected: isSelected,
+                isFeatured: j.featuredOrder != null,
+                isApprox: j.locationApprox,
                 onTap: () => onPinTap(j),
-                child: JobMapMarker(
-                  category: j.category,
-                  isSelected: isSelected,
-                  price: price,
-                  isApprox: j.locationApprox,
-                ),
               ),
             );
           }).toList(),
@@ -672,22 +689,7 @@ class _AirtaskerCard extends StatelessWidget {
 
   const _AirtaskerCard({required this.job, required this.onClose});
 
-  static IconData _iconFor(String category) {
-    switch (category) {
-      case 'Elektrikçi':
-        return Icons.bolt_rounded;
-      case 'Tesisat':
-        return Icons.plumbing_rounded;
-      case 'Temizlik':
-        return Icons.cleaning_services_rounded;
-      case 'Boya & Badana':
-        return Icons.format_paint_rounded;
-      case 'Nakliyat':
-        return Icons.local_shipping_rounded;
-      default:
-        return Icons.build_rounded;
-    }
-  }
+  static IconData _iconFor(String category) => _categoryIcon(category);
 
   @override
   Widget build(BuildContext context) {
@@ -895,6 +897,10 @@ class _AirtaskerCard extends StatelessWidget {
 
           const SizedBox(height: 14),
 
+          // ── Phase 272 — Poster mini-card section ──
+          if (job.poster != null)
+            _PosterMiniSection(poster: job.poster!),
+
           // ── Action buttons ──
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -959,6 +965,237 @@ class _AirtaskerCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 272 — Poster mini-card section
+// 3D dark pop-up'ın alt kısmında "İlanı Açan" satırı: avatar + isim + verified
+// rozet + mini stats + "Profili Aç" CTA. Glassmorphic divider üst ayrımı verir.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PosterMiniSection extends StatelessWidget {
+  final NearbyJobPoster poster;
+
+  const _PosterMiniSection({required this.poster});
+
+  String get _initials {
+    final name = poster.fullName?.trim();
+    if (name == null || name.isEmpty) return '?';
+    final parts = name.split(RegExp(r'\s+'));
+    final first = parts.first.isNotEmpty ? parts.first[0] : '';
+    final last = parts.length > 1 && parts.last.isNotEmpty ? parts.last[0] : '';
+    return (first + last).toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final successRate = poster.asCustomerTotal > 0
+        ? ((poster.asCustomerSuccess / poster.asCustomerTotal) * 100).round()
+        : null;
+    final rating = poster.averageRating;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.08),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.person_outline_rounded,
+                  size: 11,
+                  color: Colors.white.withValues(alpha: 0.55)),
+              const SizedBox(width: 4),
+              Text(
+                'İLANI AÇAN',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                  color: Colors.white.withValues(alpha: 0.55),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // ── Avatar ──
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.primary.withValues(alpha: 0.30),
+                          AppColors.primary.withValues(alpha: 0.10),
+                        ],
+                      ),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        width: 1,
+                      ),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: poster.profileImageUrl != null &&
+                            poster.profileImageUrl!.isNotEmpty
+                        ? Image.network(
+                            poster.profileImageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _initialsAvatar(),
+                          )
+                        : _initialsAvatar(),
+                  ),
+                  if (poster.identityVerified)
+                    Positioned(
+                      bottom: -2,
+                      right: -2,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF1A1F2E),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.verified_rounded,
+                          size: 14,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 10),
+              // ── Name + stats ──
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      poster.fullName ?? 'İsimsiz Kullanıcı',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        if (rating != null && rating > 0) ...[
+                          const Icon(Icons.star_rounded,
+                              size: 12, color: Color(0xFFFFC542)),
+                          const SizedBox(width: 2),
+                          Text(
+                            rating.toStringAsFixed(1),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white.withValues(alpha: 0.85),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        Icon(Icons.work_outline_rounded,
+                            size: 11,
+                            color: Colors.white.withValues(alpha: 0.55)),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${poster.asCustomerTotal} iş',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white.withValues(alpha: 0.70),
+                          ),
+                        ),
+                        if (successRate != null) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            '·  %$successRate başarı',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white.withValues(alpha: 0.55),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // ── CTA ──
+              TextButton(
+                onPressed: () => context.push('/musteri/${poster.id}'),
+                style: TextButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  minimumSize: const Size(0, 30),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  backgroundColor:
+                      AppColors.primary.withValues(alpha: 0.15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(
+                      color: AppColors.primary.withValues(alpha: 0.40),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Profil',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    SizedBox(width: 2),
+                    Icon(Icons.arrow_forward_rounded,
+                        size: 12, color: AppColors.primary),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _initialsAvatar() => Container(
+        alignment: Alignment.center,
+        child: Text(
+          _initials,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
+        ),
+      );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

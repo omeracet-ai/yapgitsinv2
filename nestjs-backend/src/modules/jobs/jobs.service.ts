@@ -1078,6 +1078,10 @@ export class JobsService {
       sql += ` ORDER BY (CASE WHEN j."featuredOrder" IS NOT NULL THEN 0 ELSE 1 END) ASC, j."featuredOrder" ASC, distanceKm ASC LIMIT 50`;
 
       const rows = await this.dataSource.query(sql, params);
+      // Phase 272 — Harita pop-up poster mini-card için poster bilgisi ekle.
+      // _attachPosters Job[] üzerinde mutate eder; raw row'lar da customerId
+      // taşıdığı için aynı şekilde davranır.
+      await this._attachPosters(rows as Job[]);
       return rows as (Job & { distanceKm: number })[];
     } catch (err) {
       const e = err as Error;
