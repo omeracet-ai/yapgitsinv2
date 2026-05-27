@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/network/api_client_provider.dart';
 import '../../../../core/utils/media_utils.dart';
 import 'confirmation_state.dart';
+import 'pending_confirmation.dart';
 
 /// Phase 254 — Escrow confirmation REST client.
 ///
@@ -202,6 +203,22 @@ class ConfirmationRepository {
       return ConfirmResult.fromJson(Map<String, dynamic>.from(res.data as Map));
     } on DioException catch (e) {
       throw Exception(_msg(e, 'Onay gönderilemedi'));
+    }
+  }
+
+  /// Phase 271 — pending confirmations across all booking-escrows the user is
+  /// a party of (awaiting_confirmation + pending_grace). Powers the "Bekleyen
+  /// Onaylar" card on the İşlerim tab.
+  Future<List<PendingConfirmation>> listMyPending() async {
+    try {
+      final res = await _dio.get('/escrow/confirmation/my-pending');
+      final list = res.data as List<dynamic>? ?? const [];
+      return list
+          .map((j) =>
+              PendingConfirmation.fromJson(Map<String, dynamic>.from(j as Map)))
+          .toList();
+    } on DioException catch (e) {
+      throw Exception(_msg(e, 'Bekleyen onaylar alınamadı'));
     }
   }
 

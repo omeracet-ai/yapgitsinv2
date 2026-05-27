@@ -14,6 +14,7 @@ import 'post_job_screen.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../widgets/boost_dialog.dart';
 import '../widgets/job_history_dialog.dart';
+import '../widgets/pending_confirmations_card.dart';
 
 // ─── Providers ────────────────────────────────────────────────────────────────
 
@@ -128,11 +129,19 @@ class _DualRoleView extends ConsumerWidget {
                 ],
               )
             : null,
-        body: const TabBarView(
+        body: const Column(
           children: [
-            _CustomerTabContentWrapper(kindFilter: 'request'),
-            _CustomerTabContentWrapper(kindFilter: 'offer'),
-            _WorkerTabContent(),
+            // Phase 271 — onay bekleyen işler (confirm-plain entegrasyonu).
+            PendingConfirmationsCard(),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _CustomerTabContentWrapper(kindFilter: 'request'),
+                  _CustomerTabContentWrapper(kindFilter: 'offer'),
+                  _WorkerTabContent(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -376,28 +385,43 @@ class _CustomerJobsView extends ConsumerWidget {
                 ),
               )
             : null,
-        body: jobsAsync.when(
-          loading: () => ListSkeleton(itemCount: 6, itemBuilder: (_) => const JobCardSkeleton()),
-          error: (e, _) => Center(child: Text('Hata: $e')),
-          data: (jobs) => TabBarView(
-            children: [
-              _JobList(
-                jobs: jobs
-                    .where((j) =>
-                        j['status'] == 'open' || j['status'] == 'in_progress')
-                    .toList(),
-                emptyMsg: 'Aktif ilanınız yok.',
+        body: Column(
+          children: [
+            // Phase 271 — onay bekleyen işler kartı (varsa).
+            const PendingConfirmationsCard(),
+            Expanded(
+              child: jobsAsync.when(
+                loading: () => ListSkeleton(
+                    itemCount: 6,
+                    itemBuilder: (_) => const JobCardSkeleton()),
+                error: (e, _) => Center(child: Text('Hata: $e')),
+                data: (jobs) => TabBarView(
+                  children: [
+                    _JobList(
+                      jobs: jobs
+                          .where((j) =>
+                              j['status'] == 'open' ||
+                              j['status'] == 'in_progress')
+                          .toList(),
+                      emptyMsg: 'Aktif ilanınız yok.',
+                    ),
+                    _JobList(
+                      jobs: jobs
+                          .where((j) => j['status'] == 'completed')
+                          .toList(),
+                      emptyMsg: 'Tamamlanan ilanınız yok.',
+                    ),
+                    _JobList(
+                      jobs: jobs
+                          .where((j) => j['status'] == 'cancelled')
+                          .toList(),
+                      emptyMsg: 'İptal edilen ilanınız yok.',
+                    ),
+                  ],
+                ),
               ),
-              _JobList(
-                jobs: jobs.where((j) => j['status'] == 'completed').toList(),
-                emptyMsg: 'Tamamlanan ilanınız yok.',
-              ),
-              _JobList(
-                jobs: jobs.where((j) => j['status'] == 'cancelled').toList(),
-                emptyMsg: 'İptal edilen ilanınız yok.',
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import {
   PaymentEscrow,
@@ -26,6 +26,27 @@ import { EscrowConfirmationVideo } from './escrow-confirmation-video.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
 import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
+import { Booking } from '../bookings/booking.entity';
+import { User } from '../users/user.entity';
+import { Job } from '../jobs/job.entity';
+
+// Phase 271 — payload shape for "İşlerim → Bekleyen Onaylar".
+export interface PendingConfirmationRow {
+  escrowId: string;
+  bookingId: string;
+  jobId: string | null;
+  jobTitle: string | null;
+  counterparty: {
+    id: string;
+    fullName: string;
+    profileImageUrl: string | null;
+  };
+  amount: number;
+  confirmationStatus: ConfirmationStatus;
+  graceEndsAt: string | null;
+  mySide: ConfirmationSide;
+  myConfirmed: boolean;
+}
 
 const QR_TTL_MS = 5 * 60 * 1000; // 5 min QR validity
 // Phase 267 — defaults migrated to PlatformSettingsService (admin-tunable).
@@ -172,11 +193,125 @@ export class EscrowConfirmationService {
     private readonly photoRepo: Repository<EscrowConfirmationPhoto>,
     @InjectRepository(EscrowConfirmationVideo)
     private readonly videoRepo: Repository<EscrowConfirmationVideo>,
+    @InjectRepository(Booking)
+    private readonly bookingRepo: Repository<Booking>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    @InjectRepository(Job)
+    private readonly jobRepo: Repository<Job>,
     private readonly escrowService: EscrowService,
     private readonly notificationsService: NotificationsService,
     private readonly config: ConfigService,
     private readonly platformSettings: PlatformSettingsService,
   ) {}
+
+  // ------------- Phase 271 — İşlerim "Bekleyen Onaylar" -------------
+
+  /**
+   * Returns escrow rows where the user is a party AND the confirmation is in
+   * a state that requires the user's attention (awaiting_confirmation or
+   * pending_grace). Sorted: pending_grace first (time-sensitive), then
+   * awaiting_confirmation.
+   *
+   * Only BookingEscrow is queried — Phase 267 confirm-plain flow lives there.
+   * The legacy PaymentEscrow path is excluded by design (no booking context to
+   * surface in "İşlerim").
+   */
+  async listMyPending(userId: string): Promise<PendingConfirmationRow[]> {
+    const rows = await this.bookingEscrowRepo
+      .createQueryBuilder('e')
+      .where('(e.customerId = :uid OR e.workerId = :uid)', { uid: userId })
+      .andWhere('e.confirmationStatus IN (:...statuses)', {
+        statuses: [
+          ConfirmationStatus.AWAITING_CONFIRMATION,
+          ConfirmationStatus.PENDING_GRACE,
+        ],
+      })
+      .getMany();
+
+    if (rows.length === 0) return [];
+
+    const bookingIds = Array.from(new Set(rows.map((r) => r.bookingId)));
+    const bookings = await this.bookingRepo.find({
+      where: { id: In(bookingIds) },
+    });
+    const bookingById = new Map(bookings.map((b) => [b.id, b]));
+
+    const jobIds = Array.from(
+      new Set(
+        bookings
+          .map((b) => b.jobId)
+          .filter((x): x is string => typeof x === 'string' && x.length > 0),
+      ),
+    );
+    const jobs =
+      jobIds.length > 0
+        ? await this.jobRepo.find({ where: { id: In(jobIds) } })
+        : [];
+    const jobById = new Map(jobs.map((j) => [j.id, j]));
+
+    const counterpartyIds = Array.from(
+      new Set(
+        rows.map((r) => (r.customerId === userId ? r.workerId : r.customerId)),
+      ),
+    );
+    const users = await this.userRepo.find({
+      where: { id: In(counterpartyIds) },
+    });
+    const userById = new Map(users.map((u) => [u.id, u]));
+
+    const mapped: PendingConfirmationRow[] = rows.map((r) => {
+      const mySide: ConfirmationSide =
+        r.customerId === userId ? 'customer' : 'worker';
+      const counterpartyId =
+        mySide === 'customer' ? r.workerId : r.customerId;
+      const cp = userById.get(counterpartyId);
+      const booking = bookingById.get(r.bookingId);
+      const job = booking?.jobId ? jobById.get(booking.jobId) : null;
+      const myConfirmed =
+        mySide === 'customer'
+          ? !!r.customerConfirmedAt
+          : !!r.workerConfirmedAt;
+      // Amount: prefer minor units (kuruş) if non-zero, else fall back to legacy float.
+      const amount =
+        r.amountMinor && r.amountMinor > 0
+          ? r.amountMinor / 100
+          : Number(r.amount) || 0;
+      return {
+        escrowId: r.id,
+        bookingId: r.bookingId,
+        jobId: booking?.jobId ?? null,
+        jobTitle:
+          job?.title ?? booking?.category ?? booking?.description ?? null,
+        counterparty: {
+          id: counterpartyId,
+          fullName: cp?.fullName ?? 'Bilinmeyen',
+          profileImageUrl: cp?.profileImageUrl ?? null,
+        },
+        amount,
+        confirmationStatus: r.confirmationStatus,
+        graceEndsAt: r.graceEndsAt ? r.graceEndsAt.toISOString() : null,
+        mySide,
+        myConfirmed,
+      };
+    });
+
+    // Sort: pending_grace first (time-sensitive), then awaiting.
+    mapped.sort((a, b) => {
+      const rank = (s: ConfirmationStatus) =>
+        s === ConfirmationStatus.PENDING_GRACE ? 0 : 1;
+      const ra = rank(a.confirmationStatus);
+      const rb = rank(b.confirmationStatus);
+      if (ra !== rb) return ra - rb;
+      // Within pending_grace, soonest deadline first.
+      if (a.graceEndsAt && b.graceEndsAt) {
+        return a.graceEndsAt.localeCompare(b.graceEndsAt);
+      }
+      return 0;
+    });
+
+    return mapped;
+  }
 
   /**
    * Phase 2 — Confirmation v2 flag. When true: photo+approval first, then the

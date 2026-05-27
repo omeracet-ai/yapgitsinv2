@@ -119,11 +119,25 @@ function buildV2(escrow: PaymentEscrow, photos: any[] = []): Harness {
     getEscrowDeadlineMs: jest.fn(async () => 72 * 60 * 60 * 1000),
   };
 
+  // Phase 271 — three additional repos (booking, user, job) for listMyPending.
+  const bookingRepo = {
+    find: jest.fn(async () => []),
+  };
+  const userRepo = {
+    find: jest.fn(async () => []),
+  };
+  const jobRepo = {
+    find: jest.fn(async () => []),
+  };
+
   const service = new EscrowConfirmationService(
     escrowRepo as any,
     bookingEscrowRepo as any,
     photoRepo as any,
     videoRepo as any,
+    bookingRepo as any,
+    userRepo as any,
+    jobRepo as any,
     escrowService as any,
     notificationsService as any,
     config as any,

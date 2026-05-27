@@ -16,8 +16,11 @@ import { EscrowConfirmationPhoto } from './escrow-confirmation-photo.entity';
 import { EscrowConfirmationVideo } from './escrow-confirmation-video.entity';
 import { EscrowConfirmationService } from './escrow-confirmation.service';
 import { EscrowConfirmationController } from './escrow-confirmation.controller';
+import { EscrowConfirmationListController } from './escrow-confirmation-list.controller';
 import { EscrowConfirmationTimeoutService } from './escrow-confirmation-timeout.service';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { User } from '../users/user.entity';
+import { Job } from '../jobs/job.entity';
 
 @Module({
   imports: [
@@ -29,6 +32,8 @@ import { NotificationsModule } from '../notifications/notifications.module';
       AdminAuditLog,
       EscrowConfirmationPhoto,
       EscrowConfirmationVideo,
+      User,
+      Job,
     ]),
     NotificationsModule,
   ],
@@ -37,6 +42,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     EscrowAdminController,
     BookingEscrowController,
     EscrowConfirmationController,
+    EscrowConfirmationListController,
   ],
   providers: [
     EscrowService,
