@@ -1200,12 +1200,27 @@ export class AdminService {
   }
 
   private getDbPath(): string {
-    // Aynı resolve mantığı app.module/data-source ile uyumlu —
-    // SQLite dosyası process cwd'ye göre `hizmet_db.sqlite`.
-    const fromEnv = process.env.DB_DATABASE || process.env.DB_PATH;
-    if (fromEnv && fs.existsSync(fromEnv)) return fromEnv;
-    const candidate = path.join(process.cwd(), 'hizmet_db.sqlite');
-    return candidate;
+    // app.module/data-source ile uyumlu çözümleme:
+    //  1. Env mutlak yol verilmiş ve dosya varsa onu kullan
+    //  2. Env göreceli ise process.cwd() ve cwd/../ (iisnode src/ cwd'sini ele al) altında ara
+    //  3. Son çare: __dirname ve üst dizinlerinde 'hizmet_db.sqlite' ara
+    const envName = process.env.DB_DATABASE || process.env.DB_PATH;
+    const candidates: string[] = [];
+    if (envName) {
+      candidates.push(envName);
+      candidates.push(path.join(process.cwd(), envName));
+      candidates.push(path.join(process.cwd(), '..', envName));
+    }
+    candidates.push(path.join(process.cwd(), 'hizmet_db.sqlite'));
+    candidates.push(path.join(process.cwd(), '..', 'hizmet_db.sqlite'));
+    candidates.push(path.join(__dirname, '..', '..', 'hizmet_db.sqlite'));
+    candidates.push(path.join(__dirname, '..', '..', '..', 'hizmet_db.sqlite'));
+    for (const p of candidates) {
+      try {
+        if (p && fs.existsSync(p)) return p;
+      } catch { /* skip */ }
+    }
+    return path.join(process.cwd(), 'hizmet_db.sqlite');
   }
 
   private sanitizeBackupName(name: string): string {
