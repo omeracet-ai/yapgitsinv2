@@ -87,10 +87,13 @@ async function request<T>(path: string, init?: RequestInit, _retried = false): P
     ...init,
   });
   // 401 → try a one-time refresh + retry before failing (admin refresh flow).
-  if (res.status === 401 && !_retried && getRefreshToken()) {
-    if (await refreshAdminToken()) {
+  // Phase 278b: refresh token yok bile olsa 401 → login ekranına yönlendir
+  // (eski 'sessiz hata' bug'ı kapandı).
+  if (res.status === 401 && !_retried) {
+    if (getRefreshToken() && (await refreshAdminToken())) {
       return request<T>(path, init, true);
     }
+    clearAdminSession();
     redirectToLogin();
   }
   if (!res.ok) {
@@ -108,10 +111,11 @@ async function uploadFile<T>(path: string, formData: FormData, _retried = false)
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: formData,
   });
-  if (res.status === 401 && !_retried && getRefreshToken()) {
-    if (await refreshAdminToken()) {
+  if (res.status === 401 && !_retried) {
+    if (getRefreshToken() && (await refreshAdminToken())) {
       return uploadFile<T>(path, formData, true);
     }
+    clearAdminSession();
     redirectToLogin();
   }
   if (!res.ok) {
