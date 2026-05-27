@@ -848,12 +848,12 @@ export class AdminService {
     affected: Record<string, number>;
   }> {
     const u = await this.usersRepo.findOne({ where: { id } });
-    if (!u) throw new NotFoundException(`Kullanıcı bulunamadı: ${id}`);
-    if (u.role === UserRole.ADMIN) {
+    if (u?.role === UserRole.ADMIN) {
       throw new BadRequestException('Admin hesabı silinemez');
     }
+    // Idempotent: user satırı yoksa bile orphan dependent rows'u temizle.
     const affected: Record<string, number> = {};
-    const phone = u.phoneNumber ?? '';
+    const phone = u?.phoneNumber ?? '';
     await this.dataSource.transaction(async (manager) => {
       await manager.query('PRAGMA foreign_keys = OFF');
       const ops: Array<[string, string, unknown[]]> = [
