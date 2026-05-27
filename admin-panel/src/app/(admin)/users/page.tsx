@@ -6,6 +6,7 @@ import { api, type User, type Paginated } from "@/lib/api";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import { Pager } from "@/components/ui/Pager";
+import { exportCsv, exportJson } from "@/lib/export";
 
 const PAGE_LIMIT = 20;
 
@@ -402,7 +403,43 @@ export default function UsersPage() {
       )}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold">Kullanıcılar</h2>
-        <span className="text-sm text-gray-400">{data.total} kullanıcı</span>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              const stamp = new Date().toISOString().slice(0, 10);
+              exportCsv(
+                users.map((u) => ({
+                  id: u.id,
+                  fullName: u.fullName,
+                  email: u.email ?? "",
+                  phoneNumber: u.phoneNumber ?? "",
+                  role: u.role,
+                  identityVerified: u.identityVerified ? "yes" : "no",
+                  city: u.city ?? "",
+                  createdAt: u.createdAt ?? "",
+                })),
+                `users-${stamp}.csv`,
+              );
+            }}
+            disabled={!users.length}
+            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+          >
+            📥 CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const stamp = new Date().toISOString().slice(0, 10);
+              exportJson(users, `users-${stamp}.json`);
+            }}
+            disabled={!users.length}
+            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+          >
+            📦 JSON
+          </button>
+          <span className="text-sm text-gray-400">{data.total} kullanıcı</span>
+        </div>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">

@@ -45,6 +45,7 @@ import { ChatMessage } from '../chat/chat-message.entity';
 import { JobQuestion } from '../jobs/job-question.entity';
 import { Provider } from '../providers/provider.entity';
 import { FcmService } from '../notifications/fcm.service';
+import { RealtimeService } from '../realtime/realtime.service';
 import {
   PromoService,
   CreatePromoDto,
@@ -84,6 +85,7 @@ export class AdminService {
     private readonly promoService: PromoService,
     private readonly fcmService: FcmService,
     private readonly dataSource: DataSource,
+    private readonly realtime: RealtimeService,
   ) {}
 
   async bulkVerifyUsers(
@@ -566,7 +568,9 @@ export class AdminService {
 
   async getDashboardStats() {
     // Phase 175 — parallelize 11 stats + chartData in a single Promise.all wave.
+    // Phase 268 — 4 new fields for Realtime Analytics page.
     const t0 = Date.now();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000);
     const [
       totalJobs,
       totalUsers,
@@ -580,6 +584,9 @@ export class AdminService {
       openJobs,
       completedJobs,
       chartData,
+      signupsLast7d,
+      jobsLast7d,
+      activeWorkers7d,
     ] = await Promise.all([
       this.jobsRepo.count(),
       this.usersRepo.count(),
@@ -603,6 +610,14 @@ export class AdminService {
       this.jobsRepo.count({ where: { status: JobStatus.OPEN } }),
       this.jobsRepo.count({ where: { status: JobStatus.COMPLETED } }),
       this.getChartData(),
+      this.usersRepo.count({ where: { createdAt: MoreThan(sevenDaysAgo) } }),
+      this.jobsRepo.count({ where: { createdAt: MoreThan(sevenDaysAgo) } }),
+      this.offersRepo
+        .createQueryBuilder('o')
+        .select('COUNT(DISTINCT o.userId)', 'cnt')
+        .where('o.createdAt > :d', { d: sevenDaysAgo })
+        .getRawOne<{ cnt: string }>()
+        .then((r) => Number(r?.cnt ?? 0)),
     ]);
     if (process.env.NODE_ENV !== 'production') {
       this.logger.debug(`getDashboardStats parallel ${Date.now() - t0}ms`);
@@ -624,6 +639,52 @@ export class AdminService {
       totalBookings,
       totalReviews,
       chartData,
+      // Phase 268 — Realtime Analytics enrichment.
+      usersOnlineNow: this.realtime.getOnlineCount(),
+      signupsLast7d,
+      jobsLast7d,
+      activeWorkers7d,
+    };
+  }
+
+  // ── Phase 268 — Realtime Analytics ────────────────────────────────
+  async getRealtimeOnline() {
+    const ids = this.realtime.getOnlineUserIds();
+    if (ids.length === 0) {
+      return { count: 0, users: [], updatedAt: new Date().toISOString() };
+    }
+    const users = await this.usersRepo.find({
+      where: { id: In(ids) },
+      select: ['id', 'fullName'],
+      take: 200,
+    });
+    return {
+      count: ids.length,
+      users,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Recent user "sessions" — sample of most-recently-seen users in the window.
+   * Uses User.lastSeenAt (maintained by ChatGateway disconnect handler).
+   * NOT a true session log; it's the cheapest proxy without a new table.
+   */
+  async getRealtimeSessions(days = 7) {
+    const clamped = Math.max(1, Math.min(90, Math.floor(days) || 7));
+    const since = new Date(Date.now() - clamped * 24 * 3600 * 1000);
+    const users = await this.usersRepo
+      .createQueryBuilder('u')
+      .select(['u.id', 'u.fullName', 'u.lastSeenAt', 'u.isOnline'])
+      .where('u.lastSeenAt > :since', { since })
+      .orderBy('u.lastSeenAt', 'DESC')
+      .take(50)
+      .getMany();
+    return {
+      days: clamped,
+      since: since.toISOString(),
+      onlineNow: this.realtime.getOnlineCount(),
+      users,
     };
   }
 

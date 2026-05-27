@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { api, refreshAdminToken, type AdminUser } from "@/lib/api";
-import { NotificationBell } from "@/components/NotificationBell";
+import { AdminTopbar } from "@/components/topbar/AdminTopbar";
 import { ConfirmDialogProvider } from "@/components/ui/ConfirmDialog";
 import { ToastProvider } from "@/components/ui/Toast";
+import { AnimatedGrid } from "@/components/animated-bg/AnimatedGrid";
 
 function isTokenValid(token: string): boolean {
   try {
@@ -19,6 +20,7 @@ function isTokenValid(token: string): boolean {
 
 const NAV = [
   { href: "/dashboard",  label: "Dashboard",     icon: "📊" },
+  { href: "/realtime-analytics", label: "Realtime Analytics", icon: "📈" },
   { href: "/workforce",  label: "Canlı İş Gücü",  icon: "⚡" },
   { href: "/jobs",       label: "Son İlanlar",    icon: "📋" },
   { href: "/categories", label: "Kategoriler",    icon: "🏷️" },
@@ -45,6 +47,7 @@ const NAV = [
   // 📱 APK Yönetimi — mobile app theme + content control (Voldi-design+fs)
   { href: "/apk-tasarim",     label: "🎨 APK Tasarım",  icon: "📱" },
   { href: "/apk-icerik",      label: "📦 APK İçerik",   icon: "📱" },
+  { href: "/apk-builder",     label: "🧩 APK Builder",  icon: "📱" },
   { href: "/ayarlar",         label: "Ayarlar",        icon: "⚙️" },
 ];
 
@@ -103,7 +106,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <ToastProvider>
       <ConfirmDialogProvider>
-    <div className="flex h-full">
+    <AnimatedGrid />
+    <div className="relative z-10 flex h-full">
       {/* Sidebar */}
       <aside className="w-56 shrink-0 bg-slate-900 text-white flex flex-col">
         <div className="px-6 py-5 border-b border-slate-700">
@@ -150,19 +154,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
-          <h1 className="text-sm font-semibold text-gray-700">
-            {NAV.find(n => path === n.href || path.startsWith(n.href + "/"))?.label ?? "Panel"}
-          </h1>
-          <div className="flex items-center gap-4">
-            <NotificationBell />
-            <span className="text-xs text-gray-400">
-              {admin ? `${admin.fullName} · admin` : ""}
-            </span>
-          </div>
-        </header>
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+      <div className="flex-1 flex flex-col overflow-hidden bg-slate-950">
+        <AdminTopbar
+          title={NAV.find(n => path === n.href || path.startsWith(n.href + "/"))?.label ?? "Panel"}
+          adminLabel={admin ? `${admin.fullName} · admin` : undefined}
+        />
+        <main className="flex-1 overflow-auto bg-gray-50 p-6">{children}</main>
       </div>
     </div>
       </ConfirmDialogProvider>

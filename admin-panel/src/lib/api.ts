@@ -544,6 +544,28 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify({ screen, items }),
     }),
+  // History / Rollback (Voldi-fs Utility 1)
+  getAppConfigHistory: (type: string, id?: string, limit = 20) =>
+    request<Array<{
+      id: string;
+      action: string;
+      targetType: string | null;
+      targetId: string | null;
+      payload: Record<string, unknown> | null;
+      adminUserId: string | null;
+      actorEmail: string | null;
+      createdAt: string;
+    }>>(
+      `/admin/app-config/history?type=${encodeURIComponent(type)}${
+        id ? `&id=${encodeURIComponent(id)}` : ''
+      }&limit=${limit}`,
+    ),
+  rollbackAppConfig: (auditLogId: string) =>
+    request<{ entityType: string; restored: unknown }>(
+      `/admin/app-config/rollback/${encodeURIComponent(auditLogId)}`,
+      { method: 'POST' },
+    ),
+
   // Visibility rules — role / device / date window per moduleKey.
   patchVisibility: (moduleKey: string, data: Partial<AppConfigVisibilityRule>) =>
     request<AppConfigVisibilityRule>(`/admin/app-config/visibility/${encodeURIComponent(moduleKey)}`, {
@@ -572,6 +594,48 @@ export const api = {
     request<{ unreadCount: number }>('/messages/unread-count'),
   deleteMessage: (messageId: string) =>
     request<{ success: boolean }>(`/messages/${messageId}`, { method: 'DELETE' }),
+
+  // ── Phase 268 — Realtime Analytics ─────────────────────────────────────────
+  getRealtimeOnline: () =>
+    request<{
+      count: number;
+      users: Array<{ id: string; fullName: string }>;
+      updatedAt: string;
+    }>('/admin/realtime/online'),
+
+  getRealtimeSessions: (days = 7) =>
+    request<{
+      days: number;
+      since: string;
+      onlineNow: number;
+      users: Array<{
+        id: string;
+        fullName: string;
+        lastSeenAt: string | null;
+        isOnline: boolean;
+      }>;
+    }>(`/admin/realtime/sessions?days=${days}`),
+
+  getEnrichedStats: () =>
+    request<{
+      totalJobs: number;
+      totalUsers: number;
+      totalWorkers: number;
+      verifiedWorkers: number;
+      totalOffers: number;
+      totalBookings: number;
+      totalReviews: number;
+      openJobs: number;
+      completedJobs: number;
+      usersOnlineNow: number;
+      signupsLast7d: number;
+      jobsLast7d: number;
+      activeWorkers7d: number;
+      chartData?: {
+        jobsPerDay: Array<{ date: string; count: number }>;
+        usersPerDay: Array<{ date: string; count: number }>;
+      };
+    }>('/admin/stats'),
 };
 
 export interface BlogPost {

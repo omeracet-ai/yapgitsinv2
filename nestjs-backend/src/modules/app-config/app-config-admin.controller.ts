@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -49,6 +50,42 @@ export class AppConfigAdminController {
   @Get('themes')
   listThemes() {
     return this.service.listThemes();
+  }
+
+  // ── History / Rollback (Voldi-fs Utility 1) ──────────────────────
+  /**
+   * Recent app-config audit history filtered by entity type, optionally
+   * narrowed to a specific entity id. Returns at most `limit` rows (default 20,
+   * max 100), newest first.
+   */
+  @Get('history')
+  history(
+    @Query('type') type?: string,
+    @Query('id') id?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const t = (type ?? '').trim();
+    if (!t) return [];
+    const lim = limit ? Number(limit) : 20;
+    return this.service.getHistory(t, id || undefined, lim);
+  }
+
+  @Post('rollback/:auditLogId')
+  async rollback(
+    @Param('auditLogId') auditLogId: string,
+    @Req() req: Request & { user?: AuthUser },
+  ) {
+    const adminId = req.user?.id ?? '';
+    const out = await this.service.rollback(auditLogId, adminId);
+    await this.audit.record({
+      actor: this.actor(req),
+      action: `app-config.${out.entityType}.rollback`,
+      targetType: 'app_config',
+      targetId: auditLogId,
+      payload: { sourceAuditLogId: auditLogId },
+      req,
+    });
+    return out;
   }
 
   // ── Settings ─────────────────────────────────────────────

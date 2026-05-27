@@ -9,6 +9,17 @@ import { useCallback, useEffect, useState } from "react";
 import { api, type AdminAppConfig, type AppConfigBranding, type AppConfigThemeTokens } from "@/lib/api";
 import { ApkPreviewModal } from "@/components/apk-preview/ApkPreviewModal";
 
+interface HistoryEntry {
+  id: string;
+  action: string;
+  targetType: string | null;
+  targetId: string | null;
+  payload: Record<string, unknown> | null;
+  adminUserId: string | null;
+  actorEmail: string | null;
+  createdAt: string;
+}
+
 const DEFAULT_TOKENS: AppConfigThemeTokens = {
   primary: "#FF5A1F",
   surface: "#FFFFFF",
@@ -84,6 +95,9 @@ export default function ApkTasarimPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
+  const [historyBusy, setHistoryBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -112,6 +126,38 @@ export default function ApkTasarimPage() {
   const flash = (kind: "ok" | "err", text: string) => {
     setToast({ kind, text });
     setTimeout(() => setToast(null), 2500);
+  };
+
+  // Combined history for theme + branding — newest first.
+  const openHistory = async () => {
+    setHistoryOpen(true);
+    setHistoryBusy(true);
+    try {
+      const [themeRows, brandingRows] = await Promise.all([
+        api.getAppConfigHistory("theme", activeThemeId ?? undefined, 20),
+        api.getAppConfigHistory("branding", "default", 20),
+      ]);
+      const merged = [...themeRows, ...brandingRows]
+        .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+        .slice(0, 30);
+      setHistoryEntries(merged);
+    } catch (e) {
+      flash("err", e instanceof Error ? e.message : "Geçmiş alınamadı");
+    } finally {
+      setHistoryBusy(false);
+    }
+  };
+
+  const doRollback = async (entry: HistoryEntry) => {
+    if (!window.confirm("Bu sürüme geri dönülecek. Onaylıyor musunuz?")) return;
+    try {
+      await api.rollbackAppConfig(entry.id);
+      flash("ok", "Geri alındı ✓");
+      setHistoryOpen(false);
+      await load();
+    } catch (e) {
+      flash("err", e instanceof Error ? e.message : "Geri alma başarısız");
+    }
   };
 
   const saveAll = async () => {
@@ -143,12 +189,20 @@ export default function ApkTasarimPage() {
             Mobil uygulamanın renkleri, tipografi ve markası — canlı önizleme ile.
           </p>
         </div>
-        <button
-          onClick={() => setPreviewOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 transition"
-        >
-          📱 APK Önizleme
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => void openHistory()}
+            className="px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 text-sm font-medium transition"
+          >
+            🕐 Geçmiş
+          </button>
+          <button
+            onClick={() => setPreviewOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 transition"
+          >
+            📱 APK Önizleme
+          </button>
+        </div>
       </div>
 
       {/* Toast */}
@@ -286,6 +340,65 @@ export default function ApkTasarimPage() {
       </div>
 
       <ApkPreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} />
+
+      {/* History modal — last 30 theme+branding audit entries with rollback */}
+      {historyOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={() => setHistoryOpen(false)}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[80vh] overflow-hidden rounded-2xl bg-slate-900 border border-white/10 shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-5 border-b border-white/10">
+              <div>
+                <h3 className="text-base font-bold text-white">🕐 Değişiklik Geçmişi</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Tema ve marka için son 30 değişiklik</p>
+              </div>
+              <button
+                onClick={() => setHistoryOpen(false)}
+                className="text-slate-400 hover:text-white text-xl leading-none px-2"
+                aria-label="Kapat"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-2">
+              {historyBusy ? (
+                <div className="p-8 text-center text-sm text-slate-400">Yükleniyor…</div>
+              ) : historyEntries.length === 0 ? (
+                <div className="p-8 text-center text-sm text-slate-400">Geçmiş kaydı yok</div>
+              ) : (
+                <ul className="divide-y divide-white/5">
+                  {historyEntries.map((h) => {
+                    const canRollback = !!(h.payload && (h.payload["before"] || h.payload["snapshot"]));
+                    return (
+                      <li key={h.id} className="flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-white/5 rounded-lg">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-mono text-emerald-300 truncate">{h.action}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {new Date(h.createdAt).toLocaleString("tr-TR")} ·{" "}
+                            {h.actorEmail ?? h.adminUserId ?? "—"}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => void doRollback(h)}
+                          disabled={!canRollback}
+                          className="shrink-0 px-3 py-1.5 rounded-md bg-amber-500/20 border border-amber-400/30 text-amber-200 text-xs font-semibold hover:bg-amber-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                          title={canRollback ? "Bu sürüme geri dön" : "Snapshot yok — geri alınamaz"}
+                        >
+                          ↺ Geri Al
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

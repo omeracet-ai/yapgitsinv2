@@ -920,6 +920,17 @@ export class AdminController {
     return this.adminService.getAnalyticsOverview();
   }
 
+  // ── Phase 268 — Realtime Analytics ────────────────────────────────────────
+  @Get('realtime/online')
+  getRealtimeOnline() {
+    return this.adminService.getRealtimeOnline();
+  }
+
+  @Get('realtime/sessions')
+  getRealtimeSessions(@Query('days') days?: string) {
+    return this.adminService.getRealtimeSessions(Number(days) || 7);
+  }
+
   // ── Harita Yönetimi — Koordinat güncelleme ────────────────────────────────
   @Patch('jobs/:id/location')
   async setJobLocation(

@@ -19,6 +19,7 @@ import { SystemSettingsService } from '../system-settings/system-settings.servic
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
 import { detectContact, maskContact } from '../../common/contact-filter';
+import { RealtimeService } from '../realtime/realtime.service';
 
 export const CONTACT_BLOCK_SETTING_KEY = 'contact_sharing_block_enabled';
 
@@ -70,6 +71,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private userBlocksService: UserBlocksService,
     private systemSettings: SystemSettingsService,
     private notificationsService: NotificationsService,
+    private realtime: RealtimeService,
   ) {}
 
   private extractUserId(client: Socket): string | null {
@@ -83,6 +85,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const userId = this.extractUserId(client);
     if (!userId) return;
     this.socketUser.set(client.id, userId);
+    // Phase 268 — feed admin Realtime Analytics tracker.
+    this.realtime.add(userId, client.id);
     let set = this.userSockets.get(userId);
     if (!set) {
       set = new Set();
@@ -101,6 +105,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const userId = this.socketUser.get(client.id);
     if (!userId) return;
     this.socketUser.delete(client.id);
+    // Phase 268 — admin realtime tracker.
+    this.realtime.remove(client.id);
     const set = this.userSockets.get(userId);
     if (!set) return;
     set.delete(client.id);

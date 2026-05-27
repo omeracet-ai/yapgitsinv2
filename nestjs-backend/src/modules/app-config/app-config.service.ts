@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
+import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
 import { AppSetting } from './entities/app-setting.entity';
 import { AppTheme } from './entities/app-theme.entity';
 import { AppBranding } from './entities/app-branding.entity';
@@ -51,7 +52,134 @@ export class AppConfigService {
     private readonly layoutRepo: Repository<AppLayout>,
     @InjectRepository(AppVisibilityRule)
     private readonly visibilityRepo: Repository<AppVisibilityRule>,
+    @InjectRepository(AdminAuditLog)
+    private readonly auditRepo: Repository<AdminAuditLog>,
   ) {}
+
+  // ── Version History / Rollback ──────────────────────────────
+  /**
+   * Return recent admin-audit-log rows for app-config changes of a given
+   * entityType ("theme" | "branding" | "setting" | "layout" | "visibility").
+   * Optionally narrows by entityId (matched against targetId).
+   */
+  async getHistory(
+    entityType: string,
+    entityId?: string,
+    limit = 20,
+  ): Promise<AdminAuditLog[]> {
+    const qb = this.auditRepo
+      .createQueryBuilder('log')
+      .where('log.action LIKE :prefix', { prefix: `app-config.${entityType}.%` })
+      .orderBy('log.createdAt', 'DESC')
+      .take(Math.max(1, Math.min(100, limit)));
+    if (entityId) {
+      qb.andWhere('log.targetId = :tid', { tid: entityId });
+    }
+    return qb.getMany();
+  }
+
+  /**
+   * Rollback an entity to the state captured in an earlier audit log entry.
+   * Reads payload.before (preferred) or payload.snapshot, applies it back to
+   * the target entity, and records a new audit row of action
+   * `app-config.<type>.rollback`.
+   * Returns the updated entity (shape varies by entityType).
+   */
+  async rollback(
+    auditLogId: string,
+    adminId: string,
+  ): Promise<{ entityType: string; restored: unknown }> {
+    const log = await this.auditRepo.findOne({ where: { id: auditLogId } });
+    if (!log) throw new NotFoundException('Audit log entry not found');
+    if (!log.action.startsWith('app-config.')) {
+      throw new BadRequestException('Not an app-config audit entry');
+    }
+    const parts = log.action.split('.');
+    const entityType = parts[1]; // theme | branding | setting | layout | visibility
+    const payload = (log.payload ?? {}) as Record<string, unknown>;
+    const before = (payload['before'] ?? payload['snapshot']) as
+      | Record<string, unknown>
+      | undefined;
+    if (!before || typeof before !== 'object') {
+      throw new BadRequestException(
+        'No "before" snapshot in audit payload — rollback not possible',
+      );
+    }
+    const targetId = log.targetId ?? null;
+    let restored: unknown;
+
+    switch (entityType) {
+      case 'theme': {
+        if (!targetId) throw new BadRequestException('Missing theme id');
+        const existing = await this.themeRepo.findOne({ where: { id: targetId } });
+        if (!existing) throw new NotFoundException('Theme not found');
+        if (typeof before['tokens'] === 'object') {
+          existing.tokens = JSON.stringify(before['tokens']);
+        } else if (typeof before['tokens'] === 'string') {
+          existing.tokens = before['tokens'] as string;
+        }
+        if (typeof before['isActive'] === 'boolean') {
+          existing.isActive = before['isActive'] as boolean;
+        }
+        restored = await this.themeRepo.save(existing);
+        break;
+      }
+      case 'branding': {
+        let existing = await this.brandingRepo.findOne({ where: { id: 'default' } });
+        if (!existing) existing = this.brandingRepo.create({ id: 'default' });
+        for (const k of ['logoUrl', 'iconUrl', 'splashUrl', 'appTitle'] as const) {
+          if (k in before) {
+            (existing as unknown as Record<string, unknown>)[k] = before[k] ?? null;
+          }
+        }
+        restored = await this.brandingRepo.save(existing);
+        break;
+      }
+      case 'setting': {
+        if (!targetId) throw new BadRequestException('Missing setting key');
+        const value = before['value'];
+        const type = (before['type'] as string) ?? 'string';
+        const group = (before['group'] as string) ?? 'general';
+        restored = await this.upsertSetting(
+          {
+            key: targetId,
+            value: typeof value === 'string' ? value : JSON.stringify(value),
+            type,
+            group,
+          },
+          adminId,
+        );
+        break;
+      }
+      case 'visibility': {
+        if (!targetId) throw new BadRequestException('Missing moduleKey');
+        restored = await this.upsertVisibility(targetId, {
+          active: before['active'] as boolean | undefined,
+          roles: before['roles'] as string[] | null | undefined,
+          devices: before['devices'] as string[] | null | undefined,
+          activeFrom: before['activeFrom'] as string | null | undefined,
+          activeUntil: before['activeUntil'] as string | null | undefined,
+        });
+        break;
+      }
+      default:
+        throw new BadRequestException(
+          `Rollback for entity type "${entityType}" not supported`,
+        );
+    }
+
+    // Record the rollback action with a back-reference to the source log.
+    const rollbackLog = this.auditRepo.create({
+      adminUserId: adminId || null,
+      action: `app-config.${entityType}.rollback`,
+      targetType: log.targetType,
+      targetId: log.targetId,
+      payload: { sourceAuditLogId: log.id, restoredFrom: log.createdAt },
+    });
+    await this.auditRepo.save(rollbackLog);
+
+    return { entityType, restored };
+  }
 
   private parseSettingValue(s: AppSetting): unknown {
     switch (s.type) {
