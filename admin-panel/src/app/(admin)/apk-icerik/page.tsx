@@ -1,21 +1,28 @@
 "use client";
 
 /**
- * /apk-icerik — App content control: settings, layouts, visibility rules, popups.
- * Settings: search + sort + pagination + CSV export.
- * Layout: 8 screen presets + structured props editor (type/icon/label/color).
- * Visibility: 4-col row layout with inline save.
- * Popups & Menus: dedicated screen=popup curator.
+ * /apk-icerik — APK Yönetim Merkezi (Phase 277 consolidation).
+ *
+ * Single hub with 9 tabs (URL ?tab=xxx persisted):
+ *   pages · settings · layout · visibility · popups · theme · branding · profile-card · backup
+ *
+ * All new tabs follow the profile-card pattern: 2-col grid (left list w/ toggle+edit,
+ * right live preview). Theme & Branding were lifted from /apk-tasarim (Phase 275),
+ * Profile-Card from /profile-card (Phase 272), Backup from /backup (Phase 272).
+ * Old routes /apk-tasarim, /profile-card, /backup redirect here.
  */
 
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   api,
   type AdminAppConfig,
+  type AppConfigBranding,
   type AppConfigLayout,
   type AppConfigLayoutItem,
   type AppConfigSetting,
+  type AppConfigThemeTokens,
   type AppConfigVisibilityRule,
   type AppScreen,
 } from "@/lib/api";
@@ -52,7 +59,29 @@ function nextIcerikDndId(): string {
   return `il-${_icerikDndCounter}-${Date.now().toString(36)}`;
 }
 
-type Tab = "settings" | "layout" | "visibility" | "popups" | "pages";
+type Tab =
+  | "pages"
+  | "settings"
+  | "layout"
+  | "visibility"
+  | "popups"
+  | "theme"
+  | "branding"
+  | "profile-card"
+  | "backup";
+
+const VALID_TABS: Tab[] = [
+  "pages",
+  "settings",
+  "layout",
+  "visibility",
+  "popups",
+  "theme",
+  "branding",
+  "profile-card",
+  "backup",
+];
+
 type SettingType = "string" | "number" | "boolean" | "json";
 
 const SCREENS = [
@@ -117,7 +146,6 @@ function SettingsTab({
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   useEffect(() => {
-    // reset page if filter shrinks list
     if (page > totalPages) {
       const id = setTimeout(() => setPage(1), 0);
       return () => clearTimeout(id);
@@ -311,7 +339,6 @@ const SortableLayoutRow = memo(function SortableLayoutRow({
         </label>
         <button onClick={onRemove} className="text-xs text-red-300 hover:text-red-100 px-2 py-1 rounded bg-red-500/10">sil</button>
       </div>
-      {/* Structured props editor */}
       <div className="grid grid-cols-12 gap-2 pl-7">
         <select value={String(props.type ?? "")} onChange={(e) => setProp("type", e.target.value)}
           className="col-span-2 bg-white/5 border border-white/10 rounded-md px-2 py-1 text-xs text-white outline-none">
@@ -570,7 +597,6 @@ function PopupsTab({
   onChanged: () => Promise<void>;
   flash: (k: "ok" | "err", t: string) => void;
 }) {
-  // Reuse "popup" + "menu_items" + "popup_titles" screens. Show two stacked editors.
   const popupItems = (layouts.find((l) => l.screen === "popup_titles")?.items ?? []);
   const menuItems = (layouts.find((l) => l.screen === "menu_items")?.items ?? []);
   const [popups, setPopups] = useState<AppConfigLayoutItem[]>(popupItems);
@@ -773,58 +799,6 @@ function ScreenEditModal({
   );
 }
 
-function ScreenCard({
-  screen, onToggle, onEdit, onDelete,
-}: {
-  screen: AppScreen;
-  onToggle: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div className={`relative p-4 rounded-xl border transition ${
-      screen.visible
-        ? "bg-white/5 border-white/10 hover:border-emerald-400/40"
-        : "bg-red-500/5 border-red-400/20 opacity-70"
-    }`}>
-      <div className="flex items-start justify-between mb-2">
-        <div className="text-3xl select-none">
-          <span className="material-symbols-outlined" style={{ fontSize: 32 }}>
-            {screen.iconName || "widgets"}
-          </span>
-        </div>
-        <button onClick={onToggle}
-          className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-            screen.visible
-              ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-200"
-              : "bg-red-500/20 border-red-400/40 text-red-200"
-          }`}>
-          {screen.visible ? "AKTİF" : "PASİF"}
-        </button>
-      </div>
-      <div className="text-sm font-semibold text-white mb-1 truncate" title={screen.name}>
-        {screen.name}
-      </div>
-      <div className="font-mono text-[10px] text-slate-500 mb-2 truncate">{screen.key}</div>
-      {screen.category && (
-        <div className="inline-block px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[9px] uppercase text-slate-400 mb-2">
-          {screen.category}
-        </div>
-      )}
-      <div className="flex items-center gap-1 mt-2">
-        <button onClick={onEdit}
-          className="flex-1 px-2 py-1 rounded-md bg-white/5 hover:bg-white/15 border border-white/10 text-slate-200 text-xs font-semibold">
-          ✏️ Düzenle
-        </button>
-        <button onClick={onDelete}
-          className="px-2 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-400/20 text-red-200 text-xs">
-          🗑️
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function PagesTab({ flash }: { flash: (k: "ok" | "err", t: string) => void }) {
   const [screens, setScreens] = useState<AppScreen[]>([]);
   const [loading, setLoading] = useState(true);
@@ -932,12 +906,10 @@ function PagesTab({ flash }: { flash: (k: "ok" | "err", t: string) => void }) {
         <div className="py-12 text-center text-slate-500 text-xs">Sayfa bulunamadı</div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left: 2/3 list — profile-card style row layout */}
           <div className="lg:col-span-2 space-y-2 max-h-[70vh] overflow-y-auto pr-1">
             {filtered.map((s) => (
               <div key={s.key}
                 className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 hover:bg-white/10 transition">
-                {/* Toggle */}
                 <label className="inline-flex items-center cursor-pointer shrink-0">
                   <input type="checkbox" className="sr-only peer" checked={s.visible}
                     onChange={() => void toggleVisible(s)} />
@@ -946,14 +918,12 @@ function PagesTab({ flash }: { flash: (k: "ok" | "err", t: string) => void }) {
                   </div>
                 </label>
 
-                {/* Icon */}
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined text-emerald-300 text-lg" aria-hidden>
                     {s.iconName ?? "widgets"}
                   </span>
                 </div>
 
-                {/* Name + key/category */}
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-white truncate">{s.name}</div>
                   <div className="text-[11px] text-slate-400 font-mono truncate">
@@ -961,23 +931,29 @@ function PagesTab({ flash }: { flash: (k: "ok" | "err", t: string) => void }) {
                   </div>
                 </div>
 
-                {/* Sort order */}
                 <div className="text-[10px] text-slate-500 font-mono w-8 text-right">#{s.sortOrder}</div>
 
-                {/* Actions */}
                 <button onClick={() => { setEditing(s); setAdding(false); }}
-                  className="text-xs px-2 py-1 rounded bg-white/5 hover:bg-white/15 border border-white/10 text-slate-300">
+                  className="text-xs px-2 py-1 rounded bg-white/5 hover:bg-white/15 border border-white/10 text-slate-300"
+                  title="Düzenle">
                   ✏️
                 </button>
+                <a
+                  href={`#flutter-route-${s.key}`}
+                  onClick={(e) => { e.preventDefault(); flash("ok", `→ Flutter rotası: /${s.key}`); }}
+                  className="text-xs px-2 py-1 rounded bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-200"
+                  title="Flutter ekran rotasını aç (deep-link mock)">
+                  →
+                </a>
                 <button onClick={() => void onDelete(s)}
-                  className="text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300">
+                  className="text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300"
+                  title="Sil">
                   🗑️
                 </button>
               </div>
             ))}
           </div>
 
-          {/* Right: 1/3 preview — mobile mockup with active screens as menu items */}
           <div className="lg:col-span-1">
             <div className="sticky top-2">
               <div className="bg-slate-900 border border-white/10 rounded-2xl p-4">
@@ -1018,10 +994,790 @@ function PagesTab({ flash }: { flash: (k: "ok" | "err", t: string) => void }) {
   );
 }
 
-// ─── Page shell ───────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Phase 277 — Consolidated tabs: Theme / Branding / Profile-Card / Backup
+// ═══════════════════════════════════════════════════════════════════════════
+
+const DEFAULT_THEME_TOKENS: AppConfigThemeTokens = {
+  primary: "#FF5A1F",
+  surface: "#FFFFFF",
+  text: "#1F2937",
+  textMuted: "#64748B",
+  radius: 16,
+  font: "Inter",
+  fontWeights: "400,500,600,700" as unknown as string,
+  fontSizeXs: 12,
+  fontSizeSm: 14,
+  fontSizeMd: 16,
+  fontSizeLg: 20,
+  fontSizeXl: 24,
+  fontSize2xl: 32,
+  letterSpacing: 0,
+  gradientPrimaryStart: "#FF5A1F",
+  gradientPrimaryEnd: "#FFB400",
+  gradientHeroStart: "#2D3E50",
+  gradientHeroEnd: "#FF5A1F",
+  radiusSm: 8,
+  radiusMd: 12,
+  radiusLg: 20,
+  radiusXl: 28,
+  spacingSm: 8,
+  spacingMd: 12,
+  spacingLg: 20,
+  motionFast: 150,
+  motionNormal: 250,
+  motionSlow: 400,
+  motionCurve: "easeOut" as unknown as string,
+  mode: "light" as unknown as string,
+  darkPrimary: "#FF7A3F",
+  darkSurface: "#0F172A",
+  darkText: "#F1F5F9",
+  darkTextMuted: "#94A3B8",
+};
+
+const DEFAULT_BRANDING: AppConfigBranding = {
+  appTitle: "Yapgitsin",
+  logoUrl: "",
+  iconUrl: "",
+  splashUrl: "",
+};
+
+// ─── Theme tab — profile-card pattern (row-list + live preview) ──────────
+
+type ThemeRow =
+  | { kind: "color"; key: keyof AppConfigThemeTokens; label: string; section: string }
+  | { kind: "num"; key: keyof AppConfigThemeTokens; label: string; section: string; min?: number; max?: number; suffix?: string }
+  | { kind: "font"; key: keyof AppConfigThemeTokens; label: string; section: string }
+  | { kind: "mode"; key: keyof AppConfigThemeTokens; label: string; section: string }
+  | { kind: "curve"; key: keyof AppConfigThemeTokens; label: string; section: string };
+
+const FONT_OPTIONS = ["Inter", "Roboto", "Poppins", "Playfair Display", "Manrope", "SF Pro", "System"];
+const CURVE_OPTIONS = ["linear", "easeIn", "easeOut", "easeInOut", "spring"];
+
+const THEME_ROWS: ThemeRow[] = [
+  { kind: "mode", key: "mode", label: "Mode (light/dark)", section: "Mode" },
+  { kind: "color", key: "primary", label: "Primary", section: "Colors" },
+  { kind: "color", key: "surface", label: "Surface", section: "Colors" },
+  { kind: "color", key: "text", label: "Text", section: "Colors" },
+  { kind: "color", key: "textMuted", label: "Text Muted", section: "Colors" },
+  { kind: "color", key: "gradientPrimaryStart", label: "Gradient Primary Start", section: "Colors" },
+  { kind: "color", key: "gradientPrimaryEnd", label: "Gradient Primary End", section: "Colors" },
+  { kind: "color", key: "gradientHeroStart", label: "Gradient Hero Start", section: "Colors" },
+  { kind: "color", key: "gradientHeroEnd", label: "Gradient Hero End", section: "Colors" },
+  { kind: "color", key: "darkPrimary", label: "Dark Primary", section: "Dark Mode" },
+  { kind: "color", key: "darkSurface", label: "Dark Surface", section: "Dark Mode" },
+  { kind: "color", key: "darkText", label: "Dark Text", section: "Dark Mode" },
+  { kind: "color", key: "darkTextMuted", label: "Dark Text Muted", section: "Dark Mode" },
+  { kind: "font", key: "font", label: "Font Family", section: "Typography" },
+  { kind: "num", key: "fontSizeXs", label: "Font Size XS", section: "Typography", min: 8, max: 24, suffix: "px" },
+  { kind: "num", key: "fontSizeSm", label: "Font Size SM", section: "Typography", min: 8, max: 24, suffix: "px" },
+  { kind: "num", key: "fontSizeMd", label: "Font Size MD", section: "Typography", min: 10, max: 32, suffix: "px" },
+  { kind: "num", key: "fontSizeLg", label: "Font Size LG", section: "Typography", min: 12, max: 40, suffix: "px" },
+  { kind: "num", key: "fontSizeXl", label: "Font Size XL", section: "Typography", min: 14, max: 48, suffix: "px" },
+  { kind: "num", key: "fontSize2xl", label: "Font Size 2XL", section: "Typography", min: 16, max: 64, suffix: "px" },
+  { kind: "num", key: "letterSpacing", label: "Letter Spacing", section: "Typography", min: -2, max: 10, suffix: "px" },
+  { kind: "num", key: "radius", label: "Default Radius", section: "Shape", min: 0, max: 48, suffix: "px" },
+  { kind: "num", key: "radiusSm", label: "Radius SM", section: "Shape", min: 0, max: 32, suffix: "px" },
+  { kind: "num", key: "radiusMd", label: "Radius MD", section: "Shape", min: 0, max: 32, suffix: "px" },
+  { kind: "num", key: "radiusLg", label: "Radius LG", section: "Shape", min: 0, max: 32, suffix: "px" },
+  { kind: "num", key: "radiusXl", label: "Radius XL", section: "Shape", min: 0, max: 48, suffix: "px" },
+  { kind: "num", key: "spacingSm", label: "Spacing SM", section: "Shape", min: 2, max: 48, suffix: "px" },
+  { kind: "num", key: "spacingMd", label: "Spacing MD", section: "Shape", min: 2, max: 48, suffix: "px" },
+  { kind: "num", key: "spacingLg", label: "Spacing LG", section: "Shape", min: 2, max: 64, suffix: "px" },
+  { kind: "num", key: "motionFast", label: "Motion Fast", section: "Motion", min: 0, max: 1000, suffix: "ms" },
+  { kind: "num", key: "motionNormal", label: "Motion Normal", section: "Motion", min: 0, max: 1500, suffix: "ms" },
+  { kind: "num", key: "motionSlow", label: "Motion Slow", section: "Motion", min: 0, max: 2000, suffix: "ms" },
+  { kind: "curve", key: "motionCurve", label: "Motion Curve", section: "Motion" },
+];
+
+function ThemeLivePreview({ t }: { t: AppConfigThemeTokens }) {
+  const mode = String(t.mode ?? "light");
+  const isDark = mode === "dark";
+  const surface = isDark ? String(t.darkSurface ?? "#0F172A") : String(t.surface ?? "#FFFFFF");
+  const text = isDark ? String(t.darkText ?? "#F1F5F9") : String(t.text ?? "#1F2937");
+  const muted = isDark ? String(t.darkTextMuted ?? "#94A3B8") : String(t.textMuted ?? "#64748B");
+  const primary = isDark ? String(t.darkPrimary ?? "#FF7A3F") : String(t.primary ?? "#FF5A1F");
+  const r = Number(t.radius ?? 16);
+  const rSm = Number(t.radiusSm ?? 8);
+  const rMd = Number(t.radiusMd ?? 12);
+  const grad = `linear-gradient(135deg, ${String(t.gradientPrimaryStart ?? primary)}, ${String(t.gradientPrimaryEnd ?? "#FFB400")})`;
+  const font = String(t.font ?? "Inter") + ", system-ui, sans-serif";
+  const sizeMd = Number(t.fontSizeMd ?? 16);
+  const sizeLg = Number(t.fontSizeLg ?? 20);
+  const sizeXs = Number(t.fontSizeXs ?? 12);
+  const motion = `${Number(t.motionNormal ?? 250)}ms`;
+  return (
+    <div className="rounded-2xl p-5 border" style={{ background: surface, color: text, borderColor: `${text}20`, fontFamily: font, transition: `all ${motion}` }}>
+      <div className="text-[11px] uppercase tracking-wider font-semibold mb-3" style={{ color: muted }}>Canlı Önizleme ({mode})</div>
+      <h3 className="font-bold mb-1" style={{ fontSize: sizeLg, color: text }}>Başlık (heading)</h3>
+      <p className="mb-4" style={{ fontSize: sizeMd, color: muted }}>Gövde metni Lorem ipsum dolor sit amet.</p>
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <button style={{ background: grad, color: "#fff", borderRadius: r, padding: "8px 14px", fontSize: sizeMd, fontWeight: 700, transition: `all ${motion}` }}>Primary</button>
+        <button style={{ background: "transparent", color: primary, borderRadius: r, padding: "8px 14px", fontSize: sizeMd, fontWeight: 600, border: `2px solid ${primary}` }}>Secondary</button>
+        <span style={{ background: `${primary}15`, color: primary, borderRadius: rSm, padding: "3px 8px", fontSize: sizeXs, fontWeight: 700 }}>✓ Doğrulanmış</span>
+        <span style={{ background: `${text}10`, color: text, borderRadius: 999, padding: "3px 10px", fontSize: sizeXs }}>chip</span>
+      </div>
+      <div className="p-3 mb-2" style={{ background: `${primary}08`, border: `1px solid ${primary}30`, borderRadius: rMd }}>
+        <div className="text-xs font-bold" style={{ color: primary }}>Glass card</div>
+        <div className="text-[11px] mt-0.5" style={{ color: muted }}>Marka renginden türetilmiş kart yüzeyi</div>
+      </div>
+      <div className="p-3" style={{ background: surface, border: `1px solid ${text}15`, borderRadius: rMd, fontSize: sizeXs, color: muted }}>
+        caption — küçük metin
+      </div>
+    </div>
+  );
+}
+
+function ThemeTab({ flash }: { flash: (k: "ok" | "err", t: string) => void }) {
+  const [tokens, setTokens] = useState<AppConfigThemeTokens>(DEFAULT_THEME_TOKENS);
+  const [activeThemeId, setActiveThemeId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [section, setSection] = useState<string>("Colors");
+
+  const load = useCallback(async () => {
+    try {
+      const data = await api.getAdminAppConfig();
+      const active = data.themes?.find((t) => t.isActive) ?? data.themes?.[0];
+      if (active) {
+        setActiveThemeId(active.id);
+        setTokens({ ...DEFAULT_THEME_TOKENS, ...active.tokens });
+      }
+    } catch { /* defaults */ }
+  }, []);
+
+  useEffect(() => { const id = setTimeout(() => { void load(); }, 0); return () => clearTimeout(id); }, [load]);
+
+  const setToken = (k: keyof AppConfigThemeTokens, v: string | number) =>
+    setTokens((p) => ({ ...p, [k]: v }));
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      if (activeThemeId) await api.patchTheme(activeThemeId, { tokens });
+      else {
+        const created = await api.postTheme({ name: "Default", tokens, isActive: true });
+        setActiveThemeId(created.id);
+      }
+      flash("ok", "Tema kaydedildi ✓");
+    } catch (e) { flash("err", e instanceof Error ? e.message : "Hata"); }
+    finally { setSaving(false); }
+  };
+
+  const sections = useMemo(() => Array.from(new Set(THEME_ROWS.map((r) => r.section))), []);
+  const visibleRows = useMemo(() => THEME_ROWS.filter((r) => r.section === section), [section]);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Left: 2 cols — row list */}
+      <div className="lg:col-span-2 space-y-4">
+        <GlassCard>
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <h3 className="text-sm font-bold text-white">🎨 Tema Tokenları</h3>
+            <button onClick={() => void save()} disabled={saving}
+              className="rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold px-4 py-1.5 transition-colors">
+              {saving ? "Kaydediliyor…" : "💾 Kaydet"}
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-1 mb-3">
+            {sections.map((s) => (
+              <button key={s} onClick={() => setSection(s)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${section === s ? "bg-emerald-500 text-white" : "bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10"}`}>
+                {s}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-2 max-h-[65vh] overflow-y-auto pr-1">
+            {visibleRows.map((row) => {
+              const value = tokens[row.key];
+              return (
+                <div key={String(row.key)}
+                  className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-white truncate">{row.label}</div>
+                    <div className="text-[10px] text-slate-500 font-mono truncate">{String(row.key)}</div>
+                  </div>
+
+                  {row.kind === "color" && (
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={String(value ?? "#000000")}
+                        onChange={(e) => setToken(row.key, e.target.value)}
+                        className="w-8 h-8 rounded cursor-pointer bg-transparent border-0" />
+                      <input type="text" value={String(value ?? "")}
+                        onChange={(e) => setToken(row.key, e.target.value)}
+                        className="w-24 bg-white/5 border border-white/10 rounded px-2 py-1 text-xs font-mono text-white outline-none focus:border-emerald-400/40" />
+                    </div>
+                  )}
+                  {row.kind === "num" && (
+                    <input type="number" value={Number(value ?? 0)} min={row.min} max={row.max}
+                      onChange={(e) => setToken(row.key, Number(e.target.value))}
+                      className="w-24 bg-white/5 border border-white/10 rounded px-2 py-1 text-xs font-mono text-white outline-none focus:border-emerald-400/40" />
+                  )}
+                  {row.kind === "font" && (
+                    <select value={String(value ?? "Inter")}
+                      onChange={(e) => setToken(row.key, e.target.value)}
+                      className="w-40 bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white outline-none">
+                      {FONT_OPTIONS.map((f) => <option key={f} value={f} className="bg-slate-900">{f}</option>)}
+                    </select>
+                  )}
+                  {row.kind === "mode" && (
+                    <div className="flex gap-1">
+                      {(["light", "dark"] as const).map((m) => (
+                        <button key={m} onClick={() => setToken(row.key, m)}
+                          className={`px-3 py-1 rounded text-[10px] font-bold uppercase transition ${String(value ?? "light") === m ? "bg-emerald-500 text-white" : "bg-white/5 text-slate-300 border border-white/10"}`}>
+                          {m === "light" ? "☀️" : "🌙"} {m}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {row.kind === "curve" && (
+                    <select value={String(value ?? "easeOut")}
+                      onChange={(e) => setToken(row.key, e.target.value)}
+                      className="w-32 bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white outline-none">
+                      {CURVE_OPTIONS.map((c) => <option key={c} value={c} className="bg-slate-900">{c}</option>)}
+                    </select>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* Right: preview */}
+      <div className="space-y-4">
+        <GlassCard>
+          <h3 className="text-sm font-bold text-white mb-3">Live Preview</h3>
+          <ThemeLivePreview t={tokens} />
+        </GlassCard>
+      </div>
+    </div>
+  );
+}
+
+// ─── Branding tab ────────────────────────────────────────────────────────
+
+type BrandingField = {
+  key: keyof AppConfigBranding;
+  label: string;
+  kind: "text" | "logo" | "icon" | "splash";
+};
+
+const BRANDING_FIELDS: BrandingField[] = [
+  { key: "appTitle", label: "Uygulama Adı", kind: "text" },
+  { key: "logoUrl", label: "Logo URL", kind: "logo" },
+  { key: "iconUrl", label: "Icon URL", kind: "icon" },
+  { key: "splashUrl", label: "Splash URL", kind: "splash" },
+];
+
+function BrandingTab({ flash }: { flash: (k: "ok" | "err", t: string) => void }) {
+  const [branding, setBranding] = useState<AppConfigBranding>(DEFAULT_BRANDING);
+  const [saving, setSaving] = useState(false);
+  const [uploads, setUploads] = useState<Record<string, boolean>>({});
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const load = useCallback(async () => {
+    try {
+      const data = await api.getAdminAppConfig();
+      if (data.branding) setBranding({ ...DEFAULT_BRANDING, ...data.branding });
+    } catch { /* defaults */ }
+  }, []);
+
+  useEffect(() => { const id = setTimeout(() => { void load(); }, 0); return () => clearTimeout(id); }, [load]);
+
+  const set = (k: keyof AppConfigBranding, v: string) => setBranding((p) => ({ ...p, [k]: v }));
+
+  const save = async () => {
+    setSaving(true);
+    try { await api.patchBranding(branding); flash("ok", "Markalama kaydedildi ✓"); }
+    catch (e) { flash("err", e instanceof Error ? e.message : "Hata"); }
+    finally { setSaving(false); }
+  };
+
+  const handleFile = async (kind: "logo" | "icon" | "splash", fieldKey: keyof AppConfigBranding, file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { flash("err", "Sadece resim dosyası"); return; }
+    if (file.size > 5 * 1024 * 1024) { flash("err", "Dosya 5MB'tan büyük"); return; }
+    setUploads((p) => ({ ...p, [kind]: true }));
+    try {
+      const out = await api.uploadBranding(file, kind);
+      set(fieldKey, out.url);
+      flash("ok", `${kind} yüklendi ✓`);
+    } catch (e) { flash("err", e instanceof Error ? e.message : "Yükleme başarısız"); }
+    finally {
+      setUploads((p) => ({ ...p, [kind]: false }));
+      const ref = inputRefs.current[kind];
+      if (ref) ref.value = "";
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Left: row list */}
+      <div className="lg:col-span-2 space-y-4">
+        <GlassCard>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-white">🏷️ Marka Alanları</h3>
+            <button onClick={() => void save()} disabled={saving}
+              className="rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold px-4 py-1.5">
+              {saving ? "Kaydediliyor…" : "💾 Kaydet"}
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {BRANDING_FIELDS.map((f) => {
+              const value = (branding[f.key] ?? "") as string;
+              const filled = !!value.trim();
+              const isUpload = f.kind !== "text";
+              return (
+                <div key={String(f.key)}
+                  className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5">
+                  {/* Toggle: filled=kullan, empty=varsayılan */}
+                  <label className="inline-flex items-center cursor-pointer shrink-0" title={filled ? "Kullan" : "Varsayılan"}>
+                    <input type="checkbox" className="sr-only peer" checked={filled} readOnly />
+                    <div className={`w-9 h-5 rounded-full relative transition-colors ${filled ? "bg-emerald-500" : "bg-slate-700"}`}>
+                      <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${filled ? "translate-x-4" : ""}`} />
+                    </div>
+                  </label>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-white">{f.label}</div>
+                    <div className="text-[10px] text-slate-500 font-mono">{String(f.key)}</div>
+                  </div>
+
+                  <input type="text" value={value}
+                    onChange={(e) => set(f.key, e.target.value)}
+                    placeholder={f.kind === "text" ? "Uygulama adı…" : "https://…"}
+                    className="flex-1 max-w-xs bg-white/5 border border-white/10 rounded px-2 py-1 text-xs font-mono text-white outline-none focus:border-emerald-400/40" />
+
+                  {isUpload && (
+                    <>
+                      <button type="button"
+                        onClick={() => inputRefs.current[f.kind]?.click()}
+                        disabled={uploads[f.kind]}
+                        className="shrink-0 px-2 py-1 rounded bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 text-xs font-semibold hover:bg-emerald-500/25 disabled:opacity-50">
+                        {uploads[f.kind] ? "…" : "📤"}
+                      </button>
+                      <input
+                        ref={(el) => { inputRefs.current[f.kind] = el; }}
+                        type="file" accept="image/*" className="hidden"
+                        onChange={(e) => void handleFile(f.kind as "logo" | "icon" | "splash", f.key, e.target.files?.[0] ?? null)}
+                      />
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* Right: phone mockup */}
+      <div className="space-y-4">
+        <GlassCard>
+          <h3 className="text-sm font-bold text-white mb-3">📱 Önizleme</h3>
+          <div className="bg-slate-950 rounded-3xl border-4 border-slate-800 p-4 max-w-[280px] mx-auto aspect-[9/16] flex flex-col items-center justify-center gap-4">
+            {branding.splashUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={branding.splashUrl} alt="splash" className="absolute inset-0 w-full h-full object-cover rounded-2xl opacity-20" />
+            ) : null}
+            {branding.iconUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={branding.iconUrl} alt="icon" className="w-20 h-20 rounded-2xl shadow-2xl"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-3xl">📱</div>
+            )}
+            {branding.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={branding.logoUrl} alt="logo" className="h-8 object-contain"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            ) : (
+              <div className="text-lg font-bold text-white">{branding.appTitle ?? "Yapgitsin"}</div>
+            )}
+            <div className="text-[10px] text-slate-500">preview</div>
+          </div>
+        </GlassCard>
+      </div>
+    </div>
+  );
+}
+
+// ─── Profile-Card tab (Phase 272 lift) ───────────────────────────────────
+
+const PROFILE_FIELDS = [
+  { key: "averageRating", defaultLabel: "Ortalama Puan", hint: "5 üzerinden yıldız" },
+  { key: "reviewsCount", defaultLabel: "Yorum Sayısı", hint: "totalReviews" },
+  { key: "jobsCount", defaultLabel: "İş Sayısı", hint: "asWorkerTotal / asCustomerTotal" },
+  { key: "completionRate", defaultLabel: "Tamamlama Oranı", hint: "% başarı" },
+  { key: "reputationScore", defaultLabel: "İtibar Puanı", hint: "reputationScore" },
+  { key: "badges", defaultLabel: "Rozetler", hint: "auto + manuel" },
+  { key: "verifiedBadge", defaultLabel: "Doğrulanmış Rozeti", hint: "identityVerified" },
+  { key: "premiumLabel", defaultLabel: "Premium Etiketi", hint: "Premium üyelik" },
+  { key: "workerSkills", defaultLabel: "Yetenekler", hint: "workerSkills tag" },
+  { key: "portfolioPhotos", defaultLabel: "Portfolyo", hint: "Geçmiş işler" },
+];
+
+const PROFILE_SCREEN = "profile_card";
+type ProfileFieldState = Record<string, { visible: boolean; label: string }>;
+
+function defaultProfileState(): ProfileFieldState {
+  const out: ProfileFieldState = {};
+  for (const f of PROFILE_FIELDS) out[f.key] = { visible: true, label: "" };
+  return out;
+}
+
+function ProfileCardTab({ flash }: { flash: (k: "ok" | "err", t: string) => void }) {
+  const [state, setState] = useState<ProfileFieldState>(defaultProfileState);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      const cfg = await api.getAdminAppConfig();
+      const screen = cfg.layouts.find((l) => l.screen === PROFILE_SCREEN);
+      const next = defaultProfileState();
+      if (screen) {
+        for (const it of screen.items) {
+          if (!(it.key in next)) continue;
+          const label = it.props && typeof it.props.label === "string" ? (it.props.label as string) : "";
+          next[it.key] = { visible: it.visible !== false, label };
+        }
+      }
+      setState(next);
+    } catch (e) { flash("err", e instanceof Error ? e.message : "Hata"); }
+    finally { setLoading(false); }
+  }, [flash]);
+
+  useEffect(() => { const id = setTimeout(() => { void load(); }, 0); return () => clearTimeout(id); }, [load]);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const items: AppConfigLayoutItem[] = PROFILE_FIELDS.map((f) => {
+        const s = state[f.key];
+        const props: Record<string, unknown> = {};
+        if (s.label.trim()) props.label = s.label.trim();
+        return { key: f.key, visible: s.visible, props };
+      });
+      await api.putLayout(PROFILE_SCREEN, items);
+      flash("ok", "Profil kartı kaydedildi ✓");
+    } catch (e) { flash("err", e instanceof Error ? e.message : "Hata"); }
+    finally { setSaving(false); }
+  };
+
+  const toggleAll = (visible: boolean) => {
+    setState((p) => {
+      const next: ProfileFieldState = {};
+      for (const k of Object.keys(p)) next[k] = { ...p[k], visible };
+      return next;
+    });
+  };
+
+  const preview = useMemo(() => {
+    const labelFor = (key: string) => {
+      const f = PROFILE_FIELDS.find((x) => x.key === key)!;
+      return state[key]?.label.trim() || f.defaultLabel;
+    };
+    const on = (key: string) => state[key]?.visible !== false;
+    return { labelFor, on };
+  }, [state]);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="lg:col-span-2 space-y-4">
+        <GlassCard>
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <h3 className="text-sm font-bold text-white">👤 Profil Kartı Alanları</h3>
+            <div className="flex gap-2">
+              <button onClick={() => toggleAll(true)} className="rounded-md bg-white/5 hover:bg-white/10 text-white text-xs font-medium px-3 py-1.5">Tümü Aç</button>
+              <button onClick={() => toggleAll(false)} className="rounded-md bg-white/5 hover:bg-white/10 text-white text-xs font-medium px-3 py-1.5">Tümü Kapat</button>
+              <button onClick={() => void save()} disabled={saving || loading}
+                className="rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold px-4 py-1.5">
+                {saving ? "Kaydediliyor…" : "💾 Kaydet"}
+              </button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="text-sm text-slate-400 py-6 text-center">Yükleniyor…</div>
+          ) : (
+            <div className="space-y-2">
+              {PROFILE_FIELDS.map((f) => {
+                const s = state[f.key];
+                return (
+                  <div key={f.key}
+                    className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5">
+                    <label className="inline-flex items-center cursor-pointer shrink-0">
+                      <input type="checkbox" className="sr-only peer" checked={s.visible}
+                        onChange={(e) => setState((p) => ({ ...p, [f.key]: { ...p[f.key], visible: e.target.checked } }))} />
+                      <div className="w-9 h-5 bg-slate-700 peer-checked:bg-emerald-500 rounded-full relative transition-colors">
+                        <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${s.visible ? "translate-x-4" : ""}`} />
+                      </div>
+                    </label>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-white">{f.defaultLabel}</div>
+                      <div className="text-[11px] text-slate-400 font-mono">{f.key} · {f.hint}</div>
+                    </div>
+                    <input type="text" placeholder="(varsayılan)" value={s.label}
+                      onChange={(e) => setState((p) => ({ ...p, [f.key]: { ...p[f.key], label: e.target.value } }))}
+                      className="w-48 bg-white/5 border border-white/10 rounded-md px-2.5 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-emerald-500/50" />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </GlassCard>
+      </div>
+
+      <div className="space-y-4">
+        <GlassCard>
+          <h3 className="text-sm font-bold text-white mb-3">Önizleme</h3>
+          <div className="bg-slate-900 border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">EK</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <div className="text-sm font-bold text-white truncate">Emre Kaya</div>
+                  {preview.on("verifiedBadge") && <span title={preview.labelFor("verifiedBadge")} className="text-blue-400 text-xs">✓</span>}
+                  {preview.on("premiumLabel") && (
+                    <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded px-1.5 py-0.5">{preview.labelFor("premiumLabel")}</span>
+                  )}
+                </div>
+                <div className="text-[11px] text-slate-400">Elektrikçi · İstanbul</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              {preview.on("averageRating") && (
+                <div className="bg-white/5 rounded-lg py-2"><div className="text-sm font-bold text-amber-400">★ 4.8</div><div className="text-[10px] text-slate-400">{preview.labelFor("averageRating")}</div></div>
+              )}
+              {preview.on("reviewsCount") && (
+                <div className="bg-white/5 rounded-lg py-2"><div className="text-sm font-bold text-white">42</div><div className="text-[10px] text-slate-400">{preview.labelFor("reviewsCount")}</div></div>
+              )}
+              {preview.on("jobsCount") && (
+                <div className="bg-white/5 rounded-lg py-2"><div className="text-sm font-bold text-white">128</div><div className="text-[10px] text-slate-400">{preview.labelFor("jobsCount")}</div></div>
+              )}
+              {preview.on("completionRate") && (
+                <div className="bg-white/5 rounded-lg py-2"><div className="text-sm font-bold text-emerald-400">%96</div><div className="text-[10px] text-slate-400">{preview.labelFor("completionRate")}</div></div>
+              )}
+              {preview.on("reputationScore") && (
+                <div className="bg-white/5 rounded-lg py-2"><div className="text-sm font-bold text-orange-400">110</div><div className="text-[10px] text-slate-400">{preview.labelFor("reputationScore")}</div></div>
+              )}
+            </div>
+            {preview.on("badges") && (
+              <div>
+                <div className="text-[10px] text-slate-400 mb-1">{preview.labelFor("badges")}</div>
+                <div className="flex flex-wrap gap-1">
+                  <span className="text-[10px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded-full px-2 py-0.5">Top Rated</span>
+                  <span className="text-[10px] bg-blue-500/15 text-blue-300 border border-blue-500/30 rounded-full px-2 py-0.5">Responsive</span>
+                </div>
+              </div>
+            )}
+            {preview.on("workerSkills") && (
+              <div>
+                <div className="text-[10px] text-slate-400 mb-1">{preview.labelFor("workerSkills")}</div>
+                <div className="flex flex-wrap gap-1">
+                  <span className="text-[10px] bg-white/5 text-slate-300 border border-white/10 rounded-full px-2 py-0.5">Tesisat</span>
+                  <span className="text-[10px] bg-white/5 text-slate-300 border border-white/10 rounded-full px-2 py-0.5">Kaynak</span>
+                </div>
+              </div>
+            )}
+            {preview.on("portfolioPhotos") && (
+              <div>
+                <div className="text-[10px] text-slate-400 mb-1">{preview.labelFor("portfolioPhotos")}</div>
+                <div className="flex gap-1">
+                  <div className="w-12 h-12 bg-slate-700 rounded" />
+                  <div className="w-12 h-12 bg-slate-700 rounded" />
+                  <div className="w-12 h-12 bg-slate-700 rounded" />
+                </div>
+              </div>
+            )}
+          </div>
+        </GlassCard>
+      </div>
+    </div>
+  );
+}
+
+// ─── Backup tab (Phase 272 lift) ─────────────────────────────────────────
+
+interface BackupRow { filename: string; size: number; createdAt: string; }
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+function formatBackupDate(iso: string): string {
+  try { return new Date(iso).toLocaleString("tr-TR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }); }
+  catch { return iso; }
+}
+function todayToken(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+}
+
+function BackupTab({ flash }: { flash: (k: "ok" | "err", t: string) => void }) {
+  const [rows, setRows] = useState<BackupRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<string | null>(null);
+  const [confirmInput, setConfirmInput] = useState("");
+
+  const refresh = useCallback(async () => {
+    try { setLoading(true); setRows(await api.listBackups()); }
+    catch (e) { flash("err", e instanceof Error ? e.message : "Hata"); }
+    finally { setLoading(false); }
+  }, [flash]);
+
+  useEffect(() => { const id = setTimeout(() => { void refresh(); }, 0); return () => clearTimeout(id); }, [refresh]);
+
+  const onCreate = async () => {
+    setBusy("create");
+    try { const out = await api.createBackup(); flash("ok", `Yedek alındı: ${out.filename}`); await refresh(); }
+    catch (e) { flash("err", e instanceof Error ? e.message : "Hata"); }
+    finally { setBusy(null); }
+  };
+  const onDownload = async (filename: string) => {
+    setBusy(`dl-${filename}`);
+    try { await api.downloadBackup(filename); }
+    catch (e) { flash("err", e instanceof Error ? e.message : "Hata"); }
+    finally { setBusy(null); }
+  };
+  const onRestoreConfirm = async () => {
+    if (!restoreTarget) return;
+    setBusy(`restore-${restoreTarget}`);
+    try {
+      const out = await api.restoreBackup(restoreTarget, confirmInput.trim());
+      flash("ok", `Geri yüklendi: ${out.restoredFrom}. ${out.note}`);
+      setRestoreTarget(null); setConfirmInput("");
+      await refresh();
+    } catch (e) { flash("err", e instanceof Error ? e.message : "Hata"); }
+    finally { setBusy(null); }
+  };
+  const onDelete = async (filename: string) => {
+    if (!confirm(`'${filename}' silinsin mi?`)) return;
+    setBusy(`del-${filename}`);
+    try { await api.deleteBackup(filename); flash("ok", "Silindi"); await refresh(); }
+    catch (e) { flash("err", e instanceof Error ? e.message : "Hata"); }
+    finally { setBusy(null); }
+  };
+
+  const last = rows[0];
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Left: backup list (rows) */}
+      <div className="lg:col-span-2 space-y-4">
+        <GlassCard>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-white">💾 Yedek Listesi ({rows.length})</h3>
+            <button onClick={() => void refresh()} className="text-xs px-2.5 py-1.5 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200">↻ Yenile</button>
+          </div>
+          {loading ? (
+            <div className="text-sm text-slate-400 py-6 text-center">Yükleniyor…</div>
+          ) : rows.length === 0 ? (
+            <div className="text-sm text-slate-400 py-6 text-center">Henüz yedek yok. Sağ panelden ilk yedeği al.</div>
+          ) : (
+            <div className="space-y-2 max-h-[65vh] overflow-y-auto pr-1">
+              {rows.map((r) => (
+                <div key={r.filename}
+                  className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-emerald-500/20 border border-white/10 flex items-center justify-center text-lg shrink-0">📦</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-mono text-white truncate">{r.filename}</div>
+                    <div className="text-[10px] text-slate-400">{formatBackupDate(r.createdAt)} · {formatSize(r.size)}</div>
+                  </div>
+                  <button onClick={() => void onDownload(r.filename)} disabled={busy === `dl-${r.filename}`}
+                    className="rounded-md bg-blue-600/80 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-medium px-2.5 py-1.5">İndir</button>
+                  <button onClick={() => { setRestoreTarget(r.filename); setConfirmInput(""); }}
+                    className="rounded-md border border-red-500/60 text-red-200 hover:bg-red-500/15 text-xs font-medium px-2.5 py-1.5">↻ Geri Yükle</button>
+                  <button onClick={() => void onDelete(r.filename)} disabled={busy === `del-${r.filename}`}
+                    className="rounded-md bg-red-600/80 hover:bg-red-500 disabled:opacity-50 text-white text-xs font-medium px-2.5 py-1.5">Sil</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </GlassCard>
+      </div>
+
+      {/* Right: action panel */}
+      <div className="space-y-4">
+        <GlassCard>
+          <h3 className="text-sm font-bold text-white mb-3">Yedek Aksiyon</h3>
+          <button onClick={() => void onCreate()} disabled={busy === "create"}
+            className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-semibold px-4 py-3 mb-3">
+            {busy === "create" ? "Alınıyor…" : "📦 Yedek Al"}
+          </button>
+          {last && (
+            <div className="text-[11px] text-slate-300 bg-white/5 border border-white/10 rounded-lg p-3 mb-3">
+              <div className="font-semibold text-white">Son yedek</div>
+              <div className="font-mono mt-1 truncate">{last.filename}</div>
+              <div className="text-slate-400 mt-1">{formatBackupDate(last.createdAt)} · {formatSize(last.size)}</div>
+            </div>
+          )}
+          <div className="text-[11px] text-blue-100 bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+            🤖 <b>Otomatik:</b> günde 1 yedek (son <b>7</b> tutulur). Geri yükleme öncesi otomatik pre-restore snapshot alınır.
+          </div>
+        </GlassCard>
+      </div>
+
+      {restoreTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm" onClick={() => setRestoreTarget(null)}>
+          <div className="w-full max-w-md rounded-2xl border border-red-500/40 bg-slate-900 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold text-red-200">⚠️ Yedeği Geri Yükle</h3>
+            <p className="mt-2 text-xs text-slate-300">
+              Mevcut DB <code className="text-red-300">{restoreTarget}</code> ile değiştirilecek. Onay için <b>bugünün tarihini</b> yaz (YYYYMMDD): <code className="text-yellow-200">{todayToken()}</code>
+            </p>
+            <input type="text" value={confirmInput} onChange={(e) => setConfirmInput(e.target.value)}
+              placeholder={todayToken()} autoFocus
+              className="mt-3 w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm font-mono text-white focus:border-red-500/50 outline-none" />
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setRestoreTarget(null)} className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-white/10">İptal</button>
+              <button onClick={() => void onRestoreConfirm()}
+                disabled={busy === `restore-${restoreTarget}` || confirmInput.trim() !== todayToken()}
+                className="rounded-md bg-red-600 hover:bg-red-500 disabled:opacity-40 text-white text-xs font-semibold px-4 py-1.5">
+                {busy === `restore-${restoreTarget}` ? "Geri yükleniyor…" : "↻ Geri Yükle"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Page shell
+// ═══════════════════════════════════════════════════════════════════════════
 
 export default function ApkIcerikPage() {
-  const [tab, setTab] = useState<Tab>("settings");
+  const router = useRouter();
+  const params = useSearchParams();
+
+  // URL state: ?tab=xxx
+  const initialTab = useMemo<Tab>(() => {
+    const t = params.get("tab");
+    return t && (VALID_TABS as string[]).includes(t) ? (t as Tab) : "pages";
+  }, [params]);
+  const [tab, setTab] = useState<Tab>(initialTab);
+
+  useEffect(() => {
+    const id = setTimeout(() => { setTab(initialTab); }, 0);
+    return () => clearTimeout(id);
+  }, [initialTab]);
+
+  const switchTab = useCallback((k: Tab) => {
+    setTab(k);
+    // Update URL without polluting history
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", k);
+    router.replace(`${url.pathname}${url.search}`);
+  }, [router]);
+
   const [data, setData] = useState<AdminAppConfig | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -1032,18 +1788,11 @@ export default function ApkIcerikPage() {
   }, []);
 
   const load = useCallback(async () => {
-    try {
-      const d = await api.getAdminAppConfig();
-      setData(d);
-    } catch {
-      setData({ branding: {}, themes: [], settings: [], layouts: [], visibility: [] });
-    }
+    try { setData(await api.getAdminAppConfig()); }
+    catch { setData({ branding: {}, themes: [], settings: [], layouts: [], visibility: [] }); }
   }, []);
 
-  useEffect(() => {
-    const id = setTimeout(() => { void load(); }, 0);
-    return () => clearTimeout(id);
-  }, [load]);
+  useEffect(() => { const id = setTimeout(() => { void load(); }, 0); return () => clearTimeout(id); }, [load]);
 
   const settings = useMemo(() => data?.settings ?? [], [data]);
   const layouts  = useMemo(() => data?.layouts  ?? [], [data]);
@@ -1053,8 +1802,8 @@ export default function ApkIcerikPage() {
     <div className="min-h-full -m-6 p-6 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950/30">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">📦 APK İçerik Kontrol</h1>
-          <p className="text-sm text-slate-400 mt-1">Ayarlar, ekran düzeni, görünürlük, popup ve menü kontrolü</p>
+          <h1 className="text-2xl font-bold text-white">📦 APK Yönetim Merkezi</h1>
+          <p className="text-sm text-slate-400 mt-1">Sayfalar · ayarlar · düzen · görünürlük · popups · tema · markalama · profil kartı · yedek</p>
         </div>
         <button onClick={() => setPreviewOpen(true)}
           className="px-4 py-2.5 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition">
@@ -1068,26 +1817,34 @@ export default function ApkIcerikPage() {
         </div>
       )}
 
-      <div className="flex gap-1 mb-5 p-1 bg-white/5 border border-white/10 rounded-xl backdrop-blur-xl w-fit">
+      <div className="flex flex-wrap gap-1 mb-5 p-1 bg-white/5 border border-white/10 rounded-xl backdrop-blur-xl w-fit">
         {([
-          { k: "settings",   l: "⚙️ Ayarlar" },
-          { k: "layout",     l: "🧩 Layout" },
-          { k: "visibility", l: "👁️ Görünürlük" },
-          { k: "popups",     l: "💬 Popups & Menus" },
-          { k: "pages",      l: "📄 Sayfalar" },
+          { k: "pages",        l: "📄 Sayfalar" },
+          { k: "settings",     l: "⚙️ Ayarlar" },
+          { k: "layout",       l: "🧩 Düzen" },
+          { k: "visibility",   l: "👁️ Görünürlük" },
+          { k: "popups",       l: "💬 Popups & Menus" },
+          { k: "theme",        l: "🎨 Tema" },
+          { k: "branding",     l: "🏷️ Markalama" },
+          { k: "profile-card", l: "👤 Profil Kartı" },
+          { k: "backup",       l: "💾 Yedek" },
         ] as { k: Tab; l: string }[]).map(({ k, l }) => (
-          <button key={k} onClick={() => setTab(k)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${tab === k ? "bg-emerald-500 text-white shadow-md" : "text-slate-300 hover:text-white hover:bg-white/5"}`}>
+          <button key={k} onClick={() => switchTab(k)}
+            className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition ${tab === k ? "bg-emerald-500 text-white shadow-md" : "text-slate-300 hover:text-white hover:bg-white/5"}`}>
             {l}
           </button>
         ))}
       </div>
 
-      {tab === "settings"   && <SettingsTab   rows={settings} onChanged={load} flash={flash} />}
-      {tab === "layout"     && <LayoutTab     layouts={layouts} onChanged={load} flash={flash} />}
-      {tab === "visibility" && <VisibilityTab rules={rules} onChanged={load} flash={flash} />}
-      {tab === "popups"     && <PopupsTab     layouts={layouts} onChanged={load} flash={flash} />}
-      {tab === "pages"      && <PagesTab      flash={flash} />}
+      {tab === "pages"        && <PagesTab        flash={flash} />}
+      {tab === "settings"     && <SettingsTab     rows={settings} onChanged={load} flash={flash} />}
+      {tab === "layout"       && <LayoutTab       layouts={layouts} onChanged={load} flash={flash} />}
+      {tab === "visibility"   && <VisibilityTab   rules={rules} onChanged={load} flash={flash} />}
+      {tab === "popups"       && <PopupsTab       layouts={layouts} onChanged={load} flash={flash} />}
+      {tab === "theme"        && <ThemeTab        flash={flash} />}
+      {tab === "branding"     && <BrandingTab     flash={flash} />}
+      {tab === "profile-card" && <ProfileCardTab  flash={flash} />}
+      {tab === "backup"       && <BackupTab       flash={flash} />}
 
       {previewOpen && <ApkPreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} />}
     </div>
