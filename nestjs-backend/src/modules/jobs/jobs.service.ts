@@ -361,6 +361,11 @@ export class JobsService {
         query.andWhere('job.customerId = :customerId', {
           customerId: filters.customerId,
         });
+      } else {
+        // Phase 279c — Profile-card'tan açılan özel ilanlar (targetWorkerId
+        // set) public listingde GÖRÜNMEZ. Sadece müşteri kendi listesinde
+        // (?customerId=me) ve targetWorker /jobs/my-offers'ta görür.
+        query.andWhere('job.targetWorkerId IS NULL');
       }
       // Phase Two-Sided — request/offer ayrımı
       if (filters?.kind) {
