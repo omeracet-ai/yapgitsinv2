@@ -1,6 +1,7 @@
-// Phase 267 — `_HomeTab` ve yardımcıları artık aktif tab listesinde değil
-// (Yapgitsin / Harita / İşlemlerim / Profil). Kod ileride yeniden açılabilir
-// diye saklanıyor; analyzer warning'leri suppress edildi.
+// Phase 268c — Tab düzeni revert: Yaptır / Yapgitsin / Harita / İşlerim / Profil
+// (Yaptır geri alındı, Harita 3. sırada — kullanıcı talebi 2026-05-27).
+// _HomeTab içindeki bazı yardımcı section'lar şu an reference edilmiyor (dead
+// code) — gelecekteki restoration için saklanıyor; analyzer warning'i suppress.
 // ignore_for_file: unused_element, unused_field, unused_local_variable, prefer_const_declarations
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -67,9 +68,9 @@ class _MainShellState extends ConsumerState<MainShell>
   void _onItemTapped(int index) {
     final authState = ref.read(authStateProvider);
     final isLoggedIn = authState is AuthAuthenticated;
-    // Phase 267 — "Yaptır" sekmesi kaldırıldı, "Harita" eklendi:
-    //   0 Yapgitsin · 1 Harita · 2 İşlemlerim · 3 Profil
-    if (index == 2 && !isLoggedIn) {
+    // Phase 268c — Tab: 0 Yaptır · 1 Yapgitsin · 2 Harita · 3 İşlerim · 4 Profil
+    // "İşlerim" (3) protected — diğerleri herkese açık (Harita dahil).
+    if (index == 3 && !isLoggedIn) {
       context.push('/giris-yap', extra: {'returnTo': '/'});
       return;
     }
@@ -89,8 +90,11 @@ class _MainShellState extends ConsumerState<MainShell>
 
     final selectedIndex = ref.watch(selectedTabProvider);
 
-    // Phase 267 — Tab düzeni: Yapgitsin · Harita · İşlemlerim · Profil
+    // Phase 268c — Tab düzeni: Yaptır · Yapgitsin · Harita · İşlerim · Profil
     final List<Widget> pages = [
+      _HomeTab(onSeeAllRequests: () {
+        ref.read(selectedTabProvider.notifier).state = 1;
+      }),
       const HizmetAlScreen(appBarTitle: 'Yapgitsin'),
       const MapScreen(),
       const MyJobsScreen(showAppBar: true),
@@ -135,6 +139,10 @@ class _MainShellState extends ConsumerState<MainShell>
             unselectedLabelStyle: const TextStyle(fontSize: 11),
             items: const [
               BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home_rounded),
+                  label: 'Yaptır'),
+              BottomNavigationBarItem(
                   icon: Icon(Icons.search_outlined),
                   activeIcon: Icon(Icons.search_rounded),
                   label: 'Yapgitsin'),
@@ -145,7 +153,7 @@ class _MainShellState extends ConsumerState<MainShell>
               BottomNavigationBarItem(
                   icon: Icon(Icons.work_outline_rounded),
                   activeIcon: Icon(Icons.work_rounded),
-                  label: 'İşlemlerim'),
+                  label: 'İşlerim'),
               BottomNavigationBarItem(
                   icon: Icon(Icons.person_outline_rounded),
                   activeIcon: Icon(Icons.person_rounded),

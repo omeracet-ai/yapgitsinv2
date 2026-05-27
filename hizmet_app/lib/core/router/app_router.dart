@@ -148,12 +148,18 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
+      final loc = state.matchedLocation;
+
+      // /splash kendi navigation'ını yönetir — router asla buradan yönlendirme.
+      // Splash'ın 3500ms süresi tamamlanmadan auth resolve etse bile kullanıcı
+      // splash'ta kalır, marka ekranı tam görünür.
+      if (loc == '/splash') return null;
+
       // Auth henüz çözülmediyse splash'ta bırak — flicker'ı önler.
       if (authState is AuthInitial || authState is AuthLoading) {
         return null;
       }
       final isAuthed = authState is AuthAuthenticated;
-      final loc = state.matchedLocation;
 
       // Auth bekleyen kullanıcı protected path'e gittiyse login'e yönlendir,
       // dönüş hedefi query string'de saklanır.

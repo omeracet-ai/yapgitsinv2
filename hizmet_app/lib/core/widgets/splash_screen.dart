@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
+import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/onboarding/data/onboarding_storage.dart';
 
 /// Premium Dark Soft splash — "Y" yeşil rounded + "yapgitsin." lowercase.
@@ -32,7 +34,14 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(milliseconds: 3500));
+    // Phase 268c — minimum splash duration: 3500ms. Auth state'in çözülmesini de
+    // bekle (max +2000ms grace) ki router redirect'i kullanıcıya yansımadan
+    // yönlendirme deterministik olsun.
+    final minDuration = Future.delayed(const Duration(milliseconds: 3500));
+    final authResolved = _waitAuthResolved(
+      timeout: const Duration(milliseconds: 5500),
+    );
+    await Future.wait([minDuration, authResolved]);
     if (!mounted) return;
     final seen = await OnboardingStorage.hasSeenOnboarding();
     if (!mounted) return;
@@ -40,6 +49,16 @@ class _SplashScreenState extends State<SplashScreen>
       context.go('/');
     } else {
       context.go('/hos-geldiniz');
+    }
+  }
+
+  Future<void> _waitAuthResolved({required Duration timeout}) async {
+    final sw = Stopwatch()..start();
+    while (sw.elapsed < timeout) {
+      final s = ProviderScope.containerOf(context, listen: false)
+          .read(authStateProvider);
+      if (s is! AuthInitial && s is! AuthLoading) return;
+      await Future.delayed(const Duration(milliseconds: 50));
     }
   }
 
