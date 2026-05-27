@@ -1575,9 +1575,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                               fontWeight: FontWeight.bold,
                               fontSize: 16)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: hasMyPendingOffer
-                            ? Colors.blue
-                            : AppColors.primary,
+                        // Phase 268d — Teklifi Yenile artık AppColors.primary
+                        // (theme-aware yeşil); önceki sabit Colors.blue dark
+                        // tema ile uyumsuzdu.
+                        backgroundColor: AppColors.primary,
                         minimumSize: const Size(double.infinity, 52),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
