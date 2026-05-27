@@ -520,7 +520,78 @@ export const api = {
   // Public preview snapshot (no auth) — used by ApkPreviewModal live render.
   getAppConfig: () => requestNoAuth<AppConfigPublic>('/app-config'),
   // Admin full state — read-only aggregate of theme/branding/settings/layouts/rules.
-  getAdminAppConfig: () => request<AdminAppConfig>('/admin/app-config'),
+  getAdminAppConfig: async (): Promise<AdminAppConfig> => {
+    // Backend returns getPublicConfig() shape: settings as dict, theme single, branding null|obj.
+    // Admin UI needs array shapes. Normalize at boundary.
+    type RawShape = {
+      settings?: Record<string, unknown>;
+      theme?: Record<string, unknown> | null;
+      branding?: AppConfigBranding | null;
+      layouts?: Array<{
+        screen: string;
+        componentKey?: string;
+        sortOrder?: number;
+        visible?: boolean;
+        props?: Record<string, unknown> | null;
+      }>;
+      visibility?: Array<{
+        moduleKey: string;
+        active?: boolean;
+        roles?: string[];
+        devices?: string[];
+        startsAt?: string | null;
+        endsAt?: string | null;
+      }>;
+    };
+    const raw = await request<RawShape>('/admin/app-config');
+    // settings dict → array
+    const settingsArr: AppConfigSetting[] = Object.entries(raw.settings ?? {}).map(
+      ([key, value]) => ({
+        key,
+        value,
+        type:
+          typeof value === 'boolean'
+            ? 'boolean'
+            : typeof value === 'number'
+              ? 'number'
+              : typeof value === 'object'
+                ? 'json'
+                : 'string',
+      }),
+    );
+    // layouts: backend has componentKey/sortOrder per item, group by screen
+    const layoutMap = new Map<string, AppConfigLayoutItem[]>();
+    for (const l of raw.layouts ?? []) {
+      const arr = layoutMap.get(l.screen) ?? [];
+      arr.push({
+        key: l.componentKey ?? '',
+        visible: l.visible ?? true,
+        props: (l.props ?? {}) as Record<string, unknown>,
+      });
+      layoutMap.set(l.screen, arr);
+    }
+    const layoutsArr: AppConfigLayout[] = Array.from(layoutMap.entries()).map(
+      ([screen, items]) => ({ screen, items }),
+    );
+    // visibility: active → enabled
+    const visibilityArr: AppConfigVisibilityRule[] = (raw.visibility ?? []).map(
+      (v) => ({
+        moduleKey: v.moduleKey,
+        roles: v.roles ?? [],
+        devices: v.devices ?? [],
+        startsAt: v.startsAt ?? null,
+        endsAt: v.endsAt ?? null,
+        enabled: v.active ?? true,
+      }),
+    );
+    return {
+      branding: raw.branding ?? {},
+      themes: [],
+      settings: settingsArr,
+      layouts: layoutsArr,
+      visibility: visibilityArr,
+    };
+  },
   // Settings CRUD (key/value with type+group). value is stringified at the boundary
   // by the backend; clients send the native shape.
   patchSetting: (key: string, value: unknown, opts?: { type?: string; group?: string }) =>
