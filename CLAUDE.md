@@ -609,6 +609,54 @@ node nestjs-backend/seed-v2.js
 
 ---
 
+## vNext Admin Refactor (Phase 269-274)
+
+Mayıs 2026 — APK Tasarım+İçerik admin control + Live Builder + Backup/Restore + Performance pass.
+
+### Phase Özeti
+
+- **Phase 269 — APK Tasarım+İçerik admin control:** 5 entity (settings/theme/branding/layout/visibility) + 9 admin endpoint + 2 admin sayfa (`/apk-tasarim`, `/apk-icerik`) + APK Preview modal + Flutter `AppConfigService` (cache + fallback). TypeORM + SQLite.
+- **Phase 270 — Full brief:** Live Builder (drag&drop section order), AI Assistant (Claude prompt → config diff), Cmd+K palette, Realtime Analytics (online users/sessions), Rollback/Version History (her save audit + restore), i18n (TR/EN), Export (CSV/JSON), Animated background.
+- **Phase 271 — Açık item'lar:** jsPDF PDF export, @dnd-kit drag-drop, branding asset upload (multer+sharp), WS push (`app-config:updated` event → Flutter auto-refresh).
+- **Phase 272 — Profile Card + Backup Manager:** Profile Card admin UI (10 toggle + label override + live preview) + Backup Manager (DB snapshot create/list/download/delete + audit log) + iisnode-cwd-safe DB path resolver.
+- **Phase 273 — Restore + cron + 3D rotate:** Backup restore (YYYYMMDD token gate + pre-restore snapshot + audit), daily cron (24h, retention 7), interactive 3D phone rotate (`PhoneFrame3D` mouse/touch drag ±25°). 273b: IIS `.sqlite` URL block fix — filename → query/body.
+- **Phase 274 — M7 Performance:** Admin bundle audit, query indexes, image optimization, WS efficiency. In-progress.
+
+### Yeni Endpoint'ler
+
+| Endpoint | Method | Açıklama |
+|---|---|---|
+| `/app-config` | GET | Public — Flutter cache çeker |
+| `/admin/app-config/settings` | GET/PATCH | Genel ayarlar |
+| `/admin/app-config/theme` | GET/PATCH | Renk paleti + dark/light |
+| `/admin/app-config/branding` | GET/PATCH | Logo/splash/varlık URL'leri |
+| `/admin/app-config/layout` | GET/PATCH | Section sırası (drag&drop) |
+| `/admin/app-config/visibility` | GET/PATCH | Profile card 10 toggle + label override |
+| `/admin/app-config/history` | GET | Tüm config save geçmişi (audit) |
+| `/admin/app-config/rollback` | POST | Version'a geri al |
+| `/admin/escrow/settings` | GET/PATCH | Phase 267 escrow toggles (QR hide, GPS relax, grace) |
+| `/admin/realtime/online` | GET | Anlık online kullanıcı sayısı |
+| `/admin/realtime/sessions` | GET | Aktif session listesi |
+| `/admin/backup/list` | GET | Snapshot listesi |
+| `/admin/backup/create` | POST | Manuel snapshot |
+| `/admin/backup/restore` | POST | `{filename, token: YYYYMMDD}` — pre-restore snapshot + audit |
+| `/admin/backup/download?filename=` | GET | Snapshot indir (IIS `.sqlite` block → query param) |
+| `/admin/backup?filename=` | DELETE | Snapshot sil |
+| `/uploads/branding?kind=` | POST | Logo/splash/icon upload (multer+sharp resize) |
+| `/app-config` (WS) | namespace | Event: `app-config:updated` → Flutter auto-refresh |
+
+### Yeni Admin Sayfaları
+
+- `/apk-tasarim` — Tema + branding + animated bg + live preview
+- `/apk-icerik` — Section visibility + label override + i18n
+- `/apk-builder` — Live drag&drop builder + AI assistant + Cmd+K + export
+- `/backup` — Snapshot manager (create/list/download/restore/delete)
+- `/profile-card` — 10 toggle + label override + live phone preview
+- `/escrow-settings` — Phase 267 escrow tuning UI
+- `/realtime-analytics` — Online users + active sessions + WS events
+
+---
+
 ## Oturum Özeti (Mayıs 2026)
 
 ### Yeni Özellikler

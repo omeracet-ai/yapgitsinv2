@@ -1,0 +1,43 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - generic "Dogrulanmis kullanici" [ref=e6]: ✓
+    - generic [ref=e8]: Demo Adas
+    - generic [ref=e9]: İstanbul · Şişli
+  - generic [ref=e10]:
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - generic [ref=e13]: "0.0"
+        - generic [ref=e14]: ★ Puan
+      - generic [ref=e15]:
+        - generic [ref=e16]: "12"
+        - generic [ref=e17]: Toplam Is
+      - generic [ref=e18]:
+        - generic [ref=e19]: "%8"
+        - generic [ref=e20]: Basari
+      - generic [ref=e21]:
+        - generic [ref=e22]: "15"
+        - generic [ref=e23]: Itibar
+    - generic [ref=e24]:
+      - heading "Hizmet Kategorileri" [level=3] [ref=e25]
+      - generic [ref=e26]:
+        - generic [ref=e27]: Tesisat
+        - generic [ref=e28]: Boya & Badana
+        - generic [ref=e29]: Mobilya Montaj
+    - generic [ref=e30]:
+      - heading "Hakkinda" [level=3] [ref=e31]
+      - generic [ref=e32]: Çok yönlü usta. Tesisat tamiri, iç-dış boya, mobilya montaj/söküm konularında 8 yıllık tecrübem var. Sigortalı, garanti veriyorum. Hızlı ve özenli iş.
+    - generic [ref=e33]:
+      - heading "Saat Ucreti" [level=3] [ref=e34]
+      - generic [ref=e35]:
+        - generic [ref=e36]: ₺300 - ₺550 / saat
+        - generic [ref=e37]: 25 km hizmet alani
+    - generic [ref=e38]:
+      - heading "Rozetler" [level=3] [ref=e39]
+      - generic [ref=e40]:
+        - generic [ref=e41]:
+          - generic [ref=e42]: ✅
+          - text: Doğrulanmış
+        - generic [ref=e43]:
+          - generic [ref=e44]: 🟢
+          - text: Şu An Müsait
+    - generic [ref=e45]: Bu Ustaya Teklif Ver
