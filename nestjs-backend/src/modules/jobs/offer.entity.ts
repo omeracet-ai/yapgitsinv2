@@ -112,6 +112,14 @@ export class Offer {
   @Column({ type: 'datetime', nullable: true, default: null })
   refreshedAt: Date | null;
 
+  /**
+   * Phase 287 — Teklif gönderildiğinde admin config'inden hesaplanan kredi
+   * maliyeti (`flat` veya `percent` moduna göre). Withdraw refund tam bu
+   * miktarı iade eder; legacy kayıtlarda null → fallback OFFER_TOKEN_COST.
+   */
+  @Column({ type: 'float', nullable: true, default: null })
+  tokenCost: number | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

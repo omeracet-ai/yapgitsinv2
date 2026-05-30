@@ -7,9 +7,13 @@ import { TokensService } from './tokens.service';
 import { TokensController } from './tokens.controller';
 import { WalletPdfService } from './wallet-pdf.service';
 import { IyzipayService } from '../escrow/iyzipay.service';
+import { AppConfigModule } from '../app-config/app-config.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TokenTransaction, User, Notification])],
+  imports: [
+    TypeOrmModule.forFeature([TokenTransaction, User, Notification]),
+    AppConfigModule,
+  ],
   controllers: [TokensController],
   // IyzipayService stateless (env-driven), aynı sınıfı EscrowModule da kullanıyor —
   // her modülde ayrı instance üretmek güvenli (singleton state yok).

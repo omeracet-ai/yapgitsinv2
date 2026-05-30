@@ -229,6 +229,11 @@ export class AppConfigService implements OnModuleInit {
       { key: 'minOfferPrice', value: '50', type: 'number', group: 'offers' },
       { key: 'maxOfferPrice', value: '50000', type: 'number', group: 'offers' },
       { key: 'offerTokenCost', value: '5', type: 'number', group: 'tokens' },
+      // Phase 287 — Teklif maliyeti hesaplama modu. 'flat' → offerTokenCost
+      // değeri SABİT kredi olarak düşülür (eski davranış). 'percent' →
+      // offerTokenCost teklif fiyatının yüzdesi olarak yorumlanır (ör. 1 ⇒
+      // %1, ceil + min 1 token). Admin /admin/app-config/settings ile değiştirir.
+      { key: 'offerTokenCostMode', value: 'flat', type: 'string', group: 'tokens' },
       { key: 'initialTokenBalance', value: '100', type: 'number', group: 'tokens' },
       { key: 'allowGuestBrowsing', value: 'true', type: 'boolean', group: 'access' },
       { key: 'maintenanceMode', value: 'false', type: 'boolean', group: 'system' },
@@ -599,6 +604,38 @@ export class AppConfigService implements OnModuleInit {
     const r = await this.screenRepo.delete({ key });
     if (!r.affected) throw new NotFoundException(`Screen "${key}" not found`);
     return { deleted: true };
+  }
+
+  // ── Settings helpers ────────────────────────────────────────
+  /**
+   * Phase 287 — typed getters used by other modules (e.g. TokensService) to
+   * read live admin-managed config without touching the repo directly.
+   */
+  async getSettingString(key: string, fallback: string): Promise<string> {
+    const row = await this.settingRepo.findOne({ where: { key } });
+    return row?.value ?? fallback;
+  }
+
+  async getSettingNumber(key: string, fallback: number): Promise<number> {
+    const row = await this.settingRepo.findOne({ where: { key } });
+    if (!row) return fallback;
+    const parsed = Number(row.value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  /**
+   * Phase 287 — Teklif maliyeti hesabı için config tek noktada okunur.
+   * mode='flat'   → cost = value (sabit kredi)
+   * mode='percent' → cost = ceil(price * value / 100), min 1
+   */
+  async getOfferCostConfig(): Promise<{
+    mode: 'flat' | 'percent';
+    value: number;
+  }> {
+    const rawMode = await this.getSettingString('offerTokenCostMode', 'flat');
+    const mode = rawMode === 'percent' ? 'percent' : 'flat';
+    const value = await this.getSettingNumber('offerTokenCost', 5);
+    return { mode, value };
   }
 
   // ── Settings ────────────────────────────────────────────────

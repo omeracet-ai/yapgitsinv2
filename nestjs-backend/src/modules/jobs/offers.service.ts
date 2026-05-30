@@ -115,9 +115,15 @@ export class OffersService {
       }
 
       // Phase 110 — Aboneler token harcamadığı için iade yok
+      // Phase 287 — Eskiden sabit OFFER_TOKEN_COST iade edilirdi. Artık
+      // teklif kaydında saklanan `tokenCost` üzerinden iade (admin mode/değer
+      // sonradan değişse bile kullanıcı tam ödediğini geri alır). Legacy null
+      // satırlar için fallback eski sabit.
       const isSubscriber =
         await this.subscriptionsService.isActiveSubscriber(userId);
-      const refundAmount = isSubscriber ? 0 : OFFER_TOKEN_COST;
+      const refundAmount = isSubscriber
+        ? 0
+        : (offer.tokenCost ?? OFFER_TOKEN_COST);
       if (refundAmount > 0) {
         await manager.increment(
           User,
@@ -262,14 +268,16 @@ export class OffersService {
     }
 
     // Phase 110 — Pro/Premium aboneler için token kesimi yapılmaz (sınırsız teklif)
+    // Phase 287 — Maliyet admin config'inden (flat veya percent) hesaplanır.
     const isSubscriber = await this.subscriptionsService.isActiveSubscriber(
       data.userId,
     );
+    const offerCost = await this.tokensService.computeOfferCost(data.price);
     if (!isSubscriber) {
       await this.tokensService.spend(
         data.userId,
-        OFFER_TOKEN_COST,
-        `İlan #${data.jobId.slice(0, 8)} için teklif (${data.price} ₺)`,
+        offerCost,
+        `İlan #${data.jobId.slice(0, 8)} için teklif (${data.price} ₺ • ${offerCost} kredi)`,
       );
     }
     await this.usersService.bumpStat(data.userId, 'asWorkerTotal');
@@ -284,6 +292,8 @@ export class OffersService {
       lineItems:
         data.lineItems && data.lineItems.length > 0 ? data.lineItems : null,
       status: OfferStatus.PENDING,
+      // Phase 287 — refund için iade tutarı bu kaydı dolaşacak.
+      tokenCost: isSubscriber ? 0 : offerCost,
     });
     const saved = await this.offersRepository.save(offer);
 
@@ -520,15 +530,20 @@ export class OffersService {
     // Phase 262 — yeniden pazarlık kredisi: yalnızca TEKLİF VEREN taraf öder
     // (ilan sahibi = job.customerId bedava). Aboneler muaf (create() ile aynı kural).
     // İki marketplace yönünde de simetrik: teklif veren taraf kim ise o öder.
+    // Phase 287 — counter cost da admin config'in YARISI (eski 5/2=2.5 davranışı
+    // korunur; percent modunda da `computeOfferCost(price) / 2`, min 1).
     const isListingOwner = !!job && byUserId === job.customerId;
+    let counterCost = 0;
     if (!isListingOwner) {
       const isSubscriber =
         await this.subscriptionsService.isActiveSubscriber(byUserId);
       if (!isSubscriber) {
+        const fullCost = await this.tokensService.computeOfferCost(counterPrice);
+        counterCost = Math.max(1, Math.ceil(fullCost / 2));
         await this.tokensService.spend(
           byUserId,
-          OFFER_COUNTER_TOKEN_COST,
-          `İlan #${root.jobId.slice(0, 8)} için karşı teklif (${counterPrice} ₺)`,
+          counterCost,
+          `İlan #${root.jobId.slice(0, 8)} için karşı teklif (${counterPrice} ₺ • ${counterCost} kredi)`,
         );
       }
     }
@@ -551,6 +566,10 @@ export class OffersService {
       negotiationRound: (leaf.negotiationRound ?? 0) + 1,
       lineItems: lineItems && lineItems.length > 0 ? lineItems : null,
       status: OfferStatus.PENDING,
+      // Phase 287 — child kaydının tokenCost'u counter için ödenen miktar
+      // (refund mantığı withdraw'da child halkalarını da bu üzerinden iade
+      // edebilsin diye saklanır). isListingOwner / abone → 0.
+      tokenCost: counterCost,
     });
     const saved = await this.offersRepository.save(child);
 

@@ -21,7 +21,11 @@ import { GiftTokensDto } from './dto/gift-tokens.dto';
 import { tlToMinor } from '../../common/money.util';
 import { IyzipayService } from '../escrow/iyzipay.service';
 import { TOKEN_PACKAGES, findPackage, TokenPackage } from './token-packages';
+import { AppConfigService } from '../app-config/app-config.service';
 
+// Phase 287 — `OFFER_TOKEN_COST` artık yalnızca FALLBACK. Canlı maliyet
+// AppConfig settings'inden hesaplanır (`offerTokenCostMode` + `offerTokenCost`)
+// — bkz. `TokensService.computeOfferCost(price)`.
 export const OFFER_TOKEN_COST = 5;
 // Phase 174c — Integer minor (kuruş): 5 TL = 500 kuruş
 export const OFFER_TOKEN_COST_MINOR = 500;
@@ -39,7 +43,23 @@ export class TokensService {
     @InjectRepository(User) private userRepo: Repository<User>,
     private dataSource: DataSource,
     private readonly iyzipay: IyzipayService,
+    private readonly appConfig: AppConfigService,
   ) {}
+
+  /**
+   * Phase 287 — admin'in belirlediği mod'a göre teklif maliyeti hesaplar.
+   * `flat`    → sabit kredi (offerTokenCost)
+   * `percent` → ceil(price * offerTokenCost / 100), min 1 token
+   * Negatif veya geçersiz fiyat verilirse fallback'e döner.
+   */
+  async computeOfferCost(offerPrice: number): Promise<number> {
+    const { mode, value } = await this.appConfig.getOfferCostConfig();
+    if (mode === 'percent') {
+      if (!Number.isFinite(offerPrice) || offerPrice <= 0) return value;
+      return Math.max(1, Math.ceil((offerPrice * value) / 100));
+    }
+    return value;
+  }
 
   /** GET /tokens/packages — Flutter UI bunu çeker, paketleri hardcode etmez. */
   listPackages(): readonly TokenPackage[] {
