@@ -722,6 +722,9 @@ class _OpportunityCard extends ConsumerWidget {
                     ),
                   ]),
                   const SizedBox(height: 3),
+                  // Phase 298c — Schedule satırı temizlendi. offerCount /
+                  // "Sizin" rozetleri sağ kolona taşındı, böylece kart kart
+                  // tutarlı sağ-hizalama (avatar altında) sağlanır.
                   Row(children: [
                     Icon(scheduleLabel.icon,
                         size: 13, color: scheduleLabel.color),
@@ -737,33 +740,6 @@ class _OpportunityCard extends ConsumerWidget {
                             fontWeight: FontWeight.w600),
                       ),
                     ),
-                    if (offerCount > 0) ...[
-                      const SizedBox(width: 6),
-                      Icon(Icons.people_rounded,
-                          size: 11, color: AppColors.primary),
-                      const SizedBox(width: 2),
-                      Text('$offerCount',
-                          style: TextStyle(
-                              fontSize: 10,
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w700)),
-                    ],
-                    if (isOwner) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text('Sizin',
-                            style: TextStyle(
-                                fontSize: 9,
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w700)),
-                      ),
-                    ],
                   ]),
                   const SizedBox(height: 8),
                   // "İlanı Aç" butonu
@@ -828,6 +804,49 @@ class _OpportunityCard extends ConsumerWidget {
                 const SizedBox(height: 8),
                 // 3D yuvarlak avatar — foto yoksa ad ilk harfi
                 _Poster3DAvatar(imageUrl: posterImg, initials: initials),
+                // Phase 298c — offerCount + "Sizin" rozetleri avatarın
+                // altında, kart kart aynı sağ-hizalı pozisyon.
+                if (offerCount > 0 || isOwner) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (offerCount > 0) ...[
+                        Icon(Icons.people_rounded,
+                            size: 12, color: AppColors.primary),
+                        const SizedBox(width: 2),
+                        Text(
+                          '$offerCount',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                      if (offerCount > 0 && isOwner)
+                        const SizedBox(width: 6),
+                      if (isOwner)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary
+                                .withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Sizin',
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ],
