@@ -106,9 +106,9 @@ class _DualRoleView extends ConsumerWidget {
                   isScrollable: true,
                   tabAlignment: TabAlignment.start,
                   tabs: [
-                    Tab(icon: Icon(Icons.assignment_outlined), text: 'Taleplerim'),
-                    Tab(icon: Icon(Icons.workspace_premium_outlined), text: 'Hizmetlerim'),
+                    Tab(icon: Icon(Icons.assignment_outlined), text: 'Aktif İlanlarım'),
                     Tab(icon: Icon(Icons.handyman_outlined), text: 'Tekliflerim'),
+                    Tab(icon: Icon(Icons.check_circle_outline), text: 'Biten İşler'),
                   ],
                   indicatorColor: Colors.white,
                   labelColor: Colors.white,
@@ -136,9 +136,12 @@ class _DualRoleView extends ConsumerWidget {
             Expanded(
               child: TabBarView(
                 children: [
-                  _CustomerTabContentWrapper(kindFilter: 'request'),
-                  _CustomerTabContentWrapper(kindFilter: 'offer'),
+                  // Phase 302 — Aktif İlanlarım: tüm kindler, open/in_progress
+                  _CustomerJobsByStatus(statuses: ['open', 'in_progress'],
+                      emptyMsg: 'Aktif ilanınız yok.'),
                   _WorkerTabContent(),
+                  _CustomerJobsByStatus(statuses: ['completed'],
+                      emptyMsg: 'Tamamlanan işiniz yok.'),
                 ],
               ),
             ),
@@ -149,33 +152,21 @@ class _DualRoleView extends ConsumerWidget {
   }
 }
 
-// Scaffold olmadan kullanılabilir wrapper
-class _CustomerTabContentWrapper extends ConsumerWidget {
-  /// 'request' (talep), 'offer' (hizmet), null = hepsi
-  final String? kindFilter;
-  const _CustomerTabContentWrapper({this.kindFilter});
+// ─── Phase 302 — Customer jobs filtered by status (no inner tabs) ────────────
+//
+// Yeni İşlerim sekmesinde Aktif İlanlarım / Biten İşler tabları için
+// statü-bazlı düz liste. İçeride alt-tab yok — tek scroll.
+class _CustomerJobsByStatus extends ConsumerWidget {
+  final List<String> statuses;
+  final String emptyMsg;
+  const _CustomerJobsByStatus({required this.statuses, required this.emptyMsg});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
     if (authState is! AuthAuthenticated) return const SizedBox.shrink();
-    return _CustomerTabContent(
-      userId: authState.user['id'] as String,
-      kindFilter: kindFilter,
-    );
-  }
-}
-
-// ─── Customer tab content ─────────────────────────────────────────────────────
-
-class _CustomerTabContent extends ConsumerWidget {
-  final String userId;
-  final String? kindFilter; // 'request' | 'offer' | null
-  const _CustomerTabContent({required this.userId, this.kindFilter});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
+    final userId = authState.user['id'] as String;
     final jobsAsync = ref.watch(myJobsProvider(userId));
-
     return jobsAsync.when(
       loading: () => ListSkeleton(
         itemCount: 5,
@@ -183,63 +174,12 @@ class _CustomerTabContent extends ConsumerWidget {
       ),
       error: (e, _) => Center(child: Text('Hata: $e')),
       data: (allJobs) {
-        // Phase Two-Sided — kind filter
-        final jobs = kindFilter == null
-            ? allJobs
-            : allJobs
-                .where((j) =>
-                    ((j['kind'] as String?) ?? 'request') == kindFilter)
-                .toList();
-        return _buildCustomerJobsTab(context, ref, jobs);
+        final filtered = allJobs
+            .where((j) => statuses.contains(j['status'] as String?))
+            .toList();
+        return _JobList(jobs: filtered, emptyMsg: emptyMsg);
       },
     );
-  }
-
-  Widget _buildCustomerJobsTab(
-      BuildContext context, WidgetRef ref, List<Map<String, dynamic>> jobs) {
-    return DefaultTabController(
-        length: 3,
-        child: Column(
-          children: [
-            Material(color: AppColors.surface,
-              child: TabBar(
-                tabs: const [
-                  Tab(text: 'Aktif'),
-                  Tab(text: 'Tamamlanan'),
-                  Tab(text: 'İptal Edilen'),
-                ],
-                labelColor: AppColors.primary,
-                unselectedLabelColor: AppColors.textHint,
-                indicatorColor: AppColors.primary,
-              ),
-            ),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  _JobList(
-                    jobs: jobs
-                        .where((j) =>
-                            j['status'] == 'open' ||
-                            j['status'] == 'in_progress')
-                        .toList(),
-                    emptyMsg: 'Aktif ilanınız yok.',
-                  ),
-                  _JobList(
-                    jobs:
-                        jobs.where((j) => j['status'] == 'completed').toList(),
-                    emptyMsg: 'Tamamlanan ilanınız yok.',
-                  ),
-                  _JobList(
-                    jobs:
-                        jobs.where((j) => j['status'] == 'cancelled').toList(),
-                    emptyMsg: 'İptal edilen ilanınız yok.',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
   }
 }
 
