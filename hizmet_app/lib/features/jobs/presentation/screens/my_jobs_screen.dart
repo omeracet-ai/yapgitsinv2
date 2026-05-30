@@ -443,9 +443,9 @@ class _JobList extends StatelessWidget {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       itemCount: jobs.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, __) => const SizedBox(height: 6),
       itemBuilder: (context, i) => _CustomerJobCard(job: jobs[i]),
     );
   }
@@ -466,9 +466,9 @@ class _OfferList extends StatelessWidget {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       itemCount: offers.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, __) => const SizedBox(height: 6),
       itemBuilder: (context, i) => _WorkerOfferCard(offer: offers[i]),
     );
   }
@@ -516,24 +516,24 @@ class _CustomerJobCard extends ConsumerWidget {
         confirmationStatus == 'completed';
 
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       onTap: () => JobHistoryDialog.show(context, job),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isCompletedVisual
                 ? AppColors.success
                 : AppColors.border,
-            width: isCompletedVisual ? 2 : 1,
+            width: isCompletedVisual ? 1.5 : 1,
           ),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 3)),
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 2)),
           ],
         ),
         child: Column(
@@ -646,63 +646,64 @@ class _CustomerJobCard extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            Text(title,
-                style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    color: AppColors.textPrimary)),
-            const SizedBox(height: 4),
-            Text(category,
-                style: TextStyle(
-                    color: AppColors.textSecondary, fontSize: 12)),
-            if (photos.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 56,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: photos.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 6),
-                  itemBuilder: (_, i) => ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (photos.isNotEmpty) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
                     child: Image.network(
-                      photos[i],
-                      width: 56,
-                      height: 56,
+                      photos.first,
+                      width: 40,
+                      height: 40,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
-                        width: 56,
-                        height: 56,
+                        width: 40,
+                        height: 40,
                         color: AppColors.border,
                         child: Icon(Icons.image_not_supported,
-                            size: 18, color: AppColors.textHint),
+                            size: 14, color: AppColors.textHint),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13.5,
+                              color: AppColors.textPrimary)),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(category,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 11)),
+                          ),
+                          if (budgetMin > 0 || budgetMax > 0)
+                            Text('$budgetMin-$budgetMax ₺',
+                                style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12)),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('$budgetMin - $budgetMax ₺',
-                    style: const TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13)),
-                Row(
-                  children: [
-                    Text(AppLocalizations.of(context).myJobsViewDetails,
-                        style: const TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600)),
-                    const Icon(Icons.chevron_right,
-                        size: 16, color: AppColors.primary),
-                  ],
-                ),
+                const Icon(Icons.chevron_right,
+                    size: 18, color: AppColors.primary),
               ],
             ),
             if (status == 'completed' || status == 'cancelled') ...[
@@ -920,15 +921,15 @@ class _WorkerOfferCard extends ConsumerWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 3)),
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: Column(
@@ -969,44 +970,40 @@ class _WorkerOfferCard extends ConsumerWidget {
                       TextStyle(color: AppColors.textHint, fontSize: 12)),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           Text(jobTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          const SizedBox(height: 4),
-          if (jobCategory.isNotEmpty)
-            Text(jobCategory,
-                style: TextStyle(
-                    color: AppColors.textSecondary, fontSize: 12)),
-          if (jobLocation.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                Icon(Icons.location_on_outlined,
-                    size: 12, color: AppColors.textHint),
-                const SizedBox(width: 2),
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              if (jobCategory.isNotEmpty)
+                Text(jobCategory,
+                    style: TextStyle(
+                        color: AppColors.textSecondary, fontSize: 11)),
+              if (jobCategory.isNotEmpty && jobLocation.isNotEmpty)
+                Text(' • ',
+                    style:
+                        TextStyle(color: AppColors.textHint, fontSize: 11)),
+              if (jobLocation.isNotEmpty)
                 Expanded(
                   child: Text(jobLocation,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                          color: AppColors.textHint, fontSize: 12)),
+                          color: AppColors.textHint, fontSize: 11)),
                 ),
-              ],
-            ),
-          ],
+            ],
+          ),
           if (message.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(message,
-                  style: TextStyle(
-                      fontSize: 12, color: AppColors.textSecondary)),
-            ),
+            const SizedBox(height: 4),
+            Text(message,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 11, color: AppColors.textSecondary)),
           ],
           if (counterPrice != null) ...[
             const SizedBox(height: 8),
@@ -1033,12 +1030,12 @@ class _WorkerOfferCard extends ConsumerWidget {
               ),
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text('Teklifiniz: ${IntlFormatter.currency(context, price, decimalDigits: 0)}',
               style: const TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,
-                  fontSize: 13)),
+                  fontSize: 12)),
           // Phase 262 — karşı teklif geldiğinde: Kabul Et + Tekrar Teklif.
           if (status == 'countered') ...[
             const SizedBox(height: 10),
