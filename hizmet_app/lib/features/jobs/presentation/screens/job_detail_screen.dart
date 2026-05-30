@@ -7,6 +7,8 @@ import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../data/job_repository.dart';
 import '../../data/offer_repository.dart';
+import '../../../tokens/data/token_repository.dart';
+import 'my_jobs_screen.dart' show myOffersProvider, myJobsProvider;
 import '../../../offers/widgets/offer_line_items_editor.dart';
 import '../../../offers/widgets/offer_template_picker.dart';
 import '../../../offers/widgets/offer_line_items_view.dart';
@@ -88,7 +90,17 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     setState(() => _actionLoading = true);
     try {
       await action();
+      // Phase 282 — herhangi bir teklif aksiyonu (accept/reject/withdraw/
+      // counter) sonrası: bu ilanın teklifleri + kredi bakiyesi + Tekliflerim
+      // + Taleplerim cache'leri taze çekilsin.
       if (widget.id != null) ref.invalidate(jobOffersProvider(widget.id!));
+      ref.invalidate(tokenBalanceProvider);
+      ref.invalidate(myOffersProvider);
+      final auth = ref.read(authStateProvider);
+      if (auth is AuthAuthenticated) {
+        final userId = auth.user['id'] as String?;
+        if (userId != null) ref.invalidate(myJobsProvider(userId));
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -1630,7 +1642,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 msgCtrl.text,
                 lineItems: items.isEmpty ? null : items,
               );
+          // Phase 282 — teklif sonrası tüm bağımlı cache'leri invalide et:
+          // jobOffers (bu ilan), tokenBalance (5 kredi düştü), myOffers
+          // (Tekliflerim sekmesi), jobsProvider (offerCount değişti).
           if (widget.id != null) ref.invalidate(jobOffersProvider(widget.id!));
+          ref.invalidate(tokenBalanceProvider);
+          ref.invalidate(myOffersProvider);
+          ref.read(jobsProvider.notifier).fetchJobs();
           if (ctx.mounted) Navigator.pop(ctx);
           _showSnack('Teklifiniz gönderildi!');
         },
@@ -1664,6 +1682,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 msgCtrl.text,
               );
           if (widget.id != null) ref.invalidate(jobOffersProvider(widget.id!));
+          ref.invalidate(tokenBalanceProvider);
+          ref.invalidate(myOffersProvider);
           if (ctx.mounted) Navigator.pop(ctx);
           _showSnack('Pazarlık teklifiniz gönderildi!');
         },

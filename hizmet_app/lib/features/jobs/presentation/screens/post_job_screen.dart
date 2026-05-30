@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/location_picker.dart';
 import '../providers/job_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import 'my_jobs_screen.dart' show myJobsProvider;
 import '../../../categories/data/category_repository.dart';
 import '../../../photos/data/photo_repository.dart';
 import '../../../photos/presentation/widgets/job_photo_picker.dart';
@@ -1449,6 +1451,14 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
     try {
       await ref.read(jobsProvider.notifier).addJob(jobData);
+      // Phase 282 — yeni ilan eklendikten sonra "İşlerim" sekmesindeki
+      // myJobsProvider cache'ini de invalide et; yoksa kullanıcı taze
+      // ilanı orada görmek için uygulamayı kapatıp açmak zorunda kalır.
+      final auth = ref.read(authStateProvider);
+      if (auth is AuthAuthenticated) {
+        final userId = auth.user['id'] as String?;
+        if (userId != null) ref.invalidate(myJobsProvider(userId));
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
