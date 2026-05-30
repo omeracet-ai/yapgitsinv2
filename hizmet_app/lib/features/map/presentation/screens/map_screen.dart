@@ -9,6 +9,7 @@ import '../../data/map_repository.dart';
 import '../widgets/job_pin_marker.dart';
 import '../widgets/worker_map_marker.dart';
 import '../../../../../core/providers/navigation_provider.dart';
+import '../../../jobs/data/job_filter.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -76,6 +77,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       if (!mounted) return;
       try {
         await ref.read(mapProvider.notifier).init();
+        // Phase 297 — Yapgitsin filter sheet'ten gelen radius/category
+        // ayarlarını haritaya yansıt.
+        final f = ref.read(jobFilterProvider);
+        if (f.maxRadiusKm != null) {
+          ref.read(mapProvider.notifier).setRadiusKm(f.maxRadiusKm);
+        }
       } catch (e, st) {
         debugPrint('map_screen.init error: $e\n$st');
       }
@@ -84,6 +91,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   void dispose() {
+    // Phase 297 — Harita full-page route olarak açıldığında pop sonrası
+    // mapShowWorkersOverride'ı sıfırla (Yapgitsin bottom-nav'da değil artık,
+    // selectedTabProvider listener yetersiz). Üst-seviye container disposed
+    // olunca ref yine erişilebilir; en güvenli yol post-frame microtask.
+    Future.microtask(() {
+      try {
+        ref.read(mapShowWorkersOverrideProvider.notifier).state = false;
+      } catch (_) {
+        // ProviderContainer disposed olduysa boş geç.
+      }
+    });
     _mapController.dispose();
     super.dispose();
   }
@@ -100,12 +118,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final showWorkersOverride = ref.watch(mapShowWorkersOverrideProvider);
     final showWorkers = showWorkersOverride;
 
-    // Harita sekmesinden (index 2) ayrılınca override'ı tüket.
-    ref.listen<int>(selectedTabProvider, (prev, next) {
-      if (prev == 2 && next != 2 && showWorkersOverride) {
-        ref.read(mapShowWorkersOverrideProvider.notifier).state = false;
-      }
-    });
+    // Phase 297 — Harita artık full-page route, bottom-nav listener'ı
+    // kullanılmıyor. Override sıfırlama dispose()'a taşındı.
 
     // Phase 180 — İlk açılışta tüm pin'leri + user'ı kapsayan fitBounds.
     // Jobs/workers/userLocation herhangi biri değiştiğinde bir kez tetiklenir.

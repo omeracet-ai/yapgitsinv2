@@ -573,21 +573,19 @@ final routerProvider = Provider<GoRouter>((ref) {
           message: 'İlanınız başarıyla yayınlandı. Şimdi ustalardan teklif bekleyebilirsiniz.',
           btnText: 'İşlerime Git',
           targetRoute: '/',
-          // Phase 291 — Tab index fix: 5-tab nav'da İşlerim 3, Harita 2.
-          // (Önceki targetTab: 2 yorumlu "İşlerim" stale comment'tı, kullanıcıyı
-          // Harita'ya gönderiyordu.)
-          targetTab: 3, // İşlerim sekmesi
+          // Phase 297 — Bottom nav 4 sekme; İşlerim artık index 2
+          // (eski 3'ten kaydı; Harita çıkarıldı).
+          targetTab: 2, // İşlerim sekmesi
           secondaryBtnText: 'Yeni İlan Ver',
           secondaryTargetRoute: '/ilan-ver',
-          // Phase 291 — "Hızlı Hizmet Verenlere Ulaş" CTA. Harita sekmesine
-          // (index 2) yönlendirir; MapScreen kullanıcının konumuna yakın
-          // workers'ı zaten otomatik gösterir.
+          // Phase 297 — Harita ana nav'dan çıktığı için tertiary CTA artık
+          // doğrudan /harita route'una push'lar (MapScreen full-page).
           tertiaryBtnText: 'Hızlı Hizmet Verenlere Ulaş',
-          tertiaryTargetRoute: '/',
-          tertiaryTargetTab: 2,
-          // Phase 292b — Müşteri normalde haritada usta pin'lerini görmez
-          // (Phase 292). Ama bu CTA'dan girince mapShowWorkersOverride aktif
-          // olur, kullanıcı Harita'dan ayrılınca otomatik sıfırlanır.
+          tertiaryTargetRoute: '/harita',
+          // tertiaryTargetTab kaldırıldı (full-page route).
+          // Phase 292b — Müşteri haritada usta pin'lerini görmez (Phase 292).
+          // Bu CTA mapShowWorkersOverride aktif eder; Harita'dan ayrılınca
+          // override otomatik sıfırlanır.
           tertiaryShowWorkersOnMap: true,
         ),
       ),

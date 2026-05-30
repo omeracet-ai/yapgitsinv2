@@ -69,7 +69,10 @@ class MapNotifier extends StateNotifier<MapState> {
 
   // Phase 152 — Backfill verisi (city-centroid) Türkiye geneline yayılıyor;
   // 20km'lik default kullanıcı görmüyor. Geniş tut, distanceKm zaten sıralıyor.
+  // Phase 297 — Yarıçap artık dinamik; varsayılan değer canlı, JobFilter
+  // mesafe filtresi aktif olduğunda setRadiusKm() ile ezilir.
   static const double _defaultRadiusKm = 500.0;
+  double _radiusKm = _defaultRadiusKm;
 
   MapNotifier(this._repo) : super(const MapState());
 
@@ -197,7 +200,7 @@ class MapNotifier extends StateNotifier<MapState> {
         .getNearbyJobs(
           lat: loc.latitude,
           lng: loc.longitude,
-          radiusKm: _defaultRadiusKm,
+          radiusKm: _radiusKm,
           category: category,
         )
         .then<List<NearbyJob>?>((v) => v)
@@ -210,7 +213,7 @@ class MapNotifier extends StateNotifier<MapState> {
         .getNearbyWorkers(
           lat: loc.latitude,
           lon: loc.longitude,
-          radiusKm: _defaultRadiusKm,
+          radiusKm: _radiusKm,
           category: category,
           limit: 100,
         )
@@ -244,6 +247,14 @@ class MapNotifier extends StateNotifier<MapState> {
         clearSelectedWorker: workerId == null,
         clearSelectedJob: true,
       );
+
+  /// Phase 297 — JobFilter mesafe filtresinden çağrılır. null → varsayılana
+  /// döner. Set sonrası _loadNearby tetiklenir.
+  void setRadiusKm(double? km) {
+    _radiusKm = km ?? _defaultRadiusKm;
+    final loc = state.userLocation;
+    if (loc != null) _loadNearby(loc);
+  }
 
   void setFilter(String filter) {
     state = state.copyWith(

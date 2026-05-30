@@ -17,10 +17,17 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
   late RangeValues _budget;
   late JobSort _sort;
   late bool _featuredOnly;
+  // Phase 297 — mesafe filtresi (km). null = kapalı.
+  double? _radiusKm;
+  double? _userLat;
+  double? _userLng;
 
   // Bütçe slider sınırları (TL)
   static const double _minBudget = 0;
   static const double _maxBudget = 10000;
+  // Mesafe sınırları (km)
+  static const double _minRadius = 1;
+  static const double _maxRadius = 100;
 
   @override
   void initState() {
@@ -32,6 +39,9 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
     );
     _sort = f.sort;
     _featuredOnly = f.featuredOnly;
+    _radiusKm = f.maxRadiusKm;
+    _userLat = f.userLat;
+    _userLng = f.userLng;
   }
 
   void _reset() {
@@ -39,6 +49,7 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
       _budget = const RangeValues(_minBudget, _maxBudget);
       _sort = JobSort.newest;
       _featuredOnly = false;
+      _radiusKm = null;
     });
   }
 
@@ -50,6 +61,9 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
       budgetMax: budgetMaxSet ? _budget.end : null,
       sort: _sort,
       featuredOnly: _featuredOnly,
+      maxRadiusKm: _radiusKm,
+      userLat: _userLat,
+      userLng: _userLng,
     );
     Navigator.of(context).pop(result);
   }
@@ -125,6 +139,46 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
             ),
             onChanged: (v) => setState(() => _budget = v),
           ),
+
+          const SizedBox(height: 12),
+          // ── Mesafe (Phase 297) ───────────────────────────────────────
+          Row(
+            children: [
+              Text('Mesafe',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary)),
+              const Spacer(),
+              Switch.adaptive(
+                value: _radiusKm != null,
+                activeThumbColor: AppColors.primary,
+                onChanged: (v) =>
+                    setState(() => _radiusKm = v ? 20.0 : null),
+              ),
+            ],
+          ),
+          if (_radiusKm != null) ...[
+            Text(
+              '${_radiusKm!.toInt()} km yarıçap içindeki ilanlar',
+              style: TextStyle(
+                  color: AppColors.textSecondary, fontSize: 12),
+            ),
+            Slider(
+              value: _radiusKm!.clamp(_minRadius, _maxRadius),
+              min: _minRadius,
+              max: _maxRadius,
+              divisions: 33,
+              activeColor: AppColors.primary,
+              inactiveColor: AppColors.primary.withValues(alpha: 0.2),
+              label: '${_radiusKm!.toInt()} km',
+              onChanged: (v) => setState(() => _radiusKm = v),
+            ),
+          ] else
+            Text(
+              'Kapalı — tüm konumlardaki ilanlar görünür.',
+              style:
+                  TextStyle(fontSize: 12, color: AppColors.textHint),
+            ),
 
           const SizedBox(height: 8),
           Text('Sıralama',

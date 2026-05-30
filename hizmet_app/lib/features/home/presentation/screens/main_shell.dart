@@ -99,12 +99,14 @@ class _MainShellState extends ConsumerState<MainShell>
     final appBarTitle = (brandingTitle is String && brandingTitle.isNotEmpty)
         ? brandingTitle
         : 'Yapgitsin';
+    // Phase 297 — Harita sekmesi bottom-nav'dan çıkarıldı; Yapgitsin
+    // header'ındaki harita ikonu üzerinden açılır. Yeni index düzeni:
+    //   0=Yaptır 1=Yapgitsin 2=İşlerim 3=Profil
     final List<Widget> pages = [
       _HomeTab(onSeeAllRequests: () {
         ref.read(selectedTabProvider.notifier).state = 1;
       }),
       HizmetAlScreen(appBarTitle: appBarTitle),
-      const MapScreen(),
       const MyJobsScreen(showAppBar: true),
       const ProfileScreen(),
     ];
@@ -154,10 +156,6 @@ class _MainShellState extends ConsumerState<MainShell>
                   icon: Icon(Icons.search_outlined),
                   activeIcon: Icon(Icons.search_rounded),
                   label: 'Yapgitsin'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.map_outlined),
-                  activeIcon: Icon(Icons.map_rounded),
-                  label: 'Harita'),
               BottomNavigationBarItem(
                   icon: Icon(Icons.work_outline_rounded),
                   activeIcon: Icon(Icons.work_rounded),

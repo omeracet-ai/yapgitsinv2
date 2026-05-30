@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/card_3d.dart';
 import '../../../../core/services/intl_formatter.dart';
+import '../../../map/presentation/screens/map_screen.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../categories/data/category_repository.dart';
@@ -80,13 +81,8 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
         );
   }
 
-  void _onSearchChanged(String value) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 400), () {
-      _searchQuery = value.trim();
-      ref.read(jobsProvider.notifier).setQuery(_searchQuery);
-    });
-  }
+  // Phase 297 — eski _onSearchChanged kaldırıldı; arama bottom-sheet
+  // modal'ı (_openSearchSheet) anlık submit ile çağırılıyor.
 
   Future<void> _openFilterSheet() async {
     final current = ref.read(jobFilterProvider);
@@ -234,9 +230,10 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
     );
   }
 
-  /// Search bar + filter button + kategori grid (hizmet ilanları paritesi).
-  /// Worker'ın workerCategories'ini "Uzmanlık Alanlarım" başlığı altında
-  /// önce gösterir, ardından "Diğer Kategoriler" altında geri kalanı.
+  /// Phase 297 — Kompakt header:
+  ///   [🗺 Harita] [Kategori ▾]                  [🔍 Arama] [⚙ Filtre] [🔔]
+  /// Kategori chip şeridi ve search bar kaldırıldı; tek dropdown +
+  /// arama butonu (modal) ile yer kazanıldı.
   Widget _buildSearchAndFilter(
     AsyncValue<List<Map<String, dynamic>>> categoriesAsync,
     int activeFilterCount,
@@ -244,111 +241,213 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
   ) {
     return Container(
       color: AppColors.background,
-      padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceElevated,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _onSearchChanged,
-                    style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
-                    decoration: InputDecoration(
-                      hintText: 'Yapgitsin\'de ara...',
-                      hintStyle: TextStyle(color: AppColors.textHint, fontSize: 13),
-                      prefixIcon:
-                          Icon(Icons.search, color: AppColors.textHint, size: 18),
-                      prefixIconConstraints: const BoxConstraints(
-                          minWidth: 32, minHeight: 32),
-                      isDense: true,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 8),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              _filterButton(activeFilterCount),
-              const SizedBox(width: 6),
-              _notifButton(context),
-            ],
+          // ── Sol: Harita ikonu (Yapgitsin içine taşındı, ana bottom-nav'da yok) ──
+          _iconButton(
+            icon: Icons.map_outlined,
+            onTap: _openMapWithFilter,
+            tooltip: 'Harita',
           ),
-          const SizedBox(height: 6),
-          SizedBox(
-            height: 28,
-            child: categoriesAsync.when(
-              data: (cats) {
-                final mySet = myCategories.toSet();
-                final mine = cats
-                    .where((c) => mySet.contains(c['name']))
-                    .toList();
-                final others = cats
-                    .where((c) => !mySet.contains(c['name']))
-                    .toList();
-                return ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _chip('Tümü', null, _activeCategory == null),
-                    ...mine.map((c) => _chip(
-                          '${c['icon'] ?? ''} ${c['name'] ?? ''}'.trim(),
-                          c['name'] as String?,
-                          _activeCategory == c['name'],
-                        )),
-                    if (mine.isNotEmpty && others.isNotEmpty)
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 6),
-                        width: 1,
-                        height: 22,
-                        color: AppColors.border,
-                      ),
-                    ...others.map((c) => _chip(
-                          '${c['icon'] ?? ''} ${c['name'] ?? ''}'.trim(),
-                          c['name'] as String?,
-                          _activeCategory == c['name'],
-                        )),
-                  ],
-                );
-              },
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
+          const SizedBox(width: 6),
+          // ── Orta: Kategori dropdown (tüm kategoriler + "Tümü") ──
+          Expanded(child: _buildCategoryDropdown(categoriesAsync, myCategories)),
+          const SizedBox(width: 6),
+          // ── Sağ: Arama butonu + Filtre + Bildirim ──
+          _iconButton(
+            icon: _searchQuery.isEmpty ? Icons.search_rounded : Icons.search_off_rounded,
+            onTap: _openSearchSheet,
+            tooltip: 'Arama',
+            highlight: _searchQuery.isNotEmpty,
           ),
+          const SizedBox(width: 6),
+          _filterButton(activeFilterCount),
+          const SizedBox(width: 6),
+          _notifButton(context),
         ],
       ),
     );
   }
 
-  Widget _chip(String label, String? value, bool active) =>
-      GestureDetector(
-        onTap: () => _selectCategory(value),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          margin: const EdgeInsets.only(right: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+  /// Phase 297 — Kategori dropdown. "Tümü" üstte, ardından kullanıcının
+  /// uzmanlık alanları (varsa), sonra diğer kategoriler.
+  Widget _buildCategoryDropdown(
+    AsyncValue<List<Map<String, dynamic>>> categoriesAsync,
+    List<String> myCategories,
+  ) {
+    return categoriesAsync.when(
+      data: (cats) {
+        final mySet = myCategories.toSet();
+        final mine = cats.where((c) => mySet.contains(c['name'])).toList();
+        final others = cats.where((c) => !mySet.contains(c['name'])).toList();
+        final items = <DropdownMenuItem<String?>>[
+          const DropdownMenuItem<String?>(value: null, child: Text('Tümü')),
+          for (final c in mine)
+            DropdownMenuItem<String?>(
+              value: c['name'] as String?,
+              child: Text('${c['icon'] ?? '⭐'} ${c['name'] ?? ''}'.trim()),
+            ),
+          for (final c in others)
+            DropdownMenuItem<String?>(
+              value: c['name'] as String?,
+              child: Text('${c['icon'] ?? ''} ${c['name'] ?? ''}'.trim()),
+            ),
+        ];
+        return Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
-            color: active ? Colors.white : AppColors.surfaceElevated,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-                color: active ? Colors.white : AppColors.border),
+            color: AppColors.surfaceElevated,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.border),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: active ? Colors.black : AppColors.textPrimary,
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String?>(
+              value: _activeCategory,
+              isExpanded: true,
+              isDense: true,
+              icon: Icon(Icons.keyboard_arrow_down_rounded,
+                  size: 18, color: AppColors.textSecondary),
+              style: TextStyle(
+                  fontSize: 12.5,
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600),
+              dropdownColor: AppColors.surface,
+              borderRadius: BorderRadius.circular(10),
+              items: items,
+              onChanged: (v) => _selectCategory(v),
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox(height: 36),
+      error: (_, __) => const SizedBox(height: 36),
+    );
+  }
+
+  /// Phase 297 — Genel ikon-buton, header'da harita / arama için.
+  Widget _iconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required String tooltip,
+    bool highlight = false,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: highlight ? AppColors.primary : AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: onTap,
+          child: Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            child: Icon(
+              icon,
+              color: highlight ? Colors.white : AppColors.textPrimary,
+              size: 22,
             ),
           ),
         ),
-      );
+      ),
+    );
+  }
+
+  /// Phase 297 — Arama modal: bottom sheet içinde tek TextField + Ara/Temizle.
+  Future<void> _openSearchSheet() async {
+    final ctrl = TextEditingController(text: _searchQuery);
+    final result = await showModalBottomSheet<String?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Yapgitsin\'de Ara',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: ctrl,
+                autofocus: true,
+                style: TextStyle(color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Anahtar kelime',
+                  prefixIcon:
+                      const Icon(Icons.search_rounded, size: 20),
+                  filled: true,
+                  fillColor: AppColors.surfaceElevated,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                ),
+                onSubmitted: (v) =>
+                    Navigator.of(ctx).pop(v.trim()),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(ctx).pop(''),
+                      child: const Text('Temizle'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white),
+                      onPressed: () =>
+                          Navigator.of(ctx).pop(ctrl.text.trim()),
+                      icon: const Icon(Icons.search_rounded, size: 18),
+                      label: const Text('Ara'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (result == null) return;
+    setState(() => _searchQuery = result);
+    _searchController.text = result;
+    ref.read(jobsProvider.notifier).setQuery(result);
+  }
+
+  /// Phase 297 — Harita ikonu tıklanınca filtreli haritayı aç.
+  void _openMapWithFilter() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MapScreen()),
+    );
+  }
 
   Widget _notifButton(BuildContext context) {
     final count = ref.watch(unreadCountBadgeProvider);

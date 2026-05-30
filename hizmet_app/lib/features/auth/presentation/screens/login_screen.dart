@@ -54,7 +54,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
         // Phase 268c revert: 5 sekme (Yaptır·Yapgitsin·Harita·İşlerim·Profil)
         // Login sonrası Profil sekmesi (index 4) açılır.
-        ref.read(selectedTabProvider.notifier).state = 4;
+        // Phase 297 — Tab index shift: Profil eskisi 4 → 3.
+        ref.read(selectedTabProvider.notifier).state = 3;
         context.go(widget.returnTo ?? '/');
       } else if (next is AuthError) {
         ScaffoldMessenger.of(context).showSnackBar(
