@@ -971,22 +971,6 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            onPressed: _aiPriceLoading ? null : _suggestPrice,
-            icon: _aiPriceLoading
-                ? const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.auto_awesome, size: 18),
-            label: Text(_aiPriceLoading
-                ? 'Fiyat hesaplanıyor…'
-                : '💰 AI Fiyat Önerisi'),
-          ),
-        ),
         TextFormField(
           controller: _budgetController,
           keyboardType: TextInputType.number,
@@ -994,6 +978,50 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             labelText: AppLocalizations.of(context).postJobBudget,
             hintText: AppLocalizations.of(context).postJobBudgetHint,
             prefixIcon: const Icon(Icons.payments_outlined),
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Phase 285 — AI fiyat önerisi bütçe alanının ALTINDA, yeşil uyarı
+        // bandı olarak. Buton banner içinde tıklanabilir.
+        InkWell(
+          onTap: _aiPriceLoading ? null : _suggestPrice,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.success.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                  color: AppColors.success.withValues(alpha: 0.45)),
+            ),
+            child: Row(
+              children: [
+                if (_aiPriceLoading)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppColors.success),
+                  )
+                else
+                  const Icon(Icons.auto_awesome,
+                      size: 18, color: AppColors.success),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _aiPriceLoading
+                        ? 'Fiyat hesaplanıyor…'
+                        : '💰 AI fiyat tahmini öner',
+                    style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios_rounded,
+                    size: 12, color: AppColors.success),
+              ],
+            ),
           ),
         ),
       ],
