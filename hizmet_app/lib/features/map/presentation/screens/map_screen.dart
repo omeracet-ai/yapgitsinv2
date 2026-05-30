@@ -8,7 +8,6 @@ import '../providers/map_provider.dart';
 import '../../data/map_repository.dart';
 import '../widgets/job_pin_marker.dart';
 import '../widgets/worker_map_marker.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../../core/providers/navigation_provider.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
