@@ -573,9 +573,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           message: 'İlanınız başarıyla yayınlandı. Şimdi ustalardan teklif bekleyebilirsiniz.',
           btnText: 'İşlerime Git',
           targetRoute: '/',
-          targetTab: 2, // İşlerim sekmesi
+          // Phase 291 — Tab index fix: 5-tab nav'da İşlerim 3, Harita 2.
+          // (Önceki targetTab: 2 yorumlu "İşlerim" stale comment'tı, kullanıcıyı
+          // Harita'ya gönderiyordu.)
+          targetTab: 3, // İşlerim sekmesi
           secondaryBtnText: 'Yeni İlan Ver',
           secondaryTargetRoute: '/ilan-ver',
+          // Phase 291 — "Hızlı Hizmet Verenlere Ulaş" CTA. Harita sekmesine
+          // (index 2) yönlendirir; MapScreen kullanıcının konumuna yakın
+          // workers'ı zaten otomatik gösterir.
+          tertiaryBtnText: 'Hızlı Hizmet Verenlere Ulaş',
+          tertiaryTargetRoute: '/',
+          tertiaryTargetTab: 2,
         ),
       ),
     ],

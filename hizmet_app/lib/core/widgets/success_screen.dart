@@ -17,6 +17,14 @@ class SuccessScreen extends ConsumerWidget {
   final String? secondaryBtnText;
   final String? secondaryTargetRoute;
   final int? secondaryTargetTab;
+  /// Phase 291 — Üçüncü CTA (örn. "Hızlı Hizmet Verenlere Ulaş"). Verilirse
+  /// secondary'nin altında ikinci bir outlined buton olarak çıkar.
+  final String? tertiaryBtnText;
+  final String? tertiaryTargetRoute;
+  final int? tertiaryTargetTab;
+  /// Vurgulu renk — tertiary butona gradient yeşil ya da accent uygulamak için.
+  final Color? tertiaryColor;
+  final IconData? tertiaryIcon;
 
   const SuccessScreen({
     super.key,
@@ -28,6 +36,11 @@ class SuccessScreen extends ConsumerWidget {
     this.secondaryBtnText,
     this.secondaryTargetRoute,
     this.secondaryTargetTab,
+    this.tertiaryBtnText,
+    this.tertiaryTargetRoute,
+    this.tertiaryTargetTab,
+    this.tertiaryColor,
+    this.tertiaryIcon,
   });
 
   @override
@@ -99,6 +112,34 @@ class SuccessScreen extends ConsumerWidget {
                         style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ).animate().fade(delay: 500.ms).slideY(begin: 0.1),
+              ],
+              if (tertiaryBtnText != null) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      if (tertiaryTargetTab != null) {
+                        ref.read(selectedTabProvider.notifier).state =
+                            tertiaryTargetTab!;
+                      }
+                      context.go(tertiaryTargetRoute ?? targetRoute);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: tertiaryColor ?? AppColors.success,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                    ),
+                    icon: Icon(tertiaryIcon ?? Icons.map_outlined,
+                        color: Colors.white),
+                    label: Text(
+                      tertiaryBtnText!,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ).animate().fade(delay: 600.ms).scale(begin: const Offset(0.9, 0.9)),
               ],
             ],
           ),
