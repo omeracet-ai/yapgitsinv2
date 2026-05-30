@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/location_picker.dart';
 import '../providers/job_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../core/app_config/app_config_provider.dart';
 import 'my_jobs_screen.dart' show myJobsProvider;
 import '../../../categories/data/category_repository.dart';
 import '../../../photos/data/photo_repository.dart';
@@ -626,8 +627,17 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       }
       setState(() => _currentStep++);
     } else {
-      // Phase 284 — Adım 2: foto + konum zorunlu; sonra upload + submit.
-      if (_selectedPhotos.isEmpty && _uploadedPhotoUrls.isEmpty) {
+      // Phase 290 — Foto zorunluluğu admin tarafından kontrol edilir.
+      // requirePhotoOnJobPost setting'i 'true' ise eski davranış (en az 1
+      // fotoğraf zorunlu); 'false' veya yoksa atla.
+      final cfg = ref.read(appConfigSyncProvider);
+      final photoRequired =
+          (cfg.settings['requirePhotoOnJobPost']?.toString().toLowerCase() ??
+                  'false') ==
+              'true';
+      if (photoRequired &&
+          _selectedPhotos.isEmpty &&
+          _uploadedPhotoUrls.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context).postJobPhotoRequired)),
         );

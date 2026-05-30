@@ -238,6 +238,10 @@ export class AppConfigService implements OnModuleInit {
       { key: 'allowGuestBrowsing', value: 'true', type: 'boolean', group: 'access' },
       { key: 'maintenanceMode', value: 'false', type: 'boolean', group: 'system' },
       { key: 'featuredJobsCount', value: '3', type: 'number', group: 'jobs' },
+      // Phase 290 — Yeni ilan açılırken fotoğraf zorunluluğu. Admin
+      // /admin/app-config/settings üzerinden true/false ile kontrol eder.
+      // Default: false (kullanıcı isteği — şart gizli, opsiyonel).
+      { key: 'requirePhotoOnJobPost', value: 'false', type: 'boolean', group: 'jobs' },
     ];
     const existing = await this.settingRepo.find({ select: ['key'] });
     const existingKeys = new Set(existing.map((s) => s.key));
