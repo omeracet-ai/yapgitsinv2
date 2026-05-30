@@ -38,6 +38,28 @@ class IntlFormatter {
     ).format(amount);
   }
 
+  /// Phase 294 — Context-free Turkish TL formatter for budgets, offer prices,
+  /// counter prices. Uses `tr_TR` locale → thousand dots, decimal comma.
+  /// Example: 1234.5 → "1.234,50 ₺" (decimals=2) or "1.235 ₺" (decimals=0).
+  static String tl(num amount, {int decimalDigits = 0}) {
+    return NumberFormat.currency(
+      locale: 'tr_TR',
+      symbol: '₺',
+      decimalDigits: decimalDigits,
+    ).format(amount);
+  }
+
+  /// Phase 294 — Aralık formatlayıcı (min – max ₺). Tek tarafta null verilirse
+  /// sadece dolu tarafı raporlar; ikisi de null ise "Belirtilmemiş".
+  static String tlRange(num? min, num? max, {int decimalDigits = 0}) {
+    if (min != null && max != null) {
+      return '${tl(min, decimalDigits: decimalDigits).replaceAll(' ₺', '')} – ${tl(max, decimalDigits: decimalDigits)}';
+    }
+    if (min != null) return tl(min, decimalDigits: decimalDigits);
+    if (max != null) return tl(max, decimalDigits: decimalDigits);
+    return 'Belirtilmemiş';
+  }
+
   static String compactNumber(BuildContext context, num n) {
     final locale = Localizations.localeOf(context).toLanguageTag();
     return NumberFormat.compact(locale: locale).format(n);

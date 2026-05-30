@@ -692,7 +692,7 @@ class _CustomerJobCard extends ConsumerWidget {
                                     fontSize: 11)),
                           ),
                           if (budgetMin > 0 || budgetMax > 0)
-                            Text('$budgetMin-$budgetMax ₺',
+                            Text(IntlFormatter.tlRange(budgetMin, budgetMax),
                                 style: const TextStyle(
                                     color: AppColors.primary,
                                     fontWeight: FontWeight.w600,

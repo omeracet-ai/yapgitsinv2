@@ -477,7 +477,7 @@ class _JobHistoryDialogState extends State<JobHistoryDialog> {
                       title: title,
                       description: job['description'] as String? ?? '',
                       location: job['location'] as String? ?? '',
-                      budget: '$budgetMin - $budgetMax ₺',
+                      budget: IntlFormatter.tlRange(budgetMin, budgetMax),
                       category: category,
                       postedAt: createdDate,
                       icon: Job.getIconForCategory(category),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/job_filter.dart';
 import '../../data/job_repository.dart';
+import '../../../../core/services/intl_formatter.dart';
 
 class JobStatus {
   // ignore: constant_identifier_names
@@ -137,9 +138,8 @@ class Job {
   factory Job.fromMap(Map<String, dynamic> map) {
     final bMin = (map['budgetMin'] as num?)?.toDouble();
     final bMax = (map['budgetMax'] as num?)?.toDouble();
-    final budgetStr = bMin != null && bMax != null
-        ? '${bMin.toInt()} – ${bMax.toInt()} ₺'
-        : bMin != null ? '${bMin.toInt()} ₺' : 'Belirtilmemiş';
+    // Phase 294 — TL noktalama: 1.500 – 3.000 ₺
+    final budgetStr = IntlFormatter.tlRange(bMin, bMax);
 
     final rawPhotos = map['photos'];
     final photoList = rawPhotos is List

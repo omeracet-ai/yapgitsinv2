@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/card_3d.dart';
+import '../../../../core/services/intl_formatter.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../categories/data/category_repository.dart';
@@ -538,8 +539,10 @@ class _OpportunityCard extends ConsumerWidget {
     final isOwner = myUserId != null && job.customerId == myUserId;
 
     final budgetStr = (job.budgetMin != null && job.budgetMax != null)
-        ? '${job.budgetMin!.toInt()} – ${job.budgetMax!.toInt()} ₺'
-        : job.budgetMin != null ? '${job.budgetMin!.toInt()} ₺~' : 'Belirtilmemiş';
+        ? IntlFormatter.tlRange(job.budgetMin, job.budgetMax)
+        : job.budgetMin != null
+            ? '${IntlFormatter.tl(job.budgetMin!)} ~'
+            : 'Belirtilmemiş';
 
     final postedAgo = job.createdAt != null
         ? _timeAgo(job.createdAt!)

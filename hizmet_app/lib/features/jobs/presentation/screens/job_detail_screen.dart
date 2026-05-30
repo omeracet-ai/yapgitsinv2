@@ -987,8 +987,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final counterPrice = (offer['counterPrice'] as num?)?.toDouble()
         ?? _toTl(counterMinor);
     final counterMessage = offer['counterMessage'] as String?;
-    String _fmtTl(double? v) =>
-        v == null ? '—' : '${v.toStringAsFixed(0)} ₺';
+    // Phase 294 — Turkish thousand-dot, decimal-comma formatting.
+    String _fmtTl(double? v) => v == null ? '—' : IntlFormatter.tl(v);
 
     // Fiyat görünürlüğü: sadece ilan sahibi VEYA teklif sahibi görebilir.
     // Phase 265d — logout user'larda isim/mesaj "üye olun" maskesi altında.
@@ -1633,7 +1633,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 0.0, (s, m) => s + ((m['total'] as num?)?.toDouble() ?? 0));
             if ((sum - price).abs() > 1.0) {
               throw Exception(
-                  'Kalemler toplamı: ₺${sum.toStringAsFixed(2)} — fiyat: ₺${price.toStringAsFixed(2)}. Devam etmek için fiyatı eşitle.');
+                  'Kalemler toplamı: ${IntlFormatter.tl(sum, decimalDigits: 2)} — fiyat: ${IntlFormatter.tl(price, decimalDigits: 2)}. Devam etmek için fiyatı eşitle.');
             }
           }
           await ref.read(offerRepositoryProvider).createOffer(

@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/intl_formatter.dart';
 import '../../../../core/widgets/location_picker.dart';
 import '../providers/job_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -1145,8 +1146,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       if (value > 0) {
         _budgetController.text = value.toStringAsFixed(0);
       }
-      final range =
-          '${result.minPrice.toStringAsFixed(0)}-${result.maxPrice.toStringAsFixed(0)}₺';
+      final range = IntlFormatter.tlRange(result.minPrice, result.maxPrice);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('💡 AI önerisi: $range — ${result.reasoning}'),

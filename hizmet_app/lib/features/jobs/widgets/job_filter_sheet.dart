@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/services/intl_formatter.dart';
 import '../data/job_filter.dart';
 
 /// İş ilanları için filtre bottom sheet'i.
@@ -107,7 +108,7 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
                   color: AppColors.textPrimary)),
           const SizedBox(height: 4),
           Text(
-            '${_budget.start.toInt()} – ${_budget.end.toInt()} ₺',
+            IntlFormatter.tlRange(_budget.start, _budget.end),
             style: TextStyle(
                 color: AppColors.textSecondary, fontSize: 13),
           ),
@@ -119,8 +120,8 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
             activeColor: AppColors.primary,
             inactiveColor: AppColors.primary.withValues(alpha: 0.2),
             labels: RangeLabels(
-              '${_budget.start.toInt()} ₺',
-              '${_budget.end.toInt()} ₺',
+              IntlFormatter.tl(_budget.start),
+              IntlFormatter.tl(_budget.end),
             ),
             onChanged: (v) => setState(() => _budget = v),
           ),
