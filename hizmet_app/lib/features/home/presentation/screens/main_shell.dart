@@ -25,6 +25,8 @@ import '../../../providers/presentation/screens/provider_list_screen.dart';
 import '../../../providers/presentation/screens/provider_profile_screen.dart';
 import 'hizmet_al_screen.dart';
 // Phase 297 — MapScreen artık ana tab değil; Yapgitsin header'ından açılır.
+// Phase 305 — Mesajlarım sekmesi (eski job_detail Sorular tab'ının yerine).
+import '../../../chat/presentation/screens/chat_list_screen.dart';
 import '../../../notifications/data/unread_count_provider.dart';
 import '../../../../core/widgets/category_card.dart';
 import '../../../../core/widgets/notification_bell.dart';
@@ -99,15 +101,16 @@ class _MainShellState extends ConsumerState<MainShell>
     final appBarTitle = (brandingTitle is String && brandingTitle.isNotEmpty)
         ? brandingTitle
         : 'Yapgitsin';
-    // Phase 297 — Harita sekmesi bottom-nav'dan çıkarıldı; Yapgitsin
-    // header'ındaki harita ikonu üzerinden açılır. Yeni index düzeni:
-    //   0=Yaptır 1=Yapgitsin 2=İşlerim 3=Profil
+    // Phase 305 — 5 sekmeli düzen: Yaptır / Yapgitsin / İşlerim / Mesajlarım / Profil.
+    // (Mesajlarım = chat list; eski job_detail Sorular tab'ı buraya taşındı.
+    // Erişim: backend tarafında sadece accepted-offer çiftleri için açık.)
     final List<Widget> pages = [
       _HomeTab(onSeeAllRequests: () {
         ref.read(selectedTabProvider.notifier).state = 1;
       }),
       HizmetAlScreen(appBarTitle: appBarTitle),
       const MyJobsScreen(showAppBar: true),
+      const ChatListScreen(),
       const ProfileScreen(),
     ];
 
@@ -160,6 +163,10 @@ class _MainShellState extends ConsumerState<MainShell>
                   icon: Icon(Icons.work_outline_rounded),
                   activeIcon: Icon(Icons.work_rounded),
                   label: 'İşlerim'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.chat_bubble_outline_rounded),
+                  activeIcon: Icon(Icons.chat_bubble_rounded),
+                  label: 'Mesajlarım'),
               BottomNavigationBarItem(
                   icon: Icon(Icons.person_outline_rounded),
                   activeIcon: Icon(Icons.person_rounded),

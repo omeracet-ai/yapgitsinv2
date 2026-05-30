@@ -8,6 +8,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, IsNull, Between } from 'typeorm';
 import { ChatMessage } from './chat-message.entity';
 import { User } from '../users/user.entity';
+import { Offer, OfferStatus } from '../jobs/offer.entity';
+import { Job } from '../jobs/job.entity';
 import { TranslateService, TranslateLang } from '../ai/translate.service';
 
 export interface ConversationItem {
@@ -48,8 +50,41 @@ export class ChatService {
     private messagesRepo: Repository<ChatMessage>,
     @InjectRepository(User)
     private usersRepo: Repository<User>,
+    @InjectRepository(Offer)
+    private offersRepo: Repository<Offer>,
+    @InjectRepository(Job)
+    private jobsRepo: Repository<Job>,
     private readonly translateService: TranslateService,
   ) {}
+
+  /**
+   * Phase 305 — Accepted-offer chat gate.
+   * İki kullanıcı arasında mesajlaşma için ortak bir kabul edilmiş teklif
+   * (status='accepted') gereklidir: o teklifi veren usta (offer.userId) ile
+   * ilanın sahibi müşterisi (job.customerId) çiftine açık.
+   */
+  async getAcceptedPeers(userId: string): Promise<Set<string>> {
+    if (!userId) return new Set();
+    const rows = await this.offersRepo
+      .createQueryBuilder('o')
+      .innerJoin(Job, 'j', 'j.id = o.jobId')
+      .where('o.status = :st', { st: OfferStatus.ACCEPTED })
+      .andWhere('(o.userId = :uid OR j.customerId = :uid)', { uid: userId })
+      .select(['o.userId AS workerId', 'j.customerId AS customerId'])
+      .getRawMany<{ workerId: string; customerId: string }>();
+    const peers = new Set<string>();
+    for (const r of rows) {
+      if (r.workerId === userId && r.customerId) peers.add(r.customerId);
+      else if (r.customerId === userId && r.workerId) peers.add(r.workerId);
+    }
+    return peers;
+  }
+
+  async canChat(userA: string, userB: string): Promise<boolean> {
+    if (!userA || !userB || userA === userB) return false;
+    const peers = await this.getAcceptedPeers(userA);
+    return peers.has(userB);
+  }
 
   /**
    * Phase 153: translate a chat message to targetLang.
@@ -92,6 +127,13 @@ export class ChatService {
     }
     if (!dto.message || dto.message.trim().length === 0) {
       throw new BadRequestException('message boş olamaz');
+    }
+
+    // Phase 305 — Accepted-offer gating
+    if (!(await this.canChat(from, dto.to))) {
+      throw new ForbiddenException(
+        'Mesajlaşma sadece teklifi kabul edilmiş kullanıcılar arasında açılır.',
+      );
     }
 
     const msg = await this.messagesRepo.save({
@@ -216,7 +258,11 @@ export class ChatService {
       (a, b) =>
         b.lastMessage.createdAt.getTime() - a.lastMessage.createdAt.getTime(),
     );
-    return result;
+
+    // Phase 305 — Accepted-offer chat gate: yalnız kabul edilmiş teklifi olan
+    // çiftlerin konuşmaları listelenir. Eski/orfan konuşmalar gizlenir.
+    const allowedPeers = await this.getAcceptedPeers(userId);
+    return result.filter((r) => allowedPeers.has(r.peerId));
   }
 
   /**

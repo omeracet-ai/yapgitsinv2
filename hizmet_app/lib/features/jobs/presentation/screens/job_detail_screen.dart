@@ -20,7 +20,7 @@ import '../../../reviews/presentation/screens/write_review_screen.dart';
 import '../widgets/completion_photos_section.dart';
 import '../widgets/job_photos_bulk_section.dart';
 import '../../widgets/job_photo_lightbox.dart';
-import '../widgets/job_questions_tab.dart';
+// Phase 305 — JobQuestionsTab kaldırıldı, Q&A yerini chat sistemi aldı.
 import '../widgets/job_video_player.dart';
 import '../../../users/widgets/user_action_menu.dart';
 
@@ -60,22 +60,9 @@ class JobDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<JobDetailScreen> createState() => _JobDetailScreenState();
 }
 
-class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
-    with SingleTickerProviderStateMixin {
+class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   bool _actionLoading = false;
-  late final TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+  // Phase 305 — TabController kaldırıldı (Sorular tab'ı Mesajlarım'a taşındı).
 
   // Dark theme constants — Voldi-job-detail-redesign
   // TODO(design): values are close to AppColors.{surface,border,textSecondary}
@@ -183,16 +170,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         foregroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
-          tabs: const [
-            Tab(text: 'Teklifler'),
-            Tab(text: 'Sorular'),
-          ],
-        ),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 12),
@@ -296,34 +273,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                     );
                   }),
                 ],
-                // ── Teklifler / Sorular TabBarView (restored) ──
+                // Phase 305 — Sorular tab kaldırıldı, Teklifler inline gösterilir.
                 const SizedBox(height: 10),
-                SizedBox(
-                  height: 600,
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      SingleChildScrollView(
-                        child: _buildOffersSection(
-                            offersAsync, canMakeOffer, currentUserId),
-                      ),
-                      if (widget.id != null)
-                        JobQuestionsTab(
-                          jobId: widget.id!,
-                          currentUserId: currentUserId,
-                          isOwner: isOwner,
-                          jobStatus: jobStatus,
-                        )
-                      else
-                        const Padding(
-                          padding: EdgeInsets.all(20),
-                          child: Center(
-                              child: Text('İlan ID bulunamadı.',
-                                  style: TextStyle(color: _textHint))),
-                        ),
-                    ],
-                  ),
-                ),
+                _buildOffersSection(offersAsync, canMakeOffer, currentUserId),
                 const SizedBox(height: 80),
               ],
             ),

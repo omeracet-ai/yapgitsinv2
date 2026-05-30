@@ -20,6 +20,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
 import { detectContact, maskContact } from '../../common/contact-filter';
 import { RealtimeService } from '../realtime/realtime.service';
+import { ChatService } from './chat.service';
 
 export const CONTACT_BLOCK_SETTING_KEY = 'contact_sharing_block_enabled';
 
@@ -72,6 +73,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private systemSettings: SystemSettingsService,
     private notificationsService: NotificationsService,
     private realtime: RealtimeService,
+    private chatService: ChatService,
   ) {}
 
   private extractUserId(client: Socket): string | null {
@@ -145,6 +147,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         _client.emit('error', {
           type: 'blocked',
           message: 'Bu kullanıcıyla mesajlaşma engellendi',
+        });
+        return;
+      }
+      // Phase 305 — Accepted-offer gate: sadece kabul edilmiş teklifi olan
+      // (müşteri ↔ usta) çiftleri WebSocket üzerinden mesaj gönderebilir.
+      const allowed = await this.chatService.canChat(data.from, data.to);
+      if (!allowed) {
+        _client.emit('error', {
+          type: 'no_accepted_offer',
+          message:
+            'Mesajlaşma sadece teklifi kabul edilmiş kullanıcılar arasında açılır.',
         });
         return;
       }
