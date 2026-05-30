@@ -459,7 +459,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   Widget _buildStickyControls() {
     final isLastStep = _currentStep == 1;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.border)),
@@ -478,7 +478,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     side: const BorderSide(color: AppColors.primary),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
@@ -493,7 +493,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
@@ -608,31 +608,32 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   Widget _buildStep1Body() {
     // Phase 284 — Adım 1: Başlık + Açıklama + Kategori + Tarih + Zaman + Bütçe.
     // Adım 2'de yalnızca Foto/Video + Konum kalır.
+    // Phase 286 — dikey ekran kullanımı ~%25 sıkıştırıldı (15/12 düzeni 20/16'nın yerine).
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildTitleDescSection(),
-        const SizedBox(height: 20),
-        const Divider(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 15),
+        const Divider(height: 1),
+        const SizedBox(height: 12),
         Text(AppLocalizations.of(context).postJobCategorySelect,
             style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _buildCategoryGrid(),
-        const SizedBox(height: 20),
-        const Divider(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 15),
+        const Divider(height: 1),
+        const SizedBox(height: 12),
         _buildDueDateSection(),
-        const SizedBox(height: 20),
-        const Divider(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 15),
+        const Divider(height: 1),
+        const SizedBox(height: 12),
         _buildScheduleFlexSection(),
-        const SizedBox(height: 20),
-        const Divider(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 15),
+        const Divider(height: 1),
+        const SizedBox(height: 12),
         _buildBudgetSection(),
       ],
     );
@@ -764,9 +765,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Ne zaman yapılmasını istiyorsunuz?',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -776,7 +777,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               child: GestureDetector(
                 onTap: _pickDueDate,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   decoration: BoxDecoration(
                     color: _dueDate != null ? AppColors.primaryLight : AppColors.surface,
                     border: Border.all(
@@ -819,7 +820,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                 child: Opacity(
                   opacity: _anyTime ? 0.55 : 1,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                     decoration: BoxDecoration(
                       color: timeActive ? AppColors.primaryLight : AppColors.surface,
                       border: Border.all(
@@ -920,14 +921,14 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               hintText: AppLocalizations.of(context).postJobTitleHint),
           validator: (v) => v?.isEmpty ?? true ? AppLocalizations.of(context).fieldRequired : null,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         TextFormField(
           controller: _descController,
-          maxLines: 4,
+          maxLines: 3,
           decoration: InputDecoration(labelText: AppLocalizations.of(context).postJobDescription),
           validator: (v) => v?.isEmpty ?? true ? AppLocalizations.of(context).fieldRequired : null,
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton.icon(
@@ -1308,41 +1309,35 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text('Fotoğraf & Video',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         JobPhotoPicker(
           initialFiles: _selectedPhotos,
           onChanged: (files) => setState(() => _selectedPhotos = files),
         ),
-        // Video upload UI hidden — restore by uncommenting below.
-        // const SizedBox(height: 16),
-        // JobVideoPicker(
-        //   initialFiles: _selectedVideos,
-        //   onChanged: (files) => setState(() => _selectedVideos = files),
-        // ),
-        const SizedBox(height: 20),
-        const Divider(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 15),
+        const Divider(height: 1),
+        const SizedBox(height: 12),
         Row(
           children: [
             Text(AppLocalizations.of(context).postJobLocation,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary)),
             const SizedBox(width: 4),
             const Text('*',
                 style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: AppColors.error)),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
         Text(
           'Doğru ustaya hızlı ulaşmak için konum zorunlu — harita pin\'i veya "Konumumu Kullan".',
-          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1391,7 +1386,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               ],
             ),
           ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
             border: Border.all(color: AppColors.border),
