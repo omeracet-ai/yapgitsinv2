@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/card_3d.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/services/intl_formatter.dart';
+import '../../../../core/services/turkish_currency_input_formatter.dart';
 import '../../data/job_repository.dart';
 import '../../data/offer_repository.dart';
 import '../../../tokens/data/token_repository.dart';
@@ -1621,7 +1623,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         onLineItemsChanged: (items) => lineItemsRef[0] = items,
         onSubmit: () async {
           if (widget.id == null || priceCtrl.text.isEmpty) return;
-          final price = double.parse(priceCtrl.text.replaceAll(',', '.'));
+          final price =
+              TurkishCurrencyInputFormatter.parseTry(priceCtrl.text) ?? 0;
           final items = lineItemsRef[0]
               .where((m) =>
                   (m['label'] ?? '').toString().trim().isNotEmpty &&
@@ -1657,8 +1660,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   }
 
   void _showCounterDialog(String offerId, String currentPrice) {
+    // Phase 295 — currentPrice "1.500 ₺" formatlanmış geliyor; symbol'ü
+    // çıkar, kalanı (TR formatlı sayı) doğrudan field'a koy.
     final priceCtrl =
-        TextEditingController(text: currentPrice.replaceAll(' ₺', ''));
+        TextEditingController(text: currentPrice.replaceAll(' ₺', '').replaceAll('₺', '').trim());
     final msgCtrl = TextEditingController();
     showModalBottomSheet(
       useSafeArea: true,
@@ -1675,10 +1680,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         msgLabel: 'Kısa notunuz',
         onSubmit: () async {
           if (widget.id == null || priceCtrl.text.isEmpty) return;
+          final counter =
+              TurkishCurrencyInputFormatter.parseTry(priceCtrl.text) ?? 0;
           await ref.read(offerRepositoryProvider).counterOffer(
                 widget.id!,
                 offerId,
-                double.parse(priceCtrl.text),
+                counter,
                 msgCtrl.text,
               );
           if (widget.id != null) ref.invalidate(jobOffersProvider(widget.id!));
@@ -1703,9 +1710,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         text: detail['description'] as String? ?? widget.description);
     final locationCtrl = TextEditingController(text: widget.location);
     final budgetMinCtrl = TextEditingController(
-        text: (detail['budgetMin'] as num?)?.toInt().toString() ?? '');
+        text: TurkishCurrencyInputFormatter.formatNumber(
+            detail['budgetMin'] as num?));
     final budgetMaxCtrl = TextEditingController(
-        text: (detail['budgetMax'] as num?)?.toInt().toString() ?? '');
+        text: TurkishCurrencyInputFormatter.formatNumber(
+            detail['budgetMax'] as num?));
     String currentCategory = widget.category;
 
     final categories = [
@@ -1789,10 +1798,14 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 // Bütçe aralığı
                 Row(children: [
                   Expanded(child: _updateField(budgetMinCtrl, 'Min Bütçe (₺)',
-                      Icons.arrow_downward_rounded, kb: TextInputType.number)),
+                      Icons.arrow_downward_rounded,
+                      kb: const TextInputType.numberWithOptions(decimal: true),
+                      formatters: [TurkishCurrencyInputFormatter()])),
                   const SizedBox(width: 10),
                   Expanded(child: _updateField(budgetMaxCtrl, 'Max Bütçe (₺)',
-                      Icons.arrow_upward_rounded, kb: TextInputType.number)),
+                      Icons.arrow_upward_rounded,
+                      kb: const TextInputType.numberWithOptions(decimal: true),
+                      formatters: [TurkishCurrencyInputFormatter()])),
                 ]),
 
                 const SizedBox(height: 24),
@@ -1816,8 +1829,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                         Navigator.pop(ctx);
                         if (widget.id == null) return;
                         await _doAction(() async {
-                          final bMin = double.tryParse(budgetMinCtrl.text);
-                          final bMax = double.tryParse(budgetMaxCtrl.text);
+                          final bMin = TurkishCurrencyInputFormatter.parseTry(
+                              budgetMinCtrl.text);
+                          final bMax = TurkishCurrencyInputFormatter.parseTry(
+                              budgetMaxCtrl.text);
                           await ref.read(offerRepositoryProvider).updateJob(
                             widget.id!,
                             {
@@ -1855,10 +1870,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   }
 
   Widget _updateField(TextEditingController ctrl, String label, IconData icon,
-      {TextInputType kb = TextInputType.text}) {
+      {TextInputType kb = TextInputType.text,
+      List<TextInputFormatter>? formatters}) {
     return TextField(
       controller: ctrl,
       keyboardType: kb,
+      inputFormatters: formatters,
       textCapitalization: TextCapitalization.sentences,
       decoration: InputDecoration(
         labelText: label,
@@ -2035,7 +2052,9 @@ class _BidSheetState extends State<_BidSheet> {
           const SizedBox(height: 20),
           TextField(
             controller: widget.priceCtrl,
-            keyboardType: TextInputType.number,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [TurkishCurrencyInputFormatter()],
             decoration: InputDecoration(
                 labelText: widget.priceLabel,
                 prefixIcon: const Icon(Icons.attach_money),

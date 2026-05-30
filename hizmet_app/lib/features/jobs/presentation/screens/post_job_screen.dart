@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/intl_formatter.dart';
+import '../../../../core/services/turkish_currency_input_formatter.dart';
 import '../../../../core/widgets/location_picker.dart';
 import '../providers/job_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -137,7 +138,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     _locationController.text = (j['location'] as String?) ?? '';
     final budgetMin = j['budgetMin'];
     if (budgetMin is num && budgetMin > 0) {
-      _budgetController.text = budgetMin.toInt().toString();
+      _budgetController.text =
+          TurkishCurrencyInputFormatter.formatNumber(budgetMin);
     }
     setState(() {
       _selectedCategory = j['category'] as String?;
@@ -244,7 +246,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     _titleController.text = d.title ?? '';
     _descController.text = d.description ?? '';
     _locationController.text = d.location ?? '';
-    _budgetController.text = d.budgetMin?.toStringAsFixed(0) ?? '';
+    _budgetController.text =
+        TurkishCurrencyInputFormatter.formatNumber(d.budgetMin);
     setState(() {
       _selectedCategory = d.category;
       _lat = d.latitude;
@@ -283,7 +286,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         description: _descController.text,
         category: _selectedCategory,
         location: _locationController.text,
-        budgetMin: double.tryParse(_budgetController.text),
+        budgetMin: TurkishCurrencyInputFormatter.parseTry(_budgetController.text),
         dueDate: _dueDate == null
             ? null
             : '${_dueDate!.year}-${_dueDate!.month.toString().padLeft(2, '0')}-${_dueDate!.day.toString().padLeft(2, '0')}',
@@ -1065,7 +1068,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       children: [
         TextFormField(
           controller: _budgetController,
-          keyboardType: TextInputType.number,
+          keyboardType:
+              const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [TurkishCurrencyInputFormatter()],
           decoration: InputDecoration(
             labelText: AppLocalizations.of(context).postJobBudget,
             hintText: AppLocalizations.of(context).postJobBudgetHint,
@@ -1144,7 +1149,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           ? result.medianPrice
           : (result.minPrice > 0 ? result.minPrice : result.maxPrice);
       if (value > 0) {
-        _budgetController.text = value.toStringAsFixed(0);
+        _budgetController.text =
+            TurkishCurrencyInputFormatter.formatNumber(value);
       }
       final range = IntlFormatter.tlRange(result.minPrice, result.maxPrice);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1189,7 +1195,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           _descController.text = result.description;
         }
         if (_budgetController.text.isEmpty && result.suggestedBudgetMin > 0) {
-          _budgetController.text = result.suggestedBudgetMin.toString();
+          _budgetController.text = TurkishCurrencyInputFormatter.formatNumber(
+              result.suggestedBudgetMin);
         }
       });
       if (result.tips.isNotEmpty) {
@@ -1563,7 +1570,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       'title': _titleController.text,
       'description': _descController.text,
       'location': _locationController.text,
-      'budgetMin': double.tryParse(_budgetController.text) ?? 0,
+      'budgetMin': TurkishCurrencyInputFormatter.parseTry(_budgetController.text) ?? 0,
       'category': _selectedCategory,
       // Phase 152 — Konum zorunlu (step3'te garantilendi).
       'latitude': _lat,
@@ -1625,8 +1632,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           'location': _locationController.text.isEmpty
               ? 'Belirtilmedi'
               : _locationController.text,
-          if (double.tryParse(_budgetController.text) != null)
-            'budgetMin': double.parse(_budgetController.text),
+          if (TurkishCurrencyInputFormatter.parseTry(_budgetController.text) != null)
+            'budgetMin': TurkishCurrencyInputFormatter.parseTry(_budgetController.text),
           'photos': const <String>[],
         });
       } catch (e) {
