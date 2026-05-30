@@ -400,30 +400,15 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               title: FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(7),
-                      child: Image.asset(
-                        'assets/icons/app_icon.png',
-                        width: 28,
-                        height: 28,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'yapgitsin.',
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        color: heroTitle,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        height: 1.0,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'Yapgitsin',
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: heroTitle,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    height: 1.0,
+                  ),
                 ),
               ),
             ),
