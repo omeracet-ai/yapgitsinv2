@@ -585,6 +585,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           tertiaryBtnText: 'Hızlı Hizmet Verenlere Ulaş',
           tertiaryTargetRoute: '/',
           tertiaryTargetTab: 2,
+          // Phase 292b — Müşteri normalde haritada usta pin'lerini görmez
+          // (Phase 292). Ama bu CTA'dan girince mapShowWorkersOverride aktif
+          // olur, kullanıcı Harita'dan ayrılınca otomatik sıfırlanır.
+          tertiaryShowWorkersOnMap: true,
         ),
       ),
     ],

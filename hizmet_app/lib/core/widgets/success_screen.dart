@@ -25,6 +25,10 @@ class SuccessScreen extends ConsumerWidget {
   /// Vurgulu renk — tertiary butona gradient yeşil ya da accent uygulamak için.
   final Color? tertiaryColor;
   final IconData? tertiaryIcon;
+  /// Phase 292b — true ise tertiary CTA harita sekmesine geçerken
+  /// mapShowWorkersOverrideProvider'ı set eder (müşteri haritada
+  /// ustaları o oturum için görebilsin).
+  final bool tertiaryShowWorkersOnMap;
 
   const SuccessScreen({
     super.key,
@@ -41,6 +45,7 @@ class SuccessScreen extends ConsumerWidget {
     this.tertiaryTargetTab,
     this.tertiaryColor,
     this.tertiaryIcon,
+    this.tertiaryShowWorkersOnMap = false,
   });
 
   @override
@@ -119,6 +124,11 @@ class SuccessScreen extends ConsumerWidget {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
+                      if (tertiaryShowWorkersOnMap) {
+                        ref
+                            .read(mapShowWorkersOverrideProvider.notifier)
+                            .state = true;
+                      }
                       if (tertiaryTargetTab != null) {
                         ref.read(selectedTabProvider.notifier).state =
                             tertiaryTargetTab!;

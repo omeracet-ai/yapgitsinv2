@@ -9,6 +9,7 @@ import '../../data/map_repository.dart';
 import '../widgets/job_pin_marker.dart';
 import '../widgets/worker_map_marker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../../core/providers/navigation_provider.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -96,9 +97,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // Phase 292 — Worker pin'leri yalnızca "hizmet ilanı veren" hesaplar
     // (workerCategories non-empty) görür. Normal müşteri için harita yalnızca
     // iş ilanlarını gösterir.
+    // Phase 292b — Müşteri, /ilan-basarili → "Hızlı Hizmet Verenlere Ulaş"
+    // CTA'sından girdiyse override aktif kalır; Harita sekmesinden ayrılınca
+    // (aşağıdaki ref.listen ile) sıfırlanır.
     final auth = ref.watch(authStateProvider);
-    final showWorkers = auth is AuthAuthenticated &&
+    final isWorker = auth is AuthAuthenticated &&
         ((auth.user['workerCategories'] as List?)?.isNotEmpty ?? false);
+    final showWorkersOverride = ref.watch(mapShowWorkersOverrideProvider);
+    final showWorkers = isWorker || showWorkersOverride;
+
+    // Phase 292b — Harita sekmesinden (index 2) ayrılınca override'ı tüket.
+    ref.listen<int>(selectedTabProvider, (prev, next) {
+      if (prev == 2 && next != 2 && showWorkersOverride) {
+        ref.read(mapShowWorkersOverrideProvider.notifier).state = false;
+      }
+    });
 
     // Phase 180 — İlk açılışta tüm pin'leri + user'ı kapsayan fitBounds.
     // Jobs/workers/userLocation herhangi biri değiştiğinde bir kez tetiklenir.
