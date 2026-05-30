@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -401,10 +402,12 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          children: [
+      body: Stack(
+        children: [
+          Form(
+            key: _formKey,
+            child: Column(
+              children: [
             if (widget.targetWorkerId != null && widget.targetWorkerName != null)
               Container(
                 width: double.infinity,
@@ -450,8 +453,22 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               ),
             ),
             _buildStickyControls(),
-          ],
-        ),
+              ],
+            ),
+          ),
+          // Phase 288 — "AI ile Otomatik Doldur" sağ alt köşede animasyonlu
+          // pop-up. Sticky controls'un (Geri/İleri) hemen üstüne konumlandırılır;
+          // sadece Adım 1 (form alanları görünürken) ve aşağı kaydırırken aktif.
+          if (_currentStep == 0)
+            Positioned(
+              right: 14,
+              bottom: 78,
+              child: _AiAutoFillFab(
+                loading: _aiLoading,
+                onTap: _aiLoading ? null : _fillWithAI,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -946,24 +963,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             label: Text(_aiDescLoading ? 'Üretiliyor…' : '✨ AI ile Öner'),
           ),
         ),
-        const SizedBox(height: 6),
-        OutlinedButton.icon(
-          onPressed: _aiLoading ? null : _fillWithAI,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.primary,
-            side: const BorderSide(color: AppColors.primary),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-          icon: _aiLoading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                )
-              : const Icon(Icons.auto_awesome, size: 18),
-          label: Text(_aiLoading ? 'AI hazırlıyor…' : 'AI ile Otomatik Doldur'),
-        ),
+        // Phase 288 — "AI ile Otomatik Doldur" butonu buradan kaldırıldı; sağ
+        // alt köşede animasyonlu pop-up olarak gösterilir (bkz. _AiAutoFillFab).
       ],
     );
   }
@@ -1553,5 +1554,92 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     if (mounted) {
       context.pushReplacement('/ilan-basarili');
     }
+  }
+}
+
+// ─── Phase 288 — Animated AI auto-fill pop-up FAB ─────────────────────────
+// Sağ alt köşede yüzer pop-up. flutter_animate ile sürekli yumuşak nabız
+// (scale 1.0 → 1.08, infinite reverse), parıltı (shimmer her 3sn) ve hafif
+// dönüş efektleri. Loading durumda animasyon durur, içerik spinner'a döner.
+
+class _AiAutoFillFab extends StatelessWidget {
+  final bool loading;
+  final VoidCallback? onTap;
+  const _AiAutoFillFab({required this.loading, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final core = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(28),
+        child: Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary,
+                AppColors.primary.withValues(alpha: 0.78),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.40),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (loading)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white),
+                )
+              else
+                const Icon(Icons.auto_awesome,
+                    size: 18, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(
+                loading ? 'AI hazırlıyor…' : 'AI ile Otomatik Doldur',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (loading) return core;
+
+    // Idle state: yumuşak nabız + her 3 sn bir parıltı (shimmer).
+    return core
+        .animate(onPlay: (c) => c.repeat(reverse: true))
+        .scaleXY(
+          duration: 1200.ms,
+          begin: 1.0,
+          end: 1.06,
+          curve: Curves.easeInOut,
+        )
+        .then()
+        .animate(onPlay: (c) => c.repeat())
+        .shimmer(
+          duration: 1600.ms,
+          delay: 1600.ms,
+          color: Colors.white.withValues(alpha: 0.35),
+        );
   }
 }
