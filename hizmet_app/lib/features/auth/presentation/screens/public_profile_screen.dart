@@ -17,6 +17,7 @@ import '../../widgets/availability_editor_sheet.dart';
 import '../../widgets/review_summary_card.dart';
 import '../../../users/widgets/badge_row.dart';
 import '../../../users/widgets/worker_documents_card.dart';
+import '../../../users/widgets/verified_category_badges.dart';
 import 'package:go_router/go_router.dart';
 
 final publicProfileProvider =
@@ -351,6 +352,15 @@ class _ProfileView extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                 ],
+
+                // Phase 293 — Belge ile doğrulanmış kategoriler rozeti
+                VerifiedCategoryBadgesRow(
+                  categories:
+                      ((data['verifiedCategories'] as List?) ?? const [])
+                          .whereType<Map>()
+                          .map((m) => Map<String, dynamic>.from(m))
+                          .toList(),
+                ),
 
                 // ── Ustalık belgeleri (varsa "Usta" title + belge kartı) ──
                 WorkerDocumentsCard(

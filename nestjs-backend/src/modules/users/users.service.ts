@@ -266,7 +266,14 @@ export class UsersService {
         );
       }
       if (opts.verifiedOnly) {
-        qb.andWhere('u.identityVerified = :verified', { verified: true });
+        // Phase 293 — "Doğrulanmış" artık iki yoldan biriyle karşılanır:
+        // (a) admin onaylı kimlik (identityVerified=true), VEYA
+        // (b) en az 1 aktif workerDocument (simple-json TEXT içinde
+        //     "status":"active" geçen kayıt). LIKE pattern SQLite uyumlu.
+        qb.andWhere(
+          '(u.identityVerified = :verified OR (u.workerDocuments IS NOT NULL AND u.workerDocuments LIKE :docPat))',
+          { verified: true, docPat: '%"status":"active"%' },
+        );
       }
       if (opts.availableDay) {
         // null schedule = "her gün müsait"; aksi halde gün true olmalı

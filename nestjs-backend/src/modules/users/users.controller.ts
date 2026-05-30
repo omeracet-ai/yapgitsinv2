@@ -39,6 +39,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
+import { User } from './user.entity';
 import { FavoriteWorkersService } from './favorite-workers.service';
 import { EarningsService } from './earnings.service';
 import { WorkerInsuranceService } from './worker-insurance.service';
@@ -1141,6 +1142,44 @@ export class UsersController {
       workerDocuments: Array.isArray(user.workerDocuments)
         ? user.workerDocuments.filter((d) => d.status === 'active')
         : [],
+      // Phase 293 — Aktif belgeden türetilen kategori rozeti detayı.
+      // Her kategori için en erken yüklenen belgenin tarihi `since`. UI bu listeyi
+      // profilde "Belge Doğrulanmış Kategoriler" başlığı altında chip olarak çizer.
+      verifiedCategories: this.computeVerifiedCategories(user.workerDocuments),
     };
+  }
+
+  /**
+   * Phase 293 — workerDocuments listesinden kategori bazlı doğrulama özeti üretir.
+   * Yalnızca `status === 'active'` belgeler dahil. Her kategori için belge sayısı
+   * ve ilk eklenme tarihi raporlanır.
+   */
+  private computeVerifiedCategories(
+    docs: User['workerDocuments'] | null | undefined,
+  ): Array<{ category: string; count: number; since: string }> {
+    if (!Array.isArray(docs)) return [];
+    const groups = new Map<
+      string,
+      { category: string; count: number; since: string }
+    >();
+    for (const d of docs) {
+      if (!d || d.status !== 'active' || !d.category) continue;
+      const existing = groups.get(d.category);
+      if (existing) {
+        existing.count += 1;
+        if (d.createdAt && d.createdAt < existing.since) {
+          existing.since = d.createdAt;
+        }
+      } else {
+        groups.set(d.category, {
+          category: d.category,
+          count: 1,
+          since: d.createdAt ?? new Date().toISOString(),
+        });
+      }
+    }
+    return Array.from(groups.values()).sort((a, b) =>
+      a.category.localeCompare(b.category, 'tr'),
+    );
   }
 }

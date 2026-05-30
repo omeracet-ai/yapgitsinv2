@@ -27,6 +27,7 @@ import '../../../profile/widgets/profile_completion_card.dart';
 import '../../widgets/availability_editor_sheet.dart';
 import '../../../users/widgets/badge_row.dart';
 import '../../../users/widgets/worker_documents_card.dart';
+import '../../../users/widgets/verified_category_badges.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../core/services/locale_provider.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -80,13 +81,23 @@ class ProfileScreen extends ConsumerWidget {
               Consumer(builder: (context, ref, _) {
                 final p = ref.watch(myPublicProfileProvider);
                 return p.maybeWhen(
-                  data: (d) => WorkerDocumentsCard(
-                    documents: ((d['workerDocuments'] as List?) ?? const [])
+                  data: (d) {
+                    final cats = ((d['verifiedCategories'] as List?) ?? const [])
                         .whereType<Map>()
                         .map((m) => Map<String, dynamic>.from(m))
-                        .toList(),
-                    isSelf: true,
-                  ),
+                        .toList();
+                    final docs = ((d['workerDocuments'] as List?) ?? const [])
+                        .whereType<Map>()
+                        .map((m) => Map<String, dynamic>.from(m))
+                        .toList();
+                    return Column(
+                      children: [
+                        // Phase 293 — Belge ile doğrulanmış kategoriler rozeti
+                        VerifiedCategoryBadgesRow(categories: cats),
+                        WorkerDocumentsCard(documents: docs, isSelf: true),
+                      ],
+                    );
+                  },
                   orElse: () => const SizedBox.shrink(),
                 );
               }),
