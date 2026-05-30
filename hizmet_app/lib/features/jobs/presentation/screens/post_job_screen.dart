@@ -18,7 +18,6 @@ import '../../data/job_draft_storage.dart';
 import '../../widgets/job_wizard_progress.dart';
 import '../../widgets/post_job_step1.dart';
 import '../../widgets/post_job_step2.dart';
-import '../../widgets/post_job_step3.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class PostJobScreen extends ConsumerStatefulWidget {
@@ -367,7 +366,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          '${widget.kind == 'offer' ? 'Yeni Hizmet İlanı' : 'Yeni İlan'} • Adım ${_currentStep + 1}/3',
+          '${widget.kind == 'offer' ? 'Yeni Hizmet İlanı' : 'Yeni İlan'} • Adım ${_currentStep + 1}/2',
         ),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -435,14 +434,28 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                   ],
                 ),
               ),
-            JobWizardProgress(currentStep: _currentStep),
+            JobWizardProgress(
+              currentStep: _currentStep,
+              labels: const ['Kategori', 'Detaylar & Konum'],
+            ),
             Expanded(
               child: IndexedStack(
                 index: _currentStep,
                 children: [
                   PostJobStep1(body: _buildStep1Body()),
-                  PostJobStep2(body: _buildStep2Body()),
-                  PostJobStep3(body: _buildStep3Body()),
+                  // Phase 283 — eski Adım 2 + Adım 3 tek scroll'da birleştirildi.
+                  PostJobStep2(
+                    body: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildStep2Body(),
+                        const SizedBox(height: 24),
+                        const Divider(height: 1),
+                        const SizedBox(height: 16),
+                        _buildStep3Body(),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -454,7 +467,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   }
 
   Widget _buildStickyControls() {
-    final isLastStep = _currentStep == 2;
+    final isLastStep = _currentStep == 1;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
@@ -512,15 +525,16 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
   Future<void> _onStepContinue() async {
     if (_currentStep == 0) {
-      // Step 1: kategori (dueDate opsiyonel — esnek default)
+      // Adım 1: kategori (dueDate opsiyonel — esnek default)
       if (_selectedCategory == null) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(AppLocalizations.of(context).postJobCategoryRequired)));
         return;
       }
       setState(() => _currentStep++);
-    } else if (_currentStep == 1) {
-      // Step 2: title + description (budget opsiyonel)
+    } else {
+      // Phase 283 — Adım 2 (birleşik): eski Adım 2 + Adım 3 validasyonu peş
+      // peşe. title/desc, sonra foto/konum/zaman, en sonda upload + submit.
       if (_titleController.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(AppLocalizations.of(context).postJobTitleRequired)));
@@ -531,9 +545,6 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             SnackBar(content: Text(AppLocalizations.of(context).postJobDescriptionRequired)));
         return;
       }
-      setState(() => _currentStep++);
-    } else {
-      // Step 3: en az 1 fotoğraf zorunlu, sonra upload + submit
       if (_selectedPhotos.isEmpty && _uploadedPhotoUrls.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context).postJobPhotoRequired)),
