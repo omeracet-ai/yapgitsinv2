@@ -431,6 +431,29 @@ async function applyBootMigrations(): Promise<void> {
       }
     }
 
+    // Phase 287/297 — offers.tokenCost (admin-controlled flat/percent cost
+    // saklanır; withdraw refund tam bu miktarı iade eder). Prod synchronize=false
+    // olduğundan entity değişiklikleri burada manuel ALTER ile eşitlenir.
+    try {
+      const exists = await get(
+        `SELECT 1 AS found FROM pragma_table_info('offers') WHERE name = 'tokenCost'`,
+      );
+      if (!exists) {
+        try {
+          await run('ALTER TABLE offers ADD COLUMN tokenCost REAL');
+          logger.log('added offers.tokenCost');
+        } catch (e) {
+          logger.warn(
+            `add offers.tokenCost skipped: ${e instanceof Error ? e.message : String(e)}`,
+          );
+        }
+      }
+    } catch (e) {
+      logger.warn(
+        `detect offers.tokenCost failed: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+
     logger.log('all up-to-date');
   } finally {
     await new Promise<void>((resolve) => db.close(() => resolve()));
