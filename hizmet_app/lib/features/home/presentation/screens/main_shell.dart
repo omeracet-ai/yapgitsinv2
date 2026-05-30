@@ -404,7 +404,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                   'Yapgitsin',
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: heroTitle,
+                    color: AppColors.success,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     height: 1.0,
