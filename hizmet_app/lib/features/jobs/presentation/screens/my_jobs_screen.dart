@@ -205,6 +205,25 @@ extension _OfferFilterLabel on _OfferFilter {
       };
 }
 
+// Phase 304 — Tekliflerim arama + filtre. Sıralama opsiyonları.
+enum _OfferSort { newest, oldest, priceHigh, priceLow }
+
+extension _OfferSortLabel on _OfferSort {
+  String get label => switch (this) {
+        _OfferSort.newest => 'En Yeni',
+        _OfferSort.oldest => 'En Eski',
+        _OfferSort.priceHigh => 'Fiyat (Yüksek → Düşük)',
+        _OfferSort.priceLow => 'Fiyat (Düşük → Yüksek)',
+      };
+
+  IconData get icon => switch (this) {
+        _OfferSort.newest => Icons.arrow_downward,
+        _OfferSort.oldest => Icons.arrow_upward,
+        _OfferSort.priceHigh => Icons.trending_down,
+        _OfferSort.priceLow => Icons.trending_up,
+      };
+}
+
 class _WorkerTabContent extends ConsumerStatefulWidget {
   const _WorkerTabContent();
 
@@ -214,30 +233,135 @@ class _WorkerTabContent extends ConsumerStatefulWidget {
 
 class _WorkerTabContentState extends ConsumerState<_WorkerTabContent> {
   _OfferFilter _filter = _OfferFilter.all;
+  _OfferSort _sort = _OfferSort.newest;
+  bool _searchOpen = false;
+  String _search = '';
+  final TextEditingController _searchCtrl = TextEditingController();
 
-  List<Map<String, dynamic>> _apply(List<Map<String, dynamic>> offers) {
-    switch (_filter) {
-      case _OfferFilter.all:
-        return offers;
-      case _OfferFilter.pending:
-        // Phase 262 — countered (karşı teklif bekleyen) da burada görünsün.
-        return offers
-            .where((o) =>
-                o['status'] == 'pending' || o['status'] == 'countered')
-            .toList();
-      case _OfferFilter.accepted:
-        return offers.where((o) => o['status'] == 'accepted').toList();
-      case _OfferFilter.rejected:
-        return offers.where((o) => o['status'] == 'rejected').toList();
-    }
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
-  String _emptyMsg() => switch (_filter) {
-        _OfferFilter.all => 'Henüz teklif vermediniz.',
-        _OfferFilter.pending => 'Bekleyen teklifiniz yok.',
-        _OfferFilter.accepted => 'Kabul edilen teklifiniz yok.',
-        _OfferFilter.rejected => 'Reddedilen teklifiniz yok.',
-      };
+  double _priceOf(Map<String, dynamic> o) {
+    final priceMinor = (o['priceMinor'] as num?)?.toInt();
+    return (o['price'] as num?)?.toDouble() ??
+        (priceMinor != null ? priceMinor / 100 : 0.0);
+  }
+
+  List<Map<String, dynamic>> _apply(List<Map<String, dynamic>> offers) {
+    Iterable<Map<String, dynamic>> list = offers;
+    // Status filtresi
+    list = switch (_filter) {
+      _OfferFilter.all => list,
+      // Phase 262 — countered (karşı teklif bekleyen) da burada görünsün.
+      _OfferFilter.pending => list.where(
+          (o) => o['status'] == 'pending' || o['status'] == 'countered'),
+      _OfferFilter.accepted => list.where((o) => o['status'] == 'accepted'),
+      _OfferFilter.rejected => list.where((o) => o['status'] == 'rejected'),
+    };
+    // Arama (iş başlığı / kategori / lokasyon)
+    if (_search.trim().isNotEmpty) {
+      final q = _search.trim().toLowerCase();
+      list = list.where((o) {
+        final job = o['job'];
+        final m = job is Map ? Map<String, dynamic>.from(job) : null;
+        final t = (m?['title'] as String? ?? '').toLowerCase();
+        final c = (m?['category'] as String? ?? '').toLowerCase();
+        final l = (m?['location'] as String? ?? '').toLowerCase();
+        return t.contains(q) || c.contains(q) || l.contains(q);
+      });
+    }
+    final out = list.toList();
+    // Sıralama
+    out.sort((a, b) {
+      switch (_sort) {
+        case _OfferSort.newest:
+          return (b['createdAt'] as String? ?? '')
+              .compareTo(a['createdAt'] as String? ?? '');
+        case _OfferSort.oldest:
+          return (a['createdAt'] as String? ?? '')
+              .compareTo(b['createdAt'] as String? ?? '');
+        case _OfferSort.priceHigh:
+          return _priceOf(b).compareTo(_priceOf(a));
+        case _OfferSort.priceLow:
+          return _priceOf(a).compareTo(_priceOf(b));
+      }
+    });
+    return out;
+  }
+
+  String _emptyMsg() {
+    if (_search.trim().isNotEmpty) {
+      return '"$_search" için sonuç yok.';
+    }
+    return switch (_filter) {
+      _OfferFilter.all => 'Henüz teklif vermediniz.',
+      _OfferFilter.pending => 'Bekleyen teklifiniz yok.',
+      _OfferFilter.accepted => 'Kabul edilen teklifiniz yok.',
+      _OfferFilter.rejected => 'Reddedilen teklifiniz yok.',
+    };
+  }
+
+  Future<void> _openSortSheet() async {
+    final picked = await showModalBottomSheet<_OfferSort>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Sıralama',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 16)),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ..._OfferSort.values.map((s) => ListTile(
+                  leading: Icon(s.icon,
+                      color: s == _sort
+                          ? AppColors.primary
+                          : AppColors.textSecondary),
+                  title: Text(s.label,
+                      style: TextStyle(
+                          color: s == _sort
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
+                          fontWeight: s == _sort
+                              ? FontWeight.w600
+                              : FontWeight.w400)),
+                  trailing: s == _sort
+                      ? const Icon(Icons.check, color: AppColors.primary)
+                      : null,
+                  onTap: () => Navigator.pop(ctx, s),
+                )),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (picked != null && picked != _sort) {
+      setState(() => _sort = picked);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -275,6 +399,7 @@ class _WorkerTabContentState extends ConsumerState<_WorkerTabContent> {
           );
         }
         final filtered = _apply(offers);
+        final sortActive = _sort != _OfferSort.newest;
         return Column(
           children: [
             Container(
@@ -283,6 +408,7 @@ class _WorkerTabContentState extends ConsumerState<_WorkerTabContent> {
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
+                  // Kategori (status) dropdown
                   Expanded(
                     child: PopupMenuButton<_OfferFilter>(
                       initialValue: _filter,
@@ -317,8 +443,8 @@ class _WorkerTabContentState extends ConsumerState<_WorkerTabContent> {
                           color: AppColors.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                              color: AppColors.primary
-                                  .withValues(alpha: 0.3)),
+                              color:
+                                  AppColors.primary.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
@@ -345,9 +471,71 @@ class _WorkerTabContentState extends ConsumerState<_WorkerTabContent> {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  // Arama butonu
+                  _IconChipButton(
+                    icon: _searchOpen ? Icons.close : Icons.search,
+                    active: _searchOpen || _search.isNotEmpty,
+                    tooltip: 'Ara',
+                    onTap: () => setState(() {
+                      _searchOpen = !_searchOpen;
+                      if (!_searchOpen) {
+                        _search = '';
+                        _searchCtrl.clear();
+                      }
+                    }),
+                  ),
+                  const SizedBox(width: 6),
+                  // Filtrele (sıralama) butonu
+                  _IconChipButton(
+                    icon: Icons.tune,
+                    active: sortActive,
+                    tooltip: 'Filtrele',
+                    onTap: _openSortSheet,
+                  ),
                 ],
               ),
             ),
+            if (_searchOpen)
+              Container(
+                color: AppColors.surface,
+                padding:
+                    const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                child: TextField(
+                  controller: _searchCtrl,
+                  autofocus: true,
+                  onChanged: (v) => setState(() => _search = v),
+                  decoration: InputDecoration(
+                    hintText: 'İş başlığı, kategori veya konum…',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    suffixIcon: _search.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () => setState(() {
+                              _search = '';
+                              _searchCtrl.clear();
+                            }),
+                          )
+                        : null,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                          color: AppColors.primary, width: 1.5),
+                    ),
+                  ),
+                ),
+              ),
             Expanded(
               child: _OfferList(
                 offers: filtered,
@@ -753,6 +941,47 @@ class _CustomerJobCard extends ConsumerWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// Phase 304 — Tekliflerim header'daki kare ikon butonu (arama / filtre).
+class _IconChipButton extends StatelessWidget {
+  final IconData icon;
+  final bool active;
+  final String tooltip;
+  final VoidCallback onTap;
+  const _IconChipButton({
+    required this.icon,
+    required this.active,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? AppColors.primary : AppColors.textSecondary;
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: active
+                ? AppColors.primary.withValues(alpha: 0.08)
+                : AppColors.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+                color: active
+                    ? AppColors.primary.withValues(alpha: 0.3)
+                    : AppColors.border),
+          ),
+          child: Icon(icon, size: 20, color: color),
         ),
       ),
     );
