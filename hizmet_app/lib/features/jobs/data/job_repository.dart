@@ -37,7 +37,8 @@ class JobRepository {
       String? status,
       String? kind,
       double? lat,
-      double? lng}) async {
+      double? lng,
+      double? radiusKm}) async {
     try {
       final response = await _dio.get('/jobs', queryParameters: {
         if (category != null) 'category': category,
@@ -47,6 +48,10 @@ class JobRepository {
         // Proximity sıralaması (backend featured→yakın→yeni). Konum varsa gönder.
         if (lat != null && lng != null) 'lat': lat,
         if (lat != null && lng != null) 'lng': lng,
+        // Phase 301 — Mesafe filtresi: radius+lat/lng beraber gönderilince
+        // server-side Haversine ile sınırlanır.
+        if (radiusKm != null && lat != null && lng != null)
+          'radiusKm': radiusKm,
       });
       return _extractJobList(response.data);
     } on DioException catch (e) {

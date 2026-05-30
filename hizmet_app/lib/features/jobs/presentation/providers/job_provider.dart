@@ -330,7 +330,9 @@ class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
           status: 'open',
           kind: _kind,
           lat: _lat,
-          lng: _lng);
+          lng: _lng,
+          // Phase 301 — Mesafe filtresi server-side Haversine ile uygulanır.
+          radiusKm: _filter.maxRadiusKm);
       _allJobs = jobsData.map((m) => Job.fromMap(m)).toList();
       state = AsyncValue.data(_applyFilter(_allJobs));
     } catch (e, st) {
@@ -345,9 +347,15 @@ class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
     await fetchJobs(category: _currentCategory, q: q.isEmpty ? null : q);
   }
 
-  /// Filter güncellendiğinde mevcut _allJobs üzerinden yeniden hesapla
+  /// Filter güncellendiğinde mevcut _allJobs üzerinden yeniden hesapla.
+  /// Phase 301 — Mesafe filtresi değişirse backend tekrar çağrılır.
   void applyFilter(JobFilter filter) {
+    final radiusChanged = _filter.maxRadiusKm != filter.maxRadiusKm;
     _filter = filter;
+    if (radiusChanged) {
+      fetchJobs(category: _currentCategory);
+      return;
+    }
     if (_allJobs.isEmpty) return;
     state = AsyncValue.data(_applyFilter(_allJobs));
   }

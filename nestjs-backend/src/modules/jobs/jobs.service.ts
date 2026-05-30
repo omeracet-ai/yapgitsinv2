@@ -340,6 +340,7 @@ export class JobsService {
     kind?: JobKind;
     lat?: number;
     lng?: number;
+    radiusKm?: number;
   }) {
     const limit = filters?.limit ?? 20;
     const page = filters?.page ?? 1;
@@ -411,6 +412,26 @@ export class JobsService {
             'ASC',
           )
           .setParameters({ ulat: filters.lat, ulng: filters.lng });
+
+        // Phase 301 — Mesafe filtresi: radiusKm verildiyse Haversine ile
+        // sınırla. Koordinatsız ilanlar bu durumda gizlenir (filtre konumla
+        // anlamlı). Featured üst sıra korunur ama radius'a uyması şart.
+        if (
+          filters?.radiusKm != null &&
+          !Number.isNaN(filters.radiusKm) &&
+          filters.radiusKm > 0
+        ) {
+          query.andWhere(
+            `job.latitude IS NOT NULL
+             AND job.longitude IS NOT NULL
+             AND (6371 * acos(
+              cos(radians(:ulat)) * cos(radians(job.latitude)) *
+              cos(radians(job.longitude) - radians(:ulng)) +
+              sin(radians(:ulat)) * sin(radians(job.latitude))
+            )) <= :rkm`,
+            { rkm: filters.radiusKm },
+          );
+        }
       }
 
       query
