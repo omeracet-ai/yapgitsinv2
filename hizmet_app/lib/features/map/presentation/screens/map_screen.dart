@@ -94,19 +94,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final state = ref.watch(mapProvider);
     final notifier = ref.read(mapProvider.notifier);
 
-    // Phase 292 — Worker pin'leri yalnızca "hizmet ilanı veren" hesaplar
-    // (workerCategories non-empty) görür. Normal müşteri için harita yalnızca
-    // iş ilanlarını gösterir.
-    // Phase 292b — Müşteri, /ilan-basarili → "Hızlı Hizmet Verenlere Ulaş"
-    // CTA'sından girdiyse override aktif kalır; Harita sekmesinden ayrılınca
-    // (aşağıdaki ref.listen ile) sıfırlanır.
-    final auth = ref.watch(authStateProvider);
-    final isWorker = auth is AuthAuthenticated &&
-        ((auth.user['workerCategories'] as List?)?.isNotEmpty ?? false);
+    // Phase 292c — Worker pin'leri hiçbir kullanıcı tipi için varsayılan
+    // değildir. Yalnızca "Hızlı Hizmet Verenlere Ulaş" CTA'sından gelen
+    // geçici override aktifken render edilirler; Harita sekmesinden ayrılınca
+    // override otomatik sıfırlanır.
     final showWorkersOverride = ref.watch(mapShowWorkersOverrideProvider);
-    final showWorkers = isWorker || showWorkersOverride;
+    final showWorkers = showWorkersOverride;
 
-    // Phase 292b — Harita sekmesinden (index 2) ayrılınca override'ı tüket.
+    // Harita sekmesinden (index 2) ayrılınca override'ı tüket.
     ref.listen<int>(selectedTabProvider, (prev, next) {
       if (prev == 2 && next != 2 && showWorkersOverride) {
         ref.read(mapShowWorkersOverrideProvider.notifier).state = false;
