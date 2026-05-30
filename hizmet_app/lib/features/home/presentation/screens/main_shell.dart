@@ -24,7 +24,7 @@ import '../../../providers/data/provider_repository.dart';
 import '../../../providers/presentation/screens/provider_list_screen.dart';
 import '../../../providers/presentation/screens/provider_profile_screen.dart';
 import 'hizmet_al_screen.dart';
-import '../../../map/presentation/screens/map_screen.dart';
+// Phase 297 — MapScreen artık ana tab değil; Yapgitsin header'ından açılır.
 import '../../../notifications/data/unread_count_provider.dart';
 import '../../../../core/widgets/category_card.dart';
 import '../../../../core/widgets/notification_bell.dart';
