@@ -70,6 +70,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   bool _saveAsTemplate = false;
 
   String? _selectedCategory;
+  // Phase 289 — Kullanıcı kategoriyi dropdown'dan manuel seçtiyse başlık
+  // değişiminde otomatik eşleyici müdahale etmesin (override koruması).
+  bool _categoryUserOverride = false;
+  String _lastAutoMatchedTitle = '';
   int _currentStep = 0;
   double? _lat;
   double? _lng;
@@ -103,6 +107,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   void initState() {
     super.initState();
     _titleController.addListener(_scheduleDraftSave);
+    _titleController.addListener(_autoMatchCategory);
     _descController.addListener(_scheduleDraftSave);
     _locationController.addListener(_scheduleDraftSave);
     _budgetController.addListener(_scheduleDraftSave);
@@ -297,6 +302,75 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     _draftDebounce?.cancel();
     _draftDebounce = Timer(const Duration(seconds: 5), _persistDraftNow);
   }
+
+  /// Phase 289 — başlık her değiştiğinde kategorileri başlığa göre eşle.
+  /// Skor: name match +10, name kelimesi +3, subService eşleşmesi +5.
+  /// Kullanıcı dropdown'dan elle seçtiyse override flag ile devre dışı kalır.
+  /// Boş başlığa düşülürse seçim/override sıfırlanır → tekrar canlı eşleme.
+  void _autoMatchCategory() {
+    final raw = _titleController.text.trim();
+    if (raw.isEmpty) {
+      if (_categoryUserOverride || _lastAutoMatchedTitle.isNotEmpty) {
+        setState(() {
+          _categoryUserOverride = false;
+          _lastAutoMatchedTitle = '';
+        });
+      }
+      return;
+    }
+    if (_categoryUserOverride) return;
+
+    final title = _foldTr(raw.toLowerCase());
+    if (title.length < 3 || title == _lastAutoMatchedTitle) return;
+    _lastAutoMatchedTitle = title;
+
+    final cats = ref.read(categoriesProvider).valueOrNull;
+    if (cats == null || cats.isEmpty) return;
+
+    // allowedCategories ile sınırlı bir akıştaysak (özel ilan) o setle eşle.
+    final allowed = widget.allowedCategories;
+    final filtered = (allowed != null && allowed.isNotEmpty)
+        ? cats.where((c) {
+            final n = c['name'] as String? ?? '';
+            return allowed.contains(n);
+          }).toList()
+        : cats;
+
+    String? best;
+    int bestScore = 0;
+    for (final c in filtered) {
+      final name = _foldTr((c['name'] as String? ?? '').toLowerCase());
+      if (name.isEmpty) continue;
+      var score = 0;
+      if (title.contains(name)) score += 10;
+      for (final w in name.split(RegExp(r'[\s&\-/]+'))) {
+        if (w.length > 2 && title.contains(w)) score += 3;
+      }
+      final subs = (c['subServices'] as List?) ?? const [];
+      for (final s in subs) {
+        final sub = _foldTr(s.toString().toLowerCase());
+        if (sub.length > 2 && title.contains(sub)) score += 5;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        best = c['name'] as String?;
+      }
+    }
+
+    if (best != null && bestScore >= 3 && best != _selectedCategory) {
+      setState(() => _selectedCategory = best);
+    }
+  }
+
+  /// Phase 289 — Türkçe karakter folding (ç→c, ğ→g, ı/İ→i, ö→o, ş→s, ü→u).
+  String _foldTr(String s) => s
+      .replaceAll('ç', 'c')
+      .replaceAll('ğ', 'g')
+      .replaceAll('ı', 'i')
+      .replaceAll('İ', 'i')
+      .replaceAll('ö', 'o')
+      .replaceAll('ş', 's')
+      .replaceAll('ü', 'u');
 
   Future<void> _persistDraftNow() async {
     final draft = _currentDraft();
@@ -702,7 +776,12 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               style: TextStyle(color: AppColors.textPrimary),
               items: items,
               onChanged: (v) {
-                setState(() => _selectedCategory = v);
+                // Phase 289 — manuel seçim: auto-match artık başlık değişiminde
+                // bu seçimi ezmeyecek.
+                setState(() {
+                  _selectedCategory = v;
+                  _categoryUserOverride = true;
+                });
                 _scheduleDraftSave();
               },
               validator: (v) =>
