@@ -979,14 +979,14 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         v == null ? '—' : '${v.toStringAsFixed(0)} ₺';
 
     // Fiyat görünürlüğü: sadece ilan sahibi VEYA teklif sahibi görebilir.
-    // Phase 265d — logout user'lar için fiyat AÇIK (üye olmaya cazip kıl);
-    // ama isim/mesaj "üye olun" maskesi altında.
+    // Phase 265d — logout user'larda isim/mesaj "üye olun" maskesi altında.
+    // Fix: logout user'da fiyat da gizli (önceden `!canMakeOffer` logout'u
+    // owner gibi gösterip fiyatı sızdırıyordu).
     final isLoggedIn     = currentUserId != null;
-    final isOwnerView    = !canMakeOffer;
+    final isOwnerView    = isLoggedIn && !canMakeOffer;
     final isOfferOwner   = isLoggedIn && currentUserId == offerUserId;
     final canSeePrice    = isOwnerView || isOfferOwner;
     final isCustomerView = isLoggedIn && isOwnerView;
-    // Logout maskesi: isim ve mesaj gizlenir, fiyat açık.
     final maskForLogout  = !isLoggedIn;
 
     final Map<String, List<Color>> statusColors = {

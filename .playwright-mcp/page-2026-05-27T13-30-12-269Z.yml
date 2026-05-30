@@ -1,0 +1,126 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - text: 🛠️ Yapgitsin
+        - paragraph [ref=e6]: Yönetim Paneli
+      - navigation [ref=e7]:
+        - link "📊 Dashboard" [ref=e8] [cursor=pointer]:
+          - /url: /dashboard
+          - generic [ref=e9]: 📊
+          - text: Dashboard
+        - link "📈 Realtime Analytics" [ref=e10] [cursor=pointer]:
+          - /url: /realtime-analytics
+          - generic [ref=e11]: 📈
+          - text: Realtime Analytics
+        - link "⚡ Canlı İş Gücü" [ref=e12] [cursor=pointer]:
+          - /url: /workforce
+          - generic [ref=e13]: ⚡
+          - text: Canlı İş Gücü
+        - link "📋 Son İlanlar" [ref=e14] [cursor=pointer]:
+          - /url: /jobs
+          - generic [ref=e15]: 📋
+          - text: Son İlanlar
+        - link "🏷️ Kategoriler" [ref=e16] [cursor=pointer]:
+          - /url: /categories
+          - generic [ref=e17]: 🏷️
+          - text: Kategoriler
+        - link "👷 Sağlayıcılar" [ref=e18] [cursor=pointer]:
+          - /url: /providers
+          - generic [ref=e19]: 👷
+          - text: Sağlayıcılar
+        - link "👥 Kullanıcılar" [ref=e20] [cursor=pointer]:
+          - /url: /users
+          - generic [ref=e21]: 👥
+          - text: Kullanıcılar
+        - link "💰 Gelir" [ref=e22] [cursor=pointer]:
+          - /url: /revenue
+          - generic [ref=e23]: 💰
+          - text: Gelir
+        - link "₿ USDT Yatırım" [ref=e24] [cursor=pointer]:
+          - /url: /crypto-deposits
+          - generic [ref=e25]: ₿
+          - text: USDT Yatırım
+        - link "🎯 Onboarding" [ref=e26] [cursor=pointer]:
+          - /url: /onboarding-mgmt
+          - generic [ref=e27]: 🎯
+          - text: Onboarding
+        - link "🎟️ Promo Kodlar" [ref=e28] [cursor=pointer]:
+          - /url: /promo-codes
+          - generic [ref=e29]: 🎟️
+          - text: Promo Kodlar
+        - link "🛡️ Moderasyon" [ref=e30] [cursor=pointer]:
+          - /url: /moderation
+          - generic [ref=e31]: 🛡️
+          - text: Moderasyon
+        - link "🚩 Şikayetler" [ref=e32] [cursor=pointer]:
+          - /url: /reports
+          - generic [ref=e33]: 🚩
+          - text: Şikayetler
+        - link "⚖️ Anlaşmazlıklar" [ref=e34] [cursor=pointer]:
+          - /url: /disputes
+          - generic [ref=e35]: ⚖️
+          - text: Anlaşmazlıklar
+        - link "📜 Sertifikalar" [ref=e36] [cursor=pointer]:
+          - /url: /certifications
+          - generic [ref=e37]: 📜
+          - text: Sertifikalar
+        - link "📜 Denetim Kaydı" [ref=e38] [cursor=pointer]:
+          - /url: /audit-log
+          - generic [ref=e39]: 📜
+          - text: Denetim Kaydı
+        - link "📢 Duyuru Gönder" [ref=e40] [cursor=pointer]:
+          - /url: /broadcast
+          - generic [ref=e41]: 📢
+          - text: Duyuru Gönder
+        - link "🗺️ Harita Yönetimi" [ref=e42] [cursor=pointer]:
+          - /url: /harita
+          - generic [ref=e43]: 🗺️
+          - text: Harita Yönetimi
+        - link "🩺 Sistem Durumu" [ref=e44] [cursor=pointer]:
+          - /url: /status
+          - generic [ref=e45]: 🩺
+          - text: Sistem Durumu
+        - link "🔐 Escrow Ayarları" [ref=e46] [cursor=pointer]:
+          - /url: /escrow-settings
+          - generic [ref=e47]: 🔐
+          - text: Escrow Ayarları
+        - link "📱 📦 APK Yönetim Merkezi" [ref=e48] [cursor=pointer]:
+          - /url: /apk-icerik
+          - generic [ref=e49]: 📱
+          - text: 📦 APK Yönetim Merkezi
+        - link "📱 🧩 APK Builder" [ref=e50] [cursor=pointer]:
+          - /url: /apk-builder
+          - generic [ref=e51]: 📱
+          - text: 🧩 APK Builder
+        - link "⚙️ Ayarlar" [ref=e52] [cursor=pointer]:
+          - /url: /ayarlar
+          - generic [ref=e53]: ⚙️
+          - text: Ayarlar
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - paragraph [ref=e56]: Admin
+          - paragraph [ref=e57]: admin@yapgitsin.tr
+        - button "🚪 Çıkış Yap" [ref=e58]:
+          - generic [ref=e59]: 🚪
+          - text: Çıkış Yap
+    - generic [ref=e60]:
+      - banner [ref=e61]:
+        - heading "Panel" [level=1] [ref=e62]
+        - button "🔎 Ara veya komut çalıştır… Ctrl+K" [ref=e63]:
+          - generic [ref=e64]: 🔎
+          - generic [ref=e65]: Ara veya komut çalıştır…
+          - generic [ref=e66]: Ctrl+K
+        - generic [ref=e67]:
+          - generic "Aktif sağlayıcılar" [ref=e68]: —
+          - button "AI Asistan" [ref=e72]: 🤖
+          - generic [ref=e73]:
+            - generic [ref=e74]: 🌐
+            - button "tr" [pressed] [ref=e75]
+            - button "en" [ref=e76]
+          - button "Bildirimler" [ref=e79]:
+            - img [ref=e80]
+          - generic [ref=e83]: Admin · admin
+      - main [ref=e84]:
+        - generic [ref=e85]: → APK Yönetim Merkezi'ne yönlendiriliyor…
