@@ -110,6 +110,11 @@ class Job {
   /// Phase 265e — listeden gelen public root-only offer sayısı.
   /// Logout user da bu sayıyı görür; per-card /offers fetch gerekmez.
   final int offerCount;
+  // Phase 296 — due date / time / schedule flexibility (Yapgitsin tab card UI).
+  final String? dueDate; // YYYY-MM-DD
+  final String? dueTime; // HH:MM
+  final bool dueAnyTime;
+  final String? scheduleFlexibility; // 'flexible' | 'specific' | 'urgent'
 
   Job({
     required this.id,
@@ -133,6 +138,10 @@ class Job {
     this.kind = JobKind.request,
     this.poster,
     this.offerCount = 0,
+    this.dueDate,
+    this.dueTime,
+    this.dueAnyTime = true,
+    this.scheduleFlexibility,
   });
 
   factory Job.fromMap(Map<String, dynamic> map) {
@@ -169,6 +178,10 @@ class Job {
       kind: (map['kind'] as String?) ?? JobKind.request,
       poster: JobPoster.fromMap(map['poster']),
       offerCount: (map['offerCount'] as num?)?.toInt() ?? 0,
+      dueDate: map['dueDate'] as String?,
+      dueTime: map['dueTime'] as String?,
+      dueAnyTime: map['dueAnyTime'] == true,
+      scheduleFlexibility: map['scheduleFlexibility'] as String?,
     );
   }
 

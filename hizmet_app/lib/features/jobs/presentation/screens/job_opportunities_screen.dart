@@ -548,9 +548,23 @@ class _OpportunityCard extends ConsumerWidget {
         ? _timeAgo(job.createdAt!)
         : '';
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: () => Navigator.push(context, MaterialPageRoute(
+    // Phase 296 — Yeni kart yapısı (kullanıcı isteği):
+    //   Sol kolon (Expanded):
+    //     • Başlık (büyük)
+    //     • 📍 Konum  •  ⏰ tarih/saat (esnek/acil/belirli ölçek)
+    //     • "İlanı Aç" düğmesi
+    //   Sağ kolon:
+    //     • Bütçe pill (başlık hizasında)
+    //     • Yuvarlak 3D poster avatar (foto yoksa ad ilk harfi)
+    final scheduleLabel = _scheduleLabel(job);
+    final posterName = job.poster?.fullName.trim() ?? '';
+    final posterImg = job.poster?.profileImageUrl;
+    final initials = posterName.isNotEmpty
+        ? posterName.trim().split(RegExp(r'\s+')).first[0].toUpperCase()
+        : '?';
+
+    void openJob() {
+      Navigator.push(context, MaterialPageRoute(
         builder: (_) => JobDetailScreen(
           id: job.id,
           title: job.title,
@@ -565,99 +579,76 @@ class _OpportunityCard extends ConsumerWidget {
           customerId: job.customerId,
           photos: job.photos ?? [],
         ),
-      )),
+      ));
+    }
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: openJob,
       child: Container(
-        // Phase 265c — 3D sıkılaştırılmış kart efekti (theme-aware).
-        decoration: card3d(context, radius: 12, elevation: 1.0),
-        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+        decoration: card3d(context, radius: 14, elevation: 1.1),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Kategori ikonu kaldırıldı (2026-05-30, kullanıcı isteği).
+            // ── SOL: başlık + konum + zaman + "İlanı Aç" butonu ──
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(job.title,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                color: AppColors.textPrimary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
-                      ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(budgetStr,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 10)),
-                      ),
-                    ],
+                  Text(
+                    job.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(job.description ?? '',
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textSecondary,
-                          height: 1.3),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Row(children: [
                     Icon(Icons.location_on_rounded,
-                        size: 11, color: AppColors.textHint),
-                    const SizedBox(width: 2),
+                        size: 13, color: AppColors.textSecondary),
+                    const SizedBox(width: 3),
                     Expanded(
-                      child: Text(job.location,
-                          style: TextStyle(
-                              fontSize: 10, color: AppColors.textHint),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                    ),
-                    const SizedBox(width: 4),
-                    Text('· $postedAgo',
+                      child: Text(
+                        job.location,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                            fontSize: 10, color: AppColors.textHint)),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: offerCount > 0
-                            ? AppColors.primary.withValues(alpha: 0.12)
-                            : AppColors.border,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.people_rounded,
-                              size: 10,
-                              color: offerCount > 0
-                                  ? AppColors.primary
-                                  : AppColors.textHint),
-                          const SizedBox(width: 2),
-                          Text('$offerCount',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: offerCount > 0
-                                      ? AppColors.primary
-                                      : AppColors.textHint,
-                                  fontWeight: FontWeight.w700)),
-                        ],
+                            fontSize: 11,
+                            color: AppColors.textSecondary),
                       ),
                     ),
+                  ]),
+                  const SizedBox(height: 3),
+                  Row(children: [
+                    Icon(scheduleLabel.icon,
+                        size: 13, color: scheduleLabel.color),
+                    const SizedBox(width: 3),
+                    Expanded(
+                      child: Text(
+                        scheduleLabel.text,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: scheduleLabel.color,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    if (offerCount > 0) ...[
+                      const SizedBox(width: 6),
+                      Icon(Icons.people_rounded,
+                          size: 11, color: AppColors.primary),
+                      const SizedBox(width: 2),
+                      Text('$offerCount',
+                          style: TextStyle(
+                              fontSize: 10,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w700)),
+                    ],
                     if (isOwner) ...[
                       const SizedBox(width: 6),
                       Container(
@@ -675,12 +666,105 @@ class _OpportunityCard extends ConsumerWidget {
                       ),
                     ],
                   ]),
+                  const SizedBox(height: 8),
+                  // "İlanı Aç" butonu
+                  SizedBox(
+                    height: 28,
+                    child: ElevatedButton.icon(
+                      onPressed: openJob,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        textStyle: const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w700),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 14),
+                      label: const Text('İlanı Aç'),
+                    ),
+                  ),
                 ],
               ),
+            ),
+            const SizedBox(width: 10),
+            // ── SAĞ: bütçe pill + 3D yuvarlak poster avatar ──
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primary.withValues(alpha: 0.78),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color:
+                            AppColors.primary.withValues(alpha: 0.35),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    budgetStr,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // 3D yuvarlak avatar — foto yoksa ad ilk harfi
+                _Poster3DAvatar(imageUrl: posterImg, initials: initials),
+              ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  _ScheduleVisual _scheduleLabel(Job j) {
+    // Phase 296 — schedule flexibility + dueDate/dueTime'a göre etiket üret.
+    final flex = j.scheduleFlexibility;
+    if (flex == 'urgent') {
+      return _ScheduleVisual(
+        icon: Icons.bolt_rounded,
+        text: 'Acil — bugün',
+        color: AppColors.error,
+      );
+    }
+    if (flex == 'specific' && j.dueDate != null) {
+      final d = j.dueDate!;
+      final parts = d.split('-');
+      final fmt = parts.length == 3
+          ? '${parts[2]}.${parts[1]}.${parts[0]}'
+          : d;
+      final timeStr = (j.dueAnyTime || j.dueTime == null) ? '' : ' • ${j.dueTime}';
+      return _ScheduleVisual(
+        icon: Icons.event_rounded,
+        text: '$fmt$timeStr',
+        color: AppColors.primary,
+      );
+    }
+    // flexible / default
+    return _ScheduleVisual(
+      icon: Icons.event_available_rounded,
+      text: 'Esnek tarih',
+      color: AppColors.textSecondary,
     );
   }
 
@@ -694,5 +778,86 @@ class _OpportunityCard extends ConsumerWidget {
     } catch (_) {
       return '';
     }
+  }
+}
+
+/// Phase 296 — Schedule görsel etiketi.
+class _ScheduleVisual {
+  final IconData icon;
+  final String text;
+  final Color color;
+  const _ScheduleVisual({
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
+}
+
+/// Phase 296 — Yuvarlak 3D ilan sahibi avatarı.
+///
+/// `imageUrl` doluysa CircleAvatar, boşsa `initials` (ad ilk harfi) gösterir.
+/// Çift katmanlı highlight + drop shadow ile 3D ışıma efekti verir.
+class _Poster3DAvatar extends StatelessWidget {
+  final String? imageUrl;
+  final String initials;
+  const _Poster3DAvatar({required this.imageUrl, required this.initials});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withValues(alpha: 0.95),
+            AppColors.primary.withValues(alpha: 0.55),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.45),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.18),
+            blurRadius: 4,
+            offset: const Offset(-1, -2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(2.2),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.surface,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: imageUrl != null && imageUrl!.isNotEmpty
+            ? Image.network(
+                imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _initialsFallback(),
+              )
+            : _initialsFallback(),
+      ),
+    );
+  }
+
+  Widget _initialsFallback() {
+    return Center(
+      child: Text(
+        initials,
+        style: TextStyle(
+          color: AppColors.primary,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
+      ),
+    );
   }
 }
