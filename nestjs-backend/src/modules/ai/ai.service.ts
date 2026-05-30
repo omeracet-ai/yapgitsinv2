@@ -3,32 +3,18 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import Anthropic from '@anthropic-ai/sdk';
+import { GeminiClient, GeminiHistoryTurn } from './gemini.client';
 
-// Phase 259: named model constant.
-// MODEL_QUALITY → user-facing creative/quality prose still on Anthropic
-// (review summaries, SEO copy, support agent). Keep on Opus.
-// NOTE: the ilan-ver helpers (generateJobDescription, runJobAssistant,
-// runPricingAdvisor) were migrated to Gemini 2.5 Flash — see geminiGenerate().
-const MODEL_QUALITY = 'claude-opus-4-7';
-
+// Phase 281: full migration off Anthropic — every AI surface here uses
+// Gemini 2.5 Flash. Opus stays reserved for Müdür orchestration (outside the app).
 const SYSTEM_PROMPT = `You are a helpful AI assistant for a service marketplace platform called Hizmet.
 This platform connects customers with service providers for jobs like home repairs, cleaning, tutoring, and more.
 Be concise, practical, and focused on helping users of this marketplace.`;
 
-// Gemini 2.5 Flash — used for the public /ai/chat endpoint (deliberate cost
-// choice: high-volume conversational support is ~10x+ cheaper on Gemini Flash).
-// All other (agent / SEO / structured) endpoints use Anthropic. Requires
-// GEMINI_API_KEY (configured in this project). Do NOT migrate chat() to Anthropic.
 const GEMINI_SYSTEM_PROMPT = `Sen Yapgitsin marketplace platformunun yardımcı asistanısın.
 Türkçe yanıt ver (kullanıcı İngilizce yazarsa İngilizce yanıt ver). Kısa, net ve pratik ol.
 Platform: müşteriler iş ilanı açar, ustalar teklif verir; ödeme platform dışı (escrow opsiyonel),
 her hesap 100 kredi ile başlar, teklif vermek 5 kredi harcar.`;
-
-const GEMINI_MODEL = 'gemini-2.5-flash';
-const GEMINI_MAX_INPUT_CHARS = 8000; // ~2k tokens
-const GEMINI_MAX_OUTPUT_TOKENS = 1024;
 
 const CATEGORIES = [
   {
@@ -62,17 +48,8 @@ const FAQ: Record<string, string> = {
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
-  private readonly client: Anthropic;
 
-  constructor(private readonly configService: ConfigService) {
-    // Phase 259: reliability — 30s per-request timeout + 2 automatic retries
-    // (the SDK retries on 408/409/429/5xx with exponential backoff).
-    this.client = new Anthropic({
-      apiKey: this.configService.get<string>('ANTHROPIC_API_KEY'),
-      timeout: 30_000,
-      maxRetries: 2,
-    });
-  }
+  constructor(private readonly gemini: GeminiClient) {}
 
   // ─── Existing endpoints ───────────────────────────────────────────────────
 
@@ -82,17 +59,16 @@ export class AiService {
     location?: string,
   ): Promise<string> {
     try {
-      // Migrated to Gemini 2.5 Flash (prod has GEMINI_API_KEY, not ANTHROPIC).
-      return await this.geminiGenerate(
-        SYSTEM_PROMPT,
-        `Write a clear, professional job description for the following service listing.
+      return await this.gemini.generate({
+        systemText: SYSTEM_PROMPT,
+        userText: `Write a clear, professional job description for the following service listing.
 Respond in Turkish.
 Title: ${title}
 Category: ${category}${location ? `\nLocation: ${location}` : ''}
 
 Include: what the job entails, what skills/experience to look for, and what the customer expects. Keep it under 150 words. Return only the description text, no preamble.`,
-        1024,
-      );
+        maxOutputTokens: 1024,
+      });
     } catch (err) {
       this.logger.error(
         `generateJobDescription failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -105,135 +81,26 @@ Include: what the job entails, what skills/experience to look for, and what the 
   }
 
   /**
-   * Public chat endpoint — uses Google Gemini 2.5 Flash (deliberate cost
-   * choice for high-volume conversational support; all other AI endpoints use
-   * Anthropic). Input capped at ~2k tokens, output at 1k tokens.
-   * Requires env: GEMINI_API_KEY (configured in this project / Plesk).
+   * Public chat endpoint — Gemini 2.5 Flash. Multi-turn history capped at 8 turns.
    */
   async chat(
     message: string,
-    history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+    history: GeminiHistoryTurn[] = [],
   ): Promise<string> {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
-    if (!apiKey) {
-      throw new InternalServerErrorException('GEMINI_API_KEY not configured');
-    }
-
-    const trimmedMessage = (message ?? '').slice(0, GEMINI_MAX_INPUT_CHARS);
-    // Cap history tail so total input stays bounded.
-    const trimmedHistory = (history ?? []).slice(-8).map((h) => ({
-      role: h.role,
-      content: (h.content ?? '').slice(0, 2000),
-    }));
-
-    const contents = [
-      ...trimmedHistory.map((h) => ({
-        role: h.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: h.content }],
-      })),
-      { role: 'user', parts: [{ text: trimmedMessage }] },
-    ];
-
-    const url =
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}` +
-      `:generateContent?key=${encodeURIComponent(apiKey)}`;
-
     try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [{ text: GEMINI_SYSTEM_PROMPT }],
-          },
-          contents,
-          generationConfig: {
-            maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS,
-            temperature: 0.7,
-          },
-        }),
+      return await this.gemini.generate({
+        systemText: GEMINI_SYSTEM_PROMPT,
+        userText: message ?? '',
+        history,
+        temperature: 0.7,
       });
-
-      if (!res.ok) {
-        throw new Error(`Gemini HTTP ${res.status}`);
-      }
-      const data = (await res.json()) as {
-        candidates?: Array<{
-          content?: { parts?: Array<{ text?: string }> };
-        }>;
-      };
-      const parts = data.candidates?.[0]?.content?.parts ?? [];
-      return parts
-        .map((p) => p.text ?? '')
-        .join('')
-        .trim();
     } catch (err) {
-      // Phase 259 — preserve original error context instead of silent swallow.
       this.logger.error(
-        `chat (gemini) request failed: ${err instanceof Error ? err.message : String(err)}`,
+        `chat failed: ${err instanceof Error ? err.message : String(err)}`,
         err instanceof Error ? err.stack : undefined,
       );
       throw new InternalServerErrorException('AI chat request failed');
     }
-  }
-
-  /**
-   * Shared Gemini 2.5 Flash single-shot text generation (no history).
-   * Used by the ilan-ver AI helpers (job description / job assistant) — these
-   * were migrated off Anthropic so they work on prod where only GEMINI_API_KEY
-   * is configured. Same request shape as chat(). Caller handles errors.
-   */
-  private async geminiGenerate(
-    systemText: string,
-    userText: string,
-    maxOutputTokens = GEMINI_MAX_OUTPUT_TOKENS,
-    temperature = 0.7,
-  ): Promise<string> {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
-    if (!apiKey) {
-      throw new InternalServerErrorException('GEMINI_API_KEY not configured');
-    }
-
-    const url =
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}` +
-      `:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemText }] },
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: userText.slice(0, GEMINI_MAX_INPUT_CHARS) }],
-          },
-        ],
-        generationConfig: { maxOutputTokens, temperature },
-      }),
-    });
-
-    if (!res.ok) {
-      throw new Error(`Gemini HTTP ${res.status}`);
-    }
-    const data = (await res.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-    };
-    const parts = data.candidates?.[0]?.content?.parts ?? [];
-    return parts
-      .map((p) => p.text ?? '')
-      .join('')
-      .trim();
-  }
-
-  /** Tolerant JSON extraction — strips ```json fences and grabs the first object. */
-  private parseJsonLoose(raw: string): Record<string, unknown> {
-    const cleaned = raw
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim();
-    const match = cleaned.match(/\{[\s\S]*\}/);
-    return JSON.parse(match ? match[0] : cleaned) as Record<string, unknown>;
   }
 
   async summarizeReviews(reviews: string[]): Promise<string> {
@@ -241,27 +108,12 @@ Include: what the job entails, what skills/experience to look for, and what the 
 
     try {
       const reviewList = reviews.map((r, i) => `${i + 1}. "${r}"`).join('\n');
-
-      const response = await this.client.messages.create({
-        model: MODEL_QUALITY,
-        max_tokens: 512,
-        system: [
-          {
-            type: 'text',
-            text: SYSTEM_PROMPT,
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        messages: [
-          {
-            role: 'user',
-            content: `Summarize these customer reviews for a service provider in 2-3 sentences. Highlight strengths and any common concerns:\n\n${reviewList}`,
-          },
-        ],
+      return await this.gemini.generate({
+        systemText: SYSTEM_PROMPT,
+        userText: `Summarize these customer reviews for a service provider in 2-3 sentences. Highlight strengths and any common concerns:\n\n${reviewList}`,
+        maxOutputTokens: 512,
+        temperature: 0.5,
       });
-
-      const textBlock = response.content.find((b) => b.type === 'text');
-      return textBlock ? textBlock.text : '';
     } catch (err) {
       this.logger.error(
         `summarizeReviews failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -303,28 +155,15 @@ ${localTouch}
 faqs uzunluğu 3-5 arası olsun. SSS uzun-kuyruk SEO odaklı: fiyat, süre, garanti, malzeme, randevu gibi konular.`;
 
     try {
-      const response = await this.client.messages.create({
-        model: MODEL_QUALITY,
-        max_tokens: 2048,
-        system: [
-          {
-            type: 'text',
-            text:
-              SYSTEM_PROMPT +
-              '\n\nSEO içerik modu: Sadece geçerli JSON döndür. Anahtar kelime istifi yapma; doğal akıcı Türkçe yaz.',
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        messages: [{ role: 'user', content: userPrompt }],
+      const raw = await this.gemini.generate({
+        systemText:
+          SYSTEM_PROMPT +
+          '\n\nSEO içerik modu: Sadece geçerli JSON döndür. Anahtar kelime istifi yapma; doğal akıcı Türkçe yaz.',
+        userText: userPrompt,
+        maxOutputTokens: 2048,
+        temperature: 0.5,
       });
-
-      const textBlock = response.content.find((b) => b.type === 'text');
-      const raw = textBlock ? textBlock.text : '';
-      const cleaned = raw
-        .replace(/^```(?:json)?\s*/i, '')
-        .replace(/\s*```$/i, '')
-        .trim();
-      const parsed = JSON.parse(cleaned) as Record<string, unknown>;
+      const parsed = this.gemini.parseJsonLoose(raw);
       return {
         description: (parsed.description as string) ?? '',
         headings: Array.isArray(parsed.headings)
@@ -336,128 +175,21 @@ faqs uzunluğu 3-5 arası olsun. SSS uzun-kuyruk SEO odaklı: fiyat, süre, gara
       };
     } catch (err) {
       this.logger.error(
-        `generateCategoryDescription failed (API or JSON parse): ${err instanceof Error ? err.message : String(err)}`,
+        `generateCategoryDescription failed: ${err instanceof Error ? err.message : String(err)}`,
         err instanceof Error ? err.stack : undefined,
       );
       throw new InternalServerErrorException('Kategori açıklaması üretilemedi');
     }
   }
 
-  // ─── Agent infrastructure ─────────────────────────────────────────────────
+  // ─── Helpers ──────────────────────────────────────────────────────────────
 
-  private executeTool(name: string, input: Record<string, unknown>): unknown {
-    switch (name) {
-      case 'get_categories':
-        return CATEGORIES;
-
-      case 'get_price_range': {
-        const cat = CATEGORIES.find((c) => c.name === input.category);
-        if (!cat) return { error: 'Kategori bulunamadı' };
-        const m = this.locationMultiplier(input.location as string | undefined);
-        return {
-          category: cat.name,
-          min: Math.round(cat.priceRange.min * m),
-          max: Math.round(cat.priceRange.max * m),
-          unit: cat.unit,
-          note: 'Piyasa ortalaması — iş kapsamına göre değişir.',
-        };
-      }
-
-      case 'get_faq': {
-        const topic = input.topic as string;
-        return {
-          answer:
-            FAQ[topic] ??
-            'Bu konuda bilgi bulunamadı. support@yapgitsin.tr adresine yazabilirsiniz.',
-        };
-      }
-
-      case 'get_platform_info':
-        return {
-          categories: CATEGORIES.map((c) => c.name),
-          tokenCostPerOffer: 5,
-          startingTokens: 100,
-          maxPhotosPerJob: 20,
-          supportEmail: 'support@yapgitsin.tr',
-        };
-
-      default:
-        return { error: `Bilinmeyen araç: ${name}` };
-    }
-  }
-
-  /** Static category price table as prompt-ready text (replaces the get_price_range tool). */
+  /** Static category price table as prompt-ready text. */
   private priceReference(): string {
     return CATEGORIES.map(
       (c) =>
         `- ${c.name}: ${c.priceRange.min}-${c.priceRange.max} TRY / ${c.unit}`,
     ).join('\n');
-  }
-
-  private locationMultiplier(location?: string): number {
-    if (!location) return 1.0;
-    const l = location.toLowerCase();
-    if (
-      ['beşiktaş', 'sarıyer', 'kadıköy', 'şişli', 'bakırköy'].some((d) =>
-        l.includes(d),
-      )
-    )
-      return 1.3;
-    if (['istanbul', 'ankara', 'izmir'].some((c) => l.includes(c))) return 1.15;
-    return 1.0;
-  }
-
-  private async runAgentLoop(
-    messages: Anthropic.MessageParam[],
-    tools: Anthropic.Tool[],
-    systemText: string,
-    maxTokens = 2048,
-    model: string = MODEL_QUALITY,
-  ): Promise<string> {
-    const msgs = [...messages];
-
-    for (let i = 0; i < 6; i++) {
-      const response = await this.client.messages.create({
-        model,
-        max_tokens: maxTokens,
-        tools,
-        tool_choice: { type: 'auto' },
-        system: [
-          {
-            type: 'text',
-            text: systemText,
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        messages: msgs,
-      });
-
-      const hasToolUse = response.content.some((b) => b.type === 'tool_use');
-
-      if (!hasToolUse) {
-        const textBlock = response.content.find((b) => b.type === 'text');
-        return textBlock ? textBlock.text : '';
-      }
-
-      msgs.push({ role: 'assistant', content: response.content });
-
-      const toolResults: Anthropic.ToolResultBlockParam[] = response.content
-        .filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
-        .map((block) => ({
-          type: 'tool_result' as const,
-          tool_use_id: block.id,
-          content: JSON.stringify(
-            this.executeTool(
-              block.name,
-              block.input as Record<string, unknown>,
-            ),
-          ),
-        }));
-
-      msgs.push({ role: 'user', content: toolResults });
-    }
-
-    throw new InternalServerErrorException('Agent döngüsü tamamlanamadı');
   }
 
   // ─── Agent 1: İlan Asistanı ───────────────────────────────────────────────
@@ -498,8 +230,13 @@ Return ONLY this JSON (no markdown):
 }`;
 
     try {
-      const raw = await this.geminiGenerate(systemText, userPrompt, 1024, 0.6);
-      const parsed = this.parseJsonLoose(raw);
+      const raw = await this.gemini.generate({
+        systemText,
+        userText: userPrompt,
+        maxOutputTokens: 1024,
+        temperature: 0.6,
+      });
+      const parsed = this.gemini.parseJsonLoose(raw);
       return {
         description: (parsed.description as string) ?? '',
         suggestedBudgetMin: (parsed.suggestedBudgetMin as number) ?? 0,
@@ -508,7 +245,7 @@ Return ONLY this JSON (no markdown):
       };
     } catch (err) {
       this.logger.error(
-        `runJobAssistant failed (agent loop or JSON parse): ${err instanceof Error ? err.message : String(err)}`,
+        `runJobAssistant failed: ${err instanceof Error ? err.message : String(err)}`,
         err instanceof Error ? err.stack : undefined,
       );
       throw new InternalServerErrorException('İlan asistanı başarısız oldu');
@@ -539,14 +276,15 @@ Using the matching range (location-adjusted) and the job details, return ONLY th
 }`;
 
     try {
-      const raw = await this.geminiGenerate(
-        SYSTEM_PROMPT +
+      const raw = await this.gemini.generate({
+        systemText:
+          SYSTEM_PROMPT +
           '\n\nRespond ONLY with valid JSON when asked for structured output.',
-        userPrompt,
-        512,
-        0.4,
-      );
-      const parsed = this.parseJsonLoose(raw);
+        userText: userPrompt,
+        maxOutputTokens: 512,
+        temperature: 0.4,
+      });
+      const parsed = this.gemini.parseJsonLoose(raw);
       return {
         budgetMin: (parsed.budgetMin as number) ?? 0,
         budgetMax: (parsed.budgetMax as number) ?? 0,
@@ -554,7 +292,7 @@ Using the matching range (location-adjusted) and the job details, return ONLY th
       };
     } catch (err) {
       this.logger.error(
-        `runPricingAdvisor failed (agent loop or JSON parse): ${err instanceof Error ? err.message : String(err)}`,
+        `runPricingAdvisor failed: ${err instanceof Error ? err.message : String(err)}`,
         err instanceof Error ? err.stack : undefined,
       );
       throw new InternalServerErrorException('Fiyat danışmanı başarısız oldu');
@@ -563,47 +301,45 @@ Using the matching range (location-adjusted) and the job details, return ONLY th
 
   // ─── Agent 3: Destek Ajanı ────────────────────────────────────────────────
 
+  /**
+   * Phase 281: native tool-use removed (Gemini Flash REST has function calling,
+   * but for static FAQ/platform data inline prompt is simpler and cheaper).
+   */
   async runSupportAgent(
     message: string,
-    history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+    history: GeminiHistoryTurn[] = [],
     userRole?: string,
   ): Promise<string> {
-    const tools: Anthropic.Tool[] = [
-      {
-        name: 'get_faq',
-        description: 'Returns a FAQ answer for the given topic',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            topic: {
-              type: 'string',
-              enum: ['token', 'ödeme', 'ilan', 'şikayet', 'öne çıkarma'],
-            },
-          },
-          required: ['topic'],
-        },
-      },
-      {
-        name: 'get_platform_info',
-        description: 'Returns general platform statistics and settings',
-        input_schema: { type: 'object' as const, properties: {}, required: [] },
-      },
-    ];
+    const faqLines = Object.entries(FAQ)
+      .map(([topic, ans]) => `- **${topic}:** ${ans}`)
+      .join('\n');
 
-    const systemText =
-      SYSTEM_PROMPT +
-      `\n\nUser role: ${userRole ?? 'customer'}. Answer in Turkish. Use tools to fetch accurate platform data before answering.`;
+    const platformInfo = `- Kategoriler: ${CATEGORIES.map((c) => c.name).join(', ')}
+- Teklif başına maliyet: 5 kredi
+- Yeni hesap başlangıç bakiyesi: 100 kredi
+- İlan başına max fotoğraf: 20
+- Destek e-postası: support@yapgitsin.tr`;
+
+    const systemText = `${SYSTEM_PROMPT}
+
+Kullanıcı rolü: ${userRole ?? 'customer'}. Türkçe yanıt ver. Kısa ve net ol.
+
+Platform bilgisi (cevaplarken bu verileri kullan):
+${platformInfo}
+
+SSS konuları:
+${faqLines}
+
+Bu listede olmayan konularda "support@yapgitsin.tr adresine yazabilirsiniz" diyebilirsin.`;
 
     try {
-      return await this.runAgentLoop(
-        [
-          ...history,
-          { role: 'user', content: message },
-        ] as Anthropic.MessageParam[],
-        tools,
+      return await this.gemini.generate({
         systemText,
-        1024,
-      );
+        userText: message,
+        history,
+        maxOutputTokens: 1024,
+        temperature: 0.5,
+      });
     } catch (err) {
       this.logger.error(
         `runSupportAgent failed: ${err instanceof Error ? err.message : String(err)}`,

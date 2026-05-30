@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import Anthropic from '@anthropic-ai/sdk';
 import { createHash } from 'crypto';
+import { GeminiClient } from './gemini.client';
 
 const SYSTEM = `Sen bir Türk hizmet pazarı (Yapgitsin) için anlaşmazlık ön-analiz asistanısın.
 Şikayetin taraflara adil olup olmadığını, sahte iddia (fraud) riskini ve önerilen çözümü değerlendir.
-SADECE STRICT JSON döndür. Türkçe reasoning yaz.`;
+SADECE STRICT JSON döndür. Türkçe reasoning yaz.
+
+Format: {"fairnessScore": <0-100>, "fraudRisk": "low|medium|high", "suggestedAction": "refund|partial_refund|cancel|dismiss|escalate", "reasoning": "<kısa türkçe>"}`;
 
 export type SuggestedAction =
   | 'refund'
@@ -15,7 +16,7 @@ export type SuggestedAction =
   | 'escalate';
 
 export interface DisputeAnalysis {
-  fairnessScore: number; // 0-100
+  fairnessScore: number;
   fraudRisk: 'low' | 'medium' | 'high';
   suggestedAction: SuggestedAction;
   reasoning: string;
@@ -38,16 +39,15 @@ interface CacheEntry {
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+/**
+ * Phase 281: migrated from Anthropic Opus to Gemini 2.5 Flash.
+ */
 @Injectable()
 export class DisputeMediationService {
   private readonly logger = new Logger(DisputeMediationService.name);
-  private readonly client: Anthropic | null;
   private readonly cache = new Map<string, CacheEntry>();
 
-  constructor(private readonly config: ConfigService) {
-    const key = this.config.get<string>('ANTHROPIC_API_KEY');
-    this.client = key ? new Anthropic({ apiKey: key }) : null;
-  }
+  constructor(private readonly gemini: GeminiClient) {}
 
   private cacheKey(type: string, description: string): string {
     return createHash('sha256').update(`${type}::${description}`).digest('hex');
@@ -56,7 +56,7 @@ export class DisputeMediationService {
   async analyzeDispute(
     input: AnalyzeDisputeInput,
   ): Promise<DisputeAnalysis | null> {
-    if (!this.client) return null;
+    if (!this.gemini.isAvailable()) return null;
     const key = this.cacheKey(input.type, input.description);
     const now = Date.now();
     const hit = this.cache.get(key);
@@ -71,32 +71,13 @@ export class DisputeMediationService {
         : input.bookingId
           ? `\nRANDEVU İD: ${input.bookingId}`
           : '';
-      const response = await this.client.messages.create({
-        model: 'claude-opus-4-7',
-        max_tokens: 700,
-        system: [
-          {
-            type: 'text',
-            text:
-              SYSTEM +
-              '\n\nFormat: {"fairnessScore": <0-100>, "fraudRisk": "low|medium|high", "suggestedAction": "refund|partial_refund|cancel|dismiss|escalate", "reasoning": "<kısa türkçe>"}',
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        messages: [
-          {
-            role: 'user',
-            content: `ŞİKAYET TÜRÜ: ${input.type}\nAÇIKLAMA: ${input.description}${ref}${ctx}\n\nBu anlaşmazlık için fairness (0=karşı tarafa adil, 100=şikayetçi haklı), fraud risk ve önerilen çözüm. JSON dön.`,
-          },
-        ],
+      const raw = await this.gemini.generate({
+        systemText: SYSTEM,
+        userText: `ŞİKAYET TÜRÜ: ${input.type}\nAÇIKLAMA: ${input.description}${ref}${ctx}\n\nBu anlaşmazlık için fairness (0=karşı tarafa adil, 100=şikayetçi haklı), fraud risk ve önerilen çözüm. JSON dön.`,
+        maxOutputTokens: 700,
+        temperature: 0.3,
       });
-      const block = response.content.find((b) => b.type === 'text');
-      const raw = block ? block.text : '';
-      const cleaned = raw
-        .replace(/^```(?:json)?\s*/i, '')
-        .replace(/\s*```$/i, '')
-        .trim();
-      const parsed = JSON.parse(cleaned) as Partial<DisputeAnalysis>;
+      const parsed = this.gemini.parseJsonLoose<Partial<DisputeAnalysis>>(raw);
 
       const result: DisputeAnalysis = {
         fairnessScore: Math.max(

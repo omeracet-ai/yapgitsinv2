@@ -8,6 +8,7 @@ import { PricingService } from './pricing.service';
 import { DisputeMediationService } from './dispute-mediation.service';
 import { TranslateService } from './translate.service';
 import { RecommendationService } from './recommendation.service';
+import { GeminiClient } from './gemini.client';
 import { Job } from '../jobs/job.entity';
 import { User } from '../users/user.entity';
 
@@ -15,6 +16,7 @@ import { User } from '../users/user.entity';
   imports: [TypeOrmModule.forFeature([Job, User])],
   controllers: [AiController, AiPublicController],
   providers: [
+    GeminiClient,
     AiService,
     FraudDetectionService,
     SemanticSearchService,
@@ -24,6 +26,7 @@ import { User } from '../users/user.entity';
     RecommendationService,
   ],
   exports: [
+    GeminiClient,
     AiService,
     FraudDetectionService,
     SemanticSearchService,

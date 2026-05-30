@@ -61,7 +61,7 @@ PORT=3001
 DB_TYPE=sqlite
 JWT_SECRET=change_me_in_production_use_a_long_random_secret_here
 ADMIN_INITIAL_PASSWORD=change_me_in_production
-ANTHROPIC_API_KEY=<claude için gerekli, ai özellikler için>
+GEMINI_API_KEY=<Gemini Flash — tüm AI servisleri için zorunlu (Phase 281)>
 ALLOWED_ORIGINS=<production'da virgülle ayır>
 ```
 
@@ -356,10 +356,13 @@ Dosyalar `nestjs-backend/uploads/` klasörüne kaydedilir. `/uploads/*` static r
 | POST | `/ai/chat` | Genel sohbet |
 | POST | `/ai/summarize-reviews` | Yorumları özetle |
 
-AI: **claude-opus-4-7** model, adaptive thinking, prompt caching (`cache_control: ephemeral`).
-`ANTHROPIC_API_KEY` .env'de gerekli.
+AI: **Tüm AI yüzeyi Gemini 2.5 Flash** (`gemini-2.5-flash`). Phase 281'de migrate edildi — Anthropic SDK kaldırıldı (`@anthropic-ai/sdk` package'tan uninstall).
 
-> **İSTİSNA — `/ai/chat`**: Genel sohbet endpoint'i **bilinçli olarak Google Gemini 2.5 Flash** (`gemini-2.5-flash`, `GEMINI_API_KEY`) kullanır — yüksek hacimli sohbet desteği Gemini Flash'ta ~10x+ daha ucuz. Bu bir tutarsızlık DEĞİL, maliyet tercihidir; chat()'i Anthropic'e taşımayın. Yapısal/JSON görevler (`pricing`) **claude-haiku-4-5** kullanır (Phase 259). Geri kalan üretken/SEO endpoint'leri Opus'ta kalır. Anthropic SDK: `timeout 30s, maxRetries 2`. Tüm AI endpoint'leri per-user throttle'lı (Phase 259).
+> **Kural:** Yapgitsin app içinde Claude/Opus/Haiku kullanma. Tüm AI servisleri `GeminiClient` üzerinden geçer ([gemini.client.ts](nestjs-backend/src/modules/ai/gemini.client.ts)). Tek env: `GEMINI_API_KEY`. AbortController 30s timeout. Per-user throttle (Phase 259) korunuyor.
+>
+> **Migrate edilen 6 servis:** `ai.service` (chat/jobAssistant/pricingAdvisor/supportAgent/summarize/categoryDesc/jobDesc), `dispute-mediation`, `fraud-detection`, `semantic-search`, `recommendation`, `translate` — `pricing` zaten Gemini'ydi.
+>
+> **Müdür istisnası:** `D:/müdür/` orchestration (Müdür/Voldi agent koordinasyonu) **Opus 4.8** kullanır — Yapgitsin uygulamasının dışıdır, bu kuralı bağlamaz.
 
 ### Admin (`/admin`)
 | Method | Path | Açıklama |

@@ -1,34 +1,30 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
-import Anthropic from '@anthropic-ai/sdk';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { User } from '../users/user.entity';
+import { GeminiClient } from './gemini.client';
 
+/**
+ * Phase 281: migrated from Anthropic Haiku to Gemini 2.5 Flash.
+ */
 @Injectable()
 export class RecommendationService {
   private readonly logger = new Logger(RecommendationService.name);
-  private readonly client: Anthropic;
 
   constructor(
     @InjectRepository(Job)
     private jobsRepo: Repository<Job>,
     @InjectRepository(User)
     private usersRepo: Repository<User>,
-    private configService: ConfigService,
-  ) {
-    this.client = new Anthropic({
-      apiKey: this.configService.get<string>('ANTHROPIC_API_KEY'),
-    });
-  }
+    private readonly gemini: GeminiClient,
+  ) {}
 
   /** GET /ai/recommend/workers/:jobId — top 5 workers for a job */
   async recommendWorkersForJob(jobId: string): Promise<User[]> {
     const job = await this.jobsRepo.findOne({ where: { id: jobId } });
     if (!job) throw new NotFoundException('İlan bulunamadı');
 
-    // Workers in same category, max 20
     const workers = await this.usersRepo
       .createQueryBuilder('u')
       .where(`u.workerCategories LIKE :cat`, { cat: `%${job.category}%` })
@@ -38,6 +34,7 @@ export class RecommendationService {
       .getMany();
 
     if (workers.length === 0) return [];
+    if (!this.gemini.isAvailable()) return workers.slice(0, 5);
 
     const workerList = workers.map((w) => ({
       id: w.id,
@@ -52,32 +49,23 @@ Workers: ${JSON.stringify(workerList)}
 Return JSON array of top 5 worker IDs ranked by fit. Only IDs, no explanation. Example: ["id1","id2","id3","id4","id5"]`;
 
     try {
-      const response = await this.client.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 200,
-        system: [
-          {
-            type: 'text',
-            text: 'You are a job matching AI. Rank workers by fit for a job. Return only a JSON array of worker IDs.',
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        messages: [{ role: 'user', content: prompt }],
+      const raw = await this.gemini.generate({
+        systemText:
+          'You are a job matching AI. Rank workers by fit for a job. Return only a JSON array of worker IDs.',
+        userText: prompt,
+        maxOutputTokens: 200,
+        temperature: 0.2,
       });
-
-      const text =
-        response.content[0].type === 'text' ? response.content[0].text : '[]';
-      const rankedIds: string[] = JSON.parse(
-        text.match(/\[.*\]/s)?.[0] ?? '[]',
-      );
-
+      const rankedIds = this.gemini.parseJsonLoose<unknown>(raw);
+      if (!Array.isArray(rankedIds)) return workers.slice(0, 5);
       const idToWorker = new Map(workers.map((w) => [w.id, w]));
-      return rankedIds
+      return (rankedIds as unknown[])
+        .filter((id): id is string => typeof id === 'string')
         .filter((id) => idToWorker.has(id))
         .map((id) => idToWorker.get(id)!)
         .slice(0, 5);
     } catch (err) {
-      this.logger.warn(`Haiku ranking failed: ${String(err)}`);
+      this.logger.warn(`Gemini ranking failed: ${String(err)}`);
       return workers.slice(0, 5);
     }
   }
@@ -104,6 +92,7 @@ Return JSON array of top 5 worker IDs ranked by fit. Only IDs, no explanation. E
 
     const jobs = await query.getMany();
     if (jobs.length === 0) return [];
+    if (!this.gemini.isAvailable()) return jobs.slice(0, 5);
 
     const jobList = jobs.map((j) => ({
       id: j.id,
@@ -117,32 +106,23 @@ Open jobs: ${JSON.stringify(jobList)}
 Return JSON array of top 5 job IDs ranked by fit. Only IDs, no explanation. Example: ["id1","id2","id3","id4","id5"]`;
 
     try {
-      const response = await this.client.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 200,
-        system: [
-          {
-            type: 'text',
-            text: 'You are a job matching AI. Rank jobs by fit for a worker. Return only a JSON array of job IDs.',
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        messages: [{ role: 'user', content: prompt }],
+      const raw = await this.gemini.generate({
+        systemText:
+          'You are a job matching AI. Rank jobs by fit for a worker. Return only a JSON array of job IDs.',
+        userText: prompt,
+        maxOutputTokens: 200,
+        temperature: 0.2,
       });
-
-      const text =
-        response.content[0].type === 'text' ? response.content[0].text : '[]';
-      const rankedIds: string[] = JSON.parse(
-        text.match(/\[.*\]/s)?.[0] ?? '[]',
-      );
-
+      const rankedIds = this.gemini.parseJsonLoose<unknown>(raw);
+      if (!Array.isArray(rankedIds)) return jobs.slice(0, 5);
       const idToJob = new Map(jobs.map((j) => [j.id, j]));
-      return rankedIds
+      return (rankedIds as unknown[])
+        .filter((id): id is string => typeof id === 'string')
         .filter((id) => idToJob.has(id))
         .map((id) => idToJob.get(id)!)
         .slice(0, 5);
     } catch (err) {
-      this.logger.warn(`Haiku ranking failed: ${String(err)}`);
+      this.logger.warn(`Gemini ranking failed: ${String(err)}`);
       return jobs.slice(0, 5);
     }
   }
