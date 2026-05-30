@@ -277,7 +277,19 @@ class FirebaseAuthRepository {
     }
   }
 
-  Future<void> logout() => _service.signOutAll();
+  /// Full sign-out: clears the backend JWT/refresh from SecureTokenStore AND
+  /// signs out Firebase + Google. Order matters — clear tokens first so a
+  /// concurrent API call can't sneak a stale Bearer header through.
+  Future<void> logout() async {
+    try {
+      await SecureTokenStore().clear();
+    } catch (_) {
+      // best-effort; even if secure storage write fails we still need to
+      // continue to Firebase signOut so the user is logged out from social
+      // providers too.
+    }
+    await _service.signOutAll();
+  }
 
   /// Google Sign-In — returns the same shape as [login] for AuthNotifier.
   /// Throws Exception('sign_in_canceled') if user dismissed the picker.

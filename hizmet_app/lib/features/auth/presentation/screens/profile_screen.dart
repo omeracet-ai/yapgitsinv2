@@ -19,6 +19,7 @@ import 'edit_profile_screen.dart';
 import 'addresses_screen.dart';
 import 'help_screen.dart';
 import '../../../../core/network/api_client_provider.dart';
+import '../../../../core/providers/navigation_provider.dart';
 import '../../../calendar/presentation/calendar_screen.dart';
 import '../../../calendar/presentation/earnings_screen.dart';
 import '../../../profile/widgets/profile_completion_card.dart';
@@ -1136,7 +1137,17 @@ class ProfileScreen extends ConsumerWidget {
               color: AppColors.error),
           const Divider(height: 1, indent: 50),
           _menuItem(Icons.logout, AppLocalizations.of(context).logout,
-              () => ref.read(authStateProvider.notifier).logout(),
+              () async {
+                // Logout sırası: state'i temizle, sonra ana sekmeye dön ki
+                // kullanıcı Profile guest view'inde değil Yaptır sekmesinde
+                // landeysin (guest view'in büyük "Giriş Yap" CTA'sını
+                // 'login ekranı geliyor' diye yorumlamasın diye).
+                await ref.read(authStateProvider.notifier).logout();
+                if (!context.mounted) return;
+                ref.read(selectedTabProvider.notifier).state = 0;
+                // Eğer kullanıcı bir sub-route'taysa root'a yolla.
+                context.go('/');
+              },
               color: AppColors.error),
           const SizedBox(height: 8),
           Padding(
