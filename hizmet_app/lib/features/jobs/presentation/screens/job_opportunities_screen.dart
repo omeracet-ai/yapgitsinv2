@@ -570,18 +570,7 @@ class _OpportunityCard extends ConsumerWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Kategori ikonu
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: job.color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(job.icon, color: job.color, size: 18),
-            ),
-            const SizedBox(width: 10),
-            // Başlık + meta + alt satır
+            // Kategori ikonu kaldırıldı (2026-05-30, kullanıcı isteği).
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
