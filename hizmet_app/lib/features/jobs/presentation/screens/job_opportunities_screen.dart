@@ -712,7 +712,7 @@ class _OpportunityCard extends ConsumerWidget {
                     const SizedBox(width: 3),
                     Expanded(
                       child: Text(
-                        job.location,
+                        _shortLoc(job.location),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -834,6 +834,29 @@ class _OpportunityCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Phase 298 — Konum metnini kısalt. Uzun reverse-geocode adresleri (örn.
+  /// "141-141A, Chapel Street, Windsor, Melbourne, Victoria, 3181, Avustralya")
+  /// kartın sağ kolon hizasını bozuyordu. Strateji:
+  ///  • Virgülle parçala, boş ve sadece-rakam segmentleri at (posta kodu vb.).
+  ///  • Son 2 anlamlı segmenti döndür ("Şehir, Ülke" / "İlçe, Şehir" tarzı).
+  ///  • 2 segmentten az kalırsa elde olanı kullan, max 28 karaktere kırp.
+  String _shortLoc(String raw) {
+    final parts = raw
+        .split(',')
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return raw.trim();
+    final meaningful =
+        parts.where((p) => !RegExp(r'^\d+$').hasMatch(p)).toList();
+    final source = meaningful.isEmpty ? parts : meaningful;
+    final tail = source.length <= 2
+        ? source
+        : source.sublist(source.length - 2);
+    final joined = tail.join(', ');
+    return joined.length <= 28 ? joined : '${joined.substring(0, 27)}…';
   }
 
   _ScheduleVisual _scheduleLabel(Job j) {
