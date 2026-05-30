@@ -436,26 +436,16 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               ),
             JobWizardProgress(
               currentStep: _currentStep,
-              labels: const ['Kategori', 'Detaylar & Konum'],
+              labels: const ['Detaylar', 'Foto & Konum'],
             ),
             Expanded(
               child: IndexedStack(
                 index: _currentStep,
                 children: [
+                  // Phase 284 — Adım 1: Başlık + Açıklama + Kategori + Tarih +
+                  // Zaman + Bütçe. Adım 2: yalnızca Foto/Video + Konum.
                   PostJobStep1(body: _buildStep1Body()),
-                  // Phase 283 — eski Adım 2 + Adım 3 tek scroll'da birleştirildi.
-                  PostJobStep2(
-                    body: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildStep2Body(),
-                        const SizedBox(height: 24),
-                        const Divider(height: 1),
-                        const SizedBox(height: 16),
-                        _buildStep3Body(),
-                      ],
-                    ),
-                  ),
+                  PostJobStep2(body: _buildStep2Body()),
                 ],
               ),
             ),
@@ -525,16 +515,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
   Future<void> _onStepContinue() async {
     if (_currentStep == 0) {
-      // Adım 1: kategori (dueDate opsiyonel — esnek default)
-      if (_selectedCategory == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context).postJobCategoryRequired)));
-        return;
-      }
-      setState(() => _currentStep++);
-    } else {
-      // Phase 283 — Adım 2 (birleşik): eski Adım 2 + Adım 3 validasyonu peş
-      // peşe. title/desc, sonra foto/konum/zaman, en sonda upload + submit.
+      // Phase 284 — Adım 1: title + desc + kategori zorunlu; tarih/saat/zaman/
+      // bütçe opsiyonel (Belirli modunda tarih+saat aşağıda Adım 2 öncesi de
+      // tekrar kontrol edilir).
       if (_titleController.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(AppLocalizations.of(context).postJobTitleRequired)));
@@ -545,6 +528,14 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             SnackBar(content: Text(AppLocalizations.of(context).postJobDescriptionRequired)));
         return;
       }
+      if (_selectedCategory == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context).postJobCategoryRequired)));
+        return;
+      }
+      setState(() => _currentStep++);
+    } else {
+      // Phase 284 — Adım 2: foto + konum zorunlu; sonra upload + submit.
       if (_selectedPhotos.isEmpty && _uploadedPhotoUrls.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context).postJobPhotoRequired)),
@@ -615,9 +606,15 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   }
 
   Widget _buildStep1Body() {
+    // Phase 284 — Adım 1: Başlık + Açıklama + Kategori + Tarih + Zaman + Bütçe.
+    // Adım 2'de yalnızca Foto/Video + Konum kalır.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _buildTitleDescSection(),
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 16),
         Text(AppLocalizations.of(context).postJobCategorySelect,
             style: TextStyle(
                 fontSize: 14,
@@ -625,10 +622,18 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                 color: AppColors.textPrimary)),
         const SizedBox(height: 12),
         _buildCategoryGrid(),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         const Divider(),
         const SizedBox(height: 16),
         _buildDueDateSection(),
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 16),
+        _buildScheduleFlexSection(),
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 16),
+        _buildBudgetSection(),
       ],
     );
   }
@@ -901,7 +906,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     );
   }
 
-  Widget _buildStep2Body() {
+  // Phase 284 — Eski _buildStep2Body iki bağımsız bölüme ayrıldı; Adım 1
+  // bunları kategori/tarih/zaman ile birlikte birleştiriyor.
+  Widget _buildTitleDescSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -956,9 +963,14 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               : const Icon(Icons.auto_awesome, size: 18),
           label: Text(_aiLoading ? 'AI hazırlıyor…' : 'AI ile Otomatik Doldur'),
         ),
-        const SizedBox(height: 20),
-        const Divider(),
-        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildBudgetSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
@@ -1212,11 +1224,11 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     );
   }
 
-  Widget _buildStep3Body() {
+  // Phase 284 — eski _buildStep3Body schedule chips bölümü Adım 1'e taşındı.
+  Widget _buildScheduleFlexSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Phase 265 — Saat dilimi esneklik durumu
         Text('Saat dilimi esnekliği',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
@@ -1237,7 +1249,6 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        // Phase 266 — dinamik özet satırı (seçili moda göre)
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
@@ -1259,9 +1270,15 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 20),
-        const Divider(),
-        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  // Phase 284 — Yeni Adım 2: yalnızca Foto/Video + Konum (+ şablon kaydet).
+  Widget _buildStep2Body() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         Text('Fotoğraf & Video',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
