@@ -49,7 +49,7 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
       _budget = const RangeValues(_minBudget, _maxBudget);
       _sort = JobSort.newest;
       _featuredOnly = false;
-      _radiusKm = null;
+      _radiusKm = 20;
     });
   }
 

@@ -18,7 +18,7 @@ class JobFilter {
     this.budgetMax,
     this.sort = JobSort.newest,
     this.featuredOnly = false,
-    this.maxRadiusKm,
+    this.maxRadiusKm = 20,
     this.userLat,
     this.userLng,
   });
