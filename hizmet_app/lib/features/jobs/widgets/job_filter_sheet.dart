@@ -115,33 +115,7 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
           ),
           const SizedBox(height: 8),
 
-          // ── Bütçe Aralığı ───────────────────────────────────────────
-          Text('Bütçe Aralığı',
-              style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary)),
-          const SizedBox(height: 4),
-          Text(
-            IntlFormatter.tlRange(_budget.start, _budget.end),
-            style: TextStyle(
-                color: AppColors.textSecondary, fontSize: 13),
-          ),
-          RangeSlider(
-            values: _budget,
-            min: _minBudget,
-            max: _maxBudget,
-            divisions: 40,
-            activeColor: AppColors.primary,
-            inactiveColor: AppColors.primary.withValues(alpha: 0.2),
-            labels: RangeLabels(
-              IntlFormatter.tl(_budget.start),
-              IntlFormatter.tl(_budget.end),
-            ),
-            onChanged: (v) => setState(() => _budget = v),
-          ),
-
-          const SizedBox(height: 12),
-          // ── Mesafe (Phase 297) ───────────────────────────────────────
+          // ── Mesafe (Phase 299 — en üste alındı) ──────────────────────
           Row(
             children: [
               Text('Mesafe',
@@ -179,6 +153,32 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
               style:
                   TextStyle(fontSize: 12, color: AppColors.textHint),
             ),
+
+          const SizedBox(height: 16),
+          // ── Bütçe Aralığı ───────────────────────────────────────────
+          Text('Bütçe Aralığı',
+              style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary)),
+          const SizedBox(height: 4),
+          Text(
+            IntlFormatter.tlRange(_budget.start, _budget.end),
+            style: TextStyle(
+                color: AppColors.textSecondary, fontSize: 13),
+          ),
+          RangeSlider(
+            values: _budget,
+            min: _minBudget,
+            max: _maxBudget,
+            divisions: 40,
+            activeColor: AppColors.primary,
+            inactiveColor: AppColors.primary.withValues(alpha: 0.2),
+            labels: RangeLabels(
+              IntlFormatter.tl(_budget.start),
+              IntlFormatter.tl(_budget.end),
+            ),
+            onChanged: (v) => setState(() => _budget = v),
+          ),
 
           const SizedBox(height: 8),
           Text('Sıralama',
