@@ -8,6 +8,7 @@ import '../providers/map_provider.dart';
 import '../../data/map_repository.dart';
 import '../widgets/job_pin_marker.dart';
 import '../widgets/worker_map_marker.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -34,15 +35,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng));
   }
 
-  void _maybeFitInitial(MapState s) {
+  void _maybeFitInitial(MapState s, {required bool includeWorkers}) {
     if (_hasInitialFit) return;
     final points = <LatLng>[
       for (final j in s.jobs)
         if (j.latitude != null && j.longitude != null)
           LatLng(j.latitude!, j.longitude!),
-      for (final w in s.workers)
-        if (w.latitude != null && w.longitude != null)
-          LatLng(w.latitude!, w.longitude!),
+      // Phase 292 — Worker pin'leri yalnızca usta hesaplarda görünür; initial
+      // fit bounds da bu kullanıcıda worker noktalarını dahil eder.
+      if (includeWorkers)
+        for (final w in s.workers)
+          if (w.latitude != null && w.longitude != null)
+            LatLng(w.latitude!, w.longitude!),
       if (s.userLocation != null) s.userLocation!,
     ];
     if (points.isEmpty) return; // hiç pin yok → default zoom
@@ -89,12 +93,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final state = ref.watch(mapProvider);
     final notifier = ref.read(mapProvider.notifier);
 
+    // Phase 292 — Worker pin'leri yalnızca "hizmet ilanı veren" hesaplar
+    // (workerCategories non-empty) görür. Normal müşteri için harita yalnızca
+    // iş ilanlarını gösterir.
+    final auth = ref.watch(authStateProvider);
+    final showWorkers = auth is AuthAuthenticated &&
+        ((auth.user['workerCategories'] as List?)?.isNotEmpty ?? false);
+
     // Phase 180 — İlk açılışta tüm pin'leri + user'ı kapsayan fitBounds.
     // Jobs/workers/userLocation herhangi biri değiştiğinde bir kez tetiklenir.
     ref.listen(mapProvider, (_, next) {
       if (!_hasInitialFit) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _maybeFitInitial(next);
+          if (mounted) _maybeFitInitial(next, includeWorkers: showWorkers);
         });
       }
     });
@@ -123,6 +134,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 _MapView(
                   state: state,
                   mapController: _mapController,
+                  showWorkers: showWorkers,
                   onPinTap: (j) => notifier.selectJob(j.id),
                   onWorkerTap: (w) {
                     notifier.selectWorker(w.id);
@@ -501,6 +513,8 @@ class _MapView extends StatelessWidget {
   final void Function(NearbyJob) onPinTap;
   final void Function(NearbyWorker) onWorkerTap;
   final VoidCallback onMapTap;
+  /// Phase 292 — Worker pin'lerini sadece "hizmet ilanı veren" hesaplara çiz.
+  final bool showWorkers;
 
   const _MapView({
     required this.state,
@@ -508,6 +522,7 @@ class _MapView extends StatelessWidget {
     required this.onPinTap,
     required this.onWorkerTap,
     required this.onMapTap,
+    required this.showWorkers,
   });
 
   @override
@@ -588,32 +603,35 @@ class _MapView extends StatelessWidget {
             );
           }).toList(),
         ),
-        // Phase 178 — Yakındaki ustalar (mavi pill). Jobs üstüne çizilir;
-        // seçili usta turuncu jobs'tan ayırt edilebilir.
-        MarkerLayer(
-          markers: state.workers
-              .where((w) => w.latitude != null && w.longitude != null)
-              .map((w) {
-            final isSelected = w.id == state.selectedWorkerId;
-            final width = isSelected ? 96.0 : 84.0;
-            final height = isSelected ? 46.0 : 38.0;
-            return Marker(
-              point: LatLng(w.latitude!, w.longitude!),
-              width: width,
-              height: height,
-              child: GestureDetector(
-                onTap: () => onWorkerTap(w),
-                child: WorkerMapMarker(
-                  name: w.name,
-                  rating: w.rating,
-                  isSelected: isSelected,
-                  isVerified: w.identityVerified,
-                  isApprox: w.locationApprox,
+        // Phase 178 + 292 — Yakındaki ustalar (mavi pill). Jobs üstüne çizilir;
+        // seçili usta turuncu jobs'tan ayırt edilebilir. Yalnızca usta hesapları
+        // (workerCategories dolu) için render edilir — normal müşteri haritada
+        // sadece iş ilanı pin'lerini görür.
+        if (showWorkers)
+          MarkerLayer(
+            markers: state.workers
+                .where((w) => w.latitude != null && w.longitude != null)
+                .map((w) {
+              final isSelected = w.id == state.selectedWorkerId;
+              final width = isSelected ? 96.0 : 84.0;
+              final height = isSelected ? 46.0 : 38.0;
+              return Marker(
+                point: LatLng(w.latitude!, w.longitude!),
+                width: width,
+                height: height,
+                child: GestureDetector(
+                  onTap: () => onWorkerTap(w),
+                  child: WorkerMapMarker(
+                    name: w.name,
+                    rating: w.rating,
+                    isSelected: isSelected,
+                    isVerified: w.identityVerified,
+                    isApprox: w.locationApprox,
+                  ),
                 ),
-              ),
-            );
-          }).toList(),
-        ),
+              );
+            }).toList(),
+          ),
       ],
     );
   }
