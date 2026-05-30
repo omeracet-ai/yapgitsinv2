@@ -185,11 +185,62 @@ class _CustomerJobsByStatus extends ConsumerWidget {
 
 // ─── Worker tab content ───────────────────────────────────────────────────────
 
-class _WorkerTabContent extends ConsumerWidget {
+// Phase 303 — Tekliflerim alt sekmeleri tek dropdown filtre butonuna indirildi.
+// Sıra: Tümü → Bekleyen → Kabul Edilen → Reddedilen.
+enum _OfferFilter { all, pending, accepted, rejected }
+
+extension _OfferFilterLabel on _OfferFilter {
+  String get label => switch (this) {
+        _OfferFilter.all => 'Tümü',
+        _OfferFilter.pending => 'Bekleyen',
+        _OfferFilter.accepted => 'Kabul Edilen',
+        _OfferFilter.rejected => 'Reddedilen',
+      };
+
+  IconData get icon => switch (this) {
+        _OfferFilter.all => Icons.list_alt_outlined,
+        _OfferFilter.pending => Icons.schedule_outlined,
+        _OfferFilter.accepted => Icons.check_circle_outline,
+        _OfferFilter.rejected => Icons.cancel_outlined,
+      };
+}
+
+class _WorkerTabContent extends ConsumerStatefulWidget {
   const _WorkerTabContent();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_WorkerTabContent> createState() => _WorkerTabContentState();
+}
+
+class _WorkerTabContentState extends ConsumerState<_WorkerTabContent> {
+  _OfferFilter _filter = _OfferFilter.all;
+
+  List<Map<String, dynamic>> _apply(List<Map<String, dynamic>> offers) {
+    switch (_filter) {
+      case _OfferFilter.all:
+        return offers;
+      case _OfferFilter.pending:
+        // Phase 262 — countered (karşı teklif bekleyen) da burada görünsün.
+        return offers
+            .where((o) =>
+                o['status'] == 'pending' || o['status'] == 'countered')
+            .toList();
+      case _OfferFilter.accepted:
+        return offers.where((o) => o['status'] == 'accepted').toList();
+      case _OfferFilter.rejected:
+        return offers.where((o) => o['status'] == 'rejected').toList();
+    }
+  }
+
+  String _emptyMsg() => switch (_filter) {
+        _OfferFilter.all => 'Henüz teklif vermediniz.',
+        _OfferFilter.pending => 'Bekleyen teklifiniz yok.',
+        _OfferFilter.accepted => 'Kabul edilen teklifiniz yok.',
+        _OfferFilter.rejected => 'Reddedilen teklifiniz yok.',
+      };
+
+  @override
+  Widget build(BuildContext context) {
     final offersAsync = ref.watch(myOffersProvider);
 
     return offersAsync.when(
@@ -223,58 +274,87 @@ class _WorkerTabContent extends ConsumerWidget {
             ),
           );
         }
-        return DefaultTabController(
-          length: 4,
-          child: Column(
-            children: [
-              Material(color: AppColors.surface,
-                child: TabBar(
-                  isScrollable: true,
-                  tabs: const [
-                    Tab(text: 'Bekleyen'),
-                    Tab(text: 'Kabul Edilen'),
-                    Tab(text: 'Reddedilen'),
-                    Tab(text: 'Tümü'),
-                  ],
-                  labelColor: AppColors.primary,
-                  unselectedLabelColor: AppColors.textHint,
-                  indicatorColor: AppColors.primary,
-                ),
+        final filtered = _apply(offers);
+        return Column(
+          children: [
+            Container(
+              color: AppColors.surface,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: PopupMenuButton<_OfferFilter>(
+                      initialValue: _filter,
+                      onSelected: (v) => setState(() => _filter = v),
+                      itemBuilder: (_) => _OfferFilter.values
+                          .map((f) => PopupMenuItem(
+                                value: f,
+                                child: Row(
+                                  children: [
+                                    Icon(f.icon,
+                                        size: 18,
+                                        color: f == _filter
+                                            ? AppColors.primary
+                                            : AppColors.textSecondary),
+                                    const SizedBox(width: 10),
+                                    Text(f.label,
+                                        style: TextStyle(
+                                            color: f == _filter
+                                                ? AppColors.primary
+                                                : AppColors.textPrimary,
+                                            fontWeight: f == _filter
+                                                ? FontWeight.w600
+                                                : FontWeight.w400)),
+                                  ],
+                                ),
+                              ))
+                          .toList(),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: AppColors.primary
+                                  .withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(_filter.icon,
+                                size: 18, color: AppColors.primary),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(_filter.label,
+                                  style: const TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13.5)),
+                            ),
+                            Text('${filtered.length}',
+                                style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12)),
+                            const SizedBox(width: 6),
+                            const Icon(Icons.arrow_drop_down,
+                                color: AppColors.primary),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    _OfferList(
-                      // Phase 262 — countered (karşı teklif bekleyen) da burada
-                      // görünsün ki usta/müşteri aksiyon alabilsin.
-                      offers: offers
-                          .where((o) =>
-                              o['status'] == 'pending' ||
-                              o['status'] == 'countered')
-                          .toList(),
-                      emptyMsg: 'Bekleyen teklifiniz yok.',
-                    ),
-                    _OfferList(
-                      offers: offers
-                          .where((o) => o['status'] == 'accepted')
-                          .toList(),
-                      emptyMsg: 'Kabul edilen teklifiniz yok.',
-                    ),
-                    _OfferList(
-                      offers: offers
-                          .where((o) => o['status'] == 'rejected')
-                          .toList(),
-                      emptyMsg: 'Reddedilen teklifiniz yok.',
-                    ),
-                    _OfferList(
-                      offers: offers,
-                      emptyMsg: 'Henüz teklif vermediniz.',
-                    ),
-                  ],
-                ),
+            ),
+            Expanded(
+              child: _OfferList(
+                offers: filtered,
+                emptyMsg: _emptyMsg(),
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );
