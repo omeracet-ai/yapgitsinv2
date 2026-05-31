@@ -69,16 +69,11 @@ class _MainShellState extends ConsumerState<MainShell>
   }
 
   void _onItemTapped(int index) {
-    final authState = ref.read(authStateProvider);
-    final isLoggedIn = authState is AuthAuthenticated;
-    // Phase 309 — Tab düzeni: 0 Yaptır · 1 Yapgitsin · 2 İşlerim · 3 Mesajlarım ·
-    // 4 Profil. Mesajlarım (3) logout iken doğrudan login ekranına gönderilir
-    // (kullanıcı kararı). İşlerim (2) ise kendi guest view'ını (Phase 306)
-    // gösterir, oradaki CTA login'e yönlendirir.
-    if (index == 3 && !isLoggedIn) {
-      context.push('/giris-yap', extra: {'returnTo': '/'});
-      return;
-    }
+    // Phase 310 — MainShell tab koruması kaldırıldı. Yeni düzen (Phase 305):
+    // 0 Yaptır · 1 Yapgitsin · 2 İşlerim · 3 Mesajlarım · 4 Profil.
+    // Her korumalı sekme (İşlerim/Mesajlarım/Profil) kendi guest view'ını
+    // (Phase 306/308 + ProfileScreen.buildGuestView) gösterir; CTA
+    // üzerinden /giris-yap'a yönlendirir.
     ref.read(selectedTabProvider.notifier).state = index;
   }
 
