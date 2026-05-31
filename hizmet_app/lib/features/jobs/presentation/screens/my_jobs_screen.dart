@@ -85,8 +85,11 @@ class _MyJobsGuestView extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.work_outline_rounded,
-                  size: 80, color: AppColors.textHint),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: Image.asset('assets/icons/app_icon.png',
+                    width: 80, height: 80, fit: BoxFit.cover),
+              ),
               const SizedBox(height: 24),
               Text('İlanlarınızı ve tekliflerinizi görmek için giriş yapın.',
                   textAlign: TextAlign.center,
