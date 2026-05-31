@@ -13,8 +13,8 @@ class JobFilter {
   final double? userLat;
   final double? userLng;
 
-  // Phase 300 — varsayılan mesafe (km). Açık/değişmemiş kabul edilir →
-  // `activeCount`/`isEmpty` bu değeri "kullanıcı kişiselleştirmesi" saymaz.
+  // Phase 300 — Mesafe toggle'ı açıldığında kullanılacak başlangıç
+  // yarıçapı (km). JobFilter varsayılanı artık `null` — filtre kapalı.
   static const double defaultMaxRadiusKm = 20;
 
   const JobFilter({
@@ -22,19 +22,16 @@ class JobFilter {
     this.budgetMax,
     this.sort = JobSort.newest,
     this.featuredOnly = false,
-    this.maxRadiusKm = defaultMaxRadiusKm,
+    this.maxRadiusKm,
     this.userLat,
     this.userLng,
   });
 
-  /// Phase 307 — Mesafe filtresi default değerden farklıysa "özelleştirilmiş".
-  /// Bu, filtre rozetinin (badge) Yapgitsin sekmesinde "takılı kalmasını"
-  /// engeller: kullanıcı 20 km'yi değiştirmediği sürece chip nötr görünür.
-  /// Phase 312 — `null` da "özelleştirilmemiş" sayılır: tab sıfırlama
-  /// sonrası radius null'a düşse de badge görünmesin (filtre yokken
-  /// "1" rozeti çıkmasın).
-  bool get isDistanceCustomized =>
-      maxRadiusKm != null && maxRadiusKm != defaultMaxRadiusKm;
+  /// Phase 313 — Mesafe filtresi açık mı? `null` ise kapalı, herhangi
+  /// bir değer ise (20 dahil) "kullanıcı filtre uyguladı" sayılır:
+  ///   • Tümü ekranında (radius = null) badge görünmez.
+  ///   • Toggle ON yapılır yapılmaz radius = 20 → badge "1" yanar.
+  bool get isDistanceCustomized => maxRadiusKm != null;
 
   bool get isEmpty =>
       budgetMin == null &&
