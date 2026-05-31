@@ -75,6 +75,8 @@ class _ProfileView extends ConsumerWidget {
     final bio             = data['workerBio']        as String?;
     final rating          = (data['averageRating']   as num?)?.toDouble() ?? 0.0;
     final reviews         = (data['totalReviews']    as num?)?.toInt()    ?? 0;
+    // Phase 322 — reputation chip kaldırıldı (3-metrik analizine geçildi).
+    // ignore: unused_local_variable
     final reputation      = (data['reputationScore'] as num?)?.toInt()    ?? 0;
     final verified        = data['identityVerified'] == true;
     final totalCustomer   = (data['asCustomerTotal']   as num?)?.toInt() ?? 0;
@@ -330,45 +332,51 @@ class _ProfileView extends ConsumerWidget {
                 // ── İstatistikler ────────────────────────────────────────
                 // Admin /profile-card ekranı her bir kartı tek tek
                 // gizleyebilir. Tüm kartlar gizliyse Container'ı hiç çizme.
+                // Phase 322 — 3 metrik analizi (worker/customer'a göre):
+                //   Tamamlanan İş (X/Y)  ·  Başarı Oranı (k.k/5.0)  ·
+                //   Değerlendirme (avgRating/5.0)
+                // Tüm kartlar 5.0 ölçeğinde okunur → kullanıcı tek bakışta
+                // karşılaştırır. Reputation/jobs/old rating kartları kaldırıldı.
                 Builder(builder: (_) {
-                  final stats = <Widget>[];
-                  if (showRating) {
-                    stats.add(_bigStat(
-                      label: rating > 0 ? rating.toStringAsFixed(1) : '—',
-                      sub: showReviews ? '$reviews yorum' : 'Puan',
-                      icon: Icons.star_rounded,
-                      iconColor: Colors.amber,
-                    ));
-                  }
-                  if (showReputation) {
-                    if (stats.isNotEmpty) stats.add(_divider());
-                    stats.add(_bigStat(
-                      label: '$reputation',
-                      sub: 'Puan',
-                      icon: Icons.emoji_events_rounded,
-                      iconColor: AppColors.accent,
-                    ));
-                  }
-                  if (isWorker && showCompletion) {
-                    if (stats.isNotEmpty) stats.add(_divider());
-                    stats.add(_bigStat(
-                      label: totalWorker > 0
-                          ? '%${(successWorker / totalWorker * 100).round()}'
-                          : '—',
-                      sub: 'Tamamlama',
+                  final total = isWorker ? totalWorker : totalCustomer;
+                  final success =
+                      isWorker ? successWorker : successCustomer;
+                  // Başarı oranı 5.0 ölçeğine yansıtıldı: success/total * 5.
+                  final ratio5 =
+                      total > 0 ? (success / total * 5.0) : 0.0;
+                  final stats = <Widget>[
+                    _bigStat(
+                      label: total > 0 ? '$success/$total' : '—',
+                      sub: 'Tamamlanan İş',
                       icon: Icons.check_circle_outline_rounded,
                       iconColor: AppColors.success,
-                    ));
-                  } else if (!isWorker && showJobs) {
-                    if (stats.isNotEmpty) stats.add(_divider());
-                    stats.add(_bigStat(
-                      label: '$totalCustomer',
-                      sub: 'İş ilanı',
-                      icon: Icons.work_outline_rounded,
+                    ),
+                    _divider(),
+                    _bigStat(
+                      label: total > 0
+                          ? '${ratio5.toStringAsFixed(1)}/5.0'
+                          : '—',
+                      sub: 'Başarı Oranı',
+                      icon: Icons.trending_up_rounded,
                       iconColor: AppColors.primary,
-                    ));
+                    ),
+                    _divider(),
+                    _bigStat(
+                      label: rating > 0
+                          ? '${rating.toStringAsFixed(1)}/5.0'
+                          : '—',
+                      sub:
+                          showReviews ? '$reviews yorum' : 'Değerlendirme',
+                      icon: Icons.star_rounded,
+                      iconColor: Colors.amber,
+                    ),
+                  ];
+                  // Tüm tilesları admin tarafı tek tek gizleyebilir; en az
+                  // bir kart aktifse render et.
+                  if (!showRating && !showReputation && !showJobs &&
+                      !showCompletion) {
+                    return const SizedBox.shrink();
                   }
-                  if (stats.isEmpty) return const SizedBox.shrink();
                   return Container(
                     color: AppColors.surface,
                     padding: const EdgeInsets.symmetric(vertical: 16),
