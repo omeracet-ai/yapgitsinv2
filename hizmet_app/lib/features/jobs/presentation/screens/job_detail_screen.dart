@@ -506,39 +506,47 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   color: _textSecondary, letterSpacing: 0.3)),
           const SizedBox(height: 10),
 
-          // Profil satırı
+          // Profil satırı — Phase 317: avatar VE isim tıklanabilir (profil rotası).
+          // Eski "Profili Gör" butonu kaldırıldı; tek tap-hedef.
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Avatar + doğrulama rozeti
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  CircleAvatar(
-                    radius: 26,
-                    backgroundColor: AppColors.primaryLight,
-                    backgroundImage: imgUrl != null ? NetworkImage(imgUrl) : null,
-                    child: imgUrl == null
-                        ? Text(name.isNotEmpty ? trUpper(name[0]) : '?',
-                            style: const TextStyle(fontSize: 20,
-                                color: AppColors.primary, fontWeight: FontWeight.bold))
-                        : null,
-                  ),
-                  if (verified)
-                    Positioned(
-                      bottom: -2,
-                      right: -2,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          color: _surfaceColor2,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.verified_rounded,
-                            color: AppColors.primary, size: 16),
-                      ),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: customerId == null
+                    ? null
+                    : () => context.push(
+                        isOffer ? '/usta/$customerId' : '/musteri/$customerId'),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    CircleAvatar(
+                      radius: 26,
+                      backgroundColor: AppColors.primaryLight,
+                      backgroundImage: imgUrl != null ? NetworkImage(imgUrl) : null,
+                      child: imgUrl == null
+                          ? Text(name.isNotEmpty ? trUpper(name[0]) : '?',
+                              style: const TextStyle(fontSize: 20,
+                                  color: AppColors.primary, fontWeight: FontWeight.bold))
+                          : null,
                     ),
-                ],
+                    if (verified)
+                      Positioned(
+                        bottom: -2,
+                        right: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: _surfaceColor2,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.verified_rounded,
+                              color: AppColors.primary, size: 16),
+                        ),
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(width: 12),
 
@@ -550,11 +558,22 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                     Row(
                       children: [
                         Flexible(
-                          child: Text(name,
-                              style: const TextStyle(fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: _textPrimary),
-                              overflow: TextOverflow.ellipsis),
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: customerId == null
+                                ? null
+                                : () => context.push(isOffer
+                                    ? '/usta/$customerId'
+                                    : '/musteri/$customerId'),
+                            child: Text(name,
+                                style: const TextStyle(fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: _textPrimary,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: AppColors.primary,
+                                    decorationThickness: 1.2),
+                                overflow: TextOverflow.ellipsis),
+                          ),
                         ),
                         if (verified) ...[
                           const SizedBox(width: 6),
@@ -651,29 +670,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             ),
           ],
 
-          const SizedBox(height: 10),
-
-          // Profili Gör butonu — kind-aware route:
-          //   offer kind = poster usta → /usta/:id (PublicProfileScreen)
-          //   request kind = poster müşteri → /musteri/:id (CustomerPublicProfileScreen)
-          if (customerId != null)
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => context.push(
-                  isOffer ? '/usta/$customerId' : '/musteri/$customerId',
-                ),
-                icon: const Icon(Icons.person_outline_rounded, size: 16),
-                label: const Text('Profili Gör'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: const BorderSide(color: AppColors.primary),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
+          // Phase 317 — "Profili Gör" butonu kaldırıldı; isim + avatar
+          // tıklaması zaten aynı rotaya götürüyor.
         ],
       ),
     );
