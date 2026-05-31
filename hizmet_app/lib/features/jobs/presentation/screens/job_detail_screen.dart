@@ -1062,6 +1062,38 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                                 : TextDecoration.none)),
                   ),
                 ),
+                // Phase 319 — 1-1 chat tetikleyici. Sadece bu iki taraf
+                // arasında: ilan sahibi ↔ teklif sahibi. Diğer ziyaretçiler
+                // (örn. fiyatı görmeyen ustalar) butonu görmez.
+                if (!maskForLogout) ...[
+                  Builder(builder: (ctx) {
+                    final jobCustomerId = widget.id == null
+                        ? null
+                        : (ref
+                                .read(jobDetailProvider(widget.id!))
+                                .valueOrNull?['customer']
+                            as Map?)?['id'] as String?;
+                    String? peerId;
+                    if (isOwnerView && offerUserId.isNotEmpty) {
+                      peerId = offerUserId;
+                    } else if (isOfferOwner && jobCustomerId != null) {
+                      peerId = jobCustomerId;
+                    }
+                    if (peerId == null) return const SizedBox.shrink();
+                    return SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: IconButton(
+                        tooltip: 'Mesajlaş',
+                        padding: EdgeInsets.zero,
+                        iconSize: 18,
+                        icon: const Icon(Icons.chat_bubble_outline_rounded,
+                            color: AppColors.primary),
+                        onPressed: () => context.push('/chat/$peerId'),
+                      ),
+                    );
+                  }),
+                ],
                 if (!isOfferOwner && offerUserId.isNotEmpty && !maskForLogout)
                   SizedBox(
                     width: 32, height: 32,
