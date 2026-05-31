@@ -110,8 +110,9 @@ class ProfileScreen extends ConsumerWidget {
               // gizlendi (kullanıcı isteği). İlgili widget tanımları kalır
               // ki gelecekte tekrar açılabilsin; build'den çekildiler.
               _buildIdentityStatus(user),
-              _buildStatsSection(ref),
-              _buildBadgesSection(ref),
+              // Phase 321 — İstatistikler + Rozetler + İtibar tek bir
+              // açılır-kapanır sekmede toplandı.
+              _buildStatsExpansion(ref),
               _buildCertificationsSection(ref),
               _buildPastPhotos(ref),
               _buildReviewsSection(ref),
@@ -176,10 +177,8 @@ class ProfileScreen extends ConsumerWidget {
           data: (p) => (p['averageRating'] as num?)?.toDouble() ?? 0.0,
           orElse: () => 0.0,
         );
-        final repScore = profileAsync.maybeWhen(
-          data: (p) => (p['reputationScore'] as num?)?.toInt() ?? 0,
-          orElse: () => 0,
-        );
+        // Phase 321 — repScore artık expansion subtitle'ında okunuyor;
+        // header strip kaldırıldı.
         final totalReviews = profileAsync.maybeWhen(
           data: (p) => (p['totalReviews'] as num?)?.toInt() ?? 0,
           orElse: () => 0,
@@ -281,27 +280,8 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              if (repScore > 0) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(color: AppColors.surface.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _headerStat('🏆', '$repScore', 'İtibar Puanı'),
-                      Container(width: 1, height: 30, color: Colors.white24),
-                      _headerStat(
-                          '⭐', avgRating.toStringAsFixed(1), 'Ortalama Puan'),
-                      Container(width: 1, height: 30, color: Colors.white24),
-                      _headerStat('📝', '$totalReviews', 'Değerlendirme'),
-                    ],
-                  ),
-                ),
-              ],
+              // Phase 321 — İtibar/Ortalama/Değerlendirme strip header'dan
+              // çıkarıldı; açılır "İstatistikler" sekmesi içine taşındı.
             ],
           ),
         );
@@ -309,6 +289,8 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  // Phase 321 — header strip kaldırıldı, _expStat ile değiştirildi.
+  // ignore: unused_element
   Widget _headerStat(String emoji, String value, String label) {
     return Column(children: [
       Text(emoji, style: const TextStyle(fontSize: 16)),
@@ -620,6 +602,151 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   // ── İstatistikler ──────────────────────────────────────────────────────────
+  /// Phase 321 — Tek açılır-kapanır "İstatistikler" sekmesi:
+  /// İtibar Puanı + Ortalama Puan + Değerlendirme strip'i (header'dan
+  /// taşındı), Hizmet Alan / Hizmet Veren kartları ve Rozetler.
+  /// Varsayılan KAPALI — kullanıcı isterse genişletir.
+  Widget _buildStatsExpansion(WidgetRef ref) {
+    final profileAsync = ref.watch(myPublicProfileProvider);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: Theme.of(ref.context).copyWith(
+          dividerColor: Colors.transparent,
+          listTileTheme: const ListTileThemeData(dense: true),
+        ),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+          leading: const Icon(Icons.insights_outlined,
+              color: AppColors.primary),
+          title: const Text('İstatistikler',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          subtitle: profileAsync.maybeWhen(
+            data: (p) {
+              final rep = (p['reputationScore'] as num?)?.toInt() ?? 0;
+              final avg = (p['averageRating'] as num?)?.toDouble() ?? 0.0;
+              final rev = (p['totalReviews'] as num?)?.toInt() ?? 0;
+              return Text(
+                'İtibar $rep · Ortalama ${avg.toStringAsFixed(1)} · $rev yorum',
+                style: TextStyle(
+                    fontSize: 11, color: AppColors.textSecondary),
+              );
+            },
+            orElse: () => null,
+          ),
+          children: [
+            profileAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (profile) {
+                if (profile.isEmpty) return const SizedBox.shrink();
+                final rep = (profile['reputationScore'] as num?)?.toInt() ?? 0;
+                final avg =
+                    (profile['averageRating'] as num?)?.toDouble() ?? 0.0;
+                final rev = (profile['totalReviews'] as num?)?.toInt() ?? 0;
+                final cTotal = (profile['asCustomerTotal'] ?? 0) as int;
+                final cSuccess = (profile['asCustomerSuccess'] ?? 0) as int;
+                final cFail = (profile['asCustomerFail'] ?? 0) as int;
+                final wTotal = (profile['asWorkerTotal'] ?? 0) as int;
+                final wSuccess = (profile['asWorkerSuccess'] ?? 0) as int;
+                final wFail = (profile['asWorkerFail'] ?? 0) as int;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _expStat('🏆', '$rep', 'İtibar'),
+                          Container(
+                              width: 1,
+                              height: 28,
+                              color: AppColors.border),
+                          _expStat(
+                              '⭐', avg.toStringAsFixed(1), 'Ortalama'),
+                          Container(
+                              width: 1,
+                              height: 28,
+                              color: AppColors.border),
+                          _expStat('📝', '$rev', 'Yorum'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _statCard(
+                            icon: Icons.shopping_bag_outlined,
+                            color: AppColors.verifiedBlue,
+                            title: 'Hizmet Alan',
+                            total: cTotal,
+                            success: cSuccess,
+                            fail: cFail,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _statCard(
+                            icon: Icons.handyman_outlined,
+                            color: AppColors.verifiedGreen,
+                            title: 'Hizmet Veren',
+                            total: wTotal,
+                            success: wSuccess,
+                            fail: wFail,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildBadgesSection(ref),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _expStat(String emoji, String value, String label) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('$emoji  $value',
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary)),
+        const SizedBox(height: 2),
+        Text(label,
+            style: TextStyle(
+                fontSize: 10, color: AppColors.textSecondary)),
+      ],
+    );
+  }
+
+  // Phase 321 — _buildStatsExpansion içinde kullanılan kartlar bu metoddan
+  // bağımsız ama tanım korunuyor; gelecekte tekrar çağrılabilir.
+  // ignore: unused_element
   Widget _buildStatsSection(WidgetRef ref) {
     final profileAsync = ref.watch(myPublicProfileProvider);
 
