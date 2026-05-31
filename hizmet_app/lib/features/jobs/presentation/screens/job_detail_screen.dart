@@ -245,14 +245,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   const SizedBox(height: 6),
                   _buildPhotosSection(photos),
                 ],
-                // Phase 203 — İlan sahibi fotoğraf ekleyebilir (max 5)
-                if (widget.id != null && isOwner) ...[
-                  const SizedBox(height: 6),
-                  JobPhotosBulkSection(
-                    jobId: widget.id!,
-                    initialPhotos: photos,
-                  ),
-                ],
+                // Phase 318 — Fotoğraf güncelleme inline kaldırıldı;
+                // ilan sahibi "Güncelle" butonu içindeki modal'dan ekliyor.
                 if (videos.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   _buildVideosSection(videos),
@@ -1787,7 +1781,27 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 ),
                 const SizedBox(height: 12),
                 _updateField(locationCtrl, 'Konum', Icons.location_on_outlined),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
+
+                // Phase 318 — Fotoğraf yönetimi artık güncelleme modal'ında.
+                if (widget.id != null) ...[
+                  Row(children: const [
+                    Icon(Icons.photo_library_outlined,
+                        size: 18, color: AppColors.primary),
+                    SizedBox(width: 8),
+                    Text('Fotoğraflar',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
+                  ]),
+                  const SizedBox(height: 8),
+                  JobPhotosBulkSection(
+                    jobId: widget.id!,
+                    initialPhotos: (detail['photos'] as List?)
+                            ?.cast<String>() ??
+                        widget.photos,
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 // Kategori dropdown
                 Container(
