@@ -1,24 +1,95 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/chat_repository.dart';
 import '../../data/chat_service.dart';
 import '../../data/presence_provider.dart';
 import 'chat_detail_screen.dart';
 
-class ChatListScreen extends ConsumerStatefulWidget {
+class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
 
   @override
-  ConsumerState<ChatListScreen> createState() => _ChatListScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+
+    // Phase 308 — Logout state: İşlerim ile aynı guest pattern.
+    // Önceki davranış: chatService.connect() + conversationsProvider
+    // anonim olarak çalıştırılıyordu, 401 hatası gösteriyordu.
+    if (authState is AuthLoading || authState is AuthInitial) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (authState is! AuthAuthenticated) {
+      return const _MessagesGuestView();
+    }
+    return const _AuthenticatedChatList();
+  }
 }
 
-class _ChatListScreenState extends ConsumerState<ChatListScreen> {
+// Phase 308 — Logout sonrası Mesajlarım sekmesi için boş + CTA görünümü.
+class _MessagesGuestView extends StatelessWidget {
+  const _MessagesGuestView();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(l.chatTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.chat_bubble_outline_rounded,
+                  size: 80, color: AppColors.textHint),
+              const SizedBox(height: 24),
+              Text('Mesajlarınızı görüntülemek için giriş yapın.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 16, color: AppColors.textSecondary)),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => context.push('/giris-yap'),
+                  child: Text(l.loginButton),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Phase 308 — Eski ChatListScreen state'i, sadece kimliği doğrulanmış
+// kullanıcılar için. WebSocket connect ve presence yalnız burada başlatılır.
+class _AuthenticatedChatList extends ConsumerStatefulWidget {
+  const _AuthenticatedChatList();
+
+  @override
+  ConsumerState<_AuthenticatedChatList> createState() =>
+      _AuthenticatedChatListState();
+}
+
+class _AuthenticatedChatListState
+    extends ConsumerState<_AuthenticatedChatList> {
   @override
   void initState() {
     super.initState();
