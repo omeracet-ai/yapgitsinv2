@@ -296,25 +296,41 @@ Widget _bookingCard(Booking b, {VoidCallback? onCancel}) {
   }
   final canCancel = b.status == BookingStatus.pending ||
       b.status == BookingStatus.confirmed;
-  return Card(
-    margin: const EdgeInsets.only(bottom: 12),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  // Phase 324 — Booking kartı sıkıştırıldı (Yapgitsin tab tarzı kompakt).
+  // Card → Container, padding 8 → 8/6, ListTile dense + minVerticalPadding,
+  // avatar 40 → 32, alt aksiyon butonları daha küçük.
+  return Container(
+    margin: const EdgeInsets.only(bottom: 8),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: Colors.grey.shade200),
+    ),
     child: Padding(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
       child: Column(
         children: [
           ListTile(
+            dense: true,
+            minVerticalPadding: 0,
+            visualDensity: const VisualDensity(vertical: -2),
             contentPadding: EdgeInsets.zero,
             leading: CircleAvatar(
+                radius: 16,
                 backgroundColor: c,
-                child: Icon(ic, color: Colors.white, size: 18)),
+                child: Icon(ic, color: Colors.white, size: 14)),
             title: Text(b.category,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 13)),
             subtitle: Text(b.description,
-                maxLines: 1, overflow: TextOverflow.ellipsis),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11)),
             trailing: Text(b.scheduledTime ?? '--:--',
                 style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.blue)),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                    fontSize: 12)),
           ),
           Align(
             alignment: Alignment.centerLeft,

@@ -15,6 +15,10 @@ import '../../../../l10n/app_localizations.dart';
 import '../widgets/boost_dialog.dart';
 import '../widgets/job_history_dialog.dart';
 import '../widgets/pending_confirmations_card.dart';
+// Phase 325 — Takvim sekmesi için booking provider + detail route.
+import '../../../calendar/data/booking_repository.dart';
+import '../../../calendar/presentation/booking_detail_screen.dart';
+import '../../../../core/models/booking_model.dart';
 
 // ─── Providers ────────────────────────────────────────────────────────────────
 
@@ -144,7 +148,7 @@ class _DualRoleView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: showAppBar
@@ -153,8 +157,7 @@ class _DualRoleView extends ConsumerWidget {
                 titleSpacing: 0,
                 backgroundColor: AppColors.headerBackground(context),
                 foregroundColor: Colors.white,
-                // "İşlerim" başlığı kaldırıldı; TabBar üstte tek satır olarak
-                // gözükür ve sağda bildirim + şablonlarım hizalı.
+                // Phase 325 — 4. tab: Takvim — randevu liste görünümü.
                 title: const TabBar(
                   isScrollable: true,
                   tabAlignment: TabAlignment.start,
@@ -162,6 +165,7 @@ class _DualRoleView extends ConsumerWidget {
                     Tab(icon: Icon(Icons.assignment_outlined), text: 'Aktif İlanlarım'),
                     Tab(icon: Icon(Icons.handyman_outlined), text: 'Tekliflerim'),
                     Tab(icon: Icon(Icons.check_circle_outline), text: 'Biten İşler'),
+                    Tab(icon: Icon(Icons.calendar_month_outlined), text: 'Takvim'),
                   ],
                   indicatorColor: Colors.white,
                   labelColor: Colors.white,
@@ -195,6 +199,8 @@ class _DualRoleView extends ConsumerWidget {
                   _WorkerTabContent(),
                   _CustomerJobsByStatus(statuses: ['completed'],
                       emptyMsg: 'Tamamlanan işiniz yok.'),
+                  // Phase 325 — Takvim sekmesi (kompakt randevu listesi).
+                  _BookingsCalendarTab(),
                 ],
               ),
             ),
@@ -1391,6 +1397,149 @@ class _WorkerOfferCard extends ConsumerWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+
+/// Phase 325 — İşlemlerim sekmesi içine kompakt randevu liste görünümü.
+/// Eski `/takvim` ekranı tam featured kalır; bu tab hızlı bakış.
+class _BookingsCalendarTab extends ConsumerWidget {
+  const _BookingsCalendarTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(myCustomerBookingsProvider);
+    return async.when(
+      loading: () => ListSkeleton(
+        itemCount: 4,
+        itemBuilder: (_) => const JobCardSkeleton(),
+      ),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text('Randevular yüklenemedi: $e',
+              style: TextStyle(color: AppColors.error)),
+        ),
+      ),
+      data: (bookings) {
+        if (bookings.isEmpty) {
+          return const EmptyState(
+            icon: Icons.event_busy_outlined,
+            title: 'Randevu yok',
+            message:
+                'Onayladığın ya da bekleyen randevular burada listelenecek.',
+          );
+        }
+        final sorted = [...bookings]
+          ..sort((a, b) => b.scheduledDate.compareTo(a.scheduledDate));
+        return RefreshIndicator(
+          onRefresh: () async => ref.invalidate(myCustomerBookingsProvider),
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 16),
+            itemCount: sorted.length,
+            itemBuilder: (_, i) {
+              final b = sorted[i];
+              return _CompactBookingRow(booking: b);
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CompactBookingRow extends StatelessWidget {
+  final Booking booking;
+  const _CompactBookingRow({required this.booking});
+
+  Color get _statusColor {
+    switch (booking.status) {
+      case BookingStatus.completed:  return Colors.green;
+      case BookingStatus.cancelled:  return Colors.red;
+      case BookingStatus.in_progress: return Colors.orange;
+      case BookingStatus.confirmed:  return Colors.blue;
+      default:                       return Colors.grey;
+    }
+  }
+
+  IconData get _statusIcon {
+    switch (booking.status) {
+      case BookingStatus.completed:  return Icons.check;
+      case BookingStatus.cancelled:  return Icons.close;
+      case BookingStatus.in_progress: return Icons.work;
+      case BookingStatus.confirmed:  return Icons.event_available;
+      default:                       return Icons.timer;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) =>
+                BookingDetailScreen(booking: booking, asWorker: false),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: _statusColor,
+                child: Icon(_statusIcon, color: Colors.white, size: 14),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(booking.category,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 2),
+                    Text(booking.description,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 11, color: AppColors.textSecondary)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${booking.scheduledDate.day}/${booking.scheduledDate.month}',
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    booking.scheduledTime ?? '--:--',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
