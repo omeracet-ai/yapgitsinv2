@@ -112,6 +112,17 @@ export class Offer {
   @Column({ type: 'datetime', nullable: true, default: null })
   refreshedAt: Date | null;
 
+  // ── Phase 316 — Usta teklifinde önerdiği tarih/saat ──────────────────
+  // Sadece ilan `scheduleFlexibility` = 'flexible' | 'urgent' olduğunda
+  // frontend gönderir; null kalabilir (opsiyonel). Format Job entity ile
+  // aynı: YYYY-MM-DD + HH:MM. Müşteri teklif kartında "Önerilen: ..."
+  // şeklinde görür, anlaşma sonrası Booking.scheduledDate/Time'a kopyalanır.
+  @Column({ type: 'varchar', length: 10, nullable: true, default: null })
+  proposedDate: string | null;
+
+  @Column({ type: 'varchar', length: 5, nullable: true, default: null })
+  proposedTime: string | null;
+
   /**
    * Phase 287 — Teklif gönderildiğinde admin config'inden hesaplanan kredi
    * maliyeti (`flat` veya `percent` moduna göre). Withdraw refund tam bu

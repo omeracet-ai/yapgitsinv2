@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -46,6 +47,17 @@ export class CreateOfferDto {
   @ValidateNested({ each: true })
   @Type(() => OfferLineItemDto)
   lineItems?: OfferLineItemDto[];
+
+  // Phase 316 — Usta opsiyonel tarih/saat önerisi (ilan flexible/urgent ise).
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'proposedDate YYYY-MM-DD olmalı' })
+  proposedDate?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{2}:\d{2}$/, { message: 'proposedTime HH:MM olmalı' })
+  proposedTime?: string;
 }
 
 export class CounterOfferDto {

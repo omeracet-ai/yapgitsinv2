@@ -720,6 +720,20 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     }
   }
 
+  /// Phase 316 — "Önerilen: 12 Haziran 2026 · 14:30" formatlı satır.
+  /// İkisi de boşsa boş string döner. Sadece biri varsa onu gösterir.
+  static String _formatProposedSchedule(String? date, String? time) {
+    final hasDate = date != null && date.isNotEmpty;
+    final hasTime = time != null && time.isNotEmpty;
+    if (!hasDate && !hasTime) return '';
+    final dateStr = hasDate ? _formatDueDate(date) : null;
+    final parts = <String>[
+      if (dateStr != null) dateStr,
+      if (hasTime) time,
+    ];
+    return 'Önerilen: ${parts.join(' · ')}';
+  }
+
   static String _memberSince(String iso) {
     try {
       final dt = DateTime.parse(iso).toLocal();
@@ -1196,6 +1210,30 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                         .map((m) => Map<String, dynamic>.from(m))
                         .toList(),
                   ),
+                // Phase 316 — Ustanın önerdiği tarih/saat (varsa).
+                if (!maskForLogout &&
+                    ((offer['proposedDate'] as String?)?.isNotEmpty == true ||
+                     (offer['proposedTime'] as String?)?.isNotEmpty == true)) ...[
+                  const SizedBox(height: 6),
+                  Row(children: [
+                    const Icon(Icons.event_available_outlined,
+                        size: 14, color: AppColors.primary),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        _formatProposedSchedule(
+                          offer['proposedDate'] as String?,
+                          offer['proposedTime'] as String?,
+                        ),
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ]),
+                ],
               ],
             ),
           ),
@@ -1565,6 +1603,18 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     final priceCtrl = TextEditingController();
     final msgCtrl = TextEditingController();
     final lineItemsRef = <List<Map<String, dynamic>>>[[]];
+    // Phase 316 — ilan flexible/urgent ise schedule picker'ı aktif et.
+    // jobDetailProvider zaten build()'de yüklü; cache'den oku.
+    final detail = widget.id != null
+        ? ref.read(jobDetailProvider(widget.id!)).valueOrNull
+        : null;
+    final flex = detail?['scheduleFlexibility'] as String?;
+    final showSchedulePicker = flex == 'flexible' || flex == 'urgent';
+    final scheduleHint = flex == 'urgent'
+        ? 'Acil iş — uygun olduğunuz tarih/saati önerin'
+        : (flex == 'flexible' ? 'Esnek — istediğiniz tarih/saati önerin' : null);
+    String? proposedDate;
+    String? proposedTime;
     showModalBottomSheet(
       useSafeArea: true,
       context: context,
@@ -1579,6 +1629,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         submitLabel: 'Gönder',
         showLineItems: true,
         onLineItemsChanged: (items) => lineItemsRef[0] = items,
+        showSchedulePicker: showSchedulePicker,
+        scheduleHint: scheduleHint,
+        onScheduleChanged: (s) {
+          proposedDate = s.date;
+          proposedTime = s.time;
+        },
         onSubmit: () async {
           if (widget.id == null || priceCtrl.text.isEmpty) return;
           final price =
@@ -1602,6 +1658,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 price,
                 msgCtrl.text,
                 lineItems: items.isEmpty ? null : items,
+                proposedDate: proposedDate,
+                proposedTime: proposedTime,
               );
           // Phase 282 — teklif sonrası tüm bağımlı cache'leri invalide et:
           // jobOffers (bu ilan), tokenBalance (5 kredi düştü), myOffers
@@ -1967,6 +2025,11 @@ class _BidSheet extends StatefulWidget {
   final Future<void> Function() onSubmit;
   final bool showLineItems;
   final ValueChanged<List<Map<String, dynamic>>>? onLineItemsChanged;
+  // Phase 316 — ilan flexible/urgent ise tarih/saat seçici göster.
+  // showSchedulePicker = false ise tüm picker UI/state oluşmaz (pazarlık).
+  final bool showSchedulePicker;
+  final String? scheduleHint; // "Acil" veya "Esnek" — UI ipucu
+  final ValueChanged<({String? date, String? time})>? onScheduleChanged;
 
   const _BidSheet({
     required this.title,
@@ -1978,6 +2041,9 @@ class _BidSheet extends StatefulWidget {
     this.msgLabel = 'Mesajınız',
     this.showLineItems = false,
     this.onLineItemsChanged,
+    this.showSchedulePicker = false,
+    this.scheduleHint,
+    this.onScheduleChanged,
   });
 
   @override
@@ -1986,6 +2052,49 @@ class _BidSheet extends StatefulWidget {
 
 class _BidSheetState extends State<_BidSheet> {
   bool _loading = false;
+  DateTime? _proposedDate;
+  TimeOfDay? _proposedTime;
+
+  String? get _dateStr => _proposedDate == null
+      ? null
+      : '${_proposedDate!.year.toString().padLeft(4, '0')}-'
+          '${_proposedDate!.month.toString().padLeft(2, '0')}-'
+          '${_proposedDate!.day.toString().padLeft(2, '0')}';
+
+  String? get _timeStr => _proposedTime == null
+      ? null
+      : '${_proposedTime!.hour.toString().padLeft(2, '0')}:'
+          '${_proposedTime!.minute.toString().padLeft(2, '0')}';
+
+  void _emitSchedule() {
+    widget.onScheduleChanged?.call((date: _dateStr, time: _timeStr));
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _proposedDate ?? now,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+      locale: const Locale('tr', 'TR'),
+    );
+    if (picked != null) {
+      setState(() => _proposedDate = picked);
+      _emitSchedule();
+    }
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _proposedTime ?? TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() => _proposedTime = picked);
+      _emitSchedule();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2063,6 +2172,91 @@ class _BidSheetState extends State<_BidSheet> {
                 children: [
                   OfferLineItemsEditor(
                     onChanged: widget.onLineItemsChanged ?? (_) {},
+                  ),
+                ],
+              ),
+            ),
+          ],
+          // Phase 316 — Önerilen tarih/saat: ilan flexible/urgent ise görünür.
+          if (widget.showSchedulePicker) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.20)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.event_available_outlined,
+                          size: 18, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          widget.scheduleHint == null
+                              ? 'Önerilen Tarih/Saat (opsiyonel)'
+                              : 'Önerilen Tarih/Saat — ${widget.scheduleHint!}',
+                          style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary),
+                        ),
+                      ),
+                      if (_proposedDate != null || _proposedTime != null)
+                        IconButton(
+                          tooltip: 'Temizle',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                              minWidth: 28, minHeight: 28),
+                          icon: const Icon(Icons.close, size: 16),
+                          color: AppColors.primary,
+                          onPressed: () {
+                            setState(() {
+                              _proposedDate = null;
+                              _proposedTime = null;
+                            });
+                            _emitSchedule();
+                          },
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _pickDate,
+                          icon: const Icon(Icons.calendar_today_outlined,
+                              size: 16),
+                          label: Text(_dateStr ?? 'Tarih seç',
+                              style: const TextStyle(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _pickTime,
+                          icon: const Icon(Icons.schedule_outlined, size: 16),
+                          label: Text(_timeStr ?? 'Saat seç',
+                              style: const TextStyle(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

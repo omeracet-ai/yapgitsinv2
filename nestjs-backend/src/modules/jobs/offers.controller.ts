@@ -66,6 +66,8 @@ export class OffersController {
       message: body.message,
       attachmentUrls: body.attachmentUrls,
       lineItems: body.lineItems,
+      proposedDate: body.proposedDate,
+      proposedTime: body.proposedTime,
     });
   }
 

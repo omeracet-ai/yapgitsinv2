@@ -36,11 +36,21 @@ class OfferRepository {
 
   Future<Map<String, dynamic>> createOffer(
       String jobId, double price, String message,
-      {List<Map<String, dynamic>>? lineItems}) async {
+      {List<Map<String, dynamic>>? lineItems,
+      String? proposedDate, // YYYY-MM-DD
+      String? proposedTime  // HH:MM
+      }) async {
     try {
       final body = <String, dynamic>{'price': price, 'message': message};
       if (lineItems != null && lineItems.isNotEmpty) {
         body['lineItems'] = lineItems;
+      }
+      // Phase 316 — yalnız doluysa gönder; backend opsiyonel + regex doğrular.
+      if (proposedDate != null && proposedDate.isNotEmpty) {
+        body['proposedDate'] = proposedDate;
+      }
+      if (proposedTime != null && proposedTime.isNotEmpty) {
+        body['proposedTime'] = proposedTime;
       }
       final res = await _dio.post(
         '/jobs/$jobId/offers',

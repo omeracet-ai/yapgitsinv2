@@ -209,6 +209,9 @@ export class OffersService {
       unitPrice: number;
       total: number;
     }>;
+    // Phase 316 — opsiyonel önerilen tarih/saat (flexible/urgent ilanlar).
+    proposedDate?: string;
+    proposedTime?: string;
   }): Promise<Offer> {
     this._assertLineItemsMatchPrice(data.lineItems, data.price);
 
@@ -244,6 +247,9 @@ export class OffersService {
       existing.attachmentUrls = this._sanitizeAttachments(data.attachmentUrls);
       existing.lineItems =
         data.lineItems && data.lineItems.length > 0 ? data.lineItems : null;
+      // Phase 316 — yenilemede önerilen tarih/saat de güncellenir; null gönderilirse temizlenir.
+      existing.proposedDate = data.proposedDate ?? null;
+      existing.proposedTime = data.proposedTime ?? null;
       existing.refreshCount = (existing.refreshCount ?? 0) + 1;
       existing.refreshedAt = new Date();
       const updated = await this.offersRepository.save(existing);
@@ -291,6 +297,9 @@ export class OffersService {
       attachmentUrls: this._sanitizeAttachments(data.attachmentUrls),
       lineItems:
         data.lineItems && data.lineItems.length > 0 ? data.lineItems : null,
+      // Phase 316 — yeni teklifte önerilen tarih/saat (varsa).
+      proposedDate: data.proposedDate ?? null,
+      proposedTime: data.proposedTime ?? null,
       status: OfferStatus.PENDING,
       // Phase 287 — refund için iade tutarı bu kaydı dolaşacak.
       tokenCost: isSubscriber ? 0 : offerCost,
