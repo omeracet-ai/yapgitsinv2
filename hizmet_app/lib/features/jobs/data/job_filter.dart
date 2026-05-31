@@ -30,8 +30,11 @@ class JobFilter {
   /// Phase 307 — Mesafe filtresi default değerden farklıysa "özelleştirilmiş".
   /// Bu, filtre rozetinin (badge) Yapgitsin sekmesinde "takılı kalmasını"
   /// engeller: kullanıcı 20 km'yi değiştirmediği sürece chip nötr görünür.
+  /// Phase 312 — `null` da "özelleştirilmemiş" sayılır: tab sıfırlama
+  /// sonrası radius null'a düşse de badge görünmesin (filtre yokken
+  /// "1" rozeti çıkmasın).
   bool get isDistanceCustomized =>
-      maxRadiusKm != defaultMaxRadiusKm;
+      maxRadiusKm != null && maxRadiusKm != defaultMaxRadiusKm;
 
   bool get isEmpty =>
       budgetMin == null &&

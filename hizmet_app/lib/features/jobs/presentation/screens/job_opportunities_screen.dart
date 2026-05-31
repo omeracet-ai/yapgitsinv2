@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/card_3d.dart';
 import '../../../../core/services/intl_formatter.dart';
+import '../../../../core/providers/navigation_provider.dart';
 import '../../../map/presentation/screens/map_screen.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -44,6 +45,23 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
   void initState() {
     super.initState();
     _applyProximity();
+    // Phase 312 — Sekme ilk kez açıldığında filtreyi tamamen temizle.
+    // Provider modifikasyonu build sırasında yapılamaz → microtask.
+    Future.microtask(_resetFilter);
+  }
+
+  /// Phase 312 — Filtreyi sıfırla:
+  ///   • mesafe limiti `null` (badge çıkmaz, server radius filtresi pasif)
+  ///   • bütçe alanları `null`, featured kapalı, sort = newest
+  /// Backend yine de lat/lng varken sonuçları mesafeye göre + budget
+  /// öncelikli + tarihe göre sıralar (Phase 312 backend ORDER BY).
+  void _resetFilter() {
+    if (!mounted) return;
+    final current = ref.read(jobFilterProvider);
+    if (current.isEmpty && current.maxRadiusKm == null) return;
+    ref.read(jobFilterProvider.notifier).state = const JobFilter(
+      maxRadiusKm: null,
+    );
   }
 
   /// Map'te zaten verilmiş konum iznini yeniden kullanır (yeni izin istemez);
@@ -104,6 +122,13 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
     final jobsAsync = ref.watch(jobsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final activeFilterCount = ref.watch(jobFilterProvider).activeCount;
+
+    // Phase 312 — Yapgitsin sekmesinden çıkış (IndexedStack dispose
+    // etmez). Tab index 1'den herhangi başka indekse geçince filtreyi
+    // sıfırla → kullanıcı tab'a döndüğünde varsayılan "tüm liste".
+    ref.listen<int>(selectedTabProvider, (prev, next) {
+      if (prev == 1 && next != 1) _resetFilter();
+    });
 
     final myCategories = authState is AuthAuthenticated
         ? _parseWorkerCategories(authState.user['workerCategories'])
@@ -182,28 +207,25 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                     .where((j) => j.status == JobStatus.OPEN)
                     .toList();
 
-                // Fırsat ilanları sıralaması:
-                // 1) workerCategories'ime uyan önce
-                // 2) createdAt DESC (en yeni)
-                // 3) budget DESC (yüksek fiyatlı önce)
-                // 4) responseCount=0 önce (rekabet az) — şu an Job
-                //    model'inde responseCount yok; offers fetch ileride
-                //    eklenebilir. Bu skorda createdAt/budget yeterli.
+                // Phase 312 — Sıralama tamamen backend'de:
+                //   featured ASC → distance ASC (lat/lng varsa) →
+                //   budget DESC → createdAt DESC.
+                // Client-side re-sort backend'in mesafe sırasını bozardı;
+                // kaldırıldı. Workererne uygun kategori önceliği gerekirse
+                // ileride sunucu tarafına taşınmalı.
                 final mySet = myCategories.toSet();
-                filtered.sort((a, b) {
-                  final aMine = mySet.contains(a.category) ? 0 : 1;
-                  final bMine = mySet.contains(b.category) ? 0 : 1;
-                  if (aMine != bMine) return aMine - bMine;
-
-                  final aDate = a.createdAt ?? '';
-                  final bDate = b.createdAt ?? '';
-                  final dateCmp = bDate.compareTo(aDate);
-                  if (dateCmp != 0) return dateCmp;
-
-                  final aBudget = a.budgetMax ?? a.budgetMin ?? 0;
-                  final bBudget = b.budgetMax ?? b.budgetMin ?? 0;
-                  return bBudget.compareTo(aBudget);
-                });
+                if (mySet.isNotEmpty) {
+                  // Stable: workererne ait kategoriler üste; aynı grup
+                  // içinde backend sırası (indeks) korunur.
+                  final indexed = filtered.asMap().entries.toList();
+                  indexed.sort((a, b) {
+                    final aMine = mySet.contains(a.value.category) ? 0 : 1;
+                    final bMine = mySet.contains(b.value.category) ? 0 : 1;
+                    if (aMine != bMine) return aMine - bMine;
+                    return a.key.compareTo(b.key);
+                  });
+                  filtered = indexed.map((e) => e.value).toList();
+                }
 
                 if (filtered.isEmpty) {
                   return _buildEmptyState();

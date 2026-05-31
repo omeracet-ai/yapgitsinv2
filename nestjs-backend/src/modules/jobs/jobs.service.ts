@@ -434,7 +434,15 @@ export class JobsService {
         }
       }
 
+      // Phase 312 — Bütçe önceliği: aynı mesafe bandında daha yüksek
+      // bütçeli ilanlar yukarıya. NULL bütçeler en sona. createdAt
+      // tiebreaker olarak kalır.
       query
+        .addOrderBy(
+          'CASE WHEN job.budgetMax IS NULL THEN 1 ELSE 0 END',
+          'ASC',
+        )
+        .addOrderBy('job.budgetMax', 'DESC')
         .addOrderBy('job.createdAt', 'DESC')
         .skip((page - 1) * limit)
         .take(limit);
