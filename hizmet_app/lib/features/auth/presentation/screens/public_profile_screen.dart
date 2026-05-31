@@ -123,15 +123,28 @@ class _ProfileView extends ConsumerWidget {
       bottomNavigationBar: (isWorker && !isSelf)
           ? SafeArea(
               top: false,
-              minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              child: Material(
-                color: AppColors.surface,
-                elevation: 8,
-                shadowColor: Colors.black.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(12),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
+              minimum: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Phase 330 — CTA üzeri başlık: "Hizmet al"
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 6),
+                    child: Text('Hizmet al',
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary)),
+                  ),
+                  Material(
+                    color: AppColors.surface,
+                    elevation: 8,
+                    shadowColor: Colors.black.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -162,8 +175,10 @@ class _ProfileView extends ConsumerWidget {
                         },
                       });
                     },
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             )
           : null,
