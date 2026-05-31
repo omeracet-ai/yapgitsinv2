@@ -332,6 +332,58 @@ class _ProfileView extends ConsumerWidget {
                         Text(_memberSince(since),
                             style: const TextStyle(
                                 fontSize: 11, color: Colors.white60)),
+                      // Phase 327 — Son görülme zamanı. Online ise canlı yeşil,
+                      // değilse son görüldüğü zaman (gün granularitesinde).
+                      Builder(builder: (_) {
+                        final online = data['isOnline'] == true;
+                        final lsStr = data['lastSeenAt'] as String?;
+                        if (online) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 7, height: 7,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.verifiedGreen,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text('Çevrimiçi',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.verifiedGreen)),
+                              ],
+                            ),
+                          );
+                        }
+                        if (lsStr == null) return const SizedBox.shrink();
+                        final ls = DateTime.tryParse(lsStr);
+                        if (ls == null) return const SizedBox.shrink();
+                        final diff = DateTime.now().difference(ls);
+                        String text;
+                        if (diff.inMinutes < 5) {
+                          text = 'Az önce çevrimiçi';
+                        } else if (diff.inHours < 1) {
+                          text = '${diff.inMinutes} dk önce';
+                        } else if (diff.inHours < 24) {
+                          text = '${diff.inHours} saat önce';
+                        } else {
+                          text = '${diff.inDays} gün önce';
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text('Son görülme: $text',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.verifiedGreen)),
+                        );
+                      }),
                     ],        // Column children
                     ),        // Column
                   ),          // SafeArea
