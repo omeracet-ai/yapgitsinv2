@@ -29,6 +29,59 @@ export class ReviewsService {
   ) {}
 
   async create(data: Partial<Review>): Promise<Review> {
+    // Phase 328 — Review girişini SADECE tamamlanmış iş kapsamına bağla.
+    // Job bulunamazsa, COMPLETED değilse, ya da reviewer ↔ reviewee çifti
+    // bu iş içindeki iki tarafa (customer + accepted-offer worker) uymuyorsa
+    // reddet. Aynı reviewer'ın aynı job+reviewee çifti için ikinci kaydı da
+    // engellenir (idempotent).
+    if (!data.jobId || !data.reviewerId || !data.revieweeId) {
+      throw new BadRequestException(
+        'jobId, reviewerId ve revieweeId zorunlu',
+      );
+    }
+    const job = await this.dataSource
+      .createQueryBuilder()
+      .select(['j.id', 'j.status', 'j.customerId'])
+      .from('jobs', 'j')
+      .where('j.id = :id', { id: data.jobId })
+      .getRawOne<{ j_id: string; j_status: string; j_customerId: string }>();
+    if (!job) throw new NotFoundException('İlan bulunamadı');
+    if (job.j_status !== 'completed') {
+      throw new ForbiddenException(
+        'Değerlendirme yalnız tamamlanmış iş üzerinden yapılır',
+      );
+    }
+    // Kabul edilmiş teklif sahibi (worker tarafı) kim?
+    const acceptedOffer = await this.dataSource
+      .createQueryBuilder()
+      .select(['o.userId'])
+      .from('offers', 'o')
+      .where('o.jobId = :jid AND o.status = :s', {
+        jid: data.jobId,
+        s: 'accepted',
+      })
+      .getRawOne<{ o_userId: string }>();
+    const customerId = job.j_customerId;
+    const workerId = acceptedOffer?.o_userId ?? null;
+    const validPair =
+      (data.reviewerId === customerId && data.revieweeId === workerId) ||
+      (data.reviewerId === workerId && data.revieweeId === customerId);
+    if (!validPair) {
+      throw new ForbiddenException(
+        'Sadece müşteri ↔ usta arası değerlendirme yazılabilir',
+      );
+    }
+    // Aynı reviewer+reviewee+job kombinasyonu için ikinciyi engelle.
+    const dup = await this.reviewsRepository.findOne({
+      where: {
+        jobId: data.jobId,
+        reviewerId: data.reviewerId,
+        revieweeId: data.revieweeId,
+      },
+    });
+    if (dup) {
+      throw new ConflictException('Bu iş için zaten değerlendirme yazdınız');
+    }
     const review = this.reviewsRepository.create(data);
     const saved = await this.reviewsRepository.save(review);
     // Değerlendirilen kullanıcının puanını otomatik güncelle
