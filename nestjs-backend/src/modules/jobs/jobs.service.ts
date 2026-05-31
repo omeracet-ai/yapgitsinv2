@@ -23,6 +23,7 @@ import {
 } from '../tokens/token-transaction.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
+import { EmailService } from '../email/email.service';
 import { EscrowService } from '../escrow/escrow.service';
 import { EscrowStatus } from '../escrow/payment-escrow.entity';
 import { CancellationService } from '../cancellation/cancellation.service';
@@ -70,6 +71,8 @@ export class JobsService {
     private fraudDetection: FraudDetectionService,
     private categorySubsService: CategorySubscriptionsService,
     private systemSettings: SystemSettingsService,
+    // Phase 326 — flagged ilanlarda kullanıcıya e-posta + push bildirim.
+    private emailService: EmailService,
   ) {}
 
   /**
@@ -108,6 +111,59 @@ export class JobsService {
    * an outer .catch(). Errors are swallowed with a logger.warn, matching the
    * fraud hook + _notifyCategorySubscribers conventions.
    */
+  /**
+   * Phase 326 — Otomatik askıya alınan ilanın sahibine push + e-posta gönder.
+   * Şeffaflık: kullanıcıya hangi sebeplerin tetiklediği kısa formatta
+   * iletilir. Tamamen best-effort, hata atılsa bile job yaratımı bozulmaz.
+   */
+  private async _notifyOwnerOfAutoSuspend(
+    job: Pick<Job, 'id' | 'title' | 'customerId'>,
+    reasons: string[],
+  ): Promise<void> {
+    const reasonText = reasons.length > 0
+      ? reasons.slice(0, 3).join(' · ')
+      : 'Otomatik sahtekarlık tespiti';
+    const shortBody =
+      `"${job.title}" ilanınız otomatik olarak askıya alındı. Sebep: ${reasonText}. ` +
+      `İlanı düzenleyip tekrar yayına alabilir veya destek için bize ulaşabilirsiniz.`;
+    try {
+      await this.notificationsService.send({
+        userId: job.customerId,
+        type: NotificationType.SYSTEM,
+        title: '⛔ İlanınız askıya alındı',
+        body: shortBody,
+        refId: job.id,
+        relatedType: 'job',
+        relatedId: job.id,
+      });
+    } catch (e) {
+      this.logger.warn(`Owner notify failed for job ${job.id}: ${String(e)}`);
+    }
+    try {
+      const owner = await this.usersRepository.findOne({
+        where: { id: job.customerId },
+        select: ['email', 'fullName'],
+      });
+      if (owner?.email) {
+        const html =
+          `<h2>İlanınız askıya alındı</h2>` +
+          `<p>Merhaba ${owner.fullName ?? ''},</p>` +
+          `<p><b>${job.title}</b> başlıklı ilanınız sistem tarafından otomatik olarak askıya alındı.</p>` +
+          `<p><b>Sebep:</b> ${reasonText}</p>` +
+          `<p>İlanı uygulamadan düzenleyip yeniden yayına alabilirsiniz. Yanlışlıkla askıya alındığını düşünüyorsanız destek ekibimizle iletişime geçin.</p>` +
+          `<p style="color:#6b7280;font-size:12px">Yapgitsin · ${new Date().toLocaleString('tr-TR')}</p>`;
+        await this.emailService.send(
+          owner.email,
+          'İlanınız askıya alındı — Yapgitsin',
+          html,
+          shortBody,
+        );
+      }
+    } catch (e) {
+      this.logger.warn(`Owner email failed for job ${job.id}: ${String(e)}`);
+    }
+  }
+
   private async _notifyAdminsOfFraudFlag(
     job: Pick<Job, 'id' | 'title'>,
     score: number,
@@ -353,6 +409,14 @@ export class JobsService {
     // stale-schema / NULL-relation / migration-drift conditions in prod.
     try {
       const query = this.jobsRepository.createQueryBuilder('job');
+
+      // Phase 326 — Otomatik flag yenmemiş ilanlar listeden gizlenir
+      // (askıya alındı). Sahibi /jobs/:id ile hâlâ erişebilir, düzenleyip
+      // tekrar yayına alabilir. Owner kendi listesini (customerId filter)
+      // çekiyorsa flagged dahil görür → kendi ilanını yönetebilsin.
+      if (!filters?.customerId) {
+        query.andWhere('(job.flagged = false OR job.flagged IS NULL)');
+      }
 
       if (filters?.category) {
         query.andWhere('job.category = :category', {
@@ -715,6 +779,10 @@ export class JobsService {
             r.score,
             r.reasons.join('; '),
           );
+          // Phase 326 — şüpheli ilan otomatik askıya alındı (findAll
+          // `flagged=false` filtresi sayesinde listeden kalktı). Sahibine
+          // hem push hem e-posta gönder: kısa açıklama + sebepler.
+          void this._notifyOwnerOfAutoSuspend(saved, r.reasons);
         } else {
           await this.jobsRepository.update(saved.id, { fraudScore: r.score });
         }
