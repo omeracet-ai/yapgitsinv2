@@ -354,29 +354,31 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         ? _timeAgo(createdAt)
         : widget.postedAt;
 
+    // Phase 314 — Header card sıkıştırıldı: padding/icon/spacing düşürüldü,
+    // kategori chip'i gizlendi (kullanıcı: "kategori alanını gizle").
     return Container(
       color: _surfaceColor,
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(
-              height: 48, width: 48,
+              height: 40, width: 40,
               decoration: BoxDecoration(
                   color: widget.color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(16)),
-              child: Icon(widget.icon, color: widget.color, size: 24),
+                  borderRadius: BorderRadius.circular(12)),
+              child: Icon(widget.icon, color: widget.color, size: 20),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (widget.isFeatured)
                     Container(
-                      margin: const EdgeInsets.only(bottom: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      margin: const EdgeInsets.only(bottom: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.amber.shade100,
                         borderRadius: BorderRadius.circular(8),
@@ -384,48 +386,34 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.star_rounded, color: Colors.amber.shade700, size: 13),
+                          Icon(Icons.star_rounded, color: Colors.amber.shade700, size: 12),
                           const SizedBox(width: 4),
                           Text('Öne Çıkan',
-                              style: TextStyle(fontSize: 11, color: Colors.amber.shade800,
+                              style: TextStyle(fontSize: 10, color: Colors.amber.shade800,
                                   fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
                   Text(widget.title,
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold,
                           color: _textPrimary)),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                            color: widget.color.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(20)),
-                        child: Text(widget.category,
-                            style: TextStyle(color: widget.color, fontSize: 12,
-                                fontWeight: FontWeight.w700)),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
           ]),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           const Divider(height: 1, color: _borderColor),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
           // Bilgi satırı: konum + zaman + teslim tarihi
           Row(children: [
             Flexible(child: _infoChip(Icons.location_on_outlined, widget.location, Colors.red.shade300)),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Flexible(child: _infoChip(Icons.access_time_rounded, postedStr, Colors.grey.shade400)),
           ]),
           if (dueDate != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Row(children: [
               Flexible(
                 child: _infoChip(
@@ -437,11 +425,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             ]),
           ],
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
-          // Bütçe kartı
+          // Bütçe kartı (sıkıştırıldı)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [AppColors.primary.withValues(alpha: 0.07),
@@ -449,21 +437,21 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
                 const Icon(Icons.account_balance_wallet_rounded,
-                    size: 20, color: AppColors.primary),
-                const SizedBox(width: 10),
+                    size: 18, color: AppColors.primary),
+                const SizedBox(width: 8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Bütçe Aralığı',
-                        style: TextStyle(fontSize: 11, color: _textSecondary)),
+                        style: TextStyle(fontSize: 10, color: _textSecondary)),
                     Text(budgetStr,
-                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
                             color: Colors.white)),
                   ],
                 ),
@@ -607,16 +595,19 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
           const SizedBox(height: 10),
 
-          // İstatistik satırı
+          // İstatistik satırı — Phase 314: hizmet veren kullanıcının
+          // (isOffer = poster usta) rating chip'i gizleniyor.
           Row(
             children: [
-              _statChip(
-                icon: Icons.star_rounded,
-                iconColor: Colors.amber,
-                label: rating > 0 ? rating.toStringAsFixed(1) : '—',
-                sublabel: '$reviews yorum',
-              ),
-              const SizedBox(width: 12),
+              if (!isOffer) ...[
+                _statChip(
+                  icon: Icons.star_rounded,
+                  iconColor: Colors.amber,
+                  label: rating > 0 ? rating.toStringAsFixed(1) : '—',
+                  sublabel: '$reviews yorum',
+                ),
+                const SizedBox(width: 12),
+              ],
               _statChip(
                 icon: Icons.work_outline_rounded,
                 iconColor: AppColors.primary,
@@ -758,54 +749,66 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   }
 
   Widget _buildPhotosSection(List<String> photos) {
+    // Phase 314 — Sıkıştırılmış foto bloğu:
+    //   • Yükseklik 160 → 130 (~%19 daha kompakt)
+    //   • >1 foto: yatay PageView (sağ-sol slider) + nokta indikatör
+    //   • 1 foto: tek tap-açılır thumbnail
+    const double imgHeight = 130;
+    final isMulti = photos.length > 1;
     return Container(
       width: double.infinity,
       color: _surfaceColor,
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14),
-            child: Text('Fotoğraflar',
-                style:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _textPrimary)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              children: [
+                const Text('Fotoğraflar',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: _textPrimary)),
+                if (isMulti) ...[
+                  const SizedBox(width: 6),
+                  Text('(${photos.length})',
+                      style: const TextStyle(
+                          fontSize: 11, color: _textSecondary)),
+                ],
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 160,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
+          const SizedBox(height: 6),
+          if (isMulti)
+            _PhotoPager(photos: photos, height: imgHeight)
+          else
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
-              itemCount: photos.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (ctx, i) => GestureDetector(
-                onTap: () => Navigator.of(ctx).push(
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => JobPhotoLightbox(
-                      photos: photos,
-                      initialIndex: i,
-                    ),
+                    builder: (_) =>
+                        JobPhotoLightbox(photos: photos, initialIndex: 0),
                   ),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.network(
-                    photos[i],
-                    height: 160,
-                    width: 130,
+                    photos.first,
+                    height: imgHeight,
+                    width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
-                      width: 130,
+                      height: imgHeight,
                       color: _surfaceColor2,
-                      child: const Icon(Icons.broken_image,
-                          color: _textHint),
+                      child: const Icon(Icons.broken_image, color: _textHint),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -2105,6 +2108,89 @@ class _BidSheetState extends State<_BidSheet> {
         ],
       ),
       ),
+    );
+  }
+}
+
+/// Phase 314 — Birden fazla foto için sağ-sol slider (PageView) + nokta
+/// indikatörü. Tek foto için tasarlanmadı (üst widget zaten bypass eder).
+class _PhotoPager extends StatefulWidget {
+  final List<String> photos;
+  final double height;
+  const _PhotoPager({required this.photos, required this.height});
+
+  @override
+  State<_PhotoPager> createState() => _PhotoPagerState();
+}
+
+class _PhotoPagerState extends State<_PhotoPager> {
+  final PageController _ctrl = PageController(viewportFraction: 0.92);
+  int _idx = 0;
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: widget.height,
+          child: PageView.builder(
+            controller: _ctrl,
+            itemCount: widget.photos.length,
+            onPageChanged: (i) => setState(() => _idx = i),
+            itemBuilder: (ctx, i) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: GestureDetector(
+                onTap: () => Navigator.of(ctx).push(
+                  MaterialPageRoute(
+                    builder: (_) => JobPhotoLightbox(
+                      photos: widget.photos,
+                      initialIndex: i,
+                    ),
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    widget.photos[i],
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: const Color(0xFF222B36),
+                      child: const Icon(Icons.broken_image,
+                          color: Color(0xFF7A8693)),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(widget.photos.length, (i) {
+            final active = i == _idx;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: active ? 14 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: active
+                    ? AppColors.primary
+                    : const Color(0xFF3A4452),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            );
+          }),
+        ),
+      ],
     );
   }
 }
