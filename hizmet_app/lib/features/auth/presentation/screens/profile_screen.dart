@@ -106,9 +106,10 @@ class ProfileScreen extends ConsumerWidget {
               //   onUploadSuccess: () => ref.invalidate(myPublicProfileProvider),
               // ),
               _buildTokenBanner(context, ref),
-              _buildSubscriptionBanner(context, ref, user),
+              // Phase 320 — Premium üyelik banner'ı + Email doğrulama kartı
+              // gizlendi (kullanıcı isteği). İlgili widget tanımları kalır
+              // ki gelecekte tekrar açılabilsin; build'den çekildiler.
               _buildIdentityStatus(user),
-              _buildEmailVerification(context, ref, user),
               _buildStatsSection(ref),
               _buildBadgesSection(ref),
               _buildCertificationsSection(ref),
@@ -371,6 +372,9 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  // Phase 320 — Build'den çekildi; gelecekte yeniden açılabilmesi için
+  // tanım korunuyor.
+  // ignore: unused_element
   Widget _buildEmailVerification(
       BuildContext context, WidgetRef ref, Map<String, dynamic> user) {
     final email = user['email'] as String?;
@@ -558,6 +562,8 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  // Phase 320 — Premium üyelik banner'ı build'den çekildi (kullanıcı isteği).
+  // ignore: unused_element
   Widget _buildSubscriptionBanner(
       BuildContext context, WidgetRef ref, Map<String, dynamic> user) {
     final cats = user['workerCategories'];
@@ -1098,12 +1104,9 @@ class ProfileScreen extends ConsumerWidget {
           _menuItem(Icons.receipt_long_outlined, 'Aylık Beyan', () {
             context.push('/aylik-beyan');
           }),
-          _menuItem(Icons.favorite_outline, 'Favorilerim', () {
-            context.push('/favorilerim');
-          }),
-          _menuItem(Icons.block_outlined, 'Engellenenler', () {
-            context.push('/engellenenler');
-          }),
+          // Phase 320 — Favorilerim + Engellenenler menü girişleri gizlendi.
+          // Engelleme akışı tamamen UI'dan kaldırıldı; veritabanı kayıtları
+          // korunur ama kullanıcı listeleri/eklemeleri göremez.
           _menuItem(Icons.bookmark_border_rounded, 'Kaydedilen İşler', () {
             context.push('/kaydedilen-isler');
           }),
