@@ -13,29 +13,39 @@ class JobFilter {
   final double? userLat;
   final double? userLng;
 
+  // Phase 300 — varsayılan mesafe (km). Açık/değişmemiş kabul edilir →
+  // `activeCount`/`isEmpty` bu değeri "kullanıcı kişiselleştirmesi" saymaz.
+  static const double defaultMaxRadiusKm = 20;
+
   const JobFilter({
     this.budgetMin,
     this.budgetMax,
     this.sort = JobSort.newest,
     this.featuredOnly = false,
-    this.maxRadiusKm = 20,
+    this.maxRadiusKm = defaultMaxRadiusKm,
     this.userLat,
     this.userLng,
   });
+
+  /// Phase 307 — Mesafe filtresi default değerden farklıysa "özelleştirilmiş".
+  /// Bu, filtre rozetinin (badge) Yapgitsin sekmesinde "takılı kalmasını"
+  /// engeller: kullanıcı 20 km'yi değiştirmediği sürece chip nötr görünür.
+  bool get isDistanceCustomized =>
+      maxRadiusKm != defaultMaxRadiusKm;
 
   bool get isEmpty =>
       budgetMin == null &&
       budgetMax == null &&
       !featuredOnly &&
       sort == JobSort.newest &&
-      maxRadiusKm == null;
+      !isDistanceCustomized;
 
   int get activeCount {
     var c = 0;
     if (budgetMin != null || budgetMax != null) c++;
     if (featuredOnly) c++;
     if (sort != JobSort.newest) c++;
-    if (maxRadiusKm != null) c++;
+    if (isDistanceCustomized) c++;
     return c;
   }
 
