@@ -834,6 +834,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               scrollDirection: Axis.horizontal,
+              // Phase 315 — Yatay drag ClampingScrollPhysics ile sınırlı;
+              // parent dikey scroll'unu hijack etmez.
+              physics: const ClampingScrollPhysics(),
               itemCount: videos.length,
               separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
@@ -2142,6 +2145,10 @@ class _PhotoPagerState extends State<_PhotoPager> {
           child: PageView.builder(
             controller: _ctrl,
             itemCount: widget.photos.length,
+            // Phase 315 — PageScrollPhysics yatay drag'lere kilitler,
+            // parent SingleChildScrollView'a dikey hareketleri
+            // aktarır → yukarı/aşağı kaydırma "sıkışması" oluşmaz.
+            physics: const PageScrollPhysics(),
             onPageChanged: (i) => setState(() => _idx = i),
             itemBuilder: (ctx, i) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),

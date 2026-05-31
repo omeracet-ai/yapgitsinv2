@@ -118,6 +118,53 @@ class _ProfileView extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      bottomNavigationBar: (isWorker && !isSelf)
+          ? SafeArea(
+              top: false,
+              minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Material(
+                color: AppColors.surface,
+                elevation: 8,
+                shadowColor: Colors.black.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.send_rounded,
+                        size: 18, color: Colors.white),
+                    label: const Text('Bu Ustaya Teklif Ver',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold)),
+                    onPressed: () {
+                      if (currentUserId == null) {
+                        context.push('/giris-yap', extra: {
+                          'returnTo': '/usta/$userId',
+                        });
+                        return;
+                      }
+                      context.push('/ilan-ver', extra: {
+                        'targetWorkerId': userId,
+                        'targetWorkerName': name,
+                        if (workerCats.isNotEmpty) ...{
+                          'initialCategory': workerCats.first,
+                          'allowedCategories': workerCats,
+                        },
+                      });
+                    },
+                  ),
+                ),
+              ),
+            )
+          : null,
       body: RefreshIndicator(
         color: AppColors.primary,
         displacement: 50,
@@ -428,49 +475,11 @@ class _ProfileView extends ConsumerWidget {
                   const SizedBox(height: 8),
                 ],
 
-                // ── Birleşik "Teklif Ver" CTA (Phase 265e — tek buton) ────
-                if (isWorker && !isSelf) ...[
-                  Container(
-                    color: AppColors.surface,
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        icon: const Icon(Icons.send_rounded,
-                            size: 18, color: Colors.white),
-                        label: const Text('Bu Ustaya Teklif Ver',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.bold)),
-                        onPressed: () {
-                          if (currentUserId == null) {
-                            context.push('/giris-yap', extra: {
-                              'returnTo': '/usta/$userId',
-                            });
-                            return;
-                          }
-                          context.push('/ilan-ver', extra: {
-                            'targetWorkerId': userId,
-                            'targetWorkerName': name,
-                            if (workerCats.isNotEmpty) ...{
-                              'initialCategory': workerCats.first,
-                              'allowedCategories': workerCats,
-                            },
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
+                // Phase 315 — "Bu Ustaya Teklif Ver" CTA artık scroll
+                // gövdesinin dışında, Scaffold.bottomNavigationBar slot'unda
+                // sabit duruyor. Sayfa scroll edilse bile buton ekranın
+                // en altında kalır → kullanıcı için her zaman ulaşılabilir,
+                // iç-içe scroll çakışması da azalır.
 
                 // ── Müsaitlik (Phase 211) ─────────────────────────────────
                 if (isWorker)
