@@ -43,8 +43,13 @@ class MyJobsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
 
-    if (authState is! AuthAuthenticated) {
+    // Phase 306 — Logged-out kullanıcı için Profil ekranındaki guest pattern.
+    // Önceki davranış: sonsuz CircularProgressIndicator (#bug).
+    if (authState is AuthLoading || authState is AuthInitial) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (authState is! AuthAuthenticated) {
+      return _MyJobsGuestView(showAppBar: showAppBar);
     }
 
     final user = authState.user;
@@ -55,6 +60,51 @@ class MyJobsScreen extends ConsumerWidget {
       return _DualRoleView(userId: userId, showAppBar: showAppBar);
     }
     return _DualRoleCheckView(userId: userId, showAppBar: showAppBar);
+  }
+}
+
+// Phase 306 — Logout sonrası İşlerim sekmesi için boş + CTA görünümü.
+class _MyJobsGuestView extends StatelessWidget {
+  final bool showAppBar;
+  const _MyJobsGuestView({required this.showAppBar});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: showAppBar
+          ? AppBar(
+              title: Text(AppLocalizations.of(context).myJobsListings),
+              backgroundColor: AppColors.headerBackground(context),
+              foregroundColor: Colors.white,
+            )
+          : null,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.work_outline_rounded,
+                  size: 80, color: AppColors.textHint),
+              const SizedBox(height: 24),
+              Text('İlanlarınızı ve tekliflerinizi görmek için giriş yapın.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 16, color: AppColors.textSecondary)),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => context.push('/giris-yap'),
+                  child: Text(AppLocalizations.of(context).loginButton),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
