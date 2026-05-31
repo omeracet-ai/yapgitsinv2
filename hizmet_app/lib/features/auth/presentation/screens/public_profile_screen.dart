@@ -412,15 +412,36 @@ class _ProfileView extends ConsumerWidget {
                   const SizedBox(height: 8),
                 ],
 
-                // ── Hakkında (worker bio) ─────────────────────────────────
+                // Phase 329 — "Hakkında" ayrı section yerine kartın
+                // sonuna sıkıştırıldı; başlık → "Kullanıcı Açıklaması"
+                // (kullanıcı "title hatalı" demişti — daha anlaşılır).
                 if (bio != null && bio.isNotEmpty) ...[
-                  _section(
-                    title: 'Hakkında',
-                    child: Text(bio,
-                        style: TextStyle(
-                            fontSize: 14, height: 1.6, color: AppColors.textSecondary)),
+                  Container(
+                    color: AppColors.surface,
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          const Icon(Icons.info_outline,
+                              size: 14, color: AppColors.primary),
+                          const SizedBox(width: 6),
+                          Text('Kullanıcı Açıklaması',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                  letterSpacing: 0.2)),
+                        ]),
+                        const SizedBox(height: 6),
+                        Text(bio,
+                            style: TextStyle(
+                                fontSize: 13,
+                                height: 1.45,
+                                color: AppColors.textSecondary)),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 8),
                 ],
 
                 // Phase 293 — Belge ile doğrulanmış kategoriler rozeti
