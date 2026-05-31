@@ -210,7 +210,14 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                       kind: detail['kind'] as String? ?? 'request'),
                   const SizedBox(height: 6),
                 ],
-                _buildHeader(budgetMin: budgetMin, budgetMax: budgetMax, createdAt: createdAt, dueDate: dueDate),
+                _buildHeader(
+                  budgetMin: budgetMin,
+                  budgetMax: budgetMax,
+                  createdAt: createdAt,
+                  dueDate: dueDate,
+                  // Phase 333 — backend her findOne'da viewCount alanını ekliyor.
+                  viewCount: (detail['viewCount'] as num?)?.toInt(),
+                ),
                 if (jobStatus == 'completed' &&
                     customer != null &&
                     authState is AuthAuthenticated &&
@@ -331,6 +338,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     double? budgetMax,
     String? createdAt,
     String? dueDate,
+    int? viewCount, // Phase 333 — ilan detay ziyaret sayısı (unique IP)
   }) {
     // Bütçe gösterimi
     String budgetStr;
@@ -400,11 +408,15 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           const Divider(height: 1, color: _borderColor),
           const SizedBox(height: 8),
 
-          // Bilgi satırı: konum + zaman + teslim tarihi
+          // Bilgi satırı: konum + zaman + (Phase 333) görüntülenme
           Row(children: [
             Flexible(child: _infoChip(Icons.location_on_outlined, widget.location, Colors.red.shade300)),
             const SizedBox(width: 14),
             Flexible(child: _infoChip(Icons.access_time_rounded, postedStr, Colors.grey.shade400)),
+            if (viewCount != null && viewCount > 0) ...[
+              const SizedBox(width: 14),
+              _infoChip(Icons.visibility_outlined, '$viewCount', Colors.blue.shade300),
+            ],
           ]),
           if (dueDate != null) ...[
             const SizedBox(height: 4),

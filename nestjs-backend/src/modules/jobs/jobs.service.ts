@@ -10,6 +10,7 @@ import { DataSource, Repository, In } from 'typeorm';
 import * as crypto from 'crypto';
 import { Job, JobStatus, JobKind, isValidTransition } from './job.entity';
 import { Offer, OfferStatus } from './offer.entity';
+import { JobView } from './job-view.entity';
 import { UsersService } from '../users/users.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
 import { TokensService } from '../tokens/tokens.service';
@@ -53,6 +54,9 @@ export class JobsService {
     private jobsRepository: Repository<Job>,
     @InjectRepository(Offer)
     private offersRepository: Repository<Offer>,
+    // Phase 333 — ilan detay görüntülenme istatistiği.
+    @InjectRepository(JobView)
+    private jobViewsRepository: Repository<JobView>,
     // Phase 259 — read-only admin lookup for fraud-flag notifications.
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -550,9 +554,48 @@ export class JobsService {
     return this.jobsRepository.save(job);
   }
 
-  async findOne(id: string): Promise<Job> {
+  /**
+   * Phase 333 — IP başına günde 1 view kaydı + total unique-IP count.
+   * Best-effort: hata olsa bile findOne sonucu döner; sayım gerçek kayıtlardan.
+   * IP yoksa (örn. internal call) tracking atlanır.
+   */
+  async trackViewAndCount(
+    id: string,
+    rawIp: string | undefined,
+  ): Promise<number> {
+    if (rawIp && rawIp.length > 0) {
+      const salt = process.env.JOB_VIEW_SALT ?? 'yapgitsin-default-salt';
+      const ipHash = crypto
+        .createHash('sha256')
+        .update(`${rawIp}:${salt}`)
+        .digest('hex');
+      const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      try {
+        // Composite UNIQUE → çakışma sessiz drop edilir.
+        await this.jobViewsRepository.insert({
+          jobId: id,
+          ipHash,
+          viewedDate: today,
+        });
+      } catch {
+        /* unique violation = aynı IP bugün ziyaret etmiş, sayım değişmez */
+      }
+    }
+    return this.jobViewsRepository.count({ where: { jobId: id } });
+  }
+
+  async findOne(id: string, viewerIp?: string): Promise<Job> {
     const job = await this.jobsRepository.findOne({ where: { id } });
     if (!job) throw new NotFoundException(`İlan bulunamadı: #${id}`);
+
+    // Phase 333 — viewCount JSON'a eklensin diye Job objesine bağla.
+    // ENTITY field değil, runtime attach → serialize edildiğinde JSON'a düşer.
+    try {
+      const viewCount = await this.trackViewAndCount(id, viewerIp);
+      (job as unknown as { viewCount: number }).viewCount = viewCount;
+    } catch {
+      (job as unknown as { viewCount: number }).viewCount = 0;
+    }
 
     const customer = await this.usersService.findById(job.customerId);
     if (customer) {

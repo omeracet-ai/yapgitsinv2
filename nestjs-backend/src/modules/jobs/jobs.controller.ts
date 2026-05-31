@@ -192,8 +192,12 @@ export class JobsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.jobsService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    // Phase 333 — view tracking için IP forward'la (proxy varsa x-forwarded-for).
+    const headersIp =
+      (req.headers?.['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim();
+    const ip = headersIp || (req as unknown as { ip?: string }).ip;
+    return this.jobsService.findOne(id, ip);
   }
 
   @UseGuards(AuthGuard('jwt'))
