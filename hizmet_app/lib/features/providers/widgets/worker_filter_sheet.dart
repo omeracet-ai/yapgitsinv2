@@ -127,8 +127,10 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
   }
 
   void _apply() {
-    final minRate = double.tryParse(_minRateCtrl.text.trim());
-    final maxRate = double.tryParse(_maxRateCtrl.text.trim());
+    // Phase 331 — TR ondalık ("," veya "1.500,5") parse desteği.
+    String norm(String s) => s.trim().replaceAll('.', '').replaceAll(',', '.');
+    final minRate = double.tryParse(norm(_minRateCtrl.text));
+    final maxRate = double.tryParse(norm(_maxRateCtrl.text));
     final semQ = _semanticQueryCtrl.text.trim();
     final result = WorkerFilter(
       minRating: _minRating,

@@ -101,8 +101,12 @@ class _ServiceRequestDetailScreenState
     try {
       final repo = ref.read(serviceRequestRepositoryProvider);
       final id = widget.item['id'] as String;
+      // Phase 331 — TR ondalık/binlik destekli parse.
       final priceText = _priceCtrl.text.trim();
-      final price = priceText.isNotEmpty ? double.tryParse(priceText) : null;
+      final price = priceText.isNotEmpty
+          ? double.tryParse(
+              priceText.replaceAll('.', '').replaceAll(',', '.'))
+          : null;
 
       await repo.apply(id, message: message, price: price);
 

@@ -73,9 +73,13 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
         scheduledTime: _time == null
             ? null
             : '${_time!.hour.toString().padLeft(2, '0')}:${_time!.minute.toString().padLeft(2, '0')}',
+        // Phase 331 — TR girişlerde "1.500,75" gibi metinler "." ile binlik
+        // ayırır + "," ondalık → düz `tryParse` "Invalid number" döner.
+        // Önce "." sil, "," → "." dönüştür.
         agreedPrice: _agreedPrice.trim().isEmpty
             ? null
-            : double.tryParse(_agreedPrice.trim()),
+            : double.tryParse(
+                _agreedPrice.trim().replaceAll('.', '').replaceAll(',', '.')),
         customerNote: _customerNote.trim().isEmpty ? null : _customerNote.trim(),
       );
       ref.invalidate(myCustomerBookingsProvider);

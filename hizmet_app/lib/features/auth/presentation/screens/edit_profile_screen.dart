@@ -957,7 +957,10 @@ class _InsuranceSectionState extends State<_InsuranceSection> {
   Future<void> _save() async {
     final policy = _policyCtrl.text.trim();
     final provider = _providerCtrl.text.trim();
-    final coverage = double.tryParse(_coverageCtrl.text.trim()) ?? 0;
+    // Phase 331 — TR ondalık parse desteği.
+    final coverage = double.tryParse(
+            _coverageCtrl.text.trim().replaceAll('.', '').replaceAll(',', '.')) ??
+        0;
     if (policy.isEmpty || provider.isEmpty || coverage <= 0 || _expiry == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tüm alanları doldurun')),
