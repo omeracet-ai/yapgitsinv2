@@ -1730,8 +1730,8 @@ class ProfileScreen extends ConsumerWidget {
             color: enabled ? AppColors.verifiedGreen : AppColors.textHint,
             fontWeight: FontWeight.w600),
       ),
-      trailing:
-          Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
+      // Phase 323 — chevron trailing kaldırıldı (kullanıcı: "iconlu
+      // text'lerden 2. ikonu kaldır"). Tap area ListTile'a bağlı.
       onTap: () async {
         if (!enabled) {
           final result = await context.push<bool>('/2fa-setup');
@@ -1822,8 +1822,8 @@ class ProfileScreen extends ConsumerWidget {
               fontSize: 12,
               color: AppColors.textHint,
               fontWeight: FontWeight.w600)),
-      trailing:
-          Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
+      // Phase 323 — chevron trailing kaldırıldı (kullanıcı: "iconlu
+      // text'lerden 2. ikonu kaldır"). Tap area ListTile'a bağlı.
       onTap: () => _showAppearanceSheet(context, ref),
     );
   }
@@ -1893,8 +1893,8 @@ class ProfileScreen extends ConsumerWidget {
               fontSize: 12,
               color: AppColors.textHint,
               fontWeight: FontWeight.w600)),
-      trailing:
-          Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
+      // Phase 323 — chevron trailing kaldırıldı (kullanıcı: "iconlu
+      // text'lerden 2. ikonu kaldır"). Tap area ListTile'a bağlı.
       onTap: () => _showLanguageSheet(context, ref),
     );
   }
@@ -1969,8 +1969,8 @@ class ProfileScreen extends ConsumerWidget {
               color: color ?? AppColors.textPrimary,
               fontSize: 15,
               fontWeight: FontWeight.w500)),
-      trailing:
-          Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
+      // Phase 323 — chevron trailing kaldırıldı (kullanıcı: "iconlu
+      // text'lerden 2. ikonu kaldır"). Tap area ListTile'a bağlı.
       onTap: onTap,
     );
   }
