@@ -151,26 +151,19 @@ class _DualRoleView extends ConsumerWidget {
     // Tümü = 3 kategoriyi (Aktif İlanlarım + Tekliflerim + Biten İşler)
     // tek scroll'da bölüm başlıklarıyla gösterir. Takvim 5. chip olarak
     // korundu (Phase 325 fonksiyonelliği bozulmasın).
+    // Phase 340 — AppBar tamamen kaldırıldı. "İşlerim" başlığı silindi,
+    // filter row (Tümü ▼ + search + bildirim) en üste, status bar
+    // altına SafeArea ile bağlandı.
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: showAppBar
-          ? AppBar(
-              automaticallyImplyLeading: false,
-              titleSpacing: 16,
-              backgroundColor: AppColors.headerBackground(context),
-              foregroundColor: Colors.white,
-              title: const Text('İşlerim',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              // Phase 339 — Şablonlarım + Bildirimler ikonları aşağıdaki
-              // filter row'a taşındı (Yapgitsin tab header pattern).
-            )
-          : null,
-      body: const Column(
-        children: [
-          // Phase 271 — onay bekleyen işler (confirm-plain entegrasyonu).
-          PendingConfirmationsCard(),
-          Expanded(child: _MergedJobsView()),
-        ],
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: const [
+            PendingConfirmationsCard(),
+            Expanded(child: _MergedJobsView()),
+          ],
+        ),
       ),
     );
   }
@@ -206,24 +199,116 @@ class _MergedJobsView extends ConsumerStatefulWidget {
 
 class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
   _JobsFilter _filter = _JobsFilter.all;
+  // Phase 340 — başlık/şablon ikonu kaldırıldı; search aktif.
+  String _searchQuery = '';
+
+  Future<void> _openSearchSheet() async {
+    final controller = TextEditingController(text: _searchQuery);
+    final result = await showModalBottomSheet<String?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 16, right: 16, top: 16),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const Text('İşlerim İçinde Ara',
+                  style: TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                textInputAction: TextInputAction.search,
+                onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
+                decoration: InputDecoration(
+                  hintText: 'Başlık ara...',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(ctx).pop(''),
+                    child: const Text('Temizle'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () =>
+                        Navigator.of(ctx).pop(controller.text.trim()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Ara'),
+                  ),
+                ),
+              ]),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() => _searchQuery = result);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Phase 339 — Yapgitsin tab header pattern'i: solda dropdown,
-        // sağda ikon grubu (şablonlarım + bildirim). Compact 36px row.
+        // Phase 340 — Top header: [Tümü ▼] [search] [bildirim].
         Container(
           color: AppColors.background,
-          padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
           child: Row(
             children: [
               Expanded(child: _buildFilterDropdown()),
               const SizedBox(width: 6),
               _headerIconButton(
-                icon: Icons.bookmark_border,
-                tooltip: 'Şablonlarım',
-                onTap: () => context.push('/sablonlarim'),
+                icon: _searchQuery.isEmpty
+                    ? Icons.search_rounded
+                    : Icons.search_off_rounded,
+                tooltip:
+                    _searchQuery.isEmpty ? 'Arama' : 'Aramayı kapat',
+                highlight: _searchQuery.isNotEmpty,
+                onTap: () {
+                  if (_searchQuery.isNotEmpty) {
+                    setState(() => _searchQuery = '');
+                  } else {
+                    _openSearchSheet();
+                  }
+                },
               ),
               const SizedBox(width: 6),
               _headerIconButton(
@@ -234,6 +319,20 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
             ],
           ),
         ),
+        if (_searchQuery.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+            child: Row(children: [
+              Icon(Icons.filter_alt_outlined,
+                  size: 14, color: AppColors.primary),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text('"$_searchQuery" için filtrelendi',
+                    style: TextStyle(
+                        fontSize: 11, color: AppColors.textSecondary)),
+              ),
+            ]),
+          ),
         Expanded(child: _buildContent()),
       ],
     );
@@ -287,11 +386,12 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
     required IconData icon,
     required String tooltip,
     required VoidCallback onTap,
+    bool highlight = false,
   }) {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: AppColors.surfaceElevated,
+        color: highlight ? AppColors.primary : AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
@@ -300,7 +400,9 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
             width: 36,
             height: 36,
             alignment: Alignment.center,
-            child: Icon(icon, color: AppColors.textPrimary, size: 22),
+            child: Icon(icon,
+                color: highlight ? Colors.white : AppColors.textPrimary,
+                size: 22),
           ),
         ),
       ),
@@ -308,39 +410,43 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
   }
 
   Widget _buildContent() {
+    final q = _searchQuery;
     switch (_filter) {
       case _JobsFilter.active:
-        return const _CustomerJobsByStatus(
-          statuses: ['open', 'in_progress'],
+        return _CustomerJobsByStatus(
+          statuses: const ['open', 'in_progress'],
           emptyMsg: 'Aktif ilanınız yok.',
+          searchQuery: q,
         );
       case _JobsFilter.offers:
         return const _WorkerTabContent();
       case _JobsFilter.completed:
-        return const _CustomerJobsByStatus(
-          statuses: ['completed'],
+        return _CustomerJobsByStatus(
+          statuses: const ['completed'],
           emptyMsg: 'Tamamlanan işiniz yok.',
+          searchQuery: q,
         );
       case _JobsFilter.calendar:
         return const _BookingsCalendarTab();
       case _JobsFilter.all:
-        // Tek scroll'da 3 kategori bölüm başlıklarıyla.
         return ListView(
           padding: const EdgeInsets.only(bottom: 16),
-          children: const [
-            _SectionHeader('Aktif İlanlarım'),
+          children: [
+            const _SectionHeader('Aktif İlanlarım'),
             _CustomerJobsByStatusEmbedded(
-              statuses: ['open', 'in_progress'],
+              statuses: const ['open', 'in_progress'],
               emptyMsg: 'Aktif ilan yok.',
+              searchQuery: q,
             ),
-            SizedBox(height: 4),
-            _SectionHeader('Tekliflerim'),
-            _WorkerOffersEmbedded(),
-            SizedBox(height: 4),
-            _SectionHeader('Biten İşler'),
+            const SizedBox(height: 4),
+            const _SectionHeader('Tekliflerim'),
+            _WorkerOffersEmbedded(searchQuery: q),
+            const SizedBox(height: 4),
+            const _SectionHeader('Biten İşler'),
             _CustomerJobsByStatusEmbedded(
-              statuses: ['completed'],
+              statuses: const ['completed'],
               emptyMsg: 'Tamamlanan iş yok.',
+              searchQuery: q,
             ),
           ],
         );
@@ -384,9 +490,11 @@ class _SectionHeader extends StatelessWidget {
 class _CustomerJobsByStatusEmbedded extends ConsumerWidget {
   final List<String> statuses;
   final String emptyMsg;
+  final String searchQuery;
   const _CustomerJobsByStatusEmbedded({
     required this.statuses,
     required this.emptyMsg,
+    this.searchQuery = '',
   });
 
   @override
@@ -406,13 +514,17 @@ class _CustomerJobsByStatusEmbedded extends ConsumerWidget {
             style: TextStyle(color: AppColors.error)),
       ),
       data: (allJobs) {
+        final q = searchQuery.toLowerCase();
         final filtered = allJobs
             .where((j) => statuses.contains(j['status'] as String?))
+            .where((j) => q.isEmpty ||
+                (j['title']?.toString().toLowerCase().contains(q) ?? false))
             .toList();
         if (filtered.isEmpty) {
           return Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-            child: Text(emptyMsg,
+            child: Text(
+                q.isEmpty ? emptyMsg : 'Aramayla eşleşen kayıt yok.',
                 style: TextStyle(
                     fontSize: 12, color: AppColors.textSecondary)),
           );
@@ -430,7 +542,8 @@ class _CustomerJobsByStatusEmbedded extends ConsumerWidget {
 }
 
 class _WorkerOffersEmbedded extends ConsumerWidget {
-  const _WorkerOffersEmbedded();
+  final String searchQuery;
+  const _WorkerOffersEmbedded({this.searchQuery = ''});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -446,10 +559,20 @@ class _WorkerOffersEmbedded extends ConsumerWidget {
             style: TextStyle(color: AppColors.error)),
       ),
       data: (offers) {
-        if (offers.isEmpty) {
+        final q = searchQuery.toLowerCase();
+        final filtered = offers.where((o) {
+          if (q.isEmpty) return true;
+          final job = o['job'];
+          final title = (job is Map ? job['title']?.toString() : null) ?? '';
+          return title.toLowerCase().contains(q);
+        }).toList();
+        if (filtered.isEmpty) {
           return Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-            child: Text('Verdiğiniz teklif yok.',
+            child: Text(
+                q.isEmpty
+                    ? 'Verdiğiniz teklif yok.'
+                    : 'Aramayla eşleşen teklif yok.',
                 style: TextStyle(
                     fontSize: 12, color: AppColors.textSecondary)),
           );
@@ -458,8 +581,8 @@ class _WorkerOffersEmbedded extends ConsumerWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          itemCount: offers.length,
-          itemBuilder: (_, i) => _WorkerOfferCard(offer: offers[i]),
+          itemCount: filtered.length,
+          itemBuilder: (_, i) => _WorkerOfferCard(offer: filtered[i]),
         );
       },
     );
@@ -473,7 +596,13 @@ class _WorkerOffersEmbedded extends ConsumerWidget {
 class _CustomerJobsByStatus extends ConsumerWidget {
   final List<String> statuses;
   final String emptyMsg;
-  const _CustomerJobsByStatus({required this.statuses, required this.emptyMsg});
+  // Phase 340 — boş ise filtre yok.
+  final String searchQuery;
+  const _CustomerJobsByStatus({
+    required this.statuses,
+    required this.emptyMsg,
+    this.searchQuery = '',
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -488,8 +617,11 @@ class _CustomerJobsByStatus extends ConsumerWidget {
       ),
       error: (e, _) => Center(child: Text('Hata: $e')),
       data: (allJobs) {
+        final q = searchQuery.toLowerCase();
         final filtered = allJobs
             .where((j) => statuses.contains(j['status'] as String?))
+            .where((j) => q.isEmpty ||
+                (j['title']?.toString().toLowerCase().contains(q) ?? false))
             .toList();
         return _JobList(jobs: filtered, emptyMsg: emptyMsg);
       },
