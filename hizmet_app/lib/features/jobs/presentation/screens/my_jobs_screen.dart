@@ -233,19 +233,15 @@ class _MergedJobsView extends ConsumerStatefulWidget {
 }
 
 class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
-  // Phase 346 — Multi-select: 4 kategoriden istenenler. Default: hepsi.
-  final Set<_JobsFilter> _selected = {
-    _JobsFilter.active,
-    _JobsFilter.offers,
-    _JobsFilter.completed,
-    _JobsFilter.calendar,
-  };
+  // Phase 347 — Multi-select default BOŞ. Boş set = "Tümü" semantic
+  // (filtre yok, hepsi gösterilir). Kullanıcı checkbox doldurdukça
+  // seçim başlar; tüm 4 kategori seçilince tekrar boş set'e döner.
+  final Set<_JobsFilter> _selected = <_JobsFilter>{};
 
-  bool get _isAllSelected => _selected.length == _JobsFilter.values.length;
+  bool get _isAllSelected => _selected.isEmpty;
 
   String get _selectionLabel {
     if (_isAllSelected) return 'Tümü';
-    if (_selected.isEmpty) return 'Seçim yok';
     if (_selected.length == 1) return _selected.first.label;
     return '${_selected.length} seçili';
   }
@@ -558,23 +554,18 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
     );
   }
 
-  /// Phase 346 — Multi-select set'ine göre içerik:
-  /// * Set boş → empty state.
+  /// Phase 347 — Multi-select set'ine göre içerik:
+  /// * Set boş → "Tümü" semantic (4 kaynak da dahil, merged list).
   /// * Set tek bir kategori → eski tek-tab davranışı.
   /// * Set ≥ 2 → `_AllItemsMergedList` set parametresiyle filtreli merge.
   Widget _buildContent() {
     final q = _searchQuery;
     if (_selected.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Text(
-            'Hiçbir kategori seçili değil. Dropdown\'dan bir veya birden çok seçin.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: 13, color: AppColors.textSecondary),
-          ),
-        ),
+      // Tümü → tüm kaynaklar dahil.
+      return _AllItemsMergedList(
+        searchQuery: q,
+        sort: _sort,
+        range: _range,
       );
     }
     if (_selected.length == 1) {
@@ -944,26 +935,34 @@ class _JobsMultiSelectSheet extends StatefulWidget {
 
 class _JobsMultiSelectSheetState extends State<_JobsMultiSelectSheet> {
   late final Set<_JobsFilter> _temp = {...widget.initial};
-  bool get _isAll => _temp.length == _JobsFilter.values.length;
+
+  // Phase 347 — Boş set = "Tümü" semantic (filtre yok). Kullanıcı
+  // checkbox'ı doldurdukça filtre başlar; hepsi seçili olunca tekrar
+  // boş set'e döner (Tümü).
+  bool get _isAll => _temp.isEmpty;
 
   void _toggleAll(bool? v) {
     setState(() {
       if (v == true) {
-        _temp
-          ..clear()
-          ..addAll(_JobsFilter.values);
-      } else {
+        // Tümü ON = filtre yok = boş set.
         _temp.clear();
       }
+      // Master OFF no-op: kullanıcının kategori seçmesi gerekir.
     });
   }
 
   void _toggle(_JobsFilter f, bool? v) {
     setState(() {
       if (v == true) {
+        // Eğer Tümü aktifse (set boş), bu kategoriyi seç + diğerlerini
+        // implicit olarak DESELECT bırak (yalnız bu seçili).
         _temp.add(f);
       } else {
         _temp.remove(f);
+      }
+      // Hepsi seçilirse → boş set'e dön (Tümü).
+      if (_temp.length == _JobsFilter.values.length) {
+        _temp.clear();
       }
     });
   }
@@ -1026,7 +1025,8 @@ class _JobsMultiSelectSheetState extends State<_JobsMultiSelectSheet> {
                   children: [
                     CheckboxListTile(
                       value: _isAll,
-                      tristate: true,
+                      // Phase 347 — Master sadece "Tümü ↔ özel seçim" ikili
+                      // durum, indeterminate gerekmiyor.
                       onChanged: _toggleAll,
                       activeColor: AppColors.primary,
                       title: const Text('Tümü',

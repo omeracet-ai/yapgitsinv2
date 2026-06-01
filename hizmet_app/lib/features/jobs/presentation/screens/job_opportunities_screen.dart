@@ -1113,19 +1113,14 @@ class _CategoryMultiSelectSheet extends StatefulWidget {
 class _CategoryMultiSelectSheetState
     extends State<_CategoryMultiSelectSheet> {
   late final Set<String> _temp = {...widget.initial};
-  bool get _isAll => _temp.isEmpty || _temp.length == widget.all.length;
+  // Phase 347 — Boş set = "Tümü" semantic. Kategori kutuları boş gelir;
+  // kullanıcı doldurdukça filtre devreye girer.
+  bool get _isAll => _temp.isEmpty;
 
   void _toggleAll(bool? v) {
     setState(() {
-      if (v == true) {
-        // Master ON = boş set (server "Tümü" semantiği).
-        _temp.clear();
-      } else {
-        // Master OFF = tüm seçimleri kaldır → liste boş kalır.
-        _temp.clear();
-        _temp.add('__none__');
-        _temp.remove('__none__');
-      }
+      if (v == true) _temp.clear(); // Tümü ON = boş set (filtre yok).
+      // Master OFF: kullanıcının kategori seçmesi gerekir, no-op.
     });
   }
 
@@ -1133,17 +1128,12 @@ class _CategoryMultiSelectSheetState
     setState(() {
       if (v == true) {
         _temp.add(cat);
-        if (_temp.length == widget.all.length) {
-          // Hepsi seçili = boş set (semantically "Tümü").
-          _temp.clear();
-        }
       } else {
-        if (_temp.isEmpty) {
-          // "Tümü" → tek bu kategoriyi çıkarmak = diğerleri seçili kalsın.
-          _temp.addAll(widget.all.where((c) => c != cat));
-        } else {
-          _temp.remove(cat);
-        }
+        _temp.remove(cat);
+      }
+      // Hepsi seçilirse → boş set (Tümü).
+      if (_temp.length == widget.all.length) {
+        _temp.clear();
       }
     });
   }
@@ -1224,7 +1214,9 @@ class _CategoryMultiSelectSheetState
                     ),
                     const Divider(height: 1),
                     ...widget.all.map((cat) {
-                      final selected = _isAll || _temp.contains(cat);
+                      // Phase 347 — Master ON iken (boş set), kategoriler
+                      // UNCHECKED görünür — kullanıcı doldurarak seçim başlar.
+                      final selected = _temp.contains(cat);
                       final icon = widget.catIcons[cat] ?? '⭐';
                       return CheckboxListTile(
                         value: selected,
