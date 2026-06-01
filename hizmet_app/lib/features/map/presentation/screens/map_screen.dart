@@ -10,6 +10,7 @@ import '../widgets/job_pin_marker.dart';
 import '../widgets/worker_map_marker.dart';
 import '../../../../../core/providers/navigation_provider.dart';
 import '../../../jobs/data/job_filter.dart';
+import '../../../jobs/widgets/job_filter_sheet.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -106,6 +107,48 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     super.dispose();
   }
 
+  // Phase 369 — kategori bottom sheet: 3D dark gradient + drag handle.
+  void _showCategorySheet(MapState state, MapNotifier notifier) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetCtx) {
+        return _CategoryBottomSheet(
+          activeFilter: state.activeFilter,
+          onSelect: (cat) {
+            notifier.setFilter(cat);
+            Navigator.of(sheetCtx).pop();
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _openFilterSheet() async {
+    final current = ref.read(jobFilterProvider);
+    final result = await showModalBottomSheet<JobFilter>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => JobFilterSheet(initial: current),
+    );
+    if (result != null) {
+      ref.read(jobFilterProvider.notifier).state = result;
+      // Mesafe filtresi haritaya da yansıt.
+      if (result.maxRadiusKm != null) {
+        ref.read(mapProvider.notifier).setRadiusKm(result.maxRadiusKm);
+      }
+    }
+  }
+
+  void _focusSearch() {
+    // Phase 369 — Listeye geç (search inputu öne çıkar). Stub: list view'a düş.
+    final m = ref.read(mapProvider);
+    if (!m.showList) ref.read(mapProvider.notifier).toggleView();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(mapProvider);
@@ -140,7 +183,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       body: state.showList
           ? Column(
               children: [
-                _FloatingHeader(state: state, notifier: notifier),
+                _FloatingHeader(
+                  state: state,
+                  notifier: notifier,
+                  onOpenCategorySheet: () => _showCategorySheet(state, notifier),
+                  onOpenFilter: _openFilterSheet,
+                  onOpenNotifications: () => context.push('/bildirimler'),
+                  onSearch: _focusSearch,
+                ),
                 Expanded(
                   child: _JobListView(
                     jobs: state.jobs,
@@ -168,8 +218,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   },
                 ),
 
-                // ── Floating search bar + category chips overlay ──
-                _FloatingOverlay(state: state, notifier: notifier),
+                // ── Floating search bar + category dropdown + action icons ──
+                _FloatingOverlay(
+                  state: state,
+                  notifier: notifier,
+                  onOpenCategorySheet: () => _showCategorySheet(state, notifier),
+                  onOpenFilter: _openFilterSheet,
+                  onOpenNotifications: () => context.push('/bildirimler'),
+                  onSearch: _focusSearch,
+                ),
 
                 // ── Loading indicator ──
                 if (state.locationLoading)
@@ -249,29 +306,38 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 class _FloatingHeader extends StatelessWidget {
   final MapState state;
   final MapNotifier notifier;
+  final VoidCallback onOpenCategorySheet;
+  final VoidCallback onOpenFilter;
+  final VoidCallback onOpenNotifications;
+  final VoidCallback onSearch;
 
-  const _FloatingHeader({required this.state, required this.notifier});
-
-  static const _categories = [
-    'all',
-    'Elektrikçi',
-    'Tesisat',
-    'Temizlik',
-    'Boya & Badana',
-    'Nakliyat',
-  ];
+  const _FloatingHeader({
+    required this.state,
+    required this.notifier,
+    required this.onOpenCategorySheet,
+    required this.onOpenFilter,
+    required this.onOpenNotifications,
+    required this.onSearch,
+  });
 
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
-    return Container(color: AppColors.surface,
+    return Container(
+      color: AppColors.surface,
       padding: EdgeInsets.fromLTRB(12, top + 8, 12, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SearchPill(state: state, notifier: notifier),
           const SizedBox(height: 8),
-          _CategoryChips(state: state, notifier: notifier, categories: _categories),
+          _CategoryToolbar(
+            state: state,
+            onOpenCategorySheet: onOpenCategorySheet,
+            onOpenFilter: onOpenFilter,
+            onOpenNotifications: onOpenNotifications,
+            onSearch: onSearch,
+          ),
           const SizedBox(height: 8),
         ],
       ),
@@ -280,23 +346,25 @@ class _FloatingHeader extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Floating overlay (search bar + chips) on top of map
+// Floating overlay (search bar + category dropdown + action icons) on map
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _FloatingOverlay extends StatelessWidget {
   final MapState state;
   final MapNotifier notifier;
+  final VoidCallback onOpenCategorySheet;
+  final VoidCallback onOpenFilter;
+  final VoidCallback onOpenNotifications;
+  final VoidCallback onSearch;
 
-  const _FloatingOverlay({required this.state, required this.notifier});
-
-  static const _categories = [
-    'all',
-    'Elektrikçi',
-    'Tesisat',
-    'Temizlik',
-    'Boya & Badana',
-    'Nakliyat',
-  ];
+  const _FloatingOverlay({
+    required this.state,
+    required this.notifier,
+    required this.onOpenCategorySheet,
+    required this.onOpenFilter,
+    required this.onOpenNotifications,
+    required this.onSearch,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -310,14 +378,312 @@ class _FloatingOverlay extends StatelessWidget {
         children: [
           _SearchPill(state: state, notifier: notifier),
           const SizedBox(height: 8),
-          _CategoryChips(
-              state: state,
-              notifier: notifier,
-              categories: _categories),
+          _CategoryToolbar(
+            state: state,
+            onOpenCategorySheet: onOpenCategorySheet,
+            onOpenFilter: onOpenFilter,
+            onOpenNotifications: onOpenNotifications,
+            onSearch: onSearch,
+          ),
         ],
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 369 — Kategori dropdown pill + action icons (search/filter/bell)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CategoryToolbar extends StatelessWidget {
+  final MapState state;
+  final VoidCallback onOpenCategorySheet;
+  final VoidCallback onOpenFilter;
+  final VoidCallback onOpenNotifications;
+  final VoidCallback onSearch;
+
+  const _CategoryToolbar({
+    required this.state,
+    required this.onOpenCategorySheet,
+    required this.onOpenFilter,
+    required this.onOpenNotifications,
+    required this.onSearch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final activeLabel =
+        state.activeFilter == 'all' ? 'Tümü' : state.activeFilter;
+    return Row(
+      children: [
+        // ── Kategori dropdown pill ──
+        Expanded(
+          child: GestureDetector(
+            onTap: onOpenCategorySheet,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x18000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    state.activeFilter == 'all'
+                        ? Icons.apps_rounded
+                        : _categoryIcon(state.activeFilter),
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      activeLabel,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.keyboard_arrow_down_rounded,
+                      size: 18, color: AppColors.textSecondary),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        _CircleIconBtn(icon: Icons.search_rounded, onTap: onSearch),
+        const SizedBox(width: 6),
+        _CircleIconBtn(icon: Icons.tune_rounded, onTap: onOpenFilter),
+        const SizedBox(width: 6),
+        _CircleIconBtn(
+            icon: Icons.notifications_none_rounded,
+            onTap: onOpenNotifications),
+      ],
+    );
+  }
+}
+
+class _CircleIconBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _CircleIconBtn({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          shape: BoxShape.circle,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x18000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Icon(icon, size: 18, color: AppColors.textPrimary),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 369 — 3D dark category bottom sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CategoryBottomSheet extends StatelessWidget {
+  final String activeFilter;
+  final void Function(String) onSelect;
+
+  const _CategoryBottomSheet({
+    required this.activeFilter,
+    required this.onSelect,
+  });
+
+  // Backend ile uyumlu örnekleme. Tümü + en sık 5 kategori.
+  static const _items = <_CatItem>[
+    _CatItem('all', 'Tümü', Icons.apps_rounded),
+    _CatItem('Elektrikçi', 'Elektrikçi', Icons.bolt_rounded),
+    _CatItem('Tesisat', 'Tesisat', Icons.plumbing_rounded),
+    _CatItem('Temizlik', 'Temizlik', Icons.cleaning_services_rounded),
+    _CatItem('Boya & Badana', 'Boya & Badana', Icons.format_paint_rounded),
+    _CatItem('Nakliyat', 'Nakliyat', Icons.local_shipping_rounded),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    const bgTop = Color(0xFF1A1F2E);
+    const bgBot = Color(0xFF0C1117);
+    final highlight = Colors.white.withValues(alpha: 0.08);
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [bgTop, bgBot],
+        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+        border: Border(top: BorderSide(color: highlight, width: 1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.50),
+            blurRadius: 28,
+            offset: const Offset(0, -10),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Row(
+                children: [
+                  Icon(Icons.filter_list_rounded,
+                      size: 16,
+                      color: AppColors.primary.withValues(alpha: 0.85)),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Kategori Seç',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            ..._items.map((it) {
+              final selected = it.key == activeFilter;
+              return InkWell(
+                onTap: () => onSelect(it.key),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.primary.withValues(
+                                  alpha: selected ? 0.32 : 0.15),
+                              AppColors.primary.withValues(
+                                  alpha: selected ? 0.10 : 0.04),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(
+                                alpha: selected ? 0.55 : 0.25),
+                            width: 1,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(it.icon,
+                            size: 18, color: AppColors.primary),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          it.label,
+                          style: TextStyle(
+                            color: Colors.white
+                                .withValues(alpha: selected ? 1 : 0.85),
+                            fontWeight:
+                                selected ? FontWeight.w700 : FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      // Checkbox (3D-style ring + fill when selected).
+                      Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? AppColors.primary
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(7),
+                          border: Border.all(
+                            color: selected
+                                ? AppColors.primary
+                                : Colors.white.withValues(alpha: 0.30),
+                            width: 1.5,
+                          ),
+                          boxShadow: selected
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.45),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: selected
+                            ? const Icon(Icons.check_rounded,
+                                size: 14, color: Colors.white)
+                            : null,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CatItem {
+  final String key;
+  final String label;
+  final IconData icon;
+  const _CatItem(this.key, this.label, this.icon);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -385,66 +751,6 @@ class _SearchPill extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Category chips row
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _CategoryChips extends StatelessWidget {
-  final MapState state;
-  final MapNotifier notifier;
-  final List<String> categories;
-
-  const _CategoryChips({
-    required this.state,
-    required this.notifier,
-    required this.categories,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 32,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: categories.map((cat) {
-          final isActive = state.activeFilter == cat;
-          final label = cat == 'all' ? 'Tümü' : cat;
-          return GestureDetector(
-            onTap: () => notifier.setFilter(cat),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              margin: const EdgeInsets.only(right: 8),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: isActive ? AppColors.primary : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: isActive
-                        ? AppColors.primary.withValues(alpha: 0.30)
-                        : const Color(0x14000000),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isActive ? Colors.white : AppColors.textSecondary,
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }

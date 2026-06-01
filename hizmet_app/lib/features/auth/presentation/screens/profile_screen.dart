@@ -600,8 +600,8 @@ class ProfileScreen extends ConsumerWidget {
         decoration: BoxDecoration(
           gradient: const LinearGradient(
               colors: [AppColors.primary, AppColors.primaryDark],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight),
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(children: [
@@ -610,7 +610,7 @@ class ProfileScreen extends ConsumerWidget {
           Expanded(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Sanal Kredi Bakiyesi',
+              const Text('Kredi Bakiyesi',
                   style: TextStyle(color: Colors.white70, fontSize: 12)),
               balanceAsync.when(
                 data: (b) => Text('$b Kredi',

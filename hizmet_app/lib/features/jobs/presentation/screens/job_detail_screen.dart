@@ -112,6 +112,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
+    // Phase 370 — Logout kullanıcı bu ekranı göremez; login/kayıt promptu.
+    if (authState is! AuthAuthenticated) {
+      return const _GuestJobDetailPrompt();
+    }
     final currentUserId =
         authState is AuthAuthenticated ? authState.user['id'] as String? : null;
     final offersAsync = widget.id != null
@@ -163,7 +167,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       backgroundColor: _bgColor,
       appBar: AppBar(
         title: const Text(
-          'İş Detayı',
+          'Hizmet İlanı',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.black,
@@ -2462,6 +2466,129 @@ class _PhotoPagerState extends State<_PhotoPager> {
           }),
         ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 370 — Logout kullanıcılar için ilan detay yerine gösterilen prompt.
+// Dark tema + iki CTA: "Giriş Yap" / "Kayıt Ol".
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GuestJobDetailPrompt extends StatelessWidget {
+  const _GuestJobDetailPrompt();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: const Text(
+          'Hizmet İlanı',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                width: 88,
+                height: 88,
+                alignment: Alignment.center,
+                margin: const EdgeInsets.only(top: 24, bottom: 24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primary.withValues(alpha: 0.30),
+                      AppColors.primary.withValues(alpha: 0.08),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.25),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Icon(Icons.lock_outline_rounded,
+                    size: 38, color: AppColors.primary),
+              ),
+              const Text(
+                'İlanı görmek için giriş yap',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'İlan detayı, ilan veren ve teklif verme yalnızca kayıtlı kullanıcılara açıktır.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.70),
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+              const Spacer(),
+              ElevatedButton(
+                onPressed: () => context.push('/giris-yap'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  elevation: 6,
+                  shadowColor: AppColors.primary.withValues(alpha: 0.45),
+                ),
+                child: const Text(
+                  'Giriş Yap',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton(
+                onPressed: () => context.push('/kayit-ol'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.white.withValues(alpha: 0.04),
+                  side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.22), width: 1),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text(
+                  'Kayıt Ol',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 15),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

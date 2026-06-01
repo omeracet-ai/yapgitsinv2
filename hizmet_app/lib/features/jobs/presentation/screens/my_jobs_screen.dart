@@ -409,7 +409,7 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
               _headerIconButton(
                 icon: Icons.notifications_outlined,
                 tooltip: 'Bildirimler',
-                onTap: () => context.push('/bildirim-ayarlari'),
+                onTap: () => context.push('/bildirimler'),
               ),
             ],
           ),
