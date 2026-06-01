@@ -241,7 +241,7 @@ class _ConfirmationFlowScreenState
             child: Text(
               _error ?? 'Bu işlem için yetkili değilsiniz.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.error),
+              style: const TextStyle(color: AppColors.error),
             ),
           ),
         ),
@@ -264,12 +264,12 @@ class _ConfirmationFlowScreenState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.error_outline, color: AppColors.error, size: 48),
+                const Icon(Icons.error_outline, color: AppColors.error, size: 48),
                 const SizedBox(height: 12),
                 Text(
                   'Yüklenemedi: $e',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.error),
+                  style: const TextStyle(color: AppColors.error),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
@@ -302,11 +302,13 @@ class _ConfirmationFlowScreenState
     // İptal edildi.
     if (st.isCancelled) return _cancelledCard();
     // Grace içinde — countdown + iptal butonu.
-    if (st.isPendingGrace) return _GraceCountdownCard(
+    if (st.isPendingGrace) {
+      return _GraceCountdownCard(
           graceEndsAt: st.graceEndsAt,
           onCancel: _submitting ? null : _cancelGrace,
           onFinalize: _submitting ? null : _finalizeGraceEarly,
         );
+    }
     // Default: plain-confirm butonu (kendi tarafın onaylamadıysa).
     return _confirmCard(st);
   }
@@ -369,7 +371,7 @@ class _ConfirmationFlowScreenState
       ),
       child: Column(
         children: [
-          Icon(Icons.check_circle_rounded,
+          const Icon(Icons.check_circle_rounded,
               color: AppColors.success, size: 64),
           const SizedBox(height: 12),
           Text(
@@ -543,7 +545,7 @@ class _GraceCountdownCardState extends State<_GraceCountdownCard> {
         children: [
           Row(
             children: [
-              Icon(Icons.check_circle_rounded,
+              const Icon(Icons.check_circle_rounded,
                   color: AppColors.success, size: 28),
               const SizedBox(width: 10),
               Expanded(

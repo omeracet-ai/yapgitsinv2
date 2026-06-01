@@ -208,7 +208,7 @@ class _WorkerDocumentsScreenState extends ConsumerState<WorkerDocumentsScreen> {
                                     fontSize: 11,
                                     color: AppColors.textSecondary)),
                           if (status != 'active')
-                            Text('Admin tarafından iptal edildi',
+                            const Text('Admin tarafından iptal edildi',
                                 style: TextStyle(
                                     fontSize: 11,
                                     color: AppColors.error,
@@ -217,7 +217,7 @@ class _WorkerDocumentsScreenState extends ConsumerState<WorkerDocumentsScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.delete_outline,
+                      icon: const Icon(Icons.delete_outline,
                           color: AppColors.error),
                       onPressed: () => _removeDocument(id, category),
                     ),

@@ -211,7 +211,7 @@ class _ServiceListingsScreenState
                       prefixIcon:
                           Icon(Icons.search, color: AppColors.textHint),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
+                      contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 14),
                     ),
                   ),

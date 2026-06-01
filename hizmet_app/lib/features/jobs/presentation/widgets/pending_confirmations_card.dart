@@ -268,16 +268,16 @@ class _RowState extends ConsumerState<_Row> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.hourglass_bottom_rounded,
+                        const Icon(Icons.hourglass_bottom_rounded,
                             size: 12, color: AppColors.warning),
                         const SizedBox(width: 3),
                         Text(
                           _countdown(),
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppColors.warning,
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            fontFeatures: const [
+                            fontFeatures: [
                               FontFeature.tabularFigures(),
                             ],
                           ),

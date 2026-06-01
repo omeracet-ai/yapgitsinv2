@@ -63,7 +63,7 @@ class _PromoRedeemSheetState extends ConsumerState<PromoRedeemSheet> {
       padding: EdgeInsets.only(bottom: pad),
       child: Container(
         decoration: BoxDecoration(color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         child: Column(

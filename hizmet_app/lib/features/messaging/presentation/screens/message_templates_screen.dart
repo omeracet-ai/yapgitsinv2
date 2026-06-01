@@ -154,13 +154,13 @@ class _MessageTemplatesScreenState
                       const SizedBox(height: 40),
                       Icon(Icons.chat_bubble_outline,
                           size: 56, color: AppColors.textSecondary),
-                      SizedBox(height: 12),
-                      Text('Henüz şablon yok',
+                      const SizedBox(height: 12),
+                      const Text('Henüz şablon yok',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600)),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       Text(
                         'Sık kullandığın mesajları buraya kaydet, sohbette tek tıkla yapıştır.',
                         textAlign: TextAlign.center,

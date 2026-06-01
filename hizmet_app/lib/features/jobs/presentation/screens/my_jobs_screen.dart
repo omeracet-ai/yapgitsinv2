@@ -1420,7 +1420,7 @@ class _BookingsCalendarTab extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text('Randevular yüklenemedi: $e',
-              style: TextStyle(color: AppColors.error)),
+              style: const TextStyle(color: AppColors.error)),
         ),
       ),
       data: (bookings) {
@@ -1530,7 +1530,7 @@ class _CompactBookingRow extends StatelessWidget {
                   ),
                   Text(
                     booking.scheduledTime ?? '--:--',
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold),

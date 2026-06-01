@@ -834,12 +834,12 @@ class _OpportunityCard extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (offerCount > 0) ...[
-                        Icon(Icons.people_rounded,
+                        const Icon(Icons.people_rounded,
                             size: 12, color: AppColors.primary),
                         const SizedBox(width: 2),
                         Text(
                           '$offerCount',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 11,
                             color: AppColors.primary,
                             fontWeight: FontWeight.w700,
@@ -904,7 +904,7 @@ class _OpportunityCard extends ConsumerWidget {
     // Phase 296 — schedule flexibility + dueDate/dueTime'a göre etiket üret.
     final flex = j.scheduleFlexibility;
     if (flex == 'urgent') {
-      return _ScheduleVisual(
+      return const _ScheduleVisual(
         icon: Icons.bolt_rounded,
         text: 'Acil — bugün',
         color: AppColors.error,
@@ -1015,7 +1015,7 @@ class _Poster3DAvatar extends StatelessWidget {
     return Center(
       child: Text(
         initials,
-        style: TextStyle(
+        style: const TextStyle(
           color: AppColors.primary,
           fontWeight: FontWeight.bold,
           fontSize: 18,

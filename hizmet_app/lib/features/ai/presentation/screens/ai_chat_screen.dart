@@ -116,12 +116,12 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Row(
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
                     'Yanıt hazırlanıyor…',
                     style: TextStyle(

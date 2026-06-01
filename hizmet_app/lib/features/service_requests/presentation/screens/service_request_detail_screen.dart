@@ -461,7 +461,7 @@ class _ServiceRequestDetailScreenState
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               labelText: 'Fiyat Teklifi ₺ (opsiyonel)',
-              prefixIcon: Icon(Icons.attach_money),
+              prefixIcon: const Icon(Icons.attach_money),
               filled: true,
               fillColor: AppColors.background,
             ),
@@ -475,7 +475,7 @@ class _ServiceRequestDetailScreenState
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
               labelText: 'Mesajınız *',
-              prefixIcon: Icon(Icons.message_outlined),
+              prefixIcon: const Icon(Icons.message_outlined),
               alignLabelWithHint: true,
               filled: true,
               fillColor: AppColors.background,

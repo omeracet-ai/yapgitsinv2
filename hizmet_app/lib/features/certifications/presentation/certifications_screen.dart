@@ -88,8 +88,8 @@ class _CertificationsScreenState extends ConsumerState<CertificationsScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('📜', style: TextStyle(fontSize: 48)),
-                          SizedBox(height: 16),
+                          const Text('📜', style: TextStyle(fontSize: 48)),
+                          const SizedBox(height: 16),
                           Text('Henüz sertifikanız yok.',
                               style: TextStyle(
                                   fontSize: 16, color: AppColors.textSecondary)),

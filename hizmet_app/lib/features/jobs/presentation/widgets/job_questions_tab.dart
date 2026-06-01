@@ -371,10 +371,10 @@ class _QuestionCardState extends ConsumerState<_QuestionCard> {
                       if (maskForLogout)
                         GestureDetector(
                           onTap: () => Navigator.of(context).pushNamed('/giris-yap'),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            const Icon(Icons.person_add_alt_1,
+                          child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                            Icon(Icons.person_add_alt_1,
                                 size: 14, color: AppColors.primary),
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6),
                             Text('Üye ol → sorular ve teklifler',
                                 style: TextStyle(
                                     fontSize: 12,

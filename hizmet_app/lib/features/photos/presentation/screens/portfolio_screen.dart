@@ -142,7 +142,7 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
                 children: [
                   Icon(Icons.photo_library_outlined,
                       size: 64, color: AppColors.textHint),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
                     'Portfolyo boş, iş örneklerini ekle',
                     style: TextStyle(
@@ -150,7 +150,7 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'Aşağıdaki + butonuna basarak fotoğraf ekleyebilirsiniz.',
                     textAlign: TextAlign.center,

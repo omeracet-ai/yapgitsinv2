@@ -346,13 +346,13 @@ class _ProfileView extends ConsumerWidget {
                               children: [
                                 Container(
                                   width: 7, height: 7,
-                                  decoration: BoxDecoration(
+                                  decoration: const BoxDecoration(
                                     color: AppColors.verifiedGreen,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
                                 const SizedBox(width: 5),
-                                Text('Çevrimiçi',
+                                const Text('Çevrimiçi',
                                     style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -378,7 +378,7 @@ class _ProfileView extends ConsumerWidget {
                         return Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Text('Son görülme: $text',
-                              style: TextStyle(
+                              style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.verifiedGreen)),
@@ -474,10 +474,10 @@ class _ProfileView extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(children: [
-                          const Icon(Icons.info_outline,
+                        const Row(children: [
+                          Icon(Icons.info_outline,
                               size: 14, color: AppColors.primary),
-                          const SizedBox(width: 6),
+                          SizedBox(width: 6),
                           Text('Kullanıcı Açıklaması',
                               style: TextStyle(
                                   fontSize: 12,

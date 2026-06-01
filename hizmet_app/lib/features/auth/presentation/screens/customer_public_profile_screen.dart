@@ -524,9 +524,9 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
       ref.invalidate(customerProfileProvider(widget.revieweeId));
       if (!mounted) return;
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         backgroundColor: AppColors.success,
-        content: const Text('Yorumun yayınlandı, teşekkürler!'),
+        content: Text('Yorumun yayınlandı, teşekkürler!'),
       ));
     } catch (e) {
       if (!mounted) return;

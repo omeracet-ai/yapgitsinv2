@@ -959,14 +959,14 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     // Backend bazen eski kayıtlar için price=null dönüyor → priceMinor'dan üret.
     final priceMinor   = (offer['priceMinor']        as num?)?.toInt();
     final counterMinor = (offer['counterPriceMinor'] as num?)?.toInt();
-    double? _toTl(num? n) => n == null ? null : (n / 100);
+    double? toTl(num? n) => n == null ? null : (n / 100);
     final price        = (offer['price'] as num?)?.toDouble()
-        ?? _toTl(priceMinor);
+        ?? toTl(priceMinor);
     final counterPrice = (offer['counterPrice'] as num?)?.toDouble()
-        ?? _toTl(counterMinor);
+        ?? toTl(counterMinor);
     final counterMessage = offer['counterMessage'] as String?;
     // Phase 294 — Turkish thousand-dot, decimal-comma formatting.
-    String _fmtTl(double? v) => v == null ? '—' : IntlFormatter.tl(v);
+    String fmtTl(double? v) => v == null ? '—' : IntlFormatter.tl(v);
 
     // Fiyat görünürlüğü: sadece ilan sahibi VEYA teklif sahibi görebilir.
     // Phase 265d — logout user'larda isim/mesaj "üye olun" maskesi altında.
@@ -1020,9 +1020,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             leading: maskForLogout
                 ? GestureDetector(
                     onTap: () => context.push('/giris-yap'),
-                    child: CircleAvatar(
+                    child: const CircleAvatar(
                       backgroundColor: AppColors.primaryLight,
-                      child: const Icon(Icons.lock_outline,
+                      child: Icon(Icons.lock_outline,
                           color: AppColors.primary, size: 18),
                     ),
                   )
@@ -1242,7 +1242,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 const SizedBox(height: 6),
                 // Fiyat — sadece ilan sahibi veya teklif sahibi görür
                 if (canSeePrice)
-                  Text(_fmtTl(price),
+                  Text(fmtTl(price),
                       style: const TextStyle(color: AppColors.primary,
                           fontWeight: FontWeight.bold, fontSize: 16))
                 else
@@ -1345,7 +1345,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Müşteri teklifi: ${_fmtTl(counterPrice)}',
+                          'Müşteri teklifi: ${fmtTl(counterPrice)}',
                           style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.blue,
@@ -1843,7 +1843,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
                 // Phase 318 — Fotoğraf yönetimi artık güncelleme modal'ında.
                 if (widget.id != null) ...[
-                  Row(children: const [
+                  const Row(children: [
                     Icon(Icons.photo_library_outlined,
                         size: 18, color: AppColors.primary),
                     SizedBox(width: 8),
