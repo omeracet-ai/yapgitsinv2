@@ -136,6 +136,13 @@ class _AuthenticatedChatListState
             tooltip: l.chatRefresh,
             onPressed: () => ref.invalidate(conversationsProvider),
           ),
+          // Phase 367 — bildirimler kısayolu.
+          IconButton(
+            icon: const Icon(Icons.notifications_none_rounded,
+                color: Colors.white),
+            tooltip: 'Bildirimler',
+            onPressed: () => context.push('/bildirimler'),
+          ),
         ],
       ),
       body: RefreshIndicator(

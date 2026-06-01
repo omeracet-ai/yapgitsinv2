@@ -225,7 +225,8 @@ class _NotifCard extends StatelessWidget {
       'booking_confirmed' => (Icons.event_available,       Colors.teal,        Colors.teal.shade50),
       'booking_completed' => (Icons.stars_rounded,         Colors.amber,       Colors.amber.shade50),
       'booking_cancelled' => (Icons.event_busy,            Colors.red,         Colors.red.shade50),
-      'new_review'        => (Icons.star_rounded,          Colors.amber,       Colors.amber.shade50),
+      // Phase 368 — yıldız ikonunu kaldır (kullanıcı rating görseli istemiyor).
+      'new_review'        => (Icons.rate_review_rounded,   AppColors.primary,  AppColors.primaryLight),
       'system'            => (Icons.campaign,               AppColors.primary,  AppColors.primaryLight),
       _                   => (Icons.notifications_rounded, AppColors.primary,  AppColors.primaryLight),
     };
@@ -237,57 +238,61 @@ class _NotifCard extends StatelessWidget {
         // Phase 71 — deep link routing on tap
         onNavigate();
       },
+      // Phase 368 — kompakt kart: padding 14→10, ikon 44→34, body 2→1 satır.
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         decoration: BoxDecoration(
           color: isRead ? AppColors.surface : AppColors.primary.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isRead ? AppColors.border : AppColors.primary.withValues(alpha: 0.4),
           ),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: 44, height: 44,
-              decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12)),
-              child: Icon(icon, color: iconColor, size: 22),
+              width: 34, height: 34,
+              decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(10)),
+              child: Icon(icon, color: iconColor, size: 18),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(children: [
                     Expanded(
                       child: Text(title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                               fontWeight: isRead ? FontWeight.w600 : FontWeight.bold,
-                              fontSize: 14,
+                              fontSize: 13,
                               color: AppColors.textPrimary)),
                     ),
                     if (!isRead)
                       Container(
-                        width: 8, height: 8,
+                        width: 7, height: 7,
                         decoration: const BoxDecoration(
                             color: AppColors.primary, shape: BoxShape.circle),
                       ),
                   ]),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(body,
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                      maxLines: 2, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 6),
+                      style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary, height: 1.2),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 3),
                   Row(children: [
                     Text(timeStr,
-                        style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+                        style: TextStyle(fontSize: 10, color: AppColors.textHint)),
                     if (refId != null) ...[
                       const Spacer(),
-                      const Text('Detaya Git',
-                          style: TextStyle(fontSize: 11, color: AppColors.primary,
+                      const Text('Detay',
+                          style: TextStyle(fontSize: 10, color: AppColors.primary,
                               fontWeight: FontWeight.w600)),
-                      const Icon(Icons.chevron_right, size: 14, color: AppColors.primary),
+                      const Icon(Icons.chevron_right, size: 12, color: AppColors.primary),
                     ],
                   ]),
                 ],
