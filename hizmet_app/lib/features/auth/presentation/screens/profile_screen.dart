@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 // Phase 344 — Yapgitsin 3D card pattern'i tüm tab içeriklerine uygulanıyor.
@@ -48,6 +49,58 @@ final myPublicProfileProvider =
   return Map<String, dynamic>.from(resp.data as Map);
 });
 
+/// Phase 351 — Profil ilk kez %100'e ulaşınca gösterilen tek-seferlik
+/// popup için SharedPreferences key'i.
+const String _kProfileCompletePopupKey = 'profile_complete_popup_shown';
+
+Future<void> _showProfileCompletePopup(BuildContext context) async {
+  if (!context.mounted) return;
+  await showDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20)),
+      title: Row(children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.success.withValues(alpha: 0.18),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.verified_rounded,
+              color: AppColors.success, size: 28),
+        ),
+        const SizedBox(width: 12),
+        const Expanded(
+          child: Text('Profil Tamamlandı',
+              style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
+      ]),
+      content: Text(
+        'Tebrikler! Profilini başarıyla tamamladın. Artık tüm fırsatlardan '
+        'tam olarak yararlanabilirsin.',
+        style:
+            TextStyle(fontSize: 13, color: AppColors.textSecondary),
+      ),
+      actions: [
+        ElevatedButton.icon(
+          onPressed: () => Navigator.of(ctx).pop(),
+          icon: const Icon(Icons.check_rounded, size: 18),
+          label: const Text('Harika'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.success,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -60,6 +113,28 @@ class ProfileScreen extends ConsumerWidget {
     }
 
     final user = authState.user;
+
+    // Phase 351 — Profil ilk kez %100'e ulaşınca tek seferlik popup.
+    // SharedPreferences `profile_complete_popup_shown` key'i ile tekrar
+    // göstermez. Listen pattern → state change trigger, build sırasında
+    // setState yok.
+    ref.listen(profileCompletionProvider, (prev, next) {
+      next.whenData((data) async {
+        final pct = (data['percent'] as num?)?.toInt() ?? 0;
+        if (pct < 100) return;
+        final prevPct = prev?.valueOrNull == null
+            ? null
+            : ((prev!.value!['percent'] as num?)?.toInt() ?? 0);
+        // Sadece transition'da popup (sürekli %100'de açılmasın); ilk
+        // mount'ta prev null → prefs check kararı verir.
+        if (prevPct != null && prevPct >= 100) return;
+        final prefs = await SharedPreferences.getInstance();
+        if (prefs.getBool(_kProfileCompletePopupKey) == true) return;
+        await prefs.setBool(_kProfileCompletePopupKey, true);
+        if (!context.mounted) return;
+        await _showProfileCompletePopup(context);
+      });
+    });
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -186,11 +261,26 @@ class ProfileScreen extends ConsumerWidget {
           orElse: () => 0,
         );
 
+        // Phase 351 — Profil tamamlandığında hero arkaplanı koyu tona
+        // geçer (primary → secondary). One-time popup için bkz: ana
+        // profile screen build'ündeki notify hook.
+        final completionAsync = ref.watch(profileCompletionProvider);
+        final isProfileComplete = completionAsync.maybeWhen(
+          data: (d) {
+            final p = (d['percent'] as num?)?.toInt() ?? 0;
+            return p >= 100;
+          },
+          orElse: () => false,
+        );
+        final heroBg = isProfileComplete
+            ? AppColors.secondary // dark navy
+            : AppColors.primary;  // theme green
+
         return Container(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
-          decoration: const BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: heroBg,
+            borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(32),
                 bottomRight: Radius.circular(32)),
           ),
