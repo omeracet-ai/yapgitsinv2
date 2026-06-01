@@ -200,6 +200,80 @@ export class ReviewsService {
     }
   }
 
+  /**
+   * Phase 334 — Aktif kullanıcının değerlendirme yazmadığı tamamlanmış
+   * işler. Kullanıcı: ya job customer'ı ya da accepted offer worker'ı.
+   * SQL JOIN tek sorguda iki tarafı da kapsar; mevcut Review kaydı LEFT
+   * JOIN ile elenir. Backend popup için kompakt projeksiyon döner.
+   * Son 60 güne kısıtlı (eski tamamlanan işler için "değerlendir" pop-up
+   * göstermek anlamsız).
+   */
+  async findPendingForUser(userId: string): Promise<
+    Array<{
+      jobId: string;
+      jobTitle: string;
+      revieweeId: string;
+      revieweeName: string;
+      completedAt: string;
+    }>
+  > {
+    try {
+      const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+      const rows = await this.dataSource
+        .createQueryBuilder()
+        .select([
+          'j.id           AS "jobId"',
+          'j.title        AS "jobTitle"',
+          'j.updatedAt    AS "completedAt"',
+          // Aktif kullanıcı customer ise reviewee = worker; aksi halde customer.
+          `CASE WHEN j.customerId = :uid THEN o.userId ELSE j.customerId END AS "revieweeId"`,
+          `CASE WHEN j.customerId = :uid THEN uw.fullName ELSE uc.fullName END AS "revieweeName"`,
+        ])
+        .from('jobs', 'j')
+        .innerJoin('offers', 'o', 'o.jobId = j.id AND o.status = :acc')
+        .leftJoin('users', 'uc', 'uc.id = j.customerId')
+        .leftJoin('users', 'uw', 'uw.id = o.userId')
+        // Mevcut review'ı dış-katıl: yazılmışsa LEFT JOIN sonucu r.id NULL değil.
+        .leftJoin(
+          'reviews',
+          'r',
+          'r.jobId = j.id AND r.reviewerId = :uid',
+        )
+        .where('j.status = :completed', { completed: 'completed' })
+        .andWhere('(j.customerId = :uid OR o.userId = :uid)', { uid: userId })
+        .andWhere('r.id IS NULL')
+        .andWhere('j.updatedAt > :since', { since: sixtyDaysAgo })
+        .setParameters({ uid: userId, acc: 'accepted' })
+        .orderBy('j.updatedAt', 'DESC')
+        .limit(20)
+        .getRawMany<{
+          jobId: string;
+          jobTitle: string;
+          revieweeId: string | null;
+          revieweeName: string | null;
+          completedAt: Date | string;
+        }>();
+      return rows
+        .filter((r) => r.revieweeId && r.jobId)
+        .map((r) => ({
+          jobId: r.jobId,
+          jobTitle: r.jobTitle ?? '',
+          revieweeId: r.revieweeId as string,
+          revieweeName: r.revieweeName ?? 'Kullanıcı',
+          completedAt:
+            r.completedAt instanceof Date
+              ? r.completedAt.toISOString()
+              : String(r.completedAt),
+        }));
+    } catch (err) {
+      const e = err as Error;
+      this.logger.warn(
+        `findPendingForUser(${userId}) failed: ${e?.message ?? String(err)}`,
+      );
+      return [];
+    }
+  }
+
   /** Phase 238A defensive guard: prod schemas may lack optional columns
    * (replyText/repliedAt/photos/helpfulCount/flagged/flagReason/fraudScore/deletedAt)
    * or contain NULL FK rows. Minimal SELECT + LEFT JOIN + try/catch → never 500.

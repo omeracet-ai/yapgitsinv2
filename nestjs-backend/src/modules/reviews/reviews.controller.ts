@@ -47,6 +47,17 @@ export class ReviewsController {
     return this.reviewsService.create({ ...dto, reviewerId: req.user.id });
   }
 
+  /**
+   * Phase 334 — Aktif kullanıcının değerlendirme yazmadığı tamamlanmış
+   * işleri döner. Frontend popup pencere bunu çekip kullanıcıya gösterir.
+   * Cevap: `[{ jobId, jobTitle, revieweeId, revieweeName, completedAt }]`.
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Get('pending')
+  async pending(@Request() req: AuthenticatedRequest) {
+    return this.reviewsService.findPendingForUser(req.user.id);
+  }
+
   @Get('user/:id')
   async findByReviewee(@Param('id') id: string) {
     return this.reviewsService.findByReviewee(id);

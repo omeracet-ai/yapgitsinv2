@@ -3,6 +3,7 @@
 // _HomeTab içindeki bazı yardımcı section'lar şu an reference edilmiyor (dead
 // code) — gelecekteki restoration için saklanıyor; analyzer warning'i suppress.
 // ignore_for_file: unused_element, unused_field, unused_local_variable, prefer_const_declarations
+import 'dart:async'; // Phase 334 — `unawaited` için.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -28,6 +29,8 @@ import 'hizmet_al_screen.dart';
 // Phase 305 — Mesajlarım sekmesi (eski job_detail Sorular tab'ının yerine).
 import '../../../chat/presentation/screens/chat_list_screen.dart';
 import '../../../notifications/data/unread_count_provider.dart';
+// Phase 334 — app-launch'ta bekleyen değerlendirme popup'ı.
+import '../../../reviews/presentation/widgets/pending_reviews_popup.dart';
 import '../../../../core/widgets/category_card.dart';
 import '../../../../core/widgets/notification_bell.dart';
 import '../../../../core/widgets/job_status_badge.dart';
@@ -49,6 +52,13 @@ class _MainShellState extends ConsumerState<MainShell>
     // Ensure badge provider is materialized so its auth listener fires.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(unreadCountBadgeProvider.notifier);
+      // Phase 334 — Authenticated kullanıcıda bekleyen değerlendirmeleri
+      // sor; varsa popup aç. 24h cooldown widget içinde.
+      final auth = ref.read(authStateProvider);
+      if (auth is AuthAuthenticated && mounted) {
+        // Build sonrası, frame'i bloklamadan asenkron koş.
+        unawaited(maybeShowPendingReviewsPopup(context, ref));
+      }
     });
   }
 
