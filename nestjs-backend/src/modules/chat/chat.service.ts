@@ -157,6 +157,14 @@ export class ChatService {
     peerId: string,
     limit: number = 50,
   ): Promise<ChatMessage[]> {
+    // Phase 365 — Tarihçeyi sadece accepted-offer çifti görür. Aksi
+    // halde eski sohbet kayıtları offer kapandıktan sonra hala
+    // okunabilir kalıyordu. `canChat` aktif teklif kontrolü yapar.
+    if (!(await this.canChat(userId, peerId))) {
+      throw new ForbiddenException(
+        'Mesajlaşma sadece teklifi kabul edilmiş kullanıcılar arasında açılır.',
+      );
+    }
     const messages = await this.messagesRepo
       .createQueryBuilder('m')
       .where(
@@ -196,6 +204,14 @@ export class ChatService {
    * Returns peer profile + last message + unread count.
    */
   async getConversations(userId: string): Promise<ConversationItem[]> {
+    // Phase 365 — accepted-offer çifti kuralı: liste yalnız ŞU AN
+    // accepted offer'lı peer'leri gösterir. Eski sohbet kayıtları
+    // mesajlaşmanın orijinal şartı (canChat) kaybolduğunda otomatik
+    // gizlenir. sendMessage zaten canChat şartını uyguluyor; bu sadece
+    // listeyi tutarlı tutar.
+    const acceptedPeers = await this.getAcceptedPeers(userId);
+    if (acceptedPeers.size === 0) return [];
+
     // Pull all messages involving this user, newest first.
     const rows = await this.messagesRepo
       .createQueryBuilder('m')
@@ -208,6 +224,8 @@ export class ChatService {
     for (const m of rows) {
       const peerId = m.from === userId ? m.to : m.from;
       if (!peerId) continue;
+      // Phase 365 — accepted-offer çifti olmayan peer'leri DROP.
+      if (!acceptedPeers.has(peerId)) continue;
       const entry = peers.get(peerId);
       const isUnread = m.to === userId && m.readAt === null;
       if (entry) {
