@@ -934,35 +934,36 @@ class _JobsMultiSelectSheet extends StatefulWidget {
 }
 
 class _JobsMultiSelectSheetState extends State<_JobsMultiSelectSheet> {
-  late final Set<_JobsFilter> _temp = {...widget.initial};
+  // Phase 378 — initial boş gelirse (eski "Tümü = empty" semantic),
+  // tüm filtreleri _temp'e koy ki UI checkbox'lar TICKED görünsün.
+  late final Set<_JobsFilter> _temp = widget.initial.isEmpty
+      ? {..._JobsFilter.values}
+      : {...widget.initial};
 
-  // Phase 347 — Boş set = "Tümü" semantic (filtre yok). Kullanıcı
-  // checkbox'ı doldurdukça filtre başlar; hepsi seçili olunca tekrar
-  // boş set'e döner (Tümü).
-  bool get _isAll => _temp.isEmpty;
+  // Tümü = hepsi seçili VEYA boş set. Apply'da full→empty normalize.
+  bool get _isAll =>
+      _temp.isEmpty || _temp.length == _JobsFilter.values.length;
 
   void _toggleAll(bool? v) {
     setState(() {
       if (v == true) {
-        // Tümü ON = filtre yok = boş set.
+        // Tümü ON → hepsini işaretle (kutular TICKED).
+        _temp
+          ..clear()
+          ..addAll(_JobsFilter.values);
+      } else {
+        // Tümü OFF → tüm seçimi kaldır.
         _temp.clear();
       }
-      // Master OFF no-op: kullanıcının kategori seçmesi gerekir.
     });
   }
 
   void _toggle(_JobsFilter f, bool? v) {
     setState(() {
       if (v == true) {
-        // Eğer Tümü aktifse (set boş), bu kategoriyi seç + diğerlerini
-        // implicit olarak DESELECT bırak (yalnız bu seçili).
         _temp.add(f);
       } else {
         _temp.remove(f);
-      }
-      // Hepsi seçilirse → boş set'e dön (Tümü).
-      if (_temp.length == _JobsFilter.values.length) {
-        _temp.clear();
       }
     });
   }
@@ -1098,8 +1099,10 @@ class _JobsMultiSelectSheetState extends State<_JobsMultiSelectSheet> {
                     Expanded(
                       flex: 2,
                       child: ElevatedButton.icon(
-                        onPressed: () =>
-                            Navigator.of(context).pop(_temp),
+                        // Phase 378 — hepsi seçili → consumer'a boş set
+                        // (eski "Tümü = empty" semantic korunur).
+                        onPressed: () => Navigator.of(context)
+                            .pop(_isAll ? <_JobsFilter>{} : _temp),
                         icon: const Icon(Icons.check_rounded,
                             size: 18),
                         label: Text(

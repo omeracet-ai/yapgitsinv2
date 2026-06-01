@@ -1112,15 +1112,24 @@ class _CategoryMultiSelectSheet extends StatefulWidget {
 
 class _CategoryMultiSelectSheetState
     extends State<_CategoryMultiSelectSheet> {
-  late final Set<String> _temp = {...widget.initial};
-  // Phase 347 — Boş set = "Tümü" semantic. Kategori kutuları boş gelir;
-  // kullanıcı doldurdukça filtre devreye girer.
-  bool get _isAll => _temp.isEmpty;
+  // Phase 378 — initial boş gelirse (önceki "Tümü" semantic), tüm kategorileri
+  // _temp'e doldur ki UI checkbox'lar TICKED görünsün.
+  late final Set<String> _temp =
+      widget.initial.isEmpty ? {...widget.all} : {...widget.initial};
+  // Tümü = hepsi seçili VEYA boş set. Apply'da full→empty olarak normalize.
+  bool get _isAll => _temp.isEmpty || _temp.length == widget.all.length;
 
   void _toggleAll(bool? v) {
     setState(() {
-      if (v == true) _temp.clear(); // Tümü ON = boş set (filtre yok).
-      // Master OFF: kullanıcının kategori seçmesi gerekir, no-op.
+      if (v == true) {
+        // Tümü ON → hepsini işaretle (checkbox'lar TICKED görünür).
+        _temp
+          ..clear()
+          ..addAll(widget.all);
+      } else {
+        // Tümü OFF → tüm seçimi kaldır (kullanıcı tek tek seçer).
+        _temp.clear();
+      }
     });
   }
 
@@ -1130,10 +1139,6 @@ class _CategoryMultiSelectSheetState
         _temp.add(cat);
       } else {
         _temp.remove(cat);
-      }
-      // Hepsi seçilirse → boş set (Tümü).
-      if (_temp.length == widget.all.length) {
-        _temp.clear();
       }
     });
   }
@@ -1180,7 +1185,12 @@ class _CategoryMultiSelectSheetState
                               fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                     TextButton(
-                      onPressed: () => setState(() => _temp.clear()),
+                      // Phase 378 — "Hepsi" tüm kategorileri işaretler (TICKED).
+                      onPressed: () => setState(() {
+                        _temp
+                          ..clear()
+                          ..addAll(widget.all);
+                      }),
                       child: const Text('Hepsi'),
                     ),
                   ],
@@ -1253,7 +1263,10 @@ class _CategoryMultiSelectSheetState
                     Expanded(
                       flex: 2,
                       child: ElevatedButton.icon(
-                        onPressed: () => Navigator.of(context).pop(_temp),
+                        // Phase 378 — hepsi seçili ise consumer'a boş set
+                        // döner (eski "Tümü = empty" semantic korunur).
+                        onPressed: () => Navigator.of(context)
+                            .pop(_isAll ? <String>{} : _temp),
                         icon: const Icon(Icons.check_rounded, size: 18),
                         label: Text(_isAll
                             ? 'Uygula (Tümü)'
