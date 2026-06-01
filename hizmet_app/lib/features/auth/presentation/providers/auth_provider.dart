@@ -158,8 +158,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = AuthUnauthenticated();
   }
 
-  // Eski NestJS 2FA metodları — Firebase'de kullanılmıyor, no-op kalıyor
-  Future<void> verify2FALogin(String tempToken, String code) async {}
+  /// Phase 352 — Email/password login `requires2FA: true` döndüğünde
+  /// Authenticator kodunu backend'e iletir. Başarılı olursa token'lar
+  /// persistlenir + state AuthAuthenticated olur. Hata fırlatırsa
+  /// challenge ekranı SnackBar'la kullanıcıyı bilgilendirir.
+  /// (Eski yorum "Firebase'de kullanılmıyor, no-op" hatalıydı — login
+  /// NestJS `/auth/login`'e geri döndü, bu metot artık çalışmalı.)
+  Future<void> verify2FALogin(String tempToken, String code) async {
+    state = AuthLoading();
+    try {
+      final data = await _repository.loginVerify2FA(tempToken, code);
+      final user = data['user'] as Map<String, dynamic>? ?? const {};
+      state = AuthAuthenticated(user);
+      unawaited(FcmService.instance.init());
+    } catch (e) {
+      state = AuthUnauthenticated();
+      rethrow;
+    }
+  }
 
   /// Google ile giriş — başarılı olunca authStateChanges stream'i
   /// state'i AuthAuthenticated'a çevirir, burada sadece loading + hata.

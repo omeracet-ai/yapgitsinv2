@@ -471,6 +471,46 @@ class FirebaseAuthRepository {
     }
   }
 
+  /// Phase 352 — 2FA login-verify. `/auth/login` `requires2FA: true` döndüğünde
+  /// kullanıcının Authenticator kodu ile bu endpoint çağrılır. Başarılı olunca
+  /// access + refresh token persist eder ve user payload döner.
+  Future<Map<String, dynamic>> loginVerify2FA(
+      String tempToken, String code) async {
+    try {
+      final res = await _dio.post<dynamic>(
+        '/auth/2fa/login-verify',
+        data: {'tempToken': tempToken, 'code': code},
+        options: Options(headers: {'Authorization': ''}),
+      );
+      final data = res.data;
+      if (data is! Map) {
+        throw Exception('Doğrulama yanıtı beklenmedik formatta.');
+      }
+      final map = Map<String, dynamic>.from(data);
+      final access = map['access_token'];
+      final refresh = map['refresh_token'];
+      if (access is! String || access.isEmpty) {
+        throw Exception('Sunucu erişim tokenı döndürmedi.');
+      }
+      final store = SecureTokenStore();
+      await store.writeToken(access);
+      if (refresh is String && refresh.isNotEmpty) {
+        await store.writeRefreshToken(refresh);
+      }
+      final userMap = map['user'];
+      return {
+        'access_token': access,
+        if (refresh is String && refresh.isNotEmpty) 'refresh_token': refresh,
+        'user': userMap is Map
+            ? Map<String, dynamic>.from(userMap)
+            : <String, dynamic>{},
+      };
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(e,
+          fallback: 'Doğrulama kodu yanlış veya süresi dolmuş.'));
+    }
+  }
+
   /// Phase 244 — Backend `POST /auth/reset-password` (Firebase confirmPasswordReset
   /// kaldırıldı; sıfırlama token'ı backend tarafından üretilip e-postayla gönderiliyor).
   Future<void> resetPassword(String token, String newPassword) async {
