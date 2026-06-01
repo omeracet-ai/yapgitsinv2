@@ -110,6 +110,9 @@ dependency_overrides:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # Phase 357 — Real E2E test infra (widget-tree query, no coord tap).
+  integration_test:
+    sdk: flutter
   flutter_lints: ^4.0.0
   build_runner: ^2.4.7
   flutter_launcher_icons: ^0.14.1

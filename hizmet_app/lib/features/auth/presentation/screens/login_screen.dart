@@ -196,6 +196,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ).animate().fade(delay: 200.ms).slideX(begin: -0.1),
               const SizedBox(height: 48),
               TextField(
+                key: const Key('login-email'),
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 enabled: !isLoading,
@@ -206,6 +207,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ).animate().fade(delay: 300.ms).slideY(begin: 0.1),
               const SizedBox(height: 16),
               TextField(
+                key: const Key('login-password'),
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 enabled: !isLoading,
@@ -227,6 +229,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
+                  key: const Key('login-submit'),
                   onPressed: isLoading ? null : _login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

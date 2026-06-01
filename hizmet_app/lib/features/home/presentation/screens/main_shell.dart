@@ -148,6 +148,7 @@ class _MainShellState extends ConsumerState<MainShell>
             topRight: Radius.circular(AppRadius.xl),
           ),
           child: BottomNavigationBar(
+            key: const Key('main-bottom-nav'),
             currentIndex: selectedIndex,
             onTap: _onItemTapped,
             selectedItemColor: AppColors.primary,
