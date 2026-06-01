@@ -147,66 +147,286 @@ class _DualRoleView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: showAppBar
-            ? AppBar(
-                automaticallyImplyLeading: false,
-                titleSpacing: 0,
-                backgroundColor: AppColors.headerBackground(context),
-                foregroundColor: Colors.white,
-                // Phase 325 — 4. tab: Takvim — randevu liste görünümü.
-                title: const TabBar(
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  tabs: [
-                    Tab(icon: Icon(Icons.assignment_outlined), text: 'Aktif İlanlarım'),
-                    Tab(icon: Icon(Icons.handyman_outlined), text: 'Tekliflerim'),
-                    Tab(icon: Icon(Icons.check_circle_outline), text: 'Biten İşler'),
-                    Tab(icon: Icon(Icons.calendar_month_outlined), text: 'Takvim'),
-                  ],
-                  indicatorColor: Colors.white,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.white70,
+    // Phase 338 — Tab yapısı kaldırıldı; tek sayfada filter chip'leri var.
+    // Tümü = 3 kategoriyi (Aktif İlanlarım + Tekliflerim + Biten İşler)
+    // tek scroll'da bölüm başlıklarıyla gösterir. Takvim 5. chip olarak
+    // korundu (Phase 325 fonksiyonelliği bozulmasın).
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: showAppBar
+          ? AppBar(
+              automaticallyImplyLeading: false,
+              titleSpacing: 16,
+              backgroundColor: AppColors.headerBackground(context),
+              foregroundColor: Colors.white,
+              title: const Text('İşlerim',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.bookmark_border),
+                  tooltip: 'Şablonlarım',
+                  onPressed: () => context.push('/sablonlarim'),
                 ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.bookmark_border),
-                    tooltip: 'Şablonlarım',
-                    onPressed: () => context.push('/sablonlarim'),
+                IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  tooltip: 'Bildirimler',
+                  onPressed: () => context.push('/bildirim-ayarlari'),
+                ),
+                const SizedBox(width: 4),
+              ],
+            )
+          : null,
+      body: const Column(
+        children: [
+          // Phase 271 — onay bekleyen işler (confirm-plain entegrasyonu).
+          PendingConfirmationsCard(),
+          Expanded(child: _MergedJobsView()),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Phase 338 — Single-page merged view with filter chips ───────────────────
+
+enum _JobsFilter { all, active, offers, completed, calendar }
+
+extension _JobsFilterMeta on _JobsFilter {
+  String get label => switch (this) {
+        _JobsFilter.all => 'Tümü',
+        _JobsFilter.active => 'Aktif İlanlarım',
+        _JobsFilter.offers => 'Tekliflerim',
+        _JobsFilter.completed => 'Biten İşler',
+        _JobsFilter.calendar => 'Takvim',
+      };
+  IconData get icon => switch (this) {
+        _JobsFilter.all => Icons.dashboard_customize_outlined,
+        _JobsFilter.active => Icons.assignment_outlined,
+        _JobsFilter.offers => Icons.handyman_outlined,
+        _JobsFilter.completed => Icons.check_circle_outline,
+        _JobsFilter.calendar => Icons.calendar_month_outlined,
+      };
+}
+
+class _MergedJobsView extends ConsumerStatefulWidget {
+  const _MergedJobsView();
+
+  @override
+  ConsumerState<_MergedJobsView> createState() => _MergedJobsViewState();
+}
+
+class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
+  _JobsFilter _filter = _JobsFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Filter chip şeridi — tek scroll'lu yatay.
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+          color: AppColors.background,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _JobsFilter.values.map((f) {
+                final selected = _filter == f;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text(f.label),
+                    avatar: Icon(f.icon,
+                        size: 16,
+                        color: selected
+                            ? Colors.white
+                            : AppColors.textSecondary),
+                    selected: selected,
+                    showCheckmark: false,
+                    onSelected: (_) => setState(() => _filter = f),
+                    selectedColor: AppColors.primary,
+                    backgroundColor: AppColors.surface,
+                    labelStyle: TextStyle(
+                      color: selected ? Colors.white : AppColors.textPrimary,
+                      fontWeight:
+                          selected ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: selected
+                            ? AppColors.primary
+                            : AppColors.border,
+                      ),
+                    ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.notifications_outlined),
-                    tooltip: 'Bildirimler',
-                    onPressed: () => context.push('/bildirim-ayarlari'),
-                  ),
-                  const SizedBox(width: 4),
-                ],
-              )
-            : null,
-        body: const Column(
-          children: [
-            // Phase 271 — onay bekleyen işler (confirm-plain entegrasyonu).
-            PendingConfirmationsCard(),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  // Phase 302 — Aktif İlanlarım: tüm kindler, open/in_progress
-                  _CustomerJobsByStatus(statuses: ['open', 'in_progress'],
-                      emptyMsg: 'Aktif ilanınız yok.'),
-                  _WorkerTabContent(),
-                  _CustomerJobsByStatus(statuses: ['completed'],
-                      emptyMsg: 'Tamamlanan işiniz yok.'),
-                  // Phase 325 — Takvim sekmesi (kompakt randevu listesi).
-                  _BookingsCalendarTab(),
-                ],
-              ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Expanded(child: _buildContent()),
+      ],
+    );
+  }
+
+  Widget _buildContent() {
+    switch (_filter) {
+      case _JobsFilter.active:
+        return const _CustomerJobsByStatus(
+          statuses: ['open', 'in_progress'],
+          emptyMsg: 'Aktif ilanınız yok.',
+        );
+      case _JobsFilter.offers:
+        return const _WorkerTabContent();
+      case _JobsFilter.completed:
+        return const _CustomerJobsByStatus(
+          statuses: ['completed'],
+          emptyMsg: 'Tamamlanan işiniz yok.',
+        );
+      case _JobsFilter.calendar:
+        return const _BookingsCalendarTab();
+      case _JobsFilter.all:
+        // Tek scroll'da 3 kategori bölüm başlıklarıyla.
+        return ListView(
+          padding: const EdgeInsets.only(bottom: 16),
+          children: const [
+            _SectionHeader('Aktif İlanlarım'),
+            _CustomerJobsByStatusEmbedded(
+              statuses: ['open', 'in_progress'],
+              emptyMsg: 'Aktif ilan yok.',
+            ),
+            SizedBox(height: 4),
+            _SectionHeader('Tekliflerim'),
+            _WorkerOffersEmbedded(),
+            SizedBox(height: 4),
+            _SectionHeader('Biten İşler'),
+            _CustomerJobsByStatusEmbedded(
+              statuses: ['completed'],
+              emptyMsg: 'Tamamlanan iş yok.',
             ),
           ],
-        ),
+        );
+    }
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 16,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+/// Embedded variant — shrinkWrap + NeverScrollable; parent ListView scroll'ar.
+class _CustomerJobsByStatusEmbedded extends ConsumerWidget {
+  final List<String> statuses;
+  final String emptyMsg;
+  const _CustomerJobsByStatusEmbedded({
+    required this.statuses,
+    required this.emptyMsg,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+    if (authState is! AuthAuthenticated) return const SizedBox.shrink();
+    final userId = authState.user['id'] as String;
+    final jobsAsync = ref.watch(myJobsProvider(userId));
+    return jobsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text('Hata: $e',
+            style: TextStyle(color: AppColors.error)),
+      ),
+      data: (allJobs) {
+        final filtered = allJobs
+            .where((j) => statuses.contains(j['status'] as String?))
+            .toList();
+        if (filtered.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: Text(emptyMsg,
+                style: TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary)),
+          );
+        }
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          itemCount: filtered.length,
+          itemBuilder: (_, i) => _CustomerJobCard(job: filtered[i]),
+        );
+      },
+    );
+  }
+}
+
+class _WorkerOffersEmbedded extends ConsumerWidget {
+  const _WorkerOffersEmbedded();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final offersAsync = ref.watch(myOffersProvider);
+    return offersAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text('Hata: $e',
+            style: TextStyle(color: AppColors.error)),
+      ),
+      data: (offers) {
+        if (offers.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: Text('Verdiğiniz teklif yok.',
+                style: TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary)),
+          );
+        }
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          itemCount: offers.length,
+          itemBuilder: (_, i) => _WorkerOfferCard(offer: offers[i]),
+        );
+      },
     );
   }
 }
