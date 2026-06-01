@@ -50,8 +50,9 @@ final myPublicProfileProvider =
 });
 
 /// Phase 351 — Profil ilk kez %100'e ulaşınca gösterilen tek-seferlik
-/// popup için SharedPreferences key'i.
-const String _kProfileCompletePopupKey = 'profile_complete_popup_shown';
+/// popup için SharedPreferences key'i. Phase 353 — `profile_completion_card`
+/// içine taşındı (`kProfileCompletePopupKey`), shared kalır.
+// (Tek doğru constant: profile/widgets/profile_completion_card.dart)
 
 Future<void> _showProfileCompletePopup(BuildContext context) async {
   if (!context.mounted) return;
@@ -129,8 +130,11 @@ class ProfileScreen extends ConsumerWidget {
         // mount'ta prev null → prefs check kararı verir.
         if (prevPct != null && prevPct >= 100) return;
         final prefs = await SharedPreferences.getInstance();
-        if (prefs.getBool(_kProfileCompletePopupKey) == true) return;
-        await prefs.setBool(_kProfileCompletePopupKey, true);
+        if (prefs.getBool(kProfileCompletePopupKey) == true) return;
+        await prefs.setBool(kProfileCompletePopupKey, true);
+        // Phase 353 — Provider'ı invalidate et ki ProfileCompletionCard
+        // bayrak değişimini yakalayıp kalıcı pill'i gizlesin.
+        ref.invalidate(profileCompletePopupShownProvider);
         if (!context.mounted) return;
         await _showProfileCompletePopup(context);
       });

@@ -1,10 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/presentation/screens/edit_profile_screen.dart';
 import '../data/user_profile_repository.dart';
+
+// Phase 353 — Popup-shown bayrağını widget tree ile share et. Bool
+// FutureProvider; tek seferlik popup gösterilmişse "Profil Tamamlandı"
+// kalıcı pill'i de gizlenir (user uyarısı zaten gösterildi).
+const String kProfileCompletePopupKey = 'profile_complete_popup_shown';
+
+final profileCompletePopupShownProvider =
+    FutureProvider.autoDispose<bool>((ref) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(kProfileCompletePopupKey) ?? false;
+  } catch (_) {
+    return false;
+  }
+});
 
 // Phase 48 — Profile Completion Banner.
 // Backend contract: GET /users/me returns
@@ -70,7 +86,18 @@ class ProfileCompletionCard extends ConsumerWidget {
         final percent = (data['percent'] as num?)?.toInt() ?? 0;
         final missingRaw = (data['missingFields'] as List?) ?? const [];
         final missing = missingRaw.map((e) => e.toString()).toList();
-        if (percent >= 100) return _buildComplete();
+        if (percent >= 100) {
+          // Phase 353 — Popup bir kere gösterildiyse kalıcı uyarıyı gizle;
+          // hero card zaten dark renge geçerek complete state'i gösteriyor.
+          final popupShownAsync =
+              ref.watch(profileCompletePopupShownProvider);
+          final popupShown = popupShownAsync.maybeWhen(
+            data: (v) => v,
+            orElse: () => false,
+          );
+          if (popupShown) return const SizedBox.shrink();
+          return _buildComplete();
+        }
         return _buildIncomplete(context, ref, percent, missing);
       },
     );
