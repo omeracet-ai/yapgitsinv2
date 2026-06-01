@@ -658,9 +658,12 @@ class _AllItemsMergedList extends ConsumerWidget {
       );
     }
 
-    return ListView.builder(
+    // Phase 345 — Yapgitsin tab pattern'i: `ListView.separated` ile
+    // kartlar arası 6px boşluk → üst üste binme yok.
+    return ListView.separated(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
       itemCount: items.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 6),
       itemBuilder: (_, i) {
         final it = items[i];
         if (it.type == _MergedKind.job) {
@@ -2109,9 +2112,11 @@ class _BookingsCalendarTab extends ConsumerWidget {
           ..sort((a, b) => b.scheduledDate.compareTo(a.scheduledDate));
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(myCustomerBookingsProvider),
-          child: ListView.builder(
+          // Phase 345 — Yapgitsin pattern: separator ile 6px boşluk.
+          child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 16),
             itemCount: sorted.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 6),
             itemBuilder: (_, i) {
               final b = sorted[i];
               return _CompactBookingRow(booking: b);
