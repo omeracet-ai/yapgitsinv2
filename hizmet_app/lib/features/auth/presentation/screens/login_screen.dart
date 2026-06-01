@@ -52,10 +52,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             duration: const Duration(seconds: 3),
           ),
         );
-        // Phase 268c revert: 5 sekme (Yaptır·Yapgitsin·Harita·İşlerim·Profil)
-        // Login sonrası Profil sekmesi (index 4) açılır.
-        // Phase 297 — Tab index shift: Profil eskisi 4 → 3.
-        ref.read(selectedTabProvider.notifier).state = 3;
+        // Phase 359 — Login sonrası Yaptır (index 0) sekmesine yönlendir.
+        // Önceki state = 3 yanlıştı (Mesajlarım'a düşürüyordu). Phase 305
+        // düzeni: 0 Yaptır · 1 Yapgitsin · 2 İşlerim · 3 Mesajlarım · 4 Profil.
+        ref.read(selectedTabProvider.notifier).state = 0;
         context.go(widget.returnTo ?? '/');
       } else if (next is AuthError) {
         ScaffoldMessenger.of(context).showSnackBar(

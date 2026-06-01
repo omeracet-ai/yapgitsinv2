@@ -47,8 +47,10 @@ class _TwoFactorChallengeScreenState
           .read(authStateProvider.notifier)
           .verify2FALogin(widget.tempToken, code);
       if (!mounted) return;
-      // Phase 297 — Bottom nav 4 sekme; Profile = index 3.
-      ref.read(selectedTabProvider.notifier).state = 3;
+      // Phase 359 — 2FA başarısı sonrası Yaptır (index 0)'a yönlendir.
+      // Eski state = 3 yanlıştı (Mesajlarım'a düşürüyordu). Phase 305
+      // düzeni: 0 Yaptır · 1 Yapgitsin · 2 İşlerim · 3 Mesajlarım · 4 Profil.
+      ref.read(selectedTabProvider.notifier).state = 0;
       context.go(widget.returnTo ?? '/');
     } catch (e) {
       if (!mounted) return;
