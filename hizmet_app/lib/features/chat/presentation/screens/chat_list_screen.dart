@@ -47,8 +47,9 @@ class _MessagesGuestView extends StatelessWidget {
       appBar: AppBar(
         title: Text(l.chatTitle,
             style: const TextStyle(fontWeight: FontWeight.bold)),
-        // Phase 350 — tema yeşili dark tonu (parlak primary yerine).
-        backgroundColor: AppColors.primaryDark,
+        // Phase 360 — yeşilden dark surface'a; diğer tab AppBar'larıyla
+        // tutarlı (`AppColors.headerBackground(context)` theme-aware).
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -124,8 +125,9 @@ class _AuthenticatedChatListState
       appBar: AppBar(
         title: Text(l.chatTitle,
             style: const TextStyle(fontWeight: FontWeight.bold)),
-        // Phase 350 — tema yeşili dark tonu (parlak primary yerine).
-        backgroundColor: AppColors.primaryDark,
+        // Phase 360 — yeşilden dark surface'a; diğer tab AppBar'larıyla
+        // tutarlı (`AppColors.headerBackground(context)` theme-aware).
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
