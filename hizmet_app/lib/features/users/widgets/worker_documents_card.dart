@@ -7,6 +7,10 @@ import '../../../core/theme/app_colors.dart';
 ///   { category, url, title?, status, createdAt }
 /// Status 'active' olan belgeler "Usta" ünvanı ve kategori-özel doğrulama
 /// kartı şeklinde gösterilir. Belge yoksa widget gizlenir.
+///
+/// Phase 349 — Onaylı kategoriler listesi açılır-kapanır ExpansionTile
+/// içinde (İstatistikler sekmesi pattern'i). Başlık + N belge badge'i
+/// her zaman görünür; tile expand edilince belge detayları açılır.
 class WorkerDocumentsCard extends StatelessWidget {
   final List<Map<String, dynamic>> documents;
   final bool isSelf;
@@ -23,9 +27,17 @@ class WorkerDocumentsCard extends StatelessWidget {
         .toList();
     if (active.isEmpty) return const SizedBox.shrink();
 
+    final categories = active
+        .map((d) => (d['category'] as String?) ?? '')
+        .where((c) => c.isNotEmpty)
+        .toSet()
+        .toList();
+    final subtitleText = categories.length <= 2
+        ? categories.join(' · ')
+        : '${categories.take(2).join(' · ')} +${categories.length - 2}';
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -38,14 +50,21 @@ class WorkerDocumentsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+          listTileTheme: const ListTileThemeData(dense: true),
+        ),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(
+              horizontal: 12, vertical: 2),
+          childrenPadding:
+              const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          leading: const Icon(Icons.workspace_premium_rounded,
+              color: AppColors.primary, size: 20),
+          title: Row(
             children: [
-              const Icon(Icons.workspace_premium_rounded,
-                  color: AppColors.primary, size: 18),
-              const SizedBox(width: 6),
               const Text('Usta',
                   style: TextStyle(
                       fontSize: 14,
@@ -67,9 +86,19 @@ class WorkerDocumentsCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          ...active.map((d) => _DocumentTile(doc: d)),
-        ],
+          subtitle: subtitleText.isEmpty
+              ? null
+              : Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(subtitleText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary)),
+                ),
+          children: active.map((d) => _DocumentTile(doc: d)).toList(),
+        ),
       ),
     );
   }
