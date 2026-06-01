@@ -1497,11 +1497,12 @@ class _CustomerJobCard extends ConsumerWidget {
                         ),
                       )
                     : Container(
+                        // Phase 343 — Sıkıştırılmış status badge.
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: statusColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(7),
                           border: Border.all(
                               color: statusColor.withValues(alpha: 0.3),
                               width: 1),
@@ -1510,17 +1511,18 @@ class _CustomerJobCard extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              width: 6,
-                              height: 6,
-                              margin: const EdgeInsets.only(right: 5),
+                              width: 4,
+                              height: 4,
+                              margin: const EdgeInsets.only(right: 4),
                               decoration: BoxDecoration(
                                   color: statusColor, shape: BoxShape.circle),
                             ),
                             Text(statusLabel,
                                 style: TextStyle(
                                     color: statusColor,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold)),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.1)),
                           ],
                         ),
                       ),
@@ -1912,11 +1914,12 @@ class _WorkerOfferCard extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
+                // Phase 343 — Sıkıştırılmış offer status badge.
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(7),
                   border: Border.all(
                       color: statusColor.withValues(alpha: 0.3), width: 1),
                 ),
@@ -1924,17 +1927,18 @@ class _WorkerOfferCard extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 6,
-                      height: 6,
-                      margin: const EdgeInsets.only(right: 5),
+                      width: 4,
+                      height: 4,
+                      margin: const EdgeInsets.only(right: 4),
                       decoration: BoxDecoration(
                           color: statusColor, shape: BoxShape.circle),
                     ),
                     Text(statusLabel,
                         style: TextStyle(
                             color: statusColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold)),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            height: 1.1)),
                   ],
                 ),
               ),
@@ -1979,26 +1983,41 @@ class _WorkerOfferCard extends ConsumerWidget {
                     fontSize: 11, color: AppColors.textSecondary)),
           ],
           if (counterPrice != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
+            // Phase 343 — Sıkıştırılmış Karşı Teklif chip.
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
               decoration: BoxDecoration(
                 color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: Colors.blue.shade200),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Karşı Teklif: ${IntlFormatter.currency(context, counterPrice, decimalDigits: 0)}',
-                      style: TextStyle(
-                          color: Colors.blue.shade700,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13)),
-                  if (counterMessage != null && counterMessage.isNotEmpty)
-                    Text(counterMessage,
+                  Row(children: [
+                    Icon(Icons.swap_horiz_rounded,
+                        size: 12, color: Colors.blue.shade700),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        'Karşı Teklif: ${IntlFormatter.currency(context, counterPrice, decimalDigits: 0)}',
                         style: TextStyle(
-                            color: Colors.blue.shade600, fontSize: 12)),
+                            color: Colors.blue.shade700,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11),
+                      ),
+                    ),
+                  ]),
+                  if (counterMessage != null && counterMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2, left: 16),
+                      child: Text(counterMessage,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              color: Colors.blue.shade600, fontSize: 10.5)),
+                    ),
                 ],
               ),
             ),
