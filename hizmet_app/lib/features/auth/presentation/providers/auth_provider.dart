@@ -91,6 +91,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = AuthLoading();
     try {
       final data = await _repository.login(email, password);
+      // Phase 358 — 2FA gerekiyorsa state'i AuthAuthenticated YAPMA.
+      // Aksi halde: router `isAuthed && loc==/2fa-challenge` redirect ile
+      // kullanıcıyı home'a atıyor + auth state'te bogus user
+      // (`{displayName: email}`) kalıyor → profilde "Kullanıcı" görünüyor.
+      // 2FA flow tamamlanana kadar Unauthenticated kal; verify2FALogin
+      // başarıyla bittiğinde gerçek user payload ile Authenticated yap.
+      if (data['requires2FA'] == true) {
+        state = AuthUnauthenticated();
+        return data;
+      }
       state = AuthAuthenticated(
         data['user'] as Map<String, dynamic>? ?? {'displayName': email},
       );
