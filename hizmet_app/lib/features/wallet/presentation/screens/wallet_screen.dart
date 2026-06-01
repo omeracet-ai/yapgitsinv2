@@ -23,7 +23,7 @@ class WalletScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Cüzdanım'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
         actions: [
           IconButton(

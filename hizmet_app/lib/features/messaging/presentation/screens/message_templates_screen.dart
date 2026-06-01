@@ -85,7 +85,7 @@ class _MessageTemplatesScreenState
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Mesaj Şablonlarım'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
       ),
       body: Column(

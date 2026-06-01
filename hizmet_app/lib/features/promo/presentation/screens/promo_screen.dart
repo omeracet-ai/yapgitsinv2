@@ -80,7 +80,7 @@ class _PromoScreenState extends ConsumerState<PromoScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Promo Kodu'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(

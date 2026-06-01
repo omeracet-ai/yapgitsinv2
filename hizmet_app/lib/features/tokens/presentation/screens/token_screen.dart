@@ -81,7 +81,7 @@ class _TokenScreenState extends ConsumerState<TokenScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Kredi Satın Al'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(

@@ -18,7 +18,7 @@ class FavoritesScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Favori Ustalarım'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
       ),
       body: favsAsync.when(

@@ -66,7 +66,7 @@ class _HelpScreenState extends State<HelpScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Yardım & Destek'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(

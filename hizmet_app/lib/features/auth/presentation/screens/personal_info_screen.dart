@@ -235,7 +235,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Kişisel Bilgiler'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
         bottom: TabBar(
           controller: _tabCtrl,
@@ -308,10 +308,17 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
             padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: _boxDeco(),
             child: DropdownButtonHideUnderline(
+              // Phase 361 — Theme-aware text color (dark mode'da beyaz,
+              // light mode'da koyu). Eski default siyahtı → dark surface
+              // üzerinde okunmuyordu.
               child: DropdownButton<String>(
                 value: _gender,
                 isExpanded: true,
                 icon: const Icon(Icons.arrow_drop_down),
+                dropdownColor: AppColors.surface,
+                style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14),
                 items: const [
                   DropdownMenuItem(value: 'male', child: Text('Erkek')),
                   DropdownMenuItem(value: 'female', child: Text('Kadın')),

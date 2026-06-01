@@ -81,7 +81,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sadakat & Davet'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
       ),
       body: loyaltyAsync.when(

@@ -108,7 +108,7 @@ class _TokenCheckoutScreenState extends ConsumerState<TokenCheckoutScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Güvenli Ödeme'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.close),

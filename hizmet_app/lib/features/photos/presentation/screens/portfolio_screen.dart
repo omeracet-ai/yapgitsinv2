@@ -96,7 +96,7 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Portfolyom'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
         elevation: 0,
       ),

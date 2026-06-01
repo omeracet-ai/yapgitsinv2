@@ -57,7 +57,7 @@ class _CertificationsScreenState extends ConsumerState<CertificationsScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Sertifikalarım'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         elevation: 0,
         actions: [
           IconButton(

@@ -470,10 +470,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: _boxDeco(highlight: missing.contains('gender')),
           child: DropdownButtonHideUnderline(
+            // Phase 361 — Theme-aware text color.
             child: DropdownButton<String>(
               value: _gender,
               isExpanded: true,
               icon: const Icon(Icons.arrow_drop_down),
+              dropdownColor: AppColors.surface,
+              style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14),
               items: const [
                 DropdownMenuItem(value: 'male', child: Text('Erkek')),
                 DropdownMenuItem(value: 'female', child: Text('Kadın')),

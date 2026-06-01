@@ -77,7 +77,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Email Doğrulama'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
       ),
       body: Center(
         child: Padding(

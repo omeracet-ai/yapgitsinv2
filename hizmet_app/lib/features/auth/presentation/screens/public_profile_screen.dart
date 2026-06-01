@@ -196,7 +196,7 @@ class _ProfileView extends ConsumerWidget {
           SliverAppBar(
             expandedHeight: MediaQuery.of(context).size.height * 0.40,
             pinned: true,
-            backgroundColor: AppColors.primary,
+            backgroundColor: AppColors.headerBackground(context),
             actions: [
               if (!isSelf) ...[
                 IconButton(
