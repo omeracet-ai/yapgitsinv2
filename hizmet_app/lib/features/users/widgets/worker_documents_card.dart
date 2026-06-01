@@ -65,7 +65,7 @@ class WorkerDocumentsCard extends StatelessWidget {
               color: AppColors.primary, size: 20),
           title: Row(
             children: [
-              const Text('Usta',
+              const Text('Hizmet Veren',
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,

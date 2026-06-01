@@ -23,6 +23,7 @@ import '../../widgets/job_photo_lightbox.dart';
 // Phase 305 — JobQuestionsTab kaldırıldı, Q&A yerini chat sistemi aldı.
 import '../widgets/job_video_player.dart';
 import '../../../users/widgets/user_action_menu.dart';
+import '../../../chat/data/chat_service.dart';
 
 class JobDetailScreen extends ConsumerStatefulWidget {
   final String? id;
@@ -63,6 +64,8 @@ class JobDetailScreen extends ConsumerStatefulWidget {
 class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   bool _actionLoading = false;
   // Phase 305 — TabController kaldırıldı (Sorular tab'ı Mesajlarım'a taşındı).
+  // Phase 372 — Teklif başına inline chat aç/kapa durumu.
+  final Set<String> _expandedChats = <String>{};
 
   // Dark theme constants — Voldi-job-detail-redesign
   // TODO(design): values are close to AppColors.{surface,border,textSecondary}
@@ -507,7 +510,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
     return Container(
       color: _surfaceColor,
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      // Phase 374 — kompakt: padding küçüldü, satır arası boşluklar daraldı.
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -634,22 +638,29 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   iconColor: Colors.amber,
                   label: rating > 0 ? rating.toStringAsFixed(1) : '—',
                   sublabel: '$reviews yorum',
+                  tooltip:
+                      'Bu kullanıcının aldığı yorumlardan hesaplanan ortalama puan ve toplam yorum sayısı.',
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
               ],
               _statChip(
                 icon: Icons.work_outline_rounded,
                 iconColor: AppColors.primary,
                 label: '$totalJobs',
                 sublabel: isOffer ? 'Tamamlanan' : 'İlan',
+                tooltip: isOffer
+                    ? 'Bu ustanın bugüne kadar tamamladığı toplam iş sayısı.'
+                    : 'Bu kullanıcının yayınladığı toplam ilan sayısı.',
               ),
               if (successRate != null) ...[
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 _statChip(
                   icon: Icons.check_circle_outline_rounded,
                   iconColor: AppColors.success,
                   label: '%$successRate',
                   sublabel: 'Başarı',
+                  tooltip:
+                      'Başlatılan işlerin başarıyla tamamlanma yüzdesi (başarılı / toplam).',
                 ),
               ],
             ],
@@ -692,26 +703,131 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     required Color iconColor,
     required String label,
     required String sublabel,
+    String? tooltip,
   }) {
+    // Phase 374 — kompakt stat chip + sublabel yanına info ikonu (varsa).
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
         decoration: BoxDecoration(
           color: _surfaceColor2,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: iconColor, size: 16),
-            const SizedBox(height: 2),
+            Icon(icon, color: iconColor, size: 14),
+            const SizedBox(height: 1),
             Text(label,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold,
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
                     color: _textPrimary)),
-            Text(sublabel,
-                style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(sublabel,
+                      style: TextStyle(
+                          fontSize: 9.5, color: Colors.grey.shade400),
+                      overflow: TextOverflow.ellipsis),
+                ),
+                if (tooltip != null) ...[
+                  const SizedBox(width: 3),
+                  GestureDetector(
+                    onTap: () => _showStatInfoPopup(
+                      context: context,
+                      title: sublabel,
+                      message: tooltip,
+                    ),
+                    child: Icon(Icons.info_outline_rounded,
+                        size: 11,
+                        color: AppColors.primary
+                            .withValues(alpha: 0.85)),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  // Phase 374 — Stat title hakkında küçük popup. Barrier her yere tıklayınca
+  // kapanır; pencere kompakt, blur'lu.
+  void _showStatInfoPopup({
+    required BuildContext context,
+    required String title,
+    required String message,
+  }) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (ctx) {
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => Navigator.of(ctx).pop(),
+          child: Center(
+            child: GestureDetector(
+              onTap: () {},
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 48),
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                constraints: const BoxConstraints(maxWidth: 280),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1F2E),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.30),
+                      width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.info_outline_rounded,
+                            size: 16, color: AppColors.primary),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      message,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.78),
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1102,24 +1218,32 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                       peerName = jobCustomerName;
                     }
                     if (peerId == null) return const SizedBox.shrink();
-                    // Phase 319 fix — karşı tarafın adı `name` query param
-                    // ile chat header'a taşınır (UUID yerine isim görünür).
-                    final encodedName = peerName == null || peerName.isEmpty
-                        ? ''
-                        : Uri.encodeQueryComponent(peerName);
-                    final chatPath = encodedName.isEmpty
-                        ? '/chat/$peerId'
-                        : '/chat/$peerId?name=$encodedName';
+                    // Phase 372 — chat icon artık inline expansion toggle
+                    // (göster/gizle). Long-press → tam ekran.
+                    final expanded = _expandedChats.contains(offerId);
                     return SizedBox(
                       width: 32,
                       height: 32,
                       child: IconButton(
-                        tooltip: 'Mesajlaş',
+                        tooltip:
+                            expanded ? 'Sohbeti gizle' : 'Sohbeti göster',
                         padding: EdgeInsets.zero,
                         iconSize: 18,
-                        icon: const Icon(Icons.chat_bubble_outline_rounded,
-                            color: AppColors.primary),
-                        onPressed: () => context.push(chatPath),
+                        icon: Icon(
+                          expanded
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.chat_bubble_outline_rounded,
+                          color: AppColors.primary,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            if (expanded) {
+                              _expandedChats.remove(offerId);
+                            } else {
+                              _expandedChats.add(offerId);
+                            }
+                          });
+                        },
                       ),
                     );
                   }),
@@ -1291,6 +1415,45 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
               ],
             ),
           ),
+
+          // Phase 372 — Inline chat panel (chevron toggle ile aç/kapa).
+          if (_expandedChats.contains(offerId) && !maskForLogout)
+            Builder(builder: (ctx) {
+              final customerMap = widget.id == null
+                  ? null
+                  : ref
+                          .read(jobDetailProvider(widget.id!))
+                          .valueOrNull?['customer']
+                      as Map?;
+              final jobCustomerId = customerMap?['id'] as String?;
+              final jobCustomerName = customerMap?['fullName'] as String?;
+              String? peerId;
+              String? peerName;
+              if (isOwnerView && offerUserId.isNotEmpty) {
+                peerId = offerUserId;
+                peerName = name;
+              } else if (isOfferOwner && jobCustomerId != null) {
+                peerId = jobCustomerId;
+                peerName = jobCustomerName;
+              }
+              if (peerId == null || currentUserId == null) {
+                return const SizedBox.shrink();
+              }
+              final encName = (peerName == null || peerName.isEmpty)
+                  ? ''
+                  : Uri.encodeQueryComponent(peerName);
+              final chatPath = encName.isEmpty
+                  ? '/chat/$peerId'
+                  : '/chat/$peerId?name=$encName';
+              return _InlineOfferChat(
+                peerId: peerId,
+                peerName: peerName ?? 'Karşı taraf',
+                fromUserId: currentUserId,
+                onOpenFullScreen: () => context.push(chatPath),
+                onClose: () =>
+                    setState(() => _expandedChats.remove(offerId)),
+              );
+            }),
 
           // Bu ustaya özel ilan aç — sadece ilan sahibi (müşteri) görür,
           // teklif vereni daha sonra özel iş için davet etmek isteyebilir.
@@ -2466,6 +2629,258 @@ class _PhotoPagerState extends State<_PhotoPager> {
           }),
         ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 372 — Teklif kartı altında açılan inline chat paneli.
+// Kompakt panel: header (peer + kapat + tam ekran) + tek satırlık textfield +
+// gönder ikonu. Sokete tek-yön emit (sendMessage). Geçmiş gösterilmez; tam
+// geçmiş için "Tam Ekran" CTA → /chat/:peerId.
+// Scroll güvenliği: panel sabit yükseklikte değil, doğal yükseklik; ana
+// CustomScrollView içinde dahili scrollable yok → scrollbar hatası riski yok.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _InlineOfferChat extends ConsumerStatefulWidget {
+  final String peerId;
+  final String peerName;
+  final String fromUserId;
+  final VoidCallback onOpenFullScreen;
+  final VoidCallback onClose;
+
+  const _InlineOfferChat({
+    required this.peerId,
+    required this.peerName,
+    required this.fromUserId,
+    required this.onOpenFullScreen,
+    required this.onClose,
+  });
+
+  @override
+  ConsumerState<_InlineOfferChat> createState() =>
+      _InlineOfferChatState();
+}
+
+class _InlineOfferChatState extends ConsumerState<_InlineOfferChat> {
+  final TextEditingController _ctl = TextEditingController();
+  bool _sending = false;
+  bool _sent = false;
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    final text = _ctl.text.trim();
+    if (text.isEmpty || _sending) return;
+    setState(() => _sending = true);
+    try {
+      final chatService = ref.read(chatServiceProvider);
+      try {
+        chatService.connect();
+      } catch (_) {
+        // Zaten bağlı olabilir.
+      }
+      chatService.sendMessage(
+        widget.peerId,
+        widget.fromUserId,
+        text,
+      );
+      _ctl.clear();
+      if (mounted) setState(() => _sent = true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Mesaj gönderilemedi: $e'),
+          backgroundColor: AppColors.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.30), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.18),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Header ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 6, 6),
+            child: Row(
+              children: [
+                const Icon(Icons.chat_bubble_outline_rounded,
+                    size: 14, color: AppColors.primary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Sohbet — ${widget.peerName}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                TextButton(
+                  onPressed: widget.onOpenFullScreen,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 0),
+                    minimumSize: const Size(0, 28),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(
+                    'Tam Ekran',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Kapat',
+                  iconSize: 16,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 28, minHeight: 28),
+                  onPressed: widget.onClose,
+                  icon: const Icon(Icons.close_rounded,
+                      color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
+          // ── Açıklama (kısa) ──
+          if (!_sent)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 4),
+              child: Text(
+                'Hızlı bir mesaj gönderebilirsin; tam sohbet için "Tam Ekran".',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withValues(alpha: 0.55),
+                ),
+                maxLines: 2,
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 4),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded,
+                      size: 14, color: AppColors.primary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Mesaj gönderildi. Tam ekran sohbet için butona dokun.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.primary.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          // ── Input + Send ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _ctl,
+                    minLines: 1,
+                    maxLines: 3,
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 13),
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _send(),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText: 'Mesaj yaz…',
+                      hintStyle: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.45),
+                          fontSize: 12),
+                      filled: true,
+                      fillColor:
+                          Colors.white.withValues(alpha: 0.06),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.10)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.10)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                            color: AppColors.primary
+                                .withValues(alpha: 0.50)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Material(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: _sending ? null : _send,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      child: _sending
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation(Colors.white),
+                              ),
+                            )
+                          : const Icon(Icons.send_rounded,
+                              color: Colors.white, size: 18),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -154,7 +154,7 @@ class _ProfileView extends ConsumerWidget {
                     ),
                     icon: const Icon(Icons.send_rounded,
                         size: 18, color: Colors.white),
-                    label: const Text('Bu Ustaya Teklif Ver',
+                    label: const Text('Hizmet Al',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(

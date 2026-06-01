@@ -461,6 +461,23 @@ export class UsersController {
   }
 
   // ── Phase 43: Worker portfolio photos ─────────────────────────────
+
+  /**
+   * Phase 375 — GET /users/me/portfolio. Frontend (`PortfolioRepository.listMine`)
+   * `id` ile silebilmek için liste döner. portfolioPhotos basit URL dizisi
+   * olduğundan, id = url normalize ediyoruz.
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me/portfolio')
+  async listMyPortfolio(@Request() req: AuthenticatedRequest) {
+    const user = await this.svc.findById(req.user.id);
+    if (!user) return [];
+    const urls = Array.isArray(user.portfolioPhotos)
+      ? user.portfolioPhotos
+      : [];
+    return urls.map((url) => ({ id: url, url }));
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @Post('me/portfolio')
   async addPortfolioPhoto(

@@ -164,7 +164,7 @@ class _MainShellState extends ConsumerState<MainShell>
               BottomNavigationBarItem(
                   icon: Icon(Icons.home_outlined),
                   activeIcon: Icon(Icons.home_rounded),
-                  label: 'Yaptır'),
+                  label: 'Anasayfa'),
               BottomNavigationBarItem(
                   icon: Icon(Icons.search_outlined),
                   activeIcon: Icon(Icons.search_rounded),
@@ -333,7 +333,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'En iyi usta, en iyi hizmet',
+                                    'En iyi Hizmet Veren, en iyi hizmet',
                                     style: GoogleFonts.playfairDisplay(
                                       color: heroTitle,
                                       fontSize: 22,
