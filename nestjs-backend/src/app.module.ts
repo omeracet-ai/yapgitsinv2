@@ -17,6 +17,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { LocationModule } from './modules/location/location.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { User } from './modules/users/user.entity';
 import { Job } from './modules/jobs/job.entity';
@@ -327,6 +328,7 @@ import { AppScreen } from './modules/app-config/entities/app-screen.entity';
     JobsModule,
     RealtimeModule,
     ChatModule,
+    LocationModule, // Phase 354 — live location prototype (in-memory rooms)
     PaymentsModule,
     ReviewsModule,
     AiModule,
