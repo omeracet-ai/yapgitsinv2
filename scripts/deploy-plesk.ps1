@@ -216,7 +216,18 @@ function Set-TlsAndCallback {
 function New-FtpRequest {
     param($Uri, $Method, $Config)
     $req = [System.Net.FtpWebRequest]::Create($Uri)
-    $req.Method = $Method
+    # Phase 337 fix — FtpWebRequest.Method düz "UploadFile" stringini kabul
+    # etmiyor (PS 5.1 .NET Framework: "Bu metot desteklenmiyor"). FTP
+    # komut karşılığını (STOR / MKD / vs.) WebRequestMethods.Ftp'den çözerek
+    # geç. Doğrudan "STOR" gibi protokol stringleri de zaten kabul edilir.
+    $ftpMethodMap = @{
+        'UploadFile'         = [System.Net.WebRequestMethods+Ftp]::UploadFile
+        'MakeDirectory'      = [System.Net.WebRequestMethods+Ftp]::MakeDirectory
+        'DeleteFile'         = [System.Net.WebRequestMethods+Ftp]::DeleteFile
+        'ListDirectory'      = [System.Net.WebRequestMethods+Ftp]::ListDirectory
+        'GetDateTimestamp'   = [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp
+    }
+    $req.Method = if ($ftpMethodMap.ContainsKey($Method)) { $ftpMethodMap[$Method] } else { $Method }
     $req.Credentials = New-Object System.Net.NetworkCredential($Config.User, $Config.Pass)
     $req.UseBinary = $true
     $req.UsePassive = $true

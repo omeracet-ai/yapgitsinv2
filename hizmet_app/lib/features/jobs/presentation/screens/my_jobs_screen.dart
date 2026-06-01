@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+// Phase 344 — Yapgitsin tab'ındaki 3D efekti tüm tab içeriklerine uygula.
+import '../../../../core/theme/card_3d.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -1447,26 +1449,21 @@ class _CustomerJobCard extends ConsumerWidget {
         confirmationStatus == 'pending_grace' ||
         confirmationStatus == 'completed';
 
+    // Phase 344 — 3D efekt uygulanıyor. Tamamlanmış işler success border'la
+    // (1.5px) çerçevelenmeye devam etsin diye card3d(tint) + ek border var.
+    final base3d = card3d(context, radius: 12, elevation: 1.1);
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () => JobHistoryDialog.show(context, job),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
+        decoration: base3d.copyWith(
           border: Border.all(
             color: isCompletedVisual
                 ? AppColors.success
-                : AppColors.border,
-            width: isCompletedVisual ? 1.5 : 1,
+                : (base3d.border as Border?)?.top.color ?? AppColors.border,
+            width: isCompletedVisual ? 1.5 : 0.6,
           ),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 6,
-                offset: const Offset(0, 2)),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1897,16 +1894,8 @@ class _WorkerOfferCard extends ConsumerWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2)),
-        ],
-      ),
+      // Phase 344 — 3D efekt (Yapgitsin tab card pattern'i).
+      decoration: card3d(context, radius: 12, elevation: 1.1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+// Phase 344 — 3D efekt (Yapgitsin tab pattern'i tüm tab'lara yayıldı).
+import '../../../../core/theme/card_3d.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
@@ -244,15 +246,23 @@ class _AuthenticatedChatListState
         .map((w) => w.isNotEmpty ? w[0] : '')
         .join());
 
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          children: [
-            Stack(
+    // Phase 344 — Mesajlarım item'larına 3D efekt: kart benzeri görünüm.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            decoration: card3d(context, radius: 12, elevation: 1.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
               children: [
-                Container(
+                Stack(
+                  children: [
+                    Container(
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
@@ -369,7 +379,9 @@ class _AuthenticatedChatListState
                 ],
               ),
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -10,6 +10,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+// Phase 344 — 3D card pattern tüm tab'lara yayıldı.
+import '../../../../core/theme/card_3d.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/providers/navigation_provider.dart';
 import '../../../auth/presentation/screens/profile_screen.dart';
@@ -761,14 +763,14 @@ class _HomeProviderCard extends StatelessWidget {
       child: Container(
         width: 158,
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-              color: isFeatured
-                  ? Colors.amber.shade400.withValues(alpha: 0.6)
-                  : AppColors.border),
-        ),
+        // Phase 344 — Yapgitsin 3D card pattern; featured ise amber border.
+        decoration: isFeatured
+            ? card3d(context, radius: 16, elevation: 1.2).copyWith(
+                border: Border.all(
+                    color: Colors.amber.shade400.withValues(alpha: 0.6),
+                    width: 0.6),
+              )
+            : card3d(context, radius: 16, elevation: 1.2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
+// Phase 344 — Yapgitsin 3D card pattern'i tüm tab içeriklerine uygulanıyor.
+import '../../../../core/theme/card_3d.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/notification_bell.dart';
 import '../../../wallet/presentation/screens/wallet_screen.dart';
@@ -610,11 +612,8 @@ class ProfileScreen extends ConsumerWidget {
     final profileAsync = ref.watch(myPublicProfileProvider);
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
+      // Phase 344 — Yapgitsin tab 3D card pattern.
+      decoration: card3d(ref.context, radius: 14, elevation: 1.2),
       clipBehavior: Clip.antiAlias,
       child: Theme(
         data: Theme.of(ref.context).copyWith(
