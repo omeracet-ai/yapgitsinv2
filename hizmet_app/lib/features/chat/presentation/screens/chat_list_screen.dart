@@ -49,9 +49,9 @@ class _MessagesGuestView extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.bold)),
         // Phase 360 — yeşilden dark surface'a; diğer tab AppBar'larıyla
         // tutarlı (`AppColors.headerBackground(context)` theme-aware).
-        // Phase 371 — tema-bağımsız sabit dark header (light mode'da bile dark).
-        backgroundColor: AppColors.darkSurface,
-        foregroundColor: Colors.white,
+        // Phase 371b — light mode'da beyaz, dark mode'da koyu (tema-duyarlı).
+        backgroundColor: AppColors.headerBackground(context),
+        foregroundColor: AppColors.headerForeground,
         elevation: 0,
       ),
       body: Center(
@@ -128,20 +128,21 @@ class _AuthenticatedChatListState
             style: const TextStyle(fontWeight: FontWeight.bold)),
         // Phase 360 — yeşilden dark surface'a; diğer tab AppBar'larıyla
         // tutarlı (`AppColors.headerBackground(context)` theme-aware).
-        // Phase 371 — tema-bağımsız sabit dark header (light mode'da bile dark).
-        backgroundColor: AppColors.darkSurface,
-        foregroundColor: Colors.white,
+        // Phase 371b — light mode'da beyaz, dark mode'da koyu (tema-duyarlı).
+        backgroundColor: AppColors.headerBackground(context),
+        foregroundColor: AppColors.headerForeground,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+            icon: Icon(Icons.refresh_rounded,
+                color: AppColors.headerForeground),
             tooltip: l.chatRefresh,
             onPressed: () => ref.invalidate(conversationsProvider),
           ),
           // Phase 367 — bildirimler kısayolu.
           IconButton(
-            icon: const Icon(Icons.notifications_none_rounded,
-                color: Colors.white),
+            icon: Icon(Icons.notifications_none_rounded,
+                color: AppColors.headerForeground),
             tooltip: 'Bildirimler',
             onPressed: () => context.push('/bildirimler'),
           ),
