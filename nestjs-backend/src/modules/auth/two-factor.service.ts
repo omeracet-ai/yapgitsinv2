@@ -7,6 +7,13 @@ import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
 import { UsersService } from '../users/users.service';
 
+// Phase 356 — TOTP doğrulama için ±1 step (±30s) tolerance.
+// `otplib` default `window: 0` idi → cihaz ve sunucu arası 1-2 saniye
+// clock drift'i kod reddine yol açıyordu (kullanıcı "bağlantı kurma
+// hatası" raporu). Window=1 yaygın endüstri standardı (Google,
+// Microsoft, AWS aynı tolerance'ı kullanır).
+authenticator.options = { window: 1 };
+
 @Injectable()
 export class TwoFactorService {
   constructor(private readonly usersService: UsersService) {}
