@@ -36,7 +36,12 @@ class JobOpportunitiesScreen extends ConsumerStatefulWidget {
 class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen> {
   bool get _showAppBar => widget.showAppBar;
 
-  String? _activeCategory;
+  // Phase 346 — Multi-select kategori state'i.
+  // `_selectedCategories` boş → "Tümü" (filtre yok, server-side category=NULL).
+  // Doluysa client-side filter: jobs.where(c => selected.contains(category)).
+  // Legacy `_activeCategory` shim kalır (eski helper'lar için), her zaman null.
+  final Set<String> _selectedCategories = <String>{};
+  String? get _activeCategory => null;
   String _searchQuery = '';
   Timer? _debounce;
   final TextEditingController _searchController = TextEditingController();
@@ -91,12 +96,51 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
     super.dispose();
   }
 
+  /// Phase 346 — Eski tek-seçim helper. Set'e tek eleman yaz/temizle.
+  // ignore: unused_element
   void _selectCategory(String? category) {
-    setState(() => _activeCategory = category);
+    setState(() {
+      _selectedCategories.clear();
+      if (category != null) _selectedCategories.add(category);
+    });
+    // Server fetch: kategori null → tüm liste; client-side filter setapply.
     ref.read(jobsProvider.notifier).fetchJobs(
-          category: category,
+          category: null,
           q: _searchQuery.isEmpty ? null : _searchQuery,
         );
+  }
+
+  /// Phase 346 — Multi-select category sheet.
+  Future<void> _openCategoriesSheet(
+      List<Map<String, dynamic>> cats) async {
+    final allNames =
+        cats.map((c) => (c['name'] as String?) ?? '').where((n) => n.isNotEmpty).toList();
+    final result = await showModalBottomSheet<Set<String>?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _CategoryMultiSelectSheet(
+        all: allNames,
+        initial: _selectedCategories,
+        catIcons: {
+          for (final c in cats)
+            (c['name'] as String?) ?? '':
+                (c['icon'] as String?) ?? '⭐',
+        },
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() {
+        _selectedCategories
+          ..clear()
+          ..addAll(result);
+      });
+      // Server tarafa kategori NULL → tüm açık ilanlar; client filtre.
+      ref.read(jobsProvider.notifier).fetchJobs(
+            category: null,
+            q: _searchQuery.isEmpty ? null : _searchQuery,
+          );
+    }
   }
 
   // Phase 297 — eski _onSearchChanged kaldırıldı; arama bottom-sheet
@@ -205,6 +249,11 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
                 // (kendine teklif verilemez).
                 var filtered = jobs
                     .where((j) => j.status == JobStatus.OPEN)
+                    // Phase 346 — client-side multi-category filter.
+                    // Boş set = hepsi (filtre yok).
+                    .where((j) =>
+                        _selectedCategories.isEmpty ||
+                        _selectedCategories.contains(j.category))
                     .toList();
 
                 // Phase 312 — Sıralama tamamen backend'de:
@@ -292,53 +341,70 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
     );
   }
 
-  /// Phase 297 — Kategori dropdown. "Tümü" üstte, ardından kullanıcının
-  /// uzmanlık alanları (varsa), sonra diğer kategoriler.
+  /// Phase 346 — Multi-select sheet trigger (eski dropdown yerine).
+  /// Etiket: hepsi seçili veya boş → "Tümü"; tek seçim → kategori adı;
+  /// 2+ → "X kategori".
   Widget _buildCategoryDropdown(
     AsyncValue<List<Map<String, dynamic>>> categoriesAsync,
     List<String> myCategories,
   ) {
     return categoriesAsync.when(
       data: (cats) {
-        final mySet = myCategories.toSet();
-        final mine = cats.where((c) => mySet.contains(c['name'])).toList();
-        final others = cats.where((c) => !mySet.contains(c['name'])).toList();
-        final items = <DropdownMenuItem<String?>>[
-          const DropdownMenuItem<String?>(value: null, child: Text('Tümü')),
-          for (final c in mine)
-            DropdownMenuItem<String?>(
-              value: c['name'] as String?,
-              child: Text('${c['icon'] ?? '⭐'} ${c['name'] ?? ''}'.trim()),
-            ),
-          for (final c in others)
-            DropdownMenuItem<String?>(
-              value: c['name'] as String?,
-              child: Text('${c['icon'] ?? ''} ${c['name'] ?? ''}'.trim()),
-            ),
-        ];
-        return Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceElevated,
+        final selectedCount = _selectedCategories.length;
+        final isAll = selectedCount == 0 || selectedCount == cats.length;
+        String label;
+        if (isAll) {
+          label = 'Tümü';
+        } else if (selectedCount == 1) {
+          label = _selectedCategories.first;
+        } else {
+          label = '$selectedCount kategori';
+        }
+        return Material(
+          color: AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String?>(
-              value: _activeCategory,
-              isExpanded: true,
-              isDense: true,
-              icon: Icon(Icons.keyboard_arrow_down_rounded,
-                  size: 18, color: AppColors.textSecondary),
-              style: TextStyle(
-                  fontSize: 12.5,
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w600),
-              dropdownColor: AppColors.surface,
-              borderRadius: BorderRadius.circular(10),
-              items: items,
-              onChanged: (v) => _selectCategory(v),
+            onTap: () => _openCategoriesSheet(cats),
+            child: Container(
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.checklist_rounded,
+                      size: 16, color: AppColors.textSecondary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(label,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 12.5,
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700)),
+                  ),
+                  if (!isAll)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      margin: const EdgeInsets.only(right: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text('$selectedCount',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                  Icon(Icons.keyboard_arrow_down_rounded,
+                      size: 18, color: AppColors.textSecondary),
+                ],
+              ),
             ),
           ),
         );
@@ -599,7 +665,8 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
           OutlinedButton.icon(
             onPressed: () {
               setState(() {
-                _activeCategory = null;
+                // Phase 346 — multi-select reset.
+                _selectedCategories.clear();
                 _searchQuery = '';
                 _searchController.clear();
               });
@@ -1019,6 +1086,200 @@ class _Poster3DAvatar extends StatelessWidget {
           color: AppColors.primary,
           fontWeight: FontWeight.bold,
           fontSize: 18,
+        ),
+      ),
+    );
+  }
+}
+
+/// Phase 346 — Multi-select kategori sheet'i (Yapgitsin tab dropdown
+/// yerine). Ekranın ~%85'ini kaplar, master "Tümü" + her kategori
+/// için checkbox + emoji ikon.
+class _CategoryMultiSelectSheet extends StatefulWidget {
+  final List<String> all;
+  final Set<String> initial;
+  final Map<String, String> catIcons;
+  const _CategoryMultiSelectSheet({
+    required this.all,
+    required this.initial,
+    required this.catIcons,
+  });
+
+  @override
+  State<_CategoryMultiSelectSheet> createState() =>
+      _CategoryMultiSelectSheetState();
+}
+
+class _CategoryMultiSelectSheetState
+    extends State<_CategoryMultiSelectSheet> {
+  late final Set<String> _temp = {...widget.initial};
+  bool get _isAll => _temp.isEmpty || _temp.length == widget.all.length;
+
+  void _toggleAll(bool? v) {
+    setState(() {
+      if (v == true) {
+        // Master ON = boş set (server "Tümü" semantiği).
+        _temp.clear();
+      } else {
+        // Master OFF = tüm seçimleri kaldır → liste boş kalır.
+        _temp.clear();
+        _temp.add('__none__');
+        _temp.remove('__none__');
+      }
+    });
+  }
+
+  void _toggle(String cat, bool? v) {
+    setState(() {
+      if (v == true) {
+        _temp.add(cat);
+        if (_temp.length == widget.all.length) {
+          // Hepsi seçili = boş set (semantically "Tümü").
+          _temp.clear();
+        }
+      } else {
+        if (_temp.isEmpty) {
+          // "Tümü" → tek bu kategoriyi çıkarmak = diğerleri seçili kalsın.
+          _temp.addAll(widget.all.where((c) => c != cat));
+        } else {
+          _temp.remove(cat);
+        }
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final sheetHeight = media.size.height * 0.85;
+    return Padding(
+      padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+      child: Container(
+        height: sheetHeight,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 10),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 16, 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.category_outlined,
+                        color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text('Kategoriler',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                    TextButton(
+                      onPressed: () => setState(() => _temp.clear()),
+                      child: const Text('Hepsi'),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  children: [
+                    CheckboxListTile(
+                      value: _isAll,
+                      onChanged: _toggleAll,
+                      activeColor: AppColors.primary,
+                      title: const Text('Tümü',
+                          style: TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: Text(
+                        _isAll
+                            ? 'Tüm kategoriler seçili'
+                            : '${_temp.length}/${widget.all.length} seçili',
+                        style: TextStyle(
+                            fontSize: 11, color: AppColors.textSecondary),
+                      ),
+                      secondary: Icon(
+                        Icons.select_all_rounded,
+                        color: _isAll
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
+                      ),
+                      controlAffinity: ListTileControlAffinity.trailing,
+                    ),
+                    const Divider(height: 1),
+                    ...widget.all.map((cat) {
+                      final selected = _isAll || _temp.contains(cat);
+                      final icon = widget.catIcons[cat] ?? '⭐';
+                      return CheckboxListTile(
+                        value: selected,
+                        onChanged: (v) => _toggle(cat, v),
+                        activeColor: AppColors.primary,
+                        title: Text('$icon  $cat',
+                            style: TextStyle(
+                              fontWeight: selected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            )),
+                        controlAffinity: ListTileControlAffinity.trailing,
+                      );
+                    }),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(null),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('İptal'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.of(context).pop(_temp),
+                        icon: const Icon(Icons.check_rounded, size: 18),
+                        label: Text(_isAll
+                            ? 'Uygula (Tümü)'
+                            : 'Uygula (${_temp.length})'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

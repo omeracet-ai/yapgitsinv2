@@ -173,7 +173,9 @@ class _DualRoleView extends ConsumerWidget {
 
 // ─── Phase 338 — Single-page merged view with filter chips ───────────────────
 
-enum _JobsFilter { all, active, offers, completed, calendar }
+// Phase 346 — Multi-select için `all` meta-değer kaldırıldı. UI'da
+// 4 kategorinin hepsi seçili olduğunda "Tümü" yazısı görünür.
+enum _JobsFilter { active, offers, completed, calendar }
 
 // Phase 342 — Filtreleme sheet'i için sıralama + tarih aralığı.
 enum _MyJobsSort { newest, oldest, budgetHigh, budgetLow }
@@ -210,14 +212,12 @@ extension _MyJobsRangeMeta on _MyJobsRange {
 
 extension _JobsFilterMeta on _JobsFilter {
   String get label => switch (this) {
-        _JobsFilter.all => 'Tümü',
         _JobsFilter.active => 'Aktif İlanlarım',
         _JobsFilter.offers => 'Tekliflerim',
         _JobsFilter.completed => 'Biten İşler',
         _JobsFilter.calendar => 'Takvim',
       };
   IconData get icon => switch (this) {
-        _JobsFilter.all => Icons.dashboard_customize_outlined,
         _JobsFilter.active => Icons.assignment_outlined,
         _JobsFilter.offers => Icons.handyman_outlined,
         _JobsFilter.completed => Icons.check_circle_outline,
@@ -233,12 +233,45 @@ class _MergedJobsView extends ConsumerStatefulWidget {
 }
 
 class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
-  _JobsFilter _filter = _JobsFilter.all;
+  // Phase 346 — Multi-select: 4 kategoriden istenenler. Default: hepsi.
+  final Set<_JobsFilter> _selected = {
+    _JobsFilter.active,
+    _JobsFilter.offers,
+    _JobsFilter.completed,
+    _JobsFilter.calendar,
+  };
+
+  bool get _isAllSelected => _selected.length == _JobsFilter.values.length;
+
+  String get _selectionLabel {
+    if (_isAllSelected) return 'Tümü';
+    if (_selected.isEmpty) return 'Seçim yok';
+    if (_selected.length == 1) return _selected.first.label;
+    return '${_selected.length} seçili';
+  }
+
   // Phase 340 — başlık/şablon ikonu kaldırıldı; search aktif.
   String _searchQuery = '';
   // Phase 342 — Filtreleme: sıralama + tarih aralığı.
   _MyJobsSort _sort = _MyJobsSort.newest;
   _MyJobsRange _range = _MyJobsRange.all;
+
+  Future<void> _openSelectionSheet() async {
+    final result = await showModalBottomSheet<Set<_JobsFilter>?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      // Phase 346 — sheet sayfanın ~%85'ini doldurur.
+      builder: (ctx) => _JobsMultiSelectSheet(initial: _selected),
+    );
+    if (result != null && mounted) {
+      setState(() {
+        _selected
+          ..clear()
+          ..addAll(result);
+      });
+    }
+  }
 
   int get _activeFilterCount {
     var c = 0;
@@ -404,45 +437,56 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
     );
   }
 
+  /// Phase 346 — Dropdown yerine sheet-trigger button. Etiket aktif
+  /// seçime göre değişir: "Tümü" / "X seçili" / tek isim.
   Widget _buildFilterDropdown() {
-    return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+    return Material(
+      color: AppColors.surfaceElevated,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<_JobsFilter>(
-          value: _filter,
-          isExpanded: true,
-          isDense: true,
-          icon: Icon(Icons.keyboard_arrow_down_rounded,
-              size: 18, color: AppColors.textSecondary),
-          style: TextStyle(
-              fontSize: 12.5,
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w600),
-          dropdownColor: AppColors.surface,
-          borderRadius: BorderRadius.circular(10),
-          items: _JobsFilter.values
-              .map((f) => DropdownMenuItem<_JobsFilter>(
-                    value: f,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(f.icon,
-                            size: 14, color: AppColors.textSecondary),
-                        const SizedBox(width: 8),
-                        Text(f.label),
-                      ],
-                    ),
-                  ))
-              .toList(),
-          onChanged: (v) {
-            if (v != null) setState(() => _filter = v);
-          },
+        onTap: _openSelectionSheet,
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.checklist_rounded,
+                  size: 16, color: AppColors.textSecondary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _selectionLabel,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700),
+                ),
+              ),
+              if (!_isAllSelected && _selected.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 6, vertical: 2),
+                  margin: const EdgeInsets.only(right: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text('${_selected.length}',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold)),
+                ),
+              Icon(Icons.keyboard_arrow_down_rounded,
+                  size: 18, color: AppColors.textSecondary),
+            ],
+          ),
         ),
       ),
     );
@@ -514,35 +558,55 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
     );
   }
 
+  /// Phase 346 — Multi-select set'ine göre içerik:
+  /// * Set boş → empty state.
+  /// * Set tek bir kategori → eski tek-tab davranışı.
+  /// * Set ≥ 2 → `_AllItemsMergedList` set parametresiyle filtreli merge.
   Widget _buildContent() {
     final q = _searchQuery;
-    switch (_filter) {
-      case _JobsFilter.active:
-        return _CustomerJobsByStatus(
-          statuses: const ['open', 'in_progress'],
-          emptyMsg: 'Aktif ilanınız yok.',
-          searchQuery: q,
-        );
-      case _JobsFilter.offers:
-        return const _WorkerTabContent();
-      case _JobsFilter.completed:
-        return _CustomerJobsByStatus(
-          statuses: const ['completed'],
-          emptyMsg: 'Tamamlanan işiniz yok.',
-          searchQuery: q,
-        );
-      case _JobsFilter.calendar:
-        return const _BookingsCalendarTab();
-      case _JobsFilter.all:
-        // Phase 341 — Tümü artık section başlığı olmadan tek liste
-        // (jobs + offers chronological merge). Boş ise tek empty state.
-        // Phase 342 — Sort + tarih aralığı uygulanır.
-        return _AllItemsMergedList(
-          searchQuery: q,
-          sort: _sort,
-          range: _range,
-        );
+    if (_selected.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Text(
+            'Hiçbir kategori seçili değil. Dropdown\'dan bir veya birden çok seçin.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                fontSize: 13, color: AppColors.textSecondary),
+          ),
+        ),
+      );
     }
+    if (_selected.length == 1) {
+      switch (_selected.first) {
+        case _JobsFilter.active:
+          return _CustomerJobsByStatus(
+            statuses: const ['open', 'in_progress'],
+            emptyMsg: 'Aktif ilanınız yok.',
+            searchQuery: q,
+          );
+        case _JobsFilter.offers:
+          return const _WorkerTabContent();
+        case _JobsFilter.completed:
+          return _CustomerJobsByStatus(
+            statuses: const ['completed'],
+            emptyMsg: 'Tamamlanan işiniz yok.',
+            searchQuery: q,
+          );
+        case _JobsFilter.calendar:
+          return const _BookingsCalendarTab();
+      }
+    }
+    // 2+ seçim: merged list. Set hangileri seçili olduğunu söyler.
+    return _AllItemsMergedList(
+      searchQuery: q,
+      sort: _sort,
+      range: _range,
+      includeJobsActive: _selected.contains(_JobsFilter.active),
+      includeOffers: _selected.contains(_JobsFilter.offers),
+      includeJobsCompleted: _selected.contains(_JobsFilter.completed),
+      includeBookings: _selected.contains(_JobsFilter.calendar),
+    );
   }
 }
 
@@ -553,10 +617,19 @@ class _AllItemsMergedList extends ConsumerWidget {
   final String searchQuery;
   final _MyJobsSort sort;
   final _MyJobsRange range;
+  // Phase 346 — multi-select flag'leri (hangi kaynaklar dahil).
+  final bool includeJobsActive;
+  final bool includeJobsCompleted;
+  final bool includeOffers;
+  final bool includeBookings;
   const _AllItemsMergedList({
     required this.searchQuery,
     this.sort = _MyJobsSort.newest,
     this.range = _MyJobsRange.all,
+    this.includeJobsActive = true,
+    this.includeJobsCompleted = true,
+    this.includeOffers = true,
+    this.includeBookings = true,
   });
 
   @override
@@ -566,8 +639,14 @@ class _AllItemsMergedList extends ConsumerWidget {
     final userId = authState.user['id'] as String;
     final jobsAsync = ref.watch(myJobsProvider(userId));
     final offersAsync = ref.watch(myOffersProvider);
+    // Phase 346 — Takvim (bookings) opsiyonel kaynak.
+    final bookingsAsync = includeBookings
+        ? ref.watch(myCustomerBookingsProvider)
+        : null;
 
-    if (jobsAsync.isLoading || offersAsync.isLoading) {
+    if (jobsAsync.isLoading ||
+        offersAsync.isLoading ||
+        (bookingsAsync?.isLoading ?? false)) {
       return ListSkeleton(
         itemCount: 5,
         itemBuilder: (_) => const JobCardSkeleton(),
@@ -575,6 +654,7 @@ class _AllItemsMergedList extends ConsumerWidget {
     }
     final jobs = jobsAsync.valueOrNull ?? const [];
     final offers = offersAsync.valueOrNull ?? const [];
+    final bookings = bookingsAsync?.valueOrNull ?? const [];
     final q = searchQuery.toLowerCase();
 
     final items = <_MergedItem>[];
@@ -603,6 +683,13 @@ class _AllItemsMergedList extends ConsumerWidget {
     }
 
     for (final j in jobs) {
+      final status = j['status']?.toString();
+      final isActive = status == 'open' || status == 'in_progress';
+      final isCompleted = status == 'completed';
+      // Phase 346 — Aktif/Biten flag'lerine göre dahil et.
+      if (isActive && !includeJobsActive) continue;
+      if (isCompleted && !includeJobsCompleted) continue;
+      if (!isActive && !isCompleted) continue;
       final title = j['title']?.toString() ?? '';
       if (q.isNotEmpty && !title.toLowerCase().contains(q)) continue;
       final createdAt = j['createdAt']?.toString();
@@ -613,18 +700,36 @@ class _AllItemsMergedList extends ConsumerWidget {
         sortKey: createdAt ?? '',
       ));
     }
-    for (final o in offers) {
-      final job = o['job'];
-      final title =
-          (job is Map ? job['title']?.toString() : null) ?? '';
-      if (q.isNotEmpty && !title.toLowerCase().contains(q)) continue;
-      final createdAt = o['createdAt']?.toString();
-      if (!inDateRange(createdAt)) continue;
-      items.add(_MergedItem(
-        type: _MergedKind.offer,
-        data: o,
-        sortKey: createdAt ?? '',
-      ));
+    if (includeOffers) {
+      for (final o in offers) {
+        final job = o['job'];
+        final title =
+            (job is Map ? job['title']?.toString() : null) ?? '';
+        if (q.isNotEmpty && !title.toLowerCase().contains(q)) continue;
+        final createdAt = o['createdAt']?.toString();
+        if (!inDateRange(createdAt)) continue;
+        items.add(_MergedItem(
+          type: _MergedKind.offer,
+          data: o,
+          sortKey: createdAt ?? '',
+        ));
+      }
+    }
+    if (includeBookings) {
+      for (final b in bookings) {
+        // Search: kategori veya açıklama.
+        final cat = b.category;
+        final desc = b.description;
+        if (q.isNotEmpty &&
+            !cat.toLowerCase().contains(q) &&
+            !desc.toLowerCase().contains(q)) continue;
+        final sortKey = b.scheduledDate.toIso8601String();
+        items.add(_MergedItem(
+          type: _MergedKind.booking,
+          data: {'__booking': b},
+          sortKey: sortKey,
+        ));
+      }
     }
 
     switch (sort) {
@@ -666,10 +771,15 @@ class _AllItemsMergedList extends ConsumerWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 6),
       itemBuilder: (_, i) {
         final it = items[i];
-        if (it.type == _MergedKind.job) {
-          return _CustomerJobCard(job: it.data);
+        switch (it.type) {
+          case _MergedKind.job:
+            return _CustomerJobCard(job: it.data);
+          case _MergedKind.offer:
+            return _WorkerOfferCard(offer: it.data);
+          case _MergedKind.booking:
+            final b = it.data['__booking'] as Booking;
+            return _CompactBookingRow(booking: b);
         }
-        return _WorkerOfferCard(offer: it.data);
       },
     );
   }
@@ -820,7 +930,203 @@ class _MyJobsFilterSheetState extends State<_MyJobsFilterSheet> {
   }
 }
 
-enum _MergedKind { job, offer }
+/// Phase 346 — Multi-select kategori sheet'i. Ekranın ~%85'ini kaplar,
+/// "Tümü" master checkbox + her kategoriye ayrı checkbox. "Uygula"
+/// butonu Set döner; "Sıfırla" hepsini seçili yapar.
+class _JobsMultiSelectSheet extends StatefulWidget {
+  final Set<_JobsFilter> initial;
+  const _JobsMultiSelectSheet({required this.initial});
+
+  @override
+  State<_JobsMultiSelectSheet> createState() =>
+      _JobsMultiSelectSheetState();
+}
+
+class _JobsMultiSelectSheetState extends State<_JobsMultiSelectSheet> {
+  late final Set<_JobsFilter> _temp = {...widget.initial};
+  bool get _isAll => _temp.length == _JobsFilter.values.length;
+
+  void _toggleAll(bool? v) {
+    setState(() {
+      if (v == true) {
+        _temp
+          ..clear()
+          ..addAll(_JobsFilter.values);
+      } else {
+        _temp.clear();
+      }
+    });
+  }
+
+  void _toggle(_JobsFilter f, bool? v) {
+    setState(() {
+      if (v == true) {
+        _temp.add(f);
+      } else {
+        _temp.remove(f);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final sheetHeight = media.size.height * 0.85;
+    return Padding(
+      padding:
+          EdgeInsets.only(bottom: media.viewInsets.bottom),
+      child: Container(
+        height: sheetHeight,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 10),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsets.fromLTRB(20, 12, 16, 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.checklist_rounded,
+                        color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text('Kategoriler',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                    TextButton(
+                      onPressed: () => _toggleAll(true),
+                      child: const Text('Hepsi'),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  children: [
+                    CheckboxListTile(
+                      value: _isAll,
+                      tristate: true,
+                      onChanged: _toggleAll,
+                      activeColor: AppColors.primary,
+                      title: const Text('Tümü',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700)),
+                      subtitle: Text(
+                        _isAll
+                            ? 'Tüm kategoriler seçili'
+                            : (_temp.isEmpty
+                                ? 'Hiçbir seçim yok'
+                                : '${_temp.length}/${_JobsFilter.values.length} seçili'),
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary),
+                      ),
+                      secondary: Icon(
+                        Icons.select_all_rounded,
+                        color: _isAll
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
+                      ),
+                      controlAffinity:
+                          ListTileControlAffinity.trailing,
+                    ),
+                    const Divider(height: 1),
+                    ..._JobsFilter.values.map((f) {
+                      final selected = _temp.contains(f);
+                      return CheckboxListTile(
+                        value: selected,
+                        onChanged: (v) => _toggle(f, v),
+                        activeColor: AppColors.primary,
+                        title: Text(f.label,
+                            style: TextStyle(
+                              fontWeight: selected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            )),
+                        secondary: Icon(f.icon,
+                            color: selected
+                                ? AppColors.primary
+                                : AppColors.textSecondary),
+                        controlAffinity:
+                            ListTileControlAffinity.trailing,
+                      );
+                    }),
+                  ],
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () =>
+                            Navigator.of(context).pop(null),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(12)),
+                        ),
+                        child: const Text('İptal'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton.icon(
+                        onPressed: () =>
+                            Navigator.of(context).pop(_temp),
+                        icon: const Icon(Icons.check_rounded,
+                            size: 18),
+                        label: Text(
+                            _temp.isEmpty ? 'Uygula' : 'Uygula (${_temp.length})'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+enum _MergedKind { job, offer, booking }
 
 class _MergedItem {
   final _MergedKind type;
