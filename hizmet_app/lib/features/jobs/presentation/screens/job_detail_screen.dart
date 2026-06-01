@@ -628,32 +628,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
           const SizedBox(height: 10),
 
-          // İstatistik satırı — Phase 314: hizmet veren kullanıcının
-          // (isOffer = poster usta) rating chip'i gizleniyor.
-          Row(
-            children: [
-              if (!isOffer) ...[
-                _statChip(
-                  icon: Icons.star_rounded,
-                  iconColor: Colors.amber,
-                  label: rating > 0 ? rating.toStringAsFixed(1) : '—',
-                  sublabel: '$reviews yorum',
-                  tooltip:
-                      'Bu kullanıcının aldığı yorumlardan hesaplanan ortalama puan ve toplam yorum sayısı.',
-                ),
-                const SizedBox(width: 8),
-              ],
-              _statChip(
-                icon: Icons.work_outline_rounded,
-                iconColor: AppColors.primary,
-                label: '$totalJobs',
-                sublabel: isOffer ? 'Tamamlanan' : 'İlan',
-                tooltip: isOffer
-                    ? 'Bu ustanın bugüne kadar tamamladığı toplam iş sayısı.'
-                    : 'Bu kullanıcının yayınladığı toplam ilan sayısı.',
-              ),
-              if (successRate != null) ...[
-                const SizedBox(width: 8),
+          // Phase 377 — rating + toplam-ilan istatistikleri kaldırıldı.
+          // Yalnızca başarı oranı (varsa) gösterilir; daha sıkı kart.
+          if (successRate != null)
+            Row(
+              children: [
                 _statChip(
                   icon: Icons.check_circle_outline_rounded,
                   iconColor: AppColors.success,
@@ -662,9 +641,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   tooltip:
                       'Başlatılan işlerin başarıyla tamamlanma yüzdesi (başarılı / toplam).',
                 ),
+                const Spacer(),
               ],
-            ],
-          ),
+            ),
 
           // Offer ilanlarında usta kategorileri chip'ler
           if (isOffer && workerCategories.isNotEmpty) ...[
@@ -868,19 +847,23 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   }
 
   Widget _buildDescription(String description) {
+    // Phase 377 — kompakt: padding 14→10, başlık 16→13, gap 8→4.
     return Container(
       width: double.infinity,
       color: _surfaceColor,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('İş Açıklaması',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _textPrimary)),
-          const SizedBox(height: 8),
+          const Text('Açıklama',
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: _textPrimary)),
+          const SizedBox(height: 4),
           Text(description.isNotEmpty ? description : 'Açıklama girilmemiş.',
-              style:
-                  const TextStyle(color: _textSecondary, height: 1.5, fontSize: 13)),
+              style: const TextStyle(
+                  color: _textSecondary, height: 1.35, fontSize: 12.5)),
         ],
       ),
     );
@@ -993,9 +976,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     bool canMakeOffer,
     String? currentUserId,
   ) {
+    // Phase 377 — kompakt offers bölümü.
     return Container(
       color: _surfaceColor,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
