@@ -135,6 +135,12 @@ class YapgitsinApp extends ConsumerWidget {
       // Sistem ve Koyu → dark (mevcut tasarım korunur); yalnızca "Açık" → light.
       themeMode:
           themeMode == ThemeMode.light ? ThemeMode.light : ThemeMode.dark,
+      // Phase 337 — Dark/Light geçişlerde "parça parça yükleme" bug fix.
+      // Default 200ms theme animasyonu Material widget'ları tween'liyor ama
+      // AppColors static getter'ları anında sıçrıyor → render desync.
+      // Animasyonu sıfırla → tek frame'de atomik geçiş, görsel tutarlılık.
+      themeAnimationDuration: Duration.zero,
+      themeAnimationCurve: Curves.linear,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
