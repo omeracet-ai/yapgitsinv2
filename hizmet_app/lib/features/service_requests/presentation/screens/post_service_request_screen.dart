@@ -124,7 +124,7 @@ class _PostServiceRequestScreenState
       appBar: AppBar(
         title: const Text('Hizmet Al İlanı Ver',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
         elevation: 0,
       ),

@@ -99,7 +99,7 @@ class _IyzipayCheckoutScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ödeme'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.close),

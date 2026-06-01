@@ -17,7 +17,7 @@ class SubscriptionScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Premium Üyelik'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
       ),
       body: RefreshIndicator(

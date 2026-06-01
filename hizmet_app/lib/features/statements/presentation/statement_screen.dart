@@ -66,7 +66,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Aylık Beyan'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
       ),
       body: Column(

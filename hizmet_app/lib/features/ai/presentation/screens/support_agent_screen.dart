@@ -78,7 +78,7 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Destek Asistanı'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
       ),
       body: Column(

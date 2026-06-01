@@ -448,7 +448,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         title: Text(
           '${widget.kind == 'offer' ? 'Yeni Hizmet İlanı' : 'Yeni İlan'} • Adım ${_currentStep + 1}/2',
         ),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

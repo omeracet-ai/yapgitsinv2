@@ -314,7 +314,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.18),
+                  backgroundColor: AppColors.headerBackground(context).withValues(alpha: 0.18),
                   child: Text(
                     widget.peerName.isNotEmpty
                         ? trUpper(widget.peerName[0])

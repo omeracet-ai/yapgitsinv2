@@ -97,7 +97,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('🤖 Yapgitsin Asistan'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
       ),
       body: Column(

@@ -83,7 +83,7 @@ class _OfferTemplatesScreenState extends ConsumerState<OfferTemplatesScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Teklif Şablonlarım'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
       ),
       body: Column(

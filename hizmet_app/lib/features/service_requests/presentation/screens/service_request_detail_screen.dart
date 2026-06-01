@@ -166,7 +166,7 @@ class _ServiceRequestDetailScreenState
       appBar: AppBar(
         title: const Text('İlan Detayı',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
