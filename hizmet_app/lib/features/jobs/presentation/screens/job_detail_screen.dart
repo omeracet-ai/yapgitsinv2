@@ -1079,19 +1079,33 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 // (örn. fiyatı görmeyen ustalar) butonu görmez.
                 if (!maskForLogout) ...[
                   Builder(builder: (ctx) {
-                    final jobCustomerId = widget.id == null
+                    final customer = widget.id == null
                         ? null
-                        : (ref
+                        : ref
                                 .read(jobDetailProvider(widget.id!))
                                 .valueOrNull?['customer']
-                            as Map?)?['id'] as String?;
+                            as Map?;
+                    final jobCustomerId = customer?['id'] as String?;
+                    final jobCustomerName =
+                        customer?['fullName'] as String?;
                     String? peerId;
+                    String? peerName;
                     if (isOwnerView && offerUserId.isNotEmpty) {
                       peerId = offerUserId;
+                      peerName = name; // offer.user.fullName scope'ta
                     } else if (isOfferOwner && jobCustomerId != null) {
                       peerId = jobCustomerId;
+                      peerName = jobCustomerName;
                     }
                     if (peerId == null) return const SizedBox.shrink();
+                    // Phase 319 fix — karşı tarafın adı `name` query param
+                    // ile chat header'a taşınır (UUID yerine isim görünür).
+                    final encodedName = peerName == null || peerName.isEmpty
+                        ? ''
+                        : Uri.encodeQueryComponent(peerName);
+                    final chatPath = encodedName.isEmpty
+                        ? '/chat/$peerId'
+                        : '/chat/$peerId?name=$encodedName';
                     return SizedBox(
                       width: 32,
                       height: 32,
@@ -1101,7 +1115,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                         iconSize: 18,
                         icon: const Icon(Icons.chat_bubble_outline_rounded,
                             color: AppColors.primary),
-                        onPressed: () => context.push('/chat/$peerId'),
+                        onPressed: () => context.push(chatPath),
                       ),
                     );
                   }),

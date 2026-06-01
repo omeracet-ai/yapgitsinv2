@@ -487,7 +487,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/chat/:roomId',
         builder: (context, state) {
           final roomId = state.pathParameters['roomId']!;
-          return ChatDetailScreen(peerName: roomId, peerId: roomId);
+          // Phase 319 fix — `?name=...` query param ile karşı tarafın
+          // görünen adı taşınır; yoksa peerId fallback (eski davranış).
+          final peerName = state.uri.queryParameters['name'] ?? roomId;
+          return ChatDetailScreen(peerName: peerName, peerId: roomId);
         },
       ),
       GoRoute(

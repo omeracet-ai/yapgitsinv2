@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_colors.dart';
+// jobDetailProvider buradan export ediliyor (Phase 318 fix).
 import '../../data/job_repository.dart';
 
 /// Phase 203 — İlan sahibi için bulk fotoğraf yükleme bölümü.
@@ -74,6 +75,9 @@ class _JobPhotosBulkSectionState extends ConsumerState<JobPhotosBulkSection> {
         _pending = [];
         _uploading = false;
       });
+      // Phase 318 fix — parent job detail provider'ı tazele ki
+      // modal kapanmadan önce yapılan upload'lar arka ekrana da yansısın.
+      ref.invalidate(jobDetailProvider(widget.jobId));
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Fotoğraflar yüklendi'),
