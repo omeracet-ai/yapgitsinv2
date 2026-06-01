@@ -161,19 +161,8 @@ class _DualRoleView extends ConsumerWidget {
               foregroundColor: Colors.white,
               title: const Text('İşlerim',
                   style: TextStyle(fontWeight: FontWeight.bold)),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.bookmark_border),
-                  tooltip: 'Şablonlarım',
-                  onPressed: () => context.push('/sablonlarim'),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.notifications_outlined),
-                  tooltip: 'Bildirimler',
-                  onPressed: () => context.push('/bildirim-ayarlari'),
-                ),
-                const SizedBox(width: 4),
-              ],
+              // Phase 339 — Şablonlarım + Bildirimler ikonları aşağıdaki
+              // filter row'a taşındı (Yapgitsin tab header pattern).
             )
           : null,
       body: const Column(
@@ -222,53 +211,99 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Filter chip şeridi — tek scroll'lu yatay.
+        // Phase 339 — Yapgitsin tab header pattern'i: solda dropdown,
+        // sağda ikon grubu (şablonlarım + bildirim). Compact 36px row.
         Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
           color: AppColors.background,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _JobsFilter.values.map((f) {
-                final selected = _filter == f;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: Text(f.label),
-                    avatar: Icon(f.icon,
-                        size: 16,
-                        color: selected
-                            ? Colors.white
-                            : AppColors.textSecondary),
-                    selected: selected,
-                    showCheckmark: false,
-                    onSelected: (_) => setState(() => _filter = f),
-                    selectedColor: AppColors.primary,
-                    backgroundColor: AppColors.surface,
-                    labelStyle: TextStyle(
-                      color: selected ? Colors.white : AppColors.textPrimary,
-                      fontWeight:
-                          selected ? FontWeight.w700 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: selected
-                            ? AppColors.primary
-                            : AppColors.border,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
+          padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+          child: Row(
+            children: [
+              Expanded(child: _buildFilterDropdown()),
+              const SizedBox(width: 6),
+              _headerIconButton(
+                icon: Icons.bookmark_border,
+                tooltip: 'Şablonlarım',
+                onTap: () => context.push('/sablonlarim'),
+              ),
+              const SizedBox(width: 6),
+              _headerIconButton(
+                icon: Icons.notifications_outlined,
+                tooltip: 'Bildirimler',
+                onTap: () => context.push('/bildirim-ayarlari'),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
         Expanded(child: _buildContent()),
       ],
+    );
+  }
+
+  Widget _buildFilterDropdown() {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<_JobsFilter>(
+          value: _filter,
+          isExpanded: true,
+          isDense: true,
+          icon: Icon(Icons.keyboard_arrow_down_rounded,
+              size: 18, color: AppColors.textSecondary),
+          style: TextStyle(
+              fontSize: 12.5,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600),
+          dropdownColor: AppColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          items: _JobsFilter.values
+              .map((f) => DropdownMenuItem<_JobsFilter>(
+                    value: f,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(f.icon,
+                            size: 14, color: AppColors.textSecondary),
+                        const SizedBox(width: 8),
+                        Text(f.label),
+                      ],
+                    ),
+                  ))
+              .toList(),
+          onChanged: (v) {
+            if (v != null) setState(() => _filter = v);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _headerIconButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: onTap,
+          child: Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            child: Icon(icon, color: AppColors.textPrimary, size: 22),
+          ),
+        ),
+      ),
     );
   }
 
