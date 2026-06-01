@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/card_3d.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/auth_provider.dart';
 import '../../../profile/data/user_profile_repository.dart';
 import '../../../service_requests/data/service_request_repository.dart';
@@ -580,9 +582,10 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     final hasFile = newFile != null;
     final hasUrl = currentUrl != null;
 
+    // Phase 364 — Yapgitsin 3D card + sıkıştırılmış padding.
+    final base3d = card3d(context, radius: 14, elevation: 1.1);
     return Container(
-      decoration: BoxDecoration(color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
+      decoration: base3d.copyWith(
         border: Border.all(
           color: hasFile
               ? AppColors.primary
@@ -590,18 +593,19 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                   ? Colors.green.shade400
                   : required
                       ? Colors.orange.shade300
-                      : AppColors.border,
-          width: (hasFile || hasUrl) ? 1.5 : 1,
+                      : (base3d.border as Border?)?.top.color ??
+                          AppColors.border,
+          width: (hasFile || hasUrl) ? 1.5 : 0.6,
         ),
       ),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: hasUrl || hasFile
                         ? Colors.green.shade50
@@ -650,36 +654,39 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
             ),
           ),
 
-          // Önizleme
+          // Önizleme — Phase 364 sıkıştı (160→120), 3D efektle uyumlu fade-in.
           if (hasFile || hasUrl) ...[
             Container(
-              height: 160,
+              height: 120,
               decoration: const BoxDecoration(
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(13),
                     bottomRight: Radius.circular(13)),
               ),
               clipBehavior: Clip.antiAlias,
-              child: hasFile
-                  ? (kIsWeb
-                      ? Image.network(newFile.path,
-                          fit: BoxFit.cover, width: double.infinity)
-                      : Image.file(io.File(newFile.path),
-                          fit: BoxFit.cover, width: double.infinity))
-                  : Image.network(currentUrl!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      errorBuilder: (_, __, ___) => Container(
-                            color: Colors.grey.shade100,
-                            child: Icon(Icons.broken_image_outlined,
-                                color: AppColors.textHint, size: 40),
-                          )),
+              child: (hasFile
+                      ? (kIsWeb
+                          ? Image.network(newFile.path,
+                              fit: BoxFit.cover, width: double.infinity)
+                          : Image.file(io.File(newFile.path),
+                              fit: BoxFit.cover, width: double.infinity))
+                      : Image.network(currentUrl!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (_, __, ___) => Container(
+                                color: Colors.grey.shade100,
+                                child: Icon(Icons.broken_image_outlined,
+                                    color: AppColors.textHint, size: 40),
+                              )))
+                  .animate()
+                  .fade(duration: 280.ms)
+                  .scale(begin: const Offset(0.96, 0.96), end: const Offset(1, 1)),
             ),
           ],
 
-          // Aksiyon
+          // Aksiyon (sıkıştırılmış padding)
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+            padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
             child: Row(
               children: [
                 Expanded(
