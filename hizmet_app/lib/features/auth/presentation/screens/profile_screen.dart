@@ -1302,16 +1302,16 @@ class ProfileScreen extends ConsumerWidget {
             AvailabilityEditorSheet.show(context);
           }),
           _menuItem(Icons.workspace_premium_outlined,
-              '🪪 Belgelerim (Usta Ünvanı)', () {
+              'Belgelerim (Usta Ünvanı)', () {
             context.push('/belgelerim');
           }),
           ..._buildWorkerOnlyItems(context, ref),
           ..._buildCustomerOnlyItems(context, ref),
-          _menuItem(Icons.card_giftcard_rounded, '🎁 Arkadaş Davet', () {
+          _menuItem(Icons.card_giftcard_rounded, 'Arkadaş Davet', () {
             context.push('/sadakat');
           }),
           _menuItem(Icons.confirmation_number_outlined,
-              '🎟️ Promosyon Kodu Kullan', () {
+              'Promosyon Kodu Kullan', () {
             PromoRedeemSheet.show(context);
           }),
           _menuItem(Icons.payments_outlined, 'Kazançlarım', () {
@@ -1338,7 +1338,7 @@ class ProfileScreen extends ConsumerWidget {
           _menuItem(Icons.notifications_outlined, 'Bildirim Ayarları', () {
             context.push('/bildirim-ayarlari');
           }),
-          _menuItem(Icons.notifications_active_outlined, '🔔 Kategori Abonelikleri', () {
+          _menuItem(Icons.notifications_active_outlined, 'Kategori Abonelikleri', () {
             context.push('/kategori-abonelikleri');
           }),
           // Gizlendi (kullanıcı isteği) — Para Birimi seçeneği:
@@ -1363,10 +1363,10 @@ class ProfileScreen extends ConsumerWidget {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const HelpScreen()));
           }),
-          _menuItem(Icons.smart_toy_outlined, '🤖 Yapgitsin Asistan',
+          _menuItem(Icons.smart_toy_outlined, 'Yapgitsin Asistan',
               () => context.push('/asistan')),
           const Divider(height: 1, indent: 50),
-          _menuItem(Icons.download_outlined, '📥 Verilerimi İndir (KVKK)',
+          _menuItem(Icons.download_outlined, 'Verilerimi İndir (KVKK)',
               () => _handleDataExport(context, ref)),
           _menuItem(Icons.privacy_tip_outlined,
               '🗑️ Hesap Verilerimi Sil (KVKK)',
@@ -1767,19 +1767,19 @@ class ProfileScreen extends ConsumerWidget {
     final isWorker = cats is List && cats.isNotEmpty;
     if (!isWorker) return const [];
     return [
-      _menuItem(Icons.verified_outlined, '📜 Sertifikalarım', () {
+      _menuItem(Icons.verified_outlined, 'Sertifikalarım', () {
         context.push('/sertifikalarim');
       }),
-      _menuItem(Icons.photo_library_outlined, '🖼️ Portfolyom', () {
+      _menuItem(Icons.photo_library_outlined, 'Portfolyom', () {
         context.push('/portfolyo');
       }),
       _menuItem(Icons.note_alt_outlined, 'Teklif Şablonlarım', () {
         context.push('/teklif-sablonlarim');
       }),
-      _menuItem(Icons.rocket_launch_rounded, '🚀 Hızlı Boost', () {
+      _menuItem(Icons.rocket_launch_rounded, 'Hızlı Boost', () {
         context.push('/boost');
       }),
-      _menuItem(Icons.calendar_month_outlined, '📅 Takvim Senkronizasyonu', () {
+      _menuItem(Icons.calendar_month_outlined, 'Takvim Senkronizasyonu', () {
         context.push('/takvim-sync');
       }),
     ];
@@ -1794,7 +1794,7 @@ class ProfileScreen extends ConsumerWidget {
     final isWorker = cats is List && cats.isNotEmpty;
     if (isWorker) return const [];
     return [
-      _menuItem(Icons.chat_bubble_outline, '💬 Mesaj Şablonlarım', () {
+      _menuItem(Icons.chat_bubble_outline, 'Mesaj Şablonlarım', () {
         context.push('/mesaj-sablonlarim');
       }),
     ];
