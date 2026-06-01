@@ -117,11 +117,13 @@ class YapgitsinApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
-    // Phase 264 — inline AppColors.* token'ları için aktif parlaklığı kökte set
-    // et (themeMode mapping ile birebir: Açık → light, Sistem/Koyu → dark).
-    // Böylece tüm inline yüzey/metin renkleri açık temada otomatik açılır.
-    AppColors.brightness =
-        themeMode == ThemeMode.light ? Brightness.light : Brightness.dark;
+    // Phase 348 — `setBrightness` ValueNotifier üzerinden mutate eder;
+    // builder altındaki ListenableBuilder tüm subtree'yi reactif rebuild
+    // eder → custom widget'lar (AppColors getter okuyanlar) anında yeni
+    // değerlerle re-paint olur, "yarım render" sorunu kalmaz.
+    AppColors.setBrightness(
+      themeMode == ThemeMode.light ? Brightness.light : Brightness.dark,
+    );
     // Phase 80 — bind real-time chat → toast hook (idempotent, auth-gated).
     ref.watch(chatToastHookProvider);
     // App-config socket — admin save → instant config refresh.
@@ -147,12 +149,19 @@ class YapgitsinApp extends ConsumerWidget {
       routerConfig: router,
       builder: (context, child) {
         // Phase 79 — register the root overlay so toast banners work globally.
+        // Phase 348 — `ListenableBuilder` OverlayEntry'nin İÇİNDE; brightness
+        // değişiminde Overlay state'i (toast banner stack vb.) korunur,
+        // sadece route içeriği reactif rebuild olur. Custom widget'ların
+        // `AppColors.*` getter okuyanları taze değerle re-paint eder.
         return Overlay(
           initialEntries: [
             OverlayEntry(
               builder: (ctx) {
                 InAppNotificationService.instance.attach(Overlay.of(ctx));
-                return child ?? const SizedBox.shrink();
+                return ListenableBuilder(
+                  listenable: AppColors.brightnessNotifier,
+                  builder: (_, __) => child ?? const SizedBox.shrink(),
+                );
               },
             ),
           ],

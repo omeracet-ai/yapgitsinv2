@@ -40,8 +40,26 @@ class AppColors {
   // ── Phase 264 — Tema-duyarlı yüzey/metin token'ları ─────────────────────
   // Aktif tema parlaklığı; main.dart kökte themeMode'dan set eder.
   // Dark VE sistem modu → Brightness.dark; yalnızca "Açık" → Brightness.light.
-  static Brightness brightness = Brightness.dark;
-  static bool get _isDark => brightness == Brightness.dark;
+  //
+  // Phase 348 — `brightnessNotifier` paralel kanal eklendi. Static field
+  // backward-compat için kalır (50+ const-context referansı), ama mutate
+  // ederken ALWAYS notifier.value'yu da güncelle (`setBrightness` helper).
+  // Custom widget'lar reactif rebuild için ListenableBuilder ile bu
+  // notifier'a abone olabilir (main.dart wrap).
+  static final ValueNotifier<Brightness> brightnessNotifier =
+      ValueNotifier<Brightness>(Brightness.dark);
+
+  static Brightness get brightness => brightnessNotifier.value;
+
+  /// Phase 348 — Brightness değişikliği için TEK doğru giriş noktası.
+  /// `AppColors.brightness = X` deprecated; bunu kullan.
+  static void setBrightness(Brightness b) {
+    if (brightnessNotifier.value != b) {
+      brightnessNotifier.value = b;
+    }
+  }
+
+  static bool get _isDark => brightnessNotifier.value == Brightness.dark;
   static Color _pick(Color dark, Color light) => _isDark ? dark : light;
 
   // ── Background / surface (tema-duyarlı) ────────────────────────────────
