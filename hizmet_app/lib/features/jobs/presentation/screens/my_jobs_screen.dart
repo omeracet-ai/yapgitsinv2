@@ -173,6 +173,39 @@ class _DualRoleView extends ConsumerWidget {
 
 enum _JobsFilter { all, active, offers, completed, calendar }
 
+// Phase 342 — Filtreleme sheet'i için sıralama + tarih aralığı.
+enum _MyJobsSort { newest, oldest, budgetHigh, budgetLow }
+
+extension _MyJobsSortMeta on _MyJobsSort {
+  String get label => switch (this) {
+        _MyJobsSort.newest => 'En Yeni',
+        _MyJobsSort.oldest => 'En Eski',
+        _MyJobsSort.budgetHigh => 'Bütçe (Yüksek → Düşük)',
+        _MyJobsSort.budgetLow => 'Bütçe (Düşük → Yüksek)',
+      };
+  IconData get icon => switch (this) {
+        _MyJobsSort.newest => Icons.arrow_downward,
+        _MyJobsSort.oldest => Icons.arrow_upward,
+        _MyJobsSort.budgetHigh => Icons.trending_down,
+        _MyJobsSort.budgetLow => Icons.trending_up,
+      };
+}
+
+enum _MyJobsRange { all, last7, last30 }
+
+extension _MyJobsRangeMeta on _MyJobsRange {
+  String get label => switch (this) {
+        _MyJobsRange.all => 'Tüm zamanlar',
+        _MyJobsRange.last7 => 'Son 7 gün',
+        _MyJobsRange.last30 => 'Son 30 gün',
+      };
+  int? get cutoffDays => switch (this) {
+        _MyJobsRange.all => null,
+        _MyJobsRange.last7 => 7,
+        _MyJobsRange.last30 => 30,
+      };
+}
+
 extension _JobsFilterMeta on _JobsFilter {
   String get label => switch (this) {
         _JobsFilter.all => 'Tümü',
@@ -201,6 +234,34 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
   _JobsFilter _filter = _JobsFilter.all;
   // Phase 340 — başlık/şablon ikonu kaldırıldı; search aktif.
   String _searchQuery = '';
+  // Phase 342 — Filtreleme: sıralama + tarih aralığı.
+  _MyJobsSort _sort = _MyJobsSort.newest;
+  _MyJobsRange _range = _MyJobsRange.all;
+
+  int get _activeFilterCount {
+    var c = 0;
+    if (_sort != _MyJobsSort.newest) c++;
+    if (_range != _MyJobsRange.all) c++;
+    return c;
+  }
+
+  Future<void> _openFilterSheet() async {
+    final result = await showModalBottomSheet<({_MyJobsSort sort, _MyJobsRange range})?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _MyJobsFilterSheet(
+        initialSort: _sort,
+        initialRange: _range,
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() {
+        _sort = result.sort;
+        _range = result.range;
+      });
+    }
+  }
 
   Future<void> _openSearchSheet() async {
     final controller = TextEditingController(text: _searchQuery);
@@ -311,6 +372,9 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
                 },
               ),
               const SizedBox(width: 6),
+              // Phase 342 — Filtreleme butonu (sort + tarih aralığı).
+              _filterButtonWithBadge(),
+              const SizedBox(width: 6),
               _headerIconButton(
                 icon: Icons.notifications_outlined,
                 tooltip: 'Bildirimler',
@@ -382,6 +446,45 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
     );
   }
 
+  Widget _filterButtonWithBadge() {
+    final count = _activeFilterCount;
+    final highlight = count > 0;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _headerIconButton(
+          icon: Icons.tune_rounded,
+          tooltip: 'Filtreleme',
+          highlight: highlight,
+          onTap: _openFilterSheet,
+        ),
+        if (highlight)
+          Positioned(
+            top: -4,
+            right: -4,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              constraints:
+                  const BoxConstraints(minWidth: 18, minHeight: 18),
+              decoration: BoxDecoration(
+                color: AppColors.error,
+                borderRadius: BorderRadius.circular(10),
+                border:
+                    Border.all(color: AppColors.background, width: 1.5),
+              ),
+              child: Text('$count',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold)),
+            ),
+          ),
+      ],
+    );
+  }
+
   Widget _headerIconButton({
     required IconData icon,
     required String tooltip,
@@ -431,7 +534,12 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
       case _JobsFilter.all:
         // Phase 341 — Tümü artık section başlığı olmadan tek liste
         // (jobs + offers chronological merge). Boş ise tek empty state.
-        return _AllItemsMergedList(searchQuery: q);
+        // Phase 342 — Sort + tarih aralığı uygulanır.
+        return _AllItemsMergedList(
+          searchQuery: q,
+          sort: _sort,
+          range: _range,
+        );
     }
   }
 }
@@ -441,7 +549,13 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
 /// `ListView.builder` ile basılır. Section başlığı yok.
 class _AllItemsMergedList extends ConsumerWidget {
   final String searchQuery;
-  const _AllItemsMergedList({required this.searchQuery});
+  final _MyJobsSort sort;
+  final _MyJobsRange range;
+  const _AllItemsMergedList({
+    required this.searchQuery,
+    this.sort = _MyJobsSort.newest,
+    this.range = _MyJobsRange.all,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -462,13 +576,39 @@ class _AllItemsMergedList extends ConsumerWidget {
     final q = searchQuery.toLowerCase();
 
     final items = <_MergedItem>[];
+    final cutoff = range.cutoffDays == null
+        ? null
+        : DateTime.now().subtract(Duration(days: range.cutoffDays!));
+
+    bool inDateRange(String? createdAt) {
+      if (cutoff == null) return true;
+      if (createdAt == null) return false;
+      final dt = DateTime.tryParse(createdAt);
+      return dt != null && dt.isAfter(cutoff);
+    }
+
+    double itemBudget(_MergedItem it) {
+      if (it.type == _MergedKind.job) {
+        final v = (it.data['budgetMax'] as num?) ??
+            (it.data['budgetMin'] as num?);
+        return v?.toDouble() ?? 0;
+      }
+      // Offer: price (float) ya da priceMinor (kuruş int).
+      final price = (it.data['price'] as num?)?.toDouble();
+      if (price != null) return price;
+      final minor = (it.data['priceMinor'] as num?)?.toInt();
+      return minor != null ? minor / 100.0 : 0;
+    }
+
     for (final j in jobs) {
       final title = j['title']?.toString() ?? '';
       if (q.isNotEmpty && !title.toLowerCase().contains(q)) continue;
+      final createdAt = j['createdAt']?.toString();
+      if (!inDateRange(createdAt)) continue;
       items.add(_MergedItem(
         type: _MergedKind.job,
         data: j,
-        sortKey: j['createdAt']?.toString() ?? '',
+        sortKey: createdAt ?? '',
       ));
     }
     for (final o in offers) {
@@ -476,13 +616,29 @@ class _AllItemsMergedList extends ConsumerWidget {
       final title =
           (job is Map ? job['title']?.toString() : null) ?? '';
       if (q.isNotEmpty && !title.toLowerCase().contains(q)) continue;
+      final createdAt = o['createdAt']?.toString();
+      if (!inDateRange(createdAt)) continue;
       items.add(_MergedItem(
         type: _MergedKind.offer,
         data: o,
-        sortKey: o['createdAt']?.toString() ?? '',
+        sortKey: createdAt ?? '',
       ));
     }
-    items.sort((a, b) => b.sortKey.compareTo(a.sortKey));
+
+    switch (sort) {
+      case _MyJobsSort.newest:
+        items.sort((a, b) => b.sortKey.compareTo(a.sortKey));
+        break;
+      case _MyJobsSort.oldest:
+        items.sort((a, b) => a.sortKey.compareTo(b.sortKey));
+        break;
+      case _MyJobsSort.budgetHigh:
+        items.sort((a, b) => itemBudget(b).compareTo(itemBudget(a)));
+        break;
+      case _MyJobsSort.budgetLow:
+        items.sort((a, b) => itemBudget(a).compareTo(itemBudget(b)));
+        break;
+    }
 
     if (items.isEmpty) {
       return Center(
@@ -510,6 +666,151 @@ class _AllItemsMergedList extends ConsumerWidget {
         }
         return _WorkerOfferCard(offer: it.data);
       },
+    );
+  }
+}
+
+/// Phase 342 — Filtreleme modal bottom-sheet'i. Sort + tarih aralığı,
+/// `_MergedJobsViewState` üzerinden uygulanır.
+class _MyJobsFilterSheet extends StatefulWidget {
+  final _MyJobsSort initialSort;
+  final _MyJobsRange initialRange;
+  const _MyJobsFilterSheet({
+    required this.initialSort,
+    required this.initialRange,
+  });
+
+  @override
+  State<_MyJobsFilterSheet> createState() => _MyJobsFilterSheetState();
+}
+
+class _MyJobsFilterSheetState extends State<_MyJobsFilterSheet> {
+  late _MyJobsSort _sort = widget.initialSort;
+  late _MyJobsRange _range = widget.initialRange;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 16, right: 16, top: 16),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(children: [
+              const Text('Filtreleme',
+                  style: TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
+              const Spacer(),
+              if (_sort != _MyJobsSort.newest ||
+                  _range != _MyJobsRange.all)
+                TextButton(
+                  onPressed: () => setState(() {
+                    _sort = _MyJobsSort.newest;
+                    _range = _MyJobsRange.all;
+                  }),
+                  child: const Text('Sıfırla'),
+                ),
+            ]),
+            const SizedBox(height: 8),
+            Text('Sıralama',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary)),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: _MyJobsSort.values
+                  .map((s) => ChoiceChip(
+                        label: Text(s.label,
+                            style: const TextStyle(fontSize: 12)),
+                        avatar:
+                            Icon(s.icon, size: 14, color: _sort == s ? Colors.white : AppColors.textSecondary),
+                        selected: _sort == s,
+                        showCheckmark: false,
+                        onSelected: (_) => setState(() => _sort = s),
+                        selectedColor: AppColors.primary,
+                        backgroundColor: AppColors.background,
+                        labelStyle: TextStyle(
+                          color: _sort == s
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontWeight: _sort == s
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ))
+                  .toList(),
+            ),
+            const SizedBox(height: 14),
+            Text('Tarih Aralığı',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary)),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: _MyJobsRange.values
+                  .map((r) => ChoiceChip(
+                        label: Text(r.label,
+                            style: const TextStyle(fontSize: 12)),
+                        selected: _range == r,
+                        showCheckmark: false,
+                        onSelected: (_) => setState(() => _range = r),
+                        selectedColor: AppColors.primary,
+                        backgroundColor: AppColors.background,
+                        labelStyle: TextStyle(
+                          color: _range == r
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontWeight: _range == r
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ))
+                  .toList(),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.of(context)
+                    .pop((sort: _sort, range: _range)),
+                icon: const Icon(Icons.check_rounded, size: 18),
+                label: const Text('Uygula'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
