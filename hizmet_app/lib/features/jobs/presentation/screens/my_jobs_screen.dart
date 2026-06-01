@@ -429,31 +429,105 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
       case _JobsFilter.calendar:
         return const _BookingsCalendarTab();
       case _JobsFilter.all:
-        return ListView(
-          padding: const EdgeInsets.only(bottom: 16),
-          children: [
-            const _SectionHeader('Aktif İlanlarım'),
-            _CustomerJobsByStatusEmbedded(
-              statuses: const ['open', 'in_progress'],
-              emptyMsg: 'Aktif ilan yok.',
-              searchQuery: q,
-            ),
-            const SizedBox(height: 4),
-            const _SectionHeader('Tekliflerim'),
-            _WorkerOffersEmbedded(searchQuery: q),
-            const SizedBox(height: 4),
-            const _SectionHeader('Biten İşler'),
-            _CustomerJobsByStatusEmbedded(
-              statuses: const ['completed'],
-              emptyMsg: 'Tamamlanan iş yok.',
-              searchQuery: q,
-            ),
-          ],
-        );
+        // Phase 341 — Tümü artık section başlığı olmadan tek liste
+        // (jobs + offers chronological merge). Boş ise tek empty state.
+        return _AllItemsMergedList(searchQuery: q);
     }
   }
 }
 
+/// Phase 341 — Tümü için single merge'lı liste. Jobs + Offers tek
+/// `_MergedItem` listesine map'lenir, createdAt DESC sıralanır, tek
+/// `ListView.builder` ile basılır. Section başlığı yok.
+class _AllItemsMergedList extends ConsumerWidget {
+  final String searchQuery;
+  const _AllItemsMergedList({required this.searchQuery});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+    if (authState is! AuthAuthenticated) return const SizedBox.shrink();
+    final userId = authState.user['id'] as String;
+    final jobsAsync = ref.watch(myJobsProvider(userId));
+    final offersAsync = ref.watch(myOffersProvider);
+
+    if (jobsAsync.isLoading || offersAsync.isLoading) {
+      return ListSkeleton(
+        itemCount: 5,
+        itemBuilder: (_) => const JobCardSkeleton(),
+      );
+    }
+    final jobs = jobsAsync.valueOrNull ?? const [];
+    final offers = offersAsync.valueOrNull ?? const [];
+    final q = searchQuery.toLowerCase();
+
+    final items = <_MergedItem>[];
+    for (final j in jobs) {
+      final title = j['title']?.toString() ?? '';
+      if (q.isNotEmpty && !title.toLowerCase().contains(q)) continue;
+      items.add(_MergedItem(
+        type: _MergedKind.job,
+        data: j,
+        sortKey: j['createdAt']?.toString() ?? '',
+      ));
+    }
+    for (final o in offers) {
+      final job = o['job'];
+      final title =
+          (job is Map ? job['title']?.toString() : null) ?? '';
+      if (q.isNotEmpty && !title.toLowerCase().contains(q)) continue;
+      items.add(_MergedItem(
+        type: _MergedKind.offer,
+        data: o,
+        sortKey: o['createdAt']?.toString() ?? '',
+      ));
+    }
+    items.sort((a, b) => b.sortKey.compareTo(a.sortKey));
+
+    if (items.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Text(
+            q.isEmpty
+                ? 'Henüz aktivite yok.'
+                : 'Aramayla eşleşen kayıt yok.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                fontSize: 13, color: AppColors.textSecondary),
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+      itemCount: items.length,
+      itemBuilder: (_, i) {
+        final it = items[i];
+        if (it.type == _MergedKind.job) {
+          return _CustomerJobCard(job: it.data);
+        }
+        return _WorkerOfferCard(offer: it.data);
+      },
+    );
+  }
+}
+
+enum _MergedKind { job, offer }
+
+class _MergedItem {
+  final _MergedKind type;
+  final Map<String, dynamic> data;
+  final String sortKey;
+  _MergedItem({
+    required this.type,
+    required this.data,
+    required this.sortKey,
+  });
+}
+
+// ignore: unused_element
 class _SectionHeader extends StatelessWidget {
   final String title;
   const _SectionHeader(this.title);
@@ -487,107 +561,10 @@ class _SectionHeader extends StatelessWidget {
 }
 
 /// Embedded variant — shrinkWrap + NeverScrollable; parent ListView scroll'ar.
-class _CustomerJobsByStatusEmbedded extends ConsumerWidget {
-  final List<String> statuses;
-  final String emptyMsg;
-  final String searchQuery;
-  const _CustomerJobsByStatusEmbedded({
-    required this.statuses,
-    required this.emptyMsg,
-    this.searchQuery = '',
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authStateProvider);
-    if (authState is! AuthAuthenticated) return const SizedBox.shrink();
-    final userId = authState.user['id'] as String;
-    final jobsAsync = ref.watch(myJobsProvider(userId));
-    return jobsAsync.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      ),
-      error: (e, _) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text('Hata: $e',
-            style: TextStyle(color: AppColors.error)),
-      ),
-      data: (allJobs) {
-        final q = searchQuery.toLowerCase();
-        final filtered = allJobs
-            .where((j) => statuses.contains(j['status'] as String?))
-            .where((j) => q.isEmpty ||
-                (j['title']?.toString().toLowerCase().contains(q) ?? false))
-            .toList();
-        if (filtered.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-            child: Text(
-                q.isEmpty ? emptyMsg : 'Aramayla eşleşen kayıt yok.',
-                style: TextStyle(
-                    fontSize: 12, color: AppColors.textSecondary)),
-          );
-        }
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          itemCount: filtered.length,
-          itemBuilder: (_, i) => _CustomerJobCard(job: filtered[i]),
-        );
-      },
-    );
-  }
-}
-
-class _WorkerOffersEmbedded extends ConsumerWidget {
-  final String searchQuery;
-  const _WorkerOffersEmbedded({this.searchQuery = ''});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final offersAsync = ref.watch(myOffersProvider);
-    return offersAsync.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      ),
-      error: (e, _) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text('Hata: $e',
-            style: TextStyle(color: AppColors.error)),
-      ),
-      data: (offers) {
-        final q = searchQuery.toLowerCase();
-        final filtered = offers.where((o) {
-          if (q.isEmpty) return true;
-          final job = o['job'];
-          final title = (job is Map ? job['title']?.toString() : null) ?? '';
-          return title.toLowerCase().contains(q);
-        }).toList();
-        if (filtered.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-            child: Text(
-                q.isEmpty
-                    ? 'Verdiğiniz teklif yok.'
-                    : 'Aramayla eşleşen teklif yok.',
-                style: TextStyle(
-                    fontSize: 12, color: AppColors.textSecondary)),
-          );
-        }
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          itemCount: filtered.length,
-          itemBuilder: (_, i) => _WorkerOfferCard(offer: filtered[i]),
-        );
-      },
-    );
-  }
-}
+// Phase 341 — Section-tabanlı `_CustomerJobsByStatusEmbedded` ve
+// `_WorkerOffersEmbedded` widget'ları kaldırıldı. Tümü görünümü
+// `_AllItemsMergedList` ile yeniden yazıldı (jobs + offers chronological
+// merge, başlıksız tek liste).
 
 // ─── Phase 302 — Customer jobs filtered by status (no inner tabs) ────────────
 //
