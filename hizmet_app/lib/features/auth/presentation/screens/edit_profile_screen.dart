@@ -330,7 +330,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               percent >= 100
                   ? 'Profil tamamlandı ✓'
                   : 'Profilin %$percent tamamlandı'
-                      '${missingCount > 0 ? ' "¢ $missingCount eksik alan' : ''}',
+                      '${missingCount > 0 ? ' • $missingCount eksik alan' : ''}',
               style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.w700,
@@ -526,7 +526,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       busy: _busySection == 'address',
       onSave: _saveAddress,
       child: Column(children: [
-        _field(_cityCtrl, 'ޞehir', Icons.location_city_outlined,
+        _field(_cityCtrl, 'Şehir', Icons.location_city_outlined,
             TextInputType.text,
             highlight: missing.contains('city')),
         const SizedBox(height: 12),
@@ -583,7 +583,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     ];
     final missingHere = fields.where(missing.contains).toList();
     return _sectionCard(
-      icon: '🛡️Ã¯Â¸Â',
+      icon: '🛡️',
       title: 'Usta Bilgileri',
       isMissing: missingHere.isNotEmpty,
       missingFields: missingHere,
@@ -620,7 +620,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           maxLines: 4,
           maxLength: 300,
           decoration: _inputDeco(
-            'Hakkında (workerBio)',
+            'Hakkında',
             Icons.work_outline,
             highlight: missing.contains('workerBio'),
           ),
@@ -1039,7 +1039,7 @@ class _InsuranceSectionState extends State<_InsuranceSection> {
             const SizedBox(height: 8),
             TextField(
               controller: _providerCtrl,
-              decoration: const InputDecoration(labelText: 'Sigorta ޞirketi'),
+              decoration: const InputDecoration(labelText: 'Sigorta Şirketi'),
             ),
             const SizedBox(height: 8),
             TextField(
