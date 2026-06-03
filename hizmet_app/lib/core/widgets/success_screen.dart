@@ -5,6 +5,7 @@ import 'package:lottie/lottie.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_colors.dart';
 import '../providers/navigation_provider.dart';
+import '../../features/map/presentation/widgets/workers_nearby_sheet.dart';
 
 class SuccessScreen extends ConsumerWidget {
   final String title;
@@ -30,6 +31,11 @@ class SuccessScreen extends ConsumerWidget {
   /// ustaları o oturum için görebilsin).
   final bool tertiaryShowWorkersOnMap;
 
+  /// Phase 386 — verilirse tertiary CTA `/harita`'ya gitmek yerine
+  /// `WorkersNearbySheet`'i 85% bottom sheet olarak açar ve yalnızca bu
+  /// kategoriye ait ustaları gösterir. null → eski davranış.
+  final String? tertiaryCategory;
+
   const SuccessScreen({
     super.key,
     required this.title,
@@ -46,6 +52,7 @@ class SuccessScreen extends ConsumerWidget {
     this.tertiaryColor,
     this.tertiaryIcon,
     this.tertiaryShowWorkersOnMap = false,
+    this.tertiaryCategory,
   });
 
   @override
@@ -124,6 +131,12 @@ class SuccessScreen extends ConsumerWidget {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
+                      // Phase 386 — kategori verilmişse 85% bottom sheet aç.
+                      if (tertiaryCategory != null &&
+                          tertiaryCategory!.isNotEmpty) {
+                        WorkersNearbySheet.show(context, tertiaryCategory!);
+                        return;
+                      }
                       if (tertiaryShowWorkersOnMap) {
                         ref
                             .read(mapShowWorkersOverrideProvider.notifier)

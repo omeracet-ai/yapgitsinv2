@@ -144,6 +144,29 @@ class Job {
     this.scheduleFlexibility,
   });
 
+  /// Phase 387 — JobHistoryDialog gibi Map-tabanlı tüketicilere ham veri
+  /// vermek için. fromMap'in tersi; sadece dialogların okuduğu anahtarları
+  /// içerir.
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'title': title,
+        'description': description ?? desc,
+        'category': category,
+        'location': location,
+        'status': status,
+        'budgetMin': budgetMin,
+        'budgetMax': budgetMax,
+        'createdAt': createdAt,
+        'dueDate': dueDate,
+        'dueTime': dueTime,
+        'dueAnyTime': dueAnyTime,
+        'scheduleFlexibility': scheduleFlexibility,
+        'photos': photos,
+        'featuredOrder': featuredOrder,
+        'customerId': customerId,
+        'kind': kind,
+      };
+
   factory Job.fromMap(Map<String, dynamic> map) {
     final bMin = (map['budgetMin'] as num?)?.toDouble();
     final bMax = (map['budgetMax'] as num?)?.toDouble();

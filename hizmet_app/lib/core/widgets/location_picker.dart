@@ -175,6 +175,16 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     }
   }
 
+  // Phase 385 — onayla işlemi: hem AppBar butonu hem alt info kart kullanır.
+  void _confirm() {
+    if (_address.isEmpty) return;
+    Navigator.pop(context, {
+      'address': _address,
+      'lat': _selected.latitude,
+      'lng': _selected.longitude,
+    });
+  }
+
   void _selectSuggestion(Map<String, dynamic> s) {
     final lat = double.parse(s['lat'] as String);
     final lon = double.parse(s['lon'] as String);
@@ -197,16 +207,14 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         foregroundColor: Colors.white,
         actions: [
           TextButton(
-            onPressed: _address.isEmpty
-                ? null
-                : () => Navigator.pop(context, {
-                      'address': _address,
-                      'lat': _selected.latitude,
-                      'lng': _selected.longitude,
-                    }),
-            child: const Text('Onayla',
+            onPressed: _address.isEmpty ? null : _confirm,
+            child: Text('Onayla',
                 style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                    color: _address.isEmpty
+                        ? Colors.white38
+                        : AppColors.success,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15)),
           ),
         ],
       ),
@@ -319,9 +327,11 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           ),
 
           // Konumumu Kullan FAB (sağ alt — alt panelin üstünde)
+          // Phase 384 — cihazın bottom safe area'sını da hesaba kat,
+          // gesture indicator/navigation bar üstüne çıksın.
           Positioned(
             right: 12,
-            bottom: 92,
+            bottom: 92 + MediaQuery.viewPaddingOf(context).bottom,
             child: FloatingActionButton.extended(
               heroTag: 'use_my_location_fab',
               onPressed: _loading ? null : _useMyLocation,
@@ -337,41 +347,56 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           ),
 
           // Seçilen adres (alt)
+          // Phase 384 — SafeArea bottom: navigation bar / gesture indicator
+          // alanına ezilmesin diye cihazın view padding'i kart içine eklenir.
+          // Phase 385 — adres seçildiyse karta tıklamak da onayla işlevi görür.
           Positioned(
             bottom: 0, left: 0, right: 0,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
-              decoration: BoxDecoration(color: AppColors.surface,
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 12)],
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: _loading
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(8),
-                        child: CircularProgressIndicator(),
-                      ))
-                  : Row(
-                      children: [
-                        const Icon(Icons.location_on, color: AppColors.primary, size: 22),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            _address.isEmpty
-                                ? 'Haritaya dokunarak konum seçin'
-                                : _address,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: _address.isEmpty
-                                  ? AppColors.textHint
-                                  : AppColors.textPrimary,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: (_loading || _address.isEmpty) ? null : _confirm,
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(
+                      16, 14, 16, 20 + MediaQuery.viewPaddingOf(context).bottom),
+                  decoration: BoxDecoration(color: AppColors.surface,
+                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 12)],
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  child: _loading
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(8),
+                            child: CircularProgressIndicator(),
+                          ))
+                      : Row(
+                          children: [
+                            const Icon(Icons.location_on, color: AppColors.primary, size: 22),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _address.isEmpty
+                                    ? 'Haritaya dokunarak konum seçin'
+                                    : _address,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: _address.isEmpty
+                                      ? AppColors.textHint
+                                      : AppColors.textPrimary,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                            if (_address.isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              const Icon(Icons.check_circle,
+                                  color: AppColors.success, size: 22),
+                            ],
+                          ],
                         ),
-                      ],
-                    ),
+                ),
+              ),
             ),
           ),
         ],

@@ -61,13 +61,17 @@ export class AiService {
     try {
       return await this.gemini.generate({
         systemText: SYSTEM_PROMPT,
-        userText: `Write a clear, professional job description for the following service listing.
-Respond in Turkish.
-Title: ${title}
-Category: ${category}${location ? `\nLocation: ${location}` : ''}
+        userText: `Bir hizmet ilanı için kısa ve net bir açıklama yaz.
+Başlık: ${title}
+Kategori: ${category}${location ? `\nKonum: ${location}` : ''}
 
-Include: what the job entails, what skills/experience to look for, and what the customer expects. Keep it under 150 words. Return only the description text, no preamble.`,
-        maxOutputTokens: 1024,
+Kurallar:
+- Türkçe, sade ve günlük dil.
+- 40-60 kelime, 2-3 cümle.
+- "Usta", "ustalar", "deneyimli usta" gibi ifadeler YASAK.
+- Sadece şunu söyle: ne yapılacak ve müşteri ne bekliyor.
+- Önsöz veya açıklama yazma, doğrudan ilan metnini ver.`,
+        maxOutputTokens: 256,
       });
     } catch (err) {
       this.logger.error(

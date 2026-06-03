@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -73,9 +72,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   bool _saveAsTemplate = false;
 
   String? _selectedCategory;
-  // Phase 289 — Kullanıcı kategoriyi dropdown'dan manuel seçtiyse başlık
-  // değişiminde otomatik eşleyici müdahale etmesin (override koruması).
-  bool _categoryUserOverride = false;
+  // Phase 380 — manuel kategori seçimi auto-match'i bloklamıyor; başlık
+  // güncellendiğinde kategori de yeniden eşleşir.
   String _lastAutoMatchedTitle = '';
   int _currentStep = 0;
   double? _lat;
@@ -95,9 +93,11 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   List<String> _uploadedPhotoUrls = [];
   List<String> _uploadedVideoUrls = [];
   bool _uploading = false;
-  bool _aiLoading = false;
   bool _aiDescLoading = false;
   bool _aiPriceLoading = false;
+  // Phase 383 — AI fiyat önerisi text-box'ı doldurmak yerine altta banner'da
+  // gösterilir. Null → henüz öneri yok.
+  String? _aiPriceSuggestion;
 
   // Draft autosave
   final JobDraftStorage _draftStorage = JobDraftStorage();
@@ -315,15 +315,15 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   void _autoMatchCategory() {
     final raw = _titleController.text.trim();
     if (raw.isEmpty) {
-      if (_categoryUserOverride || _lastAutoMatchedTitle.isNotEmpty) {
+      if (_lastAutoMatchedTitle.isNotEmpty) {
         setState(() {
-          _categoryUserOverride = false;
           _lastAutoMatchedTitle = '';
         });
       }
       return;
     }
-    if (_categoryUserOverride) return;
+    // Phase 380 — manuel kategori seçimi artık auto-match'i kalıcı bloklamıyor.
+    // Kullanıcı başlığı güncellerse kategori de yeniden eşleşip güncellenir.
 
     final title = _foldTr(raw.toLowerCase());
     if (title.length < 3 || title == _lastAutoMatchedTitle) return;
@@ -535,18 +535,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               ],
             ),
           ),
-          // Phase 288 — "AI ile Otomatik Doldur" sağ alt köşede animasyonlu
-          // pop-up. Sticky controls'un (Geri/İleri) hemen üstüne konumlandırılır;
-          // sadece Adım 1 (form alanları görünürken) ve aşağı kaydırırken aktif.
-          if (_currentStep == 0)
-            Positioned(
-              right: 14,
-              bottom: 78,
-              child: _AiAutoFillFab(
-                loading: _aiLoading,
-                onTap: _aiLoading ? null : _fillWithAI,
-              ),
-            ),
+          // Phase 381 — "AI Otomatik Doldur" FAB gizlendi (kullanıcı talebi).
         ],
       ),
     );
@@ -790,11 +779,14 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               style: TextStyle(color: AppColors.textPrimary),
               items: items,
               onChanged: (v) {
-                // Phase 289 — manuel seçim: auto-match artık başlık değişiminde
-                // bu seçimi ezmeyecek.
                 setState(() {
                   _selectedCategory = v;
-                  _categoryUserOverride = true;
+                  // Phase 380 — kategori değişince başlık otomatik kategori
+                  // adıyla doldurulsun. Title listener auto-match'i yeniden
+                  // tetikleyecek ama aynı sonucu üretir (idempotent).
+                  if (v != null && v.isNotEmpty) {
+                    _titleController.text = v;
+                  }
                 });
                 _scheduleDraftSave();
               },
@@ -1108,15 +1100,22 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                   child: Text(
                     _aiPriceLoading
                         ? 'Fiyat hesaplanıyor…'
-                        : '💰 AI fiyat tahmini öner',
+                        : (_aiPriceSuggestion != null
+                            ? 'AI Fiyat Önerisi: ${_aiPriceSuggestion!}'
+                            : '💰 AI fiyat tahmini öner'),
                     style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.success,
                         fontWeight: FontWeight.w600),
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios_rounded,
-                    size: 12, color: AppColors.success),
+                Icon(
+                  _aiPriceSuggestion != null
+                      ? Icons.refresh_rounded
+                      : Icons.arrow_forward_ios_rounded,
+                  size: _aiPriceSuggestion != null ? 16 : 12,
+                  color: AppColors.success,
+                ),
               ],
             ),
           ),
@@ -1144,22 +1143,9 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                 : _locationController.text,
           );
       if (!mounted) return;
-      // Use median for the single budget field; fall back to min if 0.
-      final value = result.medianPrice > 0
-          ? result.medianPrice
-          : (result.minPrice > 0 ? result.minPrice : result.maxPrice);
-      if (value > 0) {
-        _budgetController.text =
-            TurkishCurrencyInputFormatter.formatNumber(value);
-      }
+      // Phase 383 — text-box'a yazmayız; öneri yeşil banner'da gösterilir.
       final range = IntlFormatter.tlRange(result.minPrice, result.maxPrice);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('💡 AI önerisi: $range — ${result.reasoning}'),
-          duration: const Duration(seconds: 6),
-          backgroundColor: AppColors.primary,
-        ),
-      );
+      setState(() => _aiPriceSuggestion = range);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1171,54 +1157,6 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       }
     } finally {
       if (mounted) setState(() => _aiPriceLoading = false);
-    }
-  }
-
-  Future<void> _fillWithAI() async {
-    final title = _titleController.text.trim();
-    if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Önce bir iş başlığı girin')),
-      );
-      return;
-    }
-    setState(() => _aiLoading = true);
-    try {
-      final result = await ref.read(aiRepositoryProvider).jobAssistant(
-            title: title,
-            category: _selectedCategory,
-            location: _locationController.text.isEmpty ? null : _locationController.text,
-          );
-      if (!mounted) return;
-      setState(() {
-        if (_descController.text.isEmpty) {
-          _descController.text = result.description;
-        }
-        if (_budgetController.text.isEmpty && result.suggestedBudgetMin > 0) {
-          _budgetController.text = TurkishCurrencyInputFormatter.formatNumber(
-              result.suggestedBudgetMin);
-        }
-      });
-      if (result.tips.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('💡 ${result.tips}'),
-            duration: const Duration(seconds: 5),
-            backgroundColor: AppColors.primary,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _aiLoading = false);
     }
   }
 
@@ -1309,7 +1247,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         return '⚡ Acil — bugün başlamalı, saat esnek.';
       case 'specific':
         if (_dueDate == null || _dueTime == null) {
-          return '⚠ Adım 1\'de tarih + saat seç (belirli mod).';
+          return '⚠ Lütfen tarih ve saati seçin.';
         }
         final d =
             '${_dueDate!.day.toString().padLeft(2, '0')}/${_dueDate!.month.toString().padLeft(2, '0')}/${_dueDate!.year}';
@@ -1648,94 +1586,16 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     }
 
     if (mounted) {
-      context.pushReplacement('/ilan-basarili');
+      // Phase 386 — kategoriyi geç ki başarılı ekrandaki "Hızlı Hizmet
+      // Verenlere Ulaş" CTA'sı yalnızca bu kategoriye ait ustaları gösteren
+      // bottom sheet açabilsin.
+      final cat = _selectedCategory;
+      final qs = (cat != null && cat.isNotEmpty)
+          ? '?category=${Uri.encodeComponent(cat)}'
+          : '';
+      context.pushReplacement('/ilan-basarili$qs');
     }
   }
 }
 
-// ─── Phase 288 — Animated AI auto-fill pop-up FAB ─────────────────────────
-// Sağ alt köşede yüzer pop-up. flutter_animate ile sürekli yumuşak nabız
-// (scale 1.0 → 1.08, infinite reverse), parıltı (shimmer her 3sn) ve hafif
-// dönüş efektleri. Loading durumda animasyon durur, içerik spinner'a döner.
-
-class _AiAutoFillFab extends StatelessWidget {
-  final bool loading;
-  final VoidCallback? onTap;
-  const _AiAutoFillFab({required this.loading, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final core = Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
-        child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.primary,
-                AppColors.primary.withValues(alpha: 0.78),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.40),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (loading)
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white),
-                )
-              else
-                const Icon(Icons.auto_awesome,
-                    size: 18, color: Colors.white),
-              const SizedBox(width: 8),
-              Text(
-                loading ? 'AI hazırlıyor…' : 'AI ile Otomatik Doldur',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    if (loading) return core;
-
-    // Idle state: yumuşak nabız + her 3 sn bir parıltı (shimmer).
-    return core
-        .animate(onPlay: (c) => c.repeat(reverse: true))
-        .scaleXY(
-          duration: 1200.ms,
-          begin: 1.0,
-          end: 1.06,
-          curve: Curves.easeInOut,
-        )
-        .then()
-        .animate(onPlay: (c) => c.repeat())
-        .shimmer(
-          duration: 1600.ms,
-          delay: 1600.ms,
-          color: Colors.white.withValues(alpha: 0.35),
-        );
-  }
-}
+// Phase 381 — _AiAutoFillFab widget kaldırıldı (kullanıcı talebi).

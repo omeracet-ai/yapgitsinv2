@@ -577,26 +577,27 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/ilan-basarili',
-        builder: (context, state) => const SuccessScreen(
-          title: 'İlanınız Yayında!',
-          message: 'İlanınız başarıyla yayınlandı. Şimdi ustalardan teklif bekleyebilirsiniz.',
-          btnText: 'İşlerime Git',
-          targetRoute: '/',
-          // Phase 297 — Bottom nav 4 sekme; İşlerim artık index 2
-          // (eski 3'ten kaydı; Harita çıkarıldı).
-          targetTab: 2, // İşlerim sekmesi
-          secondaryBtnText: 'Yeni İlan Ver',
-          secondaryTargetRoute: '/ilan-ver',
-          // Phase 297 — Harita ana nav'dan çıktığı için tertiary CTA artık
-          // doğrudan /harita route'una push'lar (MapScreen full-page).
-          tertiaryBtnText: 'Hızlı Hizmet Verenlere Ulaş',
-          tertiaryTargetRoute: '/harita',
-          // tertiaryTargetTab kaldırıldı (full-page route).
-          // Phase 292b — Müşteri haritada usta pin'lerini görmez (Phase 292).
-          // Bu CTA mapShowWorkersOverride aktif eder; Harita'dan ayrılınca
-          // override otomatik sıfırlanır.
-          tertiaryShowWorkersOnMap: true,
-        ),
+        builder: (context, state) {
+          // Phase 386 — yayınlanan ilanın kategorisi query param ile geliyor.
+          // Verilirse tertiary CTA artık /harita yerine WorkersNearbySheet'i
+          // 85% bottom sheet olarak açar (sadece bu kategoriye ait ustalar).
+          final category = state.uri.queryParameters['category'];
+          return SuccessScreen(
+            title: 'İlanınız Yayında!',
+            message: 'İlanınız başarıyla yayınlandı. Şimdi ustalardan teklif bekleyebilirsiniz.',
+            btnText: 'İşlerime Git',
+            targetRoute: '/',
+            targetTab: 2, // İşlerim sekmesi
+            secondaryBtnText: 'Yeni İlan Ver',
+            secondaryTargetRoute: '/ilan-ver',
+            tertiaryBtnText: 'Hızlı Hizmet Verenlere Ulaş',
+            tertiaryTargetRoute: '/harita',
+            tertiaryShowWorkersOnMap: true,
+            tertiaryCategory: (category != null && category.isNotEmpty)
+                ? category
+                : null,
+          );
+        },
       ),
     ],
   );
