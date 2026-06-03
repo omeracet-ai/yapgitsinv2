@@ -175,30 +175,37 @@ class _WorkersNearbySheetState extends ConsumerState<WorkersNearbySheet> {
     const bgTop = Color(0xFF1A1F2E);
     const bgBot = Color(0xFF0C1117);
     final highlight = Colors.white.withValues(alpha: 0.08);
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [bgTop, bgBot],
-        ),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-        border: Border(top: BorderSide(color: highlight, width: 1)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.50),
-            blurRadius: 28,
-            offset: const Offset(0, -10),
+    // Phase 395 — Material ancestor: PageRouteBuilder ile açılan sheet'in
+    // içindeki Text widget'ları varsayılan Material'sızdı → debug modda sarı
+    // alt çizgiler. transparency tipi Material görseli etkilemeden ancestor
+    // sağlar.
+    return Material(
+      type: MaterialType.transparency,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [bgTop, bgBot],
           ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            _header(),
-            Expanded(child: _body()),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+          border: Border(top: BorderSide(color: highlight, width: 1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.50),
+              blurRadius: 28,
+              offset: const Offset(0, -10),
+            ),
           ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              _header(),
+              Expanded(child: _body()),
+            ],
+          ),
         ),
       ),
     );
@@ -323,9 +330,23 @@ class _WorkersNearbySheetState extends ConsumerState<WorkersNearbySheet> {
             onTap: (_, __) => setState(() => _selectedWorkerId = null),
           ),
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.hizmetapp.app',
+            // Phase 395 — Harita sekmesindeki ile aynı sade grayscale OSM
+            // (Phase 267). Luminance matrisi → siyah-beyaz düz görsel,
+            // pin'lerin altında ama renklerini etkilemez.
+            ColorFiltered(
+              colorFilter: const ColorFilter.matrix(<double>[
+                0.2126, 0.7152, 0.0722, 0, 0,
+                0.2126, 0.7152, 0.0722, 0, 0,
+                0.2126, 0.7152, 0.0722, 0, 0,
+                0,      0,      0,      1, 0,
+              ]),
+              child: TileLayer(
+                urlTemplate:
+                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                subdomains: const ['a', 'b', 'c'],
+                userAgentPackageName: 'com.yapgitsin.hizmet_app',
+                retinaMode: RetinaMode.isHighDensity(context),
+              ),
             ),
             // Kullanıcı konum noktası
             MarkerLayer(
