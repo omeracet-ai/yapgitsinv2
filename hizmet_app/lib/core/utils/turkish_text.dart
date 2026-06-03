@@ -13,3 +13,16 @@ String trUpper(String s) => s.replaceAll('i', 'İ').replaceAll('ı', 'I').toUppe
 
 /// Türkçe küçük harf. "İSTANBUL" → "istanbul", "IŞIK" → "ışık".
 String trLower(String s) => s.replaceAll('I', 'ı').replaceAll('İ', 'i').toLowerCase();
+
+/// Türkçe Title Case. "ıstanbul" → "İstanbul", "İSTANBUL" → "İstanbul",
+/// "muğla / fethiye" → "Muğla / Fethiye". Çok kelimeli stringler için
+/// her kelimenin baş harfi Türkçe kuralına göre büyütülür.
+String trTitle(String s) {
+  if (s.isEmpty) return s;
+  return s.split(' ').map((word) {
+    if (word.isEmpty) return word;
+    final first = trUpper(word[0]);
+    final rest = trLower(word.substring(1));
+    return '$first$rest';
+  }).join(' ');
+}

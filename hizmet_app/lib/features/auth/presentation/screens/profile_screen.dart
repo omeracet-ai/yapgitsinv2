@@ -29,7 +29,6 @@ import '../../../profile/widgets/profile_completion_card.dart';
 // import '../../../profile/presentation/widgets/profile_video_uploader.dart'; // video upload UI hidden
 import '../../widgets/availability_editor_sheet.dart';
 import '../../../users/widgets/badge_row.dart';
-import '../../../users/widgets/worker_documents_card.dart';
 import '../../../users/widgets/verified_category_badges.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../core/services/locale_provider.dart';
@@ -167,15 +166,12 @@ class ProfileScreen extends ConsumerWidget {
                         .whereType<Map>()
                         .map((m) => Map<String, dynamic>.from(m))
                         .toList();
-                    final docs = ((d['workerDocuments'] as List?) ?? const [])
-                        .whereType<Map>()
-                        .map((m) => Map<String, dynamic>.from(m))
-                        .toList();
+                    // Phase 407 — WorkerDocumentsCard kaldırıldı (kullanıcı
+                    // isteği: "Hizmet veren 3 belge" dropdown gereksiz).
                     return Column(
                       children: [
                         // Phase 293 — Belge ile doğrulanmış kategoriler rozeti
                         VerifiedCategoryBadgesRow(categories: cats),
-                        WorkerDocumentsCard(documents: docs, isSelf: true),
                       ],
                     );
                   },
@@ -334,7 +330,8 @@ class ProfileScreen extends ConsumerWidget {
                             const Icon(Icons.location_on_outlined,
                                 size: 13, color: Colors.white70),
                             const SizedBox(width: 4),
-                            Text(city,
+                            // Phase 407 — Türkçe Title Case: "ıstanbul" → "İstanbul"
+                            Text(trTitle(city),
                                 style: const TextStyle(
                                     color: Colors.white70, fontSize: 13)),
                           ]),
@@ -980,28 +977,77 @@ class ProfileScreen extends ConsumerWidget {
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
       data: (data) {
-        final badges = data['badges'] as List?;
-        if (badges == null || badges.isEmpty) return const SizedBox.shrink();
+        final rawBadges = data['badges'] as List?;
+        if (rawBadges == null || rawBadges.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        // Phase 407 — "Doğrulanmış" rozeti gizle (kullanıcı isteği).
+        // Kimlik doğrulama zaten avatar rozet + identity status pill ile
+        // gösteriliyor; rozetler arası gereksiz tekrar oluyordu.
+        final badges = rawBadges
+            .where((b) {
+              if (b is! Map) return false;
+              final key = (b['key'] ?? '').toString().toLowerCase();
+              final label = (b['label'] ?? '').toString().toLowerCase();
+              return key != 'verified' && label != 'doğrulanmış';
+            })
+            .toList();
+        if (badges.isEmpty) return const SizedBox.shrink();
+        // Phase 407 — Görsel iyileştirme: header satırı (ikon + başlık + sayım),
+        // chip'ler 8px aralıkla wrap, kart kenar yumuşatıldı.
         return Container(
-          margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.fromLTRB(0, 12, 0, 0),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary.withValues(alpha: 0.05),
+                AppColors.surface,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.20),
+                width: 0.8),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Rozetlerim',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+              Row(
+                children: [
+                  Icon(Icons.workspace_premium_rounded,
+                      size: 18, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Rozetlerim',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${badges.length}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               BadgeRow(badges: badges),
             ],
           ),
