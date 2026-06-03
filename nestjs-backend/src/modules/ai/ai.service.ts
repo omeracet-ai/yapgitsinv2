@@ -61,16 +61,25 @@ export class AiService {
     try {
       return await this.gemini.generate({
         systemText: SYSTEM_PROMPT,
-        userText: `Bir hizmet ilanı için kısa ve net bir açıklama yaz.
+        userText: `Bir kullanıcı (müşteri) hizmet almak için ilan açıyor. Onun ağzından kısa ve net bir açıklama yaz.
 Başlık: ${title}
 Kategori: ${category}${location ? `\nKonum: ${location}` : ''}
 
+Bakış açısı: KULLANICI BİRİNCİ TEKİL ŞAHIS — hizmet ALAN, hizmet veren DEĞİL.
+İyi örnekler:
+- "Evimde elektrik prizleri düzgün çalışmıyor, kontrol ettirmek istiyorum."
+- "Salonun boyanması gerekiyor, 2 oda + 1 hol, beyaz renk."
+KÖTÜ örnekler (ASLA yapma):
+- "Müşterilerimize en iyi hizmeti..." (sen müşterisin, kendi müşterin yok)
+- "Deneyimli ustalarımızla..." (kullanıcı usta değil, usta arıyor)
+- "Hizmet veriyoruz" / "sunuyoruz" (kullanıcı hizmet alıyor, vermiyor)
+
 Kurallar:
-- Türkçe, sade ve günlük dil.
-- 40-60 kelime, 2-3 cümle.
-- "Usta", "ustalar", "deneyimli usta" gibi ifadeler YASAK.
-- Sadece şunu söyle: ne yapılacak ve müşteri ne bekliyor.
-- Önsöz veya açıklama yazma, doğrudan ilan metnini ver.`,
+- Türkçe, sade ve günlük dil
+- 40-60 kelime, 2-3 cümle
+- "Usta", "ustalar", "ustalarımız", "müşterilerimiz", "veriyoruz", "sunuyoruz" ifadeleri YASAK
+- "İhtiyacım var" / "istiyorum" / "arıyorum" / "gerekiyor" gibi alıcı ifadeler tercih
+- Önsöz veya açıklama yazma, doğrudan ilan metnini ver`,
         maxOutputTokens: 256,
       });
     } catch (err) {
