@@ -371,39 +371,37 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Phase 393 — Header card'daki kategori ikon kutusu kaldırıldı
-          // (kullanıcı isteği). Başlık tam genişlikte yer alır.
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          // Phase 393 — Header card'daki kategori ikon kutusu kaldırıldı.
+          // Phase 409 — Layout exception fix: tek child'lı Row+Expanded
+          // sarması scroll context'inde çöküyordu; doğrudan Column'a
+          // çevrildi (gereksiz Row sarması yok, başlık tam genişlikte).
+          if (widget.isFeatured)
+            Container(
+              margin: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (widget.isFeatured)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.star_rounded, color: Colors.amber.shade700, size: 12),
-                          const SizedBox(width: 4),
-                          Text('Öne Çıkan',
-                              style: TextStyle(fontSize: 10, color: Colors.amber.shade800,
-                                  fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                  Text(widget.title,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold,
-                          color: _textPrimary)),
+                  Icon(Icons.star_rounded,
+                      color: Colors.amber.shade700, size: 12),
+                  const SizedBox(width: 4),
+                  Text('Öne Çıkan',
+                      style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.amber.shade800,
+                          fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
-          ]),
+          Text(widget.title,
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: _textPrimary)),
 
           const SizedBox(height: 8),
           const Divider(height: 1, color: _borderColor),
