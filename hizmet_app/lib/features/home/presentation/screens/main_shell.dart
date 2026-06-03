@@ -648,12 +648,20 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Recent job row for home screen — uses JobStatusBadge
-class _RecentJobRow extends StatelessWidget {
+class _RecentJobRow extends ConsumerWidget {
   final Job job;
   const _RecentJobRow({required this.job});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Phase 408 — Yapgitsin tab kendi ilan kartına "Öne Çıkar" CTA
+    // (kullanıcı isteği). Sadece ilan sahibi görür.
+    final auth = ref.watch(authStateProvider);
+    final myId = auth is AuthAuthenticated
+        ? auth.user['id'] as String?
+        : null;
+    final isMine = myId != null && job.customerId == myId;
+    final isFeatured = job.isFeatured;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       padding: const EdgeInsets.all(16),
@@ -722,6 +730,63 @@ class _RecentJobRow extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               JobStatusBadge.fromString(job.status ?? 'OPEN'),
+              // Phase 408 — Kendi ilanına "Öne Çıkar" mini CTA.
+              if (isMine && !isFeatured) ...[
+                const SizedBox(height: 6),
+                InkWell(
+                  onTap: () => context.push('/boost', extra: {'jobId': job.id}),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.amber.shade400,
+                          Colors.orange.shade400,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.bolt_rounded,
+                            color: Colors.white, size: 12),
+                        SizedBox(width: 3),
+                        Text('Öne Çıkar',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  ),
+                ),
+              ] else if (isMine && isFeatured) ...[
+                const SizedBox(height: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.star_rounded,
+                          color: Colors.amber.shade700, size: 11),
+                      const SizedBox(width: 2),
+                      Text('Öne Çıkan',
+                          style: TextStyle(
+                              fontSize: 9,
+                              color: Colors.amber.shade800,
+                              fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ],

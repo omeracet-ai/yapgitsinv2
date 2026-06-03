@@ -847,12 +847,13 @@ class _AllItemsMergedList extends ConsumerWidget {
       );
     }
 
-    // Phase 345 — Yapgitsin tab pattern'i: `ListView.separated` ile
-    // kartlar arası 6px boşluk → üst üste binme yok.
+    // Phase 408 — Sıkıştırılmış liste (kullanıcı isteği). Padding +
+    // separator küçültüldü: 12,8,12,16 → 10,4,10,8 ve 6 → 4 → ekrana
+    // daha çok kart sığar, görsel orantısızlık azalır.
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
       itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 6),
+      separatorBuilder: (_, __) => const SizedBox(height: 4),
       itemBuilder: (_, i) {
         final it = items[i];
         switch (it.type) {
@@ -1796,7 +1797,8 @@ class _CustomerJobCard extends ConsumerWidget {
       borderRadius: BorderRadius.circular(12),
       onTap: () => JobHistoryDialog.show(context, job),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        // Phase 408 — sıkıştırılmış: vertical 8 → 6
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: base3d.copyWith(
           border: Border.all(
             color: isCompletedVisual
