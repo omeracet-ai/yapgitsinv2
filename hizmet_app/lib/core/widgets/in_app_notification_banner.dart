@@ -44,7 +44,24 @@ class _InAppNotificationBannerState extends State<InAppNotificationBanner>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    _ctrl.forward();
+    // Phase 391 — reduce-motion'da slide+fade atla, banner anında görünür.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (MediaQuery.of(context).disableAnimations) {
+        _ctrl.value = 1.0;
+      } else {
+        _ctrl.forward();
+      }
+    });
+  }
+
+  Future<void> _animatedReverse() async {
+    if (!mounted) return;
+    if (MediaQuery.of(context).disableAnimations) {
+      _ctrl.value = 0.0;
+      return;
+    }
+    await _ctrl.reverse();
   }
 
   @override
@@ -54,7 +71,7 @@ class _InAppNotificationBannerState extends State<InAppNotificationBanner>
   }
 
   Future<void> _handleDismiss() async {
-    if (mounted) await _ctrl.reverse();
+    await _animatedReverse();
     widget.onDismiss();
   }
 

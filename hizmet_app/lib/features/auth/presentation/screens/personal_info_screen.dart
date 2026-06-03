@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/card_3d.dart';
+import '../../../../core/utils/motion.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/auth_provider.dart';
 import '../../../profile/data/user_profile_repository.dart';
@@ -678,9 +679,14 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                                 child: Icon(Icons.broken_image_outlined,
                                     color: AppColors.textHint, size: 40),
                               )))
-                  .animate()
-                  .fade(duration: 280.ms)
-                  .scale(begin: const Offset(0.96, 0.96), end: const Offset(1, 1)),
+                  .motionAnim(
+                      context,
+                      (w) => w
+                          .animate()
+                          .fade(duration: 280.ms)
+                          .scale(
+                              begin: const Offset(0.96, 0.96),
+                              end: const Offset(1, 1))),
             ),
           ],
 

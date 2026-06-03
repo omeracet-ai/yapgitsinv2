@@ -29,7 +29,15 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _scaleAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutBack);
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeIn);
-    _animCtrl.forward();
+    // Phase 391 — reduce-motion AÇIK ise scale+fade atla, anında final state.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (MediaQuery.of(context).disableAnimations) {
+        _animCtrl.value = 1.0;
+      } else {
+        _animCtrl.forward();
+      }
+    });
     _navigate();
   }
 

@@ -52,3 +52,21 @@ class Motion {
   ) =>
       reduced(context) ? child : animated();
 }
+
+/// Phase 391 — `.animate()` chain'leri reduce-motion'da bypass eden extension.
+///
+/// Kullanım (login_screen.dart, success_screen.dart vs.):
+/// ```dart
+/// SizedBox(...).motionAnim(
+///   context, (w) => w.animate().fade(delay: 200.ms).slideX(begin: -0.1));
+/// ```
+///
+/// Reduce-motion AÇIK ise widget olduğu gibi döner; KAPALI ise `chain(widget)`
+/// çağrılır (yani `flutter_animate` zinciri çalışır).
+extension MotionAnimate on Widget {
+  Widget motionAnim(
+    BuildContext context,
+    Widget Function(Widget) chain,
+  ) =>
+      Motion.reduced(context) ? this : chain(this);
+}

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/services/firebase_auth_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/motion.dart';
 import '../../../../core/providers/navigation_provider.dart';
 import '../providers/auth_provider.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -187,13 +188,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
-              ).animate().fade().slideX(begin: -0.1),
+              ).motionAnim(context, (w) => w.animate().fade().slideX(begin: -0.1)),
               const SizedBox(height: 8),
               Text(
                 l.loginSubtitle,
                 style: TextStyle(
                     color: AppColors.textSecondary, fontSize: 16),
-              ).animate().fade(delay: 200.ms).slideX(begin: -0.1),
+              ).motionAnim(context, (w) => w.animate().fade(delay: 200.ms).slideX(begin: -0.1)),
               const SizedBox(height: 48),
               TextField(
                 key: const Key('login-email'),
@@ -204,7 +205,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   labelText: l.loginEmailLabel,
                   prefixIcon: const Icon(Icons.email_outlined),
                 ),
-              ).animate().fade(delay: 300.ms).slideY(begin: 0.1),
+              ).motionAnim(context, (w) => w.animate().fade(delay: 300.ms).slideY(begin: 0.1)),
               const SizedBox(height: 16),
               TextField(
                 key: const Key('login-password'),
@@ -223,7 +224,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
-              ).animate().fade(delay: 400.ms).slideY(begin: 0.1),
+              ).motionAnim(context, (w) => w.animate().fade(delay: 400.ms).slideY(begin: 0.1)),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -251,21 +252,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               fontWeight: FontWeight.bold,
                               fontSize: 16)),
                 ),
-              ).animate().fade(delay: 500.ms).scale(),
+              ).motionAnim(context, (w) => w.animate().fade(delay: 500.ms).scale()),
               const SizedBox(height: 8),
               Center(
                 child: TextButton(
                   onPressed: isLoading ? null : () => context.push('/forgot-password'),
                   child: Text(l.forgotPassword),
                 ),
-              ).animate().fade(delay: 550.ms),
+              ).motionAnim(context, (w) => w.animate().fade(delay: 550.ms)),
               const SizedBox(height: 8),
               Center(
                 child: TextButton(
                   onPressed: isLoading ? null : () => context.push('/kayit-ol'),
                   child: Text(l.noAccountRegister),
                 ),
-              ).animate().fade(delay: 600.ms),
+              ).motionAnim(context, (w) => w.animate().fade(delay: 600.ms)),
               const SizedBox(height: 16),
               // ─────────────────────────────────────────────────────────
               // Phase 191 — Social Sign-In divider + buttons
@@ -285,7 +286,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   Expanded(child: Divider(color: AppColors.border)),
                 ],
-              ).animate().fade(delay: 650.ms),
+              ).motionAnim(context, (w) => w.animate().fade(delay: 650.ms)),
               const SizedBox(height: 16),
               // Google
               SizedBox(
@@ -309,7 +310,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
-              ).animate().fade(delay: 700.ms).slideY(begin: 0.1),
+              ).motionAnim(context, (w) => w.animate().fade(delay: 700.ms).slideY(begin: 0.1)),
               if (FirebaseAuthService.isAppleSignInAvailable) ...[
                 const SizedBox(height: 12),
                 SizedBox(
@@ -332,7 +333,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
-                ).animate().fade(delay: 750.ms).slideY(begin: 0.1),
+                ).motionAnim(context, (w) => w.animate().fade(delay: 750.ms).slideY(begin: 0.1)),
               ],
               const SizedBox(height: 24),
             ],

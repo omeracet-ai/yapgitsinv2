@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_colors.dart';
+import '../utils/motion.dart';
 import '../providers/navigation_provider.dart';
 import '../../features/map/presentation/widgets/workers_nearby_sheet.dart';
 
@@ -74,13 +75,13 @@ class SuccessScreen extends ConsumerWidget {
               Text(
                 title,
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ).animate().fade().scale(),
+              ).motionAnim(context, (w) => w.animate().fade().scale()),
               const SizedBox(height: 12),
               Text(
                 message,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
-              ).animate().fade(delay: 200.ms).slideY(begin: 0.1),
+              ).motionAnim(context, (w) => w.animate().fade(delay: 200.ms).slideY(begin: 0.1)),
               const SizedBox(height: 48),
               SizedBox(
                 width: double.infinity,
@@ -99,7 +100,7 @@ class SuccessScreen extends ConsumerWidget {
                       style: const TextStyle(
                           color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
-              ).animate().fade(delay: 400.ms).scale(),
+              ).motionAnim(context, (w) => w.animate().fade(delay: 400.ms).scale()),
               if (secondaryBtnText != null) ...[
                 const SizedBox(height: 12),
                 SizedBox(
@@ -123,7 +124,7 @@ class SuccessScreen extends ConsumerWidget {
                     child: Text(secondaryBtnText!,
                         style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
-                ).animate().fade(delay: 500.ms).slideY(begin: 0.1),
+                ).motionAnim(context, (w) => w.animate().fade(delay: 500.ms).slideY(begin: 0.1)),
               ],
               if (tertiaryBtnText != null) ...[
                 const SizedBox(height: 12),
@@ -162,7 +163,7 @@ class SuccessScreen extends ConsumerWidget {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                ).animate().fade(delay: 600.ms).scale(begin: const Offset(0.9, 0.9)),
+                ).motionAnim(context, (w) => w.animate().fade(delay: 600.ms).scale(begin: const Offset(0.9, 0.9))),
               ],
             ],
           ),
