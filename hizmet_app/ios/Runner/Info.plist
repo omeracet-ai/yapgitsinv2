@@ -4,6 +4,20 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!--
+	Phase 396 — Google Maps alt yapısı KAPALI.
+	Aktive etmek için:
+	1) Console: https://console.cloud.google.com → Maps SDK for iOS
+	2) Bundle ID restriction: com.yapgitsin.hizmet_app (veya prod ID)
+	3) Aşağıdaki GMSApiKey'i uncomment + key'i yapıştır
+	4) ios/Runner/AppDelegate.swift → GMSServices.provideAPIKey ekle (talimat
+	   maps/google_maps_setup.md'de)
+	5) lib/core/maps/map_provider_flag.dart → useGoogleMaps = true
+
+	<key>GMSApiKey</key>
+	<string>YOUR_GOOGLE_MAPS_API_KEY</string>
+	-->
+
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

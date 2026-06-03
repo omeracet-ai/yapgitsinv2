@@ -17,6 +17,20 @@
         android:label="Yapgitsin"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!--
+        Phase 396 — Google Maps alt yapısı KAPALI (devre dışı).
+        Aktive etmek için:
+        1) Console: https://console.cloud.google.com → Maps SDK for Android etkinleştir
+        2) Package restriction: com.yapgitsin.hizmet_app + SHA-1
+        3) Aşağıdaki meta-data'yı uncomment + key'i yapıştır
+        4) lib/core/maps/map_provider_flag.dart → useGoogleMaps = true
+        5) Rebuild
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="YOUR_GOOGLE_MAPS_API_KEY"/>
+        -->
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
