@@ -25,6 +25,8 @@ import { UserBlocksModule } from '../user-blocks/user-blocks.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { AiModule } from '../ai/ai.module';
 import { SystemSettingsModule } from '../system-settings/system-settings.module';
+// Phase 401 — Teklif kabul edildiğinde otomatik chat başlatmak için.
+import { ChatModule } from '../chat/chat.module';
 
 @Module({
   imports: [
@@ -50,6 +52,7 @@ import { SystemSettingsModule } from '../system-settings/system-settings.module'
     SubscriptionsModule,
     AiModule,
     SystemSettingsModule,
+    ChatModule,
   ],
   providers: [JobsService, OffersService, QuestionsService, SavedJobsService],
   controllers: [

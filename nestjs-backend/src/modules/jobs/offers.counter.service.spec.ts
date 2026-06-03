@@ -142,6 +142,7 @@ function build(offers: Offer[], job: any): Harness {
     { listBlockedIds: jest.fn(async () => []) } as any, // userBlocksService
     { isActiveSubscriber: isSubscriber } as any, // subscriptionsService
     dataSource as any, // dataSource
+    { createAcceptanceWelcome: jest.fn(async () => undefined) } as any, // chatService (Phase 401)
   );
 
   return { service, offers, spend, escrowHold, bookingSave, isSubscriber };

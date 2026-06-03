@@ -636,9 +636,11 @@ export class AppConfigService implements OnModuleInit {
     mode: 'flat' | 'percent';
     value: number;
   }> {
-    const rawMode = await this.getSettingString('offerTokenCostMode', 'flat');
-    const mode = rawMode === 'percent' ? 'percent' : 'flat';
-    const value = await this.getSettingNumber('offerTokenCost', 5);
+    // Phase 401 — Default: percent %1 (kullanıcı spec'i). Eski flat=5
+    // fallback override edilirse de tutulur (mevcut admin ayarı korunur).
+    const rawMode = await this.getSettingString('offerTokenCostMode', 'percent');
+    const mode = rawMode === 'flat' ? 'flat' : 'percent';
+    const value = await this.getSettingNumber('offerTokenCost', 1);
     return { mode, value };
   }
 

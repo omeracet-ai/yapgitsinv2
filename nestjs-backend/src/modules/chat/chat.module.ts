@@ -24,5 +24,6 @@ import { SystemSettingsModule } from '../system-settings/system-settings.module'
   ],
   controllers: [ChatController],
   providers: [ChatGateway, ChatService],
+  exports: [ChatService],
 })
 export class ChatModule {}

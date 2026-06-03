@@ -27,6 +27,11 @@ import {
   PaginatedResult,
 } from './dto/admin-list-query.dto';
 import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
+// Phase 401 — Admin dashboard "Kullanılan krediler" toplamı için.
+import {
+  TokenTransaction,
+  TxType,
+} from '../tokens/token-transaction.entity';
 import { BulkVerifyDto } from './dto/bulk-verify.dto';
 import { BulkFeatureDto, BulkUnfeatureDto } from './dto/bulk-feature.dto';
 import { Job, JobStatus } from '../jobs/job.entity';
@@ -88,6 +93,8 @@ export class AdminService implements OnModuleInit {
     @InjectRepository(AdminAuditLog)
     private auditRepo: Repository<AdminAuditLog>,
     @InjectRepository(Provider) private providersRepo: Repository<Provider>,
+    @InjectRepository(TokenTransaction)
+    private tokenTxRepo: Repository<TokenTransaction>,
     private readonly promoService: PromoService,
     private readonly fcmService: FcmService,
     private readonly dataSource: DataSource,
@@ -593,6 +600,7 @@ export class AdminService implements OnModuleInit {
       signupsLast7d,
       jobsLast7d,
       activeWorkers7d,
+      tokensSpent,
     ] = await Promise.all([
       this.jobsRepo.count(),
       this.usersRepo.count(),
@@ -624,6 +632,14 @@ export class AdminService implements OnModuleInit {
         .where('o.createdAt > :d', { d: sevenDaysAgo })
         .getRawOne<{ cnt: string }>()
         .then((r) => Number(r?.cnt ?? 0)),
+      // Phase 401 — Kullanılan (silinen) krediler toplamı: tüm SPEND
+      // transactionlarının amount SUM'ı. REFUND yok (Phase 401'de kaldırıldı).
+      this.tokenTxRepo
+        .createQueryBuilder('t')
+        .select('COALESCE(SUM(t.amount), 0)', 'total')
+        .where('t.type = :type', { type: TxType.SPEND })
+        .getRawOne<{ total: string | number }>()
+        .then((r) => Number(r?.total ?? 0)),
     ]);
     if (process.env.NODE_ENV !== 'production') {
       this.logger.debug(`getDashboardStats parallel ${Date.now() - t0}ms`);
@@ -650,6 +666,8 @@ export class AdminService implements OnModuleInit {
       signupsLast7d,
       jobsLast7d,
       activeWorkers7d,
+      // Phase 401 — Toplam "Kullanılan krediler" (SPEND amount SUM).
+      tokensSpent,
     };
   }
 

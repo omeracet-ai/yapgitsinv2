@@ -80,6 +80,27 @@ export class ChatService {
     return peers;
   }
 
+  /// Phase 401 — Teklif kabul edildiğinde Mesajlarım listesinde iki taraf
+  /// arasında konuşmanın anında belirmesi için sistem hoşgeldin mesajı insert.
+  /// İlan sahibi tarafından usta'ya gönderilmiş gibi yazılır (single direction
+  /// — getConversations any-direction message yakalar).
+  async createAcceptanceWelcome(params: {
+    fromUserId: string;
+    toUserId: string;
+    jobId: string;
+    jobTitle: string;
+  }): Promise<void> {
+    const msg = this.messagesRepo.create({
+      from: params.fromUserId,
+      to: params.toUserId,
+      jobId: params.jobId,
+      message:
+        `🎉 "${params.jobTitle}" ilanı için teklifiniz kabul edildi. ` +
+        `Mesajlaşmaya başlayabilirsiniz.`,
+    });
+    await this.messagesRepo.save(msg);
+  }
+
   async canChat(userA: string, userB: string): Promise<boolean> {
     if (!userA || !userB || userA === userB) return false;
     const peers = await this.getAcceptedPeers(userA);

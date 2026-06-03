@@ -28,6 +28,7 @@ import { EscrowService } from '../escrow/escrow.service';
 import { Booking, BookingStatus } from '../bookings/booking.entity';
 import { UserBlocksService } from '../user-blocks/user-blocks.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { ChatService } from '../chat/chat.service';
 import { tlToMinor } from '../../common/money.util';
 
 @Injectable()
@@ -48,6 +49,8 @@ export class OffersService {
     private userBlocksService: UserBlocksService,
     private subscriptionsService: SubscriptionsService,
     private dataSource: DataSource,
+    // Phase 401 — Accept sonrası iki taraf arasında otomatik chat başlatma için.
+    private chatService: ChatService,
   ) {}
 
   /**
@@ -114,42 +117,15 @@ export class OffersService {
         cursor = child;
       }
 
-      // Phase 110 — Aboneler token harcamadığı için iade yok
-      // Phase 287 — Eskiden sabit OFFER_TOKEN_COST iade edilirdi. Artık
-      // teklif kaydında saklanan `tokenCost` üzerinden iade (admin mode/değer
-      // sonradan değişse bile kullanıcı tam ödediğini geri alır). Legacy null
-      // satırlar için fallback eski sabit.
-      const isSubscriber =
-        await this.subscriptionsService.isActiveSubscriber(userId);
-      const refundAmount = isSubscriber
-        ? 0
-        : (offer.tokenCost ?? OFFER_TOKEN_COST);
-      if (refundAmount > 0) {
-        await manager.increment(
-          User,
-          { id: userId },
-          'tokenBalance',
-          refundAmount,
-        );
-        await manager.save(
-          TokenTransaction,
-          manager.create(TokenTransaction, {
-            userId,
-            type: TxType.REFUND,
-            amount: refundAmount,
-            description: 'Teklif iptali iadesi',
-            status: TxStatus.COMPLETED,
-            paymentMethod: PaymentMethod.SYSTEM,
-            paymentRef: `WITHDRAW-${offerId.slice(0, 8)}`,
-          }),
-        );
-      }
+      // Phase 401 — Teklif geri çekildiğinde kredi iadesi YOK (kullanıcı
+      // spec'i: harcanan kredi silinir, kullanıcılar arası transfer/aktarım
+      // hiçbir şekilde olmaz). refundAmount sabit 0.
 
       return {
         id: offer.id,
         status: offer.status,
-        refunded: refundAmount > 0,
-        refundAmount,
+        refunded: false,
+        refundAmount: 0,
       };
     });
   }
@@ -274,11 +250,14 @@ export class OffersService {
     }
 
     // Phase 110 — Pro/Premium aboneler için token kesimi yapılmaz (sınırsız teklif)
-    // Phase 287 — Maliyet admin config'inden (flat veya percent) hesaplanır.
+    // Phase 401 — Maliyet İLAN BÜTÇESİ üzerinden hesaplanır (kullanıcı spec'i:
+    // tüm teklif veren aynı öder, teklif fiyatından bağımsız). budget yoksa
+    // data.price fallback. Phase 287 percent mode varsayılan.
     const isSubscriber = await this.subscriptionsService.isActiveSubscriber(
       data.userId,
     );
-    const offerCost = await this.tokensService.computeOfferCost(data.price);
+    const costBasis = job?.budgetMax ?? job?.budgetMin ?? data.price;
+    const offerCost = await this.tokensService.computeOfferCost(costBasis);
     if (!isSubscriber) {
       await this.tokensService.spend(
         data.userId,
@@ -436,6 +415,22 @@ export class OffersService {
       );
     }
 
+    // Phase 401 — Teklif kabul edildiği anda iki taraf arasında Mesajlarım
+    // listesinde konuşma görünsün diye sistem hoşgeldin mesajı eklenir.
+    try {
+      if (job && job.customerId) {
+        await this.chatService.createAcceptanceWelcome({
+          fromUserId: job.customerId,
+          toUserId: saved.userId,
+          jobId: saved.jobId,
+          jobTitle,
+        });
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Acceptance welcome chat insert failed: ${(err as Error).message}`,
+      );
+    }
     // Teklif kabulünü randevulaşma sistemine bağla: karşılıklı anlaşma (müşteri
     // teklifi kabul etti, usta zaten teklif vermişti) → CONFIRMED booking.
     // Best-effort: booking başarısız olsa da accept tamamlanır. Tarih job.dueDate,
@@ -547,7 +542,10 @@ export class OffersService {
       const isSubscriber =
         await this.subscriptionsService.isActiveSubscriber(byUserId);
       if (!isSubscriber) {
-        const fullCost = await this.tokensService.computeOfferCost(counterPrice);
+        // Phase 401 — counter da ilan bütçesi üzerinden hesaplanır.
+        const counterBasis =
+          job?.budgetMax ?? job?.budgetMin ?? counterPrice;
+        const fullCost = await this.tokensService.computeOfferCost(counterBasis);
         counterCost = Math.max(1, Math.ceil(fullCost / 2));
         await this.tokensService.spend(
           byUserId,

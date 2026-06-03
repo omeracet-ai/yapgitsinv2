@@ -759,6 +759,10 @@ IYZIPAY_URI=https://sandbox-api.iyzipay.com
 
 ## Agent Team Configuration (Müdür + 6 Voldi)
 
+> **Kanonik kaynak:** `D:/müdür/MUDUR_PROMPT.md` (v2.1) — tüm protokol detayları, §12-17 checkpoint/shared context/conditional pipeline/trace/retry/conflict kuralları orada.
+> **Yapgitsin state:** `D:/müdür/projects/yapgitsin.md`.
+> Aşağıdaki bölüm Yapgitsin'e özel hızlı referanstır; çatışma olursa MUDUR_PROMPT.md kazanır.
+
 ### Team Structure
 
 ```
@@ -786,93 +790,127 @@ Invoke appropriate agent when:
 | **AI Features** | Voldi-ai | Voldi-fs | Claude SDK, prompts, batch processing, caching |
 | **Performance** | Voldi-db | Voldi-ops | Query optimization, caching, bundle size, Core Web Vitals |
 
-### Dispatch Workflow
+### Dispatch Workflow (markdown-based, not code)
 
-1. **User requests phase (e.g., "Phase 159 başla")**
-2. **Müdür creates phase spec** → `D:\müdür\NNN_phase_*.md`
-3. **Müdür dispatches 6 agents in parallel:**
-   ```
-   node src/cli.ts "Phase NNN: Description — 6 Voldi: design/fs/db/ops/sec/ai"
-   ```
-4. **Each agent:**
-   - Reads phase spec
-   - Works on assigned task
-   - Reports findings/code
-5. **Müdür collects all reports** → single commit + push
-6. **Output:** GitHub PR or commit message with all agent contributions
+Müdür ≠ Node.js CLI. Müdür = markdown protokol. Claude Code `MUDUR_PROMPT.md`'yi okur ve `Agent` tool ile Voldi subagent'larını dispatch eder.
 
-### Phase Template
+9-adımlı protokol (`D:/müdür/MUDUR_PROMPT.md` §3 detay):
 
-Create `D:\müdür\NNN_phase_*.md` with:
-- **Goal:** What's the business outcome?
-- **Scope:** Which subsystems affected?
-- **Voldi-design tasks:** Design changes, tokens, component specs
-- **Voldi-fs tasks:** React/NestJS code, API changes, form logic
-- **Voldi-db tasks:** Schema, migrations, queries, performance checks
-- **Voldi-ops tasks:** Build, deploy, monitoring, performance
-- **Voldi-sec tasks:** Security audit, auth flow, data validation
-- **Voldi-ai tasks:** AI prompts, Claude integration, content generation
-- **Success criteria:** Measurable deliverables
-- **Timeline:** Estimated hours per agent
+| # | Aktör | Çıktı |
+|---|---|---|
+| 1 | User | Ham talimat |
+| 2 | Müdür | Resepsiyon + ön analiz |
+| 3 | Çakma + Voldi | Dispatch planı |
+| 4 | Voldi(ler) | İcra (kod) |
+| 5 | Çakma + Voldi | Denetim (build/test/smoke) |
+| 6 | Çakma | Dispatch raporu → Müdür |
+| 7 | Müdür | Doc güncelle + build |
+| 8 | Müdür | Deploy onayı |
+| 9 | Çakma | Deploy + final rapor → User |
+
+**Çakma Müdür** = deploy-only persona (`D:/müdür/cakma_mudur/`). Kod yazmaz; sadece build artefakt + FTP/Firebase + smoke + `last_deploy.md` raporu.
+
+### Phase Protokol Eklemeler (MUDUR_PROMPT v2.1 §12-17)
+
+Yapgitsin'e uygulanan ek kurallar (`D:/müdür/MUDUR_PROMPT.md`'den):
+
+| § | Kural |
+|---|---|
+| 12 | **Phase Checkpoint** — `D:/müdür/projects/yapgitsin.md` içinde `## CURRENT_PHASE` bloğu (id/started_at/completed_steps/pending_steps/status). "Kaldığın yerden devam" net. |
+| 13 | **Shared Context** — `D:/müdür/projects/yapgitsin.shared.md` Voldi'lerin birbirinin çıktısını okuduğu cross-context dosyası. Dispatch öncesi zorunlu okuma. |
+| 14 | **Conditional Pipeline** — Voldi-sec `BLOCKED` → pipeline durdur. Voldi-db pending migration → fs/design dispatch ertele. Default: 6 paralel + sec gate. |
+| 15 | **Observability** — `D:/müdür/dispatch_trace.jsonl` her dispatch için 1 satır JSONL (ts/phase/voldi/duration/status/files_changed/summary). |
+| 16 | **Retry/Bail-out** — Transient: 1 retry. Permanent: 1 retry düzeltilmiş prompt. Logical (sec BLOCKED): retry yok. Max 2 deneme → kullanıcıya yükselt. |
+| 17 | **Conflict Resolution** — Mevcut kod patern'i > CLAUDE.md kuralı > sec gate > kullanıcıya 2-3 seçenek. Müdür kendi başına mimari değiştirmez. |
 
 ### Autonomous Mode
 
-Müdür operates with:
-- ✅ Auto-commit + push (no "push edeyim mi?" prompts)
-- ✅ Parallel agent dispatch (all 6 at once)
-- ✅ Silent failures reported → single digest report
-- ✅ Phase chaining (Phase 158 → 159 → 160 automatically if no blockers)
+- ✅ Auto-commit + push ("push edeyim mi?" sormaz)
+- ✅ Paralel Voldi dispatch (bağımsız subtask'lar TEK message)
+- ✅ Phase chaining (blokaj yoksa otomatik zincirleme)
+- ✅ Sessiz hata raporu → final konsolide rapor
 
-### Offline Mode (No Ollama)
+### Phase Template
 
-If Müdür offline, Claude Code assistant manually implements phases:
-1. Creates phase spec
-2. Implements work following Voldi role guidelines
-3. Commits & pushes
-4. Waits for FTP/deployment user input
+`D:/müdür/projects/yapgitsin.md` CURRENT_PHASE bloğu (canonical):
+
+```markdown
+## CURRENT_PHASE
+- id: 391
+- title: "Phase başlığı"
+- voldi: design, fs       # hangi Voldi'ler
+- completed_steps: [...]
+- pending_steps: [...]
+- last_commit: <hash>
+- status: in_progress | blocked | done
+```
 
 ---
 
 ## Voldi Agent Role Definitions
 
-### **Voldi-design**
-- **Responsibility:** Visual & UX coherence
-- **Expertise:** Design tokens, Tailwind, Airtasker pattern, typography, spacing, shadows, colors
-- **Outputs:** Design spec updates, component guidelines, CSS changes
-- **Key Files:** `DESIGN_TOKENS.md`, `globals.css`, component documentation
-- **Review Gate:** "Does this follow Airtasker palette (#FF5A1F, #2D3E50, #FFB400)?"
+> Detay: her Voldi'nin lessons-learned'i `D:/müdür/0X_*.md`'de. Aşağıdaki tablo
+> Yapgitsin'e özel hızlı referans.
 
-### **Voldi-fs**
-- **Responsibility:** Code quality, API contracts, React patterns, NestJS structure
-- **Expertise:** Next.js App Router, React hooks, NestJS services, REST API design, TypeScript
-- **Outputs:** React/NestJS code, refactored components, API endpoints, unit tests
-- **Key Files:** `web/src/app/**/*.tsx`, `nestjs-backend/src/**/*.ts`
-- **Review Gate:** "Is this code clean, typed, and testable? Does it follow project patterns?"
+### **Voldi-design** ([D:/müdür/08_design.md](D:/müdür/08_design.md))
+- **Yetki:** UI/UX overhaul, design tokens, mobile-first, motion craft
+- **Yapgitsin palette:**
+  - **Flutter app** (Phase 221 "Premium Dark Soft"): primary `#4ADE80` (yeşil), surface `#161B22`, bg `#0C1117` — tema-aware getter (`AppColors.*`)
+  - **Admin panel + Web** (Airtasker-inspired): primary `#FF5A1F` coral, secondary `#2D3E50` navy
+- **Standartlar:** Phase 388 3D pattern (`card3d()` + drag handle 44×4 + sheet köşe 22), Emil Kowalski 7 great-anim prensibi (Phase 391 motion.dart)
+- **Key files:** `hizmet_app/lib/core/theme/app_colors.dart`, `card_3d.dart`, `motion.dart`, admin-panel `globals.css`
+- **Review Gate:** Flutter — "AppColors getter mi (tema-aware)? Phase 388 3D pattern uyumlu?" / Admin — "Airtasker palette + 16-24px radius?"
 
-### **Voldi-db**
-- **Responsibility:** Data integrity, query performance, schema evolution
-- **Expertise:** SQLite/TypeORM, query optimization, migration planning, indexes, n+1 prevention
-- **Outputs:** Entity updates, migration scripts, query refactors, performance reports
-- **Key Files:** `nestjs-backend/src/entities/*.ts`, queries in services
-- **Review Gate:** "Will this scale? Are there missing indexes? Any n+1 queries?"
+### **Voldi-fs** ([D:/müdür/05_fs.md](D:/müdür/05_fs.md))
+- **Yetki:** NestJS + Next.js admin + Next.js web + Flutter — feature, refactor, API
+- **Yapgitsin stack:**
+  - **Backend:** NestJS 10, TypeORM, SQLite dev+prod, Socket.io, multer+sharp, Swagger
+  - **Admin:** Next.js 16 App Router, Tailwind, localStorage JWT
+  - **Web:** Next.js 16 static export, i18n (tr/en/az)
+  - **App:** Flutter 3.x, Riverpod, GoRouter, Dio, socket_io_client, flutter_map (OSM)
+- **Pattern:** DTO + class-validator, `AuthGuard('jwt')` + `@CurrentUser()`, `simple-json/simple-enum` SQLite uyumlu, pagination `{data,total,page,limit,pages}`, Flutter `ApiConstants.baseUrl` env override
+- **Review Gate:** "DTO validated? Auth guard doğru? Pagination response? SQLite tipi `simple-json/datetime/float`?"
 
-### **Voldi-ops**
-- **Responsibility:** Build health, deployment readiness, production stability
-- **Expertise:** Next.js static export, Plesk FTP, performance monitoring, CI/CD
-- **Outputs:** Deploy checklist, performance metrics, monitoring scripts, infra docs
-- **Key Files:** `next.config.ts`, build output verification, deployment procedures
-- **Review Gate:** "Is the build reproducible? Can we deploy this safely?"
+### **Voldi-db** ([D:/müdür/06_db.md](D:/müdür/06_db.md))
+- **Yetki:** SQLite/TypeORM, query opt, indexing, migration, backup/rollback
+- **Yapgitsin DB:** SQLite (prod + dev); `synchronize: true` dev, `false` prod + `migrationsRun: true` boot migration
+- **Migration:** `scripts/migrations/NNN_description.sql`, idempotent (`IF NOT EXISTS`), `_migrations` tracking table
+- **28 tablo:** users, jobs, job_questions, job_question_replies, offers, service_requests, service_request_applications, bookings, reviews, categories, token_transactions, notifications, chat_messages, audit_log, ...
+- **Açık ihtiyaçlar:** Redis cache (kategori×şehir matrix), search index (Meilisearch/Typesense), read replica
+- **SQLite tip kuralları:** `datetime` NOT `timestamp`, `float` NOT `decimal`, `simple-json` NOT `jsonb` → boot crash önler
+- **Review Gate:** "Index var mı? n+1 yok mu? Migration idempotent?"
 
-### **Voldi-sec**
-- **Responsibility:** Security posture, compliance, threat prevention
-- **Expertise:** JWT/auth, XSS/injection prevention, CORS, rate limiting, env secrets, GDPR
-- **Outputs:** Security audit reports, vulnerable code fixes, security tests
-- **Key Files:** NestJS guards, middleware, validation pipes, sanitization
-- **Review Gate:** "Could an attacker exploit this? Are credentials exposed?"
+### **Voldi-ops** ([D:/müdür/03_ops.md](D:/müdür/03_ops.md))
+- **Yetki:** Local infra, Docker/K8s, log debug, network, Nginx/IIS/Plesk
+- **Yapgitsin deploy:**
+  - **Host:** Plesk Windows + IIS, yapgitsin.tr
+  - **Backend:** NestJS standalone `D:\backend`, iisnode `dist/main.js`
+  - **Admin:** Next.js standalone `D:\admin`, iisnode `server.js`
+  - **Web:** Next.js static `D:\web`, IIS direct
+  - **App:** Flutter web `D:\app`, IIS direct, base `/app/`
+- **Deploy script:** `node scripts/node-ftp-deploy.js` (basic-ftp tabanlı, PowerShell sorunlarından izole)
+- **Sık sorunlar:** Port 3001 EADDRINUSE zombie, web.config'de `node_modules/iisnode/.env` hidden segment, `iisnode-cwd-safe` DB resolver
+- **Backup:** Phase 273 — günlük SQLite snapshot cron + 7 gün retention + token-gate restore (`YYYYMMDD`)
+- **Review Gate:** "Build reproducible? Smoke geçiyor mu? Deploy `last_deploy.md`'ye yazılıyor mu?"
 
-### **Voldi-ai**
-- **Responsibility:** AI/LLM features, prompt quality, Claude SDK integration
-- **Expertise:** Claude API, prompt engineering, batch processing, caching, streaming
-- **Outputs:** AI feature specs, prompt examples, integration code, performance tuning
-- **Key Files:** `nestjs-backend/src/ai/`, prompt templates, Claude SDK calls
-- **Review Gate:** "Is the prompt clear? Will Claude output useful? Is caching optimal?"
+### **Voldi-sec** ([D:/müdür/04_sec.md](D:/müdür/04_sec.md))
+- **Yetki:** JWT/Auth, OWASP, rate limit, hardening, pen test, log monitoring
+- **Yapgitsin kuralları:**
+  - JWT user 30d, admin 8h, `ignoreExpiration: false`, secret env'den (hardcoded fallback YOK)
+  - bcrypt 10 rounds
+  - Helmet ^8.1.0 + HSTS 180g
+  - Rate limit: ThrottlerModule global guard 60/dk/IP
+  - CORS: `ALLOWED_ORIGINS` env, production https zorunlu
+- **Açık riskler:** CORS HTTP downgrade temizliği, NODE_ENV production garanti, CSP header, Iyzipay callback https
+- **Review Gate:** "Credentials exposed? Rate limit yeterli? CORS prod'da https only?" — **§14 sec gate: BLOCKED dönerse pipeline durur**
+
+### **Voldi-ai** ([D:/müdür/07_ai.md](D:/müdür/07_ai.md))
+- **Yetki:** LLM entegrasyon, prompt eng, RAG, embedding, MCP, agent orchestration
+- **Yapgitsin AI (Phase 281 migration):**
+  - **Tüm `/ai/*` endpoint'leri Gemini 2.5 Flash** (`GeminiClient`, env: `GEMINI_API_KEY`)
+  - `@anthropic-ai/sdk` package'tan kaldırıldı
+  - Endpointler: `POST /ai/generate-description`, `/ai/chat`, `/ai/summarize-reviews`
+- **Anthropic (Opus 4.8) — sadece bu orchestration katmanı için** (`D:/müdür/`), Yapgitsin uygulaması içinde YOK
+- **Prompt kuralları:** Phase 382 — 40-60 kelime hedef, 2-3 cümle, pazarlama dili yasak (sadece "usta" türevleri için)
+- **Key files:** `nestjs-backend/src/modules/ai/gemini.client.ts`, `ai.service.ts`
+- **Review Gate:** "Prompt yeterince kısa? maxOutputTokens makul (256/yazı)? Gemini'ye gidiyor mu (Anthropic değil)?"

@@ -19,6 +19,8 @@ interface Stats {
   totalUsers: number;
   totalProviders: number;
   verifiedProviders: number;
+  // Phase 401 — Kullanılan (silinen) krediler toplamı.
+  tokensSpent?: number;
   chartData?: {
     jobsPerDay: Array<{ date: string; count: number }>;
     usersPerDay: Array<{ date: string; count: number }>;
@@ -106,10 +108,12 @@ export default function DashboardPage() {
         <h2 className="text-lg font-semibold mb-4">Genel Bakış</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: "Toplam İlan",    value: stats?.totalJobs,          icon: "📋", cls: "bg-blue-50 border-blue-100" },
-            { label: "Kullanıcı",      value: stats?.totalUsers,         icon: "👥", cls: "bg-emerald-50 border-emerald-100" },
-            { label: "Sağlayıcı",      value: stats?.totalProviders,     icon: "👷", cls: "bg-purple-50 border-purple-100" },
-            { label: "Doğrulanmış ✓",  value: stats?.verifiedProviders,  icon: "✅", cls: "bg-teal-50 border-teal-100" },
+            { label: "Toplam İlan",      value: stats?.totalJobs,          icon: "📋", cls: "bg-blue-50 border-blue-100" },
+            { label: "Kullanıcı",        value: stats?.totalUsers,         icon: "👥", cls: "bg-emerald-50 border-emerald-100" },
+            { label: "Sağlayıcı",        value: stats?.totalProviders,     icon: "👷", cls: "bg-purple-50 border-purple-100" },
+            { label: "Doğrulanmış ✓",    value: stats?.verifiedProviders,  icon: "✅", cls: "bg-teal-50 border-teal-100" },
+            // Phase 401 — Kullanılan krediler (toplam SPEND amount).
+            { label: "Kullanılan Krediler", value: stats?.tokensSpent,     icon: "🪙", cls: "bg-amber-50 border-amber-100" },
           ].map(c => (
             <div key={c.label} className={`rounded-xl border p-5 ${c.cls} shadow-sm`}>
               <div className="flex items-center justify-between mb-2">

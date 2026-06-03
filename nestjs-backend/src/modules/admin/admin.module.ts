@@ -14,6 +14,8 @@ import { JobQuestion } from '../jobs/job-question.entity';
 import { Provider } from '../providers/provider.entity';
 import { Notification } from '../notifications/notification.entity';
 import { AdminAuditLog } from '../admin-audit/admin-audit-log.entity';
+// Phase 401 — Admin dashboard "Kullanılan krediler" toplamı için.
+import { TokenTransaction } from '../tokens/token-transaction.entity';
 import { CategoriesModule } from '../categories/categories.module';
 import { ProvidersModule } from '../providers/providers.module';
 import { PromoModule } from '../promo/promo.module';
@@ -37,6 +39,7 @@ import { TokensModule } from '../tokens/tokens.module';
       Notification,
       AdminAuditLog,
       Provider,
+      TokenTransaction,
     ]),
     CategoriesModule,
     ProvidersModule,
