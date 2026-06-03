@@ -265,9 +265,10 @@ class ProfileScreen extends ConsumerWidget {
           orElse: () => 0,
         );
 
-        // Phase 351 — Profil tamamlandığında hero arkaplanı koyu tona
-        // geçer (primary → secondary). One-time popup için bkz: ana
-        // profile screen build'ündeki notify hook.
+        // Phase 351 — Profil tamamlandığında hero arkaplanı.
+        // Phase 403 — Koşul TERSİNE çevrildi (kullanıcı isteği): %100 dolu
+        // profil AÇIK (primary green) gösterilir; eksik profil KOYU
+        // (secondary navy) ile kullanıcının dikkatini çeker.
         final completionAsync = ref.watch(profileCompletionProvider);
         final isProfileComplete = completionAsync.maybeWhen(
           data: (d) {
@@ -277,8 +278,8 @@ class ProfileScreen extends ConsumerWidget {
           orElse: () => false,
         );
         final heroBg = isProfileComplete
-            ? AppColors.secondary // dark navy
-            : AppColors.primary;  // theme green
+            ? AppColors.primary   // theme green (tamamlanmış → ödüllü)
+            : AppColors.secondary; // dark navy (eksik → dikkat)
 
         return Container(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
