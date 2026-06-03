@@ -502,6 +502,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         ? (successJobs / totalJobs * 100).round()
         : null;
     final customerId       = customer['id'] as String?;
+    // Phase 392 — workerCategories kullanılmıyor (chip'ler + özel ilan CTA
+    // kaldırıldı). Underscore ile lint suppress.
+    // ignore: unused_local_variable
     final workerCategories = customer['workerCategories'] is List
         ? (customer['workerCategories'] as List)
             .map((e) => e.toString())
@@ -589,19 +592,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                                 overflow: TextOverflow.ellipsis),
                           ),
                         ),
-                        if (verified) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryLight,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Text('Doğrulandı',
-                                style: TextStyle(fontSize: 10,
-                                    color: AppColors.primary, fontWeight: FontWeight.w600)),
-                          ),
-                        ],
+                        // Phase 392 — "Doğrulandı" text badge kaldırıldı
+                        // (kullanıcı isteği). Avatar üstündeki mavi tik rozet
+                        // verified göstergesi olarak yeterli.
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -645,30 +638,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
               ],
             ),
 
-          // Offer ilanlarında usta kategorileri chip'ler
-          if (isOffer && workerCategories.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: workerCategories
-                  .take(4)
-                  .map((c) => Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(c,
-                            style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary)),
-                      ))
-                  .toList(),
-            ),
-          ],
+          // Phase 392 — Offer ilanlarındaki usta kategori chip'leri kaldırıldı
+          // (kullanıcı isteği). Bilgi profili kartında zaten mevcut.
 
           // Phase 317 — "Profili Gör" butonu kaldırıldı; isim + avatar
           // tıklaması zaten aynı rotaya götürüyor.
@@ -1178,60 +1149,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                                 : TextDecoration.none)),
                   ),
                 ),
-                // Phase 319 — 1-1 chat tetikleyici. Sadece bu iki taraf
-                // arasında: ilan sahibi ↔ teklif sahibi. Diğer ziyaretçiler
-                // (örn. fiyatı görmeyen ustalar) butonu görmez.
-                if (!maskForLogout) ...[
-                  Builder(builder: (ctx) {
-                    final customer = widget.id == null
-                        ? null
-                        : ref
-                                .read(jobDetailProvider(widget.id!))
-                                .valueOrNull?['customer']
-                            as Map?;
-                    final jobCustomerId = customer?['id'] as String?;
-                    final jobCustomerName =
-                        customer?['fullName'] as String?;
-                    String? peerId;
-                    String? peerName;
-                    if (isOwnerView && offerUserId.isNotEmpty) {
-                      peerId = offerUserId;
-                      peerName = name; // offer.user.fullName scope'ta
-                    } else if (isOfferOwner && jobCustomerId != null) {
-                      peerId = jobCustomerId;
-                      peerName = jobCustomerName;
-                    }
-                    if (peerId == null) return const SizedBox.shrink();
-                    // Phase 372 — chat icon artık inline expansion toggle
-                    // (göster/gizle). Long-press → tam ekran.
-                    final expanded = _expandedChats.contains(offerId);
-                    return SizedBox(
-                      width: 32,
-                      height: 32,
-                      child: IconButton(
-                        tooltip:
-                            expanded ? 'Sohbeti gizle' : 'Sohbeti göster',
-                        padding: EdgeInsets.zero,
-                        iconSize: 18,
-                        icon: Icon(
-                          expanded
-                              ? Icons.keyboard_arrow_up_rounded
-                              : Icons.chat_bubble_outline_rounded,
-                          color: AppColors.primary,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            if (expanded) {
-                              _expandedChats.remove(offerId);
-                            } else {
-                              _expandedChats.add(offerId);
-                            }
-                          });
-                        },
-                      ),
-                    );
-                  }),
-                ],
+                // Phase 392 — Phase 319/372 inline chat icon kaldırıldı
+                // (kullanıcı isteği). Mesajlaşma Mesajlarım sekmesinden
+                // (jobCustomerId ↔ offerUserId) zaten erişilebilir.
                 if (!isOfferOwner && offerUserId.isNotEmpty && !maskForLogout)
                   SizedBox(
                     width: 32, height: 32,
@@ -1439,42 +1359,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
               );
             }),
 
-          // Bu ustaya özel ilan aç — sadece ilan sahibi (müşteri) görür,
-          // teklif vereni daha sonra özel iş için davet etmek isteyebilir.
-          if (isCustomerView && offerUserId.isNotEmpty && !isOfferOwner) ...[
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-              child: SizedBox(
-                width: double.infinity,
-                height: 32,
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                  icon: const Icon(Icons.send_to_mobile_outlined, size: 14),
-                  label: Text('Bu Ustaya Özel İlan Aç ($name)',
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
-                  onPressed: () {
-                    final cats = (userMap?['workerCategories'] as List?)
-                            ?.map((e) => e.toString())
-                            .toList() ??
-                        <String>[];
-                    context.push('/ilan-ver', extra: {
-                      'targetWorkerId': offerUserId,
-                      'targetWorkerName': name,
-                      if (cats.isNotEmpty) 'allowedCategories': cats,
-                    });
-                  },
-                ),
-              ),
-            ),
-          ],
+          // Phase 392 — "Bu Ustaya Özel İlan Aç" CTA kaldırıldı
+          // (kullanıcı isteği). Profil sayfasından "Teklif Yap" akışıyla
+          // aynı işlev zaten karşılanıyor.
 
           // Pazarlık detayı
           if (status == 'countered' && counterPrice != null && canSeePrice)

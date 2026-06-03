@@ -1,4 +1,6 @@
+import 'dart:io' as io;
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -177,16 +179,32 @@ class _JobPhotosBulkSectionState extends ConsumerState<JobPhotosBulkSection> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            xf.path,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: Colors.grey.shade100,
-                              child: const Icon(Icons.image_outlined),
-                            ),
-                          ),
+                          // Phase 392 — Bug fix: pending preview için web'de
+                          // Image.network (XFile.path = blob url) ama mobil'de
+                          // Image.file (XFile.path = filesystem path).
+                          // Önceki Image.network mobil'de "broken image" hatası
+                          // veriyordu çünkü path bir URL değil.
+                          child: kIsWeb
+                              ? Image.network(
+                                  xf.path,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: Colors.grey.shade100,
+                                    child: const Icon(Icons.image_outlined),
+                                  ),
+                                )
+                              : Image.file(
+                                  io.File(xf.path),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: Colors.grey.shade100,
+                                    child: const Icon(Icons.image_outlined),
+                                  ),
+                                ),
                         ),
                         Positioned(
                           top: 4,
