@@ -253,12 +253,45 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
   _MyJobsRange _range = _MyJobsRange.all;
 
   Future<void> _openSelectionSheet() async {
-    final result = await showModalBottomSheet<Set<_JobsFilter>?>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      // Phase 346 — sheet sayfanın ~%85'ini doldurur.
-      builder: (ctx) => _JobsMultiSelectSheet(initial: _selected),
+    // Phase 398 — Slide-up route (380ms easeOutCubic), live filter callback.
+    final result = await Navigator.of(context).push<Set<_JobsFilter>?>(
+      PageRouteBuilder<Set<_JobsFilter>?>(
+        opaque: false,
+        barrierDismissible: true,
+        barrierColor: Colors.black54,
+        transitionDuration: const Duration(milliseconds: 380),
+        reverseTransitionDuration: const Duration(milliseconds: 260),
+        pageBuilder: (_, __, ___) => Align(
+          alignment: Alignment.bottomCenter,
+          child: FractionallySizedBox(
+            heightFactor: 0.85,
+            child: _JobsMultiSelectSheet(
+              initial: _selected,
+              onChange: (current) {
+                if (!mounted) return;
+                setState(() {
+                  _selected
+                    ..clear()
+                    ..addAll(current);
+                });
+              },
+            ),
+          ),
+        ),
+        transitionsBuilder: (_, animation, __, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+              reverseCurve: Curves.easeInCubic,
+            )),
+            child: child,
+          );
+        },
+      ),
     );
     if (result != null && mounted) {
       setState(() {
@@ -414,6 +447,9 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
             ],
           ),
         ),
+        // Phase 398 — TopHeader altında seçili kategori chip stripi + Kaldır.
+        // Yalnız _selected dolu ise render.
+        if (_selected.isNotEmpty) _buildSelectedChipsStrip(),
         if (_searchQuery.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
@@ -435,6 +471,63 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
 
   /// Phase 346 — Dropdown yerine sheet-trigger button. Etiket aktif
   /// seçime göre değişir: "Tümü" / "X seçili" / tek isim.
+  /// Phase 398 — Seçili filtreleri yatay chip stripi. Sağ kenarda Kaldır.
+  Widget _buildSelectedChipsStrip() {
+    return Container(
+      color: AppColors.background,
+      padding: const EdgeInsets.fromLTRB(10, 0, 4, 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 32,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  for (final f in _selected)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: InputChip(
+                        avatar: Icon(f.icon,
+                            size: 14, color: AppColors.primary),
+                        label: Text(f.label),
+                        labelStyle: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600),
+                        backgroundColor:
+                            AppColors.primary.withValues(alpha: 0.12),
+                        side: BorderSide(
+                            color:
+                                AppColors.primary.withValues(alpha: 0.40),
+                            width: 0.8),
+                        labelPadding:
+                            const EdgeInsets.symmetric(horizontal: 4),
+                        deleteIcon: const Icon(Icons.close_rounded, size: 14),
+                        deleteIconColor: AppColors.primary,
+                        onDeleted: () {
+                          setState(() => _selected.remove(f));
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          TextButton.icon(
+            onPressed: () => setState(() => _selected.clear()),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.error,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: const Size(0, 32),
+            ),
+            icon: const Icon(Icons.clear_all_rounded, size: 16),
+            label: const Text('Kaldır',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFilterDropdown() {
     return Material(
       color: AppColors.surfaceElevated,
@@ -926,7 +1019,8 @@ class _MyJobsFilterSheetState extends State<_MyJobsFilterSheet> {
 /// butonu Set döner; "Sıfırla" hepsini seçili yapar.
 class _JobsMultiSelectSheet extends StatefulWidget {
   final Set<_JobsFilter> initial;
-  const _JobsMultiSelectSheet({required this.initial});
+  final void Function(Set<_JobsFilter> current)? onChange;
+  const _JobsMultiSelectSheet({required this.initial, this.onChange});
 
   @override
   State<_JobsMultiSelectSheet> createState() =>
@@ -934,29 +1028,11 @@ class _JobsMultiSelectSheet extends StatefulWidget {
 }
 
 class _JobsMultiSelectSheetState extends State<_JobsMultiSelectSheet> {
-  // Phase 378 — initial boş gelirse (eski "Tümü = empty" semantic),
-  // tüm filtreleri _temp'e koy ki UI checkbox'lar TICKED görünsün.
-  late final Set<_JobsFilter> _temp = widget.initial.isEmpty
-      ? {..._JobsFilter.values}
-      : {...widget.initial};
+  // Phase 398 — Boş başla (eski Phase 378 yanıltıcı "empty=all-ticked"
+  // davranışı kaldırıldı). Kullanıcı seçim yaparak filtreler.
+  late final Set<_JobsFilter> _temp = {...widget.initial};
 
-  // Tümü = hepsi seçili VEYA boş set. Apply'da full→empty normalize.
-  bool get _isAll =>
-      _temp.isEmpty || _temp.length == _JobsFilter.values.length;
-
-  void _toggleAll(bool? v) {
-    setState(() {
-      if (v == true) {
-        // Tümü ON → hepsini işaretle (kutular TICKED).
-        _temp
-          ..clear()
-          ..addAll(_JobsFilter.values);
-      } else {
-        // Tümü OFF → tüm seçimi kaldır.
-        _temp.clear();
-      }
-    });
-  }
+  void _notify() => widget.onChange?.call(_temp);
 
   void _toggle(_JobsFilter f, bool? v) {
     setState(() {
@@ -966,162 +1042,114 @@ class _JobsMultiSelectSheetState extends State<_JobsMultiSelectSheet> {
         _temp.remove(f);
       }
     });
+    _notify();
   }
 
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    final sheetHeight = media.size.height * 0.85;
-    return Padding(
-      padding:
-          EdgeInsets.only(bottom: media.viewInsets.bottom),
-      child: Container(
-        height: sheetHeight,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 10),
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Padding(
-                padding:
-                    const EdgeInsets.fromLTRB(20, 12, 16, 8),
-                child: Row(
-                  children: [
-                    const Icon(Icons.checklist_rounded,
-                        color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text('Kategoriler',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold)),
-                    ),
-                    TextButton(
-                      onPressed: () => _toggleAll(true),
-                      child: const Text('Hepsi'),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  children: [
-                    CheckboxListTile(
-                      value: _isAll,
-                      // Phase 347 — Master sadece "Tümü ↔ özel seçim" ikili
-                      // durum, indeterminate gerekmiyor.
-                      onChanged: _toggleAll,
-                      activeColor: AppColors.primary,
-                      title: const Text('Tümü',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w700)),
-                      subtitle: Text(
-                        _isAll
-                            ? 'Tüm kategoriler seçili'
-                            : (_temp.isEmpty
-                                ? 'Hiçbir seçim yok'
-                                : '${_temp.length}/${_JobsFilter.values.length} seçili'),
-                        style: TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecondary),
-                      ),
-                      secondary: Icon(
-                        Icons.select_all_rounded,
-                        color: _isAll
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
-                      ),
-                      controlAffinity:
-                          ListTileControlAffinity.trailing,
-                    ),
-                    const Divider(height: 1),
-                    ..._JobsFilter.values.map((f) {
-                      final selected = _temp.contains(f);
-                      return CheckboxListTile(
-                        value: selected,
-                        onChanged: (v) => _toggle(f, v),
-                        activeColor: AppColors.primary,
-                        title: Text(f.label,
-                            style: TextStyle(
-                              fontWeight: selected
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                            )),
-                        secondary: Icon(f.icon,
-                            color: selected
-                                ? AppColors.primary
-                                : AppColors.textSecondary),
-                        controlAffinity:
-                            ListTileControlAffinity.trailing,
-                      );
-                    }),
-                  ],
-                ),
-              ),
-              Padding(
-                padding:
-                    const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () =>
-                            Navigator.of(context).pop(null),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 12),
-                          shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(12)),
-                        ),
-                        child: const Text('İptal'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton.icon(
-                        // Phase 378 — hepsi seçili → consumer'a boş set
-                        // (eski "Tümü = empty" semantic korunur).
-                        onPressed: () => Navigator.of(context)
-                            .pop(_isAll ? <_JobsFilter>{} : _temp),
-                        icon: const Icon(Icons.check_rounded,
-                            size: 18),
-                        label: Text(
-                            _temp.isEmpty ? 'Uygula' : 'Uygula (${_temp.length})'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 12),
-                          shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(12)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+    // Phase 398 — Yapgitsin 3D pattern: koyu dikey gradient + drag handle
+    // + üst highlight + yukarı yönelik boxShadow + 22px corner.
+    const bgTop = Color(0xFF1A1F2E);
+    const bgBot = Color(0xFF0C1117);
+    final highlight = Colors.white.withValues(alpha: 0.08);
+    return Material(
+      type: MaterialType.transparency,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [bgTop, bgBot],
+            ),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(22)),
+            border: Border(top: BorderSide(color: highlight, width: 1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.50),
+                blurRadius: 28,
+                offset: const Offset(0, -10),
               ),
             ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 10),
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                // Phase 398 — "Kategoriler / Hepsi" header + Tümü master KALDIRILDI.
+                const SizedBox(height: 8),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    children: [
+                      ..._JobsFilter.values.map((f) {
+                        final selected = _temp.contains(f);
+                        return CheckboxListTile(
+                          value: selected,
+                          onChanged: (v) => _toggle(f, v),
+                          activeColor: AppColors.primary,
+                          checkColor: Colors.white,
+                          side: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.35),
+                              width: 1.4),
+                          title: Text(f.label,
+                              style: TextStyle(
+                                fontWeight: selected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: Colors.white.withValues(
+                                    alpha: selected ? 1.0 : 0.85),
+                              )),
+                          secondary: Icon(f.icon,
+                              color: selected
+                                  ? AppColors.primary
+                                  : Colors.white.withValues(alpha: 0.55)),
+                          controlAffinity:
+                              ListTileControlAffinity.trailing,
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () =>
+                          Navigator.of(context).pop(_temp),
+                      icon: const Icon(Icons.check_rounded, size: 18),
+                      label: Text(_temp.isEmpty
+                          ? 'Tümü'
+                          : '${_temp.length} seçim aktif'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

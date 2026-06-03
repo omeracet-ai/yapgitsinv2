@@ -115,31 +115,65 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
       List<Map<String, dynamic>> cats) async {
     final allNames =
         cats.map((c) => (c['name'] as String?) ?? '').where((n) => n.isNotEmpty).toList();
-    final result = await showModalBottomSheet<Set<String>?>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => _CategoryMultiSelectSheet(
-        all: allNames,
-        initial: _selectedCategories,
-        catIcons: {
-          for (final c in cats)
-            (c['name'] as String?) ?? '':
-                (c['icon'] as String?) ?? '⭐',
+    // Phase 398 — Slide-up sheet (380ms easeOutCubic), 3D Yapgitsin pattern,
+    // live filter callback her toggle'da çağrılır.
+    final result = await Navigator.of(context).push<Set<String>?>(
+      PageRouteBuilder<Set<String>?>(
+        opaque: false,
+        barrierDismissible: true,
+        barrierColor: Colors.black54,
+        transitionDuration: const Duration(milliseconds: 380),
+        reverseTransitionDuration: const Duration(milliseconds: 260),
+        pageBuilder: (_, __, ___) => Align(
+          alignment: Alignment.bottomCenter,
+          child: FractionallySizedBox(
+            heightFactor: 0.85,
+            child: _CategoryMultiSelectSheet(
+              all: allNames,
+              initial: _selectedCategories,
+              catIcons: {
+                for (final c in cats)
+                  (c['name'] as String?) ?? '':
+                      (c['icon'] as String?) ?? '⭐',
+              },
+              onChange: (current) {
+                // Phase 398 — anlık güncelleme: her toggle parent state'e yansır.
+                if (!mounted) return;
+                setState(() {
+                  _selectedCategories
+                    ..clear()
+                    ..addAll(current);
+                });
+                ref.read(jobsProvider.notifier).fetchJobs(
+                      category: null,
+                      q: _searchQuery.isEmpty ? null : _searchQuery,
+                    );
+              },
+            ),
+          ),
+        ),
+        transitionsBuilder: (_, animation, __, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+              reverseCurve: Curves.easeInCubic,
+            )),
+            child: child,
+          );
         },
       ),
     );
+    // Kapanışta son durum override (varsa); live onChange zaten uyguladı.
     if (result != null && mounted) {
       setState(() {
         _selectedCategories
           ..clear()
           ..addAll(result);
       });
-      // Server tarafa kategori NULL → tüm açık ilanlar; client filtre.
-      ref.read(jobsProvider.notifier).fetchJobs(
-            category: null,
-            q: _searchQuery.isEmpty ? null : _searchQuery,
-          );
     }
   }
 
@@ -197,6 +231,10 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
       body: Column(
         children: [
           _buildSearchAndFilter(categoriesAsync, activeFilterCount, myCategories),
+          // Phase 398 — Seçili kategori chip stripi (TopHeader hemen altında).
+          // Yalnız boş değilse render edilir. Sağ kenarda "Kaldır" tüm seçimi siler.
+          if (_selectedCategories.isNotEmpty)
+            _buildSelectedChipsStrip(categoriesAsync),
           Expanded(
             child: jobsAsync.when(
               loading: () => ListSkeleton(
@@ -305,6 +343,80 @@ class _JobOpportunitiesScreenState extends ConsumerState<JobOpportunitiesScreen>
   ///   [🗺 Harita] [Kategori ▾]                  [🔍 Arama] [⚙ Filtre] [🔔]
   /// Kategori chip şeridi ve search bar kaldırıldı; tek dropdown +
   /// arama butonu (modal) ile yer kazanıldı.
+  /// Phase 398 — Seçili kategorileri yatay chip stripi olarak gösterir.
+  /// Her chip tıklanırsa o kategori silinir. Sağ kenarda "Kaldır" tüm seçimi
+  /// temizler, anlık fetchJobs ile liste güncellenir.
+  Widget _buildSelectedChipsStrip(
+    AsyncValue<List<Map<String, dynamic>>> categoriesAsync,
+  ) {
+    final cats = categoriesAsync.valueOrNull ?? const [];
+    final icons = {
+      for (final c in cats)
+        (c['name'] as String?) ?? '': (c['icon'] as String?) ?? '⭐',
+    };
+    return Container(
+      color: AppColors.background,
+      padding: const EdgeInsets.fromLTRB(10, 0, 4, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 32,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  for (final cat in _selectedCategories)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: InputChip(
+                        label: Text('${icons[cat] ?? '⭐'}  $cat'),
+                        labelStyle: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600),
+                        backgroundColor:
+                            AppColors.primary.withValues(alpha: 0.12),
+                        side: BorderSide(
+                            color:
+                                AppColors.primary.withValues(alpha: 0.40),
+                            width: 0.8),
+                        labelPadding:
+                            const EdgeInsets.symmetric(horizontal: 4),
+                        deleteIcon: const Icon(Icons.close_rounded, size: 14),
+                        deleteIconColor: AppColors.primary,
+                        onDeleted: () {
+                          setState(() => _selectedCategories.remove(cat));
+                          ref.read(jobsProvider.notifier).fetchJobs(
+                                category: null,
+                                q: _searchQuery.isEmpty ? null : _searchQuery,
+                              );
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          TextButton.icon(
+            onPressed: () {
+              setState(() => _selectedCategories.clear());
+              ref.read(jobsProvider.notifier).fetchJobs(
+                    category: null,
+                    q: _searchQuery.isEmpty ? null : _searchQuery,
+                  );
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.error,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: const Size(0, 32),
+            ),
+            icon: const Icon(Icons.clear_all_rounded, size: 16),
+            label: const Text('Kaldır',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSearchAndFilter(
     AsyncValue<List<Map<String, dynamic>>> categoriesAsync,
     int activeFilterCount,
@@ -1099,10 +1211,14 @@ class _CategoryMultiSelectSheet extends StatefulWidget {
   final List<String> all;
   final Set<String> initial;
   final Map<String, String> catIcons;
+  /// Phase 398 — anlık filtreleme. Her toggle'da çağrılır, parent state
+  /// senkron tutulur. null geçilirse opt-out (eski behavior).
+  final void Function(Set<String> current)? onChange;
   const _CategoryMultiSelectSheet({
     required this.all,
     required this.initial,
     required this.catIcons,
+    this.onChange,
   });
 
   @override
@@ -1112,25 +1228,13 @@ class _CategoryMultiSelectSheet extends StatefulWidget {
 
 class _CategoryMultiSelectSheetState
     extends State<_CategoryMultiSelectSheet> {
-  // Phase 378 — initial boş gelirse (önceki "Tümü" semantic), tüm kategorileri
-  // _temp'e doldur ki UI checkbox'lar TICKED görünsün.
-  late final Set<String> _temp =
-      widget.initial.isEmpty ? {...widget.all} : {...widget.initial};
-  // Tümü = hepsi seçili VEYA boş set. Apply'da full→empty olarak normalize.
-  bool get _isAll => _temp.isEmpty || _temp.length == widget.all.length;
+  // Phase 398 BUG FIX — initial seti boş gelirse checkbox'lar BOŞ başlasın.
+  // Eski Phase 378 davranışı: empty → all ticked (yanıltıcıydı).
+  // Yeni: empty → empty. Kullanıcı seçim yaparak filtreler.
+  late final Set<String> _temp = {...widget.initial};
 
-  void _toggleAll(bool? v) {
-    setState(() {
-      if (v == true) {
-        // Tümü ON → hepsini işaretle (checkbox'lar TICKED görünür).
-        _temp
-          ..clear()
-          ..addAll(widget.all);
-      } else {
-        // Tümü OFF → tüm seçimi kaldır (kullanıcı tek tek seçer).
-        _temp.clear();
-      }
-    });
+  void _notify() {
+    widget.onChange?.call(_temp);
   }
 
   void _toggle(String cat, bool? v) {
@@ -1141,102 +1245,83 @@ class _CategoryMultiSelectSheetState
         _temp.remove(cat);
       }
     });
+    _notify();
   }
 
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    final sheetHeight = media.size.height * 0.85;
-    return Padding(
-      padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
-      child: Container(
-        height: sheetHeight,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
+    // Phase 398 — Yapgitsin 3D pattern (workers_nearby_sheet ile aynı):
+    // koyu dikey gradient, üst beyaz highlight, "kalkık" boxShadow, 22px corner.
+    const bgTop = Color(0xFF1A1F2E);
+    const bgBot = Color(0xFF0C1117);
+    final highlight = Colors.white.withValues(alpha: 0.08);
+    return Material(
+      type: MaterialType.transparency,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [bgTop, bgBot],
+            ),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(22)),
+            border: Border(top: BorderSide(color: highlight, width: 1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.50),
+                blurRadius: 28,
+                offset: const Offset(0, -10),
+              ),
+            ],
+          ),
+          child: SafeArea(
           top: false,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 10),
+              // Phase 398 — drag handle 44×4, beyaz alpha 0.18 (Yapgitsin std).
               Center(
                 child: Container(
-                  width: 40,
+                  width: 44,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: Colors.white.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 16, 8),
-                child: Row(
-                  children: [
-                    const Icon(Icons.category_outlined,
-                        color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text('Kategoriler',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
-                    TextButton(
-                      // Phase 378 — "Hepsi" tüm kategorileri işaretler (TICKED).
-                      onPressed: () => setState(() {
-                        _temp
-                          ..clear()
-                          ..addAll(widget.all);
-                      }),
-                      child: const Text('Hepsi'),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
+              // Phase 398 — "Kategoriler / Hepsi" header ve "Tümü" master checkbox
+              // KALDIRILDI (kullanıcı isteği). Liste direkt kategori checkbox'larıyla
+              // başlar. Filtre boş = tüm ilanlar (semantik korunur).
+              const SizedBox(height: 8),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   children: [
-                    CheckboxListTile(
-                      value: _isAll,
-                      onChanged: _toggleAll,
-                      activeColor: AppColors.primary,
-                      title: const Text('Tümü',
-                          style: TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: Text(
-                        _isAll
-                            ? 'Tüm kategoriler seçili'
-                            : '${_temp.length}/${widget.all.length} seçili',
-                        style: TextStyle(
-                            fontSize: 11, color: AppColors.textSecondary),
-                      ),
-                      secondary: Icon(
-                        Icons.select_all_rounded,
-                        color: _isAll
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
-                      ),
-                      controlAffinity: ListTileControlAffinity.trailing,
-                    ),
-                    const Divider(height: 1),
                     ...widget.all.map((cat) {
-                      // Phase 347 — Master ON iken (boş set), kategoriler
-                      // UNCHECKED görünür — kullanıcı doldurarak seçim başlar.
+                      // Phase 398 — checkbox boş başlar, dark sheet için beyaz text.
                       final selected = _temp.contains(cat);
                       final icon = widget.catIcons[cat] ?? '⭐';
                       return CheckboxListTile(
                         value: selected,
                         onChanged: (v) => _toggle(cat, v),
                         activeColor: AppColors.primary,
+                        checkColor: Colors.white,
+                        side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.35),
+                            width: 1.4),
                         title: Text('$icon  $cat',
                             style: TextStyle(
                               fontWeight: selected
                                   ? FontWeight.w700
                                   : FontWeight.w500,
+                              color: Colors.white.withValues(
+                                  alpha: selected ? 1.0 : 0.85),
                             )),
                         controlAffinity: ListTileControlAffinity.trailing,
                       );
@@ -1244,47 +1329,31 @@ class _CategoryMultiSelectSheetState
                   ],
                 ),
               ),
+              // Phase 398 — Tek "Kapat" butonu (live filter zaten anlık uyguladı).
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(null),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: const Text('İptal'),
-                      ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () =>
+                        Navigator.of(context).pop(_temp),
+                    icon: const Icon(Icons.check_rounded, size: 18),
+                    label: Text(_temp.isEmpty
+                        ? 'Tümü'
+                        : '${_temp.length} seçim aktif'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton.icon(
-                        // Phase 378 — hepsi seçili ise consumer'a boş set
-                        // döner (eski "Tümü = empty" semantic korunur).
-                        onPressed: () => Navigator.of(context)
-                            .pop(_isAll ? <String>{} : _temp),
-                        icon: const Icon(Icons.check_rounded, size: 18),
-                        label: Text(_isAll
-                            ? 'Uygula (Tümü)'
-                            : 'Uygula (${_temp.length})'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
           ),
+        ),
         ),
       ),
     );
