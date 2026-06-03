@@ -403,19 +403,17 @@ class ProfileScreen extends ConsumerWidget {
     final hasIdentity = user['identityPhotoUrl'] != null;
     final isVerified = user['identityVerified'] == true;
 
+    // Phase 404 — Doğrulanmış kullanıcıda banner kaldırıldı (kullanıcı isteği).
+    // Sadece "İnceleniyor" veya "Yüklenmedi" durumlarında uyarı gösterilir.
+    if (isVerified) return const SizedBox.shrink();
+
     final Color bgColor;
     final Color borderColor;
     final IconData icon;
     final String title;
     final String subtitle;
 
-    if (isVerified) {
-      bgColor = AppColors.verifiedGreen.withValues(alpha: 0.12);
-      borderColor = AppColors.verifiedGreen;
-      icon = Icons.verified_user;
-      title = 'Kimlik Doğrulandı';
-      subtitle = 'Hesabınız onaylıdır.';
-    } else if (hasIdentity) {
+    if (hasIdentity) {
       bgColor = AppColors.warning.withValues(alpha: 0.12);
       borderColor = AppColors.warning;
       icon = Icons.hourglass_empty;
