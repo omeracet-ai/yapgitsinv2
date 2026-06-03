@@ -158,9 +158,18 @@ class YapgitsinApp extends ConsumerWidget {
             OverlayEntry(
               builder: (ctx) {
                 InAppNotificationService.instance.attach(Overlay.of(ctx));
+                // Phase 379 — KeyedSubtree brightness key. ListenableBuilder
+                // tek başına `child` referansını koruyordu → Flutter element
+                // diffing derin subtree'de bazı widget'ları (RepaintBoundary,
+                // sliver, KeepAlive) dirty marklamıyor, "parça parça" repaint.
+                // ValueKey(brightness) değişince Flutter subtree'yi zorla
+                // yeniden inşa eder; AppColors getter'ları taze değer döner.
                 return ListenableBuilder(
                   listenable: AppColors.brightnessNotifier,
-                  builder: (_, __) => child ?? const SizedBox.shrink(),
+                  builder: (_, __) => KeyedSubtree(
+                    key: ValueKey(AppColors.brightnessNotifier.value),
+                    child: child ?? const SizedBox.shrink(),
+                  ),
                 );
               },
             ),
