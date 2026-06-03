@@ -36,7 +36,14 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton>
     _pulse = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
-    )..repeat(reverse: true);
+    );
+    // Phase 391 — kayıt sırasında kırmızı nabız; reduce-motion'da statik.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!MediaQuery.of(context).disableAnimations) {
+        _pulse.repeat(reverse: true);
+      }
+    });
   }
 
   @override

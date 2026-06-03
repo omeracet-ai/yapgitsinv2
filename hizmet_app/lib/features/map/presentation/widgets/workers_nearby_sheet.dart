@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/card_3d.dart';
+import '../../../../core/utils/motion.dart';
 import '../../data/map_repository.dart';
 import 'worker_map_marker.dart';
 
@@ -23,13 +24,17 @@ class WorkersNearbySheet extends ConsumerStatefulWidget {
   /// micro-slide'ı yerine 380ms easeOutCubic ile belirgin "aşağıdan yukarı"
   /// sayfa hissi verir; arka plan koyu barrier.
   static Future<void> show(BuildContext context, String category) {
+    // Phase 391 — reduce-motion: slide süresini sıfırla, doğrudan görünür.
+    final reduced = Motion.reduced(context);
     return Navigator.of(context).push(
       PageRouteBuilder<void>(
         opaque: false,
         barrierDismissible: true,
         barrierColor: Colors.black54,
-        transitionDuration: const Duration(milliseconds: 380),
-        reverseTransitionDuration: const Duration(milliseconds: 260),
+        transitionDuration:
+            reduced ? Duration.zero : const Duration(milliseconds: 380),
+        reverseTransitionDuration:
+            reduced ? Duration.zero : const Duration(milliseconds: 260),
         pageBuilder: (_, __, ___) => GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {},
@@ -42,6 +47,7 @@ class WorkersNearbySheet extends ConsumerStatefulWidget {
           ),
         ),
         transitionsBuilder: (_, animation, __, child) {
+          if (reduced) return child;
           return SlideTransition(
             position: Tween<Offset>(
               begin: const Offset(0, 1),
@@ -225,34 +231,8 @@ class _WorkersNearbySheetState extends ConsumerState<WorkersNearbySheet> {
           Row(
             children: [
               // Şimşek ikonu yumuşak yeşil halo ile (3D hissi).
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.success.withValues(alpha: 0.32),
-                      AppColors.success.withValues(alpha: 0.08),
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.success.withValues(alpha: 0.30),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.bolt,
-                    color: AppColors.success, size: 20),
-              ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(
-                  duration: 1400.ms,
-                  begin: 1.0,
-                  end: 1.06,
-                  curve: Curves.easeInOut),
+              // Phase 391 — nabız animasyonu sadece reduce-motion KAPALI iken.
+              _PulsingBolt(),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -450,7 +430,7 @@ class _WorkersNearbySheetState extends ConsumerState<WorkersNearbySheet> {
             ),
           ],
         ),
-      ).animate().fadeIn(duration: 220.ms),
+      ),
     );
   }
 
@@ -461,12 +441,8 @@ class _WorkersNearbySheetState extends ConsumerState<WorkersNearbySheet> {
     );
     // Phase 388 — Card3D ile Yapgitsin gradient + iç highlight + dual shadow.
     // Slide+fade entrance (220ms), her seçim değişimde key ile rebuild → re-anime.
-    return Positioned(
-      key: ValueKey('worker_card_${w.id}'),
-      left: 12,
-      right: 12,
-      bottom: 16,
-      child: Card3D(
+    // Phase 391 — reduce-motion'da entrance animasyonu atla, kart hemen görünür.
+    final Widget card = Card3D(
         radius: 16,
         elevation: 1.6,
         onTap: () {
@@ -572,14 +548,56 @@ class _WorkersNearbySheetState extends ConsumerState<WorkersNearbySheet> {
             ),
           ],
         ),
-      )
-          .animate()
-          .slideY(
-              begin: 0.4,
-              end: 0.0,
-              duration: 280.ms,
-              curve: Curves.easeOutCubic)
-          .fadeIn(duration: 220.ms),
+      );
+    final animated = Motion.reduced(context)
+        ? card
+        : card.animate().slideY(
+            begin: 0.4,
+            end: 0.0,
+            duration: 280.ms,
+            curve: Curves.easeOutCubic).fadeIn(duration: 220.ms);
+    return Positioned(
+      key: ValueKey('worker_card_${w.id}'),
+      left: 12,
+      right: 12,
+      bottom: 16,
+      child: animated,
     );
+  }
+}
+
+/// Phase 391 — Şimşek ikonu (yeşil halo + nabız). Reduce-motion'da statik kalır.
+class _PulsingBolt extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final core = Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.success.withValues(alpha: 0.32),
+            AppColors.success.withValues(alpha: 0.08),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.success.withValues(alpha: 0.30),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: const Icon(Icons.bolt, color: AppColors.success, size: 20),
+    );
+    if (Motion.reduced(context)) return core;
+    return core.animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(
+        duration: 1400.ms,
+        begin: 1.0,
+        end: 1.06,
+        curve: Curves.easeInOut);
   }
 }

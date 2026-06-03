@@ -24,7 +24,15 @@ class _TypingIndicatorState extends State<TypingIndicator>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1100),
-    )..repeat();
+    );
+    // Phase 391 — sürekli repeat sadece reduce-motion KAPALI iken.
+    // Reduce-motion açıksa controller value 0'da kalır, statik 3 nokta.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!MediaQuery.of(context).disableAnimations) {
+        _controller.repeat();
+      }
+    });
   }
 
   @override
