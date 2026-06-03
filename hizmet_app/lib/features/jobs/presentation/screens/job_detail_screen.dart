@@ -557,38 +557,35 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
               const SizedBox(width: 12),
 
               // İsim + meta
+              // Phase 411 — Layout fix: tek-Flexible Row sarması kaldırıldı.
+              // Page transition (ImageFiltered+Stack+Scroll) pass'inde Row 564
+              // unbounded width tetikliyordu. Doğrudan Text + ellipsis.
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: customerId == null
-                                ? null
-                                : () => context.push(isOffer
-                                    ? '/usta/$customerId'
-                                    : '/musteri/$customerId'),
-                            child: Text(name,
-                                style: const TextStyle(fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: _textPrimary,
-                                    decoration: TextDecoration.underline,
-                                    decorationColor: AppColors.primary,
-                                    decorationThickness: 1.2),
-                                overflow: TextOverflow.ellipsis),
-                          ),
-                        ),
-                        // Phase 392 — "Doğrulandı" text badge kaldırıldı
-                        // (kullanıcı isteği). Avatar üstündeki mavi tik rozet
-                        // verified göstergesi olarak yeterli.
-                      ],
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: customerId == null
+                          ? null
+                          : () => context.push(isOffer
+                              ? '/usta/$customerId'
+                              : '/musteri/$customerId'),
+                      child: Text(name,
+                          style: const TextStyle(fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: _textPrimary,
+                              decoration: TextDecoration.underline,
+                              decorationColor: AppColors.primary,
+                              decorationThickness: 1.2),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
                     ),
                     const SizedBox(height: 2),
                     if (city.isNotEmpty || sinceStr.isNotEmpty)
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 0,
                         children: [
                           if (city.isNotEmpty) ...[
                             Icon(Icons.location_on_outlined, size: 11, color: Colors.grey.shade400),
