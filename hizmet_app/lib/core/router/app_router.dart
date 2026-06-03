@@ -582,14 +582,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Verilirse tertiary CTA artık /harita yerine WorkersNearbySheet'i
           // 85% bottom sheet olarak açar (sadece bu kategoriye ait ustalar).
           final category = state.uri.queryParameters['category'];
+          // Phase 399 — 2 buton yeter (kullanıcı isteği):
+          //   Primary  → Hizmet ilanlarına yönlen (Yapgitsin tab=1)
+          //   Tertiary → Hızlı Hizmet Verenlere Ulaş (workers sheet)
+          // 'Yeni İlan Ver' secondary kaldırıldı.
           return SuccessScreen(
             title: 'İlanınız Yayında!',
             message: 'İlanınız başarıyla yayınlandı. Şimdi ustalardan teklif bekleyebilirsiniz.',
-            btnText: 'İşlerime Git',
+            btnText: 'Hizmet İlanları',
             targetRoute: '/',
-            targetTab: 2, // İşlerim sekmesi
-            secondaryBtnText: 'Yeni İlan Ver',
-            secondaryTargetRoute: '/ilan-ver',
+            targetTab: 1, // Yapgitsin sekmesi (ilanlar)
             tertiaryBtnText: 'Hızlı Hizmet Verenlere Ulaş',
             tertiaryTargetRoute: '/harita',
             tertiaryShowWorkersOnMap: true,
