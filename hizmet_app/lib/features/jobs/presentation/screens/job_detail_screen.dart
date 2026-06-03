@@ -371,15 +371,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Phase 393 — Header card'daki kategori ikon kutusu kaldırıldı
+          // (kullanıcı isteği). Başlık tam genişlikte yer alır.
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Container(
-              height: 40, width: 40,
-              decoration: BoxDecoration(
-                  color: widget.color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12)),
-              child: Icon(widget.icon, color: widget.color, size: 20),
-            ),
-            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -502,9 +496,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         ? (successJobs / totalJobs * 100).round()
         : null;
     final customerId       = customer['id'] as String?;
-    // Phase 392 — workerCategories kullanılmıyor (chip'ler + özel ilan CTA
-    // kaldırıldı). Underscore ile lint suppress.
-    // ignore: unused_local_variable
     final workerCategories = customer['workerCategories'] is List
         ? (customer['workerCategories'] as List)
             .map((e) => e.toString())
@@ -638,8 +629,31 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
               ],
             ),
 
-          // Phase 392 — Offer ilanlarındaki usta kategori chip'leri kaldırıldı
-          // (kullanıcı isteği). Bilgi profili kartında zaten mevcut.
+          // Phase 393 — Offer ilanlarında usta kategorileri chip'leri
+          // (Phase 392'de yanlış kaldırılmıştı, revert).
+          if (isOffer && workerCategories.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: workerCategories
+                  .take(4)
+                  .map((c) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(c,
+                            style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary)),
+                      ))
+                  .toList(),
+            ),
+          ],
 
           // Phase 317 — "Profili Gör" butonu kaldırıldı; isim + avatar
           // tıklaması zaten aynı rotaya götürüyor.
