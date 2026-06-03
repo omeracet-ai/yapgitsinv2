@@ -763,49 +763,56 @@ class ProfileScreen extends ConsumerWidget {
                         color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(10),
                       ),
+                      // Phase 406 — İkonlar kaldırıldı (kullanıcı isteği).
+                      // Sadece değer + label kalır, sade görünüm.
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _expStat('🏆', '$rep', 'İtibar'),
+                          _expStat('$rep', 'İtibar'),
                           Container(
                               width: 1,
                               height: 28,
                               color: AppColors.border),
                           _expStat(
-                              '⭐', avg.toStringAsFixed(1), 'Ortalama'),
+                              avg.toStringAsFixed(1), 'Ortalama'),
                           Container(
                               width: 1,
                               height: 28,
                               color: AppColors.border),
-                          _expStat('📝', '$rev', 'Yorum'),
+                          _expStat('$rev', 'Yorum'),
                         ],
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _statCard(
-                            icon: Icons.shopping_bag_outlined,
-                            color: AppColors.verifiedBlue,
-                            title: 'Hizmet Alan',
-                            total: cTotal,
-                            success: cSuccess,
-                            fail: cFail,
+                    // Phase 406 — IntrinsicHeight ile iki kart eşit yükseklikte
+                    // hizalanır; ProgressBar her zaman render → satırlar eşit.
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: _statCard(
+                              icon: Icons.shopping_bag_outlined,
+                              color: AppColors.verifiedBlue,
+                              title: 'Hizmet Alan',
+                              total: cTotal,
+                              success: cSuccess,
+                              fail: cFail,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _statCard(
-                            icon: Icons.handyman_outlined,
-                            color: AppColors.verifiedGreen,
-                            title: 'Hizmet Veren',
-                            total: wTotal,
-                            success: wSuccess,
-                            fail: wFail,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _statCard(
+                              icon: Icons.handyman_outlined,
+                              color: AppColors.verifiedGreen,
+                              title: 'Hizmet Veren',
+                              total: wTotal,
+                              success: wSuccess,
+                              fail: wFail,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildBadgesSection(ref),
@@ -819,13 +826,14 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _expStat(String emoji, String value, String label) {
+  Widget _expStat(String value, String label) {
+    // Phase 406 — İkon kaldırıldı; değer üstte büyük + label altta küçük.
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('$emoji  $value',
+        Text(value,
             style: TextStyle(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary)),
         const SizedBox(height: 2),
@@ -934,18 +942,18 @@ class ProfileScreen extends ConsumerWidget {
           _statRow('Başarılı', success, AppColors.verifiedGreen),
           const SizedBox(height: 2),
           _statRow('Başarısız', fail, AppColors.error),
-          if (total > 0) ...[
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: total > 0 ? success / total : 0,
-                backgroundColor: AppColors.error.withValues(alpha: 0.15),
-                valueColor: AlwaysStoppedAnimation<Color>(color),
-                minHeight: 6,
-              ),
+          const SizedBox(height: 8),
+          // Phase 406 — ProgressBar her zaman render (total=0 iken bile boş bar
+          // gösterilir) → iki kart yükseklik olarak eşit hizalanır.
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: total > 0 ? success / total : 0,
+              backgroundColor: AppColors.border.withValues(alpha: 0.40),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              minHeight: 6,
             ),
-          ],
+          ),
         ],
       ),
     );
