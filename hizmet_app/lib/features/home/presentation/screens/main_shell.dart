@@ -19,8 +19,8 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../categories/data/category_repository.dart';
 import '../../../jobs/presentation/providers/job_provider.dart' as jp;
 import '../../../jobs/presentation/providers/job_provider.dart' show jobsProvider, Job;
+import '../../../jobs/presentation/screens/job_detail_screen.dart';
 import '../../../jobs/presentation/screens/my_jobs_screen.dart';
-import '../../../jobs/presentation/widgets/job_history_dialog.dart';
 import '../../../../core/app_config/app_config_provider.dart';
 import '../../../../core/widgets/yapgitsin_loader.dart';
 import '../../../providers/data/provider_repository.dart';
@@ -583,10 +583,28 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
             }
             return Column(
               children: open.map((j) => GestureDetector(
-                    // Phase 387 — Yapgitsin tab ilan kartları artık İşlerim
-                    // sekmesindeki gibi `JobHistoryDialog` (bottom-sheet
-                    // detay) açar; tutarlı detay UX'i.
-                    onTap: () => JobHistoryDialog.show(context, j.toMap()),
+                    // Phase 390 — Yapgitsin tap revert: tekrar full page
+                    // JobDetailScreen. Dialog deneyi boş açılıyordu;
+                    // user kararı: eski davranışa dön, alt popup ayrı
+                    // bir story olarak ele alınacak.
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => JobDetailScreen(
+                          id: j.id,
+                          title: j.title,
+                          description: j.desc,
+                          location: j.location,
+                          budget: j.budget,
+                          category: j.category,
+                          postedAt: j.time,
+                          icon: j.icon,
+                          color: j.color,
+                          isFeatured: j.isFeatured,
+                          customerId: j.customerId,
+                        ),
+                      ),
+                    ),
                     child: _RecentJobRow(job: j),
                   )).toList(),
             );
