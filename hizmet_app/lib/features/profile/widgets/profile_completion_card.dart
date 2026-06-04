@@ -52,6 +52,16 @@ const Map<String, String> kProfileFieldLabels = {
 
 String labelForField(String key) => kProfileFieldLabels[key] ?? key;
 
+// Phase 426 — Defansif filter: backend Phase 425'te availability/isAvailable
+// alanlarını profil doluluk hesabından kaldırdı. Ancak APK cache'i veya eski
+// backend response'ları kullanıcıya hâlâ "Müsaitlik Durumu eksik" gösterebilir
+// — bu set Flutter tarafında o anahtarları zorla temizler ve percent'i
+// kalan alanlar üzerinden yeniden hesaplar.
+const Set<String> kCompletionExcludedKeys = {
+  'isAvailable',
+  'availabilitySchedule',
+};
+
 final profileCompletionProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final auth = ref.watch(authStateProvider);
@@ -59,10 +69,31 @@ final profileCompletionProvider =
   try {
     final body = await ref.read(userProfileRepositoryProvider).getMe();
     final pc = body['profileCompletion'];
-    if (pc is Map) {
-      return Map<String, dynamic>.from(pc);
-    }
-    return {};
+    if (pc is! Map) return {};
+    final map = Map<String, dynamic>.from(pc);
+
+    // missingFields filter — availability anahtarlarını UI'dan gizle.
+    final rawMissing = (map['missingFields'] as List?) ?? const [];
+    final filteredMissing = rawMissing
+        .map((e) => e.toString())
+        .where((k) => !kCompletionExcludedKeys.contains(k))
+        .toList();
+
+    // Eğer backend hâlâ filtered olmayan totalFields gönderiyorsa
+    // (eski cache), totalFields ve percent'i yeniden hesapla.
+    final totalFromBackend = (map['totalFields'] as num?)?.toInt() ?? 0;
+    final filledFromBackend = (map['filledFields'] as num?)?.toInt() ?? 0;
+    final removedFromMissing = rawMissing.length - filteredMissing.length;
+    // Backend missing'de availability tutmuş → totalFields'tan da düş.
+    final totalFields = (totalFromBackend - removedFromMissing).clamp(1, 999);
+    final filledFields = filledFromBackend.clamp(0, totalFields);
+    final percent = ((filledFields / totalFields) * 100).round();
+
+    map['missingFields'] = filteredMissing;
+    map['totalFields'] = totalFields;
+    map['filledFields'] = filledFields;
+    map['percent'] = percent;
+    return map;
   } catch (_) {
     return {};
   }
