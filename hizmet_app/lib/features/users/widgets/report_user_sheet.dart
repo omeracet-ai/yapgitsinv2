@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/overflow_slide_row.dart';
 import '../data/moderation_repository.dart';
 
 /// Bottom sheet to file a user report. Backend reasons:
@@ -126,9 +127,8 @@ class _ReportUserSheetState extends ConsumerState<ReportUserSheet> {
             ),
           ),
           const SizedBox(height: 8),
-          Wrap(
+          OverflowSlideRow(
             spacing: 8,
-            runSpacing: 8,
             children: [
               for (final r in _reasons)
                 ChoiceChip(

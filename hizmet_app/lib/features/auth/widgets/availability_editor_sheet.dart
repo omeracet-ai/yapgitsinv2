@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/widgets/overflow_slide_row.dart';
 
 /// Phase 211 — Haftalık müsaitlik düzenleyici (gün switch + saat aralığı).
 /// PUT /users/availability — 7-gün array gönderir.
@@ -453,9 +454,8 @@ class AvailabilityChips extends StatelessWidget {
       }
     }
 
-    return Wrap(
+    return OverflowSlideRow(
       spacing: 6,
-      runSpacing: 6,
       children: _order.map((k) {
         final on = activeDays.contains(k);
         return Container(

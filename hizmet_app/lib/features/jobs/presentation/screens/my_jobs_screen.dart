@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/card_3d.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/overflow_slide_row.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/job_repository.dart';
@@ -936,9 +937,8 @@ class _MyJobsFilterSheetState extends State<_MyJobsFilterSheet> {
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary)),
             const SizedBox(height: 6),
-            Wrap(
+            OverflowSlideRow(
               spacing: 6,
-              runSpacing: 6,
               children: _MyJobsSort.values
                   .map((s) => ChoiceChip(
                         label: Text(s.label,
@@ -968,9 +968,8 @@ class _MyJobsFilterSheetState extends State<_MyJobsFilterSheet> {
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary)),
             const SizedBox(height: 6),
-            Wrap(
+            OverflowSlideRow(
               spacing: 6,
-              runSpacing: 6,
               children: _MyJobsRange.values
                   .map((r) => ChoiceChip(
                         label: Text(r.label,

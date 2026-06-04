@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/intl_formatter.dart';
+import '../../../core/widgets/overflow_slide_row.dart';
 import '../data/job_filter.dart';
 
 /// İş ilanları için filtre bottom sheet'i.
@@ -186,7 +187,7 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary)),
           const SizedBox(height: 8),
-          Wrap(
+          OverflowSlideRow(
             spacing: 8,
             children: [
               _sortChip(JobSort.newest, 'En Yeni'),

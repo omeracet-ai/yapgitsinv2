@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../../../core/services/turkish_currency_input_formatter.dart';
 import '../../../../core/widgets/location_picker.dart';
+import '../../../../core/widgets/overflow_slide_row.dart';
 import '../providers/job_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/app_config/app_config_provider.dart';
@@ -1303,9 +1304,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 8),
-        Wrap(
+        OverflowSlideRow(
           spacing: 8,
-          runSpacing: 8,
           children: [
             _scheduleChip('flexible', 'Esnek', Icons.event_available_rounded),
             _scheduleChip('specific', 'Belirli', Icons.schedule_rounded),

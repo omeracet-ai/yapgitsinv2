@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/overflow_slide_row.dart';
 import '../data/worker_filter.dart';
 
 /// Phase 39 — Worker Filter Bottom Sheet
@@ -229,9 +230,9 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
                       const SizedBox(height: 12),
                       _sectionTitle('Yarıçap (km)'),
                       const SizedBox(height: 8),
-                      Wrap(
+                      OverflowSlideRow(
                         spacing: 8,
-                        runSpacing: 8,
+                        height: 40,
                         children: _radiusOptions.map((r) {
                           final active = _radiusKm == r;
                           return GestureDetector(
@@ -340,9 +341,9 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
       );
 
   Widget _buildRatingChips() {
-    return Wrap(
+    return OverflowSlideRow(
       spacing: 8,
-      runSpacing: 8,
+      height: 40,
       children: _ratingOptions.map((r) {
         final active = _minRating == r;
         final label = r == null ? 'Hepsi' : '${r.toStringAsFixed(1)}+';
@@ -451,9 +452,9 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
   }
 
   Widget _buildSortChips() {
-    return Wrap(
+    return OverflowSlideRow(
       spacing: 8,
-      runSpacing: 8,
+      height: 40,
       children: WorkerSortBy.values.map((s) {
         final active = _sortBy == s;
         return GestureDetector(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/widgets/overflow_slide_row.dart';
 
 /// Phase 129 Step 4 — ޞehir/ilçe + servis radius slider.
 class WorkerOnboardingStep4Location extends StatelessWidget {
@@ -57,7 +58,7 @@ class WorkerOnboardingStep4Location extends StatelessWidget {
           const Text('Servis Yarıçapı',
               style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          Wrap(
+          OverflowSlideRow(
             spacing: 8,
             children: _options.map((km) {
               final sel = km == radiusKm;

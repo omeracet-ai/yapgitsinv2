@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/widgets/overflow_slide_row.dart';
 import '../providers/auth_provider.dart';
 import '../../../service_requests/data/service_request_repository.dart';
 import '../../../profile/data/user_profile_repository.dart';
@@ -591,9 +592,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       onSave: _saveWorker,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         if (_workerCategories.isNotEmpty)
-          Wrap(
+          OverflowSlideRow(
             spacing: 6,
-            runSpacing: 6,
             children: _workerCategories
                 .map((c) => Chip(
                       label: Text(c, style: const TextStyle(fontSize: 12)),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/overflow_slide_row.dart';
 import '../../../profile/data/user_profile_repository.dart';
 import '../providers/auth_provider.dart';
 
@@ -522,7 +523,7 @@ class _AddressFormState extends State<_AddressForm> {
                     fontWeight: FontWeight.w600,
                     color: AppColors.textSecondary)),
             const SizedBox(height: 8),
-            Wrap(
+            OverflowSlideRow(
               spacing: 8,
               children: _titles.map((t) {
                 final sel = _titleCtrl.text == t;

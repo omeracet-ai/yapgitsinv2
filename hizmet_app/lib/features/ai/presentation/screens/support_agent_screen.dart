@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/overflow_slide_row.dart';
 import '../../data/ai_repository.dart';
 
 class SupportAgentScreen extends ConsumerStatefulWidget {
@@ -139,10 +140,8 @@ class _SupportAgentScreenState extends ConsumerState<SupportAgentScreen> {
               style: TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 24),
-            Wrap(
+            OverflowSlideRow(
               spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.center,
               children: [
                 _QuickChip('Kredi nasıl kullanılır?', onTap: _sendQuick),
                 _QuickChip('Ödeme nasıl yapılır?', onTap: _sendQuick),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/overflow_slide_row.dart';
 
 class BookingStep1Service extends StatelessWidget {
   final List<String> categories;
@@ -40,9 +41,8 @@ class BookingStep1Service extends StatelessWidget {
             const Text('Bu usta için kategori bulunamadı.',
                 style: TextStyle(color: AppColors.error))
           else
-            Wrap(
+            OverflowSlideRow(
               spacing: 8,
-              runSpacing: 8,
               children: categories.map((c) {
                 final selected = c == selectedCategory;
                 return ChoiceChip(
