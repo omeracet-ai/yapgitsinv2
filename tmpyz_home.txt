@@ -1,0 +1,380 @@
+HTTP/1.1 200 OK
+Date: Thu, 04 Jun 2026 18:39:51 GMT
+Server: Apache
+X-Powered-By: PHP/8.3.31
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Upgrade: h2,h2c
+Connection: Upgrade
+Cache-Control: no-cache, must-revalidate
+Expires: Thu, 04 Jun 2026 18:39:51 GMT
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Referrer-Policy: strict-origin-when-cross-origin
+Transfer-Encoding: chunked
+Content-Type: text/html; charset=UTF-8
+
+<!DOCTYPE html>
+<html lang="tr"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<base href="/">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='88'>🌿</text></svg>">
+<title>Yaprakzade: Çay Sanatının Zirvesi.</title>
+<meta name="google-site-verification" content="Performansımızı takip edin, lezzetimizle buluşun.">
+<script async src="https://www.googletagmanager.com/gtag/js?id=Çay keyfinizi ölçer, deneyimi mükemmelleştiririz."></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","Çay keyfinizi ölçer, deneyimi mükemmelleştiririz.");</script>
+<meta name="description" content="Yaprakzade — Rize&#039;nin yüksek bahçelerinden toplanan premium, doğal ve organik çaylar. Geleneksel lezzet, modern sunum, kapıya teslim.">
+<link rel="canonical" href="https://yaprakcay.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Yaprakzade">
+<meta property="og:title" content="Yaprakzade: Çay Sanatının Zirvesi.">
+<meta property="og:description" content="Yaprakzade — Rize&#039;nin yüksek bahçelerinden toplanan premium, doğal ve organik çaylar. Geleneksel lezzet, modern sunum, kapıya teslim.">
+<meta property="og:url" content="https://yaprakcay.com/">
+<meta property="og:locale" content="tr_TR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Yaprakzade: Çay Sanatının Zirvesi.">
+<meta name="twitter:description" content="Yaprakzade — Rize&#039;nin yüksek bahçelerinden toplanan premium, doğal ve organik çaylar. Geleneksel lezzet, modern sunum, kapıya teslim.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Yaprakzade","alternateName":["Yaprakçay","Yaprak Çay","yaprakcay.com"],"url":"https://yaprakcay.com/","logo":"https://yaprakcay.com/style.css","description":"Yaprakzade — Rize'nin yüksek bahçelerinden toplanan premium, doğal ve organik çaylar. Geleneksel lezzet, modern sunum, kapıya teslim.","contactPoint":[{"@type":"ContactPoint","telephone":"05301257909","contactType":"customer service"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Çaylarınız organik ve doğal mı?","acceptedAnswer":{"@type":"Answer","text":"Evet. Ürünlerimiz Rize'nin yüksek bahçelerinden katkısız, doğal olarak toplanır ve el ile paketlenir."}},{"@type":"Question","name":"Kargo ne kadar sürede gelir?","acceptedAnswer":{"@type":"Answer","text":"Siparişleriniz 1-3 iş günü içinde özenle paketlenip kargoya verilir."}},{"@type":"Question","name":"Toptan / kurumsal satış yapıyor musunuz?","acceptedAnswer":{"@type":"Answer","text":"Evet; cafe, otel ve işletmelere özel toplu alım ve özel harman seçenekleri sunuyoruz. İletişim sayfasından ulaşabilirsiniz."}}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css?v=1779668222">
+<link rel="stylesheet" href="/assets/css/enhance.css?v=1779670008">
+</head><body class="premium-theme">
+
+<div class="announcement-bar"><div class="container">Yaprakzade 🌿 Gerçek Mayıs Çayına ulaşmanın doğru adresi</div></div>
+
+<header class="main-header"><div class="container">
+  <div class="header-content">
+    <a href="/" class="brand">Yaprakzade</a>
+    <nav class="nav-links" id="nav-links">
+              <a href="/" class="active">Ana Sayfa</a>
+              <a href="/urunler" class="">Ürünlerimiz</a>
+              <a href="/hakkimizda" class="">Hakkımızda</a>
+              <a href="/blog" class="">Blog</a>
+              <a href="/iletisim" class="">İletişim</a>
+          </nav>
+    <div class="header-actions">
+      <button class="icon-btn" id="search-open" title="Ara (Ctrl+K)" aria-label="Ara">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      </button>
+      <a href="/urunler" class="contact-btn">Alışverişe Başla</a>
+      <button class="mobile-toggle" id="mobile-toggle" aria-label="Menü"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</div></header>
+
+<div id="global-search" class="search-overlay">
+  <div class="search-container">
+    <div class="search-header"><input type="text" id="search-input" placeholder="Hangi çayı arıyorsunuz?" autocomplete="off"><button id="search-close" class="close-btn">&times;</button></div>
+    <div id="search-results" class="results-grid"></div>
+    <div class="search-suggestions">Popüler:<div class="tag-list"><span class="search-tag">Siyah Çay</span><span class="search-tag">Yeşil Çay</span><span class="search-tag">Bitki Harmanları</span><span class="search-tag">Mayıs Harmanı</span></div></div>
+  </div>
+</div>
+
+<!-- HERO SLIDER -->
+<section class="hero-slider" id="hero-slider">
+      <div class="hero-slide active" style="background-image:url('https://images.unsplash.com/photo-1594631252845-29fc4586c55c?q=80&amp;w=2000')">
+      <div class="container"><div class="hero-inner">
+        <div class="hero-text">
+          <h1>Doğanın En Saf Hali</h1>
+          <p>Her yaprakta tazelik, her yudumda huzur.</p>          <div class="hero-btns">
+            <a class="btn-primary" href="/urunler">Alışverişe Başla</a>
+            <a class="btn-ghost" href="/hakkimizda">Hikayemiz</a>
+          </div>
+          <div class="hero-rating"><span class="stars">★★★★★</span> 5/5.0 — binlerce mutlu müşterinin tercihi</div>
+        </div>
+        <div class="hero-media">
+          <img src="https://images.unsplash.com/photo-1571934811356-5cc061b6821f?q=80&amp;w=900" alt="Yaprakzade çay" loading="eager" decoding="async">
+          <span class="hero-badge">%100 Doğal</span>
+        </div>
+      </div></div>
+    </div>
+      <div class="hero-slide " style="background-image:url('https://images.unsplash.com/photo-1544787210-2211d44b565a?q=80&amp;w=2000')">
+      <div class="container"><div class="hero-inner">
+        <div class="hero-text">
+          <h1>Geleneksel Lezzet</h1>
+          <p>Nesiller boyu aktarılan tecrübeyle en iyi harmanlar.</p>          <div class="hero-btns">
+            <a class="btn-primary" href="/urunler">Alışverişe Başla</a>
+            <a class="btn-ghost" href="/hakkimizda">Hikayemiz</a>
+          </div>
+          <div class="hero-rating"><span class="stars">★★★★★</span> 5/5.0 — binlerce mutlu müşterinin tercihi</div>
+        </div>
+        <div class="hero-media">
+          <img src="https://images.unsplash.com/photo-1571934811356-5cc061b6821f?q=80&amp;w=900" alt="Yaprakzade çay" loading="eager" decoding="async">
+          <span class="hero-badge">%100 Doğal</span>
+        </div>
+      </div></div>
+    </div>
+      <div class="hero-slide " style="background-image:url('https://images.unsplash.com/photo-1597481499750-3e6b209705f2?q=80&amp;w=2000')">
+      <div class="container"><div class="hero-inner">
+        <div class="hero-text">
+          <h1>Tarladan Sofraya</h1>
+          <p>Hiçbir katkı maddesi içermeyen, taze ve canlı çay deneyimi.</p>          <div class="hero-btns">
+            <a class="btn-primary" href="/urunler">Alışverişe Başla</a>
+            <a class="btn-ghost" href="/hakkimizda">Hikayemiz</a>
+          </div>
+          <div class="hero-rating"><span class="stars">★★★★★</span> 5/5.0 — binlerce mutlu müşterinin tercihi</div>
+        </div>
+        <div class="hero-media">
+          <img src="https://images.unsplash.com/photo-1571934811356-5cc061b6821f?q=80&amp;w=900" alt="Yaprakzade çay" loading="eager" decoding="async">
+          <span class="hero-badge">%100 Doğal</span>
+        </div>
+      </div></div>
+    </div>
+        <button class="hero-nav prev" id="hero-prev" aria-label="Önceki">❮</button>
+    <button class="hero-nav next" id="hero-next" aria-label="Sonraki">❯</button>
+    <div class="hero-dots" id="hero-dots">
+      <button class="hero-dot active" data-i="0" aria-label="Slayt 1"></button><button class="hero-dot " data-i="1" aria-label="Slayt 2"></button><button class="hero-dot " data-i="2" aria-label="Slayt 3"></button>    </div>
+  </section>
+
+<!-- TRUST -->
+<section class="trust"><div class="container"><div class="trust-grid">
+      <div class="trust-item"><span class="ic">🌿</span><div><h4>%100 Doğal</h4><p>Katkısız, saf çay yaprağı</p></div></div>
+      <div class="trust-item"><span class="ic">🍃</span><div><h4>Taze &amp; El Yapımı</h4><p>Her paket el ile özenle hazırlanır</p></div></div>
+      <div class="trust-item"><span class="ic">🔒</span><div><h4>Güvenli Alışveriş</h4><p>256-bit SSL ile korumalı ödeme</p></div></div>
+      <div class="trust-item"><span class="ic">🚚</span><div><h4>Hızlı Teslimat</h4><p>Siparişiniz kapınıza kadar</p></div></div>
+  </div></div></section>
+
+<!-- PRODUCTS -->
+<section class="section"><div class="container">
+  <div class="sec-head row">
+    <div><span class="eyebrow">Yaprakzade: Her Yudumda Bir Hikaye.</span><h2>Her yudumda bir hikaye, her demde bir sanat.</h2><p>Her yudumda doğanın izi, her fincanda huzurun sesi.</p></div>
+    <a class="btn-ghost" href="/urunler">Tüm Ürünleri Gör</a>
+  </div>
+  <div class="product-grid">
+          <div class="product-card">
+        <a href="/urun/yaprakzade-demlik-poset-cay-15-gr-x-300-demlik-8f77" class="p-img lazy-bg" data-bg="" aria-label="Yaprakzade Demlik Poşet Çay 15 Gr x 300 Demlik"></a>
+        <div class="p-body">
+          <span class="p-cat">Siyah Çay</span>
+          <h3><a href="/urun/yaprakzade-demlik-poset-cay-15-gr-x-300-demlik-8f77">Yaprakzade Demlik Poşet Çay 15 Gr x 300 Demlik</a></h3>
+          <div class="p-foot">
+            <span class="p-price">3.250,00 ₺</span>
+            <a class="p-cart" href="/urun/yaprakzade-demlik-poset-cay-15-gr-x-300-demlik-8f77" title="İncele">→</a>
+          </div>
+        </div>
+      </div>
+          <div class="product-card">
+        <a href="/urun/premium-siyah-cay" class="p-img lazy-bg" data-bg="https://images.unsplash.com/photo-1597481499750-3e6b209705f2?q=80&amp;w=600" aria-label="Yaprakzade Siyah Çay 30 Gr X 150 Adet"></a>
+        <div class="p-body">
+          <span class="p-cat">Siyah Çay</span>
+          <h3><a href="/urun/premium-siyah-cay">Yaprakzade Siyah Çay 30 Gr X 150 Adet</a></h3>
+          <div class="p-foot">
+            <span class="p-price">3.250,00 ₺</span>
+            <a class="p-cart" href="/urun/premium-siyah-cay" title="İncele">→</a>
+          </div>
+        </div>
+      </div>
+          <div class="product-card">
+        <a href="/urun/zen-yesil-cay" class="p-img lazy-bg" data-bg="https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?q=80&amp;w=600" aria-label="Yaprakzade Organik Yeşil Çay"></a>
+        <div class="p-body">
+          <span class="p-cat">Yeşil Çay</span>
+          <h3><a href="/urun/zen-yesil-cay">Yaprakzade Organik Yeşil Çay</a></h3>
+          <div class="p-foot">
+            <span class="p-price">159,90 ₺</span>
+            <a class="p-cart" href="/urun/zen-yesil-cay" title="İncele">→</a>
+          </div>
+        </div>
+      </div>
+          <div class="product-card">
+        <a href="/urun/botanist-harmani" class="p-img lazy-bg" data-bg="https://images.unsplash.com/photo-1594631252845-29fc4586c55c?q=80&amp;w=600" aria-label="Yaprakzade Demlik Poşet Çay 57 Gr X 90 Demlik Poşet Çay"></a>
+        <div class="p-body">
+          <span class="p-cat">Siyah Çay</span>
+          <h3><a href="/urun/botanist-harmani">Yaprakzade Demlik Poşet Çay 57 Gr X 90 Demlik Poşet Çay</a></h3>
+          <div class="p-foot">
+            <span class="p-price">3.250,00 ₺</span>
+            <a class="p-cart" href="/urun/botanist-harmani" title="İncele">→</a>
+          </div>
+        </div>
+      </div>
+      </div>
+</div></section>
+
+<!-- HERITAGE -->
+<section class="section alt"><div class="container"><div class="heritage-grid">
+  <div class="heritage-media">
+    <img class="lazy-bg-img" src="https://images.unsplash.com/photo-1523920290228-4f321a939b4c?q=80&amp;w=1100" alt="Çay bahçesi" loading="lazy" decoding="async">
+    <span class="badge">%100 DOĞAL</span>
+  </div>
+  <div class="heritage-content">
+    <span class="eyebrow">Biz Kimiz?</span>
+    <h2>Doğaya Saygı, İnsana Sağlık</h2>
+    <div><p>Çay yapraklarımız, Trabzon'un 1200 metre rakımlı, her daim puslu ve taze bahçelerinden toplanır. Sadece doğanın sunduğu saflıkla, hiçbir katkı maddesi eklemeden işlenir. Her yaprakta kaliteyi, her yudumda huzuru vaat ederiz.</p></div>
+    <div class="chips"><span>Sürdürülebilir Tarım</span><span>Doğa Dostu</span><span>Kalite Kontrol</span></div>
+    <div class="hero-btns"><a class="btn-primary" href="/iletisim">İletişime Geç</a><a class="btn-ghost" href="/hakkimizda">Daha Fazla</a></div>
+  </div>
+</div></div></section>
+
+<!-- BLOG -->
+<section class="section"><div class="container">
+  <div class="sec-head row">
+    <div><span class="eyebrow">Yaprakzade: Her Yudumda Bir Hikaye.</span><h2>Yaprakzade: Her Yudumda Bir Hikaye, Bir Asır Lezzet.</h2></div>
+    <a class="btn-ghost" href="/blog">Tüm Blog Yazıları</a>
+  </div>
+  <div class="blog-grid">
+          <a class="blog-card" href="/blog/cay-nasil-demlenir">
+        <div class="b-img lazy-bg" data-bg="https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?q=80&amp;w=1200"></div>        <div class="b-body"><span class="b-date">24.05.2026</span><h3>Çay Nasıl Demlenir? Mükemmel Demin Sırrı</h3><p>Doğru su sıcaklığı, demleme süresi ve oran ile evde profesyonel lezzet.</p><span class="more">Devamını Oku →</span></div>
+      </a>
+      </div>
+</div></section>
+
+<!-- GALERİ (admin panelden yönetilir) -->
+
+<!-- MÜŞTERİ YORUMLARI (slider) -->
+<section class="section reviews-sec"><div class="container" style="max-width:900px">
+  <div class="sec-head" style="text-align:center"><span class="eyebrow">Yaprakzade: Her Yudumda Bir Hikaye.</span><h2>Yaprakzade: Her Yudumda Bir Hikaye, Bir Asır Lezzet.</h2></div>
+  <div class="rev-slider" id="rev-slider">
+          <figure class="rev-slide active">
+        <div class="rev-stars">★★★★★</div>
+        <blockquote>“Müşteri hizmetleri ilgili, ürün açıklamadaki gibi geldi.”</blockquote>
+        <figcaption><strong>Ahmet R.</strong> <span>— Yaprakzade Organik Yeşil Çay</span></figcaption>
+      </figure>
+          <figure class="rev-slide ">
+        <div class="rev-stars">★★★★★</div>
+        <blockquote>“Hediye olarak aldım, çok beğenildi. Şık bir sunum.”</blockquote>
+        <figcaption><strong>Elif S.</strong> <span>— Yaprakzade Bitki Çayı 250 Gr</span></figcaption>
+      </figure>
+          <figure class="rev-slide ">
+        <div class="rev-stars">★★★★★</div>
+        <blockquote>“Kurumsal siparişimiz zamanında ve eksiksiz geldi, teşekkürler.”</blockquote>
+        <figcaption><strong>Zeynep A.</strong> <span>— Yaprakzade Demlik Poşet Çay 57 Gr X 90 Demlik Poşet Çay</span></figcaption>
+      </figure>
+          <figure class="rev-slide ">
+        <div class="rev-stars">★★★★★</div>
+        <blockquote>“Rize çayının gerçek tadını burada buldum. Paketleme çok özenli.”</blockquote>
+        <figcaption><strong>Mehmet T.</strong> <span>— Yaprakzade Organik Yeşil Çay</span></figcaption>
+      </figure>
+          <figure class="rev-slide ">
+        <div class="rev-stars">★★★★★</div>
+        <blockquote>“Çayın tazeliği ve aroması harika, kesinlikle tavsiye ederim.”</blockquote>
+        <figcaption><strong>Ayşe K.</strong> <span>— Yaprakzade Siyah Çay 30 Gr X 150 Adet</span></figcaption>
+      </figure>
+          <figure class="rev-slide ">
+        <div class="rev-stars">★★★★★</div>
+        <blockquote>“Harika bir cay, tavsiye ederim.”</blockquote>
+        <figcaption><strong>Test Musteri</strong> <span>— Yaprakzade Siyah Çay 30 Gr X 150 Adet</span></figcaption>
+      </figure>
+          <figure class="rev-slide ">
+        <div class="rev-stars">★★★★☆</div>
+        <blockquote>“Fiyat/performans çok iyi, kaliteli ürün.”</blockquote>
+        <figcaption><strong>Selin M.</strong> <span>— Yaprakzade Siyah Çay 30 Gr X 150 Adet</span></figcaption>
+      </figure>
+          <figure class="rev-slide ">
+        <div class="rev-stars">★★★★☆</div>
+        <blockquote>“Yeşil çayı çok hafif ve ferahlatıcı. Bağımlısı oldum.”</blockquote>
+        <figcaption><strong>Can D.</strong> <span>— Yaprakzade Beyaz Çay 100 Gr</span></figcaption>
+      </figure>
+              <button class="rev-nav prev" id="rev-prev" aria-label="Önceki">❮</button>
+      <button class="rev-nav next" id="rev-next" aria-label="Sonraki">❯</button>
+      <div class="rev-dots" id="rev-dots"><button class="rev-dot active" data-i="0" aria-label="Yorum 1"></button><button class="rev-dot " data-i="1" aria-label="Yorum 2"></button><button class="rev-dot " data-i="2" aria-label="Yorum 3"></button><button class="rev-dot " data-i="3" aria-label="Yorum 4"></button><button class="rev-dot " data-i="4" aria-label="Yorum 5"></button><button class="rev-dot " data-i="5" aria-label="Yorum 6"></button><button class="rev-dot " data-i="6" aria-label="Yorum 7"></button><button class="rev-dot " data-i="7" aria-label="Yorum 8"></button></div>
+      </div>
+</div></section>
+
+<!-- SERBEST İÇERİK (admin "Serbest İçerik" grubuna eklediği bloklar) -->
+
+<!-- 3D / İNTERAKTİF DENEYİM (admin: "3D / İnteraktif" grubu) -->
+
+<!-- SSS / FAQ -->
+<section class="section alt"><div class="container" style="max-width:840px">
+  <div class="sec-head" style="text-align:center"><span class="eyebrow">Sıkça Sorulan Sorular</span><h2>Merak Ettikleriniz: Yaprakzade Hakkında Her Şey</h2></div>
+  <div class="faq-list">
+          <details class="faq-item">
+        <summary>Çaylarınız organik ve doğal mı?</summary>
+        <div class="faq-a">Evet. Ürünlerimiz Rize&#039;nin yüksek bahçelerinden katkısız, doğal olarak toplanır ve el ile paketlenir.</div>
+      </details>
+          <details class="faq-item">
+        <summary>Kargo ne kadar sürede gelir?</summary>
+        <div class="faq-a">Siparişleriniz 1-3 iş günü içinde özenle paketlenip kargoya verilir.</div>
+      </details>
+          <details class="faq-item">
+        <summary>Toptan / kurumsal satış yapıyor musunuz?</summary>
+        <div class="faq-a">Evet; cafe, otel ve işletmelere özel toplu alım ve özel harman seçenekleri sunuyoruz. İletişim sayfasından ulaşabilirsiniz.</div>
+      </details>
+      </div>
+</div></section>
+
+<!-- FOOTER -->
+<footer class="main-footer"><div class="container">
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="footer-logo">Yaprakzade</div>
+      <p>Doğadan gelen saf lezzet. Rize&#039;nin en seçkin çaylarını özenle sofranıza getiriyoruz.</p>
+      <div class="footer-social">
+                              </div>
+    </div>
+    <div class="footer-col">
+      <h4>Kategoriler</h4>
+      <a href="/siyah-cay">Siyah Çay</a><a href="/yesil-cay">Yeşil Çay</a><a href="/bitki-harmanlari">Bitki Harmanları</a><a href="/mayis-harmani">Mayıs Harmanı</a>    </div>
+    <div class="footer-col">
+      <h4>Kurumsal</h4>
+      <a href="/hakkimizda">Hakkımızda</a><a href="/blog">Blog</a><a href="/iletisim">İletişim</a><a href="/urunler">Ürünler</a>
+    </div>
+    <div class="footer-col">
+      <h4>İletişim</h4>
+      <p>📞 05301257909</p>      <p>✉️ info@yaprakzade.com</p>      <p>📍 Yakuplu Mah. 88. Sokak No:14/b Beylikdüzü, 34524 İstanbul</p>      <div class="newsletter" style="margin-top:10px">
+        <form action="/iletisim" method="get"><input type="email" name="email" placeholder="E-posta adresiniz" required><button type="submit">Abone Ol</button></form>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Yaprakzade. Tüm hakları saklıdır.</span>
+  </div>
+</div></footer>
+
+<script>
+const productsData = [{"name":"Yaprakzade Siyah Çay 30 Gr X 150 Adet","desc":"İlk hasat, profesyonel seçki. 800 ml ölçüsündeki Demlikler için uygundur","cat":"Siyah Çay","img":"https:\/\/images.unsplash.com\/photo-1597481499750-3e6b209705f2?q=80&w=600","slug":"premium-siyah-cay"},{"name":"Yaprakzade Organik Yeşil Çay","desc":"Yüksek antioksidan, saf huzur.","cat":"Yeşil Çay","img":"https:\/\/images.unsplash.com\/photo-1564890369478-c89ca6d9cde9?q=80&w=600","slug":"zen-yesil-cay"},{"name":"Yaprakzade Demlik Poşet Çay 57 Gr X 90 Demlik Poşet Çay","desc":"Endüstriel Demliklerde 3 numara Yani 1700 ml ülçüsündeki Demlikler için Uygundur \r\nDoğru Demlik ve Doğru Çay Seçimi İçin Uygulamadan Yardım alınız.","cat":"Siyah Çay","img":"https:\/\/images.unsplash.com\/photo-1594631252845-29fc4586c55c?q=80&w=600","slug":"botanist-harmani"},{"name":"Yaprakzade Beyaz Çay 100 Gr","desc":"Sürmene\u0027nin nadide bahçelerinden.","cat":"Mayıs Harmanı","img":"https:\/\/images.unsplash.com\/photo-1576092768241-dec231879fc3?q=80&w=600","slug":"altin-yaprak"},{"name":"Yaprakzade Bitki Çayı 250 Gr","desc":"En genç tomurcukların saflığı.","cat":"Mayıs Harmanı","img":"https:\/\/images.unsplash.com\/photo-1564890369478-c89ca6d9cde9?q=80&w=600","slug":"beyaz-ruya"},{"name":"Yaprakzade Demlik Poşet Çay 15 Gr x 300 Demlik","desc":"Trabzon\u0027un bereketli topraklarından gelen Yaprakzade demlik poşet çay, her bardakta doğallığı ve yöresel lezzeti sunar. Pratik kullanımıyla çay keyfinizi kolaylaştırırken, damaklarda kalıcı ve güven veren bir tat bırakır.","cat":"Siyah Çay","img":"","slug":"yaprakzade-demlik-poset-cay-15-gr-x-300-demlik-8f77"}];
+document.addEventListener('DOMContentLoaded', function(){
+  var mt=document.getElementById('mobile-toggle'), nl=document.getElementById('nav-links');
+  if(mt&&nl){
+    function navClose(){ nl.classList.remove('active'); mt.classList.remove('active'); }
+    mt.addEventListener('click',function(e){ e.stopPropagation(); nl.classList.toggle('active'); mt.classList.toggle('active'); });
+    nl.querySelectorAll('a').forEach(function(a){ a.addEventListener('click',navClose); });
+    document.addEventListener('click',function(e){ if(nl.classList.contains('active') && !nl.contains(e.target) && !mt.contains(e.target)) navClose(); });
+    window.addEventListener('keydown',function(e){ if(e.key==='Escape') navClose(); });
+  }
+  // Hero slider
+  (function(){
+    var slides=document.querySelectorAll('#hero-slider .hero-slide'); if(slides.length<2) return;
+    var dots=document.querySelectorAll('#hero-dots .hero-dot'); var idx=0, timer;
+    function go(n){ idx=(n+slides.length)%slides.length; slides.forEach(function(s,i){s.classList.toggle('active',i===idx);}); dots.forEach(function(d,i){d.classList.toggle('active',i===idx);}); }
+    function reset(){ clearInterval(timer); timer=setInterval(function(){go(idx+1);},6000); }
+    var pv=document.getElementById('hero-prev'), nx=document.getElementById('hero-next');
+    if(nx)nx.addEventListener('click',function(){go(idx+1);reset();});
+    if(pv)pv.addEventListener('click',function(){go(idx-1);reset();});
+    dots.forEach(function(d){d.addEventListener('click',function(){go(parseInt(d.dataset.i));reset();});});
+    reset();
+  })();
+  // Yorum slider
+  (function(){
+    var slides=document.querySelectorAll('#rev-slider .rev-slide'); if(slides.length<2) return;
+    var dots=document.querySelectorAll('#rev-dots .rev-dot'); var idx=0, t;
+    function go(n){ idx=(n+slides.length)%slides.length; slides.forEach(function(s,i){s.classList.toggle('active',i===idx);}); dots.forEach(function(d,i){d.classList.toggle('active',i===idx);}); }
+    function reset(){ clearInterval(t); t=setInterval(function(){go(idx+1);},5000); }
+    var pv=document.getElementById('rev-prev'), nx=document.getElementById('rev-next');
+    if(nx)nx.addEventListener('click',function(){go(idx+1);reset();});
+    if(pv)pv.addEventListener('click',function(){go(idx-1);reset();});
+    dots.forEach(function(d){d.addEventListener('click',function(){go(parseInt(d.dataset.i));reset();});});
+    reset();
+  })();
+  var so=document.getElementById('global-search'), sOpen=document.getElementById('search-open'), sClose=document.getElementById('search-close'),
+      sIn=document.getElementById('search-input'), sRes=document.getElementById('search-results');
+  function clr(){ while(sRes.firstChild) sRes.removeChild(sRes.firstChild); }
+  function render(list){ clr(); list.forEach(function(p){
+    var a=document.createElement('a'); a.className='result-item'; a.href='/urun/'+encodeURIComponent(p.slug);
+    var im=document.createElement('img'); im.src=p.img; im.alt=''; a.appendChild(im);
+    var info=document.createElement('div'); var c=document.createElement('span'); c.className='result-cat'; c.textContent=p.cat; info.appendChild(c);
+    var h=document.createElement('h5'); h.style.margin='2px 0'; h.textContent=p.name; info.appendChild(h);
+    a.appendChild(info); sRes.appendChild(a);
+  }); }
+  function tog(s){ so.classList.toggle('active',s); if(s){ setTimeout(function(){sIn.focus();},200); document.body.style.overflow='hidden'; } else { document.body.style.overflow=''; sIn.value=''; clr(); } }
+  if(sOpen)sOpen.addEventListener('click',function(){tog(true);}); if(sClose)sClose.addEventListener('click',function(){tog(false);});
+  window.addEventListener('keydown',function(e){ if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();tog(true);} if(e.key==='Escape')tog(false); });
+  if(sIn)sIn.addEventListener('input',function(e){ var q=e.target.value.toLowerCase(); if(q.length<2){clr();return;} render(productsData.filter(function(p){return p.name.toLowerCase().includes(q)||p.cat.toLowerCase().includes(q);})); });
+  document.querySelectorAll('.search-tag').forEach(function(t){ t.addEventListener('click',function(){ sIn.value=t.textContent; sIn.dispatchEvent(new Event('input')); }); });
+});
+</script>
+<script src="/assets/js/lazy.js?v=1779662669" defer></script>
+<script src="/assets/js/enhance.js?v=1779670008" defer></script>
+</body><script>'undefined'=== typeof _trfq || (window._trfq = []);'undefined'=== typeof _trfd && (window._trfd=[]),_trfd.push({'tccl.baseHost':'secureserver.net'},{'ap':'cpsh-oh'},{'server':'sxb1plzcpnl507722'},{'dcenter':'sxb1'},{'cp_id':'10933301'},{'cp_cl':'8'}) // Monitoring performance to make your website faster. If you want to opt-out, please contact web hosting support.</script><script src='https://img1.wsimg.com/traffic-assets/js/tccl.min.js'></script></html>

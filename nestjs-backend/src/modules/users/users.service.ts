@@ -1161,7 +1161,11 @@ export class UsersService {
     const ws = user.asWorkerSuccess ?? 0;
     if (ws >= 5 && ws < 20 && (user.averageRating ?? 0) >= 4.0)
       earned.add('rising_star');
-    if (user.isAvailable === true) earned.add('available_now');
+    // Phase 428 — 'available_now' rozet hesabından çıkarıldı (kullanıcı bug raporu).
+    // "Şu an Müsait" zaten profile screen'de ayrı toggle chip olarak gösteriliyor;
+    // rozet listesinde de yer alması toggle her değiştiğinde badges.length'i
+    // değiştirip kullanıcıya "profil tamamlanma oranı değişiyor" hissi veriyordu.
+    // if (user.isAvailable === true) earned.add('available_now');
     const completion = this.computeProfileCompletion(user);
     if (completion.percent === 100) earned.add('complete_profile');
 
