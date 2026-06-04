@@ -1069,9 +1069,14 @@ class ProfileScreen extends ConsumerWidget {
               // Phase 424 — "Şu an Müsait" aktif-pasif toggle chip.
               // Müsaitlik Takvimi master switch'inin kısayolu; rozet
               // satırının başında daima görünür. Tap → PATCH /users/me.
+              // Phase 427 — profileCompletionProvider AYRI provider; ek
+              // invalidate yoksa stale percent yansıyordu (kullanıcı bug raporu).
               _AvailabilityToggleChip(
                 isAvailable: data['isAvailable'] == true,
-                onChanged: () => ref.invalidate(myPublicProfileProvider),
+                onChanged: () {
+                  ref.invalidate(myPublicProfileProvider);
+                  ref.invalidate(profileCompletionProvider);
+                },
               ),
               const SizedBox(height: 10),
               BadgeRow(badges: badges),
