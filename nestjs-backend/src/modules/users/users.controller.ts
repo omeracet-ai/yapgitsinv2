@@ -927,25 +927,27 @@ export class UsersController {
       where: { customerId: id, status: JobStatus.COMPLETED },
     });
 
-    // Phase 145 — enrichment: monthlyActivity (last 6mo), topCategories, avgBudget, lastCompletedJobs
+    // Phase 145 — enrichment: monthlyActivity, topCategories, avgBudget, lastCompletedJobs
+    // Phase 417 — pencere 6 ay → 1 ay (kullanıcı isteği).
     const completedJobs = await this.jobsRepo.find({
       where: { customerId: id, status: JobStatus.COMPLETED },
       order: { updatedAt: 'DESC' },
       take: 200,
     });
 
-    // Last 6 months activity
+    // Last 1 month activity (sadece içinde bulunulan ay).
     const now = new Date();
-    const months: { month: string; count: number }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      months.push({ month: key, count: 0 });
-    }
-    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const months: { month: string; count: number }[] = [
+      {
+        month:
+          `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
+        count: 0,
+      },
+    ];
+    const windowStart = new Date(now.getFullYear(), now.getMonth(), 1);
     for (const j of completedJobs) {
       const dt = j.updatedAt ? new Date(j.updatedAt) : null;
-      if (!dt || dt < sixMonthsAgo) continue;
+      if (!dt || dt < windowStart) continue;
       const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
       const slot = months.find((m) => m.month === key);
       if (slot) slot.count++;

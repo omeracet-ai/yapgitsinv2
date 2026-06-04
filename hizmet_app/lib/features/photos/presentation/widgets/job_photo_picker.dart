@@ -108,27 +108,35 @@ class _JobPhotoPickerState extends State<JobPhotoPicker> {
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 14),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            // Mevcut fotoğraflar
-            for (int i = 0; i < _files.length; i++)
-              _SlotTile(
-                xfile: _files[i],
-                index: i + 1,
-                onTap: () => _pick(i),
-                onRemove: () => _remove(i),
-              ),
-            // "+" ekle butonu (sadece cap'e ulaşılmadıysa)
-            if (_files.length < JobPhotoPicker.maxPhotos)
-              _SlotTile(
+        // Phase 421 — Row sınırına ulaşan slot'lar alt satıra inmek
+        // yerine yatayda kaydırılır.
+        SizedBox(
+          height: 96,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            clipBehavior: Clip.none,
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
+            itemCount: _files.length +
+                (_files.length < JobPhotoPicker.maxPhotos ? 1 : 0),
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (_, i) {
+              if (i < _files.length) {
+                return _SlotTile(
+                  xfile: _files[i],
+                  index: i + 1,
+                  onTap: () => _pick(i),
+                  onRemove: () => _remove(i),
+                );
+              }
+              return _SlotTile(
                 xfile: null,
                 index: _files.length + 1,
                 onTap: () => _pick(_files.length),
                 onRemove: null,
-              ),
-          ],
+              );
+            },
+          ),
         ),
       ],
     );

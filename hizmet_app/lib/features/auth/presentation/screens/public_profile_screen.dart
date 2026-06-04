@@ -5,6 +5,7 @@ import '../../../../core/app_config/app_config_visibility.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/list_skeleton.dart';
+import '../../../../core/widgets/stat_info_popup.dart';
 import '../../../profile/data/user_profile_repository.dart';
 import '../../../users/widgets/user_action_menu.dart';
 import '../../../tokens/widgets/gift_tokens_sheet.dart';
@@ -12,12 +13,11 @@ import '../providers/auth_provider.dart';
 import '../../../reviews/widgets/review_reply_sheet.dart';
 import '../../widgets/portfolio_gallery.dart';
 import '../../widgets/intro_video_section.dart';
-import '../../../photos/presentation/widgets/portfolio_grid.dart';
+// Phase 419 — portfolio_grid + verified_category_badges import'ları kaldırıldı.
 import '../../widgets/availability_editor_sheet.dart';
 import '../../widgets/review_summary_card.dart';
 import '../../../users/widgets/badge_row.dart';
 import '../../../users/widgets/worker_documents_card.dart';
-import '../../../users/widgets/verified_category_badges.dart';
 import 'package:go_router/go_router.dart';
 
 final publicProfileProvider =
@@ -87,7 +87,7 @@ class _ProfileView extends ConsumerWidget {
     final workerCats      = (data['workerCategories'] as List?)?.cast<String>() ?? [];
     final pastPhotos      = (data['pastPhotos']       as List?)?.cast<String>() ?? [];
     final portfolioPhotos = (data['portfolioPhotos']  as List?)?.cast<String>() ?? [];
-    final portfolioVideos = (data['portfolioVideos']  as List?)?.cast<String>() ?? [];
+    // Phase 419 — portfolioVideos kaldırıldı (video desteği bitti).
     final introVideoUrl   = data['introVideoUrl']     as String?;
     final introVideoDur   = (data['introVideoDuration'] as num?)?.toInt();
     // Phase 265d — defensive: bazı kayıtlar reviewer field'ını string
@@ -194,7 +194,10 @@ class _ProfileView extends ConsumerWidget {
           slivers: [
           // ── Hero header — full-bleed gradient, 40% screen height ─────────
           SliverAppBar(
-            expandedHeight: MediaQuery.of(context).size.height * 0.40,
+            // Phase 420 — Compact header: 40% → ~22% ekran yüksekliği.
+            // Hero kart önceki dev gradient panel yerine kompakt bir avatar +
+            // ad + tek satır meta. Görsel hiyerarşi içerik lehine düzeltildi.
+            expandedHeight: 210,
             pinned: true,
             backgroundColor: AppColors.headerBackground(context),
             actions: [
@@ -249,29 +252,29 @@ class _ProfileView extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  // Content
+                  // Content — Phase 420 kompakt
                   SafeArea(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8),
                       Stack(
                         clipBehavior: Clip.none,
                         children: [
                           Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 3),
+                              border: Border.all(color: Colors.white, width: 2),
                               boxShadow: const [
                                 BoxShadow(
                                   color: Colors.black26,
-                                  blurRadius: 12,
-                                  offset: Offset(0, 4),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 3),
                                 ),
                               ],
                             ),
                             child: CircleAvatar(
-                              radius: 54,
+                              radius: 36,
                               backgroundColor: Colors.white24,
                               backgroundImage:
                                   imgUrl != null ? NetworkImage(imgUrl) : null,
@@ -279,7 +282,7 @@ class _ProfileView extends ConsumerWidget {
                                   ? Text(
                                       name.isNotEmpty ? trUpper(name[0]) : '?',
                                       style: const TextStyle(
-                                          fontSize: 40,
+                                          fontSize: 28,
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold))
                                   : null,
@@ -287,51 +290,62 @@ class _ProfileView extends ConsumerWidget {
                           ),
                           if (verified && showVerified)
                             Positioned(
-                              bottom: 2,
-                              right: 2,
+                              bottom: 0,
+                              right: 0,
                               child: Container(
-                                padding: const EdgeInsets.all(3),
+                                padding: const EdgeInsets.all(2),
                                 decoration: BoxDecoration(color: AppColors.surface,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(Icons.verified_rounded,
-                                    color: AppColors.primary, size: 22),
+                                    color: AppColors.primary, size: 16),
                               ),
                             ),
                         ],
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(name,
                               style: const TextStyle(
-                                  fontSize: 22,
+                                  fontSize: 17,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white)),
                           if (verified && showVerified) ...[
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 4),
                             const Icon(Icons.verified_rounded,
-                                color: Colors.white, size: 18),
+                                color: Colors.white, size: 14),
                           ],
                         ],
                       ),
-                      if (city.isNotEmpty)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.location_on_outlined,
-                                size: 13, color: Colors.white70),
-                            const SizedBox(width: 3),
-                            Text(city,
-                                style: const TextStyle(
-                                    fontSize: 13, color: Colors.white70)),
-                          ],
+                      // Phase 420 — city + üyelik tek satırda nokta ayraçlı.
+                      if (city.isNotEmpty || since != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (city.isNotEmpty) ...[
+                                const Icon(Icons.location_on_outlined,
+                                    size: 11, color: Colors.white70),
+                                const SizedBox(width: 2),
+                                Text(city,
+                                    style: const TextStyle(
+                                        fontSize: 11, color: Colors.white70)),
+                              ],
+                              if (city.isNotEmpty && since != null)
+                                const Text(' · ',
+                                    style: TextStyle(
+                                        fontSize: 11, color: Colors.white54)),
+                              if (since != null)
+                                Text(_memberSince(since),
+                                    style: const TextStyle(
+                                        fontSize: 11, color: Colors.white70)),
+                            ],
+                          ),
                         ),
-                      if (since != null)
-                        Text(_memberSince(since),
-                            style: const TextStyle(
-                                fontSize: 11, color: Colors.white60)),
                       // Phase 327 — Son görülme zamanı. Online ise canlı yeşil,
                       // değilse son görüldüğü zaman (gün granularitesinde).
                       Builder(builder: (_) {
@@ -417,6 +431,9 @@ class _ProfileView extends ConsumerWidget {
                       sub: 'Tamamlanan İş',
                       icon: Icons.check_circle_outline_rounded,
                       iconColor: AppColors.success,
+                      tooltip: isWorker
+                          ? StatTooltips.completedWorker
+                          : StatTooltips.completedCustomer,
                     ),
                     _divider(),
                     _bigStat(
@@ -426,6 +443,7 @@ class _ProfileView extends ConsumerWidget {
                       sub: 'Başarı Oranı',
                       icon: Icons.trending_up_rounded,
                       iconColor: AppColors.primary,
+                      tooltip: StatTooltips.successScore5,
                     ),
                     _divider(),
                     _bigStat(
@@ -436,6 +454,9 @@ class _ProfileView extends ConsumerWidget {
                           showReviews ? '$reviews yorum' : 'Değerlendirme',
                       icon: Icons.star_rounded,
                       iconColor: Colors.amber,
+                      tooltip: showReviews
+                          ? StatTooltips.reviews
+                          : StatTooltips.rating,
                     ),
                   ];
                   // Tüm tilesları admin tarafı tek tek gizleyebilir; en az
@@ -496,14 +517,10 @@ class _ProfileView extends ConsumerWidget {
                   ),
                 ],
 
-                // Phase 293 — Belge ile doğrulanmış kategoriler rozeti
-                VerifiedCategoryBadgesRow(
-                  categories:
-                      ((data['verifiedCategories'] as List?) ?? const [])
-                          .whereType<Map>()
-                          .map((m) => Map<String, dynamic>.from(m))
-                          .toList(),
-                ),
+                // Phase 419 — "Belge ile Doğrulanmış N Kategori" bölümü
+                // kaldırıldı (kullanıcı isteği): WorkerDocumentsCard zaten
+                // belge görseli + kategorileri listeliyor, tekrar görsel
+                // gürültü yaratıyordu.
 
                 // ── Ustalık belgeleri (varsa "Usta" title + belge kartı) ──
                 WorkerDocumentsCard(
@@ -628,16 +645,15 @@ class _ProfileView extends ConsumerWidget {
                 ],
 
                 // ── Portfolyo ────────────────────────────────────────────
-                if (showPortfolio &&
-                    (portfolioPhotos.isNotEmpty ||
-                        portfolioVideos.isNotEmpty ||
-                        isSelf)) ...[
+                // Phase 421 — Public profile salt-okunur: upload tile burada
+                // gizli (isOwner=false). Sahibi Profil sekmesi → "Portfolyom"
+                // ekranından foto ekler/siler.
+                if (showPortfolio && portfolioPhotos.isNotEmpty) ...[
                   _section(
                     title: 'Portfolyo',
                     child: PortfolioGallery(
                       photos: portfolioPhotos,
-                      videos: portfolioVideos,
-                      isOwner: isSelf,
+                      isOwner: false,
                       userId: userId,
                     ),
                   ),
@@ -794,13 +810,10 @@ class _ProfileView extends ConsumerWidget {
                           ))),
                 ],
 
-                // ── Phase 218: Portfolyo Grid (ID tabanlı, public) ───────
-                const SizedBox(height: 16),
-                _section(
-                  title: 'İş Örnekleri',
-                  child: PortfolioGrid(userId: userId),
-                ),
-
+                // Phase 419 — "İş Örnekleri" + portfolyo videosu bölümü
+                // kaldırıldı (kullanıcı isteği). Kart başlığındaki
+                // portfolyo grid + video alanı yerine sadece yorumlar +
+                // tamamlanan işler özetleniyor.
                 const SizedBox(height: 32),
               ],
             ),
@@ -816,7 +829,9 @@ class _ProfileView extends ConsumerWidget {
     required String sub,
     required IconData icon,
     required Color iconColor,
+    String? tooltip,
   }) {
+    // Phase 414 — sublabel yanına bilgi imleci (tooltip varsa).
     return Expanded(
       child: Column(
         children: [
@@ -826,7 +841,27 @@ class _ProfileView extends ConsumerWidget {
               style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary)),
-          Text(sub, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(sub,
+                    style: TextStyle(
+                        fontSize: 11, color: AppColors.textSecondary),
+                    overflow: TextOverflow.ellipsis),
+              ),
+              if (tooltip != null) ...[
+                const SizedBox(width: 3),
+                StatInfoIcon(
+                  title: sub,
+                  message: tooltip,
+                  size: 12,
+                  padding: EdgeInsets.zero,
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );

@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/card_3d.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/notification_bell.dart';
+import '../../../../core/widgets/stat_info_popup.dart';
 import '../../../wallet/presentation/screens/wallet_screen.dart';
 import '../../../tokens/data/token_repository.dart';
 // Gizlendi (Para Birimi menüsü kapalı): currency_picker_sheet importu.
@@ -765,18 +766,20 @@ class ProfileScreen extends ConsumerWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _expStat('$rep', 'İtibar'),
+                          _expStat('$rep', 'İtibar',
+                              tooltip: StatTooltips.reputation),
                           Container(
                               width: 1,
                               height: 28,
                               color: AppColors.border),
-                          _expStat(
-                              avg.toStringAsFixed(1), 'Ortalama'),
+                          _expStat(avg.toStringAsFixed(1), 'Ortalama',
+                              tooltip: StatTooltips.rating),
                           Container(
                               width: 1,
                               height: 28,
                               color: AppColors.border),
-                          _expStat('$rev', 'Yorum'),
+                          _expStat('$rev', 'Yorum',
+                              tooltip: StatTooltips.reviews),
                         ],
                       ),
                     ),
@@ -823,8 +826,9 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _expStat(String value, String label) {
+  Widget _expStat(String value, String label, {String? tooltip}) {
     // Phase 406 — İkon kaldırıldı; değer üstte büyük + label altta küçük.
+    // Phase 414 — label yanına opsiyonel bilgi imleci.
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -834,9 +838,23 @@ class ProfileScreen extends ConsumerWidget {
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary)),
         const SizedBox(height: 2),
-        Text(label,
-            style: TextStyle(
-                fontSize: 10, color: AppColors.textSecondary)),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label,
+                style: TextStyle(
+                    fontSize: 10, color: AppColors.textSecondary)),
+            if (tooltip != null) ...[
+              const SizedBox(width: 2),
+              StatInfoIcon(
+                title: label,
+                message: tooltip,
+                size: 11,
+                padding: EdgeInsets.zero,
+              ),
+            ],
+          ],
+        ),
       ],
     );
   }

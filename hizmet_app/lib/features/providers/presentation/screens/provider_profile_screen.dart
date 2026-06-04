@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
+import '../../../../core/widgets/stat_info_popup.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../reviews/presentation/screens/write_review_screen.dart';
 import '../../../reviews/data/review_repository.dart';
@@ -168,11 +169,17 @@ class _ProviderContent extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _statCol(rating.toStringAsFixed(1), 'Puan', Icons.star, Colors.amber),
-          _statCol(totalReviews.toString(), 'Yorum', Icons.reviews_outlined, Colors.green),
+          _statCol(rating.toStringAsFixed(1), 'Puan', Icons.star, Colors.amber,
+              tooltip: StatTooltips.rating),
+          _statCol(totalReviews.toString(), 'Yorum',
+              Icons.reviews_outlined, Colors.green,
+              tooltip: StatTooltips.reviews),
           _statCol(isVerified ? 'Onaylı' : 'Bekliyor', 'Durum',
               isVerified ? Icons.verified : Icons.pending_outlined,
-              isVerified ? Colors.blue : Colors.orange),
+              isVerified ? Colors.blue : Colors.orange,
+              tooltip: isVerified
+                  ? 'Bu ustanın kimliği yönetici tarafından doğrulanmıştır.'
+                  : 'Bu ustanın kimlik doğrulaması henüz tamamlanmamıştır.'),
         ],
       ),
     );
@@ -278,14 +285,30 @@ class _ProviderContent extends ConsumerWidget {
     );
   }
 
-  Widget _statCol(String value, String label, IconData icon, Color color) {
+  Widget _statCol(String value, String label, IconData icon, Color color,
+      {String? tooltip}) {
+    // Phase 416 — label yanına opsiyonel bilgi imleci.
     return Column(children: [
       Icon(icon, color: color, size: 24),
       const SizedBox(height: 6),
       Text(value,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-      Text(label,
-          style: TextStyle(color: AppColors.textHint, fontSize: 12)),
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label,
+              style: TextStyle(color: AppColors.textHint, fontSize: 12)),
+          if (tooltip != null) ...[
+            const SizedBox(width: 2),
+            StatInfoIcon(
+              title: label,
+              message: tooltip,
+              size: 12,
+              padding: EdgeInsets.zero,
+            ),
+          ],
+        ],
+      ),
     ]);
   }
 

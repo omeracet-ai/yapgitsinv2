@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/card_3d.dart';
+import '../../../../core/widgets/stat_info_popup.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../../../core/services/turkish_currency_input_formatter.dart';
@@ -610,6 +611,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
           // Phase 377 — rating + toplam-ilan istatistikleri kaldırıldı.
           // Yalnızca başarı oranı (varsa) gösterilir; daha sıkı kart.
+          // Phase 377 — Yalnızca başarı oranı (varsa). Phase 414'te
+          // eklenen Tamamlanan + Rating chip'leri kullanıcı geri çevirdi
+          // (ilan detay sayfasında rating yanıltıcı: ilan sahibi
+          // müşteri için anlam taşımıyor; usta profili PublicProfileScreen'de
+          // zaten gösteriliyor).
           if (successRate != null)
             Row(
               children: [
@@ -618,8 +624,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   iconColor: AppColors.success,
                   label: '%$successRate',
                   sublabel: 'Başarı',
-                  tooltip:
-                      'Başlatılan işlerin başarıyla tamamlanma yüzdesi (başarılı / toplam).',
+                  tooltip: StatTooltips.successRate,
                 ),
                 const Spacer(),
               ],
@@ -695,16 +700,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 ),
                 if (tooltip != null) ...[
                   const SizedBox(width: 3),
-                  GestureDetector(
-                    onTap: () => _showStatInfoPopup(
-                      context: context,
-                      title: sublabel,
-                      message: tooltip,
-                    ),
-                    child: Icon(Icons.info_outline_rounded,
-                        size: 11,
-                        color: AppColors.primary
-                            .withValues(alpha: 0.85)),
+                  // Phase 414 — shared StatInfoIcon (core/widgets).
+                  StatInfoIcon(
+                    title: sublabel,
+                    message: tooltip,
+                    size: 11,
+                    padding: EdgeInsets.zero,
                   ),
                 ],
               ],
@@ -715,81 +716,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     );
   }
 
-  // Phase 374 — Stat title hakkında küçük popup. Barrier her yere tıklayınca
-  // kapanır; pencere kompakt, blur'lu.
-  void _showStatInfoPopup({
-    required BuildContext context,
-    required String title,
-    required String message,
-  }) {
-    showDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black.withValues(alpha: 0.35),
-      builder: (ctx) {
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => Navigator.of(ctx).pop(),
-          child: Center(
-            child: GestureDetector(
-              onTap: () {},
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 48),
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                constraints: const BoxConstraints(maxWidth: 280),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1F2E),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.30),
-                      width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.45),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline_rounded,
-                            size: 16, color: AppColors.primary),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      message,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.78),
-                        fontSize: 12,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
+  // Phase 414 — _showStatInfoPopup core/widgets/stat_info_popup.dart'a
+  // çıkarıldı (3 ekran tek kaynak). Aşağıdaki helper'lar lokal kaldı.
 
   static String _formatDueDate(String yyyyMmDd) {
     try {
@@ -1210,16 +1138,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Rozet satırı: mavi tik + belge + doğrulanmamış uyarı
-                const SizedBox(height: 4),
-                Wrap(spacing: 6, runSpacing: 4, children: [
-                  if (identityVerified)
-                    _badgeChip(Icons.verified, 'Kimliği Doğrulandı', Colors.blue)
-                  else
-                    _badgeChip(Icons.warning_amber_rounded, 'Doğrulanmamış', Colors.orange),
-                  if (hasDocument)
+                // Rozet satırı: yalnız "Yeterlilik Belgesi".
+                // Phase 415 — "Kimliği Doğrulandı" + "Doğrulanmamış" chip'leri
+                // kaldırıldı (kullanıcı isteği). Avatar üstündeki mavi tik
+                // sadece identityVerified=true iken görünür (line 1057).
+                if (hasDocument) ...[
+                  const SizedBox(height: 4),
+                  Wrap(spacing: 6, runSpacing: 4, children: [
                     _badgeChip(Icons.workspace_premium_outlined, 'Yeterlilik Belgesi', Colors.green),
-                ]),
+                  ]),
+                ],
                 const SizedBox(height: 6),
                 // İstatistikler
                 Row(children: [

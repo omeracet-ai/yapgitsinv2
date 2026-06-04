@@ -18,11 +18,17 @@ class BadgeRow extends StatelessWidget {
     final list = badges;
     if (list == null || list.isEmpty) return const SizedBox.shrink();
 
+    // Phase 418 — "Doğrulanmış" rozeti tüm ekranlarda gizle (kullanıcı
+    // isteği). Profile/PublicProfile/Provider listede aynı kural; Phase
+    // 407'deki ProfileScreen inline filter'ı buraya taşındı, tek kaynak.
     final parsed = <_Badge>[];
     for (final raw in list) {
       if (raw is Map) {
         final label = (raw['label'] ?? '').toString();
         if (label.isEmpty) continue;
+        final key = (raw['key'] ?? '').toString().toLowerCase();
+        final labelLower = label.toLowerCase();
+        if (key == 'verified' || labelLower == 'doğrulanmış') continue;
         parsed.add(_Badge(
           label: label,
           icon: raw['icon']?.toString(),

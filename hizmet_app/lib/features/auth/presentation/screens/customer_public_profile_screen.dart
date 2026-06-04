@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_client_provider.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/list_skeleton.dart';
+import '../../../../core/widgets/stat_info_popup.dart';
 import '../../data/customer_profile_repository.dart';
 
 /// Phase 133 — Customer public profile screen (no worker fields).
@@ -54,9 +55,14 @@ class _Body extends StatelessWidget {
     final totalListingsCount =
         (data['totalCustomerListings'] as num?)?.toInt() ?? total;
     final userId = (data['id'] as String?) ?? '';
-    final monthly = (data['monthlyActivity'] as List?)
+    // Phase 417 — pencere 1 ay (bu ay). Backend deploy edilene kadar
+    // 6 ay listesi gelirse defensive olarak son 1 ay alınır.
+    final monthlyRaw = (data['monthlyActivity'] as List?)
             ?.cast<Map<String, dynamic>>() ??
         [];
+    final monthly = monthlyRaw.length > 1
+        ? monthlyRaw.sublist(monthlyRaw.length - 1)
+        : monthlyRaw;
     final topCats = (data['topCategories'] as List?)
             ?.cast<Map<String, dynamic>>() ??
         [];
@@ -133,15 +139,20 @@ class _Body extends StatelessWidget {
           ),
           child: Row(
             children: [
-              _stat('Tamamlanan', '$completed', Icons.check_circle_outline),
+              _stat('Tamamlanan', '$completed', Icons.check_circle_outline,
+                  tooltip: StatTooltips.completedCustomer),
               _divider(),
-              _stat('Başarı', '%$rate', Icons.trending_up_rounded),
+              _stat('Başarı', '%$rate', Icons.trending_up_rounded,
+                  tooltip: StatTooltips.successRate),
               _divider(),
               _stat('Toplam İlan', '$totalListingsCount',
-                  Icons.list_alt_rounded),
+                  Icons.list_alt_rounded,
+                  tooltip:
+                      'Bu kişinin şimdiye kadar açtığı toplam ilan sayısıdır.'),
               _divider(),
               _stat('Yorum', '$totalReviewsCount',
-                  Icons.rate_review_outlined),
+                  Icons.rate_review_outlined,
+                  tooltip: StatTooltips.reviews),
             ],
           ),
         ),
@@ -169,8 +180,8 @@ class _Body extends StatelessWidget {
 
         const SizedBox(height: 16),
 
-        // Phase 145 — Aktivite (son 6 ay)
-        const Text('Aktivite (Son 6 Ay)',
+        // Phase 145 — Aktivite (son 1 ay; Phase 417'de 6→1)
+        const Text('Aktivite (Bu Ay)',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         _activityChart(monthly),
@@ -258,7 +269,9 @@ class _Body extends StatelessWidget {
     );
   }
 
-  Widget _stat(String label, String value, IconData icon) {
+  Widget _stat(String label, String value, IconData icon,
+      {String? tooltip}) {
+    // Phase 416 — label yanına opsiyonel bilgi imleci.
     return Expanded(
       child: Column(
         children: [
@@ -268,9 +281,28 @@ class _Body extends StatelessWidget {
               style: const TextStyle(
                   fontSize: 15, fontWeight: FontWeight.bold)),
           const SizedBox(height: 2),
-          Text(label,
-              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-              textAlign: TextAlign.center),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(label,
+                    style: TextStyle(
+                        fontSize: 11, color: AppColors.textSecondary),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis),
+              ),
+              if (tooltip != null) ...[
+                const SizedBox(width: 2),
+                StatInfoIcon(
+                  title: label,
+                  message: tooltip,
+                  size: 11,
+                  padding: EdgeInsets.zero,
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
@@ -365,7 +397,7 @@ class _Body extends StatelessWidget {
           Icon(Icons.show_chart_rounded, color: Colors.grey.shade400),
           const SizedBox(width: 10),
           Expanded(
-            child: Text('Son 6 ayda tamamlanan iş yok.',
+            child: Text('Bu ay tamamlanan iş yok.',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
           ),
         ]),

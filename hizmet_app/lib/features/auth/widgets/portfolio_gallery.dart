@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:video_player/video_player.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../photos/data/photo_repository.dart';
 import '../presentation/screens/public_profile_screen.dart';
 
-/// Worker portfolio galerisi (Phase 43 fotoğraf + Phase 125 video).
-/// - Sahibi ise üstte "+ Fotoğraf" ve "🎥 Video" butonları, her item'da X.
-/// - Fotoğraf tap → lightbox; video tap → fullscreen player.
+/// Worker portfolio galerisi (Phase 43 fotoğraf).
+/// Phase 419 — video desteği kaldırıldı (kullanıcı isteği).
+/// - Sahibi ise üstte "+ Fotoğraf" butonu, her item'da X.
+/// - Fotoğraf tap → lightbox.
 class PortfolioGallery extends ConsumerStatefulWidget {
   final List<String> photos;
-  final List<String> videos;
   final bool isOwner;
   final String userId;
   const PortfolioGallery({
     super.key,
     required this.photos,
-    this.videos = const [],
     required this.isOwner,
     required this.userId,
   });
@@ -28,7 +26,6 @@ class PortfolioGallery extends ConsumerStatefulWidget {
 
 class _PortfolioGalleryState extends ConsumerState<PortfolioGallery> {
   bool _busy = false;
-  bool _busyVideo = false;
 
   Future<void> _addPhoto() async {
     if (_busy) return;
@@ -58,61 +55,12 @@ class _PortfolioGalleryState extends ConsumerState<PortfolioGallery> {
     }
   }
 
-  Future<void> _addVideo() async {
-    if (_busyVideo) return;
-    if (widget.videos.length >= 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('En fazla 3 portfolyo videosu ekleyebilirsiniz')),
-      );
-      return;
-    }
-    final picker = ImagePicker();
-    final picked = await picker.pickVideo(
-      source: ImageSource.gallery,
-      maxDuration: const Duration(minutes: 2),
-    );
-    if (picked == null) return;
-    setState(() => _busyVideo = true);
-    try {
-      final repo = ref.read(photoRepositoryProvider);
-      await repo.uploadPortfolioVideo(picked);
-      if (!mounted) return;
-      ref.invalidate(publicProfileProvider(widget.userId));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Video eklendi')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    } finally {
-      if (mounted) setState(() => _busyVideo = false);
-    }
-  }
-
   Future<void> _removePhoto(String url) async {
     final ok = await _confirm('Bu fotoğraf portfolyodan kaldırılsın mı?');
     if (ok != true) return;
     try {
       final repo = ref.read(photoRepositoryProvider);
       await repo.removePortfolioPhoto(url);
-      if (!mounted) return;
-      ref.invalidate(publicProfileProvider(widget.userId));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  }
-
-  Future<void> _removeVideo(String url) async {
-    final ok = await _confirm('Bu video portfolyodan kaldırılsın mı?');
-    if (ok != true) return;
-    try {
-      final repo = ref.read(photoRepositoryProvider);
-      await repo.removePortfolioVideo(url);
       if (!mounted) return;
       ref.invalidate(publicProfileProvider(widget.userId));
     } catch (e) {
@@ -151,37 +99,32 @@ class _PortfolioGalleryState extends ConsumerState<PortfolioGallery> {
     );
   }
 
-  void _openVideoPlayer(String url) {
-    showDialog<void>(
-      context: context,
-      barrierColor: Colors.black,
-      builder: (_) => _FullscreenVideoPlayer(url: url),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (widget.photos.isEmpty &&
-        widget.videos.isEmpty &&
-        !widget.isOwner) {
+    if (widget.photos.isEmpty && !widget.isOwner) {
       return const SizedBox.shrink();
     }
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        if (widget.isOwner) _addTile(_addPhoto, _busy, Icons.add_a_photo_outlined, 'Foto'),
-        if (widget.isOwner)
-          _addTile(_addVideo, _busyVideo, Icons.videocam_outlined, 'Video'),
-        ...List.generate(widget.photos.length, (i) {
-          final url = widget.photos[i];
-          return _photoTile(url, i);
-        }),
-        ...List.generate(widget.videos.length, (i) {
-          final url = widget.videos[i];
-          return _videoTile(url);
-        }),
-      ],
+    // Phase 421 — Wrap → yatay slide ListView. Row sınırına ulaşan
+    // resimler alt satıra inmek yerine yatayda kaydırılır. Tile 90×90
+    // sabit yükseklik; parent height: 90.
+    final tiles = <Widget>[
+      if (widget.isOwner) _addTile(_addPhoto, _busy, Icons.add_a_photo_outlined, 'Foto'),
+      ...List.generate(widget.photos.length, (i) {
+        final url = widget.photos[i];
+        return _photoTile(url, i);
+      }),
+    ];
+    return SizedBox(
+      height: 96, // 90 + bordür/badge taşması payı
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        clipBehavior: Clip.none,
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
+        itemCount: tiles.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) => tiles[i],
+      ),
     );
   }
 
@@ -246,46 +189,6 @@ class _PortfolioGalleryState extends ConsumerState<PortfolioGallery> {
           ),
         ),
         if (widget.isOwner) _removeBadge(() => _removePhoto(url)),
-      ],
-    );
-  }
-
-  Widget _videoTile(String url) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        GestureDetector(
-          onTap: () => _openVideoPlayer(url),
-          child: Container(
-            width: 90,
-            height: 90,
-            decoration: BoxDecoration(
-              color: Colors.black87,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Icon(Icons.play_circle_fill,
-                  color: Colors.white, size: 36),
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 4,
-          left: 4,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-            decoration: BoxDecoration(
-              color: Colors.black54,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: const Text('VIDEO',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold)),
-          ),
-        ),
-        if (widget.isOwner) _removeBadge(() => _removeVideo(url)),
       ],
     );
   }
@@ -362,88 +265,4 @@ class _LightboxState extends State<_Lightbox> {
   }
 }
 
-class _FullscreenVideoPlayer extends StatefulWidget {
-  final String url;
-  const _FullscreenVideoPlayer({required this.url});
-
-  @override
-  State<_FullscreenVideoPlayer> createState() => _FullscreenVideoPlayerState();
-}
-
-class _FullscreenVideoPlayerState extends State<_FullscreenVideoPlayer> {
-  late final VideoPlayerController _ctrl;
-  bool _ready = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = VideoPlayerController.networkUrl(Uri.parse(widget.url))
-      ..initialize().then((_) {
-        if (!mounted) return;
-        setState(() => _ready = true);
-        _ctrl.play();
-      });
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.black,
-      insetPadding: EdgeInsets.zero,
-      child: Stack(
-        children: [
-          Center(
-            child: _ready
-                ? AspectRatio(
-                    aspectRatio: _ctrl.value.aspectRatio,
-                    child: Stack(
-                      alignment: Alignment.bottomCenter,
-                      children: [
-                        VideoPlayer(_ctrl),
-                        VideoProgressIndicator(_ctrl, allowScrubbing: true),
-                      ],
-                    ),
-                  )
-                : const CircularProgressIndicator(color: Colors.white),
-          ),
-          Positioned(
-            top: 32,
-            right: 16,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white, size: 28),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-          if (_ready)
-            Positioned(
-              bottom: 32,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: IconButton(
-                  iconSize: 56,
-                  icon: Icon(
-                    _ctrl.value.isPlaying
-                        ? Icons.pause_circle_filled
-                        : Icons.play_circle_filled,
-                    color: Colors.white70,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _ctrl.value.isPlaying ? _ctrl.pause() : _ctrl.play();
-                    });
-                  },
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
+// Phase 419 — _FullscreenVideoPlayer kaldırıldı (video desteği bitti).

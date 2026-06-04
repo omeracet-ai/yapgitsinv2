@@ -12,8 +12,10 @@ class PortfolioRepository {
   Future<String> uploadPhoto(XFile file) async {
     try {
       final compressed = await compressImage(file);
+      // Phase 419 — backend uploads.controller.ts FileInterceptor('photo')
+      // bekliyor; field adı 'file' iken "unexpected field" hatası fırlatıyordu.
       final formData = FormData.fromMap({
-        'file': MultipartFile.fromBytes(compressed, filename: file.name),
+        'photo': MultipartFile.fromBytes(compressed, filename: file.name),
       });
       final upResp = await _dio.post('/uploads/portfolio', data: formData);
       final url = (upResp.data as Map)['url'] as String;
