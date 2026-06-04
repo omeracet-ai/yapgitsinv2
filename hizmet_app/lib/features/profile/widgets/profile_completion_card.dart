@@ -42,6 +42,9 @@ const Map<String, String> kProfileFieldLabels = {
   'workerBio': 'Hakkında',
   'hourlyRateMin': 'Saatlik Ücret (Min)',
   'hourlyRateMax': 'Saatlik Ücret (Max)',
+  // Phase 425 — isAvailable + availabilitySchedule profil doluluk
+  // sayımından çıkarıldı (backend de aynı). Label mapping defensive
+  // amaçla kaldı.
   'isAvailable': 'Müsaitlik Durumu',
   'availabilitySchedule': 'Çalışma Saatleri',
   'serviceRadiusKm': 'Hizmet Yarıçapı',

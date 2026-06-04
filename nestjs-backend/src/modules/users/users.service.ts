@@ -764,10 +764,9 @@ export class UsersService {
       key: 'hourlyRateMax',
       check: (u) => u.hourlyRateMax != null && u.hourlyRateMax > 0,
     },
-    {
-      key: 'availability',
-      check: (u) => u.isAvailable === true || u.availabilitySchedule != null,
-    },
+    // Phase 425 — 'availability' / isAvailable profil doluluk
+    // hesabından çıkarıldı (kullanıcı isteği). Müsaitlik artık
+    // Rozetlerim chip + Müsaitlik Takvimi'nden bağımsız yönetilir.
   ];
 
   computeProfileCompletion(user: User): {
@@ -867,12 +866,8 @@ export class UsersService {
           points: 5,
           ok: !!user.serviceRadiusKm,
         },
-        {
-          field: 'isAvailable',
-          label: 'Aktif Çalışma Durumu',
-          points: 5,
-          ok: !!user.isAvailable,
-        },
+        // Phase 425 — 'isAvailable' (Aktif Çalışma Durumu) score
+        // hesabından çıkarıldı (kullanıcı isteği). Müsaitlik bağımsız.
       );
     }
 

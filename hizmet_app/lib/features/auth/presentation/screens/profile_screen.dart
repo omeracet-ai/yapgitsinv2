@@ -2181,6 +2181,12 @@ class _AvailabilityToggleChipState
           content: Text(next ? 'Müsait olarak işaretlendi' : 'Pasife alındı'),
           backgroundColor: next ? AppColors.success : AppColors.textSecondary,
         ));
+        // Phase 425 — Aktif'e çevirince Müsaitlik Takvimi otomatik açılsın
+        // (kullanıcı saatleri hemen belirlesin diye). Kapatırken sheet açma.
+        if (next) {
+          await AvailabilityEditorSheet.show(context);
+          widget.onChanged();
+        }
       }
     } catch (e) {
       if (mounted) {
