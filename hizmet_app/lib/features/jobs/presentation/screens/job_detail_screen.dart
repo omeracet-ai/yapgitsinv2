@@ -408,26 +408,27 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           const SizedBox(height: 8),
 
           // Bilgi satırı: konum + zaman + (Phase 333) görüntülenme
-          Row(children: [
-            Flexible(child: _infoChip(Icons.location_on_outlined, widget.location, Colors.red.shade300)),
-            const SizedBox(width: 14),
-            Flexible(child: _infoChip(Icons.access_time_rounded, postedStr, Colors.grey.shade400)),
-            if (viewCount != null && viewCount > 0) ...[
-              const SizedBox(width: 14),
-              _infoChip(Icons.visibility_outlined, '$viewCount', Colors.blue.shade300),
+          // Phase 413 — Row+Flexible chain uzun konum/şehir metninde
+          // right-overflow yapıyordu (Phase 412 _infoChip'ten Flexible
+          // kaldırılınca açığa çıktı). Wrap'a çevrildi: dar ekran/uzun
+          // metinde chip'ler alt satıra kayar, taşma yok.
+          Wrap(
+            spacing: 14,
+            runSpacing: 4,
+            children: [
+              _infoChip(Icons.location_on_outlined, widget.location, Colors.red.shade300),
+              _infoChip(Icons.access_time_rounded, postedStr, Colors.grey.shade400),
+              if (viewCount != null && viewCount > 0)
+                _infoChip(Icons.visibility_outlined, '$viewCount', Colors.blue.shade300),
             ],
-          ]),
+          ),
           if (dueDate != null) ...[
             const SizedBox(height: 4),
-            Row(children: [
-              Flexible(
-                child: _infoChip(
-                  Icons.event_outlined,
-                  'Teslim: ${_formatDueDate(dueDate)}',
-                  Colors.orange.shade400,
-                ),
-              ),
-            ]),
+            _infoChip(
+              Icons.event_outlined,
+              'Teslim: ${_formatDueDate(dueDate)}',
+              Colors.orange.shade400,
+            ),
           ],
 
           const SizedBox(height: 8),
@@ -2077,20 +2078,26 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   }
 
   Widget _infoChip(IconData icon, String label, Color iconColor) {
-    // Phase 412 — nested Flexible-in-Flexible kaldırıldı (page transition
-    // ImageFiltered pass'inde "non-zero flex, unbounded width" patlamasının
-    // kök nedeniydi). MainAxisSize.min + plain Text(ellipsis); dış Row
-    // sarmalındaki Flexible genel daralma yönetiyor.
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: iconColor),
-        const SizedBox(width: 4),
-        Text(label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12, color: _textSecondary)),
-      ],
+    // Phase 413 — ConstrainedBox(maxWidth) + Row(min) + Flexible(Text):
+    // Wrap içinde tek chip parent'tan geniş olunca taşıyordu. Üst sınır
+    // verince hem ellipsis tetiklenir hem Wrap chip'i alt satıra düşürebilir.
+    // İç Flexible güvenli — outer Wrap intrinsic-friendly (Phase 412'de
+    // patlayan "outer Row+Flexible × iç Flexible" kombinasyonu yok).
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 220),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: iconColor),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12, color: _textSecondary)),
+          ),
+        ],
+      ),
     );
   }
 }
