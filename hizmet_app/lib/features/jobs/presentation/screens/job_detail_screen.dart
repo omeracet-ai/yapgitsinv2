@@ -2077,17 +2077,21 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   }
 
   Widget _infoChip(IconData icon, String label, Color iconColor) {
-    return Row(children: [
-      Icon(icon, size: 14, color: iconColor),
-      const SizedBox(width: 4),
-      Flexible(
-        child: Text(label,
+    // Phase 412 — nested Flexible-in-Flexible kaldırıldı (page transition
+    // ImageFiltered pass'inde "non-zero flex, unbounded width" patlamasının
+    // kök nedeniydi). MainAxisSize.min + plain Text(ellipsis); dış Row
+    // sarmalındaki Flexible genel daralma yönetiyor.
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: iconColor),
+        const SizedBox(width: 4),
+        Text(label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style:
-                const TextStyle(fontSize: 12, color: _textSecondary)),
-      ),
-    ]);
+            style: const TextStyle(fontSize: 12, color: _textSecondary)),
+      ],
+    );
   }
 }
 
