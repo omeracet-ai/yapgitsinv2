@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/list_skeleton.dart';
+import '../../../../core/widgets/overflow_slide_row.dart';
 import '../../../../core/widgets/stat_info_popup.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../reviews/presentation/screens/write_review_screen.dart';
@@ -431,7 +432,9 @@ class _ProviderContent extends ConsumerWidget {
           const Text('Belgeler',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          Wrap(spacing: 8, runSpacing: 8, children: badges),
+          // Phase 429 — Wrap → OverflowSlideRow (belge sayısı arttıkça
+          // multi-line yerine yatay slide + <> oklar).
+          OverflowSlideRow(spacing: 8, height: 32, children: badges),
         ],
       ),
     );

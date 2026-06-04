@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/overflow_slide_row.dart';
 
 /// Phase 293 — Belge doğrulanmış kategoriler için rozet şeridi.
 ///
@@ -65,9 +66,11 @@ class VerifiedCategoryBadgesRow extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Wrap(
+          // Phase 429 — Wrap → OverflowSlideRow (kategori sayısı arttıkça
+          // multi-line yerine yatay slide + <> oklar; bilgi kayıbı yok).
+          OverflowSlideRow(
             spacing: 6,
-            runSpacing: 6,
+            height: 32,
             children: categories.map((c) => _CategoryChip(data: c)).toList(),
           ),
         ],

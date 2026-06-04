@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
+import '../../../../core/widgets/overflow_slide_row.dart';
 import '../../../categories/data/category_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/job_filter.dart';
@@ -644,10 +645,11 @@ class _PosterStrip extends StatelessWidget {
                     color: AppColors.textPrimary),
               ),
               const SizedBox(height: 4),
-              Wrap(
+              // Phase 429 — Wrap → OverflowSlideRow (uzun isim + 3 chip
+              // mini kartta multi-line yapmasın; yatay slide + oklar).
+              OverflowSlideRow(
                 spacing: 6,
-                runSpacing: 4,
-                crossAxisAlignment: WrapCrossAlignment.center,
+                height: 24,
                 children: [
                   _miniChip(
                     Icons.star_rounded,

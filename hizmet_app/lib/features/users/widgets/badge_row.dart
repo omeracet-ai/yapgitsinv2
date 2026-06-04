@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/overflow_slide_row.dart';
 import 'badge_chip.dart';
 
 /// Renders a list of badges as Wrap chips.
@@ -40,6 +41,8 @@ class BadgeRow extends StatelessWidget {
     if (compact) {
       final visible = parsed.take(2).toList();
       final overflow = parsed.length - visible.length;
+      // Phase 429 — compact (list card) modunda zaten max 2 chip + overflow
+      // chip var; tek satıra rahat sığar, slide row gerekmez. Sade Wrap kalır.
       return Wrap(
         spacing: 6,
         runSpacing: 4,
@@ -67,9 +70,10 @@ class BadgeRow extends StatelessWidget {
       );
     }
 
-    return Wrap(
+    // Phase 429 — full mode: rozetler taşıyor olabilir, yatay slide + oklar.
+    return OverflowSlideRow(
       spacing: 8,
-      runSpacing: 8,
+      height: 32,
       children: parsed
           .map((b) => BadgeChip(label: b.label, icon: b.icon))
           .toList(),

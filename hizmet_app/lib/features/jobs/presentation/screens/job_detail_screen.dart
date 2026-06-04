@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/card_3d.dart';
 import '../../../../core/widgets/stat_info_popup.dart';
+import '../../../../core/widgets/overflow_slide_row.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../../../core/services/turkish_currency_input_formatter.dart';
@@ -409,13 +410,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           const SizedBox(height: 8),
 
           // Bilgi satırı: konum + zaman + (Phase 333) görüntülenme
-          // Phase 413 — Row+Flexible chain uzun konum/şehir metninde
-          // right-overflow yapıyordu (Phase 412 _infoChip'ten Flexible
-          // kaldırılınca açığa çıktı). Wrap'a çevrildi: dar ekran/uzun
-          // metinde chip'ler alt satıra kayar, taşma yok.
-          Wrap(
+          // Phase 429 — Wrap → OverflowSlideRow. Uzun konum metni / 3+
+          // chip dar ekranda multi-line'a kaymak yerine yatay slide olur,
+          // belirgin <> oklarıyla kullanıcı kaydırabilir.
+          OverflowSlideRow(
             spacing: 14,
-            runSpacing: 4,
+            height: 28,
             children: [
               _infoChip(Icons.location_on_outlined, widget.location, Colors.red.shade300),
               _infoChip(Icons.access_time_rounded, postedStr, Colors.grey.shade400),
@@ -1144,7 +1144,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 // sadece identityVerified=true iken görünür (line 1057).
                 if (hasDocument) ...[
                   const SizedBox(height: 4),
-                  Wrap(spacing: 6, runSpacing: 4, children: [
+                  // Phase 429 — Wrap → OverflowSlideRow (ileride badge eklenirse
+                  // multi-line yerine yatay slide olur).
+                  OverflowSlideRow(spacing: 6, height: 24, children: [
                     _badgeChip(Icons.workspace_premium_outlined, 'Yeterlilik Belgesi', Colors.green),
                   ]),
                 ],
