@@ -21,6 +21,12 @@ const TIER_THRESHOLDS: { tier: LoyaltyTier; min: number }[] = [
 
 export const REFERRAL_BONUS_TOKENS = 50;
 
+// Phase 422 — VIP sadakat override: aşağıdaki email'ler her durumda
+// en üst kademe (Platinum) görünür. Kullanıcı isteği (manuel atama).
+const VIP_PLATINUM_EMAILS = new Set<string>([
+  'omer.acet93@gmail.com',
+]);
+
 export interface LoyaltyInfo {
   referralCode: string;
   tier: LoyaltyTier;
@@ -55,6 +61,19 @@ export class LoyaltyService {
   } {
     const totalSuccess =
       (user.asCustomerSuccess || 0) + (user.asWorkerSuccess || 0);
+
+    // Phase 422 — VIP override: belirli email'lere en üst kademe ver,
+    // gerçek totalSuccess'e bakmaksızın. nextTier = null (üstü yok).
+    const email = (user.email || '').trim().toLowerCase();
+    if (email && VIP_PLATINUM_EMAILS.has(email)) {
+      return {
+        tier: 'Platinum',
+        totalSuccess,
+        nextTier: null,
+        jobsToNextTier: null,
+      };
+    }
+
     let current: LoyaltyTier = 'Bronze';
     let nextTier: LoyaltyTier | null = null;
     let jobsToNextTier: number | null = null;

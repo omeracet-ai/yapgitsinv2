@@ -477,7 +477,12 @@ class _ProfileView extends ConsumerWidget {
                 const SizedBox(height: 8),
 
                 // ── Rozetler ─────────────────────────────────────────────
-                if (showBadges && badges != null && badges.isNotEmpty) ...[
+                // Phase 422 — Filter sonrası boş kalan rozet listesinde
+                // section başlığı bile gizli. BadgeRow Phase 418'de
+                // "Doğrulanmış" eliyor; sadece o rozet varsa bölüm boş
+                // kalıyordu.
+                if (showBadges &&
+                    _hasVisibleBadges(badges)) ...[
                   _section(
                     title: 'Rozetler',
                     child: BadgeRow(badges: badges),
@@ -531,62 +536,9 @@ class _ProfileView extends ConsumerWidget {
                   isSelf: isSelf,
                 ),
 
-                // ── Hizmet Kategorileri (Phase 265e — tıklanabilir,
-                // birleşik buton ile auto-fill PostJob)
-                if (workerCats.isNotEmpty) ...[
-                  _section(
-                    title: 'Hizmet Kategorileri',
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: workerCats.map((c) {
-                        return InkWell(
-                          borderRadius: BorderRadius.circular(20),
-                          onTap: isSelf
-                              ? null
-                              : () {
-                                  if (currentUserId == null) {
-                                    context.push('/giris-yap', extra: {
-                                      'returnTo': '/usta/$userId',
-                                    });
-                                    return;
-                                  }
-                                  context.push('/ilan-ver', extra: {
-                                    'targetWorkerId': userId,
-                                    'targetWorkerName': name,
-                                    'initialCategory': c,
-                                    'allowedCategories': workerCats,
-                                  });
-                                },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryLight,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(c,
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w600)),
-                                if (!isSelf) ...[
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.arrow_forward_rounded,
-                                      size: 12, color: AppColors.primary),
-                                ],
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
+                // Phase 422 — Chip-list 'Hizmet Kategorileri' kaldırıldı
+                // (kullanıcı isteği). Dropdown tabanlı tek liste kaldı
+                // ("Bu Ustaya Teklif Ver" CTA → PostJob form'unda).
 
                 // Phase 315 — "Bu Ustaya Teklif Ver" CTA artık scroll
                 // gövdesinin dışında, Scaffold.bottomNavigationBar slot'unda
@@ -612,25 +564,9 @@ class _ProfileView extends ConsumerWidget {
                           ),
                   ),
 
-                // ── İstatistik detayı ─────────────────────────────────────
-                _section(
-                  title: 'İstatistikler',
-                  child: Column(
-                    children: [
-                      _statRow('Müşteri olarak tamamlanan',
-                          '$successCustomer / $totalCustomer iş'),
-                      const SizedBox(height: 6),
-                      _statRow('Usta olarak tamamlanan',
-                          '$successWorker / $totalWorker iş'),
-                      if (verified) ...[
-                        const SizedBox(height: 6),
-                        _statRow('Kimlik doğrulama', 'Doğrulandı ✓',
-                            valueColor: AppColors.primary),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
+                // Phase 422 — 'İstatistikler' bölümü kaldırıldı (kullanıcı
+                // isteği). Üstteki _bigStat satırı (Tamamlanan/Başarı/Puan)
+                // zaten özet veriyor; aşağıdaki detay tekrar oluyordu.
 
                 // ── Tanıtım Videosu (Phase 152) ──────────────────────────
                 if (introVideoUrl != null && introVideoUrl.isNotEmpty) ...[
@@ -868,6 +804,22 @@ class _ProfileView extends ConsumerWidget {
   }
 
   Widget _divider() => Container(width: 1, height: 40, color: Colors.grey.shade200);
+
+  /// Phase 422 — BadgeRow filter (key='verified' / label='doğrulanmış')
+  /// uygulandıktan sonra görünür rozet kaldı mı? `null` veya boş liste de
+  /// false döner — section başlığı çizilmesin.
+  static bool _hasVisibleBadges(List? raw) {
+    if (raw == null || raw.isEmpty) return false;
+    for (final b in raw) {
+      if (b is! Map) continue;
+      final label = (b['label'] ?? '').toString();
+      if (label.isEmpty) continue;
+      final key = (b['key'] ?? '').toString().toLowerCase();
+      if (key == 'verified' || label.toLowerCase() == 'doğrulanmış') continue;
+      return true;
+    }
+    return false;
+  }
 
   Widget _section({required String title, required Widget child}) {
     return Container(color: AppColors.surface,
