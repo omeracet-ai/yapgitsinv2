@@ -1066,6 +1066,14 @@ class ProfileScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 10),
+              // Phase 424 — "Şu an Müsait" aktif-pasif toggle chip.
+              // Müsaitlik Takvimi master switch'inin kısayolu; rozet
+              // satırının başında daima görünür. Tap → PATCH /users/me.
+              _AvailabilityToggleChip(
+                isAvailable: data['isAvailable'] == true,
+                onChanged: () => ref.invalidate(myPublicProfileProvider),
+              ),
+              const SizedBox(height: 10),
               BadgeRow(badges: badges),
             ],
           ),
@@ -2136,6 +2144,106 @@ class ProfileScreen extends ConsumerWidget {
       // Phase 323 — chevron trailing kaldırıldı (kullanıcı: "iconlu
       // text'lerden 2. ikonu kaldır"). Tap area ListTile'a bağlı.
       onTap: onTap,
+    );
+  }
+}
+
+/// Phase 424 — Rozetlerim section'ı içinde "Şu an Müsait" aktif-pasif chip.
+/// Sahibi tek tap'la müsaitlik master switch'ini çevirir; PATCH /users/me
+/// {isAvailable} → provider invalidate → UI freshen.
+class _AvailabilityToggleChip extends ConsumerStatefulWidget {
+  final bool isAvailable;
+  final VoidCallback onChanged;
+  const _AvailabilityToggleChip({
+    required this.isAvailable,
+    required this.onChanged,
+  });
+
+  @override
+  ConsumerState<_AvailabilityToggleChip> createState() =>
+      _AvailabilityToggleChipState();
+}
+
+class _AvailabilityToggleChipState
+    extends ConsumerState<_AvailabilityToggleChip> {
+  bool _busy = false;
+
+  Future<void> _toggle() async {
+    if (_busy) return;
+    final next = !widget.isAvailable;
+    setState(() => _busy = true);
+    try {
+      final client = ref.read(apiClientProvider);
+      await client.dio.patch('/users/me', data: {'isAvailable': next});
+      widget.onChanged();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(next ? 'Müsait olarak işaretlendi' : 'Pasife alındı'),
+          backgroundColor: next ? AppColors.success : AppColors.textSecondary,
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Güncellenemedi: $e'),
+          backgroundColor: AppColors.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final on = widget.isAvailable;
+    final color = on ? AppColors.success : AppColors.textHint;
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: _busy ? null : _toggle,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: on ? 0.12 : 0.06),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.45), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_busy)
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: color),
+              )
+            else
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            const SizedBox(width: 8),
+            Text(
+              on ? 'Şu an Müsait' : 'Şu an Müsait Değil',
+              style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: color),
+            ),
+            const SizedBox(width: 6),
+            Icon(
+              on ? Icons.toggle_on_rounded : Icons.toggle_off_rounded,
+              size: 18,
+              color: color,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
