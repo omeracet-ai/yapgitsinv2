@@ -50,7 +50,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _hourlyMinCtrl = TextEditingController();
   final _hourlyMaxCtrl = TextEditingController();
   List<String> _workerCategories = const [];
-  bool _isAvailable = false;
+  // Phase 423 — _isAvailable Müsaitlik Takvimi sheet'ine taşındı.
   bool _isWorker = false;
 
   // Identity
@@ -86,7 +86,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _workerCategories = wc.map((e) => e.toString()).toList();
     }
     _isWorker = _workerCategories.isNotEmpty;
-    _isAvailable = u['isAvailable'] == true;
+    // Phase 423 — isAvailable Müsaitlik Takvimi sheet'inde okunuyor.
     final hMin = u['hourlyRateMin'];
     final hMax = u['hourlyRateMax'];
     if (hMin != null) _hourlyMinCtrl.text = hMin.toString();
@@ -215,13 +215,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _saveWorker() async {
+    // Phase 423 — isAvailable Müsaitlik Takvimi sheet'inden patch'leniyor.
     final min = double.tryParse(_hourlyMinCtrl.text.trim().replaceAll(',', '.'));
     final max = double.tryParse(_hourlyMaxCtrl.text.trim().replaceAll(',', '.'));
     await _patch('worker', {
       if (_bioCtrl.text.trim().isNotEmpty) 'workerBio': _bioCtrl.text.trim(),
       if (min != null) 'hourlyRateMin': min,
       if (max != null) 'hourlyRateMax': max,
-      'isAvailable': _isAvailable,
     });
   }
 
@@ -574,12 +574,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Widget _workerSection(Set<String> missing) {
+    // Phase 423 — 'isAvailable' Müsaitlik Takvimi sheet'e taşındı.
     final fields = [
       'workerCategories',
       'workerBio',
       'hourlyRateMin',
       'hourlyRateMax',
-      'isAvailable',
     ];
     final missingHere = fields.where(missing.contains).toList();
     return _sectionCard(
@@ -639,19 +639,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 highlight: missing.contains('hourlyRateMax')),
           ),
         ]),
-        const SizedBox(height: 12),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('İş alıyorum (müsaitlik)',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-          subtitle: const Text(
-            'Açıkken arama sonuçlarında öne çıkarsın',
-            style: TextStyle(fontSize: 11),
-          ),
-          value: _isAvailable,
-          activeThumbColor: AppColors.success,
-          onChanged: (v) => setState(() => _isAvailable = v),
-        ),
+        // Phase 423 — "İş alıyorum (müsaitlik)" toggle Müsaitlik Takvimi
+        // ekranına taşındı (Profil → Müsaitlik Takvimi). Master switch + saatler
+        // tek yerde yönetilir.
       ]),
     );
   }

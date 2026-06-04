@@ -60,6 +60,9 @@ class _AvailabilityEditorSheetState
 
   late final List<_DaySlot> _slots; // index = dayOfWeek (0-6)
   bool _saving = false;
+  // Phase 423 — Global "İş alıyorum" toggle, edit-profile'dan taşındı.
+  bool _isAvailable = false;
+  bool _loadingProfile = true;
 
   @override
   void initState() {
@@ -85,6 +88,24 @@ class _AvailabilityEditorSheetState
         _slots[dow].startTime = start;
         _slots[dow].endTime = end;
       }
+    }
+    // Phase 423 — global isAvailable backend'ten yükle
+    _loadProfileAvailable();
+  }
+
+  Future<void> _loadProfileAvailable() async {
+    try {
+      final client = ApiClient();
+      final resp = await client.dio.get('/users/me');
+      if (!mounted) return;
+      final data = resp.data;
+      final v = data is Map ? data['isAvailable'] : null;
+      setState(() {
+        _isAvailable = v == true;
+        _loadingProfile = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingProfile = false);
     }
   }
 
@@ -155,7 +176,11 @@ class _AvailabilityEditorSheetState
           'isAvailable': s.isAvailable,
         };
       });
-      await client.dio.put('/users/availability', data: {'days': days});
+      // Phase 423 — Global isAvailable + slots tek save.
+      await Future.wait([
+        client.dio.put('/users/availability', data: {'days': days}),
+        client.dio.patch('/users/me', data: {'isAvailable': _isAvailable}),
+      ]);
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -215,6 +240,25 @@ class _AvailabilityEditorSheetState
                 'Hangi gün ve saatlerde iş alabileceğinizi belirleyin.',
                 style:
                     TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ),
+            // Phase 423 — Global "İş alıyorum (müsaitlik)" toggle —
+            // edit-profile'dan taşındı. Arama sonuçlarında öne çıkma master switch.
+            Container(
+              color: AppColors.background,
+              child: SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                title: const Text('İş alıyorum (müsaitlik)',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                subtitle: const Text(
+                  'Açıkken arama sonuçlarında öne çıkarsın.',
+                  style: TextStyle(fontSize: 11),
+                ),
+                value: _isAvailable,
+                activeThumbColor: AppColors.success,
+                onChanged: _loadingProfile || _saving
+                    ? null
+                    : (v) => setState(() => _isAvailable = v),
               ),
             ),
             const Divider(height: 1),
