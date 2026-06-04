@@ -128,15 +128,8 @@ class _ProfileView extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Phase 330 — CTA üzeri başlık: "Hizmet al"
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 6),
-                    child: Text('Hizmet al',
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary)),
-                  ),
+                  // Phase 431 — Phase 330'daki "Hizmet al" üst başlığı kaldırıldı
+                  // (kullanıcı isteği): buton zaten "Hizmet Al" yazıyor, redundant.
                   Material(
                     color: AppColors.surface,
                     elevation: 8,

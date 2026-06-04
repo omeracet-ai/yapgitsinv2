@@ -36,14 +36,16 @@ class _UserActionMenuState extends ConsumerState<UserActionMenu> {
     final isBlocked =
         ref.watch(blockedUsersProvider).contains(widget.userId);
 
+    // Phase 431 — "Engelle" entry kaldırıldı (kullanıcı isteği). Sadece
+    // "Şikayet Et" kaldı.
+    // ignore: unused_local_variable
+    final _ = isBlocked;
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_vert,
           color: widget.iconColor ?? Colors.grey.shade700),
       tooltip: 'Daha fazla',
       onSelected: (value) async {
-        if (value == 'block') {
-          await _confirmBlock(context, isBlocked: isBlocked);
-        } else if (value == 'report') {
+        if (value == 'report') {
           await ReportUserSheet.show(
             context,
             userId: widget.userId,
@@ -52,13 +54,6 @@ class _UserActionMenuState extends ConsumerState<UserActionMenu> {
         }
       },
       itemBuilder: (_) => [
-        PopupMenuItem(
-          value: 'block',
-          child: Row(children: [
-            Text(isBlocked ? '✅  ' : '🚫  '),
-            Text(isBlocked ? 'Engellemeyi Kaldır' : 'Engelle'),
-          ]),
-        ),
         const PopupMenuItem(
           value: 'report',
           child: Row(children: [
@@ -70,6 +65,7 @@ class _UserActionMenuState extends ConsumerState<UserActionMenu> {
     );
   }
 
+  // ignore: unused_element
   Future<void> _confirmBlock(BuildContext context,
       {required bool isBlocked}) async {
     if (isBlocked) {
