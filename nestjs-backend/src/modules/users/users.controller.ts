@@ -1103,6 +1103,12 @@ export class UsersController {
       Math.round(avgRating * 20) +
       (user.asCustomerSuccess + user.asWorkerSuccess) * 5;
 
+    // Phase 433 — Sadakat puanı (loyalty points).
+    // Formula: reputationScore + (asCustomerSuccess + asWorkerSuccess) * 2
+    // Müşteri ve usta tarafındaki tüm başarılı işler ekstra ağırlık alır.
+    const loyaltyPoints =
+      reputation + (user.asCustomerSuccess + user.asWorkerSuccess) * 2;
+
     const { passwordHash: _ph, ...safe } = user as {
       passwordHash?: string;
     } & typeof user;
@@ -1122,6 +1128,12 @@ export class UsersController {
       badges.push({ key: 'insured', label: 'Sigortalı', icon: '🛡️' });
     if (hasCert)
       badges.push({ key: 'certified', label: 'Sertifikalı', icon: '📜' });
+    // Phase 433 — Sadakat rozeti (her zaman görünür, puana göre etiket).
+    badges.push({
+      key: 'loyalty',
+      label: `Sadakat ${loyaltyPoints}`,
+      icon: '🏆',
+    });
 
     return {
       ...safe,
@@ -1130,6 +1142,7 @@ export class UsersController {
       averageRating: avgRating,
       totalReviews: reviews.length,
       reputationScore: reputation,
+      loyaltyPoints,
       badges,
       reviews: reviews.map((r) => ({
         id: r.id,

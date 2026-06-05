@@ -5,6 +5,7 @@ import '../../../../core/app_config/app_config_visibility.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/list_skeleton.dart';
+import '../../../../core/widgets/rating_progress_bar.dart';
 import '../../../../core/widgets/stat_info_popup.dart';
 import '../../../profile/data/user_profile_repository.dart';
 import '../../../users/widgets/user_action_menu.dart';
@@ -403,6 +404,14 @@ class _ProfileView extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Phase 433 — İnce rating progress bar (metin yok, sadece
+                // renk + dolgu). Header'ın hemen altında full-width.
+                Container(
+                  color: AppColors.surface,
+                  padding:
+                      const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: RatingProgressBar(rating: rating),
+                ),
                 // ── İstatistikler ────────────────────────────────────────
                 // Admin /profile-card ekranı her bir kartı tek tek
                 // gizleyebilir. Tüm kartlar gizliyse Container'ı hiç çizme.

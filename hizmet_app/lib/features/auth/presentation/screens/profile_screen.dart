@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/card_3d.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/notification_bell.dart';
+import '../../../../core/widgets/rating_progress_bar.dart';
 import '../../../../core/widgets/stat_info_popup.dart';
 import '../../../wallet/presentation/screens/wallet_screen.dart';
 import '../../../tokens/data/token_repository.dart';
@@ -377,6 +378,11 @@ class ProfileScreen extends ConsumerWidget {
               ),
               // Phase 321 — İtibar/Ortalama/Değerlendirme strip header'dan
               // çıkarıldı; açılır "İstatistikler" sekmesi içine taşındı.
+              // Phase 433 — İnce rating progress bar (label yok). Header'ın
+              // alt kenarında full-width — kullanıcının itibarını tek bakışta
+              // okumak için renk skalası: kırmızı→turuncu→sarı→yeşil.
+              const SizedBox(height: 16),
+              RatingProgressBar(rating: avgRating, height: 5),
             ],
           ),
         );
@@ -783,6 +789,46 @@ class ProfileScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    // Phase 433 — Rating + review count + sadakat puanı satırı.
+                    // Yıldız ikonu ile averageRating ve yorum sayısı net görünür.
+                    Builder(builder: (_) {
+                      final loyalty =
+                          (profile['loyaltyPoints'] as num?)?.toInt() ?? 0;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.warning.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.star_rounded,
+                                size: 18, color: Colors.amber),
+                            const SizedBox(width: 4),
+                            Text('${avg.toStringAsFixed(1)} / 5.0',
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700)),
+                            const SizedBox(width: 6),
+                            Text('($rev yorum)',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary)),
+                            const Spacer(),
+                            const Icon(Icons.emoji_events_rounded,
+                                size: 16, color: AppColors.warning),
+                            const SizedBox(width: 4),
+                            Text('Sadakat $loyalty',
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.warning)),
+                          ],
+                        ),
+                      );
+                    }),
                     const SizedBox(height: 12),
                     // Phase 406 — IntrinsicHeight ile iki kart eşit yükseklikte
                     // hizalanır; ProgressBar her zaman render → satırlar eşit.
