@@ -21,7 +21,7 @@ import '../providers/job_provider.dart';
 import '../../../reviews/presentation/screens/write_review_screen.dart';
 import '../widgets/completion_photos_section.dart';
 import '../widgets/job_photos_bulk_section.dart';
-import '../../widgets/job_photo_lightbox.dart';
+import '../../../../core/widgets/job_photo_carousel.dart';
 // Phase 305 — JobQuestionsTab kaldırıldı, Q&A yerini chat sistemi aldı.
 import '../widgets/job_video_player.dart';
 import '../../../users/widgets/user_action_menu.dart';
@@ -779,16 +779,15 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   }
 
   Widget _buildPhotosSection(List<String> photos) {
-    // Phase 314 — Sıkıştırılmış foto bloğu:
-    //   • Yükseklik 160 → 130 (~%19 daha kompakt)
-    //   • >1 foto: yatay PageView (sağ-sol slider) + nokta indikatör
-    //   • 1 foto: tek tap-açılır thumbnail
-    const double imgHeight = 130;
+    // Phase 434 — Portfolio-style horizontal carousel.
+    // 1 foto → ortalanmış 300×300 kart. 2+ foto → yatay slider 280×280
+    // (12px gap, fade gradient, 4+ için "x/y" counter chip).
+    // Tap → JobPhotoLightbox (mevcut full-screen viewer).
     final isMulti = photos.length > 1;
     return Container(
       width: double.infinity,
       color: _surfaceColor,
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -810,35 +809,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 6),
-          if (isMulti)
-            _PhotoPager(photos: photos, height: imgHeight)
-          else
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: GestureDetector(
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        JobPhotoLightbox(photos: photos, initialIndex: 0),
-                  ),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    photos.first,
-                    height: imgHeight,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: imgHeight,
-                      color: _surfaceColor2,
-                      child: const Icon(Icons.broken_image, color: _textHint),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          const SizedBox(height: 10),
+          JobPhotoCarousel(photos: photos),
         ],
       ),
     );
@@ -2367,92 +2339,8 @@ class _BidSheetState extends State<_BidSheet> {
   }
 }
 
-/// Phase 314 — Birden fazla foto için sağ-sol slider (PageView) + nokta
-/// indikatörü. Tek foto için tasarlanmadı (üst widget zaten bypass eder).
-class _PhotoPager extends StatefulWidget {
-  final List<String> photos;
-  final double height;
-  const _PhotoPager({required this.photos, required this.height});
-
-  @override
-  State<_PhotoPager> createState() => _PhotoPagerState();
-}
-
-class _PhotoPagerState extends State<_PhotoPager> {
-  final PageController _ctrl = PageController(viewportFraction: 0.92);
-  int _idx = 0;
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(
-          height: widget.height,
-          child: PageView.builder(
-            controller: _ctrl,
-            itemCount: widget.photos.length,
-            // Phase 315 — PageScrollPhysics yatay drag'lere kilitler,
-            // parent SingleChildScrollView'a dikey hareketleri
-            // aktarır → yukarı/aşağı kaydırma "sıkışması" oluşmaz.
-            physics: const PageScrollPhysics(),
-            onPageChanged: (i) => setState(() => _idx = i),
-            itemBuilder: (ctx, i) => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: GestureDetector(
-                onTap: () => Navigator.of(ctx).push(
-                  MaterialPageRoute(
-                    builder: (_) => JobPhotoLightbox(
-                      photos: widget.photos,
-                      initialIndex: i,
-                    ),
-                  ),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    widget.photos[i],
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFF222B36),
-                      child: const Icon(Icons.broken_image,
-                          color: Color(0xFF7A8693)),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(widget.photos.length, (i) {
-            final active = i == _idx;
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: active ? 14 : 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: active
-                    ? AppColors.primary
-                    : const Color(0xFF3A4452),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            );
-          }),
-        ),
-      ],
-    );
-  }
-}
+// Phase 434 — _PhotoPager removed; replaced by JobPhotoCarousel
+// (lib/core/widgets/job_photo_carousel.dart).
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Phase 372 — Teklif kartı altında açılan inline chat paneli.
