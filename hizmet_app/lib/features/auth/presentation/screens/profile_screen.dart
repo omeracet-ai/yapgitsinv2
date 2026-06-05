@@ -1391,7 +1391,7 @@ class ProfileScreen extends ConsumerWidget {
           }),
           ..._buildWorkerOnlyItems(context, ref),
           ..._buildCustomerOnlyItems(context, ref),
-          _menuItem(Icons.card_giftcard_rounded, 'Arkadaş Davet', () {
+          _menuItem(Icons.card_giftcard_rounded, 'Sadakat - Arkadaş Davet', () {
             context.push('/sadakat');
           }),
           _menuItem(Icons.confirmation_number_outlined,
