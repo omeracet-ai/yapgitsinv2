@@ -17,6 +17,7 @@ import '../../../notifications/presentation/screens/notification_screen.dart';
 import '../../data/job_filter.dart';
 import '../../widgets/job_filter_sheet.dart';
 import '../providers/job_provider.dart';
+import '../widgets/job_preview_sheet.dart';
 import 'job_detail_screen.dart';
 
 /// AppBar'sız versiyon — TabBarView içinde kullanılır
@@ -863,6 +864,11 @@ class _OpportunityCard extends ConsumerWidget {
         ? posterName.trim().split(RegExp(r'\s+')).first[0].toUpperCase()
         : '?';
 
+    // Phase 436 — tap → bottom sheet preview; long-press → full detail.
+    void openPreview() {
+      JobPreviewSheet.show(context, job.id, jobObj: job);
+    }
+
     void openJob() {
       Navigator.push(context, MaterialPageRoute(
         builder: (_) => JobDetailScreen(
@@ -884,7 +890,8 @@ class _OpportunityCard extends ConsumerWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(14),
-      onTap: openJob,
+      onTap: openPreview,
+      onLongPress: openJob,
       child: Container(
         decoration: card3d(context, radius: 14, elevation: 1.1),
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),

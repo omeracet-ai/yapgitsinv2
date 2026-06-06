@@ -12,6 +12,7 @@ import '../../data/job_filter.dart';
 import '../../widgets/job_filter_sheet.dart';
 import '../../widgets/save_job_button.dart';
 import '../providers/job_provider.dart';
+import '../widgets/job_preview_sheet.dart';
 import 'job_detail_screen.dart';
 
 /// AppBar'sız versiyon — TabBarView içinde kullanılır
@@ -351,7 +352,9 @@ class _JobCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.push(
+      // Phase 436 — tap → bottom sheet preview; long-press → full detail.
+      onTap: () => JobPreviewSheet.show(context, job.id, jobObj: job),
+      onLongPress: () => Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => JobDetailScreen(

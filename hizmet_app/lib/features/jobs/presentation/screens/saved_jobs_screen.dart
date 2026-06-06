@@ -5,6 +5,7 @@ import '../../../../core/services/intl_formatter.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
 import '../../data/saved_jobs_provider.dart';
+import '../widgets/job_preview_sheet.dart';
 import 'job_detail_screen.dart';
 
 class SavedJobsScreen extends ConsumerWidget {
@@ -91,7 +92,9 @@ class _SavedJobCard extends ConsumerWidget {
         (job['photos'] as List?)?.map((e) => e.toString()).toList() ?? [];
 
     return GestureDetector(
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+      // Phase 436 — tap → bottom sheet preview; long-press → full detail.
+      onTap: () => JobPreviewSheet.show(context, id),
+      onLongPress: () => Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => JobDetailScreen(
           id: id,
           title: title,

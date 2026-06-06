@@ -15,6 +15,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/job_filter.dart';
 import '../../widgets/job_filter_sheet.dart';
 import '../providers/job_provider.dart';
+import '../widgets/job_preview_sheet.dart';
 import 'job_detail_screen.dart';
 
 /// Phase Two-Sided — Hizmet İlanları (kind='offer').
@@ -355,7 +356,9 @@ class _ServiceListingCard extends StatelessWidget {
     // offer ilanlarında job.customerId = ilanı yayınlayan USTA'nın id'si.
     final isOwner = myUserId != null && job.customerId == myUserId;
     return GestureDetector(
-      onTap: () => Navigator.push(
+      // Phase 436 — tap → bottom sheet preview; long-press → full detail.
+      onTap: () => JobPreviewSheet.show(context, job.id, jobObj: job),
+      onLongPress: () => Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => JobDetailScreen(
