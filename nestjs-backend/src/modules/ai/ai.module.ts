@@ -9,6 +9,8 @@ import { DisputeMediationService } from './dispute-mediation.service';
 import { TranslateService } from './translate.service';
 import { RecommendationService } from './recommendation.service';
 import { GeminiClient } from './gemini.client';
+import { AnthropicClient } from './anthropic.client';
+import { AiProvider } from './ai-provider.service';
 import { Job } from '../jobs/job.entity';
 import { User } from '../users/user.entity';
 
@@ -17,6 +19,8 @@ import { User } from '../users/user.entity';
   controllers: [AiController, AiPublicController],
   providers: [
     GeminiClient,
+    AnthropicClient,
+    AiProvider,
     AiService,
     FraudDetectionService,
     SemanticSearchService,
@@ -27,6 +31,8 @@ import { User } from '../users/user.entity';
   ],
   exports: [
     GeminiClient,
+    AnthropicClient,
+    AiProvider,
     AiService,
     FraudDetectionService,
     SemanticSearchService,

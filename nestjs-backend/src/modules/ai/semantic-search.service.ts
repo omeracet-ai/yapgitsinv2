@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'crypto';
-import { GeminiClient } from './gemini.client';
+import { AiProvider } from './ai-provider.service';
 
 interface WorkerLite {
   id: string;
@@ -28,7 +28,7 @@ export class SemanticSearchService {
   private readonly logger = new Logger(SemanticSearchService.name);
   private readonly cache = new Map<string, CacheEntry>();
 
-  constructor(private readonly gemini: GeminiClient) {}
+  constructor(private readonly gemini: AiProvider) {}
 
   isEnabled(): boolean {
     return this.gemini.isAvailable();

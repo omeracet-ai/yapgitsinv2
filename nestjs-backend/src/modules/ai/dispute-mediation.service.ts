@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'crypto';
-import { GeminiClient } from './gemini.client';
+import { AiProvider } from './ai-provider.service';
 
 const SYSTEM = `Sen bir Türk hizmet pazarı (Yapgitsin) için anlaşmazlık ön-analiz asistanısın.
 Şikayetin taraflara adil olup olmadığını, sahte iddia (fraud) riskini ve önerilen çözümü değerlendir.
@@ -47,7 +47,7 @@ export class DisputeMediationService {
   private readonly logger = new Logger(DisputeMediationService.name);
   private readonly cache = new Map<string, CacheEntry>();
 
-  constructor(private readonly gemini: GeminiClient) {}
+  constructor(private readonly gemini: AiProvider) {}
 
   private cacheKey(type: string, description: string): string {
     return createHash('sha256').update(`${type}::${description}`).digest('hex');

@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { GeminiClient } from './gemini.client';
+import { AiProvider } from './ai-provider.service';
 
 export type TranslateLang = 'tr' | 'en' | 'az';
 
@@ -22,7 +22,7 @@ const LANG_LABELS: Record<TranslateLang, string> = {
 export class TranslateService {
   private readonly logger = new Logger(TranslateService.name);
 
-  constructor(private readonly gemini: GeminiClient) {}
+  constructor(private readonly gemini: AiProvider) {}
 
   isAvailable(): boolean {
     return this.gemini.isAvailable();

@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { GeminiClient, GeminiHistoryTurn } from './gemini.client';
+import { AiProvider, AiHistoryTurn } from './ai-provider.service';
 
 // Phase 281: full migration off Anthropic — every AI surface here uses
 // Gemini 2.5 Flash. Opus stays reserved for Müdür orchestration (outside the app).
@@ -49,7 +49,7 @@ const FAQ: Record<string, string> = {
 export class AiService {
   private readonly logger = new Logger(AiService.name);
 
-  constructor(private readonly gemini: GeminiClient) {}
+  constructor(private readonly gemini: AiProvider) {}
 
   // ─── Existing endpoints ───────────────────────────────────────────────────
 
@@ -98,7 +98,7 @@ Kurallar:
    */
   async chat(
     message: string,
-    history: GeminiHistoryTurn[] = [],
+    history: AiHistoryTurn[] = [],
   ): Promise<string> {
     try {
       return await this.gemini.generate({
@@ -320,7 +320,7 @@ Using the matching range (location-adjusted) and the job details, return ONLY th
    */
   async runSupportAgent(
     message: string,
-    history: GeminiHistoryTurn[] = [],
+    history: AiHistoryTurn[] = [],
     userRole?: string,
   ): Promise<string> {
     const faqLines = Object.entries(FAQ)

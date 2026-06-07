@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { GeminiClient } from './gemini.client';
+import { AiProvider } from './ai-provider.service';
 
 const FRAUD_SYSTEM = `You are a fraud detection assistant for a Turkish service marketplace (Yapgitsin).
 Detect spam, scams, fake listings, suspicious phone/contact extraction, money laundering signals,
@@ -19,7 +19,7 @@ export interface FraudResult {
 export class FraudDetectionService {
   private readonly logger = new Logger(FraudDetectionService.name);
 
-  constructor(private readonly gemini: GeminiClient) {}
+  constructor(private readonly gemini: AiProvider) {}
 
   async analyzeJobListing(
     title: string,

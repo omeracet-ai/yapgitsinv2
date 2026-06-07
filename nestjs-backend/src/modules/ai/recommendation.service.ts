@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job, JobStatus } from '../jobs/job.entity';
 import { User } from '../users/user.entity';
-import { GeminiClient } from './gemini.client';
+import { AiProvider } from './ai-provider.service';
 
 /**
  * Phase 281: migrated from Anthropic Haiku to Gemini 2.5 Flash.
@@ -17,7 +17,7 @@ export class RecommendationService {
     private jobsRepo: Repository<Job>,
     @InjectRepository(User)
     private usersRepo: Repository<User>,
-    private readonly gemini: GeminiClient,
+    private readonly gemini: AiProvider,
   ) {}
 
   /** GET /ai/recommend/workers/:jobId — top 5 workers for a job */
