@@ -38,6 +38,7 @@ import '../../../../core/widgets/category_card.dart';
 import '../../../../core/widgets/notification_bell.dart';
 import '../../../../core/widgets/job_status_badge.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../../core/widgets/oem_battery_sheet.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -61,6 +62,11 @@ class _MainShellState extends ConsumerState<MainShell>
       if (auth is AuthAuthenticated && mounted) {
         // Build sonrası, frame'i bloklamadan asenkron koş.
         unawaited(maybeShowPendingReviewsPopup(context, ref));
+        // Phase 439b — Xiaomi/Huawei/Oppo/Vivo gibi cihazlarda pil whitelist
+        // onboarding sheet (ilk push grant sonrası, kullanıcı başına bir kez).
+        unawaited(Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) OemBatterySheet.showIfNeeded(context);
+        }));
       }
     });
   }

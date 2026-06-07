@@ -45,10 +45,54 @@ export class BotProtectionService {
   private cache = new Map<string, { blocked: boolean; expiresAtMs: number }>();
   private readonly CACHE_TTL_MS = 60_000;
 
+  // Phase 443 — sliding-window per-IP hit tracker for auto-detect.
+  // Map<ip, timestamps[]>. trimWindow drops entries older than WINDOW_MS.
+  // Threshold breach → auto-block 1h with reason 'auto:rate-flood'.
+  private hits = new Map<string, number[]>();
+  private readonly WINDOW_MS = 60_000; // 1 dakika
+  private readonly THRESHOLD = 100; // 100 req/dk = bot
+
   constructor(
     @InjectRepository(BlockedIp)
     private blockedRepo: Repository<BlockedIp>,
   ) {}
+
+  /**
+   * Phase 443 — call from middleware on every pass. If IP exceeds threshold
+   * within window, auto-block for 1h. Returns true if newly blocked.
+   */
+  async trackAndMaybeBlock(ip: string, userAgent: string): Promise<boolean> {
+    if (!ip) return false;
+    const now = Date.now();
+    const cutoff = now - this.WINDOW_MS;
+    let arr = this.hits.get(ip);
+    if (!arr) {
+      arr = [];
+      this.hits.set(ip, arr);
+    }
+    // append + trim
+    arr.push(now);
+    while (arr.length && arr[0] < cutoff) arr.shift();
+    if (arr.length < this.THRESHOLD) return false;
+    // Threshold breach — auto-block
+    this.hits.delete(ip);
+    try {
+      await this.block(
+        ip,
+        `auto:rate-flood ${arr.length}/dk`,
+        'system',
+        1,
+        userAgent,
+      );
+      this.logger.warn(
+        `Auto-blocked ${ip} (${arr.length} req/min, UA=${userAgent.slice(0, 60)})`,
+      );
+      return true;
+    } catch (err) {
+      this.logger.warn(`Auto-block failed: ${(err as Error).message}`);
+      return false;
+    }
+  }
 
   /** UA pattern check — synchronous, no DB. */
   isBotUserAgent(ua: string | undefined): boolean {

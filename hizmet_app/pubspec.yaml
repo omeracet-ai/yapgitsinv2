@@ -71,6 +71,9 @@ dependencies:
   permission_handler: ^11.0.0
   path_provider: ^2.1.1
 
+  # Phase 439b — OEM manufacturer detection for battery whitelist onboarding
+  device_info_plus: ^13.1.0
+
   # Phase 113 — Firebase Cloud Messaging (mobile push)
   # Real platform setup (google-services.json / GoogleService-Info.plist) is
   # done at deploy time. The FcmService stub silently no-ops if Firebase

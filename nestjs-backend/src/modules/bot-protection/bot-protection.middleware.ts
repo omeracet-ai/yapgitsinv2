@@ -53,6 +53,11 @@ export class BotProtectionMiddleware implements NestMiddleware {
       return;
     }
 
+    // 3) Phase 443 — sliding-window auto-detect (>100 req/dk = bot)
+    // Fire-and-forget; rate-flood newly-blocked IPs still served on this
+    // request but next will see them in the block list (60s cache miss).
+    void this.bots.trackAndMaybeBlock(ip, ua);
+
     next();
   }
 
