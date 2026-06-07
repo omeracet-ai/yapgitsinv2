@@ -11,7 +11,9 @@ import { SavedSearchAlertService } from './saved-search-alert.service';
 import { BoostExpiryService } from './boost-expiry.service';
 import { WorkerBoostExpiryService } from './worker-boost-expiry.service';
 import { BookingReminderService } from './booking-reminder.service';
+import { BotProtectionCleanupService } from './bot-protection-cleanup.service';
 import { BoostModule } from '../boost/boost.module';
+import { BotProtectionModule } from '../bot-protection/bot-protection.module';
 
 @Module({
   imports: [
@@ -24,6 +26,7 @@ import { BoostModule } from '../boost/boost.module';
       Booking,
     ]),
     BoostModule,
+    BotProtectionModule,
   ],
   providers: [
     ReviewReminderService,
@@ -31,6 +34,7 @@ import { BoostModule } from '../boost/boost.module';
     BoostExpiryService,
     WorkerBoostExpiryService,
     BookingReminderService,
+    BotProtectionCleanupService,
   ],
 })
 export class CronModule {}

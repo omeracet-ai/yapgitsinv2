@@ -809,7 +809,35 @@ export const api = {
         usersPerDay: Array<{ date: string; count: number }>;
       };
     }>('/admin/stats'),
+
+  // Phase 438+440 — Bot protection / blocked IPs
+  listBlockedIps: (limit = 100) =>
+    request<BlockedIp[]>(`/admin/blocked-ips?limit=${limit}`),
+  blockIp: (body: {
+    ip: string;
+    reason?: string;
+    durationHours?: number | null;
+    userAgent?: string;
+  }) =>
+    request<BlockedIp>('/admin/blocked-ips', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    }),
+  unblockIp: (id: string) =>
+    request<{ ok: boolean }>(`/admin/blocked-ips/${id}`, { method: 'DELETE' }),
 };
+
+export interface BlockedIp {
+  id: string;
+  ip: string;
+  reason: string;
+  expiresAt: string | null;
+  blockedBy: string;
+  lastUserAgent: string;
+  hitCount: number;
+  createdAt: string;
+}
 
 export interface BlogPost {
   id: string;

@@ -42,6 +42,7 @@ const NAV = [
   { href: "/broadcast",       label: "Duyuru Gönder",  icon: "📢" },
   { href: "/harita",           label: "Harita Yönetimi", icon: "🗺️" },
   { href: "/status",          label: "Sistem Durumu",  icon: "🩺" },
+  { href: "/blocked-ips",     label: "Engellenen IP",  icon: "🛡️" },
   // Phase 267 — Escrow ayarları (placeholder; backend hazır, UI TODO).
   { href: "/escrow-settings", label: "Escrow Ayarları", icon: "🔐" },
   // 📦 APK Yönetim Merkezi — Phase 277 consolidated hub (theme/branding/profile-card/backup as tabs)
