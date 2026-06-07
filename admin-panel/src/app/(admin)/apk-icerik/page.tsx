@@ -1758,21 +1758,14 @@ export default function ApkIcerikPage() {
   const router = useRouter();
   const params = useSearchParams();
 
-  // URL state: ?tab=xxx
-  const initialTab = useMemo<Tab>(() => {
+  // URL is the single source of truth for ?tab=xxx — derive, don't duplicate
+  // (prior useState + useEffect sync raced with router.replace and snapped tab back)
+  const tab = useMemo<Tab>(() => {
     const t = params.get("tab");
     return t && (VALID_TABS as string[]).includes(t) ? (t as Tab) : "pages";
   }, [params]);
-  const [tab, setTab] = useState<Tab>(initialTab);
-
-  useEffect(() => {
-    const id = setTimeout(() => { setTab(initialTab); }, 0);
-    return () => clearTimeout(id);
-  }, [initialTab]);
 
   const switchTab = useCallback((k: Tab) => {
-    setTab(k);
-    // Update URL without polluting history
     const url = new URL(window.location.href);
     url.searchParams.set("tab", k);
     router.replace(`${url.pathname}${url.search}`);
