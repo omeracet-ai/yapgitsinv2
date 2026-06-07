@@ -43,6 +43,7 @@ import { Booking } from './modules/bookings/booking.entity';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { Notification } from './modules/notifications/notification.entity';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { BotProtectionModule } from './modules/bot-protection/bot-protection.module';
 import { Provider } from './modules/providers/provider.entity';
 import { ChatMessage } from './modules/chat/chat-message.entity';
 import { JobQuestion } from './modules/jobs/job-question.entity';
@@ -340,6 +341,7 @@ import { AppScreen } from './modules/app-config/entities/app-screen.entity';
     ServiceRequestsModule,
     BookingsModule,
     NotificationsModule,
+    BotProtectionModule,
     OnboardingModule,
     FavoritesModule,
     EscrowModule,

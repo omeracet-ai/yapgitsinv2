@@ -136,6 +136,52 @@ export class NotificationsService {
     }
   }
 
+  /**
+   * Phase 439 — FCM priority routing.
+   * - 'high' bypasses Doze + apns-priority=10. Use for user-direct interactions
+   *   (offer, accept/reject, booking, dispute, payment). FCM penalizes overuse.
+   * - 'normal' is queued to next maintenance window. Use for system/info/marketing.
+   */
+  static priorityFor(type: NotificationType): 'high' | 'normal' {
+    switch (type) {
+      case NotificationType.NEW_OFFER:
+      case NotificationType.COUNTER_OFFER:
+      case NotificationType.OFFER_ACCEPTED:
+      case NotificationType.OFFER_REJECTED:
+      case NotificationType.BOOKING_REQUEST:
+      case NotificationType.BOOKING_CONFIRMED:
+      case NotificationType.BOOKING_CANCELLED:
+      case NotificationType.BOOKING_COMPLETED:
+      case NotificationType.JOB_COMPLETED:
+        return 'high';
+      default:
+        return 'normal';
+    }
+  }
+
+  /**
+   * Phase 439 — TTL per notification class (seconds).
+   * Realtime msgs short (stale push hurts UX); informational longer.
+   */
+  static ttlFor(type: NotificationType): number {
+    switch (type) {
+      case NotificationType.NEW_OFFER:
+      case NotificationType.COUNTER_OFFER:
+        return 3600; // 1h — outdated offers confuse
+      case NotificationType.OFFER_ACCEPTED:
+      case NotificationType.OFFER_REJECTED:
+      case NotificationType.BOOKING_REQUEST:
+      case NotificationType.BOOKING_CONFIRMED:
+      case NotificationType.BOOKING_CANCELLED:
+        return 7200; // 2h
+      case NotificationType.JOB_COMPLETED:
+      case NotificationType.BOOKING_COMPLETED:
+        return 86400; // 24h
+      default:
+        return 14400; // 4h
+    }
+  }
+
   /** Phase 71 — derive deep-link target type from notification type */
   static relatedTypeFor(
     type: NotificationType,
@@ -205,14 +251,23 @@ export class NotificationsService {
       data.body,
     );
     // Phase 113 — fire-and-forget FCM push (does not block API response)
+    // Phase 439 — priority + TTL per notification class for delivery rate optimization
     const soundTag = NotificationsService.soundTagFor(data.type);
-    void this.fcm.sendToUser(data.userId, data.title, data.body, {
-      type: String(data.type),
-      soundTag,
-      ...(data.refId ? { refId: data.refId } : {}),
-      ...(relatedType ? { relatedType } : {}),
-      ...(relatedId ? { relatedId } : {}),
-    });
+    const priority = NotificationsService.priorityFor(data.type);
+    const ttl = NotificationsService.ttlFor(data.type);
+    void this.fcm.sendToUser(
+      data.userId,
+      data.title,
+      data.body,
+      {
+        type: String(data.type),
+        soundTag,
+        ...(data.refId ? { refId: data.refId } : {}),
+        ...(relatedType ? { relatedType } : {}),
+        ...(relatedId ? { relatedId } : {}),
+      },
+      { priority, ttl },
+    );
     return saved;
   }
 

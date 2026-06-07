@@ -3,6 +3,78 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../users/user.entity';
 
+/**
+ * Phase 439 — FCM send options (delivery rate optimization).
+ *
+ * `priority`: 'high' bypasses Doze for immediate delivery + sets apns-priority=10.
+ *             Use for chat/offer/booking. 'normal' delays until maintenance window
+ *             (3-15min) + apns-priority=5. Use for promo/digest. FCM demotes apps
+ *             that abuse 'high' for non-urgent messages.
+ * `ttl`:      Seconds. Default 3600 (1h) — stale push hurts UX more than missing one.
+ *             Set 0 for immediate-or-drop. FCM default is 4 weeks (too long).
+ * `dataOnly`: true → omit `notification` block, client builds local notification.
+ *             Required when you want client to control display (e.g. localize body,
+ *             skip if user is on that chat screen, suppress duplicates).
+ */
+export interface FcmSendOptions {
+  priority?: 'high' | 'normal';
+  ttl?: number;
+  dataOnly?: boolean;
+}
+
+const DEFAULT_OPTS: Required<FcmSendOptions> = {
+  priority: 'high',
+  ttl: 3600,
+  dataOnly: false,
+};
+
+function buildPayload(
+  title: string,
+  body: string,
+  data: Record<string, string> | undefined,
+  opts: Required<FcmSendOptions>,
+): {
+  notification?: { title: string; body: string };
+  data: Record<string, string>;
+  android: Record<string, unknown>;
+  apns: Record<string, unknown>;
+} {
+  const apnsPriority = opts.priority === 'high' ? '10' : '5';
+  const merged: Record<string, string> = { ...(data ?? {}) };
+  // Data-only mode → echo title/body into data so client can build local notification
+  if (opts.dataOnly) {
+    if (!merged.title) merged.title = title;
+    if (!merged.body) merged.body = body;
+  }
+  const out: ReturnType<typeof buildPayload> = {
+    data: merged,
+    android: {
+      priority: opts.priority,
+      ttl: `${opts.ttl}s`,
+      // notification block only used by FCM auto-display; data-only mode skips it
+      ...(opts.dataOnly
+        ? {}
+        : { notification: { sound: 'default', defaultSound: true } }),
+    },
+    apns: {
+      headers: {
+        'apns-priority': apnsPriority,
+        // expiration: 0 = immediate-or-drop on iOS too
+        'apns-expiration': String(Math.floor(Date.now() / 1000) + opts.ttl),
+      },
+      payload: {
+        aps: opts.dataOnly
+          ? { 'content-available': 1 }
+          : { sound: 'default', 'content-available': 1 },
+      },
+    },
+  };
+  if (!opts.dataOnly) {
+    out.notification = { title, body };
+  }
+  return out;
+}
+
 // Lazy import — package may be absent in some environments
 type FirebaseAdmin = typeof import('firebase-admin');
 
@@ -70,21 +142,15 @@ export class FcmService implements OnModuleInit {
     title: string,
     body: string,
     data?: Record<string, string>,
+    options?: FcmSendOptions,
   ): Promise<boolean> {
     if (!this.enabled || !this.admin || !token) return false;
+    const opts = { ...DEFAULT_OPTS, ...(options ?? {}) };
+    const payload = buildPayload(title, body, data, opts);
     try {
       await this.admin.messaging().send({
         token,
-        notification: { title, body },
-        data: data ?? {},
-        // Phase 265e — sistem bildirim sesi (real device'larda sessizlik fix).
-        android: {
-          priority: 'high',
-          notification: { sound: 'default', defaultSound: true },
-        },
-        apns: {
-          payload: { aps: { sound: 'default', contentAvailable: true } },
-        },
+        ...payload,
       });
       return true;
     } catch (err) {
@@ -111,6 +177,7 @@ export class FcmService implements OnModuleInit {
     title: string,
     body: string,
     data?: Record<string, string>,
+    options?: FcmSendOptions,
   ): Promise<{ successCount: number; failureCount: number }> {
     if (!this.enabled || !this.admin || !tokens || tokens.length === 0) {
       return { successCount: 0, failureCount: 0 };
@@ -120,6 +187,8 @@ export class FcmService implements OnModuleInit {
     );
     if (unique.length === 0) return { successCount: 0, failureCount: 0 };
 
+    const opts = { ...DEFAULT_OPTS, ...(options ?? {}) };
+    const payload = buildPayload(title, body, data, opts);
     const chunkSize = 500;
     let successCount = 0;
     let failureCount = 0;
@@ -130,10 +199,7 @@ export class FcmService implements OnModuleInit {
       try {
         const response = await this.admin.messaging().sendEachForMulticast({
           tokens: chunk,
-          notification: { title, body },
-          data: data ?? {},
-          android: { priority: 'high', notification: { sound: 'default', defaultSound: true } },
-          apns: { payload: { aps: { sound: 'default', contentAvailable: true } } },
+          ...payload,
         });
         successCount += response.successCount;
         failureCount += response.failureCount;
@@ -194,6 +260,7 @@ export class FcmService implements OnModuleInit {
     title: string,
     body: string,
     data?: Record<string, string>,
+    options?: FcmSendOptions,
   ): Promise<void> {
     if (!this.enabled || !this.admin) return;
     const user = await this.usersRepo.findOne({
@@ -207,20 +274,13 @@ export class FcmService implements OnModuleInit {
       : [];
     if (!tokens.length) return;
 
+    const opts = { ...DEFAULT_OPTS, ...(options ?? {}) };
+    const payload = buildPayload(title, body, data, opts);
     try {
       const messaging = this.admin.messaging();
       const response = await messaging.sendEachForMulticast({
         tokens,
-        notification: { title, body },
-        data: data ?? {},
-        // Phase 265e — sistem bildirim sesi (real device'larda sessizlik fix).
-        android: {
-          priority: 'high',
-          notification: { sound: 'default', defaultSound: true },
-        },
-        apns: {
-          payload: { aps: { sound: 'default', contentAvailable: true } },
-        },
+        ...payload,
       });
 
       if (response.failureCount > 0) {
@@ -259,8 +319,12 @@ export class FcmService implements OnModuleInit {
     title: string,
     body: string,
     data?: Record<string, string>,
+    options?: FcmSendOptions,
   ): Promise<number> {
     if (!this.enabled || !this.admin) return 0;
+    // Broadcasts default to normal priority — FCM penalizes high-priority broadcasts
+    const opts = { ...DEFAULT_OPTS, priority: 'normal' as const, ttl: 86400, ...(options ?? {}) };
+    const payload = buildPayload(title, body, data, opts);
     try {
       const users = await this.usersRepo
         .createQueryBuilder('u')
@@ -282,10 +346,7 @@ export class FcmService implements OnModuleInit {
           const messaging = this.admin.messaging();
           const response = await messaging.sendEachForMulticast({
             tokens,
-            notification: { title, body },
-            data: data ?? {},
-          android: { priority: 'high', notification: { sound: 'default', defaultSound: true } },
-          apns: { payload: { aps: { sound: 'default', contentAvailable: true } } },
+            ...payload,
           });
           totalSuccess += response.successCount;
 
