@@ -349,14 +349,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     String? dueDate,
     int? viewCount, // Phase 333 — ilan detay ziyaret sayısı (unique IP)
   }) {
-    // Bütçe gösterimi
+    // Bütçe gösterimi — Phase 446 (hatalar.txt #5): aralık yerine TEK fiyat.
+    // Eski kayıtlarda budgetMax > budgetMin olabilir; her halükarda budgetMin'i
+    // tek değer olarak göster (yoksa budgetMax fallback).
     String budgetStr;
-    if (budgetMin != null && budgetMax != null && budgetMax > budgetMin) {
-      // P190/4 — IntlFormatter.currency.
-      budgetStr =
-          '${IntlFormatter.currency(context, budgetMin, decimalDigits: 0)} – ${IntlFormatter.currency(context, budgetMax, decimalDigits: 0)}';
-    } else if (budgetMin != null) {
-      budgetStr = '${IntlFormatter.currency(context, budgetMin, decimalDigits: 0)} ~';
+    final singleBudget = budgetMin ?? budgetMax;
+    if (singleBudget != null) {
+      budgetStr = IntlFormatter.currency(context, singleBudget, decimalDigits: 0);
     } else {
       budgetStr = widget.budget;
     }

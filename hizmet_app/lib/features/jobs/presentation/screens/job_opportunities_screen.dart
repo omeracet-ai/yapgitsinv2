@@ -839,11 +839,11 @@ class _OpportunityCard extends ConsumerWidget {
     final offerCount = job.offerCount;
     final isOwner = myUserId != null && job.customerId == myUserId;
 
-    final budgetStr = (job.budgetMin != null && job.budgetMax != null)
-        ? IntlFormatter.tlRange(job.budgetMin, job.budgetMax)
-        : job.budgetMin != null
-            ? '${IntlFormatter.tl(job.budgetMin!)} ~'
-            : 'Belirtilmemiş';
+    // Phase 446 (hatalar.txt #5) — Bütçe aralığı yerine TEK fiyat gösterimi.
+    final singleBudget = job.budgetMin ?? job.budgetMax;
+    final budgetStr = singleBudget != null
+        ? IntlFormatter.tl(singleBudget)
+        : 'Belirtilmemiş';
 
     final postedAgo = job.createdAt != null
         ? _timeAgo(job.createdAt!)
