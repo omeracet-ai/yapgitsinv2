@@ -9,7 +9,7 @@ import '../../../../core/widgets/rating_progress_bar.dart';
 import '../../../../core/widgets/stat_info_popup.dart';
 import '../../../profile/data/user_profile_repository.dart';
 import '../../../users/widgets/user_action_menu.dart';
-import '../../../tokens/widgets/gift_tokens_sheet.dart';
+import '../../../chat/data/presence_provider.dart';
 import '../providers/auth_provider.dart';
 import '../../../reviews/widgets/review_reply_sheet.dart';
 import '../../widgets/portfolio_gallery.dart';
@@ -37,11 +37,6 @@ final publicAvailabilitySlotsProvider =
         .getPublicAvailability(userId);
   },
 );
-
-/// Phase 465 (hatalar.txt #15) — Profile tab seçimi.
-/// 0 = Hizmet Veren (mevcut worker content), 1 = Hizmet Alan (customer history).
-final _profileTabIndex =
-    StateProvider.autoDispose.family<int, String>((ref, _) => 0);
 
 class PublicProfileScreen extends ConsumerWidget {
   final String userId;
@@ -225,15 +220,10 @@ class _ProfileView extends ConsumerWidget {
             backgroundColor: AppColors.headerBackground(context),
             actions: [
               if (!isSelf) ...[
-                IconButton(
-                  tooltip: 'Kredi hediye et',
-                  icon: const Text('🎁', style: TextStyle(fontSize: 20)),
-                  onPressed: () => GiftTokensSheet.show(
-                    context,
-                    recipientId: userId,
-                    recipientName: name,
-                  ),
-                ),
+                // Phase 468 — Gift icon kaldırıldı; yerine canlı online/offline
+                // sinyali. peerPresenceProvider WebSocket ile real-time
+                // güncellenir (Phase 78).
+                _PresenceSignal(userId: userId),
                 UserActionMenu(
                   userId: userId,
                   userName: name,
@@ -369,58 +359,9 @@ class _ProfileView extends ConsumerWidget {
                             ],
                           ),
                         ),
-                      // Phase 327 — Son görülme zamanı. Online ise canlı yeşil,
-                      // değilse son görüldüğü zaman (gün granularitesinde).
-                      Builder(builder: (_) {
-                        final online = data['isOnline'] == true;
-                        final lsStr = data['lastSeenAt'] as String?;
-                        if (online) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 7, height: 7,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.verifiedGreen,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                const Text('Çevrimiçi',
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.verifiedGreen)),
-                              ],
-                            ),
-                          );
-                        }
-                        if (lsStr == null) return const SizedBox.shrink();
-                        final ls = DateTime.tryParse(lsStr);
-                        if (ls == null) return const SizedBox.shrink();
-                        final diff = DateTime.now().difference(ls);
-                        String text;
-                        if (diff.inMinutes < 5) {
-                          text = 'Az önce çevrimiçi';
-                        } else if (diff.inHours < 1) {
-                          text = '${diff.inMinutes} dk önce';
-                        } else if (diff.inHours < 24) {
-                          text = '${diff.inHours} saat önce';
-                        } else {
-                          text = '${diff.inDays} gün önce';
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text('Son görülme: $text',
-                              style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.verifiedGreen)),
-                        );
-                      }),
+                      // Phase 468 — Eski stale online indicator kaldırıldı.
+                      // Canlı sinyal artık AppBar.actions içinde
+                      // (_PresenceSignal — peerPresenceProvider).
                     ],        // Column children
                     ),        // Column
                   ),          // SafeArea
@@ -429,92 +370,9 @@ class _ProfileView extends ConsumerWidget {
             ),                // FlexibleSpaceBar
           ),                  // SliverAppBar
 
-          // Phase 458 (hatalar.txt #15) — Verification Center carousel.
-          // Yatay kaydırılabilir rozet şeridi: ID, telefon, ödeme, lisans.
-          // Field'lar backend response'unda mevcut alanlardan türetilir
-          // (P462 audit fix — direct boolean'lar yoktu):
-          //  - phoneVerified  : phoneNumber doluysa true
-          //  - paymentReady   : tokenBalance veya loyaltyPoints > 0
-          //  - licenseVerified: workerDocuments veya certifications dolu
-          if (showVerified)
-            SliverToBoxAdapter(
-              child: _VerificationCenter(
-                identityVerified: verified,
-                phoneVerified: (data['phoneNumber'] as String?)?.isNotEmpty == true,
-                paymentReady: ((data['tokenBalance'] as num?)?.toDouble() ?? 0) > 0
-                    || ((data['loyaltyPoints'] as num?)?.toInt() ?? 0) > 0,
-                licenseVerified:
-                    ((data['workerDocuments'] as List?)?.isNotEmpty ?? false)
-                    || ((data['certifications'] as List?)?.isNotEmpty ?? false),
-              ),
-            ),
-
-          // Phase 465 (hatalar.txt #15) — Profile Tab Bar.
-          // Verification Center altında, content üstünde. Sticky değil — scroll'la
-          // birlikte yukarı kayar (mimari sade tutuldu, NestedScrollView'a göre
-          // refactor riskinden kaçınıldı).
-          if (isWorker)
-            SliverToBoxAdapter(
-              child: _ProfileTabBar(userId: userId),
-            ),
-          // Tab=1 ise worker content gizlenir; Hizmet Alan placeholder gösterilir.
-          if (isWorker)
-            Consumer(builder: (context, ref, _) {
-              final tab = ref.watch(_profileTabIndex(userId));
-              if (tab == 1) {
-                return SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.shopping_bag_outlined,
-                              size: 28, color: AppColors.primary),
-                          const SizedBox(height: 10),
-                          Text(
-                              isSelf
-                                  ? 'Hizmet aldığın geçmiş işler burada listelenir.'
-                                  : 'Bu kullanıcının hizmet alan olarak iş geçmişi.',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary)),
-                          const SizedBox(height: 6),
-                          Text(
-                              'Toplam: $totalCustomer ilan · Başarılı: $successCustomer',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary)),
-                          if (totalCustomer == 0) ...[
-                            const SizedBox(height: 12),
-                            Text('Henüz kayıt yok.',
-                                style: TextStyle(
-                                    fontSize: 12, color: AppColors.textSecondary)),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }
-              return const SliverToBoxAdapter(child: SizedBox.shrink());
-            }),
-
-          // Tab=0 (Hizmet Veren) — mevcut tüm worker content
-          // (Consumer ile sarıldı: tab=1 olduğunda boş döndürür).
-          Consumer(builder: (context, ref, _) {
-            final tab = isWorker ? ref.watch(_profileTabIndex(userId)) : 0;
-            if (tab != 0) {
-              return const SliverToBoxAdapter(child: SizedBox.shrink());
-            }
-            return SliverToBoxAdapter(
+          // Phase 468 — Verification Center + Hizmet Veren/Alan TabBar
+          // kaldırıldı (hatalar.txt revize). Worker content doğrudan render.
+          SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -597,18 +455,7 @@ class _ProfileView extends ConsumerWidget {
                 // section başlığı bile gizli. BadgeRow Phase 418'de
                 // "Doğrulanmış" eliyor; sadece o rozet varsa bölüm boş
                 // kalıyordu.
-                if (showBadges &&
-                    _hasVisibleBadges(badges)) ...[
-                  _section(
-                    title: 'Rozetler',
-                    child: BadgeRow(badges: badges),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-
-                // Phase 329 — "Hakkında" ayrı section yerine kartın
-                // sonuna sıkıştırıldı; başlık → "Kullanıcı Açıklaması"
-                // (kullanıcı "title hatalı" demişti — daha anlaşılır).
+                // Phase 468 — Kullanıcı Açıklaması Rozetler'in ÜSTÜNE taşındı.
                 if (bio != null && bio.isNotEmpty) ...[
                   Container(
                     color: AppColors.surface,
@@ -636,6 +483,15 @@ class _ProfileView extends ConsumerWidget {
                       ],
                     ),
                   ),
+                ],
+
+                if (showBadges &&
+                    _hasVisibleBadges(badges)) ...[
+                  _section(
+                    title: 'Rozetler',
+                    child: BadgeRow(badges: badges),
+                  ),
+                  const SizedBox(height: 8),
                 ],
 
                 // Phase 419 — "Belge ile Doğrulanmış N Kategori" bölümü
@@ -869,8 +725,7 @@ class _ProfileView extends ConsumerWidget {
                 const SizedBox(height: 32),
               ],
             ),
-            );
-          }),
+          ),
         ],
         ),
       ),
@@ -1186,158 +1041,63 @@ class _ReviewTile extends ConsumerWidget {
 /// Phase 458 (hatalar.txt #15) — Verification Center.
 /// Airtasker-style horizontal carousel: ID + Telefon + Ödeme + Lisans rozetleri.
 /// Verilen alanlar olmayanlar gri/varsayılan gösterilir (mevcut data nullable).
-class _VerificationCenter extends StatelessWidget {
-  final bool identityVerified;
-  final bool phoneVerified;
-  final bool paymentReady;
-  final bool licenseVerified;
-  const _VerificationCenter({
-    required this.identityVerified,
-    required this.phoneVerified,
-    required this.paymentReady,
-    required this.licenseVerified,
-  });
+/// Phase 468 — Canlı online/offline sinyali (3-nokta sol tarafı).
+/// peerPresenceProvider WebSocket ile real-time güncellenir (Phase 78).
+/// İlk açılışta REST ile hydrate (ensure).
+class _PresenceSignal extends ConsumerStatefulWidget {
+  final String userId;
+  const _PresenceSignal({required this.userId});
+
+  @override
+  ConsumerState<_PresenceSignal> createState() => _PresenceSignalState();
+}
+
+class _PresenceSignalState extends ConsumerState<_PresenceSignal> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(presenceProvider.notifier).ensure(widget.userId);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      color: AppColors.surface,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Icon(Icons.verified_user_outlined,
-                    size: 15, color: AppColors.textSecondary),
-                const SizedBox(width: 6),
-                Text('Güvenilirlik Doğrulamaları',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary)),
-              ],
+    final p = ref.watch(peerPresenceProvider(widget.userId));
+    final online = p?.isOnline == true;
+    final dotColor = online ? AppColors.verifiedGreen : Colors.white54;
+    final label = online ? 'Çevrimiçi' : 'Çevrimdışı';
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Tooltip(
+        message: label,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 9,
+              height: 9,
+              decoration: BoxDecoration(
+                color: dotColor,
+                shape: BoxShape.circle,
+                boxShadow: online
+                    ? [
+                        BoxShadow(
+                          color: AppColors.verifiedGreen.withValues(alpha: 0.6),
+                          blurRadius: 6,
+                        ),
+                      ]
+                    : null,
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          SizedBox(
-            height: 56,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              physics: const ClampingScrollPhysics(),
-              children: [
-                _badge('🆔', 'Kimlik', identityVerified),
-                _badge('📱', 'Telefon', phoneVerified),
-                _badge('💳', 'Ödeme', paymentReady),
-                _badge('📜', 'Lisans', licenseVerified),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _badge(String emoji, String label, bool ok) {
-    final bg = ok
-        ? AppColors.primary.withValues(alpha: 0.10)
-        : AppColors.background;
-    final fg = ok ? AppColors.primary : AppColors.textSecondary;
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-            color: ok ? AppColors.primary.withValues(alpha: 0.35) : AppColors.border,
-            width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 16)),
-          const SizedBox(width: 6),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: fg)),
-          if (ok) ...[
-            const SizedBox(width: 4),
-            Icon(Icons.check_circle_rounded, size: 13, color: fg),
+            const SizedBox(width: 6),
+            Text(label,
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600)),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Phase 465 (hatalar.txt #15) — Profile Tab Bar widget.
-class _ProfileTabBar extends ConsumerWidget {
-  final String userId;
-  const _ProfileTabBar({required this.userId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final selected = ref.watch(_profileTabIndex(userId));
-    return Container(
-      width: double.infinity,
-      color: AppColors.surface,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-      child: Row(
-        children: [
-          _tab(ref, label: 'Hizmet Veren', idx: 0, selected: selected,
-              icon: Icons.handyman_outlined),
-          const SizedBox(width: 6),
-          _tab(ref, label: 'Hizmet Alan', idx: 1, selected: selected,
-              icon: Icons.shopping_bag_outlined),
-        ],
-      ),
-    );
-  }
-
-  Widget _tab(WidgetRef ref,
-      {required String label,
-      required int idx,
-      required int selected,
-      required IconData icon}) {
-    final isActive = selected == idx;
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: () => ref.read(_profileTabIndex(userId).notifier).state = idx,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isActive
-                ? AppColors.primary.withValues(alpha: 0.12)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-                color: isActive ? AppColors.primary : AppColors.border,
-                width: isActive ? 1.5 : 1),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon,
-                  size: 16,
-                  color: isActive ? AppColors.primary : AppColors.textSecondary),
-              const SizedBox(width: 6),
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: isActive
-                          ? AppColors.primary
-                          : AppColors.textSecondary)),
-            ],
-          ),
         ),
       ),
     );
