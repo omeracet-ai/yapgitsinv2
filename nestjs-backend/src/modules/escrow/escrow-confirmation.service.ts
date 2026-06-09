@@ -108,11 +108,13 @@ const STANDARD_REQUIREMENTS: TierRequirements = {
 };
 
 function requirementsFor(tier: ConfirmationTier): TierRequirements {
+  // Phase 480 — Görsel şart kaldırıldı. Tüm tier'larda photosPerPhase: 0
+  // (sadece QR onaylama akışı). GPS match standard/premium'da admin
+  // ayarına bağlı kalır.
   if (tier === ConfirmationTier.LITE) {
     return { photosPerPhase: 0, videoRequired: false, gpsMatchRequired: false };
   }
-  // standard + premium — same hard requirements (premium video is optional)
-  return { photosPerPhase: 1, videoRequired: false, gpsMatchRequired: true };
+  return { photosPerPhase: 0, videoRequired: false, gpsMatchRequired: true };
 }
 
 /** Haversine in meters between two lat/lng pairs. */
@@ -819,22 +821,26 @@ export class EscrowConfirmationService {
 
   private conditionsMet(
     escrow: PaymentEscrow,
-    photos: EscrowConfirmationPhoto[],
-    side: ConfirmationSide,
+    _photos: EscrowConfirmationPhoto[],
+    _side: ConfirmationSide,
   ): boolean {
+    // Phase 480 — Görsel şart kaldırıldı. Sadece QR scan + (opsiyonel) GPS.
+    // Photos parametresi UI uyumluluğu için imzada kalır ama okunmaz.
     const tier = escrow.confirmationTier;
     if (!tier) return false;
     if (!escrow.qrScannedAt) return false;
     if (tier === ConfirmationTier.LITE) return true;
 
-    // standard / premium: GPS match + each side has ≥1 before AND ≥1 after photo
+    // standard / premium: yalnız GPS match (admin gevşek tutarsa bypass).
     if (
       escrow.workerLat == null ||
       escrow.workerLng == null ||
       escrow.customerLat == null ||
       escrow.customerLng == null
     ) {
-      return false;
+      // Koordinat alınamadıysa scan zaten gpsMatchRequired'a takılır;
+      // burada izin ver (UI true gözüksün).
+      return true;
     }
     const dist = haversineMeters(
       escrow.workerLat,
@@ -842,12 +848,7 @@ export class EscrowConfirmationService {
       escrow.customerLat,
       escrow.customerLng,
     );
-    if (dist > DEFAULT_GPS_MATCH_RADIUS_M) return false;
-
-    const sidePhotos = photos.filter((p) => p.side === side);
-    const hasBefore = sidePhotos.some((p) => p.phase === 'before');
-    const hasAfter = sidePhotos.some((p) => p.phase === 'after');
-    return hasBefore && hasAfter;
+    return dist <= DEFAULT_GPS_MATCH_RADIUS_M;
   }
 
   /**
