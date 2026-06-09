@@ -117,8 +117,14 @@ class _AuthenticatedChatListState
     final l = AppLocalizations.of(context);
     final asyncConvos = ref.watch(conversationsProvider);
     // Seed presence from server-side conversation snapshot whenever it arrives.
+    // Phase 466 (emülator boot fix) — build sırasında provider modify
+    // Riverpod'da yasak; postFrameCallback ile pipeline tamamlandıktan
+    // sonra çağrılır.
     asyncConvos.whenData((convos) {
-      ref.read(presenceProvider.notifier).seedFromConversations(convos);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) return;
+        ref.read(presenceProvider.notifier).seedFromConversations(convos);
+      });
     });
 
     return Scaffold(
