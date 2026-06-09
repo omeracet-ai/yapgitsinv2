@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/job_photo_carousel.dart';
 import '../../data/job_repository.dart';
 import '../providers/job_provider.dart';
 import '../screens/job_detail_screen.dart';
@@ -222,7 +221,8 @@ class _Body extends StatelessWidget {
       );
     }
     final j = job!;
-    final photos = j.photos ?? const <String>[];
+    // Phase 478 — Preview pop-up'tan resim carousel'i kaldırıldı; tam
+    // fotoğraflar JobDetailScreen'de görülür ("Detayı Aç" CTA ile).
     final desc = (j.description?.isNotEmpty == true ? j.description! : j.desc);
     final preview = desc.length > 200 ? '${desc.substring(0, 200)}…' : desc;
 
@@ -232,11 +232,6 @@ class _Body extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (photos.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            JobPhotoCarousel(photos: photos),
-            const SizedBox(height: 12),
-          ],
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18),
             child: Column(
