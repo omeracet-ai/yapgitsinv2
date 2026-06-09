@@ -13,6 +13,9 @@ import '../../data/job_repository.dart';
 import '../../data/offer_repository.dart';
 import '../../../tokens/data/token_repository.dart';
 import 'my_jobs_screen.dart' show myOffersProvider, myJobsProvider;
+// Phase 447 (hatalar.txt #7) — OfferLineItemsEditor gizlendi (kullanım yok).
+// Import korunur — gelecekte tekrar bağlanabilir.
+// ignore: unused_import
 import '../../../offers/widgets/offer_line_items_editor.dart';
 import '../../../offers/widgets/offer_template_picker.dart';
 import '../../../offers/widgets/offer_line_items_view.dart';

@@ -157,7 +157,7 @@ class _ProfileView extends ConsumerWidget {
                               context.push('/giris-yap', extra: {'returnTo': '/usta/$userId'});
                               return;
                             }
-                            context.push('/sohbet/$userId', extra: {'peerName': name});
+                            context.push('/chat/$userId', extra: {'peerName': name});
                           },
                         ),
                       ),
@@ -426,13 +426,21 @@ class _ProfileView extends ConsumerWidget {
 
           // Phase 458 (hatalar.txt #15) — Verification Center carousel.
           // Yatay kaydırılabilir rozet şeridi: ID, telefon, ödeme, lisans.
+          // Field'lar backend response'unda mevcut alanlardan türetilir
+          // (P462 audit fix — direct boolean'lar yoktu):
+          //  - phoneVerified  : phoneNumber doluysa true
+          //  - paymentReady   : tokenBalance veya loyaltyPoints > 0
+          //  - licenseVerified: workerDocuments veya certifications dolu
           if (showVerified)
             SliverToBoxAdapter(
               child: _VerificationCenter(
                 identityVerified: verified,
-                phoneVerified: data['phoneVerified'] == true,
-                paymentReady: data['paymentReady'] == true,
-                licenseVerified: data['licenseVerified'] == true,
+                phoneVerified: (data['phoneNumber'] as String?)?.isNotEmpty == true,
+                paymentReady: ((data['tokenBalance'] as num?)?.toDouble() ?? 0) > 0
+                    || ((data['loyaltyPoints'] as num?)?.toInt() ?? 0) > 0,
+                licenseVerified:
+                    ((data['workerDocuments'] as List?)?.isNotEmpty ?? false)
+                    || ((data['certifications'] as List?)?.isNotEmpty ?? false),
               ),
             ),
 
