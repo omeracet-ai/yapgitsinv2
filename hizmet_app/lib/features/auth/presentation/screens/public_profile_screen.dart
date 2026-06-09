@@ -5,7 +5,6 @@ import '../../../../core/app_config/app_config_visibility.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/list_skeleton.dart';
-import '../../../../core/widgets/rating_progress_bar.dart';
 import '../../../../core/widgets/stat_info_popup.dart';
 import '../../../profile/data/user_profile_repository.dart';
 import '../../../users/widgets/user_action_menu.dart';
@@ -376,14 +375,8 @@ class _ProfileView extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Phase 433 — İnce rating progress bar (metin yok, sadece
-                // renk + dolgu). Header'ın hemen altında full-width.
-                Container(
-                  color: AppColors.surface,
-                  padding:
-                      const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: RatingProgressBar(rating: rating),
-                ),
+                // Phase 471 — Üst rating progress bar kaldırıldı
+                // (mini-stats detay sheet'inde rating zaten var).
                 // ── İstatistikler ────────────────────────────────────────
                 // Admin /profile-card ekranı her bir kartı tek tek
                 // gizleyebilir. Tüm kartlar gizliyse Container'ı hiç çizme.
@@ -1047,9 +1040,10 @@ class _ReviewTile extends ConsumerWidget {
 /// Phase 458 (hatalar.txt #15) — Verification Center.
 /// Airtasker-style horizontal carousel: ID + Telefon + Ödeme + Lisans rozetleri.
 /// Verilen alanlar olmayanlar gri/varsayılan gösterilir (mevcut data nullable).
-/// Phase 468 — Canlı online/offline sinyali (3-nokta sol tarafı).
+/// Phase 471 — Cinematic 3D presence signal (şimşek ⚡).
+/// Online  : sarı/turuncu glow + pulse + 3D yatay döndürme (matrix rotateY)
+/// Offline : silik gri statik şimşek (animasyon yok)
 /// peerPresenceProvider WebSocket ile real-time güncellenir (Phase 78).
-/// İlk açılışta REST ile hydrate (ensure).
 class _PresenceSignal extends ConsumerStatefulWidget {
   final String userId;
   const _PresenceSignal({required this.userId});
@@ -1058,10 +1052,22 @@ class _PresenceSignal extends ConsumerStatefulWidget {
   ConsumerState<_PresenceSignal> createState() => _PresenceSignalState();
 }
 
-class _PresenceSignalState extends ConsumerState<_PresenceSignal> {
+class _PresenceSignalState extends ConsumerState<_PresenceSignal>
+    with TickerProviderStateMixin {
+  late final AnimationController _pulse;
+  late final AnimationController _rotate;
+
   @override
   void initState() {
     super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+    _rotate = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2600),
+    )..repeat();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(presenceProvider.notifier).ensure(widget.userId);
@@ -1069,41 +1075,80 @@ class _PresenceSignalState extends ConsumerState<_PresenceSignal> {
   }
 
   @override
+  void dispose() {
+    _pulse.dispose();
+    _rotate.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final p = ref.watch(peerPresenceProvider(widget.userId));
     final online = p?.isOnline == true;
-    final dotColor = online ? AppColors.verifiedGreen : Colors.white54;
-    final label = online ? 'Çevrimiçi' : 'Çevrimdışı';
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       child: Tooltip(
-        message: label,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 9,
-              height: 9,
-              decoration: BoxDecoration(
-                color: dotColor,
-                shape: BoxShape.circle,
-                boxShadow: online
-                    ? [
-                        BoxShadow(
-                          color: AppColors.verifiedGreen.withValues(alpha: 0.6),
-                          blurRadius: 6,
+        message: online ? 'Çevrimiçi' : 'Çevrimdışı',
+        child: SizedBox(
+          width: 30,
+          height: 30,
+          child: online
+              ? AnimatedBuilder(
+                  animation: Listenable.merge([_pulse, _rotate]),
+                  builder: (_, __) {
+                    final t = _pulse.value; // 0..1..0
+                    final rotY = (_rotate.value * 2 * 3.14159);
+                    final glow = 6.0 + t * 10.0;
+                    final scale = 0.92 + t * 0.18;
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 26 + t * 6,
+                          height: 26 + t * 6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                Colors.amber.withValues(alpha: 0.55 - t * 0.25),
+                                Colors.amber.withValues(alpha: 0),
+                              ],
+                            ),
+                          ),
                         ),
-                      ]
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(label,
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600)),
-          ],
+                        Transform(
+                          alignment: Alignment.center,
+                          transform: Matrix4.identity()
+                            ..setEntry(3, 2, 0.0012)
+                            ..rotateY(rotY)
+                            ..scaleByDouble(scale, scale, scale, 1.0),
+                          child: Icon(
+                            Icons.bolt_rounded,
+                            size: 22,
+                            color: const Color(0xFFFFD54F),
+                            shadows: [
+                              Shadow(
+                                color: const Color(0xFFFFC107)
+                                    .withValues(alpha: 0.9),
+                                blurRadius: glow,
+                              ),
+                              Shadow(
+                                color: const Color(0xFFFF8F00)
+                                    .withValues(alpha: 0.6),
+                                blurRadius: glow * 1.4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                )
+              : Icon(
+                  Icons.bolt_rounded,
+                  size: 20,
+                  color: Colors.white.withValues(alpha: 0.35),
+                ),
         ),
       ),
     );
@@ -1150,11 +1195,19 @@ class _RozetlerSectionState extends State<_RozetlerSection>
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
-                  Text('Rozetler',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary)),
+                  Row(
+                    children: [
+                      Icon(Icons.workspace_premium_rounded,
+                          size: 18, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      Text('Performans Paneli',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.2,
+                              color: AppColors.textPrimary)),
+                    ],
+                  ),
                   const Spacer(),
                   AnimatedRotation(
                     duration: const Duration(milliseconds: 180),
