@@ -1,26 +1,444 @@
 @import "tailwindcss";
 
+/*
+ * Phase 481 — Yaprakzade admin design system port.
+ * Source: D:/masaüstü/Yaprakzade/admin/assets/admin-design.css
+ * "Premium Dark Soft" palette + Inter typography + 8/12/16 radius scale +
+ * fast/med/slow motion.
+ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ── Marka ──────────────────────────────────────────────────────── */
+  --ad-green:        #2d5e3e;
+  --ad-green-dark:   #1f3a2a;
+  --ad-green-light:  #3a7a51;
+  --ad-green-glow:   rgba(45, 94, 62, 0.16);
+  --ad-gold:         #c9a96e;
+  --ad-gold-glow:    rgba(201, 169, 110, 0.18);
+
+  /* ── Surface — Premium Dark Soft ──────────────────────────────── */
+  --ad-bg:           #0c1117;
+  --ad-card:         #16202b;
+  --ad-card-hover:   #1a2a36;
+  --ad-elev:         #1e2a36;
+  --ad-pop:          #222d3a;
+
+  /* ── Text ─────────────────────────────────────────────────────── */
+  --ad-ink:          #e6e8eb;
+  --ad-ink-dim:      #cbd1d8;
+  --ad-muted:        #9aa4b2;
+  --ad-faint:        #6b7689;
+
+  /* ── Border ───────────────────────────────────────────────────── */
+  --ad-line:         #2a3340;
+  --ad-line-soft:    #222b36;
+  --ad-line-strong:  #3a4555;
+
+  /* ── State ────────────────────────────────────────────────────── */
+  --ad-success:      #22c55e;
+  --ad-success-tx:   #86efac;
+  --ad-warn:         #f59e0b;
+  --ad-warn-tx:      #fbbf24;
+  --ad-err:          #ef4444;
+  --ad-err-tx:       #fca5a5;
+  --ad-info:         #3b82f6;
+  --ad-info-tx:      #93c5fd;
+
+  /* ── Spacing scale ────────────────────────────────────────────── */
+  --ad-sp-1: 4px;
+  --ad-sp-2: 8px;
+  --ad-sp-3: 12px;
+  --ad-sp-4: 16px;
+  --ad-sp-5: 20px;
+  --ad-sp-6: 24px;
+  --ad-sp-8: 32px;
+  --ad-sp-10: 40px;
+
+  /* ── Radius ───────────────────────────────────────────────────── */
+  --ad-r-xs: 6px;
+  --ad-r-sm: 8px;
+  --ad-r-md: 12px;
+  --ad-r-lg: 16px;
+  --ad-r-xl: 22px;
+
+  /* ── Shadow ───────────────────────────────────────────────────── */
+  --ad-shadow-sm: 0 2px 6px -2px rgba(0, 0, 0, 0.4);
+  --ad-shadow-md: 0 4px 12px -4px rgba(0, 0, 0, 0.4);
+  --ad-shadow-lg: 0 20px 50px -20px rgba(0, 0, 0, 0.6);
+  --ad-shadow-glow: 0 0 0 3px var(--ad-green-glow);
+
+  /* ── Motion ───────────────────────────────────────────────────── */
+  --ad-dur-fast: 0.15s;
+  --ad-dur-med:  0.25s;
+  --ad-dur-slow: 0.4s;
+  --ad-ease:      cubic-bezier(0.16, 1, 0.3, 1);
+  --ad-ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Typography ───────────────────────────────────────────────── */
+  --ad-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+  --ad-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --ad-fs-xs:  11px;
+  --ad-fs-sm:  12px;
+  --ad-fs-md:  13px;
+  --ad-fs-lg:  15px;
+  --ad-fs-xl:  17px;
+  --ad-fs-2xl: 20px;
+  --ad-fs-3xl: 24px;
+  --ad-fs-4xl: 32px;
+
+  /* Tailwind theme bridge (eski class'larla geri uyumluluk) */
+  --background: var(--ad-bg);
+  --foreground: var(--ad-ink);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--ad-bg);
+  --color-foreground: var(--ad-ink);
+  --color-card:       var(--ad-card);
+  --color-elev:       var(--ad-elev);
+  --color-pop:        var(--ad-pop);
+  --color-line:       var(--ad-line);
+  --color-line-soft:  var(--ad-line-soft);
+  --color-ink:        var(--ad-ink);
+  --color-ink-dim:    var(--ad-ink-dim);
+  --color-muted:      var(--ad-muted);
+  --color-faint:      var(--ad-faint);
+  --color-brand:      var(--ad-green);
+  --color-brand-light:var(--ad-green-light);
+  --color-brand-dark: var(--ad-green-dark);
+  --color-gold:       var(--ad-gold);
+  --color-ad-success: var(--ad-success);
+  --color-ad-warn:    var(--ad-warn);
+  --color-ad-err:     var(--ad-err);
+  --color-ad-info:    var(--ad-info);
+  --font-sans:        var(--ad-font);
+  --font-mono:        var(--ad-font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ── Body atmosphere — fixed radial glow ─────────────────────────── */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ad-bg);
+  color: var(--ad-ink);
+  font-family: var(--ad-font);
+  font-size: var(--ad-fs-md);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1200px 600px at 90% -10%, rgba(45, 94, 62, 0.08), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(201, 169, 110, 0.05), transparent 60%);
+  z-index: -1;
+}
+
+/* ── Selection ──────────────────────────────────────────────────── */
+::selection {
+  background: var(--ad-green);
+  color: #fff;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ad-line) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--ad-line);
+  border: 2px solid var(--ad-bg);
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--ad-line-strong);
+}
+
+/* ── Typography ─────────────────────────────────────────────────── */
+h1 {
+  font-size: var(--ad-fs-3xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  background: linear-gradient(135deg, var(--ad-ink) 0%, var(--ad-gold) 200%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+h2 {
+  font-size: var(--ad-fs-xl);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ad-ink);
+}
+h3 {
+  font-size: var(--ad-fs-lg);
+  font-weight: 600;
+  color: var(--ad-ink-dim);
+}
+
+/* ── Focus ring (global) ───────────────────────────────────────── */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ad-shadow-glow);
+}
+
+/* ── Card pattern (.ad-card) ───────────────────────────────────── */
+.ad-card {
+  background: var(--ad-card);
+  border: 1px solid var(--ad-line-soft);
+  border-radius: var(--ad-r-md);
+  box-shadow: var(--ad-shadow-sm);
+  padding: 22px;
+}
+.ad-stat {
+  background: var(--ad-card);
+  border: 1px solid var(--ad-line-soft);
+  border-radius: var(--ad-r-md);
+  padding: 22px;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 14px 28px -16px rgba(0, 0, 0, 0.5),
+    0 6px 12px -8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: transform var(--ad-dur-med) var(--ad-ease),
+              box-shadow var(--ad-dur-med) var(--ad-ease);
+}
+.ad-stat::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--ad-green-light), var(--ad-green));
+}
+.ad-stat:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 24px 40px -20px rgba(0, 0, 0, 0.6),
+    0 10px 20px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Button (.ad-btn) ──────────────────────────────────────────── */
+.ad-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: var(--ad-r-sm);
+  font: 500 var(--ad-fs-md) var(--ad-font);
+  background: var(--ad-green);
+  color: #fff;
+  border: 1px solid var(--ad-green-light);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 4px 12px -4px rgba(0, 0, 0, 0.4);
+  transition: transform var(--ad-dur-fast),
+              box-shadow var(--ad-dur-fast),
+              background var(--ad-dur-fast);
+  cursor: pointer;
+}
+.ad-btn:hover {
+  background: var(--ad-green-light);
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 8px 18px -6px rgba(45, 94, 62, 0.5);
+}
+.ad-btn:active { transform: translateY(0); }
+.ad-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.ad-btn-sm { padding: 6px 11px; font-size: var(--ad-fs-sm); }
+.ad-btn-secondary {
+  background: transparent;
+  color: var(--ad-green-light);
+  border: 1.5px solid var(--ad-green-light);
+}
+.ad-btn-secondary:hover {
+  background: var(--ad-green);
+  color: #fff;
+}
+.ad-btn-danger {
+  background: var(--ad-err);
+  border-color: #dc2626;
+}
+.ad-btn-danger:hover { background: #dc2626; }
+
+/* ── Form inputs ──────────────────────────────────────────────── */
+.ad-input,
+input[type="text"], input[type="email"], input[type="password"],
+input[type="number"], input[type="search"], input[type="url"],
+input[type="tel"], textarea, select {
+  background: var(--ad-elev);
+  color: var(--ad-ink);
+  border: 1.5px solid var(--ad-line);
+  border-radius: var(--ad-r-sm);
+  padding: 9px 12px;
+  font: var(--ad-fs-md) var(--ad-font);
+  transition: border-color var(--ad-dur-fast),
+              box-shadow var(--ad-dur-fast),
+              background var(--ad-dur-fast);
+  width: 100%;
+}
+.ad-input:focus,
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--ad-green-light);
+  background: #1a2632;
+  box-shadow: var(--ad-shadow-glow);
+}
+input::placeholder, textarea::placeholder { color: var(--ad-faint); }
+label { font: 500 var(--ad-fs-md) var(--ad-font); color: var(--ad-ink-dim); margin-bottom: 6px; }
+
+/* ── Table pattern ─────────────────────────────────────────────── */
+.ad-table {
+  background: var(--ad-card);
+  border: 1px solid var(--ad-line-soft);
+  border-radius: var(--ad-r-lg);
+  overflow: hidden;
+  border-collapse: separate;
+  border-spacing: 0;
+  box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.5);
+  width: 100%;
+}
+.ad-table thead th {
+  background: linear-gradient(180deg, var(--ad-elev), var(--ad-card));
+  color: var(--ad-ink-dim);
+  font: 600 var(--ad-fs-xs) var(--ad-font);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--ad-green);
+  text-align: left;
+}
+.ad-table tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ad-line-soft);
+  font-size: var(--ad-fs-md);
+  color: var(--ad-ink-dim);
+}
+.ad-table tbody tr:last-child td { border-bottom: none; }
+.ad-table tbody tr:hover td { background: var(--ad-card-hover); }
+
+/* ── Badge / chip ──────────────────────────────────────────────── */
+.ad-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font: 600 var(--ad-fs-xs) var(--ad-font);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ad-badge-success { background: rgba(34, 197, 94, 0.14);  color: var(--ad-success-tx); border: 1px solid rgba(34, 197, 94, 0.35); }
+.ad-badge-warn    { background: rgba(245, 158, 11, 0.14); color: var(--ad-warn-tx);    border: 1px solid rgba(245, 158, 11, 0.35); }
+.ad-badge-err     { background: rgba(239, 68, 68, 0.14);  color: var(--ad-err-tx);     border: 1px solid rgba(239, 68, 68, 0.35); }
+.ad-badge-info    { background: rgba(59, 130, 246, 0.14); color: var(--ad-info-tx);    border: 1px solid rgba(59, 130, 246, 0.35); }
+.ad-badge-muted   { background: rgba(107, 118, 137, 0.14);color: var(--ad-muted);      border: 1px solid var(--ad-line); }
+
+/* ── Modal ─────────────────────────────────────────────────────── */
+.ad-modal {
+  background: var(--ad-card);
+  color: var(--ad-ink);
+  border: 1px solid var(--ad-line);
+  border-radius: var(--ad-r-lg);
+  box-shadow: var(--ad-shadow-lg);
+  padding: 0;
+}
+.ad-modal-backdrop {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+}
+.ad-modal-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--ad-line-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+.ad-modal-body { padding: 20px; }
+.ad-modal-foot {
+  padding: 12px 20px;
+  border-top: 1px solid var(--ad-line-soft);
+  background: rgba(0, 0, 0, 0.18);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ── Loader / Skeleton ────────────────────────────────────────── */
+.ad-spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--ad-line);
+  border-top-color: var(--ad-green-light);
+  border-radius: 50%;
+  animation: ad-spin 0.8s linear infinite;
+  display: inline-block;
+}
+@keyframes ad-spin { to { transform: rotate(360deg); } }
+
+.ad-skeleton {
+  background: linear-gradient(90deg, var(--ad-elev) 0%, var(--ad-pop) 50%, var(--ad-elev) 100%);
+  background-size: 200% 100%;
+  border-radius: var(--ad-r-sm);
+  animation: ad-skeleton 1.4s ease-in-out infinite;
+}
+@keyframes ad-skeleton {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Sidebar nav patterns (used in (admin)/layout.tsx) ────────── */
+.ad-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--ad-r-sm);
+  font: 500 var(--ad-fs-md) var(--ad-font);
+  color: var(--ad-ink-dim);
+  border-left: 3px solid transparent;
+  transition: background var(--ad-dur-fast),
+              transform var(--ad-dur-fast),
+              border-left-color var(--ad-dur-fast);
+}
+.ad-nav-link:hover {
+  background: rgba(45, 94, 62, 0.10);
+  transform: translateX(2px);
+  color: var(--ad-ink);
+}
+.ad-nav-link.active {
+  background: linear-gradient(90deg, rgba(45, 94, 62, 0.22), rgba(45, 94, 62, 0.06));
+  border-left-color: var(--ad-gold);
+  color: var(--ad-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.ad-nav-group-title {
+  font: 800 10px var(--ad-font);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ad-muted);
+  padding: 14px 12px 6px;
+  border-top: 1px solid var(--ad-line-soft);
+  margin-top: 8px;
+}
+
+/* ── Reduced motion ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation-duration: 0.001s !important;
+  }
 }
