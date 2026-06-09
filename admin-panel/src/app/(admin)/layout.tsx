@@ -18,53 +18,90 @@ function isTokenValid(token: string): boolean {
   }
 }
 
-const NAV = [
-  { href: "/dashboard",  label: "Dashboard",     icon: "📊" },
-  { href: "/realtime-analytics", label: "Realtime Analytics", icon: "📈" },
-  { href: "/workforce",  label: "Canlı İş Gücü",  icon: "⚡" },
-  { href: "/jobs",       label: "Son İlanlar",    icon: "📋" },
-  { href: "/categories", label: "Kategoriler",    icon: "🏷️" },
-  { href: "/providers",  label: "Sağlayıcılar",   icon: "👷" },
-  { href: "/users",      label: "Kullanıcılar",   icon: "👥" },
-  { href: "/revenue",    label: "Gelir",          icon: "💰" },
-  { href: "/crypto-deposits", label: "USDT Yatırım",   icon: "₿" },
-  // Komisyon gizlendi — platform per-iş komisyonu devre dışı (restorable).
-  // { href: "/komisyon",   label: "Komisyon",       icon: "💸" },
-  { href: "/onboarding-mgmt", label: "Onboarding",     icon: "🎯" },
-  { href: "/promo-codes",     label: "Promo Kodlar",   icon: "🎟️" },
-  { href: "/moderation",      label: "Moderasyon",     icon: "🛡️" },
-  { href: "/reports",         label: "Şikayetler",     icon: "🚩" },
-  { href: "/disputes",        label: "Anlaşmazlıklar", icon: "⚖️" },
-  { href: "/certifications",  label: "Sertifikalar",   icon: "📜" },
-  { href: "/audit-log",       label: "Denetim Kaydı",  icon: "📜" },
-  // Blog gizlendi — feature hidden (restorable). /blog route'ları 404.
-  // { href: "/blog",            label: "Blog",           icon: "📝" },
-  { href: "/broadcast",       label: "Duyuru Gönder",  icon: "📢" },
-  { href: "/harita",           label: "Harita Yönetimi", icon: "🗺️" },
-  { href: "/status",          label: "Sistem Durumu",  icon: "🩺" },
-  { href: "/blocked-ips",     label: "Engellenen IP",  icon: "🛡️" },
-  // Phase 267 — Escrow ayarları (placeholder; backend hazır, UI TODO).
-  { href: "/escrow-settings", label: "Escrow Ayarları", icon: "🔐" },
-  // 📦 APK Yönetim Merkezi — Phase 277 consolidated hub (theme/branding/profile-card/backup as tabs)
-  { href: "/apk-icerik",      label: "📦 APK Yönetim Merkezi", icon: "📱" },
-  { href: "/apk-builder",     label: "🧩 APK Builder",  icon: "📱" },
-  { href: "/ayarlar",         label: "Ayarlar",        icon: "⚙️" },
+type NavItem = { href: string; label: string; icon: string };
+type NavGroup = { title: string; items: NavItem[] };
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    title: "Operasyon",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: "📊" },
+      { href: "/realtime-analytics", label: "Realtime", icon: "📈" },
+      { href: "/workforce", label: "Canlı İş Gücü", icon: "⚡" },
+      { href: "/jobs", label: "Son İlanlar", icon: "📋" },
+      { href: "/analytics", label: "Analytics", icon: "📊" },
+    ],
+  },
+  {
+    title: "Kullanıcılar",
+    items: [
+      { href: "/users", label: "Kullanıcılar", icon: "👥" },
+      { href: "/providers", label: "Sağlayıcılar", icon: "👷" },
+      { href: "/certifications", label: "Sertifikalar", icon: "📜" },
+    ],
+  },
+  {
+    title: "İçerik",
+    items: [
+      { href: "/categories", label: "Kategoriler", icon: "🏷️" },
+      { href: "/promo-codes", label: "Promo Kodlar", icon: "🎟️" },
+      { href: "/onboarding-mgmt", label: "Onboarding", icon: "🎯" },
+      { href: "/broadcast", label: "Duyuru Gönder", icon: "📢" },
+    ],
+  },
+  {
+    title: "Para",
+    items: [
+      { href: "/revenue", label: "Gelir", icon: "💰" },
+      { href: "/crypto-deposits", label: "USDT Yatırım", icon: "₿" },
+    ],
+  },
+  {
+    title: "Moderasyon",
+    items: [
+      { href: "/moderation", label: "Moderasyon", icon: "🛡️" },
+      { href: "/reports", label: "Şikayetler", icon: "🚩" },
+      { href: "/disputes", label: "Anlaşmazlıklar", icon: "⚖️" },
+      { href: "/audit-log", label: "Denetim Kaydı", icon: "📜" },
+      { href: "/blocked-ips", label: "Engellenen IP", icon: "🛡️" },
+    ],
+  },
+  {
+    title: "Sistem",
+    items: [
+      { href: "/status", label: "Sistem Durumu", icon: "🩺" },
+      { href: "/escrow-settings", label: "Escrow Ayarları", icon: "🔐" },
+      { href: "/harita", label: "Harita Yönetimi", icon: "🗺️" },
+      { href: "/ayarlar", label: "Ayarlar", icon: "⚙️" },
+    ],
+  },
+  {
+    title: "APK",
+    items: [
+      { href: "/apk-icerik", label: "APK Yönetim", icon: "📱" },
+      { href: "/apk-builder", label: "APK Builder", icon: "🧩" },
+      { href: "/apk-tasarim", label: "APK Tasarım", icon: "🎨" },
+      { href: "/profile-card", label: "Profile Card", icon: "🪪" },
+    ],
+  },
 ];
 
+const ALL_NAV: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const path   = usePathname();
+  const path = usePathname();
   const router = useRouter();
 
-  const [ready, setReady]     = useState(false);
-  const [authed, setAuthed]   = useState(false);
-  const [admin, setAdmin]     = useState<AdminUser | null>(null);
+  const [ready, setReady] = useState(false);
+  const [authed, setAuthed] = useState(false);
+  const [admin, setAdmin] = useState<AdminUser | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const token = localStorage.getItem("admin_token");
       let valid = !!token && isTokenValid(token);
-      // Access missing/expired → try the refresh flow before bouncing to login.
       if (!valid) valid = await refreshAdminToken();
       if (cancelled) return;
       if (!valid) {
@@ -77,7 +114,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       try {
         const u = localStorage.getItem("admin_user");
         if (u) setAdmin(JSON.parse(u));
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       setAuthed(true);
       setReady(true);
     })();
@@ -86,8 +125,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
   }, [router]);
 
+  // Close mobile drawer on path change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [path]);
+
   const logout = async () => {
-    await api.adminLogout().catch(() => { /* ignore — pairs with P191/2 backend */ });
+    await api.adminLogout().catch(() => {
+      /* ignore */
+    });
     localStorage.removeItem("admin_token");
     localStorage.removeItem("admin_refresh_token");
     localStorage.removeItem("admin_user");
@@ -96,72 +142,316 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!ready) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-slate-400 text-sm animate-pulse">Yükleniyor…</div>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "var(--ad-bg)" }}
+      >
+        <div
+          className="text-sm animate-pulse"
+          style={{ color: "var(--ad-muted)" }}
+        >
+          Yükleniyor…
+        </div>
       </div>
     );
   }
   if (!authed) return null;
 
-  return (
-    <ToastProvider>
-      <ConfirmDialogProvider>
-    <AnimatedGrid />
-    <div className="relative z-10 flex h-full">
-      {/* Sidebar */}
-      <aside className="w-56 shrink-0 bg-slate-900 text-white flex flex-col">
-        <div className="px-6 py-5 border-b border-slate-700">
-          <span className="text-lg font-bold tracking-tight">🛠️ Yapgitsin</span>
-          <p className="text-xs text-slate-400 mt-0.5">Yönetim Paneli</p>
-        </div>
+  const activeNav = ALL_NAV.find(
+    (n) => path === n.href || path.startsWith(n.href + "/"),
+  );
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV.map(({ href, label, icon }) => {
-            const active = path === href || path.startsWith(href + "/");
+  const renderNavGroup = (group: NavGroup) => {
+    const hasActive = group.items.some(
+      (it) => path === it.href || path.startsWith(it.href + "/"),
+    );
+    return (
+      <details
+        key={group.title}
+        open={hasActive}
+        className="ad-nav-group"
+      >
+        <summary className="ad-nav-group-title cursor-pointer list-none flex items-center justify-between">
+          <span>{group.title}</span>
+          <span style={{ fontSize: 10, opacity: 0.5 }}>▾</span>
+        </summary>
+        <div className="space-y-0.5 pt-1">
+          {group.items.map((it) => {
+            const active =
+              path === it.href || path.startsWith(it.href + "/");
             return (
               <Link
-                key={href}
-                href={href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
+                key={it.href}
+                href={it.href}
+                className={`ad-nav-link ${active ? "active" : ""}`}
+                style={{ textDecoration: "none" }}
               >
-                <span>{icon}</span>
-                {label}
+                <span style={{ width: 18, display: "inline-flex", justifyContent: "center" }}>
+                  {it.icon}
+                </span>
+                <span>{it.label}</span>
               </Link>
             );
           })}
-        </nav>
+        </div>
+      </details>
+    );
+  };
 
-        {/* Kullanıcı bilgisi + çıkış */}
-        <div className="px-4 py-4 border-t border-slate-700">
-          {admin && (
-            <div className="mb-3 px-2">
-              <p className="text-xs font-semibold text-white truncate">{admin.fullName}</p>
-              <p className="text-xs text-slate-400 truncate">{admin.email}</p>
-            </div>
-          )}
+  const sidebarInner = (
+    <>
+      {/* Brand */}
+      <div
+        style={{
+          padding: "20px 18px 18px",
+          borderBottom: "1px solid var(--ad-line-soft)",
+        }}
+      >
+        <h1
+          style={{
+            fontSize: 17,
+            fontWeight: 700,
+            letterSpacing: "-0.01em",
+            margin: 0,
+          }}
+        >
+          Yapgitsin Yönetim
+        </h1>
+        <p
+          style={{
+            fontSize: 11,
+            color: "var(--ad-muted)",
+            marginTop: 4,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+          }}
+        >
+          Admin Paneli
+        </p>
+      </div>
+
+      {/* Nav scroll */}
+      <nav
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: "8px 10px 16px",
+        }}
+      >
+        {NAV_GROUPS.map(renderNavGroup)}
+      </nav>
+
+      {/* Foot */}
+      <div
+        style={{
+          padding: "14px 16px",
+          borderTop: "1px solid var(--ad-line-soft)",
+        }}
+      >
+        {admin && (
+          <div style={{ marginBottom: 10 }}>
+            <p
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: "var(--ad-ink)",
+                margin: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {admin.fullName}
+            </p>
+            <p
+              style={{
+                fontSize: 11,
+                color: "var(--ad-muted)",
+                margin: "2px 0 0",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {admin.email}
+            </p>
+          </div>
+        )}
+        <button
+          onClick={logout}
+          className="ad-btn ad-btn-secondary ad-btn-sm"
+          style={{ width: "100%", justifyContent: "center" }}
+        >
+          🚪 Çıkış Yap
+        </button>
+      </div>
+    </>
+  );
+
+  return (
+    <ToastProvider>
+      <ConfirmDialogProvider>
+        <AnimatedGrid />
+
+        {/* Mobile topbar */}
+        <div className="ad-mobile-topbar">
+          <button
+            onClick={() => setMobileOpen(true)}
+            aria-label="Menüyü aç"
+            style={{
+              width: 44,
+              height: 44,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "transparent",
+              border: "1px solid var(--ad-line-soft)",
+              borderRadius: 8,
+              color: "var(--ad-ink)",
+              fontSize: 18,
+              cursor: "pointer",
+            }}
+          >
+            ☰
+          </button>
+          <span style={{ fontWeight: 600, fontSize: 14 }}>
+            {activeNav?.label ?? "Panel"}
+          </span>
           <button
             onClick={logout}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-red-900/50 hover:text-red-300 transition-colors"
+            aria-label="Çıkış"
+            style={{
+              width: 44,
+              height: 44,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "transparent",
+              border: "1px solid var(--ad-line-soft)",
+              borderRadius: 8,
+              color: "var(--ad-ink)",
+              cursor: "pointer",
+            }}
           >
-            <span>🚪</span>
-            Çıkış Yap
+            ⎋
           </button>
         </div>
-      </aside>
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-slate-950">
-        <AdminTopbar
-          title={NAV.find(n => path === n.href || path.startsWith(n.href + "/"))?.label ?? "Panel"}
-          adminLabel={admin ? `${admin.fullName} · admin` : undefined}
-        />
-        <main className="flex-1 overflow-auto bg-gray-50 p-6">{children}</main>
-      </div>
-    </div>
+        {/* Sidebar — desktop fixed */}
+        <aside className={`ad-sidebar ${mobileOpen ? "is-open" : ""}`}>
+          {sidebarInner}
+        </aside>
+
+        {/* Backdrop for mobile drawer */}
+        {mobileOpen && (
+          <div
+            className="ad-sidebar-backdrop"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
+
+        {/* Content */}
+        <div className="ad-content-wrap">
+          <AdminTopbar
+            title={activeNav?.label ?? "Panel"}
+            adminLabel={admin ? `${admin.fullName} · admin` : undefined}
+          />
+          <main className="ad-main">{children}</main>
+        </div>
+
+        {/* Layout-scoped styles */}
+        <style jsx global>{`
+          html,
+          body {
+            background: var(--ad-bg);
+            color: var(--ad-ink);
+          }
+          .ad-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 220px;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, #131b25 0%, #0f161f 100%);
+            border-right: 1px solid var(--ad-line-soft);
+            box-shadow: var(--ad-shadow-md);
+            z-index: 40;
+            transition: transform 0.3s var(--ad-ease-soft);
+          }
+          .ad-content-wrap {
+            margin-left: 220px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+          }
+          .ad-main {
+            flex: 1;
+            padding: 24px 32px;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+            box-sizing: border-box;
+          }
+          .ad-mobile-topbar {
+            display: none;
+          }
+          .ad-sidebar-backdrop {
+            display: none;
+          }
+          .ad-nav-group summary::-webkit-details-marker {
+            display: none;
+          }
+          .ad-nav-group[open] > summary > span:last-child {
+            transform: rotate(180deg);
+            transition: transform 0.2s;
+          }
+          @media (max-width: 1024px) {
+            .ad-sidebar { width: 200px; }
+            .ad-content-wrap { margin-left: 200px; }
+            .ad-main { padding: 20px 24px; }
+          }
+          @media (max-width: 760px) {
+            .ad-sidebar {
+              width: 80vw;
+              max-width: 320px;
+              transform: translateX(-100%);
+            }
+            .ad-sidebar.is-open {
+              transform: translateX(0);
+            }
+            .ad-content-wrap {
+              margin-left: 0;
+              padding-top: 60px;
+            }
+            .ad-main {
+              padding: 16px 14px 80px;
+            }
+            .ad-mobile-topbar {
+              display: flex;
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 60px;
+              padding: 0 14px;
+              background: var(--ad-card);
+              border-bottom: 1px solid var(--ad-line-soft);
+              align-items: center;
+              justify-content: space-between;
+              z-index: 30;
+            }
+            .ad-sidebar-backdrop {
+              display: block;
+              position: fixed;
+              inset: 0;
+              background: rgba(0, 0, 0, 0.5);
+              backdrop-filter: blur(4px);
+              z-index: 35;
+            }
+          }
+        `}</style>
       </ConfirmDialogProvider>
     </ToastProvider>
   );

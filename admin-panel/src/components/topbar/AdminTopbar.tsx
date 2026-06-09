@@ -71,18 +71,49 @@ export function AdminTopbar({
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-white/10 bg-slate-900/70 px-6 backdrop-blur-xl">
+      <header
+        className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-4 px-6 backdrop-blur-xl"
+        style={{
+          background: "rgba(22, 32, 43, 0.75)",
+          borderBottom: "1px solid var(--ad-line-soft)",
+        }}
+      >
         {/* Title */}
-        <h1 className="truncate text-sm font-semibold text-white">{title}</h1>
+        <h2
+          className="truncate"
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            color: "var(--ad-ink)",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {title}
+        </h2>
 
         {/* Center — Cmd+K trigger */}
         <button
           onClick={() => setCmdOpen(true)}
-          className="group hidden flex-1 max-w-md items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-left text-sm text-slate-400 transition-colors hover:border-white/20 hover:bg-white/10 hover:text-slate-200 md:flex"
+          className="group hidden flex-1 max-w-md items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm md:flex"
+          style={{
+            background: "var(--ad-elev)",
+            border: "1px solid var(--ad-line)",
+            color: "var(--ad-muted)",
+            transition: "border-color 0.15s, background 0.15s",
+          }}
         >
           <span>🔎</span>
           <span className="flex-1 truncate">Ara veya komut çalıştır…</span>
-          <kbd className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 group-hover:text-slate-200">
+          <kbd
+            className="rounded px-1.5 py-0.5"
+            style={{
+              border: "1px solid var(--ad-line)",
+              background: "var(--ad-pop)",
+              fontSize: 10,
+              fontWeight: 500,
+              color: "var(--ad-muted)",
+            }}
+          >
             {isMac ? "⌘K" : "Ctrl+K"}
           </kbd>
         </button>
@@ -91,7 +122,15 @@ export function AdminTopbar({
         <div className="flex items-center gap-3">
           {/* Online indicator */}
           <div
-            className="hidden items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300 sm:flex"
+            className="hidden items-center gap-1.5 rounded-full px-2.5 py-1 sm:flex"
+            style={{
+              border: "1px solid rgba(34, 197, 94, 0.35)",
+              background: "rgba(34, 197, 94, 0.14)",
+              color: "var(--ad-success-tx)",
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: "0.04em",
+            }}
             title="Aktif sağlayıcılar"
           >
             <span className="relative flex h-2 w-2">
@@ -104,11 +143,15 @@ export function AdminTopbar({
           {/* AI Assistant toggle */}
           <button
             onClick={() => setAiOpen((v) => !v)}
-            className={`flex h-9 w-9 items-center justify-center rounded-lg border text-base transition-colors ${
-              aiOpen
-                ? "border-blue-400/40 bg-blue-500/20 text-white"
-                : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:bg-white/10 hover:text-white"
-            }`}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-base"
+            style={{
+              border: aiOpen
+                ? "1px solid var(--ad-green-light)"
+                : "1px solid var(--ad-line)",
+              background: aiOpen ? "var(--ad-green-glow)" : "var(--ad-elev)",
+              color: "var(--ad-ink)",
+              transition: "all 0.15s",
+            }}
             title="AI Asistan"
             aria-label="AI Asistan"
           >
@@ -119,13 +162,16 @@ export function AdminTopbar({
           <LocaleSwitcher />
 
           {/* Notifications */}
-          <div className="text-slate-300">
+          <div style={{ color: "var(--ad-ink-dim)" }}>
             <NotificationBell />
           </div>
 
           {/* Admin label */}
           {adminLabel && (
-            <span className="hidden text-xs text-slate-400 sm:block">
+            <span
+              className="hidden sm:block"
+              style={{ fontSize: 11, color: "var(--ad-muted)" }}
+            >
               {adminLabel}
             </span>
           )}
