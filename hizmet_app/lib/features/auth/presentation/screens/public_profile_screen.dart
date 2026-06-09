@@ -38,6 +38,11 @@ final publicAvailabilitySlotsProvider =
   },
 );
 
+/// Phase 465 (hatalar.txt #15) — Profile tab seçimi.
+/// 0 = Hizmet Veren (mevcut worker content), 1 = Hizmet Alan (customer history).
+final _profileTabIndex =
+    StateProvider.autoDispose.family<int, String>((ref, _) => 0);
+
 class PublicProfileScreen extends ConsumerWidget {
   final String userId;
   const PublicProfileScreen({super.key, required this.userId});
@@ -444,7 +449,72 @@ class _ProfileView extends ConsumerWidget {
               ),
             ),
 
-          SliverToBoxAdapter(
+          // Phase 465 (hatalar.txt #15) — Profile Tab Bar.
+          // Verification Center altında, content üstünde. Sticky değil — scroll'la
+          // birlikte yukarı kayar (mimari sade tutuldu, NestedScrollView'a göre
+          // refactor riskinden kaçınıldı).
+          if (isWorker)
+            SliverToBoxAdapter(
+              child: _ProfileTabBar(userId: userId),
+            ),
+          // Tab=1 ise worker content gizlenir; Hizmet Alan placeholder gösterilir.
+          if (isWorker)
+            Consumer(builder: (context, ref, _) {
+              final tab = ref.watch(_profileTabIndex(userId));
+              if (tab == 1) {
+                return SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.shopping_bag_outlined,
+                              size: 28, color: AppColors.primary),
+                          const SizedBox(height: 10),
+                          Text(
+                              isSelf
+                                  ? 'Hizmet aldığın geçmiş işler burada listelenir.'
+                                  : 'Bu kullanıcının hizmet alan olarak iş geçmişi.',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary)),
+                          const SizedBox(height: 6),
+                          Text(
+                              'Toplam: $totalCustomer ilan · Başarılı: $successCustomer',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary)),
+                          if (totalCustomer == 0) ...[
+                            const SizedBox(height: 12),
+                            Text('Henüz kayıt yok.',
+                                style: TextStyle(
+                                    fontSize: 12, color: AppColors.textSecondary)),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+              return const SliverToBoxAdapter(child: SizedBox.shrink());
+            }),
+
+          // Tab=0 (Hizmet Veren) — mevcut tüm worker content
+          // (Consumer ile sarıldı: tab=1 olduğunda boş döndürür).
+          Consumer(builder: (context, ref, _) {
+            final tab = isWorker ? ref.watch(_profileTabIndex(userId)) : 0;
+            if (tab != 0) {
+              return const SliverToBoxAdapter(child: SizedBox.shrink());
+            }
+            return SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -799,7 +869,8 @@ class _ProfileView extends ConsumerWidget {
                 const SizedBox(height: 32),
               ],
             ),
-          ),
+            );
+          }),
         ],
         ),
       ),
@@ -1201,6 +1272,73 @@ class _VerificationCenter extends StatelessWidget {
             Icon(Icons.check_circle_rounded, size: 13, color: fg),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Phase 465 (hatalar.txt #15) — Profile Tab Bar widget.
+class _ProfileTabBar extends ConsumerWidget {
+  final String userId;
+  const _ProfileTabBar({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selected = ref.watch(_profileTabIndex(userId));
+    return Container(
+      width: double.infinity,
+      color: AppColors.surface,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      child: Row(
+        children: [
+          _tab(ref, label: 'Hizmet Veren', idx: 0, selected: selected,
+              icon: Icons.handyman_outlined),
+          const SizedBox(width: 6),
+          _tab(ref, label: 'Hizmet Alan', idx: 1, selected: selected,
+              icon: Icons.shopping_bag_outlined),
+        ],
+      ),
+    );
+  }
+
+  Widget _tab(WidgetRef ref,
+      {required String label,
+      required int idx,
+      required int selected,
+      required IconData icon}) {
+    final isActive = selected == idx;
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () => ref.read(_profileTabIndex(userId).notifier).state = idx,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isActive
+                ? AppColors.primary.withValues(alpha: 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+                color: isActive ? AppColors.primary : AppColors.border,
+                width: isActive ? 1.5 : 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon,
+                  size: 16,
+                  color: isActive ? AppColors.primary : AppColors.textSecondary),
+              const SizedBox(width: 6),
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isActive
+                          ? AppColors.primary
+                          : AppColors.textSecondary)),
+            ],
+          ),
+        ),
       ),
     );
   }
