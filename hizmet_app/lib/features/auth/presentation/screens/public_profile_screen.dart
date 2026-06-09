@@ -15,7 +15,6 @@ import '../../widgets/intro_video_section.dart';
 // Phase 419 — portfolio_grid + verified_category_badges import'ları kaldırıldı.
 import '../../widgets/availability_editor_sheet.dart';
 import '../../widgets/review_summary_card.dart';
-import '../../../users/widgets/badge_row.dart';
 import 'package:go_router/go_router.dart';
 
 final publicProfileProvider =
@@ -397,6 +396,11 @@ class _ProfileView extends ConsumerWidget {
                     badges: _hasVisibleBadges(badges)
                         ? (badges as List)
                         : const <dynamic>[],
+                    certifications:
+                        ((data['certifications'] as List?) ?? const [])
+                            .whereType<Map>()
+                            .map((m) => Map<String, dynamic>.from(m))
+                            .toList(),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -552,64 +556,8 @@ class _ProfileView extends ConsumerWidget {
                   }),
                 ],
 
-                // ── Phase 159: Sertifikalar (verified only) ──────────────
-                if ((data['certifications'] as List?)?.isNotEmpty == true) ...[
-                  const SizedBox(height: 16),
-                  const Text('📜 Sertifikalar',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 8),
-                  ...(((data['certifications'] as List?) ?? const [])
-                      .whereType<Map>()
-                      .map((m) => Map<String, dynamic>.from(m))
-                      .map((c) => Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color: AppColors.success
-                                      .withValues(alpha: 0.3)),
-                            ),
-                            child: Row(children: [
-                              const Text('🪪',
-                                  style: TextStyle(fontSize: 22)),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Text((c['name'] ?? '') as String,
-                                        style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600)),
-                                    const SizedBox(height: 2),
-                                    Text((c['issuer'] ?? '') as String,
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            color:
-                                                AppColors.textSecondary)),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.success
-                                      .withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text('🪪 Doğrulandı',
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        color: AppColors.success,
-                                        fontWeight: FontWeight.w600)),
-                              ),
-                            ]),
-                          ))),
-                ],
+                // Phase 474 — "📜 Sertifikalar" bölümü kaldırıldı.
+                // Sertifika rozeti BadgeRow içinde, tap → detay sheet.
 
                 // Phase 419 — "İş Örnekleri" + portfolyo videosu bölümü
                 // kaldırıldı (kullanıcı isteği). Kart başlığındaki
@@ -1002,6 +950,7 @@ class _RozetlerSection extends StatefulWidget {
   final String? bio;
   final List<Map<String, dynamic>> reviewList;
   final List badges;
+  final List<Map<String, dynamic>> certifications;
   const _RozetlerSection({
     required this.reviews,
     required this.rating,
@@ -1011,6 +960,7 @@ class _RozetlerSection extends StatefulWidget {
     required this.bio,
     required this.reviewList,
     required this.badges,
+    required this.certifications,
   });
 
   @override
@@ -1078,7 +1028,10 @@ class _RozetlerSectionState extends State<_RozetlerSection>
                   ),
                   if (widget.badges.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    BadgeRow(badges: widget.badges),
+                    _TappableBadgeRow(
+                      badges: widget.badges,
+                      certifications: widget.certifications,
+                    ),
                   ],
                 ],
               ),
@@ -1910,4 +1863,398 @@ class _ReviewsSliderState extends State<_ReviewsSlider> {
       return '';
     }
   }
+}
+
+/// Phase 474 — Tap'lı rozet satırı. Default BadgeRow yerine kullanılır
+/// (Performans Paneli içinde). Her rozet chip → bottom sheet detay.
+class _TappableBadgeRow extends StatelessWidget {
+  final List badges;
+  final List<Map<String, dynamic>> certifications;
+  const _TappableBadgeRow({
+    required this.badges,
+    required this.certifications,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final parsed = <Map<String, String>>[];
+    for (final raw in badges) {
+      if (raw is! Map) continue;
+      final label = (raw['label'] ?? '').toString();
+      if (label.isEmpty) continue;
+      final key = (raw['key'] ?? '').toString().toLowerCase();
+      final labelLower = label.toLowerCase();
+      if (key == 'verified' || labelLower == 'doğrulanmış') continue;
+      parsed.add({
+        'key': key,
+        'label': label,
+        'icon': (raw['icon'] ?? '').toString(),
+      });
+    }
+    if (parsed.isEmpty) return const SizedBox.shrink();
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: parsed.length,
+        physics: const BouncingScrollPhysics(),
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final b = parsed[i];
+          return InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => _BadgeDetailSheet.show(
+              context,
+              badgeKey: b['key']!,
+              label: b['label']!,
+              icon: b['icon']!,
+              certifications: certifications,
+            ),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (b['icon']!.isNotEmpty) ...[
+                    Text(b['icon']!, style: const TextStyle(fontSize: 14)),
+                    const SizedBox(width: 6),
+                  ],
+                  Text(b['label']!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      )),
+                  const SizedBox(width: 4),
+                  Icon(Icons.info_outline,
+                      size: 11,
+                      color: AppColors.primary.withValues(alpha: 0.6)),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Phase 474 — Rozet detay bottom sheet (mini-stats sheet ile aynı mimari).
+class _BadgeDetailSheet {
+  static void show(
+    BuildContext context, {
+    required String badgeKey,
+    required String label,
+    required String icon,
+    required List<Map<String, dynamic>> certifications,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (_) => _BadgeDetailContent(
+        badgeKey: badgeKey,
+        label: label,
+        icon: icon,
+        certifications: certifications,
+      ),
+    );
+  }
+}
+
+class _BadgeDetailContent extends StatelessWidget {
+  final String badgeKey;
+  final String label;
+  final String icon;
+  final List<Map<String, dynamic>> certifications;
+  const _BadgeDetailContent({
+    required this.badgeKey,
+    required this.label,
+    required this.icon,
+    required this.certifications,
+  });
+
+  _BadgeInfo _resolve() {
+    switch (badgeKey) {
+      case 'top_rated':
+        return _BadgeInfo(
+          accent: Colors.amber,
+          headline: 'Üst Sıralama',
+          description:
+              'Ortalama puanı 4.5/5.0 ve üzeri olan, en az 10 yorum almış '
+              'kullanıcılara verilir. Yüksek müşteri memnuniyeti ve '
+              'tutarlı kalitenin kanıtıdır.',
+          criteria: const [
+            '⭐ Ortalama puan ≥ 4.5/5.0',
+            '📝 En az 10 yorum',
+          ],
+        );
+      case 'prolific':
+        return _BadgeInfo(
+          accent: AppColors.success,
+          headline: 'Deneyimli',
+          description:
+              'Platformda 50 ve üzeri iş tamamlamış kullanıcılara verilir. '
+              'Yıllarca süren uygulamalı deneyim ve geniş portföy demektir.',
+          criteria: const ['🏆 50+ tamamlanmış iş'],
+        );
+      case 'rising_star':
+        return _BadgeInfo(
+          accent: AppColors.primary,
+          headline: 'Yükselen Yıldız',
+          description:
+              'Henüz yolun başında ama hızlı ilerleyen, kaliteyi ilk işten '
+              'itibaren koruyan kullanıcılara verilir. Yeni ama güvenilir.',
+          criteria: const [
+            '🌟 5-19 tamamlanmış iş',
+            '⭐ Ortalama puan ≥ 4.0/5.0',
+          ],
+        );
+      case 'available_now':
+        return _BadgeInfo(
+          accent: AppColors.success,
+          headline: 'Şu An Müsait',
+          description:
+              'Hizmet veren profilinde "Aktif/Müsait" ayarını açık tutuyor. '
+              'Hızlı yanıt ve hızlı teklif demektir.',
+          criteria: const ['🟢 Aktiflik toggle açık'],
+        );
+      case 'complete_profile':
+        return _BadgeInfo(
+          accent: AppColors.primary,
+          headline: 'Eksiksiz Profil',
+          description:
+              'Profil tamamlanma oranı %100. Fotoğraf, kategori, açıklama, '
+              'iletişim ve doğrulama alanlarının tümü dolu. Güvenilirlik artar.',
+          criteria: const ['💯 Profil tamamlanma oranı %100'],
+        );
+      case 'pro_member':
+        return _BadgeInfo(
+          accent: Colors.cyan,
+          headline: 'Pro Üye',
+          description:
+              'Pro abonelik planı aktif. Premium görünürlük, öncelikli '
+              'teklif eşleştirme ve gelişmiş analiz erişimi içerir.',
+          criteria: const ['💎 Pro Üyelik aktif'],
+        );
+      case 'premium_member':
+        return _BadgeInfo(
+          accent: Colors.deepPurple,
+          headline: 'Premium Üye',
+          description:
+              'Premium abonelik planı aktif. En üst görünürlük seviyesi, '
+              'reklamsız deneyim, sınırsız teklif kontenjanı.',
+          criteria: const ['👑 Premium Üyelik aktif'],
+        );
+      default:
+        return _BadgeInfo(
+          accent: AppColors.primary,
+          headline: label,
+          description:
+              'Bu rozet, kullanıcının platform üzerindeki başarı ve '
+              'aktivitesini gösterir.',
+          criteria: const [],
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final info = _resolve();
+    final isCert = label.toLowerCase().contains('sertifika');
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: info.accent.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      icon.isNotEmpty ? icon : '🏅',
+                      style: const TextStyle(fontSize: 22),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(info.headline,
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                            )),
+                        const SizedBox(height: 2),
+                        Text('Kazanılmış rozet',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            )),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: info.accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                          color: info.accent.withValues(alpha: 0.4),
+                          width: 1),
+                    ),
+                    child: Text('Aktif',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: info.accent,
+                        )),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.border, width: 1),
+                ),
+                child: Text(info.description,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      height: 1.5,
+                      color: AppColors.textPrimary,
+                    )),
+              ),
+              if (info.criteria.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text('Kazanma kriteri',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.3,
+                    )),
+                const SizedBox(height: 6),
+                ...info.criteria.map((c) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.check_circle_rounded,
+                              size: 14, color: info.accent),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(c,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textPrimary,
+                                )),
+                          ),
+                        ],
+                      ),
+                    )),
+              ],
+              if (isCert && certifications.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text('Sertifikalar (${certifications.length})',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.3,
+                    )),
+                const SizedBox(height: 8),
+                ...certifications.map((c) => Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: AppColors.success.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Text('🪪', style: TextStyle(fontSize: 18)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text((c['name'] ?? '') as String,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    )),
+                                const SizedBox(height: 2),
+                                Text((c['issuer'] ?? '') as String,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textSecondary,
+                                    )),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+              ],
+              const SizedBox(height: 6),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BadgeInfo {
+  final Color accent;
+  final String headline;
+  final String description;
+  final List<String> criteria;
+  _BadgeInfo({
+    required this.accent,
+    required this.headline,
+    required this.description,
+    required this.criteria,
+  });
 }
