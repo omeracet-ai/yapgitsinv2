@@ -485,11 +485,25 @@ class _ProfileView extends ConsumerWidget {
                   ),
                 ],
 
-                if (showBadges &&
-                    _hasVisibleBadges(badges)) ...[
+                // Phase 469 — Rozetler bölümü artık her zaman görünür
+                // (mini stats yeterli içerik). Rozet yoksa BadgeRow boş döner.
+                if (showBadges) ...[
                   _section(
                     title: 'Rozetler',
-                    child: BadgeRow(badges: badges),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _BadgesMiniStats(
+                          reviews: reviews,
+                          successWorker: successWorker,
+                          totalWorker: totalWorker,
+                        ),
+                        if (_hasVisibleBadges(badges)) ...[
+                          const SizedBox(height: 10),
+                          BadgeRow(badges: badges),
+                        ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -1099,6 +1113,107 @@ class _PresenceSignalState extends ConsumerState<_PresenceSignal> {
                     fontWeight: FontWeight.w600)),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Phase 469 — Rozetler bölümü içi mini metrik şeridi:
+/// Aldığı yorum · Başarı oranı (/10) · Verdiği hizmet sayısı.
+/// 3 eşit-genişlikli pill, divider yok. Veri yoksa "—" gösterir.
+class _BadgesMiniStats extends StatelessWidget {
+  final int reviews;
+  final int successWorker;
+  final int totalWorker;
+  const _BadgesMiniStats({
+    required this.reviews,
+    required this.successWorker,
+    required this.totalWorker,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio10 = totalWorker > 0
+        ? (successWorker / totalWorker * 10.0).toStringAsFixed(1)
+        : '—';
+    return Row(
+      children: [
+        Expanded(
+          child: _statPill(
+            icon: Icons.rate_review_outlined,
+            value: reviews > 0 ? '$reviews' : '—',
+            label: 'Aldığı yorum',
+            color: Colors.amber,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _statPill(
+            icon: Icons.trending_up_rounded,
+            value: ratio10 == '—' ? '—' : '$ratio10/10',
+            label: 'Başarı oranı',
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _statPill(
+            icon: Icons.handyman_outlined,
+            value: totalWorker > 0 ? '$totalWorker' : '—',
+            label: 'Verdiği hizmet',
+            color: AppColors.success,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _statPill({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
