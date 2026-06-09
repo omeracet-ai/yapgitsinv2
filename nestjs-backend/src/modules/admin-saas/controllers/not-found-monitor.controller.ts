@@ -13,6 +13,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { NotFoundLog } from '../entities/not-found-log.entity';
 import { Redirect } from '../entities/redirect.entity';
 
@@ -79,6 +80,7 @@ export class NotFoundMonitorController {
 
   @Get('admin/seo-404')
   @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @RequirePermission('seo-404', 'read')
   async list(@Query('limit') limit?: string) {
     const n = Math.min(500, Math.max(1, Number(limit ?? 100)));
     const items = await this.logs.find({
@@ -95,6 +97,7 @@ export class NotFoundMonitorController {
 
   @Delete('admin/seo-404/:id')
   @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @RequirePermission('seo-404', 'delete')
   async deleteLog(@Param('id') id: string) {
     await this.logs.delete({ id });
     return { ok: true };
@@ -102,6 +105,7 @@ export class NotFoundMonitorController {
 
   @Get('admin/redirects')
   @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @RequirePermission('seo-404', 'read')
   async listRedirects() {
     const items = await this.redirects.find({
       order: { createdAt: 'DESC' },
@@ -111,6 +115,7 @@ export class NotFoundMonitorController {
 
   @Post('admin/redirects')
   @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @RequirePermission('seo-404', 'write')
   async createRedirect(@Body() body: RedirectBody) {
     const src = (body?.src ?? '').trim().slice(0, 512);
     const dst = (body?.dst ?? '').trim().slice(0, 512);
@@ -129,6 +134,7 @@ export class NotFoundMonitorController {
 
   @Delete('admin/redirects/:id')
   @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @RequirePermission('seo-404', 'delete')
   async deleteRedirect(@Param('id') id: string) {
     await this.redirects.delete({ id });
     return { ok: true };

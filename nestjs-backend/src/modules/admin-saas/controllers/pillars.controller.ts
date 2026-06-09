@@ -13,6 +13,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { PillarPage } from '../entities/pillar-page.entity';
 import { GeminiClient } from '../../ai/gemini.client';
 
@@ -40,6 +41,7 @@ interface PillarUpsert {
  */
 @Controller('admin/seo-pillars')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('seo-pillars')
 export class PillarsController {
   constructor(
     @InjectRepository(PillarPage)

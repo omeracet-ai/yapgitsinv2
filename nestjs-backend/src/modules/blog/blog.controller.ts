@@ -15,6 +15,7 @@ import type { Request } from 'express';
 import { BlogService } from './blog.service';
 import { CreateBlogPostDto, UpdateBlogPostDto } from './dto/blog-post.dto';
 import { AdminGuard } from '../../common/guards/admin.guard';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import type { AuthUser } from '../../common/types/auth.types';
 import type { Tenant } from '../tenants/tenant.entity';
@@ -50,6 +51,7 @@ export class BlogPublicController {
 
 @Controller('admin/blog')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('categories')
 export class BlogAdminController {
   constructor(
     private readonly blog: BlogService,

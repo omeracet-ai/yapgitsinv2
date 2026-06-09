@@ -1,130 +1,94 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import type { Request } from 'express';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
+import {
+  getMatrixSnapshot,
+  resolveRbacRole,
+  RBAC_ROLES,
+} from '../../../common/rbac/rbac.config';
+import { User } from '../../users/user.entity';
+import type { AuthUser } from '../../../common/types/auth.types';
 
 /**
- * M11 — RBAC Matrix (read-only preview).
+ * Phase 489 (Faz J/2) — RBAC Matrix.
  *
- * Yapgitsin currently uses a binary admin role enum. This endpoint returns the
- * intended fine-grained matrix as a *design preview* — UI shows what a future
- * multi-role rollout would look like. Toggling has no effect yet; storage
- * layer (admin_roles / role_permissions) lands in Faz J.
+ * Live enforcement: every endpoint decorated with @RequirePermission is gated
+ * by PermissionGuard. Legacy admins (User.adminRole NULL) are treated as
+ * super_admin so the existing single-admin model keeps working until roles
+ * are assigned via PATCH /admin/rbac/users/:id.
  */
-const MODULES = [
-  'jobs',
-  'users',
-  'providers',
-  'categories',
-  'broadcast',
-  'revenue',
-  'crypto-deposits',
-  'moderation',
-  'reports',
-  'disputes',
-  'audit-log',
-  'blocked-ips',
-  'escrow-settings',
-  'apk-builder',
-  'system-settings',
-  'ai-assistant',
-  'quality-check',
-  'cron-hub',
-  'messages',
-  'loyalty',
-  'seo-gsc',
-  'seo-keywords',
-  'seo-pillars',
-  'seo-404',
-  'dns-health',
-];
-
-const ACTIONS = ['read', 'write', 'delete'] as const;
-type Action = (typeof ACTIONS)[number];
-
-interface Role {
-  key: string;
-  name: string;
-  description: string;
-  permissions: Record<string, Action[]>;
-}
-
-const ROLES: Role[] = [
-  {
-    key: 'super_admin',
-    name: 'Süper Admin',
-    description: 'Tüm modüllere tam erişim. Sistem sahibi.',
-    permissions: Object.fromEntries(MODULES.map((m) => [m, ['read', 'write', 'delete']])),
-  },
-  {
-    key: 'admin',
-    name: 'Admin',
-    description: 'Standart admin — silme yetkisi kısıtlı.',
-    permissions: Object.fromEntries(
-      MODULES.map((m) => [m, ['read', 'write'] as Action[]]),
-    ),
-  },
-  {
-    key: 'moderator',
-    name: 'Moderatör',
-    description: 'Sadece moderasyon, raporlar, anlaşmazlık ve audit.',
-    permissions: Object.fromEntries(
-      MODULES.map((m) => {
-        const allow: Action[] =
-          ['moderation', 'reports', 'disputes', 'audit-log', 'blocked-ips'].includes(m)
-            ? ['read', 'write']
-            : ['read'];
-        return [m, allow];
-      }),
-    ),
-  },
-  {
-    key: 'support',
-    name: 'Destek',
-    description: 'Yalnızca okuma + müşteri mesajları.',
-    permissions: Object.fromEntries(
-      MODULES.map((m) => {
-        const allow: Action[] = m === 'messages' ? ['read', 'write'] : ['read'];
-        return [m, allow];
-      }),
-    ),
-  },
-  {
-    key: 'seo',
-    name: 'SEO Uzmanı',
-    description: 'Sadece SEO + AI + içerik araçları.',
-    permissions: Object.fromEntries(
-      MODULES.map((m) => {
-        const allow: Action[] = m.startsWith('seo-') || m === 'ai-assistant' || m === 'categories'
-          ? ['read', 'write']
-          : m === 'audit-log'
-            ? ['read']
-            : [];
-        return [m, allow];
-      }),
-    ),
-  },
-];
-
 @Controller('admin/rbac')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
 export class RbacController {
+  constructor(
+    @InjectRepository(User)
+    private readonly usersRepo: Repository<User>,
+  ) {}
+
   @Get('matrix')
   matrix() {
+    const snap = getMatrixSnapshot();
     return {
-      modules: MODULES,
-      actions: ACTIONS,
-      roles: ROLES,
+      ...snap,
       note:
-        'Şu an Yapgitsin tek bir admin rolü ile çalışır. Bu matris çoklu-rol geçişi için tasarım önizlemesidir; toggle pasif.',
+        'Faz J/2 ile RBAC enforcement aktif. NULL adminRole = legacy super_admin. PATCH /admin/rbac/users/:id ile rol ata.',
     };
   }
 
   @Get('current')
-  current() {
+  current(@Req() req: Request & { user?: AuthUser & { adminRole?: string | null } }) {
+    const user = req.user;
+    const role = resolveRbacRole(user?.adminRole);
     return {
-      role: 'super_admin',
-      description:
-        'Tüm modüllere erişiminiz var. Çoklu rol modeli Faz J (RBAC enforcement) ile devreye girecek.',
+      role,
+      legacy: !user?.adminRole,
+      assignableRoles: RBAC_ROLES,
     };
+  }
+
+  /** List admin users + their adminRole for the UI assignment screen. */
+  @Get('users')
+  @RequirePermission('system-settings', 'read')
+  async users() {
+    const admins = await this.usersRepo.find({
+      where: { role: 'admin' as never },
+      select: ['id', 'email', 'fullName', 'adminRole'],
+    });
+    return {
+      data: admins.map((a) => ({
+        id: a.id,
+        email: a.email,
+        fullName: a.fullName,
+        adminRole: a.adminRole,
+        effectiveRole: resolveRbacRole(a.adminRole),
+      })),
+    };
+  }
+
+  /** Assign or clear an admin's RBAC sub-role. */
+  @Patch('users/:id')
+  @RequirePermission('system-settings', 'write')
+  async assign(
+    @Param('id') id: string,
+    @Body() body: { adminRole?: string | null },
+  ) {
+    const next =
+      body.adminRole && (RBAC_ROLES as readonly string[]).includes(body.adminRole)
+        ? body.adminRole
+        : null;
+    await this.usersRepo.update(id, { adminRole: next });
+    return { id, adminRole: next, effectiveRole: resolveRbacRole(next) };
   }
 }

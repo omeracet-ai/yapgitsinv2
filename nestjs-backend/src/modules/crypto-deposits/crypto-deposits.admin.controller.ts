@@ -12,6 +12,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { SkipThrottle } from '@nestjs/throttler';
 import { AdminGuard } from '../../common/guards/admin.guard';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import { Audit } from '../admin-audit/audit.decorator';
 import { AuditInterceptor } from '../admin-audit/audit.interceptor';
 import { CryptoDepositsService } from './crypto-deposits.service';
@@ -23,6 +24,7 @@ import type { AuthUser } from '../../common/types/auth.types';
 @Controller('admin/crypto-deposits')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
 @UseInterceptors(AuditInterceptor)
+@RequirePermission('crypto-deposits')
 export class CryptoDepositsAdminController {
   constructor(private readonly svc: CryptoDepositsService) {}
 

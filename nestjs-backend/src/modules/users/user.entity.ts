@@ -83,6 +83,15 @@ export class User {
   })
   role: UserRole;
 
+  /**
+   * Phase 489 (Faz J/2) — RBAC sub-role for admins. NULL = legacy admin
+   * (treated as super_admin for backward compatibility). Ignored when
+   * role !== 'admin'. Values: super_admin | admin | moderator |
+   * content_editor | analyst (see rbac.config.ts).
+   */
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  adminRole: string | null;
+
   /** @deprecated Phase 174 — use tokenBalanceMinor (kuruş). Kept for backward compatibility. */
   @Column({ type: 'float', default: 100 })
   tokenBalance: number;

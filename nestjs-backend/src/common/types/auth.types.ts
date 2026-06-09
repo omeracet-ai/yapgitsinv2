@@ -16,6 +16,9 @@ export interface AuthUser {
   id: string;
   email: string;
   role: string;
+  // Phase 489 (Faz J/2) — RBAC sub-role for admins. Null/undefined → legacy
+  // super_admin treatment. Only meaningful when role === 'admin'.
+  adminRole?: string | null;
   tenantId?: string | null;
   city?: string;
 }

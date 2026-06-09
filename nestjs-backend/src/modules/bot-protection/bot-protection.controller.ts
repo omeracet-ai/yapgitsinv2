@@ -13,6 +13,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { AdminGuard } from '../../common/guards/admin.guard';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import type { AuthUser } from '../../common/types/auth.types';
 import { BotProtectionService } from './bot-protection.service';
 
@@ -22,6 +23,7 @@ import { BotProtectionService } from './bot-protection.service';
 @ApiTags('admin')
 @Controller('admin/blocked-ips')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('blocked-ips')
 export class BotProtectionController {
   constructor(private bots: BotProtectionService) {}
 

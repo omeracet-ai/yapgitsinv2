@@ -11,6 +11,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { DisputesService } from './disputes.service';
 import type { ResolveDisputeDto } from './disputes.service';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 
 interface JwtRequest {
   user: { sub: string; userId?: string; role?: string };
@@ -28,6 +29,7 @@ function ensureAdmin(req: JwtRequest): void {
 
 @Controller('admin/disputes')
 @UseGuards(AuthGuard('jwt'))
+@RequirePermission('disputes')
 export class AdminDisputesController {
   constructor(private readonly svc: DisputesService) {}
 

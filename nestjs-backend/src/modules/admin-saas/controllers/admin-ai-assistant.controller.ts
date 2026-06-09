@@ -12,6 +12,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { AdminAiAssistantService } from '../services/admin-ai-assistant.service';
 import type { AuthUser } from '../../../common/types/auth.types';
 
@@ -21,6 +22,7 @@ import type { AuthUser } from '../../../common/types/auth.types';
  */
 @Controller('admin/ai-assistant')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('ai-assistant')
 export class AdminAiAssistantController {
   constructor(private readonly svc: AdminAiAssistantService) {}
 

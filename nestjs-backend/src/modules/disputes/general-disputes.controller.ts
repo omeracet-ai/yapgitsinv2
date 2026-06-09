@@ -18,6 +18,7 @@ import type {
 } from './general-disputes.service';
 import { GeneralDisputeStatus } from './dispute.entity';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 
 interface JwtRequest {
   user: { sub?: string; userId?: string; id?: string; role?: string };
@@ -49,6 +50,7 @@ export class GeneralDisputesController {
 
 @Controller('admin/disputes')
 @UseGuards(AuthGuard('jwt'))
+@RequirePermission('disputes')
 export class AdminGeneralDisputesController {
   constructor(
     private readonly svc: GeneralDisputesService,

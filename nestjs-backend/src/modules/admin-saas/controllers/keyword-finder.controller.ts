@@ -11,6 +11,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { GscService } from '../services/gsc.service';
 import { GeminiClient } from '../../ai/gemini.client';
 import { BlogDraft } from '../entities/blog-draft.entity';
@@ -34,6 +35,7 @@ function slugify(input: string): string {
  */
 @Controller('admin/seo-keywords')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('seo-keywords')
 export class KeywordFinderController {
   constructor(
     private readonly gsc: GscService,

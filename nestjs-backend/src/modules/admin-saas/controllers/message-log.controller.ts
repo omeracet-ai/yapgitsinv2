@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { MessageLogService } from '../services/message-log.service';
 
 /**
@@ -8,6 +9,7 @@ import { MessageLogService } from '../services/message-log.service';
  */
 @Controller('admin/messages')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('messages')
 export class MessageLogController {
   constructor(private readonly svc: MessageLogService) {}
 

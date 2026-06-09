@@ -1,6 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 
 /**
  * M9 — Cron Hub.
@@ -121,6 +122,7 @@ const CRON_CATALOG: CronJobInfo[] = [
 
 @Controller('admin/cron-hub')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('cron-hub')
 export class CronHubController {
   @Get()
   list(): { items: CronJobInfo[]; total: number; categories: string[] } {

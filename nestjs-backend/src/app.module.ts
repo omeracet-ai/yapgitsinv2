@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { UserOrIpThrottlerGuard } from './common/guards/user-or-ip.throttler.guard';
+import { PermissionGuard } from './common/guards/permission.guard';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CacheModule } from '@nestjs/cache-manager';
 import { cacheConfigAsync } from './common/cache/cache.config';
@@ -381,6 +382,9 @@ import { AppScreen } from './modules/app-config/entities/app-screen.entity';
   providers: [
     AppService,
     { provide: APP_GUARD, useClass: UserOrIpThrottlerGuard },
+    // Phase 489 (Faz J/2) — RBAC enforcement. Allow-list by default: only
+    // handlers/controllers annotated with @RequirePermission are gated.
+    { provide: APP_GUARD, useClass: PermissionGuard },
   ],
 })
 export class AppModule {}

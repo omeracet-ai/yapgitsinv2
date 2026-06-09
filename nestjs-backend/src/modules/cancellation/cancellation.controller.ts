@@ -11,9 +11,12 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { CancellationService } from './cancellation.service';
 import type { CreatePolicyDto, UpdatePolicyDto } from './cancellation.service';
+import { AdminGuard } from '../../common/guards/admin.guard';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 
 @Controller('admin/cancellation-policies')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('system-settings')
 export class CancellationController {
   constructor(private readonly svc: CancellationService) {}
 

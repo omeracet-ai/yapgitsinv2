@@ -15,6 +15,7 @@ import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 import { SkipThrottle } from '@nestjs/throttler';
 import { AdminGuard } from '../../common/guards/admin.guard';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import type { AuthUser } from '../../common/types/auth.types';
 import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { AppConfigService } from './app-config.service';
@@ -34,6 +35,7 @@ import { CreateScreenDto, UpdateScreenDto } from './dto/upsert-screen.dto';
 })
 @Controller('admin/app-config')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('apk-builder')
 export class AppConfigAdminController {
   constructor(
     private readonly service: AppConfigService,

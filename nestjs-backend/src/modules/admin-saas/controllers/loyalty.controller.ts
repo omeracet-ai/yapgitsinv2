@@ -11,6 +11,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { LoyaltyAdminService } from '../services/loyalty.service';
 import type { AuthUser } from '../../../common/types/auth.types';
 
@@ -27,6 +28,7 @@ interface GrantBody {
  */
 @Controller('admin/loyalty')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('loyalty')
 export class LoyaltyController {
   constructor(private readonly svc: LoyaltyAdminService) {}
 

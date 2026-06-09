@@ -8,6 +8,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { SkipThrottle } from '@nestjs/throttler';
 import { AdminGuard } from '../../common/guards/admin.guard';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import { Audit } from '../admin-audit/audit.decorator';
 import { AuditInterceptor } from '../admin-audit/audit.interceptor';
 import { MaintenanceService } from './maintenance.service';
@@ -16,6 +17,7 @@ import { MaintenanceService } from './maintenance.service';
 @Controller('admin/maintenance')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
 @UseInterceptors(AuditInterceptor)
+@RequirePermission('system-settings')
 export class MaintenanceController {
   constructor(private readonly maintenance: MaintenanceService) {}
 

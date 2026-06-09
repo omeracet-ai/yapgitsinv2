@@ -1,6 +1,7 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { GscService } from '../services/gsc.service';
 
 /**
@@ -8,6 +9,7 @@ import { GscService } from '../services/gsc.service';
  */
 @Controller('admin/seo-gsc')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('seo-gsc')
 export class GscController {
   constructor(private readonly svc: GscService) {}
 

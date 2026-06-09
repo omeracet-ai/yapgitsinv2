@@ -1,6 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { QualityCheckService, QualityCheckResult } from '../services/quality-check.service';
 
 /**
@@ -8,6 +9,7 @@ import { QualityCheckService, QualityCheckResult } from '../services/quality-che
  */
 @Controller('admin/quality-check')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('quality-check')
 export class QualityCheckController {
   constructor(private readonly svc: QualityCheckService) {}
 

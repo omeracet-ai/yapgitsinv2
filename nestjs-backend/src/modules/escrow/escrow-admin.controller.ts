@@ -23,6 +23,7 @@ import {
 import { EscrowService } from './escrow.service';
 import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 
 class AdminResolveDto {
   @IsIn(['release', 'refund', 'split']) action!: 'release' | 'refund' | 'split';
@@ -64,6 +65,7 @@ class EscrowSettingDto {
  */
 @Controller('admin/escrow')
 @UseGuards(AuthGuard('jwt'))
+@RequirePermission('escrow-settings')
 export class EscrowAdminController {
   constructor(
     private readonly svc: EscrowService,

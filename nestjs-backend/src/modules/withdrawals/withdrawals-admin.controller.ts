@@ -10,12 +10,14 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../../common/guards/admin.guard';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import { WithdrawalsService } from './withdrawals.service';
 import { UpdateWithdrawalStatusDto } from './dto/update-status.dto';
 import { WithdrawalStatus } from './withdrawal-request.entity';
 
 @Controller('admin/withdrawals')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('revenue')
 export class WithdrawalsAdminController {
   constructor(private readonly service: WithdrawalsService) {}
 

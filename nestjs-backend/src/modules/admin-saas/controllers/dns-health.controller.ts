@@ -1,6 +1,7 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { DnsHealthService } from '../services/dns-health.service';
 
 const DEFAULT_DOMAIN = 'yapgitsin.tr';
@@ -10,6 +11,7 @@ const DEFAULT_DOMAIN = 'yapgitsin.tr';
  */
 @Controller('admin/dns-health')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
+@RequirePermission('dns-health')
 export class DnsHealthController {
   constructor(private readonly svc: DnsHealthService) {}
 
