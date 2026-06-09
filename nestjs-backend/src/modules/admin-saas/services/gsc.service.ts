@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { GscCache } from '../entities/gsc-cache.entity';
+import * as fs from 'fs';
 
 export interface GscRow {
   keys: string[];
@@ -23,10 +24,43 @@ export interface GscReport {
   trend: Array<{ date: string; clicks: number; impressions: number }>;
 }
 
+// Lazy import — package may be absent in dev/CI when GSC_OAUTH_ENABLED=false.
+// Typed as `any` so the type-checker doesn't require @types/googleapis at compile.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type GoogleApisModule = any;
+
+interface ServiceAccountCreds {
+  client_email: string;
+  private_key: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Phase 489 (Faz J/3) — Google Search Console live data.
+ *
+ * Two paths:
+ *  - GSC_OAUTH_ENABLED !== 'true'           → mock report (legacy behaviour).
+ *  - GSC_OAUTH_ENABLED === 'true' + creds   → live Search Analytics API call,
+ *    authenticated via service account (JSON content or file path in env).
+ *
+ * Required env when enabled:
+ *   GSC_SERVICE_ACCOUNT_JSON   — full JSON content OR absolute path to .json
+ *   GSC_SITE_URL               — exact GSC property (e.g. 'sc-domain:yapgitsin.tr'
+ *                                or 'https://yapgitsin.tr/')
+ *
+ * If enabled but creds are missing/invalid, falls back to mock and logs a warning
+ * (graceful degradation — does NOT throw at boot or per-request).
+ *
+ * Token caching: googleapis JWT client refreshes its own access token (~1h TTL).
+ * On top of that we cache the rendered GscReport in the gsc_cache table for 1h
+ * to bound quota usage even under heavy admin polling.
+ */
 @Injectable()
 export class GscService {
   private readonly logger = new Logger(GscService.name);
   private readonly TTL_MS = 60 * 60 * 1000;
+  private googleapis: GoogleApisModule | null = null;
+  private googleapisLoadFailed = false;
 
   constructor(
     private readonly config: ConfigService,
@@ -47,14 +81,19 @@ export class GscService {
 
     let payload: GscReport;
     if (this.isEnabled()) {
-      // Live GSC fetch not yet implemented — fall back to mock with warning.
-      this.logger.warn('GSC_OAUTH_ENABLED=true but live fetch not implemented yet — returning mock');
-      payload = this.mockReport(days);
+      try {
+        const live = await this.fetchLive(days);
+        payload = live ?? this.mockReport(days);
+      } catch (err) {
+        this.logger.warn(
+          `GSC live fetch failed, falling back to mock: ${(err as Error).message}`,
+        );
+        payload = this.mockReport(days);
+      }
     } else {
       payload = this.mockReport(days);
     }
 
-    // Upsert cache
     if (cached) {
       cached.payload = payload as unknown as Record<string, unknown>;
       cached.expiresAt = new Date(Date.now() + this.TTL_MS);
@@ -74,6 +113,157 @@ export class GscService {
   async quickWins(): Promise<GscRow[]> {
     const r = await this.report(90);
     return r.quickWins;
+  }
+
+  /** Loads googleapis lazily so the package is only required when enabled. */
+  private getGoogleApis(): GoogleApisModule | null {
+    if (this.googleapis) return this.googleapis;
+    if (this.googleapisLoadFailed) return null;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      this.googleapis = require('googleapis') as GoogleApisModule;
+      return this.googleapis;
+    } catch (err) {
+      this.googleapisLoadFailed = true;
+      this.logger.warn(
+        `googleapis package not installed — GSC live mode unavailable: ${(err as Error).message}`,
+      );
+      return null;
+    }
+  }
+
+  private loadServiceAccount(): ServiceAccountCreds | null {
+    const raw = this.config.get<string>('GSC_SERVICE_ACCOUNT_JSON');
+    if (!raw) {
+      this.logger.warn('GSC_SERVICE_ACCOUNT_JSON not set');
+      return null;
+    }
+    let jsonStr = raw.trim();
+    try {
+      if (jsonStr.startsWith('{')) {
+        // inline JSON
+      } else if (fs.existsSync(jsonStr)) {
+        // file path
+        jsonStr = fs.readFileSync(jsonStr, 'utf8');
+      } else {
+        // try base64
+        jsonStr = Buffer.from(jsonStr, 'base64').toString('utf8');
+      }
+      const parsed = JSON.parse(jsonStr) as ServiceAccountCreds;
+      if (!parsed.client_email || !parsed.private_key) {
+        this.logger.warn(
+          'GSC_SERVICE_ACCOUNT_JSON missing client_email or private_key',
+        );
+        return null;
+      }
+      return parsed;
+    } catch (err) {
+      this.logger.warn(
+        `Failed to parse GSC_SERVICE_ACCOUNT_JSON: ${(err as Error).message}`,
+      );
+      return null;
+    }
+  }
+
+  /** Returns null on any failure → caller falls back to mock. */
+  private async fetchLive(days: number): Promise<GscReport | null> {
+    const googleapis = this.getGoogleApis();
+    if (!googleapis) return null;
+    const creds = this.loadServiceAccount();
+    if (!creds) return null;
+    const siteUrl = this.config.get<string>('GSC_SITE_URL');
+    if (!siteUrl) {
+      this.logger.warn('GSC_SITE_URL not set');
+      return null;
+    }
+
+    const { google } = googleapis;
+    const auth = new google.auth.JWT({
+      email: creds.client_email,
+      key: creds.private_key,
+      scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
+    });
+    const searchconsole = google.searchconsole({ version: 'v1', auth });
+
+    const endDate = new Date();
+    const startDate = new Date(endDate.getTime() - (days - 1) * 86_400_000);
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+
+    type ApiRow = {
+      keys?: string[];
+      clicks?: number;
+      impressions?: number;
+      ctr?: number;
+      position?: number;
+    };
+    const normalize = (rows: ApiRow[] | undefined): GscRow[] =>
+      (rows ?? []).map((r) => ({
+        keys: r.keys ?? [],
+        clicks: r.clicks ?? 0,
+        impressions: r.impressions ?? 0,
+        ctr: r.ctr ?? 0,
+        position: r.position ?? 0,
+      }));
+
+    const queryReq = async (dimensions: string[], rowLimit = 20) => {
+      const res = await searchconsole.searchanalytics.query({
+        siteUrl,
+        requestBody: {
+          startDate: fmt(startDate),
+          endDate: fmt(endDate),
+          dimensions,
+          rowLimit,
+        },
+      });
+      return normalize(res.data.rows as ApiRow[] | undefined);
+    };
+
+    const [topQueries, topPages, trendRows] = await Promise.all([
+      queryReq(['query'], 20),
+      queryReq(['page'], 20),
+      queryReq(['date'], 365),
+    ]);
+
+    // Quick wins: positions 11-20, decent impressions, low clicks.
+    const quickWins = topQueries
+      .filter((r) => r.position >= 11 && r.position <= 20 && r.impressions >= 100)
+      .sort((a, b) => b.impressions - a.impressions)
+      .slice(0, 5);
+    const falling = topQueries
+      .filter((r) => r.position > 15 && r.clicks < 10)
+      .slice(0, 5);
+
+    const trend = trendRows
+      .map((r) => ({
+        date: r.keys[0] ?? '',
+        clicks: r.clicks,
+        impressions: r.impressions,
+      }))
+      .filter((t) => t.date);
+
+    const totals = {
+      clicks: trend.reduce((a, b) => a + b.clicks, 0),
+      impressions: trend.reduce((a, b) => a + b.impressions, 0),
+      avgCtr:
+        topQueries.length > 0
+          ? topQueries.reduce((a, b) => a + b.ctr, 0) / topQueries.length
+          : 0,
+      avgPosition:
+        topQueries.length > 0
+          ? topQueries.reduce((a, b) => a + b.position, 0) / topQueries.length
+          : 0,
+    };
+
+    return {
+      source: 'live',
+      days,
+      totals,
+      topQueries,
+      topPages,
+      quickWins,
+      falling,
+      trend,
+    };
   }
 
   private mockReport(days: number): GscReport {
