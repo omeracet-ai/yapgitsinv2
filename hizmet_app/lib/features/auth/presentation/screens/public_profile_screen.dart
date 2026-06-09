@@ -16,7 +16,6 @@ import '../../widgets/intro_video_section.dart';
 import '../../widgets/availability_editor_sheet.dart';
 import '../../widgets/review_summary_card.dart';
 import '../../../users/widgets/badge_row.dart';
-import '../../../users/widgets/worker_documents_card.dart';
 import 'package:go_router/go_router.dart';
 
 final publicProfileProvider =
@@ -392,6 +391,9 @@ class _ProfileView extends ConsumerWidget {
                     rating: rating,
                     successWorker: successWorker,
                     totalWorker: totalWorker,
+                    categories: workerCats,
+                    bio: bio,
+                    reviewList: reviewList,
                     badges: _hasVisibleBadges(badges)
                         ? (badges as List)
                         : const <dynamic>[],
@@ -399,23 +401,9 @@ class _ProfileView extends ConsumerWidget {
                   const SizedBox(height: 8),
                 ],
 
-                // Phase 419 — "Belge ile Doğrulanmış N Kategori" bölümü
-                // kaldırıldı (kullanıcı isteği): WorkerDocumentsCard zaten
-                // belge görseli + kategorileri listeliyor, tekrar görsel
-                // gürültü yaratıyordu.
-
-                // ── Ustalık belgeleri (varsa "Usta" title + belge kartı) ──
-                WorkerDocumentsCard(
-                  documents: ((data['workerDocuments'] as List?) ?? const [])
-                      .whereType<Map>()
-                      .map((m) => Map<String, dynamic>.from(m))
-                      .toList(),
-                  isSelf: isSelf,
-                ),
-
-                // Phase 422 — Chip-list 'Hizmet Kategorileri' kaldırıldı
-                // (kullanıcı isteği). Dropdown tabanlı tek liste kaldı
-                // ("Bu Ustaya Teklif Ver" CTA → PostJob form'unda).
+                // Phase 473 — "Belge ile Doğrulanmış" WorkerDocumentsCard
+                // bölümü kaldırıldı. Kategoriler + açıklama artık
+                // Performans Paneli → "Verdiği hizmet" detay sheet'inde.
 
                 // Phase 315 — "Bu Ustaya Teklif Ver" CTA artık scroll
                 // gövdesinin dışında, Scaffold.bottomNavigationBar slot'unda
@@ -1003,19 +991,25 @@ class _PresenceSignalState extends ConsumerState<_PresenceSignal>
 }
 
 /// Phase 470 — Rozetler bölümü artık collapsible (chevron toggle).
-/// Default açık (kullanıcı içeriği görmek istemediğinde kapatır).
+/// Phase 473 — Default KAPALI (kullanıcı isteği). Tap ile aç.
 /// Çocuk: mini stat pill'leri (tap'lı) + rozet listesi (varsa).
 class _RozetlerSection extends StatefulWidget {
   final int reviews;
   final double rating;
   final int successWorker;
   final int totalWorker;
+  final List<String> categories;
+  final String? bio;
+  final List<Map<String, dynamic>> reviewList;
   final List badges;
   const _RozetlerSection({
     required this.reviews,
     required this.rating,
     required this.successWorker,
     required this.totalWorker,
+    required this.categories,
+    required this.bio,
+    required this.reviewList,
     required this.badges,
   });
 
@@ -1025,7 +1019,7 @@ class _RozetlerSection extends StatefulWidget {
 
 class _RozetlerSectionState extends State<_RozetlerSection>
     with SingleTickerProviderStateMixin {
-  bool _open = true;
+  bool _open = false; // Phase 473 — default kapalı
 
   @override
   Widget build(BuildContext context) {
@@ -1078,6 +1072,9 @@ class _RozetlerSectionState extends State<_RozetlerSection>
                     rating: widget.rating,
                     successWorker: widget.successWorker,
                     totalWorker: widget.totalWorker,
+                    categories: widget.categories,
+                    bio: widget.bio,
+                    reviewList: widget.reviewList,
                   ),
                   if (widget.badges.isNotEmpty) ...[
                     const SizedBox(height: 12),
@@ -1097,18 +1094,24 @@ class _RozetlerSectionState extends State<_RozetlerSection>
   }
 }
 
-/// Phase 469+470 — Rozetler içi mini metrik şeridi (tap'lı pill).
-/// Aldığı yorum · Başarı oranı (/10) · Verdiği hizmet sayısı.
+/// Phase 469+470+473 — Rozetler içi mini metrik şeridi (tap'lı pill).
+/// Aldığı yorum · Başarı oranı (/10) · Verdiği hizmet (kategori sayısı).
 class _BadgesMiniStats extends StatelessWidget {
   final int reviews;
   final double rating;
   final int successWorker;
   final int totalWorker;
+  final List<String> categories;
+  final String? bio;
+  final List<Map<String, dynamic>> reviewList;
   const _BadgesMiniStats({
     required this.reviews,
     required this.rating,
     required this.successWorker,
     required this.totalWorker,
+    required this.categories,
+    required this.bio,
+    required this.reviewList,
   });
 
   @override
@@ -1119,6 +1122,7 @@ class _BadgesMiniStats extends StatelessWidget {
     final ratio10Str = totalWorker > 0
         ? ratio10.toStringAsFixed(1)
         : '—';
+    final catCount = categories.length;
     return Row(
       children: [
         Expanded(
@@ -1135,6 +1139,9 @@ class _BadgesMiniStats extends StatelessWidget {
               rating: rating,
               successWorker: successWorker,
               totalWorker: totalWorker,
+              categories: categories,
+              bio: bio,
+              reviewList: reviewList,
             ),
           ),
         ),
@@ -1153,6 +1160,9 @@ class _BadgesMiniStats extends StatelessWidget {
               rating: rating,
               successWorker: successWorker,
               totalWorker: totalWorker,
+              categories: categories,
+              bio: bio,
+              reviewList: reviewList,
             ),
           ),
         ),
@@ -1161,7 +1171,8 @@ class _BadgesMiniStats extends StatelessWidget {
           child: _statPill(
             context,
             icon: Icons.handyman_outlined,
-            value: totalWorker > 0 ? '$totalWorker' : '—',
+            // Phase 473 — Verdiği hizmet artık eklediği kategori sayısı.
+            value: catCount > 0 ? '$catCount' : '—',
             label: 'Verdiği hizmet',
             color: AppColors.success,
             onTap: () => _StatDetailSheet.show(
@@ -1171,6 +1182,9 @@ class _BadgesMiniStats extends StatelessWidget {
               rating: rating,
               successWorker: successWorker,
               totalWorker: totalWorker,
+              categories: categories,
+              bio: bio,
+              reviewList: reviewList,
             ),
           ),
         ),
@@ -1254,10 +1268,14 @@ class _StatDetailSheet {
     required double rating,
     required int successWorker,
     required int totalWorker,
+    required List<String> categories,
+    required String? bio,
+    required List<Map<String, dynamic>> reviewList,
   }) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -1267,6 +1285,9 @@ class _StatDetailSheet {
         rating: rating,
         successWorker: successWorker,
         totalWorker: totalWorker,
+        categories: categories,
+        bio: bio,
+        reviewList: reviewList,
       ),
     );
   }
@@ -1278,12 +1299,18 @@ class _StatDetailContent extends StatelessWidget {
   final double rating;
   final int successWorker;
   final int totalWorker;
+  final List<String> categories;
+  final String? bio;
+  final List<Map<String, dynamic>> reviewList;
   const _StatDetailContent({
     required this.kind,
     required this.reviews,
     required this.rating,
     required this.successWorker,
     required this.totalWorker,
+    required this.categories,
+    required this.bio,
+    required this.reviewList,
   });
 
   @override
@@ -1298,9 +1325,8 @@ class _StatDetailContent extends StatelessWidget {
     }
   }
 
-  // ── Reviews ────────────────────────────────────────────────────────────
+  // ── Reviews — Phase 473: horizontal slider ─────────────────────────────
   Widget _reviewsBody(BuildContext context) {
-    final ratingPct = (rating / 5.0).clamp(0.0, 1.0);
     String bench;
     Color benchColor;
     if (rating >= 4.5) {
@@ -1316,26 +1342,22 @@ class _StatDetailContent extends StatelessWidget {
       bench = 'Geliştirmeli';
       benchColor = AppColors.error;
     } else {
-      bench = 'Henüz değerlendirme yok';
+      bench = 'Henüz yok';
       benchColor = AppColors.textSecondary;
     }
-    return _shell(
+    return _shellSlider(
       icon: Icons.rate_review_outlined,
       accent: Colors.amber,
-      title: 'Aldığı Yorum',
-      bigValue: reviews > 0 ? '$reviews' : '—',
-      bigCaption: reviews > 0 ? 'toplam yorum' : 'henüz yok',
-      progressLabel:
-          rating > 0 ? 'Ortalama puan ${rating.toStringAsFixed(1)}/5.0' : null,
-      progress: rating > 0 ? ratingPct : null,
-      progressColor: Colors.amber,
+      title: 'Aldığı Yorumlar',
+      headerValue: reviews > 0 ? '$reviews' : '—',
+      headerSubtitle: rating > 0
+          ? '⭐ ${rating.toStringAsFixed(1)}/5.0 · $reviews yorum'
+          : 'Henüz değerlendirme yok',
       bench: bench,
       benchColor: benchColor,
-      explanation:
-          'Bu metrik, hizmet alanların bu kullanıcıya bıraktığı toplam yorum sayısını '
-          'gösterir. Daha fazla yorum, daha güvenilir geçmiş demektir. '
-          'Ortalama puan 4.5 ve üzeri Türkiye genelinde "Mükemmel" '
-          'sınıfındadır.',
+      slider: reviewList.isEmpty
+          ? _emptyState('Henüz yorum yok.', Icons.rate_review_outlined)
+          : _ReviewsSlider(items: reviewList),
     );
   }
 
@@ -1381,40 +1403,125 @@ class _StatDetailContent extends StatelessWidget {
     );
   }
 
-  // ── Total services ─────────────────────────────────────────────────────
+  // ── Services — Phase 473: kategori chip'leri + bio (sıkıştırılmış) ─────
   Widget _servicesBody(BuildContext context) {
+    final count = categories.length;
     String bench;
     Color benchColor;
-    if (totalWorker == 0) {
-      bench = 'Yeni';
+    if (count == 0) {
+      bench = 'Henüz yok';
       benchColor = AppColors.textSecondary;
-    } else if (totalWorker >= 50) {
-      bench = 'Tecrübeli';
+    } else if (count >= 5) {
+      bench = 'Çok yönlü';
       benchColor = AppColors.success;
-    } else if (totalWorker >= 15) {
-      bench = 'Aktif';
+    } else if (count >= 3) {
+      bench = 'Geniş';
       benchColor = AppColors.primary;
     } else {
-      bench = 'Başlangıç';
+      bench = 'Odaklı';
       benchColor = Colors.orange;
     }
-    final tierProgress = (totalWorker / 50.0).clamp(0.0, 1.0);
-    return _shell(
+    final hasBio = bio != null && bio!.trim().isNotEmpty;
+    return _shellSlider(
       icon: Icons.handyman_outlined,
       accent: AppColors.success,
-      title: 'Verdiği Hizmet',
-      bigValue: totalWorker > 0 ? '$totalWorker' : '—',
-      bigCaption: totalWorker > 0 ? 'toplam iş' : 'henüz iş yok',
-      progressLabel:
-          totalWorker > 0 ? 'Tecrübeli (50+) eşiğine ilerleme' : null,
-      progress: totalWorker > 0 ? tierProgress : null,
-      progressColor: AppColors.success,
+      title: 'Verdiği Hizmetler',
+      headerValue: count > 0 ? '$count' : '—',
+      headerSubtitle: count > 0
+          ? '$count hizmet kategorisi'
+          : 'Henüz kategori eklenmemiş',
       bench: bench,
       benchColor: benchColor,
-      explanation:
-          'Hizmet verenin platform üzerinde aldığı toplam iş sayısı (tamamlanan + '
-          'iptal + devam eden). 15+ aktif, 50+ tecrübeli olarak sınıflanır. '
-          'Yüksek sayı, geniş portföy ve deneyim demektir.',
+      slider: count == 0 && !hasBio
+          ? _emptyState('Henüz hizmet eklenmemiş.', Icons.handyman_outlined)
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (count > 0) ...[
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: categories
+                        .map((c) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.success.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                    color: AppColors.success
+                                        .withValues(alpha: 0.35),
+                                    width: 1),
+                              ),
+                              child: Text(c,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.success,
+                                  )),
+                            ))
+                        .toList(),
+                  ),
+                ],
+                if (hasBio) ...[
+                  if (count > 0) const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border, width: 1),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Icon(Icons.info_outline,
+                              size: 13, color: AppColors.textSecondary),
+                          const SizedBox(width: 5),
+                          Text('Açıklama',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textSecondary,
+                                  letterSpacing: 0.2)),
+                        ]),
+                        const SizedBox(height: 6),
+                        Text(bio!.trim(),
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              height: 1.45,
+                              color: AppColors.textPrimary,
+                            )),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+    );
+  }
+
+  Widget _emptyState(String message, IconData icon) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 28, color: AppColors.textSecondary),
+          const SizedBox(height: 8),
+          Text(message,
+              style: TextStyle(
+                  fontSize: 12, color: AppColors.textSecondary)),
+        ],
+      ),
     );
   }
 
@@ -1556,5 +1663,251 @@ class _StatDetailContent extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Phase 473 — Yeni shell: header (icon+title+bench) + sayı + alt başlık
+  /// + slider body (kategoriler / yorum kartları). Açıklama bloğu yok —
+  /// içerik kendi başına anlatıcı.
+  Widget _shellSlider({
+    required IconData icon,
+    required Color accent,
+    required String title,
+    required String headerValue,
+    required String headerSubtitle,
+    required String bench,
+    required Color benchColor,
+    required Widget slider,
+  }) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, color: accent, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(title,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                            )),
+                        const SizedBox(height: 2),
+                        Text(headerSubtitle,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: benchColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                          color: benchColor.withValues(alpha: 0.4), width: 1),
+                    ),
+                    child: Text(bench,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: benchColor,
+                        )),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              slider,
+              const SizedBox(height: 4),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Phase 473 — Aldığı Yorumlar sheet'i için yatay swipe slider.
+/// Her kart: yıldız satırı + reviewer adı + yorum metni + tarih.
+/// PageView snap (clip) + alt dot indicator.
+class _ReviewsSlider extends StatefulWidget {
+  final List<Map<String, dynamic>> items;
+  const _ReviewsSlider({required this.items});
+
+  @override
+  State<_ReviewsSlider> createState() => _ReviewsSliderState();
+}
+
+class _ReviewsSliderState extends State<_ReviewsSlider> {
+  final PageController _ctrl = PageController(viewportFraction: 0.94);
+  int _index = 0;
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = widget.items;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 180,
+          child: PageView.builder(
+            controller: _ctrl,
+            itemCount: items.length,
+            onPageChanged: (i) => setState(() => _index = i),
+            itemBuilder: (_, i) {
+              final r = items[i];
+              final stars = (r['rating'] as num?)?.toInt() ?? 0;
+              final comment = (r['comment'] as String?) ?? '';
+              final reviewer = r['reviewer'] is Map
+                  ? Map<String, dynamic>.from(r['reviewer'] as Map)
+                  : <String, dynamic>{};
+              final reviewerName =
+                  (reviewer['fullName'] as String?) ?? 'Anonim';
+              final created = r['createdAt'] as String?;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border, width: 1),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: List.generate(5, (s) {
+                          final filled = s < stars;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 2),
+                            child: Icon(
+                              filled ? Icons.star_rounded
+                                     : Icons.star_outline_rounded,
+                              size: 16,
+                              color: filled
+                                  ? Colors.amber
+                                  : AppColors.textSecondary
+                                      .withValues(alpha: 0.4),
+                            ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(reviewerName,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          )),
+                      if (created != null) ...[
+                        const SizedBox(height: 2),
+                        Text(_formatDate(created),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: AppColors.textSecondary,
+                            )),
+                      ],
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Text(
+                            comment.isNotEmpty
+                                ? comment
+                                : 'Yorum metni yok.',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              height: 1.45,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(items.length, (i) {
+            final active = i == _index;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: active ? 18 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: active
+                    ? Colors.amber
+                    : AppColors.textSecondary.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Kaydırarak gez',
+          style: TextStyle(
+            fontSize: 10,
+            color: AppColors.textSecondary.withValues(alpha: 0.7),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(String iso) {
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      const months = ['', 'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
+                      'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+      return '${dt.day} ${months[dt.month]} ${dt.year}';
+    } catch (_) {
+      return '';
+    }
   }
 }
