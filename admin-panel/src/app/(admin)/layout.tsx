@@ -30,6 +30,15 @@ import {
   Menu as MenuIcon,
   Palette,
   IdCard,
+  Sparkles,
+  AlertTriangle,
+  Globe,
+  MessageCircle,
+  Award,
+  Clock,
+  Search,
+  Layers,
+  KeyRound,
   type LucideIcon,
 } from "lucide-react";
 import { api, refreshAdminToken, type AdminUser } from "@/lib/api";
@@ -96,9 +105,30 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    title: "AI Araçları",
+    items: [
+      { href: "/ai-assistant", label: "AI Asistan", icon: Sparkles },
+      { href: "/quality-check", label: "Kalite Kontrol", icon: AlertTriangle },
+    ],
+  },
+  {
+    title: "SEO Araçları",
+    items: [
+      { href: "/seo-gsc", label: "GSC Dashboard", icon: BarChart3 },
+      { href: "/seo-keywords", label: "Keyword Finder", icon: Search },
+      { href: "/seo-pillars", label: "Pillar Sayfaları", icon: Layers },
+      { href: "/seo-404", label: "404 İzleme", icon: AlertTriangle },
+    ],
+  },
+  {
     title: "Sistem",
     items: [
       { href: "/status", label: "Sistem Durumu", icon: Activity },
+      { href: "/cron-hub", label: "Cron Hub", icon: Clock },
+      { href: "/dns-health", label: "DNS Sağlığı", icon: Globe },
+      { href: "/messages", label: "Mesaj Logu", icon: MessageCircle },
+      { href: "/loyalty", label: "Sadakat", icon: Award },
+      { href: "/rbac", label: "Yetki Matrisi", icon: KeyRound },
       { href: "/escrow-settings", label: "Escrow Ayarları", icon: Lock },
       { href: "/harita", label: "Harita Yönetimi", icon: MapIcon },
       { href: "/ayarlar", label: "Ayarlar", icon: Settings },

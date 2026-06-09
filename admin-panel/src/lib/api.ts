@@ -826,6 +826,334 @@ export const api = {
     }),
   unblockIp: (id: string) =>
     request<{ ok: boolean }>(`/admin/blocked-ips/${id}`, { method: 'DELETE' }),
+
+  // ─── SaaS (Faz G+H+I) ────────────────────────────────────────────────
+
+  // M1 — AI Operations Assistant
+  saasAiModes: () =>
+    request<{ modes: Array<{ key: string; label: string; description: string }> }>(
+      '/admin/ai-assistant/modes',
+    ),
+  saasAiChat: (body: { sessionId?: string; mode?: string; message: string }) =>
+    request<{ sessionId: string; mode: string; reply: string; truncated: boolean }>(
+      '/admin/ai-assistant/chat',
+      { method: 'POST', body: JSON.stringify(body) },
+    ),
+  saasAiSessions: (limit = 30) =>
+    request<
+      Array<{
+        sessionId: string;
+        mode: string;
+        lastMessageAt: string;
+        messageCount: number;
+        preview: string;
+      }>
+    >(`/admin/ai-assistant/sessions?limit=${limit}`),
+  saasAiSession: (sessionId: string) =>
+    request<
+      Array<{
+        id: string;
+        sessionId: string;
+        role: 'user' | 'assistant';
+        content: string;
+        mode: string;
+        createdAt: string;
+      }>
+    >(`/admin/ai-assistant/sessions/${sessionId}`),
+  saasAiDeleteSession: (sessionId: string) =>
+    request<{ deleted: number }>(`/admin/ai-assistant/sessions/${sessionId}`, {
+      method: 'DELETE',
+    }),
+
+  // M6 — Quality Check
+  saasQualityCheck: () =>
+    request<{
+      generatedAt: string;
+      totalIssues: number;
+      bySeverity: { high: number; medium: number; low: number };
+      score: number;
+      issues: Array<{
+        type: string;
+        severity: 'high' | 'medium' | 'low';
+        title: string;
+        description: string;
+        count: number;
+        sampleIds?: string[];
+        fixHint?: string;
+      }>;
+    }>('/admin/quality-check'),
+
+  // M9 — Cron Hub
+  saasCronHub: () =>
+    request<{
+      items: Array<{
+        name: string;
+        description: string;
+        schedule: string;
+        schedulePretty: string;
+        module: string;
+        category: string;
+        internal: boolean;
+      }>;
+      total: number;
+      categories: string[];
+    }>('/admin/cron-hub'),
+
+  // M2 — 404 Monitor + Redirects
+  saasNotFoundList: (limit = 100) =>
+    request<{
+      items: Array<{
+        id: string;
+        url: string;
+        hitCount: number;
+        referrer: string | null;
+        createdAt: string;
+        lastSeenAt: string;
+      }>;
+      total: number;
+      last24h: number;
+    }>(`/admin/seo-404?limit=${limit}`),
+  saasNotFoundDelete: (id: string) =>
+    request<{ ok: boolean }>(`/admin/seo-404/${id}`, { method: 'DELETE' }),
+  saasRedirectsList: () =>
+    request<{
+      items: Array<{
+        id: string;
+        src: string;
+        dst: string;
+        status: 301 | 302;
+        hits: number;
+        enabled: boolean;
+        createdAt: string;
+      }>;
+      total: number;
+    }>('/admin/redirects'),
+  saasRedirectCreate: (body: { src: string; dst: string; status?: 301 | 302 }) =>
+    request<{ id: string; src: string; dst: string; status: number }>(
+      '/admin/redirects',
+      { method: 'POST', body: JSON.stringify(body) },
+    ),
+  saasRedirectDelete: (id: string) =>
+    request<{ ok: boolean }>(`/admin/redirects/${id}`, { method: 'DELETE' }),
+
+  // M7 — DNS Health
+  saasDnsHealth: (domain = 'yapgitsin.tr') =>
+    request<{
+      domain: string;
+      generatedAt: string;
+      durationMs: number;
+      score: number;
+      checks: Array<{
+        type: string;
+        status: 'ok' | 'missing' | 'warn' | 'error';
+        records: string[];
+        message?: string;
+      }>;
+    }>(`/admin/dns-health?domain=${encodeURIComponent(domain)}`),
+
+  // M8 — Message Log
+  saasMessagesStats: () =>
+    request<{
+      total: number;
+      sent: number;
+      failed: number;
+      last24h: number;
+      byChannel: Array<{ channel: string; count: number }>;
+    }>('/admin/messages/stats'),
+  saasMessagesList: (params: {
+    channel?: 'email' | 'fcm' | 'sms' | 'wa';
+    status?: 'pending' | 'sent' | 'failed';
+    page?: number;
+    limit?: number;
+  } = {}) => {
+    const q = new URLSearchParams();
+    if (params.channel) q.set('channel', params.channel);
+    if (params.status) q.set('status', params.status);
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    return request<{
+      data: Array<{
+        id: string;
+        channel: string;
+        status: string;
+        recipient: string;
+        subject: string | null;
+        body: string | null;
+        error: string | null;
+        createdAt: string;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+      pages: number;
+    }>(`/admin/messages?${q.toString()}`);
+  },
+
+  // M10 — Loyalty
+  saasLoyaltyLeaderboard: (limit = 50) =>
+    request<
+      Array<{
+        id: string;
+        fullName: string;
+        email: string;
+        profileImageUrl: string | null;
+        tokenBalance: number;
+        totalSuccess: number;
+        tier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
+      }>
+    >(`/admin/loyalty/leaderboard?limit=${limit}`),
+  saasLoyaltyTierStats: () =>
+    request<Array<{ tier: string; count: number }>>('/admin/loyalty/tier-stats'),
+  saasLoyaltyTransactions: (userId?: string, limit = 50) =>
+    request<
+      Array<{
+        id: string;
+        userId: string;
+        type: string;
+        points: number;
+        reason: string | null;
+        createdAt: string;
+      }>
+    >(
+      `/admin/loyalty/transactions?limit=${limit}${userId ? `&userId=${encodeURIComponent(userId)}` : ''}`,
+    ),
+  saasLoyaltyGrant: (body: { userId: string; points: number; reason?: string }) =>
+    request<{ id: string; userId: string; points: number; type: string }>(
+      '/admin/loyalty/grant',
+      { method: 'POST', body: JSON.stringify(body) },
+    ),
+
+  // M3 — GSC Dashboard
+  saasGsc: (days = 30) =>
+    request<{
+      source: 'live' | 'mock';
+      days: number;
+      totals: {
+        clicks: number;
+        impressions: number;
+        avgCtr: number;
+        avgPosition: number;
+      };
+      topQueries: Array<{
+        keys: string[];
+        clicks: number;
+        impressions: number;
+        ctr: number;
+        position: number;
+      }>;
+      topPages: Array<{
+        keys: string[];
+        clicks: number;
+        impressions: number;
+        ctr: number;
+        position: number;
+      }>;
+      quickWins: Array<{
+        keys: string[];
+        clicks: number;
+        impressions: number;
+        ctr: number;
+        position: number;
+      }>;
+      falling: Array<{
+        keys: string[];
+        clicks: number;
+        impressions: number;
+        ctr: number;
+        position: number;
+      }>;
+      trend: Array<{ date: string; clicks: number; impressions: number }>;
+    }>(`/admin/seo-gsc?days=${days}`),
+
+  // M4 — Keyword Finder
+  saasKeywordOpportunities: () =>
+    request<{
+      items: Array<{
+        keys: string[];
+        clicks: number;
+        impressions: number;
+        ctr: number;
+        position: number;
+      }>;
+      total: number;
+    }>('/admin/seo-keywords/opportunities'),
+  saasKeywordDraftList: () =>
+    request<{
+      items: Array<{
+        id: string;
+        query: string;
+        slug: string;
+        markdown: string;
+        status: string;
+        createdAt: string;
+      }>;
+      total: number;
+    }>('/admin/seo-keywords/drafts'),
+  saasKeywordDraftCreate: (body: {
+    query: string;
+    gscPosition?: number;
+    gscImpressions?: number;
+  }) =>
+    request<{ id: string; query: string; slug: string; markdown: string }>(
+      '/admin/seo-keywords/drafts',
+      { method: 'POST', body: JSON.stringify(body) },
+    ),
+
+  // M5 — Pillars
+  saasPillarsList: () =>
+    request<{
+      items: Array<{
+        id: string;
+        slug: string;
+        title: string;
+        topic: string;
+        content: string | null;
+        generationStatus: string;
+        updatedAt: string;
+      }>;
+      total: number;
+    }>('/admin/seo-pillars'),
+  saasPillarGet: (id: string) =>
+    request<{
+      id: string;
+      slug: string;
+      title: string;
+      topic: string;
+      content: string | null;
+      seoMetaTitle: string | null;
+      seoMetaDesc: string | null;
+      generationStatus: string;
+      generationError: string | null;
+    }>(`/admin/seo-pillars/${id}`),
+  saasPillarCreate: (body: { title: string; topic: string; slug?: string }) =>
+    request<{ id: string; slug: string }>('/admin/seo-pillars', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  saasPillarGenerate: (id: string) =>
+    request<{ ok: boolean; status: string }>(`/admin/seo-pillars/${id}/generate`, {
+      method: 'POST',
+    }),
+  saasPillarStatus: (id: string) =>
+    request<{ id: string; generationStatus: string; generationError: string | null }>(
+      `/admin/seo-pillars/${id}/status`,
+    ),
+  saasPillarDelete: (id: string) =>
+    request<{ ok: boolean }>(`/admin/seo-pillars/${id}`, { method: 'DELETE' }),
+
+  // M11 — RBAC Matrix
+  saasRbacMatrix: () =>
+    request<{
+      modules: string[];
+      actions: readonly ['read', 'write', 'delete'];
+      roles: Array<{
+        key: string;
+        name: string;
+        description: string;
+        permissions: Record<string, string[]>;
+      }>;
+      note: string;
+    }>('/admin/rbac/matrix'),
 };
 
 export interface BlockedIp {
