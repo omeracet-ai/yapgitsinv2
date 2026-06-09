@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { Search, Bot } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { api } from "@/lib/api";
@@ -102,7 +103,7 @@ export function AdminTopbar({
             transition: "border-color 0.15s, background 0.15s",
           }}
         >
-          <span>🔎</span>
+          <Search size={14} strokeWidth={1.8} />
           <span className="flex-1 truncate">Ara veya komut çalıştır…</span>
           <kbd
             className="rounded px-1.5 py-0.5"
@@ -155,7 +156,7 @@ export function AdminTopbar({
             title="AI Asistan"
             aria-label="AI Asistan"
           >
-            🤖
+            <Bot size={16} strokeWidth={1.8} />
           </button>
 
           {/* Locale switcher (TR/EN) */}

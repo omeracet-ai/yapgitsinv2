@@ -3,6 +3,35 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import {
+  BarChart3,
+  TrendingUp,
+  Zap,
+  ClipboardList,
+  Tag,
+  HardHat,
+  Users,
+  Wallet,
+  Bitcoin,
+  Target,
+  Ticket,
+  Shield,
+  Flag,
+  Scale,
+  ScrollText,
+  Megaphone,
+  Map as MapIcon,
+  Activity,
+  Lock,
+  Smartphone,
+  Puzzle,
+  Settings,
+  LogOut,
+  Menu as MenuIcon,
+  Palette,
+  IdCard,
+  type LucideIcon,
+} from "lucide-react";
 import { api, refreshAdminToken, type AdminUser } from "@/lib/api";
 import { AdminTopbar } from "@/components/topbar/AdminTopbar";
 import { ConfirmDialogProvider } from "@/components/ui/ConfirmDialog";
@@ -18,70 +47,70 @@ function isTokenValid(token: string): boolean {
   }
 }
 
-type NavItem = { href: string; label: string; icon: string };
+type NavItem = { href: string; label: string; icon: LucideIcon };
 type NavGroup = { title: string; items: NavItem[] };
 
 const NAV_GROUPS: NavGroup[] = [
   {
     title: "Operasyon",
     items: [
-      { href: "/dashboard", label: "Dashboard", icon: "📊" },
-      { href: "/realtime-analytics", label: "Realtime", icon: "📈" },
-      { href: "/workforce", label: "Canlı İş Gücü", icon: "⚡" },
-      { href: "/jobs", label: "Son İlanlar", icon: "📋" },
-      { href: "/analytics", label: "Analytics", icon: "📊" },
+      { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
+      { href: "/realtime-analytics", label: "Realtime", icon: TrendingUp },
+      { href: "/workforce", label: "Canlı İş Gücü", icon: Zap },
+      { href: "/jobs", label: "Son İlanlar", icon: ClipboardList },
+      { href: "/analytics", label: "Analytics", icon: BarChart3 },
     ],
   },
   {
     title: "Kullanıcılar",
     items: [
-      { href: "/users", label: "Kullanıcılar", icon: "👥" },
-      { href: "/providers", label: "Sağlayıcılar", icon: "👷" },
-      { href: "/certifications", label: "Sertifikalar", icon: "📜" },
+      { href: "/users", label: "Kullanıcılar", icon: Users },
+      { href: "/providers", label: "Sağlayıcılar", icon: HardHat },
+      { href: "/certifications", label: "Sertifikalar", icon: ScrollText },
     ],
   },
   {
     title: "İçerik",
     items: [
-      { href: "/categories", label: "Kategoriler", icon: "🏷️" },
-      { href: "/promo-codes", label: "Promo Kodlar", icon: "🎟️" },
-      { href: "/onboarding-mgmt", label: "Onboarding", icon: "🎯" },
-      { href: "/broadcast", label: "Duyuru Gönder", icon: "📢" },
+      { href: "/categories", label: "Kategoriler", icon: Tag },
+      { href: "/promo-codes", label: "Promo Kodlar", icon: Ticket },
+      { href: "/onboarding-mgmt", label: "Onboarding", icon: Target },
+      { href: "/broadcast", label: "Duyuru Gönder", icon: Megaphone },
     ],
   },
   {
     title: "Para",
     items: [
-      { href: "/revenue", label: "Gelir", icon: "💰" },
-      { href: "/crypto-deposits", label: "USDT Yatırım", icon: "₿" },
+      { href: "/revenue", label: "Gelir", icon: Wallet },
+      { href: "/crypto-deposits", label: "USDT Yatırım", icon: Bitcoin },
     ],
   },
   {
     title: "Moderasyon",
     items: [
-      { href: "/moderation", label: "Moderasyon", icon: "🛡️" },
-      { href: "/reports", label: "Şikayetler", icon: "🚩" },
-      { href: "/disputes", label: "Anlaşmazlıklar", icon: "⚖️" },
-      { href: "/audit-log", label: "Denetim Kaydı", icon: "📜" },
-      { href: "/blocked-ips", label: "Engellenen IP", icon: "🛡️" },
+      { href: "/moderation", label: "Moderasyon", icon: Shield },
+      { href: "/reports", label: "Şikayetler", icon: Flag },
+      { href: "/disputes", label: "Anlaşmazlıklar", icon: Scale },
+      { href: "/audit-log", label: "Denetim Kaydı", icon: ScrollText },
+      { href: "/blocked-ips", label: "Engellenen IP", icon: Shield },
     ],
   },
   {
     title: "Sistem",
     items: [
-      { href: "/status", label: "Sistem Durumu", icon: "🩺" },
-      { href: "/escrow-settings", label: "Escrow Ayarları", icon: "🔐" },
-      { href: "/harita", label: "Harita Yönetimi", icon: "🗺️" },
-      { href: "/ayarlar", label: "Ayarlar", icon: "⚙️" },
+      { href: "/status", label: "Sistem Durumu", icon: Activity },
+      { href: "/escrow-settings", label: "Escrow Ayarları", icon: Lock },
+      { href: "/harita", label: "Harita Yönetimi", icon: MapIcon },
+      { href: "/ayarlar", label: "Ayarlar", icon: Settings },
     ],
   },
   {
     title: "APK",
     items: [
-      { href: "/apk-icerik", label: "APK Yönetim", icon: "📱" },
-      { href: "/apk-builder", label: "APK Builder", icon: "🧩" },
-      { href: "/apk-tasarim", label: "APK Tasarım", icon: "🎨" },
-      { href: "/profile-card", label: "Profile Card", icon: "🪪" },
+      { href: "/apk-icerik", label: "APK Yönetim", icon: Smartphone },
+      { href: "/apk-builder", label: "APK Builder", icon: Puzzle },
+      { href: "/apk-tasarim", label: "APK Tasarım", icon: Palette },
+      { href: "/profile-card", label: "Profile Card", icon: IdCard },
     ],
   },
 ];
@@ -179,6 +208,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {group.items.map((it) => {
             const active =
               path === it.href || path.startsWith(it.href + "/");
+            const Icon = it.icon;
             return (
               <Link
                 key={it.href}
@@ -187,7 +217,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 style={{ textDecoration: "none" }}
               >
                 <span style={{ width: 18, display: "inline-flex", justifyContent: "center" }}>
-                  {it.icon}
+                  <Icon size={16} strokeWidth={1.8} />
                 </span>
                 <span>{it.label}</span>
               </Link>
@@ -282,7 +312,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           className="ad-btn ad-btn-secondary ad-btn-sm"
           style={{ width: "100%", justifyContent: "center" }}
         >
-          🚪 Çıkış Yap
+          <LogOut size={14} strokeWidth={1.8} /> Çıkış Yap
         </button>
       </div>
     </>
@@ -312,7 +342,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               cursor: "pointer",
             }}
           >
-            ☰
+            <MenuIcon size={20} strokeWidth={1.8} />
           </button>
           <span style={{ fontWeight: 600, fontSize: 14 }}>
             {activeNav?.label ?? "Panel"}
@@ -333,7 +363,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               cursor: "pointer",
             }}
           >
-            ⎋
+            <LogOut size={18} strokeWidth={1.8} />
           </button>
         </div>
 
