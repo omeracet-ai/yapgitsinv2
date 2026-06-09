@@ -80,6 +80,18 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   static const Color _textHint = Color(0xFF8A8A8A);
   static const Color _borderColor = Color(0xFF2A2A2A);
 
+  // Phase 449 (hatalar.txt #14) — Light tema fix: brightness-aware helper.
+  // Sadece Scaffold + AppBar arka planı için runtime-resolved değer.
+  // İç bileşenlerin dark palette'i korunur (intentional redesign).
+  Color _scaffoldBg(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? _bgColor
+          : AppColors.background;
+  Color _appBarFg(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? Colors.white
+          : AppColors.textPrimary;
+
   Future<void> _doAction(Future<void> Function() action) async {
     setState(() => _actionLoading = true);
     try {
@@ -169,15 +181,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     final statusMeta = _statusMeta(jobStatus);
 
     return Scaffold(
-      backgroundColor: _bgColor,
+      // Phase 449 (hatalar.txt #14) — Scaffold + AppBar brightness-aware.
+      backgroundColor: _scaffoldBg(context),
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Hizmet İlanı',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          style: TextStyle(color: _appBarFg(context), fontWeight: FontWeight.w600),
         ),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: _scaffoldBg(context),
+        foregroundColor: _appBarFg(context),
+        iconTheme: IconThemeData(color: _appBarFg(context)),
         elevation: 0,
         actions: [
           Container(
@@ -2612,15 +2625,16 @@ class _GuestJobDetailPrompt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      // Phase 449 — Guest prompt theme-aware (light tema fix).
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Hizmet İlanı',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
         ),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.textPrimary,
+        iconTheme: IconThemeData(color: AppColors.textPrimary),
         elevation: 0,
       ),
       body: SafeArea(
