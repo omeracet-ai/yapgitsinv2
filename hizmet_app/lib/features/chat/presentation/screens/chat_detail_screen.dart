@@ -16,6 +16,7 @@ import '../../widgets/typing_indicator.dart';
 import '../../widgets/voice_recorder_button.dart';
 import '../../../messaging/widgets/message_template_picker.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// Phase 66: scaffold provider for peer-typing state.
 /// Phase 67 will wire WebSocket "typing" events to this.
@@ -45,7 +46,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   Timer? _peerTypingClearTimer;
   bool _isLocallyTyping = false;
   bool _isUploading = false;
-  static const String _meId = 'me';
+
+  /// Phase 456 (hatalar.txt #2) — KRİTİK BUG FIX:
+  /// Eski `_meId = 'me'` hardcoded'di → tüm kullanıcılar aynı odaya
+  /// katılıyor, A ile B arası iletim çalışmıyordu. Auth provider'dan
+  /// gerçek user id çekilir.
+  String get _meId {
+    final auth = ref.read(authStateProvider);
+    if (auth is AuthAuthenticated) {
+      return auth.user['id'] as String? ?? 'unknown';
+    }
+    return 'guest';
+  }
 
   String get _roomId {
     // Stable room id for the 1:1 conversation, independent of sender order.
@@ -149,7 +161,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   }
 
   void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 100), () {
+    // Phase 456 (hatalar.txt #2) — Refresh frame hatası fix:
+    // Future.delayed yerine postFrameCallback → build pipeline tamamlandıktan
+    // sonra ScrollController'a güvenli erişim, "setState during build" yok.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
