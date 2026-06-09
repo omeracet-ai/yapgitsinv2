@@ -36,6 +36,7 @@ import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../core/services/locale_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../certifications/data/certification_repository.dart';
+import '../../../../core/widgets/info_hint.dart';
 // TODO(P190): migrate remaining strings to AppLocalizations
 
 // ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
@@ -666,8 +667,12 @@ class ProfileScreen extends ConsumerWidget {
           Expanded(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Kredi Bakiyesi',
-                  style: TextStyle(color: Colors.white70, fontSize: 12)),
+              Row(children: const [
+                Text('Kredi Bakiyesi',
+                    style: TextStyle(color: Colors.white70, fontSize: 12)),
+                SizedBox(width: 4),
+                InfoHint(k: 'profile.token', size: 13, color: Colors.white70),
+              ]),
               balanceAsync.when(
                 data: (b) => Text('$b Kredi',
                     style: const TextStyle(

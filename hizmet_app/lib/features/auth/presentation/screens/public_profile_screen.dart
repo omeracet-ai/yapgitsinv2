@@ -8,6 +8,7 @@ import '../../../../core/widgets/list_skeleton.dart';
 import '../../../profile/data/user_profile_repository.dart';
 import '../../../users/widgets/user_action_menu.dart';
 import '../../../chat/data/presence_provider.dart';
+import '../../../../core/widgets/info_hint.dart';
 import '../providers/auth_provider.dart';
 import '../../../reviews/widgets/review_reply_sheet.dart';
 import '../../widgets/portfolio_gallery.dart';
@@ -1002,6 +1003,8 @@ class _RozetlerSectionState extends State<_RozetlerSection>
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.2,
                               color: AppColors.textPrimary)),
+                      const SizedBox(width: 4),
+                      const InfoHint(k: 'perf.badges'),
                     ],
                   ),
                   const Spacer(),

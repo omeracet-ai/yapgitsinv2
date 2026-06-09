@@ -22,6 +22,7 @@ import '../widgets/pending_confirmations_card.dart';
 import '../../../calendar/data/booking_repository.dart';
 import '../../../calendar/presentation/booking_detail_screen.dart';
 import '../../../../core/models/booking_model.dart';
+import '../../../../core/widgets/info_hint.dart';
 
 // ─── Providers ────────────────────────────────────────────────────────────────
 
@@ -241,7 +242,17 @@ extension _JobsFilterMeta on _JobsFilter {
         _JobsFilter.closed => Icons.archive_outlined,
         _JobsFilter.calendar => Icons.calendar_month_outlined,
       };
+  String get hintKey => switch (this) {
+        _JobsFilter.drafts => 'myjobs.drafts',
+        _JobsFilter.active => 'myjobs.active',
+        _JobsFilter.offers => 'myjobs.offers',
+        _JobsFilter.completed => 'myjobs.completed',
+        _JobsFilter.closed => 'myjobs.closed',
+        _JobsFilter.calendar => 'myjobs.calendar',
+      };
 }
+
+String _hintForFilter(_JobsFilter f) => f.hintKey;
 
 class _MergedJobsView extends ConsumerStatefulWidget {
   const _MergedJobsView();
@@ -1140,14 +1151,24 @@ class _JobsMultiSelectSheetState extends State<_JobsMultiSelectSheet> {
                           side: BorderSide(
                               color: Colors.white.withValues(alpha: 0.35),
                               width: 1.4),
-                          title: Text(f.label,
-                              style: TextStyle(
-                                fontWeight: selected
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: Colors.white.withValues(
-                                    alpha: selected ? 1.0 : 0.85),
-                              )),
+                          title: Row(children: [
+                            Flexible(
+                              child: Text(f.label,
+                                  style: TextStyle(
+                                    fontWeight: selected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: Colors.white.withValues(
+                                        alpha: selected ? 1.0 : 0.85),
+                                  )),
+                            ),
+                            const SizedBox(width: 4),
+                            InfoHint(
+                              k: _hintForFilter(f),
+                              size: 13,
+                              color: Colors.white.withValues(alpha: 0.7),
+                            ),
+                          ]),
                           secondary: Icon(f.icon,
                               color: selected
                                   ? AppColors.primary

@@ -23,6 +23,7 @@ import '../../widgets/job_wizard_progress.dart';
 import '../../widgets/post_job_step1.dart';
 import '../../widgets/post_job_step2.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/widgets/info_hint.dart';
 
 class PostJobScreen extends ConsumerStatefulWidget {
   /// Optional source job to clone (used by "🔁 Tekrar İlan Aç" feature).
@@ -1007,14 +1008,17 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
               labelText: AppLocalizations.of(context).postJobTitle,
-              hintText: AppLocalizations.of(context).postJobTitleHint),
+              hintText: AppLocalizations.of(context).postJobTitleHint,
+              suffixIcon: const InfoHint(k: 'job.title', size: 18)),
           validator: (v) => v?.isEmpty ?? true ? AppLocalizations.of(context).fieldRequired : null,
         ),
         const SizedBox(height: 12),
         TextFormField(
           controller: _descController,
           maxLines: 3,
-          decoration: InputDecoration(labelText: AppLocalizations.of(context).postJobDescription),
+          decoration: InputDecoration(
+              labelText: AppLocalizations.of(context).postJobDescription,
+              suffixIcon: const InfoHint(k: 'job.description', size: 18)),
           validator: (v) => v?.isEmpty ?? true ? AppLocalizations.of(context).fieldRequired : null,
         ),
         const SizedBox(height: 4),
@@ -1054,6 +1058,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             labelText: AppLocalizations.of(context).postJobBudget,
             hintText: AppLocalizations.of(context).postJobBudgetHint,
             prefixIcon: const Icon(Icons.payments_outlined),
+            suffixIcon: const InfoHint(k: 'job.budget', size: 18),
           ),
         ),
         const SizedBox(height: 8),
@@ -1329,9 +1334,13 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Fotoğraf & Video',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary)),
+        Row(children: [
+          Text('Fotoğraf & Video',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary)),
+          const SizedBox(width: 4),
+          const InfoHint(k: 'job.photos'),
+        ]),
         const SizedBox(height: 8),
         JobPhotoPicker(
           initialFiles: _selectedPhotos,
@@ -1367,6 +1376,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                 controller: _locationController,
                 readOnly: true,
                 decoration: InputDecoration(
+                  suffixIcon: const InfoHint(k: 'job.location', size: 18),
                   labelText: AppLocalizations.of(context).postJobLocation,
                   prefixIcon: const Icon(Icons.location_on),
                   hintText: AppLocalizations.of(context).postJobLocationHint,

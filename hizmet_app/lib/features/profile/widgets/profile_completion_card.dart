@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/info_hint.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/presentation/screens/edit_profile_screen.dart';
 import '../data/user_profile_repository.dart';
@@ -193,13 +194,22 @@ class ProfileCompletionCard extends ConsumerWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    'Profilini %$percent tamamla',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          'Profilini %$percent tamamla',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      InfoHint(k: 'profile.completion',
+                          color: AppColors.textSecondary),
+                    ],
                   ),
                 ),
                 Container(

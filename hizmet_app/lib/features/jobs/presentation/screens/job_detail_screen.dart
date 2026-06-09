@@ -29,6 +29,7 @@ import '../../../../core/widgets/job_photo_carousel.dart';
 import '../widgets/job_video_player.dart';
 import '../../../users/widgets/user_action_menu.dart';
 import '../../../chat/data/chat_service.dart';
+import '../../../../core/widgets/info_hint.dart';
 
 class JobDetailScreen extends ConsumerStatefulWidget {
   final String? id;
@@ -402,7 +403,21 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       width: double.infinity,
       color: _surfaceColor,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Text('İlan Durumu',
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: _textSecondary,
+                    letterSpacing: 0.3)),
+            const SizedBox(width: 4),
+            const InfoHint(k: 'job.status', size: 13),
+          ]),
+          const SizedBox(height: 8),
+          Row(
         children: List.generate(stages.length * 2 - 1, (i) {
           if (i.isOdd) {
             final connectorIdx = (i - 1) ~/ 2;
@@ -453,6 +468,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             ],
           );
         }),
+      ),
+        ],
       ),
     );
   }
