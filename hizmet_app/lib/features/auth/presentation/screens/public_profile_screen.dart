@@ -186,17 +186,16 @@ class _ProfileView extends ConsumerWidget {
             pinned: true,
             backgroundColor: AppColors.headerBackground(context),
             actions: [
-              if (!isSelf) ...[
-                // Phase 468 — Gift icon kaldırıldı; yerine canlı online/offline
-                // sinyali. peerPresenceProvider WebSocket ile real-time
-                // güncellenir (Phase 78).
-                _PresenceSignal(userId: userId),
+              // Phase 475 — Presence signal kendi profilinde de görünür
+              // (kullanıcı test edebilsin); UserActionMenu sadece başkasının
+              // profilinde görünür (kendine şikayet/blok anlamsız).
+              _PresenceSignal(userId: userId, forceOnline: isSelf),
+              if (!isSelf)
                 UserActionMenu(
                   userId: userId,
                   userName: name,
                   iconColor: Colors.white,
                 ),
-              ],
             ],
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.pin,
@@ -829,7 +828,11 @@ class _ReviewTile extends ConsumerWidget {
 /// peerPresenceProvider WebSocket ile real-time güncellenir (Phase 78).
 class _PresenceSignal extends ConsumerStatefulWidget {
   final String userId;
-  const _PresenceSignal({required this.userId});
+  final bool forceOnline; // self-view → her zaman online göster
+  const _PresenceSignal({
+    required this.userId,
+    this.forceOnline = false,
+  });
 
   @override
   ConsumerState<_PresenceSignal> createState() => _PresenceSignalState();
@@ -851,10 +854,12 @@ class _PresenceSignalState extends ConsumerState<_PresenceSignal>
       vsync: this,
       duration: const Duration(milliseconds: 2600),
     )..repeat();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ref.read(presenceProvider.notifier).ensure(widget.userId);
-    });
+    if (!widget.forceOnline) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(presenceProvider.notifier).ensure(widget.userId);
+      });
+    }
   }
 
   @override
@@ -867,7 +872,7 @@ class _PresenceSignalState extends ConsumerState<_PresenceSignal>
   @override
   Widget build(BuildContext context) {
     final p = ref.watch(peerPresenceProvider(widget.userId));
-    final online = p?.isOnline == true;
+    final online = widget.forceOnline || p?.isOnline == true;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       child: Tooltip(
