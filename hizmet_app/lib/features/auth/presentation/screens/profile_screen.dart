@@ -31,7 +31,7 @@ import '../../../profile/widgets/profile_completion_card.dart';
 // import '../../../profile/presentation/widgets/profile_video_uploader.dart'; // video upload UI hidden
 import '../../widgets/availability_editor_sheet.dart';
 import '../../../users/widgets/badge_row.dart';
-import '../../../users/widgets/verified_category_badges.dart';
+import 'public_profile_screen.dart' show PerformancePanel;
 import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../core/services/locale_provider.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -182,19 +182,41 @@ class ProfileScreen extends ConsumerWidget {
                   children: [
                     const ProfileCompletionCard(),
                     _buildProfileHeader(user),
+                    // Phase 477 — "Belge ile Doğrulanmış" VerifiedCategoryBadgesRow
+                    // kaldırıldı; yerine PublicProfile'daki PerformancePanel.
                     Consumer(builder: (context, ref, _) {
                       final p = ref.watch(myPublicProfileProvider);
                       return p.maybeWhen(
                         data: (d) {
-                          final cats = ((d['verifiedCategories'] as List?) ??
+                          final cats =
+                              (d['workerCategories'] as List?)?.cast<String>() ??
+                                  const <String>[];
+                          final bio = d['workerBio'] as String?;
+                          final reviewList = ((d['reviews'] as List?) ??
                                   const [])
                               .whereType<Map>()
                               .map((m) => Map<String, dynamic>.from(m))
                               .toList();
-                          return Column(
-                            children: [
-                              VerifiedCategoryBadgesRow(categories: cats),
-                            ],
+                          final badges = (d['badges'] as List?) ?? const [];
+                          final certs = ((d['certifications'] as List?) ??
+                                  const [])
+                              .whereType<Map>()
+                              .map((m) => Map<String, dynamic>.from(m))
+                              .toList();
+                          return PerformancePanel(
+                            reviews:
+                                (d['totalReviews'] as num?)?.toInt() ?? 0,
+                            rating:
+                                (d['averageRating'] as num?)?.toDouble() ?? 0,
+                            successWorker:
+                                (d['asWorkerSuccess'] as num?)?.toInt() ?? 0,
+                            totalWorker:
+                                (d['asWorkerTotal'] as num?)?.toInt() ?? 0,
+                            categories: cats,
+                            bio: bio,
+                            reviewList: reviewList,
+                            badges: badges,
+                            certifications: certs,
                           );
                         },
                         orElse: () => const SizedBox.shrink(),

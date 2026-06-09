@@ -385,7 +385,7 @@ class _ProfileView extends ConsumerWidget {
                 // Phase 470 — Rozetler artık collapsible (dropdown).
                 // Mini stat pill'leri tap → detay bottom sheet.
                 if (showBadges) ...[
-                  _RozetlerSection(
+                  PerformancePanel(
                     reviews: reviews,
                     rating: rating,
                     successWorker: successWorker,
@@ -946,8 +946,8 @@ class _PresenceSignalState extends ConsumerState<_PresenceSignal>
 
 /// Phase 470 — Rozetler bölümü artık collapsible (chevron toggle).
 /// Phase 473 — Default KAPALI (kullanıcı isteği). Tap ile aç.
-/// Çocuk: mini stat pill'leri (tap'lı) + rozet listesi (varsa).
-class _RozetlerSection extends StatefulWidget {
+/// Phase 477 — Public hale getirildi; ProfileScreen de aynı panel'i çağırıyor.
+class PerformancePanel extends StatefulWidget {
   final int reviews;
   final double rating;
   final int successWorker;
@@ -957,7 +957,7 @@ class _RozetlerSection extends StatefulWidget {
   final List<Map<String, dynamic>> reviewList;
   final List badges;
   final List<Map<String, dynamic>> certifications;
-  const _RozetlerSection({
+  const PerformancePanel({super.key,
     required this.reviews,
     required this.rating,
     required this.successWorker,
@@ -970,10 +970,10 @@ class _RozetlerSection extends StatefulWidget {
   });
 
   @override
-  State<_RozetlerSection> createState() => _RozetlerSectionState();
+  State<PerformancePanel> createState() => _PerformancePanelState();
 }
 
-class _RozetlerSectionState extends State<_RozetlerSection>
+class _PerformancePanelState extends State<PerformancePanel>
     with SingleTickerProviderStateMixin {
   bool _open = false; // Phase 473 — default kapalı
 
