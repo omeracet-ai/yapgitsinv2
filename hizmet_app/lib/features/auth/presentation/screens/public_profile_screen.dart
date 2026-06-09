@@ -5,7 +5,6 @@ import '../../../../core/app_config/app_config_visibility.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/list_skeleton.dart';
-import '../../../../core/widgets/stat_info_popup.dart';
 import '../../../profile/data/user_profile_repository.dart';
 import '../../../users/widgets/user_action_menu.dart';
 import '../../../chat/data/presence_provider.dart';
@@ -79,8 +78,8 @@ class _ProfileView extends ConsumerWidget {
     // ignore: unused_local_variable
     final reputation      = (data['reputationScore'] as num?)?.toInt()    ?? 0;
     final verified        = data['identityVerified'] == true;
-    final totalCustomer   = (data['asCustomerTotal']   as num?)?.toInt() ?? 0;
-    final successCustomer = (data['asCustomerSuccess'] as num?)?.toInt() ?? 0;
+    // Phase 472 — customer stat'leri 3-metrik şeridi kaldırılınca unused;
+    // ileride Hizmet Alan görünümü eklenirse geri açılır.
     final totalWorker     = (data['asWorkerTotal']     as num?)?.toInt() ?? 0;
     final successWorker   = (data['asWorkerSuccess']   as num?)?.toInt() ?? 0;
     final since           = data['createdAt']        as String?;
@@ -104,11 +103,10 @@ class _ProfileView extends ConsumerWidget {
     // Admin paneldeki /profile-card ekranından gelen field visibility
     // konfigürasyonu. Kural yoksa varsayılan true (geriye dönük uyumlu).
     final appCfg = ref.watch(appConfigSyncProvider);
-    final showRating      = isProfileFieldVisible('averageRating',   appCfg);
-    final showReviews     = isProfileFieldVisible('reviewsCount',    appCfg);
-    final showJobs        = isProfileFieldVisible('jobsCount',       appCfg);
-    final showCompletion  = isProfileFieldVisible('completionRate',  appCfg);
-    final showReputation  = isProfileFieldVisible('reputationScore', appCfg);
+    // Phase 472 — showRating de unused (üst metrik şeridi kaldırıldı).
+    // Phase 472 — showReviews/showJobs hâlâ Performans Paneli içinde
+    // dolaylı okunuyor (BadgesMiniStats); showCompletion/showReputation
+    // kullanılmıyor (3-metrik şeridi kaldırıldı).
     final showBadges      = isProfileFieldVisible('badges',          appCfg);
     final showVerified    = isProfileFieldVisible('verifiedBadge',   appCfg);
     // Phase 271+: workerSkills bu ekranda ayrı bir blok değil; ileride
@@ -120,8 +118,8 @@ class _ProfileView extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      // Phase 458 (hatalar.txt #15) — Sticky Action Bar: 2 buton
-      // Mesaj Gönder (chat) + İşe Davet Et (Hizmet Al → /ilan-ver targetWorker)
+      // Phase 472 — Sticky Action Bar: Mesaj butonu kaldırıldı,
+      // tek "Hizmet teklifi ver" CTA full-width.
       bottomNavigationBar: (isWorker && !isSelf)
           ? SafeArea(
               top: false,
@@ -133,67 +131,39 @@ class _ProfileView extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(14),
                 child: Padding(
                   padding: const EdgeInsets.all(8),
-                  child: Row(
-                    children: [
-                      // Mesaj Gönder (outlined)
-                      Expanded(
-                        flex: 2,
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            side: BorderSide(color: AppColors.primary, width: 1.5),
-                            foregroundColor: AppColors.primary,
-                          ),
-                          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 17),
-                          label: const Text('Mesaj',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                          onPressed: () {
-                            if (currentUserId == null) {
-                              context.push('/giris-yap', extra: {'returnTo': '/usta/$userId'});
-                              return;
-                            }
-                            context.push('/chat/$userId', extra: {'peerName': name});
-                          },
-                        ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
-                      const SizedBox(width: 10),
-                      // İşe Davet Et (filled — primary CTA)
-                      Expanded(
-                        flex: 3,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                          icon: const Icon(Icons.send_rounded, size: 17, color: Colors.white),
-                          label: const Text('İşe Davet Et',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                          onPressed: () {
-                            if (currentUserId == null) {
-                              context.push('/giris-yap', extra: {'returnTo': '/usta/$userId'});
-                              return;
-                            }
-                            context.push('/ilan-ver', extra: {
-                              'targetWorkerId': userId,
-                              'targetWorkerName': name,
-                              if (workerCats.isNotEmpty) ...{
-                                'initialCategory': workerCats.first,
-                                'allowedCategories': workerCats,
-                              },
-                            });
+                      icon: const Icon(Icons.send_rounded,
+                          size: 18, color: Colors.white),
+                      label: const Text('Hizmet teklifi ver',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        if (currentUserId == null) {
+                          context.push('/giris-yap',
+                              extra: {'returnTo': '/profil/$userId'});
+                          return;
+                        }
+                        context.push('/ilan-ver', extra: {
+                          'targetWorkerId': userId,
+                          'targetWorkerName': name,
+                          if (workerCats.isNotEmpty) ...{
+                            'initialCategory': workerCats.first,
+                            'allowedCategories': workerCats,
                           },
-                        ),
-                      ),
-                    ],
+                        });
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -375,72 +345,8 @@ class _ProfileView extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Phase 471 — Üst rating progress bar kaldırıldı
-                // (mini-stats detay sheet'inde rating zaten var).
-                // ── İstatistikler ────────────────────────────────────────
-                // Admin /profile-card ekranı her bir kartı tek tek
-                // gizleyebilir. Tüm kartlar gizliyse Container'ı hiç çizme.
-                // Phase 322 — 3 metrik analizi (worker/customer'a göre):
-                //   Tamamlanan İş (X/Y)  ·  Başarı Oranı (k.k/5.0)  ·
-                //   Değerlendirme (avgRating/5.0)
-                // Tüm kartlar 5.0 ölçeğinde okunur → kullanıcı tek bakışta
-                // karşılaştırır. Reputation/jobs/old rating kartları kaldırıldı.
-                Builder(builder: (_) {
-                  final total = isWorker ? totalWorker : totalCustomer;
-                  final success =
-                      isWorker ? successWorker : successCustomer;
-                  // Başarı oranı 5.0 ölçeğine yansıtıldı: success/total * 5.
-                  final ratio5 =
-                      total > 0 ? (success / total * 5.0) : 0.0;
-                  final stats = <Widget>[
-                    _bigStat(
-                      label: total > 0 ? '$success/$total' : '—',
-                      sub: 'Tamamlanan İş',
-                      icon: Icons.check_circle_outline_rounded,
-                      iconColor: AppColors.success,
-                      tooltip: isWorker
-                          ? StatTooltips.completedWorker
-                          : StatTooltips.completedCustomer,
-                    ),
-                    _divider(),
-                    _bigStat(
-                      label: total > 0
-                          ? '${ratio5.toStringAsFixed(1)}/5.0'
-                          : '—',
-                      sub: 'Başarı Oranı',
-                      icon: Icons.trending_up_rounded,
-                      iconColor: AppColors.primary,
-                      tooltip: StatTooltips.successScore5,
-                    ),
-                    _divider(),
-                    _bigStat(
-                      label: rating > 0
-                          ? '${rating.toStringAsFixed(1)}/5.0'
-                          : '—',
-                      sub:
-                          showReviews ? '$reviews yorum' : 'Değerlendirme',
-                      icon: Icons.star_rounded,
-                      iconColor: Colors.amber,
-                      tooltip: showReviews
-                          ? StatTooltips.reviews
-                          : StatTooltips.rating,
-                    ),
-                  ];
-                  // Tüm tilesları admin tarafı tek tek gizleyebilir; en az
-                  // bir kart aktifse render et.
-                  if (!showRating && !showReputation && !showJobs &&
-                      !showCompletion) {
-                    return const SizedBox.shrink();
-                  }
-                  return Container(
-                    color: AppColors.surface,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Row(children: stats),
-                  );
-                }),
-
-                // Eski "Teklif Yap" CTA Phase 265e'de tek "Bu Ustaya Teklif
-                // Ver" butonuyla birleştirildi (aşağıda).
+                // Phase 472 — Açıklama üstündeki 3-metrik istatistik şeridi
+                // kaldırıldı. Tüm metrikler artık "Performans Paneli" altında.
                 const SizedBox(height: 8),
 
                 // ── Rozetler ─────────────────────────────────────────────
@@ -731,51 +637,6 @@ class _ProfileView extends ConsumerWidget {
     );
   }
 
-  Widget _bigStat({
-    required String label,
-    required String sub,
-    required IconData icon,
-    required Color iconColor,
-    String? tooltip,
-  }) {
-    // Phase 414 — sublabel yanına bilgi imleci (tooltip varsa).
-    return Expanded(
-      child: Column(
-        children: [
-          Icon(icon, color: iconColor, size: 22),
-          const SizedBox(height: 4),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary)),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(sub,
-                    style: TextStyle(
-                        fontSize: 11, color: AppColors.textSecondary),
-                    overflow: TextOverflow.ellipsis),
-              ),
-              if (tooltip != null) ...[
-                const SizedBox(width: 3),
-                StatInfoIcon(
-                  title: sub,
-                  message: tooltip,
-                  size: 12,
-                  padding: EdgeInsets.zero,
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _divider() => Container(width: 1, height: 40, color: Colors.grey.shade200);
-
   /// Phase 422 — BadgeRow filter (key='verified' / label='doğrulanmış')
   /// uygulandıktan sonra görünür rozet kaldı mı? `null` veya boş liste de
   /// false döner — section başlığı çizilmesin.
@@ -806,20 +667,6 @@ class _ProfileView extends ConsumerWidget {
           child,
         ],
       ),
-    );
-  }
-
-  Widget _statRow(String label, String value, {Color? valueColor}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-        Text(value,
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: valueColor ?? AppColors.textPrimary)),
-      ],
     );
   }
 
@@ -1485,7 +1332,7 @@ class _StatDetailContent extends StatelessWidget {
       bench: bench,
       benchColor: benchColor,
       explanation:
-          'Bu metrik, müşterilerin ustaya bıraktığı toplam yorum sayısını '
+          'Bu metrik, hizmet alanların bu kullanıcıya bıraktığı toplam yorum sayısını '
           'gösterir. Daha fazla yorum, daha güvenilir geçmiş demektir. '
           'Ortalama puan 4.5 ve üzeri Türkiye genelinde "Mükemmel" '
           'sınıfındadır.',
@@ -1565,7 +1412,7 @@ class _StatDetailContent extends StatelessWidget {
       bench: bench,
       benchColor: benchColor,
       explanation:
-          'Ustanın platform üzerinde aldığı toplam iş sayısı (tamamlanan + '
+          'Hizmet verenin platform üzerinde aldığı toplam iş sayısı (tamamlanan + '
           'iptal + devam eden). 15+ aktif, 50+ tecrübeli olarak sınıflanır. '
           'Yüksek sayı, geniş portföy ve deneyim demektir.',
     );
