@@ -485,25 +485,17 @@ class _ProfileView extends ConsumerWidget {
                   ),
                 ],
 
-                // Phase 469 — Rozetler bölümü artık her zaman görünür
-                // (mini stats yeterli içerik). Rozet yoksa BadgeRow boş döner.
+                // Phase 470 — Rozetler artık collapsible (dropdown).
+                // Mini stat pill'leri tap → detay bottom sheet.
                 if (showBadges) ...[
-                  _section(
-                    title: 'Rozetler',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _BadgesMiniStats(
-                          reviews: reviews,
-                          successWorker: successWorker,
-                          totalWorker: totalWorker,
-                        ),
-                        if (_hasVisibleBadges(badges)) ...[
-                          const SizedBox(height: 10),
-                          BadgeRow(badges: badges),
-                        ],
-                      ],
-                    ),
+                  _RozetlerSection(
+                    reviews: reviews,
+                    rating: rating,
+                    successWorker: successWorker,
+                    totalWorker: totalWorker,
+                    badges: _hasVisibleBadges(badges)
+                        ? (badges as List)
+                        : const <dynamic>[],
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -1118,15 +1110,103 @@ class _PresenceSignalState extends ConsumerState<_PresenceSignal> {
   }
 }
 
-/// Phase 469 — Rozetler bölümü içi mini metrik şeridi:
+/// Phase 470 — Rozetler bölümü artık collapsible (chevron toggle).
+/// Default açık (kullanıcı içeriği görmek istemediğinde kapatır).
+/// Çocuk: mini stat pill'leri (tap'lı) + rozet listesi (varsa).
+class _RozetlerSection extends StatefulWidget {
+  final int reviews;
+  final double rating;
+  final int successWorker;
+  final int totalWorker;
+  final List badges;
+  const _RozetlerSection({
+    required this.reviews,
+    required this.rating,
+    required this.successWorker,
+    required this.totalWorker,
+    required this.badges,
+  });
+
+  @override
+  State<_RozetlerSection> createState() => _RozetlerSectionState();
+}
+
+class _RozetlerSectionState extends State<_RozetlerSection>
+    with SingleTickerProviderStateMixin {
+  bool _open = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.surface,
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () => setState(() => _open = !_open),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Text('Rozetler',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary)),
+                  const Spacer(),
+                  AnimatedRotation(
+                    duration: const Duration(milliseconds: 180),
+                    turns: _open ? 0.5 : 0.0,
+                    child: Icon(Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox(width: double.infinity),
+            secondChild: Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _BadgesMiniStats(
+                    reviews: widget.reviews,
+                    rating: widget.rating,
+                    successWorker: widget.successWorker,
+                    totalWorker: widget.totalWorker,
+                  ),
+                  if (widget.badges.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    BadgeRow(badges: widget.badges),
+                  ],
+                ],
+              ),
+            ),
+            crossFadeState:
+                _open ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
+            sizeCurve: Curves.easeInOut,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Phase 469+470 — Rozetler içi mini metrik şeridi (tap'lı pill).
 /// Aldığı yorum · Başarı oranı (/10) · Verdiği hizmet sayısı.
-/// 3 eşit-genişlikli pill, divider yok. Veri yoksa "—" gösterir.
 class _BadgesMiniStats extends StatelessWidget {
   final int reviews;
+  final double rating;
   final int successWorker;
   final int totalWorker;
   const _BadgesMiniStats({
     required this.reviews,
+    required this.rating,
     required this.successWorker,
     required this.totalWorker,
   });
@@ -1134,86 +1214,446 @@ class _BadgesMiniStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ratio10 = totalWorker > 0
-        ? (successWorker / totalWorker * 10.0).toStringAsFixed(1)
+        ? (successWorker / totalWorker * 10.0)
+        : 0.0;
+    final ratio10Str = totalWorker > 0
+        ? ratio10.toStringAsFixed(1)
         : '—';
     return Row(
       children: [
         Expanded(
           child: _statPill(
+            context,
             icon: Icons.rate_review_outlined,
             value: reviews > 0 ? '$reviews' : '—',
             label: 'Aldığı yorum',
             color: Colors.amber,
+            onTap: () => _StatDetailSheet.show(
+              context,
+              kind: _StatKind.reviews,
+              reviews: reviews,
+              rating: rating,
+              successWorker: successWorker,
+              totalWorker: totalWorker,
+            ),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: _statPill(
+            context,
             icon: Icons.trending_up_rounded,
-            value: ratio10 == '—' ? '—' : '$ratio10/10',
+            value: ratio10Str == '—' ? '—' : '$ratio10Str/10',
             label: 'Başarı oranı',
             color: AppColors.primary,
+            onTap: () => _StatDetailSheet.show(
+              context,
+              kind: _StatKind.success,
+              reviews: reviews,
+              rating: rating,
+              successWorker: successWorker,
+              totalWorker: totalWorker,
+            ),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: _statPill(
+            context,
             icon: Icons.handyman_outlined,
             value: totalWorker > 0 ? '$totalWorker' : '—',
             label: 'Verdiği hizmet',
             color: AppColors.success,
+            onTap: () => _StatDetailSheet.show(
+              context,
+              kind: _StatKind.services,
+              reviews: reviews,
+              rating: rating,
+              successWorker: successWorker,
+              totalWorker: totalWorker,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _statPill({
+  Widget _statPill(
+    BuildContext context, {
     required IconData icon,
     required String value,
     required String label,
     required Color color,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        splashColor: color.withValues(alpha: 0.18),
+        highlightColor: color.withValues(alpha: 0.08),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 14, color: color),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+              Row(
+                children: [
+                  Icon(icon, size: 14, color: color),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
+                  Icon(Icons.info_outline,
+                      size: 11, color: color.withValues(alpha: 0.6)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+enum _StatKind { reviews, success, services }
+
+/// Phase 470 — Mini stat pill tap → detay bottom sheet.
+/// Her metrik için: büyük rakam + progress bar + benchmark + açıklama.
+class _StatDetailSheet {
+  static void show(
+    BuildContext context, {
+    required _StatKind kind,
+    required int reviews,
+    required double rating,
+    required int successWorker,
+    required int totalWorker,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (_) => _StatDetailContent(
+        kind: kind,
+        reviews: reviews,
+        rating: rating,
+        successWorker: successWorker,
+        totalWorker: totalWorker,
+      ),
+    );
+  }
+}
+
+class _StatDetailContent extends StatelessWidget {
+  final _StatKind kind;
+  final int reviews;
+  final double rating;
+  final int successWorker;
+  final int totalWorker;
+  const _StatDetailContent({
+    required this.kind,
+    required this.reviews,
+    required this.rating,
+    required this.successWorker,
+    required this.totalWorker,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    switch (kind) {
+      case _StatKind.reviews:
+        return _reviewsBody(context);
+      case _StatKind.success:
+        return _successBody(context);
+      case _StatKind.services:
+        return _servicesBody(context);
+    }
+  }
+
+  // ── Reviews ────────────────────────────────────────────────────────────
+  Widget _reviewsBody(BuildContext context) {
+    final ratingPct = (rating / 5.0).clamp(0.0, 1.0);
+    String bench;
+    Color benchColor;
+    if (rating >= 4.5) {
+      bench = 'Mükemmel';
+      benchColor = AppColors.success;
+    } else if (rating >= 4.0) {
+      bench = 'İyi';
+      benchColor = AppColors.primary;
+    } else if (rating >= 3.0) {
+      bench = 'Orta';
+      benchColor = Colors.orange;
+    } else if (rating > 0) {
+      bench = 'Geliştirmeli';
+      benchColor = AppColors.error;
+    } else {
+      bench = 'Henüz değerlendirme yok';
+      benchColor = AppColors.textSecondary;
+    }
+    return _shell(
+      icon: Icons.rate_review_outlined,
+      accent: Colors.amber,
+      title: 'Aldığı Yorum',
+      bigValue: reviews > 0 ? '$reviews' : '—',
+      bigCaption: reviews > 0 ? 'toplam yorum' : 'henüz yok',
+      progressLabel:
+          rating > 0 ? 'Ortalama puan ${rating.toStringAsFixed(1)}/5.0' : null,
+      progress: rating > 0 ? ratingPct : null,
+      progressColor: Colors.amber,
+      bench: bench,
+      benchColor: benchColor,
+      explanation:
+          'Bu metrik, müşterilerin ustaya bıraktığı toplam yorum sayısını '
+          'gösterir. Daha fazla yorum, daha güvenilir geçmiş demektir. '
+          'Ortalama puan 4.5 ve üzeri Türkiye genelinde "Mükemmel" '
+          'sınıfındadır.',
+    );
+  }
+
+  // ── Success ratio ──────────────────────────────────────────────────────
+  Widget _successBody(BuildContext context) {
+    final has = totalWorker > 0;
+    final ratio = has ? (successWorker / totalWorker) : 0.0;
+    final ratio10 = ratio * 10.0;
+    String bench;
+    Color benchColor;
+    if (!has) {
+      bench = 'Henüz iş yok';
+      benchColor = AppColors.textSecondary;
+    } else if (ratio >= 0.9) {
+      bench = 'Mükemmel';
+      benchColor = AppColors.success;
+    } else if (ratio >= 0.75) {
+      bench = 'İyi';
+      benchColor = AppColors.primary;
+    } else if (ratio >= 0.5) {
+      bench = 'Orta';
+      benchColor = Colors.orange;
+    } else {
+      bench = 'Düşük';
+      benchColor = AppColors.error;
+    }
+    return _shell(
+      icon: Icons.trending_up_rounded,
+      accent: AppColors.primary,
+      title: 'Başarı Oranı',
+      bigValue: has ? '${ratio10.toStringAsFixed(1)}/10' : '—',
+      bigCaption: has ? '$successWorker / $totalWorker iş tamamlandı' : 'iş yok',
+      progressLabel:
+          has ? '%${(ratio * 100).round()} başarı' : null,
+      progress: has ? ratio : null,
+      progressColor: AppColors.primary,
+      bench: bench,
+      benchColor: benchColor,
+      explanation:
+          'Tamamladığı iş sayısının üstlendiği toplam işe oranıdır. '
+          'Başarı = işin son durumunun "Tamamlandı" olarak kapatılması. '
+          '7.5/10 ve üzeri sektör ortalamasının üstüdür.',
+    );
+  }
+
+  // ── Total services ─────────────────────────────────────────────────────
+  Widget _servicesBody(BuildContext context) {
+    String bench;
+    Color benchColor;
+    if (totalWorker == 0) {
+      bench = 'Yeni';
+      benchColor = AppColors.textSecondary;
+    } else if (totalWorker >= 50) {
+      bench = 'Tecrübeli';
+      benchColor = AppColors.success;
+    } else if (totalWorker >= 15) {
+      bench = 'Aktif';
+      benchColor = AppColors.primary;
+    } else {
+      bench = 'Başlangıç';
+      benchColor = Colors.orange;
+    }
+    final tierProgress = (totalWorker / 50.0).clamp(0.0, 1.0);
+    return _shell(
+      icon: Icons.handyman_outlined,
+      accent: AppColors.success,
+      title: 'Verdiği Hizmet',
+      bigValue: totalWorker > 0 ? '$totalWorker' : '—',
+      bigCaption: totalWorker > 0 ? 'toplam iş' : 'henüz iş yok',
+      progressLabel:
+          totalWorker > 0 ? 'Tecrübeli (50+) eşiğine ilerleme' : null,
+      progress: totalWorker > 0 ? tierProgress : null,
+      progressColor: AppColors.success,
+      bench: bench,
+      benchColor: benchColor,
+      explanation:
+          'Ustanın platform üzerinde aldığı toplam iş sayısı (tamamlanan + '
+          'iptal + devam eden). 15+ aktif, 50+ tecrübeli olarak sınıflanır. '
+          'Yüksek sayı, geniş portföy ve deneyim demektir.',
+    );
+  }
+
+  // ── Reusable shell ─────────────────────────────────────────────────────
+  Widget _shell({
+    required IconData icon,
+    required Color accent,
+    required String title,
+    required String bigValue,
+    required String bigCaption,
+    String? progressLabel,
+    double? progress,
+    required Color progressColor,
+    required String bench,
+    required Color benchColor,
+    required String explanation,
+  }) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: accent, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Text(title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    )),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: benchColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: benchColor.withValues(alpha: 0.4), width: 1),
+                  ),
+                  child: Text(bench,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: benchColor,
+                      )),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(bigValue,
+                    style: TextStyle(
+                      fontSize: 38,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textPrimary,
+                      height: 1.0,
+                    )),
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(bigCaption,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      )),
+                ),
+              ],
+            ),
+            if (progress != null && progressLabel != null) ...[
+              const SizedBox(height: 14),
+              Text(progressLabel,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  )),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 8,
+                  backgroundColor: progressColor.withValues(alpha: 0.12),
+                  valueColor: AlwaysStoppedAnimation(progressColor),
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.border, width: 1),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline,
+                      size: 16, color: AppColors.textSecondary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(explanation,
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.45,
+                          color: AppColors.textSecondary,
+                        )),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
