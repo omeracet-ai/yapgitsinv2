@@ -177,9 +177,18 @@ export class Job {
   @Column({ type: 'varchar', length: 12, nullable: true })
   geohash: string | null;
 
-  /** Teslim/bitiş tarihi — YYYY-MM-DD formatında */
+  /** Teslim/bitiş tarihi — YYYY-MM-DD formatında.
+   * Phase 463 (hatalar.txt #9) — backward-compat: dueDate tek tarih kalır.
+   * Çoklu tarih seçimi `dueDates` (aşağıda) ile destekleniyor; varsa ilk
+   * tarih `dueDate`'e mirror edilir, listeleme/filtre eskisi gibi çalışır. */
   @Column({ type: 'varchar', length: 10, nullable: true, default: null })
   dueDate: string | null;
+
+  /** Phase 463 (hatalar.txt #9) — Çoklu tarih seçimi.
+   * YYYY-MM-DD string'lerden oluşan dizi (simple-json SQLite uyumlu).
+   * null/empty → dueDate kullanılır (geriye uyumlu). */
+  @Column({ type: 'simple-json', nullable: true, default: null })
+  dueDates: string[] | null;
 
   /**
    * Phase 266 — Saat (HH:MM, 24h). null = saat belirsiz.

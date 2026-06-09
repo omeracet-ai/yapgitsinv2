@@ -854,6 +854,11 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     }
   }
 
+  /// Phase 463 (hatalar.txt #9) — Çoklu tarih state.
+  /// _dueDate ilk seçilen tarihi tutar (backend backward-compat).
+  /// _additionalDueDates ekstra seçimleri tutar; submit'te birleşir.
+  final List<DateTime> _additionalDueDates = [];
+
   Widget _buildDueDateSection() {
     final dueDateLabel = _dueDate == null
         ? 'Esnek (tarih önemli değil)'
@@ -910,7 +915,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         ),
         const SizedBox(height: 6),
         GestureDetector(
-          onTap: () => setState(() => _dueDate = null),
+          onTap: () => setState(() {
+            _dueDate = null;
+            _additionalDueDates.clear();
+          }),
           child: Row(
             children: [
               Icon(
@@ -926,8 +934,66 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             ],
           ),
         ),
+        // Phase 463 (hatalar.txt #9) — Çoklu tarih chip + "+ Tarih ekle" buton.
+        if (_dueDate != null) ...[
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final extra in _additionalDueDates)
+                Chip(
+                  label: Text(
+                      '${extra.day.toString().padLeft(2, '0')}/${extra.month.toString().padLeft(2, '0')}/${extra.year}',
+                      style: const TextStyle(fontSize: 12)),
+                  onDeleted: () => setState(() => _additionalDueDates.remove(extra)),
+                  deleteIconColor: AppColors.textSecondary,
+                  backgroundColor: AppColors.primaryLight,
+                  side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ActionChip(
+                avatar: Icon(Icons.add_rounded, size: 16, color: AppColors.primary),
+                label: Text('Tarih Ekle',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600)),
+                backgroundColor: AppColors.surface,
+                side: BorderSide(color: AppColors.primary, width: 1),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                onPressed: _pickAdditionalDate,
+              ),
+            ],
+          ),
+        ],
       ],
     );
+  }
+
+  /// Phase 463 (hatalar.txt #9) — Ek tarih seç.
+  Future<void> _pickAdditionalDate() async {
+    final now = DateTime.now();
+    final exclude = <DateTime>{
+      if (_dueDate != null) _dueDate!,
+      ..._additionalDueDates,
+    };
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: now.add(const Duration(days: 1)),
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+      helpText: 'Ek tarih seç',
+    );
+    if (picked == null) return;
+    final norm = DateTime(picked.year, picked.month, picked.day);
+    if (exclude.any((d) => d.year == norm.year && d.month == norm.month && d.day == norm.day)) {
+      return; // dup ignore
+    }
+    setState(() => _additionalDueDates.add(norm));
+    _scheduleDraftSave();
   }
 
   // Phase 284 — Eski _buildStep2Body iki bağımsız bölüme ayrıldı; Adım 1
@@ -1443,6 +1509,14 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       if (_dueDate != null)
         'dueDate':
             '${_dueDate!.year}-${_dueDate!.month.toString().padLeft(2, '0')}-${_dueDate!.day.toString().padLeft(2, '0')}',
+      // Phase 463 (hatalar.txt #9) — Çoklu tarih: dueDates dizisi.
+      // Backend ilk elemanı dueDate'e mirror eder; ek tarihler ayrıca tutulur.
+      if (_dueDate != null && _additionalDueDates.isNotEmpty)
+        'dueDates': [
+          '${_dueDate!.year}-${_dueDate!.month.toString().padLeft(2, '0')}-${_dueDate!.day.toString().padLeft(2, '0')}',
+          for (final d in _additionalDueDates)
+            '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
+        ],
       // Phase 266 — saat (HH:MM) + "tüm saatler" toggle
       if (!_anyTime && _dueTime != null)
         'dueTime':

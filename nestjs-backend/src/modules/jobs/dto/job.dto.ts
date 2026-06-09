@@ -43,6 +43,13 @@ export class CreateJobDto {
   @IsString()
   dueDate?: string;
 
+  /** Phase 463 (hatalar.txt #9) — Çoklu tarih (YYYY-MM-DD dizisi).
+   * Doluysa dueDate ilk elemana mirror edilir. */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  dueDates?: string[];
+
   /** Phase 266 — HH:MM 24h saat. */
   @IsOptional()
   @IsString()
@@ -127,6 +134,12 @@ export class UpdateJobDto {
   @IsOptional()
   @IsString()
   dueDate?: string;
+
+  /** Phase 463 (hatalar.txt #9) — Çoklu tarih (UpdateJob). */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  dueDates?: string[];
 
   /** Phase 266 — HH:MM 24h saat. */
   @IsOptional()

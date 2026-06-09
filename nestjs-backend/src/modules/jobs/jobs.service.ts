@@ -733,6 +733,19 @@ export class JobsService {
       }
     }
 
+    // Phase 463 (hatalar.txt #9) — Çoklu tarih: dueDates doluysa unique +
+    // sıralı kaydet, dueDate'i ilk elemana mirror et (backward-compat).
+    let normalizedDueDates: string[] | null = null;
+    let mirroredDueDate = createJobDto.dueDate ?? null;
+    if (Array.isArray(createJobDto.dueDates) && createJobDto.dueDates.length > 0) {
+      const uniq = Array.from(
+        new Set(createJobDto.dueDates.filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))),
+      ).sort();
+      if (uniq.length > 0) {
+        normalizedDueDates = uniq;
+        mirroredDueDate = uniq[0];
+      }
+    }
     const job = this.jobsRepository.create({
       ...createJobDto,
       kind,
@@ -742,6 +755,9 @@ export class JobsService {
       // Phase 266 — saat alanları. anyTime true ise dueTime null'a düşür.
       dueTime: createJobDto.dueAnyTime ? null : (createJobDto.dueTime ?? null),
       dueAnyTime: createJobDto.dueAnyTime ?? false,
+      // Phase 463 — multi-date normalize
+      dueDate: mirroredDueDate,
+      dueDates: normalizedDueDates,
       status: JobStatus.OPEN,
       // Phase 174b — minor sync: TL float → integer kuruş
       budgetMinMinor: tlToMinor(createJobDto.budgetMin),
