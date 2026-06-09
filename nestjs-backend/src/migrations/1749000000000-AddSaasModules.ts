@@ -19,6 +19,19 @@ export class AddSaasModules1749000000000 implements MigrationInterface {
   name = 'AddSaasModules1749000000000';
 
   public async up(qr: QueryRunner): Promise<void> {
+    // Hotfix — RBAC adminRole sütunu (User entity Faz I commit'inde eklendi,
+    // ama bu migration'a yansımamıştı → prod boot crashed:
+    //   SQLITE_ERROR: no such column: User.adminRole
+    // PRAGMA gate ile idempotent (zaten varsa atla).
+    const userCols = (await qr.query(`PRAGMA table_info("users")`)) as Array<{
+      name: string;
+    }>;
+    if (!userCols.some((c) => c.name === 'adminRole')) {
+      await qr.query(
+        `ALTER TABLE "users" ADD COLUMN "adminRole" varchar(32) DEFAULT NULL`,
+      );
+    }
+
     // M1 — admin_chat_messages
     await qr.query(`
       CREATE TABLE IF NOT EXISTS "admin_chat_messages" (
