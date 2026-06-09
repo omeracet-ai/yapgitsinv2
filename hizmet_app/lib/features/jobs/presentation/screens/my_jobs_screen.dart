@@ -187,8 +187,9 @@ class _DualRoleView extends ConsumerWidget {
 // ─── Phase 338 — Single-page merged view with filter chips ───────────────────
 
 // Phase 346 — Multi-select için `all` meta-değer kaldırıldı. UI'da
-// 4 kategorinin hepsi seçili olduğunda "Tümü" yazısı görünür.
-enum _JobsFilter { active, offers, completed, calendar }
+// kategorilerin hepsi seçili olduğunda "Tümü" yazısı görünür.
+// Phase 464 (hatalar.txt #17) — 'drafts' + 'closed' eklendi (Airtasker lifecycle).
+enum _JobsFilter { drafts, active, offers, completed, closed, calendar }
 
 // Phase 342 — Filtreleme sheet'i için sıralama + tarih aralığı.
 enum _MyJobsSort { newest, oldest, budgetHigh, budgetLow }
@@ -225,15 +226,19 @@ extension _MyJobsRangeMeta on _MyJobsRange {
 
 extension _JobsFilterMeta on _JobsFilter {
   String get label => switch (this) {
+        _JobsFilter.drafts => 'Taslaklar',
         _JobsFilter.active => 'Aktif İlanlarım',
         _JobsFilter.offers => 'Tekliflerim',
         _JobsFilter.completed => 'Biten İşler',
+        _JobsFilter.closed => 'Kapatılan',
         _JobsFilter.calendar => 'Takvim',
       };
   IconData get icon => switch (this) {
+        _JobsFilter.drafts => Icons.edit_note_rounded,
         _JobsFilter.active => Icons.assignment_outlined,
         _JobsFilter.offers => Icons.handyman_outlined,
         _JobsFilter.completed => Icons.check_circle_outline,
+        _JobsFilter.closed => Icons.archive_outlined,
         _JobsFilter.calendar => Icons.calendar_month_outlined,
       };
 }
@@ -676,6 +681,15 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
     }
     if (_selected.length == 1) {
       switch (_selected.first) {
+        case _JobsFilter.drafts:
+          // Phase 464 (hatalar.txt #17) — Taslaklar.
+          // Backend `isDraft=true` filtresi → şu an liste API gönderilmiyor;
+          // gelene kadar boş gösterilir (empty state).
+          return _CustomerJobsByStatus(
+            statuses: const ['__drafts__'], // sentinel: API'de eşleşmez
+            emptyMsg: 'Henüz taslak yok. İlanı kaydet, yayınlamadan dur.',
+            searchQuery: q,
+          );
         case _JobsFilter.active:
           return _CustomerJobsByStatus(
             statuses: const ['open', 'in_progress'],
@@ -688,6 +702,13 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
           return _CustomerJobsByStatus(
             statuses: const ['completed'],
             emptyMsg: 'Tamamlanan işiniz yok.',
+            searchQuery: q,
+          );
+        case _JobsFilter.closed:
+          // Phase 464 — Kapatılan = cancelled/disputed.
+          return _CustomerJobsByStatus(
+            statuses: const ['cancelled', 'disputed'],
+            emptyMsg: 'Kapatılan ilanınız yok.',
             searchQuery: q,
           );
         case _JobsFilter.calendar:

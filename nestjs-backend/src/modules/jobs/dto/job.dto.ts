@@ -50,6 +50,11 @@ export class CreateJobDto {
   @IsString({ each: true })
   dueDates?: string[];
 
+  /** Phase 464 (hatalar.txt #17) — Taslak ilan (yayında değil). */
+  @IsOptional()
+  @IsBoolean()
+  isDraft?: boolean;
+
   /** Phase 266 — HH:MM 24h saat. */
   @IsOptional()
   @IsString()

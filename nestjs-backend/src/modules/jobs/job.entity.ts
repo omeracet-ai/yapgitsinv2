@@ -177,6 +177,12 @@ export class Job {
   @Column({ type: 'varchar', length: 12, nullable: true })
   geohash: string | null;
 
+  /** Phase 464 (hatalar.txt #17) — Taslak ilan.
+   * true ise ilan yayında değil, sadece sahibinin "Drafts" sekmesinde görünür.
+   * Listeleme query'leri default'ta `isDraft=false` filtreler. */
+  @Column({ type: 'boolean', default: false })
+  isDraft: boolean;
+
   /** Teslim/bitiş tarihi — YYYY-MM-DD formatında.
    * Phase 463 (hatalar.txt #9) — backward-compat: dueDate tek tarih kalır.
    * Çoklu tarih seçimi `dueDates` (aşağıda) ile destekleniyor; varsa ilk
