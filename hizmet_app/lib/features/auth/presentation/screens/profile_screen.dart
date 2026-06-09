@@ -189,9 +189,10 @@ class ProfileScreen extends ConsumerWidget {
               // gizlendi (kullanıcı isteği). İlgili widget tanımları kalır
               // ki gelecekte tekrar açılabilsin; build'den çekildiler.
               _buildIdentityStatus(user),
-              // Phase 321 — İstatistikler + Rozetler + İtibar tek bir
-              // açılır-kapanır sekmede toplandı.
-              _buildStatsExpansion(ref),
+              // Phase 445 (hatalar.txt #3) — Hizmet Alan/Veren istatistikleri
+              // kullanıcı isteğiyle profile sekmesinden kaldırıldı.
+              // _buildStatsExpansion gövdesi korunuyor — gelecekte tekrar
+              // çağrılabilir, build chain'inden çıkarıldı.
               _buildCertificationsSection(ref),
               _buildPastPhotos(ref),
               _buildReviewsSection(ref),
@@ -704,7 +705,8 @@ class ProfileScreen extends ConsumerWidget {
   /// Phase 321 — Tek açılır-kapanır "İstatistikler" sekmesi:
   /// İtibar Puanı + Ortalama Puan + Değerlendirme strip'i (header'dan
   /// taşındı), Hizmet Alan / Hizmet Veren kartları ve Rozetler.
-  /// Varsayılan KAPALI — kullanıcı isterse genişletir.
+  /// Phase 445 — build chain'inden çıkarıldı (hatalar.txt #3), tanım korunuyor.
+  // ignore: unused_element
   Widget _buildStatsExpansion(WidgetRef ref) {
     final profileAsync = ref.watch(myPublicProfileProvider);
     return Container(
