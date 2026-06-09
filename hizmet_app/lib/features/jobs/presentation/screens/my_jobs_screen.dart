@@ -1725,25 +1725,91 @@ class _JobList extends StatelessWidget {
   }
 }
 
-class _OfferList extends StatelessWidget {
+/// Phase 450 (hatalar.txt #8) — Teklif liste fiyat sort filter.
+enum _OfferSortMode { none, priceAsc, priceDesc }
+
+class _OfferList extends StatefulWidget {
   final List<Map<String, dynamic>> offers;
   final String emptyMsg;
   const _OfferList({required this.offers, required this.emptyMsg});
 
   @override
+  State<_OfferList> createState() => _OfferListState();
+}
+
+class _OfferListState extends State<_OfferList> {
+  _OfferSortMode _sort = _OfferSortMode.none;
+
+  List<Map<String, dynamic>> _sortedOffers() {
+    final list = [...widget.offers];
+    if (_sort == _OfferSortMode.none) return list;
+    list.sort((a, b) {
+      final ap = (a['price'] as num?)?.toDouble() ?? 0;
+      final bp = (b['price'] as num?)?.toDouble() ?? 0;
+      return _sort == _OfferSortMode.priceAsc
+          ? ap.compareTo(bp)
+          : bp.compareTo(ap);
+    });
+    return list;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (offers.isEmpty) {
+    if (widget.offers.isEmpty) {
       return EmptyState(
         icon: Icons.local_offer_outlined,
         title: 'Teklif yok',
-        message: emptyMsg,
+        message: widget.emptyMsg,
       );
     }
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      itemCount: offers.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 6),
-      itemBuilder: (context, i) => _WorkerOfferCard(offer: offers[i]),
+    final sorted = _sortedOffers();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Phase 450 — Fiyat sort filter butonları.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+          child: Row(
+            children: [
+              Text('Fiyat sıralama:',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary)),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('Artan',
+                    style: TextStyle(fontSize: 11)),
+                selected: _sort == _OfferSortMode.priceAsc,
+                onSelected: (sel) => setState(() => _sort =
+                    sel ? _OfferSortMode.priceAsc : _OfferSortMode.none),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                avatar: const Icon(Icons.arrow_upward_rounded, size: 14),
+              ),
+              const SizedBox(width: 6),
+              ChoiceChip(
+                label: const Text('Azalan',
+                    style: TextStyle(fontSize: 11)),
+                selected: _sort == _OfferSortMode.priceDesc,
+                onSelected: (sel) => setState(() => _sort =
+                    sel ? _OfferSortMode.priceDesc : _OfferSortMode.none),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                avatar: const Icon(Icons.arrow_downward_rounded, size: 14),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            itemCount: sorted.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 6),
+            itemBuilder: (context, i) => _WorkerOfferCard(offer: sorted[i]),
+          ),
+        ),
+      ],
     );
   }
 }
