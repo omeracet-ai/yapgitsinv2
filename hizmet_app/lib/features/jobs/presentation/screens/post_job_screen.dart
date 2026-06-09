@@ -826,6 +826,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   }
 
   /// Phase 266 — Saat seçici.
+  /// Phase 455 (hatalar.txt #9) — saat alanları gizlendi; fonksiyon korunuyor.
+  // ignore: unused_element
   Future<void> _pickDueTime() async {
     final picked = await showTimePicker(
       context: context,
@@ -858,12 +860,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         : '${_dueDate!.day.toString().padLeft(2, '0')}/'
             '${_dueDate!.month.toString().padLeft(2, '0')}/'
             '${_dueDate!.year}';
-    final dueTimeLabel = _anyTime
-        ? 'Tüm saatler'
-        : (_dueTime == null
-            ? 'Saat — opsiyonel'
-            : '${_dueTime!.hour.toString().padLeft(2, '0')}:${_dueTime!.minute.toString().padLeft(2, '0')}');
-    final timeActive = !_anyTime && _dueTime != null;
+    // Phase 455 (hatalar.txt #9) — Saat label/state'i kaldırıldı.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -871,122 +868,45 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary)),
         const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Tarih kutusu
-            Expanded(
-              flex: 3,
-              child: GestureDetector(
-                onTap: _pickDueDate,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: _dueDate != null ? AppColors.primaryLight : AppColors.surface,
-                    border: Border.all(
-                      color: _dueDate != null ? AppColors.primary : AppColors.border,
-                      width: _dueDate != null ? 1.5 : 1,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today_outlined,
-                          size: 18,
-                          color: _dueDate != null ? AppColors.primary : AppColors.textSecondary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(dueDateLabel,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: _dueDate != null ? AppColors.primary : AppColors.textPrimary,
-                              fontWeight: _dueDate != null ? FontWeight.w600 : FontWeight.normal,
-                            )),
-                      ),
-                      if (_dueDate != null)
-                        GestureDetector(
-                          onTap: () => setState(() => _dueDate = null),
-                          child: const Icon(Icons.close, size: 16, color: Colors.black54),
-                        ),
-                    ],
-                  ),
-                ),
+        // Phase 455 (hatalar.txt #9) — Saat seçim alanları gizlendi.
+        // _anyTime hep true sabit; saat kutusu + "Tüm saatler" Switch
+        // chain'inden çıkarıldı. Backend dueAnyTime=true alır, dueTime null.
+        // Tarih kutusu artık full-width.
+        GestureDetector(
+          onTap: _pickDueDate,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              color: _dueDate != null ? AppColors.primaryLight : AppColors.surface,
+              border: Border.all(
+                color: _dueDate != null ? AppColors.primary : AppColors.border,
+                width: _dueDate != null ? 1.5 : 1,
               ),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 8),
-            // Saat kutusu (Phase 266)
-            Expanded(
-              flex: 2,
-              child: GestureDetector(
-                onTap: _anyTime ? null : _pickDueTime,
-                child: Opacity(
-                  opacity: _anyTime ? 0.55 : 1,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: timeActive ? AppColors.primaryLight : AppColors.surface,
-                      border: Border.all(
-                        color: timeActive ? AppColors.primary : AppColors.border,
-                        width: timeActive ? 1.5 : 1,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.access_time_outlined,
-                            size: 18,
-                            color: timeActive ? AppColors.primary : AppColors.textSecondary),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(dueTimeLabel,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: timeActive ? AppColors.primary : AppColors.textPrimary,
-                                fontWeight: timeActive ? FontWeight.w600 : FontWeight.normal,
-                              )),
-                        ),
-                        if (timeActive)
-                          GestureDetector(
-                            onTap: () => setState(() => _dueTime = null),
-                            child: const Icon(Icons.close, size: 16, color: Colors.black54),
-                          ),
-                      ],
-                    ),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_today_outlined,
+                    size: 18,
+                    color: _dueDate != null ? AppColors.primary : AppColors.textSecondary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(dueDateLabel,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: _dueDate != null ? AppColors.primary : AppColors.textPrimary,
+                        fontWeight: _dueDate != null ? FontWeight.w600 : FontWeight.normal,
+                      )),
+                ),
+                if (_dueDate != null)
+                  GestureDetector(
+                    onTap: () => setState(() => _dueDate = null),
+                    child: const Icon(Icons.close, size: 16, color: Colors.black54),
                   ),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        // Phase 266 — "Tüm saatler" toggle
-        Row(
-          children: [
-            Switch(
-              value: _anyTime,
-              onChanged: (v) {
-                setState(() {
-                  _anyTime = v;
-                  if (v) _dueTime = null;
-                });
-                _scheduleDraftSave();
-              },
-              activeThumbColor: AppColors.primary,
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(
-                'Tüm saatler (saat farketmez)',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: _anyTime ? AppColors.primary : AppColors.textSecondary,
-                  fontWeight: _anyTime ? FontWeight.w600 : FontWeight.normal,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
         const SizedBox(height: 6),
         GestureDetector(
