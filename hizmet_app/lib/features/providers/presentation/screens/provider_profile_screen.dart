@@ -476,20 +476,12 @@ class _ProviderContent extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Yorumlar',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              TextButton.icon(
-                onPressed: () => _openWriteReview(context, ref, provider),
-                icon: const Icon(Icons.rate_review_outlined,
-                    size: 16, color: AppColors.primary),
-                label: const Text('Yorum Yaz',
-                    style: TextStyle(color: AppColors.primary, fontSize: 13)),
-              ),
-            ],
-          ),
+          // Phase 452 (hatalar.txt #1) — Review gating.
+          // Provider profile sayfasındaki "Yorum Yaz" butonu kaldırıldı.
+          // Yorum yazma artık sadece job tamamlandı/red edildi sonrası
+          // (JobDetail veya PendingReviewsPopup) akışından açılır.
+          const Text('Yorumlar',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           reviewsAsync.when(
             loading: () =>
@@ -531,6 +523,9 @@ class _ProviderContent extends ConsumerWidget {
     );
   }
 
+  // Phase 452 (hatalar.txt #1) — Yorum yazma artık job completed/rejected
+  // sonrası açılır; entry korunuyor (gelecekte gerekirse tekrar bağlanabilir).
+  // ignore: unused_element
   void _openWriteReview(BuildContext context, WidgetRef ref,
       Map<String, dynamic> provider) {
     final auth = ref.read(authStateProvider);
