@@ -2183,29 +2183,37 @@ class _BidSheetState extends State<_BidSheet> {
             controller: widget.msgCtrl,
             maxLines: 2,
             maxLength: 200,
+            // Phase 447 (hatalar.txt #7) — Teklif metninde rakam/sayı yasak.
+            inputFormatters: [
+              FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+            ],
             decoration: InputDecoration(
                 labelText: widget.msgLabel,
                 prefixIcon: const Icon(Icons.message_outlined),
                 alignLabelWithHint: true,
+                helperText: 'Mesajda rakam/sayı kullanılamaz',
                 filled: true),
           ),
-          if (widget.showLineItems) ...[
-            const SizedBox(height: 8),
-            Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-              child: ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                childrenPadding: const EdgeInsets.only(bottom: 8),
-                title: const Text('Kalem Bazlı Detay (opsiyonel)',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                children: [
-                  OfferLineItemsEditor(
-                    onChanged: widget.onLineItemsChanged ?? (_) {},
-                  ),
-                ],
-              ),
-            ),
-          ],
+          // Phase 447 (hatalar.txt #7) — "Kalem Bazlı Detay" gizlendi
+          // (kullanıcı isteği). Widget kullanımı yorum satırına alındı, kod
+          // korunuyor — gelecekte tekrar açılabilir.
+          // if (widget.showLineItems) ...[
+          //   const SizedBox(height: 8),
+          //   Theme(
+          //     data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          //     child: ExpansionTile(
+          //       tilePadding: EdgeInsets.zero,
+          //       childrenPadding: const EdgeInsets.only(bottom: 8),
+          //       title: const Text('Kalem Bazlı Detay (opsiyonel)',
+          //           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          //       children: [
+          //         OfferLineItemsEditor(
+          //           onChanged: widget.onLineItemsChanged ?? (_) {},
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          // ],
           // Phase 316 — Önerilen tarih/saat: ilan flexible/urgent ise görünür.
           if (widget.showSchedulePicker) ...[
             const SizedBox(height: 12),
