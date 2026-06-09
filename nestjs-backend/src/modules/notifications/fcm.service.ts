@@ -1,7 +1,8 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../users/user.entity';
+import { MessageLogService } from '../admin-saas/services/message-log.service';
 
 /**
  * Phase 439 — FCM send options (delivery rate optimization).
@@ -95,7 +96,26 @@ export class FcmService implements OnModuleInit {
   constructor(
     @InjectRepository(User)
     private usersRepo: Repository<User>,
+    @Optional() private readonly messageLog?: MessageLogService,
   ) {}
+
+  private logPush(
+    recipient: string,
+    title: string,
+    body: string,
+    status: 'sent' | 'failed',
+    error?: string,
+  ): void {
+    if (!this.messageLog) return;
+    void this.messageLog.log({
+      channel: 'fcm',
+      status,
+      recipient,
+      subject: title,
+      body,
+      error: error ?? null,
+    });
+  }
 
   async onModuleInit(): Promise<void> {
     const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
@@ -152,17 +172,20 @@ export class FcmService implements OnModuleInit {
         token,
         ...payload,
       });
+      this.logPush(token, title, body, 'sent');
       return true;
     } catch (err) {
       const code = (err as { code?: string }).code ?? '';
+      const msg = (err as Error).message;
       if (
         code === 'messaging/invalid-registration-token' ||
         code === 'messaging/registration-token-not-registered'
       ) {
         await this.cleanupTokens([token]);
       } else {
-        this.logger.warn(`FCM sendToToken failed: ${(err as Error).message}`);
+        this.logger.warn(`FCM sendToToken failed: ${msg}`);
       }
+      this.logPush(token, title, body, 'failed', code || msg);
       return false;
     }
   }
@@ -225,6 +248,13 @@ export class FcmService implements OnModuleInit {
     if (invalid.length) {
       await this.cleanupTokens(invalid);
     }
+    this.logPush(
+      `multicast:${unique.length}`,
+      title,
+      body,
+      failureCount === 0 ? 'sent' : 'failed',
+      failureCount > 0 ? `success=${successCount} fail=${failureCount}` : undefined,
+    );
     return { successCount, failureCount };
   }
 
@@ -282,6 +312,15 @@ export class FcmService implements OnModuleInit {
         tokens,
         ...payload,
       });
+      this.logPush(
+        `user:${userId}`,
+        title,
+        body,
+        response.failureCount === 0 ? 'sent' : 'failed',
+        response.failureCount > 0
+          ? `success=${response.successCount} fail=${response.failureCount}`
+          : undefined,
+      );
 
       if (response.failureCount > 0) {
         const invalid: string[] = [];
@@ -307,7 +346,9 @@ export class FcmService implements OnModuleInit {
         }
       }
     } catch (err) {
-      this.logger.warn(`FCM send failed: ${(err as Error).message}`);
+      const msg = (err as Error).message;
+      this.logger.warn(`FCM send failed: ${msg}`);
+      this.logPush(`user:${userId}`, title, body, 'failed', msg);
     }
   }
 
@@ -373,9 +414,18 @@ export class FcmService implements OnModuleInit {
         await this.cleanupTokens(invalid);
       }
 
+      this.logPush(
+        `broadcast:${users.length}users`,
+        title,
+        body,
+        'sent',
+        `success=${totalSuccess}`,
+      );
       return totalSuccess;
     } catch (err) {
-      this.logger.warn(`FCM broadcast failed: ${(err as Error).message}`);
+      const msg = (err as Error).message;
+      this.logger.warn(`FCM broadcast failed: ${msg}`);
+      this.logPush('broadcast:all', title, body, 'failed', msg);
       return 0;
     }
   }

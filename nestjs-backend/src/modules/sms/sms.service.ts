@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MessageLogService } from '../admin-saas/services/message-log.service';
 
 /**
  * Phase 123 — SMS Service
@@ -8,6 +9,28 @@ import { Injectable, Logger } from '@nestjs/common';
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
+
+  constructor(
+    @Optional() private readonly messageLog?: MessageLogService,
+  ) {}
+
+  private logSms(
+    to: string,
+    message: string,
+    status: 'sent' | 'failed',
+    provider?: string,
+    error?: string,
+  ): void {
+    if (!this.messageLog) return;
+    void this.messageLog.log({
+      channel: 'sms',
+      status,
+      recipient: to,
+      subject: provider ?? null,
+      body: message,
+      error: error ?? null,
+    });
+  }
 
   async sendSms(
     to: string,
@@ -34,6 +57,7 @@ export class SmsService {
         // Netgsm success codes: starts with "00" or "01"
         if (res.ok && /^0[01]\s/.test(text.trim())) {
           this.logger.log(`SMS sent via Netgsm to ${to}`);
+          this.logSms(to, message, 'sent', 'netgsm');
           return { success: true, provider: 'netgsm' };
         }
         this.logger.warn(`Netgsm failed: ${text}`);
@@ -64,20 +88,25 @@ export class SmsService {
         });
         if (res.ok) {
           this.logger.log(`SMS sent via Twilio to ${to}`);
+          this.logSms(to, message, 'sent', 'twilio');
           return { success: true, provider: 'twilio' };
         }
         const errText = await res.text();
         this.logger.warn(`Twilio failed: ${errText}`);
+        this.logSms(to, message, 'failed', 'twilio', errText);
         return { success: false, error: errText };
       } catch (e) {
-        this.logger.error(`Twilio error: ${(e as Error).message}`);
-        return { success: false, error: (e as Error).message };
+        const msg = (e as Error).message;
+        this.logger.error(`Twilio error: ${msg}`);
+        this.logSms(to, message, 'failed', 'twilio', msg);
+        return { success: false, error: msg };
       }
     }
 
     this.logger.warn(
       `SMS disabled (no provider configured) — would send to ${to}: ${message}`,
     );
+    this.logSms(to, message, 'failed', undefined, 'sms_disabled');
     return { success: false, error: 'sms_disabled' };
   }
 

@@ -1,6 +1,7 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import { MessageLogService } from '../admin-saas/services/message-log.service';
 
 interface MailUser {
   id?: string;
@@ -59,6 +60,28 @@ export class EmailService implements OnModuleInit {
   private readonly logger = new Logger(EmailService.name);
   private transporter: Transporter | null = null;
   private from = 'Yapgitsin <noreply@yapgitsin.tr>';
+
+  constructor(
+    @Optional() private readonly messageLog?: MessageLogService,
+  ) {}
+
+  private logMessage(
+    to: string,
+    subject: string,
+    html: string,
+    status: 'sent' | 'failed',
+    error?: string,
+  ): void {
+    if (!this.messageLog) return;
+    void this.messageLog.log({
+      channel: 'email',
+      status,
+      recipient: to,
+      subject,
+      body: html,
+      error: error ?? null,
+    });
+  }
 
   onModuleInit() {
     const host = process.env.SMTP_HOST;
@@ -120,10 +143,12 @@ export class EmailService implements OnModuleInit {
         html,
         text: text ?? htmlToText(html),
       });
+      this.logMessage(to, subject, html, 'sent');
       return { ok: true, transporter: transporterLabel };
     } catch (err) {
       const msg = (err as Error).message;
       this.logger.error(`sendRaw failed to ${to}: ${msg}`);
+      this.logMessage(to, subject, html, 'failed', msg);
       return { ok: false, error: msg, transporter: transporterLabel };
     }
   }
@@ -144,10 +169,11 @@ export class EmailService implements OnModuleInit {
         html,
         text: text ?? htmlToText(html),
       });
+      this.logMessage(to, subject, html, 'sent');
     } catch (err) {
-      this.logger.error(
-        `Email send failed to ${to}: ${(err as Error).message}`,
-      );
+      const msg = (err as Error).message;
+      this.logger.error(`Email send failed to ${to}: ${msg}`);
+      this.logMessage(to, subject, html, 'failed', msg);
     }
   }
 

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 
@@ -46,6 +46,7 @@ import { GscService } from './services/gsc.service';
 import { PillarPage } from './entities/pillar-page.entity';
 import { BlogDraft } from './entities/blog-draft.entity';
 
+@Global()
 @Module({
   imports: [
     ConfigModule,
