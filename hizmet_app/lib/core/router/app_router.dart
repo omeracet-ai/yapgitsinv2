@@ -19,9 +19,7 @@ import '../../../features/ai/presentation/screens/support_agent_screen.dart';
 import '../../../features/ai/presentation/screens/ai_chat_screen.dart';
 import '../../../features/auth/presentation/screens/public_profile_screen.dart';
 // Phase 453 — CustomerPublicProfileScreen artık kullanılmıyor (route konsolide).
-// Import korunuyor ki dosya gelecekte gerekirse referansla kalabilsin.
-// ignore: unused_import
-import '../../../features/auth/presentation/screens/customer_public_profile_screen.dart';
+// Dosya _zombi_kasa/ altına taşındı; geri çağırma INDEX.md'de.
 import '../../../features/auth/presentation/screens/two_factor_challenge_screen.dart';
 import '../../../features/auth/presentation/screens/two_factor_setup_screen.dart';
 import '../../../features/auth/presentation/screens/forgot_password_screen.dart';
@@ -410,8 +408,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       // Phase 453 (hatalar.txt #4) — Müşteri ve hizmet veren profil ekranları
       // konsolide edildi. Eski "/musteri/:id" route'u da artık PublicProfileScreen
-      // (hizmet veren detayı) kullanır. CustomerPublicProfileScreen dosyası
-      // korunuyor ama hiç kullanılmıyor (gelecekte gerekirse tekrar bağlanabilir).
+      // (hizmet veren detayı) kullanır. CustomerPublicProfileScreen kasada.
       GoRoute(
         path: '/musteri/:id',
         builder: (context, state) =>

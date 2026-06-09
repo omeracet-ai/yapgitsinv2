@@ -13,10 +13,7 @@ import '../../data/job_repository.dart';
 import '../../data/offer_repository.dart';
 import '../../../tokens/data/token_repository.dart';
 import 'my_jobs_screen.dart' show myOffersProvider, myJobsProvider;
-// Phase 447 (hatalar.txt #7) — OfferLineItemsEditor gizlendi (kullanım yok).
-// Import korunur — gelecekte tekrar bağlanabilir.
-// ignore: unused_import
-import '../../../offers/widgets/offer_line_items_editor.dart';
+// Phase 447 (hatalar.txt #7) — OfferLineItemsEditor _zombi_kasa/ altına taşındı.
 import '../../../offers/widgets/offer_template_picker.dart';
 import '../../../offers/widgets/offer_line_items_view.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -2326,26 +2323,8 @@ class _BidSheetState extends State<_BidSheet> {
                 helperText: 'Mesajda rakam/sayı kullanılamaz',
                 filled: true),
           ),
-          // Phase 447 (hatalar.txt #7) — "Kalem Bazlı Detay" gizlendi
-          // (kullanıcı isteği). Widget kullanımı yorum satırına alındı, kod
-          // korunuyor — gelecekte tekrar açılabilir.
-          // if (widget.showLineItems) ...[
-          //   const SizedBox(height: 8),
-          //   Theme(
-          //     data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-          //     child: ExpansionTile(
-          //       tilePadding: EdgeInsets.zero,
-          //       childrenPadding: const EdgeInsets.only(bottom: 8),
-          //       title: const Text('Kalem Bazlı Detay (opsiyonel)',
-          //           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-          //       children: [
-          //         OfferLineItemsEditor(
-          //           onChanged: widget.onLineItemsChanged ?? (_) {},
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          // ],
+          // Phase 447 (hatalar.txt #7) — "Kalem Bazlı Detay" widget'ı kullanım
+          // dışı; OfferLineItemsEditor _zombi_kasa/ altında.
           // Phase 316 — Önerilen tarih/saat: ilan flexible/urgent ise görünür.
           if (widget.showSchedulePicker) ...[
             const SizedBox(height: 12),
