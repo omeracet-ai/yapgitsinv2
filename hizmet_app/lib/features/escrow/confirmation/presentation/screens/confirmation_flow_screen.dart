@@ -8,11 +8,10 @@ import '../../../data/escrow_repository.dart';
 import '../../data/confirmation_repository.dart';
 import '../../data/confirmation_state.dart';
 import '../../providers/confirmation_providers.dart';
-// NOTE (Phase 267): QR display/scanner widgets retained on disk for backward
-// compat but no longer wired into the flow. The flag below restores them.
-// ignore: unused_import
+// Phase 480 — QR flow restored (kEnableQrFlow = true). İlk implementation
+// pre-Phase 267 koddan alındı; grace timer'ın yanına ek "QR short-circuit"
+// yolu olarak çalışır (kullanıcılar 1 saat beklemek zorunda kalmaz).
 import '../widgets/qr_display_widget.dart';
-// ignore: unused_import
 import '../widgets/qr_scanner_screen.dart';
 
 /// Phase 267 — Plain-confirm flow with 1hr grace window.
@@ -40,10 +39,10 @@ class _ConfirmationFlowScreenState
   String? _error;
   bool _submitting = false;
 
-  /// Phase 267 — QR akışını gizleyen feature flag. true yapılırsa eski
-  /// QR display + scanner butonları geri gelir. Şu an plain-confirm aktif.
-  // ignore: unused_field
-  static const bool kEnableQrFlow = false;
+  /// Phase 480 — QR akışı aktif. true: her iki taraf onayladıktan sonra
+  /// Grace countdown'a ek olarak QR short-circuit kartı gösterilir.
+  /// false: pure plain-confirm + 1hr grace (Phase 267 davranışı).
+  static const bool kEnableQrFlow = true;
 
   @override
   void initState() {
@@ -301,16 +300,124 @@ class _ConfirmationFlowScreenState
     if (st.isExpired) return _expiredCard();
     // İptal edildi.
     if (st.isCancelled) return _cancelledCard();
-    // Grace içinde — countdown + iptal butonu.
+    // Grace içinde — countdown + iptal butonu (+ QR kart eklenirse).
     if (st.isPendingGrace) {
-      return _GraceCountdownCard(
-          graceEndsAt: st.graceEndsAt,
-          onCancel: _submitting ? null : _cancelGrace,
-          onFinalize: _submitting ? null : _finalizeGraceEarly,
-        );
+      return Column(
+        children: [
+          _GraceCountdownCard(
+            graceEndsAt: st.graceEndsAt,
+            onCancel: _submitting ? null : _cancelGrace,
+            onFinalize: _submitting ? null : _finalizeGraceEarly,
+          ),
+          if (kEnableQrFlow) ...[
+            const SizedBox(height: 12),
+            _qrStepCard(),
+          ],
+        ],
+      );
+    }
+    // Her iki taraf da onayladı ama henüz grace yoksa (anormal) — QR'ı da
+    // göster ki worker tarayıp hızlı release alabilsin.
+    if (kEnableQrFlow && st.workerConfirmed && st.customerConfirmed) {
+      return _qrStepCard();
     }
     // Default: plain-confirm butonu (kendi tarafın onaylamadıysa).
     return _confirmCard(st);
+  }
+
+  /// Phase 480 — QR short-circuit kart.
+  /// - Customer (payer): "QR Göster" → QrDisplayWidget tam ekran açar
+  /// - Worker (payee): "QR Tara" → kamera ile QR okur → /scan → release
+  Widget _qrStepCard() {
+    final isCustomer = _mySide == ConfirmationSide.customer;
+    return _baseCard(
+      icon: Icons.qr_code_rounded,
+      iconColor: AppColors.primary,
+      title: isCustomer ? 'Hızlı Onay — QR Göster' : 'Hızlı Onay — QR Tara',
+      subtitle: isCustomer
+          ? 'Hizmet veren karşınızda ise QR kodu gösterin; o tarar, ödeme '
+              'hemen serbest bırakılır (1 saatlik bekleme atlanır).'
+          : 'Karşı taraf QR kodu telefonunda gösterecek. QR\'ı tarayın → '
+              'ödeme hemen serbest bırakılır.',
+      action: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: _submitting
+              ? null
+              : (isCustomer ? _showPayerQr : _openQrScanner),
+          icon: Icon(isCustomer
+              ? Icons.qr_code_2_rounded
+              : Icons.qr_code_scanner_rounded),
+          label: Text(isCustomer ? 'QR Kodu Göster' : 'QR Kodu Tara'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showPayerQr() async {
+    try {
+      final tok = await ref
+          .read(confirmationRepositoryProvider)
+          .getQr(widget.escrowId);
+      if (!mounted) return;
+      await showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(20),
+          child: QrDisplayWidget(
+            qrToken: tok.qrToken,
+            expiresAt: tok.expiresAt,
+            onRefresh: () async {
+              await ref
+                  .read(confirmationRepositoryProvider)
+                  .getQr(widget.escrowId);
+              if (mounted) setState(() {});
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      _toast(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _openQrScanner() async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => const QrScannerScreen(),
+      ),
+    );
+    if (result == null || result.isEmpty) return;
+    if (!mounted) return;
+    setState(() => _submitting = true);
+    try {
+      // Mock GPS — gerçek implementation Geolocator ile alır.
+      await ref.read(confirmationRepositoryProvider).scan(
+            escrowId: widget.escrowId,
+            qrToken: result,
+            lat: 0.0,
+            lng: 0.0,
+          );
+      if (!mounted) return;
+      _toast('Ödeme serbest bırakıldı');
+      ref
+          .read(confirmationStateProvider(widget.escrowId).notifier)
+          .refresh();
+    } catch (e) {
+      _toast(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   Widget _confirmCard(ConfirmationState st) {
