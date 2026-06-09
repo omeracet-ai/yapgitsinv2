@@ -267,7 +267,38 @@ export class BookingsService {
         }),
       );
 
-      return { saved, percent, amount, refundStatus, old };
+      // Phase 454 (hatalar.txt #6) — Booking cancel → ilgili Job otomatik
+      // tekrar yayınlansın (OPEN) ve müşteriye bildirim gitsin. Yalnız
+      // tamamlanmamış (COMPLETED değil) işler reopen edilir; idempotent.
+      let reopenedJobId: string | null = null;
+      if (booking.jobId) {
+        const job = await em.findOne(Job, { where: { id: booking.jobId } });
+        if (job && job.status !== JobStatus.COMPLETED && job.status !== JobStatus.OPEN) {
+          job.status = JobStatus.OPEN;
+          await em.save(job);
+          reopenedJobId = job.id;
+          await em.save(
+            em.create(Notification, {
+              userId: booking.customerId,
+              type: NotificationType.SYSTEM,
+              title: '📢 İlanınız tekrar yayında',
+              body: `Randevu iptal edildi, "${job.title}" ilanı otomatik olarak tekrar açıldı. Yeni teklifler bekleniyor.`,
+              refId: job.id,
+            }),
+          );
+          await em.save(
+            em.create(AdminAuditLog, {
+              adminUserId: userId,
+              action: 'job.auto_reopen',
+              targetType: 'job',
+              targetId: job.id,
+              payload: { triggeredBy: 'booking.cancel', bookingId: booking.id },
+            }),
+          );
+        }
+      }
+
+      return { saved, percent, amount, refundStatus, old, reopenedJobId };
     });
 
     // Stats outside TX (non-critical, idempotent recalcs)
