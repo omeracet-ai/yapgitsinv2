@@ -79,7 +79,41 @@ class _JobPhotoCarouselState extends State<JobPhotoCarousel> {
       return _buildSingleCard();
     }
 
+    // Phase 457 (hatalar.txt #13) — 2-4 foto → row'a sığacak şekilde 4-per-row
+    // grid. 5+ foto → mevcut yatay slider (row taşar, slider aktif).
+    if (widget.photos.length <= 4) {
+      return _buildGrid();
+    }
+
     return _buildSlider();
+  }
+
+  /// Phase 457 — 4-per-row grid (2-4 fotoğraf için).
+  Widget _buildGrid() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: LayoutBuilder(
+        builder: (ctx, constraints) {
+          const gap = 8.0;
+          // 4 sütun + 3 gap
+          final available = constraints.maxWidth - gap * 3;
+          final tileSize = available / 4;
+          return Wrap(
+            spacing: gap,
+            runSpacing: gap,
+            children: List.generate(widget.photos.length, (i) {
+              return GestureDetector(
+                onTap: () => _openLightbox(i),
+                child: _PhotoCard(
+                  url: widget.photos[i],
+                  size: tileSize,
+                ),
+              );
+            }),
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildSingleCard() {
