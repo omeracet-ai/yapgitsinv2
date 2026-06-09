@@ -23,28 +23,30 @@ export function AnimatedGrid() {
         }
       `}</style>
 
-      {/* Gradient wash */}
+      {/* Gradient wash — Yaprakzade green + gold tints, very subtle */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 z-0"
+        className="pointer-events-none fixed inset-0"
         style={{
+          zIndex: -2,
           backgroundImage:
-            "linear-gradient(135deg, #0c1117 0%, #1a1f2e 50%, #0a3320 100%)",
+            "linear-gradient(135deg, #0c1117 0%, #131b25 50%, #0f1e17 100%)",
           backgroundSize: "200% 200%",
           animation: "ygrid-shift 30s ease infinite",
-          // M7 perf — promote to its own compositor layer so the 30s shift
-          // does not invalidate the page during paint.
           willChange: "background-position",
+          opacity: 0.5,
         }}
       />
 
-      {/* Dot grid overlay */}
+      {/* Dot grid overlay — gold tint, lowered to 0.025 */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 z-0 opacity-[0.035]"
+        className="pointer-events-none fixed inset-0"
         style={{
+          zIndex: -2,
+          opacity: 0.025,
           backgroundImage:
-            "radial-gradient(circle, #4ade80 1px, transparent 1px)",
+            "radial-gradient(circle, #c9a96e 1px, transparent 1px)",
           backgroundSize: "32px 32px",
         }}
       />

@@ -95,7 +95,39 @@ export default function DashboardPage() {
     fetchAnalytics();
   }, []);
 
-  if (loading) return <p className="text-gray-400 text-sm animate-pulse">Yükleniyor…</p>;
+  if (loading) {
+    return (
+      <div className="space-y-6 max-w-6xl">
+        <div
+          className="ad-skeleton"
+          style={{ height: 32, width: 240, borderRadius: 8 }}
+        />
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 16,
+          }}
+        >
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="ad-skeleton"
+              style={{ height: 110, borderRadius: 12 }}
+            />
+          ))}
+        </div>
+        <div
+          className="ad-skeleton"
+          style={{ height: 280, borderRadius: 12 }}
+        />
+        <div
+          className="ad-skeleton"
+          style={{ height: 220, borderRadius: 12 }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 max-w-6xl">
