@@ -442,3 +442,128 @@ label { font: 500 var(--ad-fs-md) var(--ad-font); color: var(--ad-ink-dim); marg
     animation-duration: 0.001s !important;
   }
 }
+
+/* ── Tailwind utility compat shim — Yaprakzade port ─────────────
+ * Existing admin pages still ship a lot of light-theme utility
+ * classes (bg-white, text-gray-900, border-gray-200, status pill
+ * bg-green-100 …). Rather than touch each page, we remap those
+ * utilities to dark-theme tokens so the visual port is uniform.
+ * Pages that opt out can wrap themselves in `.ad-raw` to escape
+ * these overrides.
+ */
+
+/* Page card pattern — bg-white + rounded + shadow ----------------- */
+.bg-white { background-color: var(--ad-card) !important; }
+
+/* Page surfaces -------------------------------------------------- */
+.bg-gray-50,
+.bg-gray-100,
+.bg-slate-50,
+.bg-slate-100 { background-color: var(--ad-bg) !important; }
+.bg-gray-200,
+.bg-slate-200 { background-color: var(--ad-elev) !important; }
+.bg-gray-800,
+.bg-gray-900,
+.bg-slate-800,
+.bg-slate-900,
+.bg-slate-950 { background-color: var(--ad-card) !important; }
+
+/* Text colors --------------------------------------------------- */
+.text-gray-900,
+.text-slate-900,
+.text-black { color: var(--ad-ink) !important; }
+.text-gray-800,
+.text-gray-700,
+.text-slate-800,
+.text-slate-700 { color: var(--ad-ink-dim) !important; }
+.text-gray-600,
+.text-gray-500,
+.text-slate-600,
+.text-slate-500 { color: var(--ad-muted) !important; }
+.text-gray-400,
+.text-gray-300,
+.text-slate-400,
+.text-slate-300 { color: var(--ad-muted) !important; }
+
+/* Borders ------------------------------------------------------- */
+.border-gray-100,
+.border-gray-200,
+.border-gray-300,
+.border-slate-100,
+.border-slate-200,
+.border-slate-300 { border-color: var(--ad-line-soft) !important; }
+.border-gray-400,
+.border-slate-400,
+.border-gray-700,
+.border-slate-700 { border-color: var(--ad-line) !important; }
+
+/* Blue → brand-green (primary action) ----------------------------- */
+.bg-blue-600,
+.bg-blue-500,
+.bg-blue-700 { background-color: var(--ad-green) !important; }
+.bg-blue-600:hover,
+.hover\:bg-blue-700:hover,
+.hover\:bg-blue-600:hover { background-color: var(--ad-green-light) !important; }
+.text-blue-600,
+.text-blue-500,
+.text-blue-700 { color: var(--ad-green-light) !important; }
+.border-blue-500,
+.border-blue-600 { border-color: var(--ad-green-light) !important; }
+
+/* Status pills — recolor to dark-theme tinted */
+.bg-green-100 { background-color: rgba(34, 197, 94, 0.14) !important; }
+.text-green-700,
+.text-green-800 { color: var(--ad-success-tx) !important; }
+
+.bg-yellow-100,
+.bg-amber-100 { background-color: rgba(245, 158, 11, 0.14) !important; }
+.text-yellow-700,
+.text-yellow-800,
+.text-amber-700 { color: var(--ad-warn-tx) !important; }
+
+.bg-blue-100 { background-color: rgba(59, 130, 246, 0.14) !important; }
+.text-blue-700,
+.text-blue-800 { color: var(--ad-info-tx) !important; }
+
+.bg-red-100,
+.bg-rose-100 { background-color: rgba(239, 68, 68, 0.14) !important; }
+.text-red-600,
+.text-red-700,
+.text-red-800,
+.text-rose-700 { color: var(--ad-err-tx) !important; }
+
+.bg-orange-100 { background-color: rgba(245, 158, 11, 0.14) !important; }
+.text-orange-700 { color: var(--ad-warn-tx) !important; }
+
+.bg-purple-100 { background-color: rgba(168, 85, 247, 0.14) !important; }
+.text-purple-700 { color: #d8b4fe !important; }
+
+.bg-emerald-500\/10 { background-color: rgba(34, 197, 94, 0.14) !important; }
+.text-emerald-300,
+.text-emerald-400 { color: var(--ad-success-tx) !important; }
+
+/* Shadows look heavier on dark; soften default shadow-sm ---------- */
+.shadow,
+.shadow-sm { box-shadow: var(--ad-shadow-sm) !important; }
+.shadow-md { box-shadow: var(--ad-shadow-md) !important; }
+.shadow-lg,
+.shadow-xl { box-shadow: var(--ad-shadow-lg) !important; }
+
+/* Hover row backgrounds ------------------------------------------ */
+.hover\:bg-gray-50:hover,
+.hover\:bg-slate-50:hover,
+.hover\:bg-gray-100:hover,
+.hover\:bg-slate-100:hover { background-color: var(--ad-card-hover) !important; }
+.hover\:bg-slate-800:hover { background-color: var(--ad-card-hover) !important; }
+
+/* Divide borders -------------------------------------------------- */
+.divide-gray-100 > * + *,
+.divide-gray-200 > * + *,
+.divide-slate-100 > * + *,
+.divide-slate-200 > * + * { border-color: var(--ad-line-soft) !important; }
+
+/* Opt-out escape hatch */
+.ad-raw,
+.ad-raw * {
+  /* Reset shim — usage: wrap container in className="ad-raw" */
+}
