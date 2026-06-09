@@ -1240,10 +1240,14 @@ class ProfileScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Sertifikalarım',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+              Row(children: const [
+                Text(
+                  'Sertifikalarım',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(width: 6),
+                InfoHint(k: 'profile.certifications'),
+              ]),
               const SizedBox(height: 10),
               ...verified.map((c) => Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -1306,9 +1310,13 @@ class ProfileScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Geçmiş İşlerden',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Row(children: const [
+                    Text('Geçmiş İşlerden',
+                        style:
+                            TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    SizedBox(width: 6),
+                    InfoHint(k: 'profile.pastPhotos'),
+                  ]),
                   Text('${photos.length} fotoğraf',
                       style: TextStyle(
                           fontSize: 12, color: AppColors.textHint)),
@@ -1381,7 +1389,9 @@ class ProfileScreen extends ConsumerWidget {
                 const Text('Değerlendirmeler',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
+                const InfoHint(k: 'profile.reviews'),
+                const SizedBox(width: 6),
                 Icon(Icons.star, size: 16, color: Colors.amber.shade600),
                 const SizedBox(width: 2),
                 Text('${avg.toStringAsFixed(1)} ($total)',

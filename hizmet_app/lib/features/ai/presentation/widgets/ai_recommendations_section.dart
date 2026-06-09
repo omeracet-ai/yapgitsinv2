@@ -23,7 +23,8 @@ class AiRecommendationsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: 'Senin İçin Öneriler'),
+        const SectionHeader(
+            title: 'Senin İçin Öneriler', hintKey: 'home.aiRecommendations'),
         const SizedBox(height: 10),
         jobsAsync.when(
           data: (jobs) {

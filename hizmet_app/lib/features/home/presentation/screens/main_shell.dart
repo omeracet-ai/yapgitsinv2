@@ -455,6 +455,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
+          hintKey: 'home.categoryStrip',
           title: 'Popüler Kategoriler',
           actionLabel: 'Tümünü Gör',
           onAction: () => Navigator.push(
@@ -516,7 +517,9 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: 'Öne Çıkan Ustalar',
+          hintKey: 'home.featured',
+          // Phase 472 terim kuralı: "Usta" → "Hizmet Verenler"
+          title: 'Öne Çıkan Hizmet Verenler',
           actionLabel: 'Tümü',
           onAction: () => ref
               .read(selectedTabProvider.notifier)
@@ -564,6 +567,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
+          hintKey: 'home.recentJobs',
           title: 'Son İlanlar',
           actionLabel: 'Tümünü Gör',
           onAction: widget.onSeeAllRequests,

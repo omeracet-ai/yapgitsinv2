@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import 'stat_info_popup.dart';
 
 /// Phase 476 — Tüm uygulamada tek imleç tipi: küçük "ⓘ" → tap → kompakt
@@ -14,10 +15,12 @@ class InfoHint extends StatelessWidget {
   final EdgeInsets padding;
   final Color? color;
 
+  // Phase 479 — Default boyut 14 → 16 (+1 derece görünür) ve dolgun bg.
+  // Renk null gelirse AppColors.primary kullanılır (her arka planda görünür).
   const InfoHint({
     super.key,
     required this.k,
-    this.size = 14,
+    this.size = 16,
     this.padding = const EdgeInsets.all(2),
     this.color,
   });
@@ -26,13 +29,13 @@ class InfoHint extends StatelessWidget {
   Widget build(BuildContext context) {
     final hint = HintCatalog.lookup(k);
     if (hint == null) {
-      // Geliştirici uyarısı; release'de fark edilmez.
       assert(() {
         debugPrint('[InfoHint] Bilinmeyen key: $k');
         return true;
       }());
       return const SizedBox.shrink();
     }
+    final fg = color ?? AppColors.primary;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => showStatInfoPopup(
@@ -42,10 +45,17 @@ class InfoHint extends StatelessWidget {
       ),
       child: Padding(
         padding: padding,
-        child: Icon(
-          Icons.info_outline_rounded,
-          size: size,
-          color: color,
+        child: Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: fg.withValues(alpha: 0.10),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.info_outline_rounded,
+            size: size,
+            color: fg,
+          ),
         ),
       ),
     );
@@ -142,6 +152,33 @@ class HintCatalog {
       'Hizmet Kategorileri',
       'Platformda sunulan tüm ana hizmet alanları. Bir kategoriye tap → '
           'sadece o kategorideki ilanları görürsün.',
+    ),
+    'home.recentJobs': Hint(
+      'Son İlanlar',
+      'Son 7 günde açılan en yeni ilanlar. Hızlı teklif yapmak için '
+          'iyi bir başlangıç noktası.',
+    ),
+    'home.aiRecommendations': Hint(
+      'Senin İçin Öneriler',
+      'AI tarafından, eklediğin kategorilere ve geçmiş tekliflerine göre '
+          'sana özel eşleştirilen ilanlar. Liste sık sık tazelenir.',
+    ),
+
+    // ── Profile Tab 2 ────────────────────────────────────────────────────
+    'profile.certifications': Hint(
+      'Sertifikalarım',
+      'Yüklediğin sertifika belgeleri. Admin onayından geçenler "Doğrulandı" '
+          'olarak rozetlenir; profilinde gözle görünür güven artışı sağlar.',
+    ),
+    'profile.pastPhotos': Hint(
+      'Geçmiş İşlerden Fotoğraflar',
+      'Tamamladığın işlerden çekilmiş fotoğraflar. Galerinde gösterilir; '
+          'hizmet alanlar kalitenizi gerçek örneklerden değerlendirir.',
+    ),
+    'profile.reviews': Hint(
+      'Değerlendirmeler',
+      'Hizmet alanların seninle çalıştıktan sonra bıraktığı yıldız + yorum. '
+          'Ortalama puan profilinde ve arama sıralamasında etkilidir.',
     ),
 
     // ── İlan / Job ───────────────────────────────────────────────────────
