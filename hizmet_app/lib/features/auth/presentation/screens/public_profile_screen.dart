@@ -121,58 +121,82 @@ class _ProfileView extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      // Phase 458 (hatalar.txt #15) — Sticky Action Bar: 2 buton
+      // Mesaj Gönder (chat) + İşe Davet Et (Hizmet Al → /ilan-ver targetWorker)
       bottomNavigationBar: (isWorker && !isSelf)
           ? SafeArea(
               top: false,
-              minimum: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Phase 431 — Phase 330'daki "Hizmet al" üst başlığı kaldırıldı
-                  // (kullanıcı isteği): buton zaten "Hizmet Al" yazıyor, redundant.
-                  Material(
-                    color: AppColors.surface,
-                    elevation: 8,
-                    shadowColor: Colors.black.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: const Icon(Icons.send_rounded,
-                        size: 18, color: Colors.white),
-                    label: const Text('Hizmet Al',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold)),
-                    onPressed: () {
-                      if (currentUserId == null) {
-                        context.push('/giris-yap', extra: {
-                          'returnTo': '/usta/$userId',
-                        });
-                        return;
-                      }
-                      context.push('/ilan-ver', extra: {
-                        'targetWorkerId': userId,
-                        'targetWorkerName': name,
-                        if (workerCats.isNotEmpty) ...{
-                          'initialCategory': workerCats.first,
-                          'allowedCategories': workerCats,
-                        },
-                      });
-                    },
+              minimum: const EdgeInsets.fromLTRB(12, 4, 12, 10),
+              child: Material(
+                color: AppColors.surface,
+                elevation: 8,
+                shadowColor: Colors.black.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(14),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Row(
+                    children: [
+                      // Mesaj Gönder (outlined)
+                      Expanded(
+                        flex: 2,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            side: BorderSide(color: AppColors.primary, width: 1.5),
+                            foregroundColor: AppColors.primary,
+                          ),
+                          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 17),
+                          label: const Text('Mesaj',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                          onPressed: () {
+                            if (currentUserId == null) {
+                              context.push('/giris-yap', extra: {'returnTo': '/usta/$userId'});
+                              return;
+                            }
+                            context.push('/sohbet/$userId', extra: {'peerName': name});
+                          },
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      // İşe Davet Et (filled — primary CTA)
+                      Expanded(
+                        flex: 3,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: const Icon(Icons.send_rounded, size: 17, color: Colors.white),
+                          label: const Text('İşe Davet Et',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                          onPressed: () {
+                            if (currentUserId == null) {
+                              context.push('/giris-yap', extra: {'returnTo': '/usta/$userId'});
+                              return;
+                            }
+                            context.push('/ilan-ver', extra: {
+                              'targetWorkerId': userId,
+                              'targetWorkerName': name,
+                              if (workerCats.isNotEmpty) ...{
+                                'initialCategory': workerCats.first,
+                                'allowedCategories': workerCats,
+                              },
+                            });
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             )
           : null,
@@ -399,6 +423,18 @@ class _ProfileView extends ConsumerWidget {
               ),              // Stack (background)
             ),                // FlexibleSpaceBar
           ),                  // SliverAppBar
+
+          // Phase 458 (hatalar.txt #15) — Verification Center carousel.
+          // Yatay kaydırılabilir rozet şeridi: ID, telefon, ödeme, lisans.
+          if (showVerified)
+            SliverToBoxAdapter(
+              child: _VerificationCenter(
+                identityVerified: verified,
+                phoneVerified: data['phoneVerified'] == true,
+                paymentReady: data['paymentReady'] == true,
+                licenseVerified: data['licenseVerified'] == true,
+              ),
+            ),
 
           SliverToBoxAdapter(
             child: Column(
@@ -1065,5 +1101,99 @@ class _ReviewTile extends ConsumerWidget {
     } catch (_) {
       return '';
     }
+  }
+}
+
+/// Phase 458 (hatalar.txt #15) — Verification Center.
+/// Airtasker-style horizontal carousel: ID + Telefon + Ödeme + Lisans rozetleri.
+/// Verilen alanlar olmayanlar gri/varsayılan gösterilir (mevcut data nullable).
+class _VerificationCenter extends StatelessWidget {
+  final bool identityVerified;
+  final bool phoneVerified;
+  final bool paymentReady;
+  final bool licenseVerified;
+  const _VerificationCenter({
+    required this.identityVerified,
+    required this.phoneVerified,
+    required this.paymentReady,
+    required this.licenseVerified,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: AppColors.surface,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Icon(Icons.verified_user_outlined,
+                    size: 15, color: AppColors.textSecondary),
+                const SizedBox(width: 6),
+                Text('Güvenilirlik Doğrulamaları',
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 56,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              physics: const ClampingScrollPhysics(),
+              children: [
+                _badge('🆔', 'Kimlik', identityVerified),
+                _badge('📱', 'Telefon', phoneVerified),
+                _badge('💳', 'Ödeme', paymentReady),
+                _badge('📜', 'Lisans', licenseVerified),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _badge(String emoji, String label, bool ok) {
+    final bg = ok
+        ? AppColors.primary.withValues(alpha: 0.10)
+        : AppColors.background;
+    final fg = ok ? AppColors.primary : AppColors.textSecondary;
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+            color: ok ? AppColors.primary.withValues(alpha: 0.35) : AppColors.border,
+            width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 6),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: fg)),
+          if (ok) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.check_circle_rounded, size: 13, color: fg),
+          ],
+        ],
+      ),
+    );
   }
 }
