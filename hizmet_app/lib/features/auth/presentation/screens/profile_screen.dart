@@ -193,6 +193,8 @@ class ProfileScreen extends ConsumerWidget {
               // kullanıcı isteğiyle profile sekmesinden kaldırıldı.
               // _buildStatsExpansion gövdesi korunuyor — gelecekte tekrar
               // çağrılabilir, build chain'inden çıkarıldı.
+              // Phase 451 (hatalar.txt #10) — 3. göz preview link.
+              _buildPublicPreviewLink(context, user),
               _buildCertificationsSection(ref),
               _buildPastPhotos(ref),
               _buildReviewsSection(ref),
@@ -402,6 +404,51 @@ class ProfileScreen extends ConsumerWidget {
               color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
       Text(label, style: const TextStyle(color: Colors.white60, fontSize: 10)),
     ]);
+  }
+
+  /// Phase 451 (hatalar.txt #10) — "Profilimi 3. göz olarak gör" link.
+  /// Kullanıcı kendi public profile'ına navigasyon yapar — başkalarının
+  /// gördüğü hâlini önizler.
+  Widget _buildPublicPreviewLink(BuildContext context, Map<String, dynamic> user) {
+    final userId = user['id'] as String?;
+    if (userId == null || userId.isEmpty) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      decoration: card3d(context, radius: 12, elevation: 0.8),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/profil/$userId'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Icon(Icons.visibility_outlined,
+                  size: 18, color: AppColors.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Profilimi başkaları nasıl görüyor?',
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary)),
+                    const SizedBox(height: 2),
+                    Text('3. göz olarak profilini önizle',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded,
+                  size: 20, color: AppColors.textSecondary),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildIdentityStatus(Map<String, dynamic> user) {
