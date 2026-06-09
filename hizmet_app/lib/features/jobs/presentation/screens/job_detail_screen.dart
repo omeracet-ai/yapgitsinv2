@@ -232,6 +232,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                       kind: detail['kind'] as String? ?? 'request'),
                   const SizedBox(height: 6),
                 ],
+                // Phase 459 (hatalar.txt #16) — Status Tracker line.
+                _buildStatusTracker(jobStatus),
+                const SizedBox(height: 4),
                 _buildHeader(
                   budgetMin: budgetMin,
                   budgetMax: budgetMax,
@@ -355,6 +358,85 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   }
 
   // ── Header ────────────────────────────────────────────────────────────────
+  /// Phase 459 (hatalar.txt #16) — Canlı görev durum çizgisi.
+  /// Açık ➔ Atandı ➔ Tamamlandı progress yatay tracker.
+  Widget _buildStatusTracker(String status) {
+    final stages = const ['Açık', 'Atandı', 'Tamamlandı'];
+    int activeIdx;
+    switch (status) {
+      case 'in_progress':
+      case 'pending_grace':
+        activeIdx = 1;
+        break;
+      case 'completed':
+        activeIdx = 2;
+        break;
+      case 'cancelled':
+        activeIdx = -1; // tüm aşamalar pasif
+        break;
+      default:
+        activeIdx = 0;
+    }
+    final accent = status == 'cancelled' ? Colors.red.shade300 : AppColors.primary;
+    return Container(
+      width: double.infinity,
+      color: _surfaceColor,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: List.generate(stages.length * 2 - 1, (i) {
+          if (i.isOdd) {
+            final connectorIdx = (i - 1) ~/ 2;
+            final filled = connectorIdx < activeIdx;
+            return Expanded(
+              child: Container(
+                height: 3,
+                margin: const EdgeInsets.symmetric(horizontal: 6),
+                decoration: BoxDecoration(
+                  color: filled ? accent : _borderColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            );
+          }
+          final stepIdx = i ~/ 2;
+          final isActive = stepIdx <= activeIdx;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isActive ? accent : _surfaceColor2,
+                  border: Border.all(
+                      color: isActive ? accent : _borderColor, width: 1.5),
+                ),
+                alignment: Alignment.center,
+                child: isActive
+                    ? Icon(
+                        stepIdx == 2 ? Icons.check_rounded : Icons.circle,
+                        color: Colors.white,
+                        size: stepIdx == 2 ? 16 : 8)
+                    : Text('${stepIdx + 1}',
+                        style: TextStyle(
+                            color: _textHint,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700)),
+              ),
+              const SizedBox(height: 4),
+              Text(stages[stepIdx],
+                  style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                      color: isActive ? _textPrimary : _textHint)),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
   Widget _buildHeader({
     double? budgetMin,
     double? budgetMax,
