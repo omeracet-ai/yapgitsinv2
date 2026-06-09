@@ -141,67 +141,90 @@ class ProfileScreen extends ConsumerWidget {
       });
     });
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context).tabProfil),
-        backgroundColor: AppColors.headerBackground(context),
-        elevation: 0,
-        actions: const [
-          NotificationBell(),
-          SizedBox(width: 4),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(myPublicProfileProvider),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            children: [
-              const ProfileCompletionCard(),
-              _buildProfileHeader(user),
-              Consumer(builder: (context, ref, _) {
-                final p = ref.watch(myPublicProfileProvider);
-                return p.maybeWhen(
-                  data: (d) {
-                    final cats = ((d['verifiedCategories'] as List?) ?? const [])
-                        .whereType<Map>()
-                        .map((m) => Map<String, dynamic>.from(m))
-                        .toList();
-                    // Phase 407 — WorkerDocumentsCard kaldırıldı (kullanıcı
-                    // isteği: "Hizmet veren 3 belge" dropdown gereksiz).
-                    return Column(
-                      children: [
-                        // Phase 293 — Belge ile doğrulanmış kategoriler rozeti
-                        VerifiedCategoryBadgesRow(categories: cats),
-                      ],
-                    );
-                  },
-                  orElse: () => const SizedBox.shrink(),
-                );
-              }),
-              // Video upload UI hidden — restore by uncommenting below.
-              // ProfileVideoUploader(
-              //   onUploadSuccess: () => ref.invalidate(myPublicProfileProvider),
-              // ),
-              _buildTokenBanner(context, ref),
-              // Phase 320 — Premium üyelik banner'ı + Email doğrulama kartı
-              // gizlendi (kullanıcı isteği). İlgili widget tanımları kalır
-              // ki gelecekte tekrar açılabilsin; build'den çekildiler.
-              _buildIdentityStatus(user),
-              // Phase 445 (hatalar.txt #3) — Hizmet Alan/Veren istatistikleri
-              // kullanıcı isteğiyle profile sekmesinden kaldırıldı.
-              // _buildStatsExpansion gövdesi korunuyor — gelecekte tekrar
-              // çağrılabilir, build chain'inden çıkarıldı.
-              // Phase 451 (hatalar.txt #10) — 3. göz preview link.
-              _buildPublicPreviewLink(context, user),
-              _buildCertificationsSection(ref),
-              _buildPastPhotos(ref),
-              _buildReviewsSection(ref),
-              _buildMenuSection(context, ref),
-              const SizedBox(height: 32),
+    // Phase 461 (hatalar.txt #18) — Profile sekmesi 2-tab split.
+    // Tab 1: Kimlik & Özet (Hero header + KPI + badges + preview link)
+    // Tab 2: Yönetim (Token + IdentityStatus + Certs + Photos + Reviews + Menu)
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: Text(AppLocalizations.of(context).tabProfil),
+          backgroundColor: AppColors.headerBackground(context),
+          elevation: 0,
+          actions: const [
+            NotificationBell(),
+            SizedBox(width: 4),
+          ],
+          bottom: TabBar(
+            indicatorColor: AppColors.primary,
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.textSecondary,
+            labelStyle:
+                const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            tabs: const [
+              Tab(icon: Icon(Icons.person_outline_rounded, size: 18),
+                  text: 'Kimlik & Özet'),
+              Tab(icon: Icon(Icons.tune_rounded, size: 18),
+                  text: 'Yönetim'),
             ],
           ),
+        ),
+        body: TabBarView(
+          children: [
+            // ── Tab 1 — Kimlik & Özet ─────────────────────────────────────
+            RefreshIndicator(
+              onRefresh: () async => ref.invalidate(myPublicProfileProvider),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    const ProfileCompletionCard(),
+                    _buildProfileHeader(user),
+                    Consumer(builder: (context, ref, _) {
+                      final p = ref.watch(myPublicProfileProvider);
+                      return p.maybeWhen(
+                        data: (d) {
+                          final cats = ((d['verifiedCategories'] as List?) ??
+                                  const [])
+                              .whereType<Map>()
+                              .map((m) => Map<String, dynamic>.from(m))
+                              .toList();
+                          return Column(
+                            children: [
+                              VerifiedCategoryBadgesRow(categories: cats),
+                            ],
+                          );
+                        },
+                        orElse: () => const SizedBox.shrink(),
+                      );
+                    }),
+                    // Phase 451 (hatalar.txt #10) — 3. göz preview link.
+                    _buildPublicPreviewLink(context, user),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+            // ── Tab 2 — Yönetim ──────────────────────────────────────────
+            RefreshIndicator(
+              onRefresh: () async => ref.invalidate(myPublicProfileProvider),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    _buildTokenBanner(context, ref),
+                    _buildIdentityStatus(user),
+                    _buildCertificationsSection(ref),
+                    _buildPastPhotos(ref),
+                    _buildReviewsSection(ref),
+                    _buildMenuSection(context, ref),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
