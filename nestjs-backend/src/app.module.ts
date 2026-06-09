@@ -115,6 +115,7 @@ import { WithdrawalRequest } from './modules/withdrawals/withdrawal-request.enti
 import { CryptoDepositsModule } from './modules/crypto-deposits/crypto-deposits.module';
 import { CryptoDeposit } from './modules/crypto-deposits/crypto-deposit.entity';
 import { AppConfigModule } from './modules/app-config/app-config.module';
+import { AdminSaasModule } from './modules/admin-saas/admin-saas.module';
 import { AppSetting } from './modules/app-config/entities/app-setting.entity';
 import { AppTheme } from './modules/app-config/entities/app-theme.entity';
 import { AppBranding } from './modules/app-config/entities/app-branding.entity';
@@ -372,6 +373,7 @@ import { AppScreen } from './modules/app-config/entities/app-screen.entity';
     CryptoDepositsModule,
     ProvidersModule,
     AppConfigModule,
+    AdminSaasModule,
     // Provide User & Job repositories for AppController public stats endpoint
     TypeOrmModule.forFeature([User, Job]),
   ],
