@@ -44,6 +44,8 @@ class JobDetailScreen extends ConsumerStatefulWidget {
   final String? customerId;
   final List<String> photos;
   final List<String> videos;
+  // Phase 467 — preview sheet "Teklif Ver" → otomatik bid sheet aç.
+  final bool openBidOnLoad;
 
   const JobDetailScreen({
     super.key,
@@ -60,6 +62,7 @@ class JobDetailScreen extends ConsumerStatefulWidget {
     this.customerId,
     this.photos = const [],
     this.videos = const [],
+    this.openBidOnLoad = false,
   });
 
   @override
@@ -71,6 +74,20 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   // Phase 305 — TabController kaldırıldı (Sorular tab'ı Mesajlarım'a taşındı).
   // Phase 372 — Teklif başına inline chat aç/kapa durumu.
   final Set<String> _expandedChats = <String>{};
+  // Phase 467 — preview sheet → bid sheet otomatik açma (tek atış).
+  bool _bidOpened = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.openBidOnLoad) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _bidOpened) return;
+        _bidOpened = true;
+        _showBidDialog();
+      });
+    }
+  }
 
   // Dark theme constants — Voldi-job-detail-redesign
   // TODO(design): values are close to AppColors.{surface,border,textSecondary}

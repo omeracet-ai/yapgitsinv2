@@ -107,7 +107,9 @@ class JobPreviewSheet extends ConsumerWidget {
             if (job != null)
               _StickyCta(
                 onOpenFull: () => _openFull(context, job),
-                onOffer: () => _openFull(context, job, scrollToOffer: true),
+                // Phase 467 — Teklif Ver: detay sayfasına geç ve bid sheet'i
+                // otomatik aç (kullanıcı doğrudan teklif metnine ulaşsın).
+                onOffer: () => _openFull(context, job, openBid: true),
               ),
           ],
         ),
@@ -115,7 +117,7 @@ class JobPreviewSheet extends ConsumerWidget {
     );
   }
 
-  void _openFull(BuildContext context, Job job, {bool scrollToOffer = false}) {
+  void _openFull(BuildContext context, Job job, {bool openBid = false}) {
     Navigator.of(context).pop();
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -132,6 +134,7 @@ class JobPreviewSheet extends ConsumerWidget {
           isFeatured: job.isFeatured,
           customerId: job.customerId,
           photos: job.photos ?? const [],
+          openBidOnLoad: openBid,
         ),
       ),
     );
