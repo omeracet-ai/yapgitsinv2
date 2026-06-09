@@ -180,19 +180,9 @@ class _HeaderBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          if (onOpenFull != null)
-            TextButton.icon(
-              onPressed: onOpenFull,
-              icon: Icon(Icons.open_in_full,
-                  size: 16, color: AppColors.primary),
-              label: Text(
-                'Detayı Aç',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          // Phase 448 (hatalar.txt #12) — Sağ üstteki "Detayı Aç" TextButton
+          // kaldırıldı. Aynı işlevi alt sticky bar üstlenmiş durumda — duplicate
+          // önlenmiş oldu.
         ],
       ),
     );

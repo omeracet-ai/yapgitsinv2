@@ -110,6 +110,9 @@ class Job {
   /// Phase 265e — listeden gelen public root-only offer sayısı.
   /// Logout user da bu sayıyı görür; per-card /offers fetch gerekmez.
   final int offerCount;
+  /// Phase 448 (hatalar.txt #11) — ilan detay görüntülenme sayısı.
+  /// Liste API'si verirse kartın sağ-alt köşesinde göz ikonu olarak gösterilir.
+  final int viewCount;
   // Phase 296 — due date / time / schedule flexibility (Yapgitsin tab card UI).
   final String? dueDate; // YYYY-MM-DD
   final String? dueTime; // HH:MM
@@ -138,6 +141,7 @@ class Job {
     this.kind = JobKind.request,
     this.poster,
     this.offerCount = 0,
+    this.viewCount = 0,
     this.dueDate,
     this.dueTime,
     this.dueAnyTime = true,
@@ -201,6 +205,7 @@ class Job {
       kind: (map['kind'] as String?) ?? JobKind.request,
       poster: JobPoster.fromMap(map['poster']),
       offerCount: (map['offerCount'] as num?)?.toInt() ?? 0,
+      viewCount: (map['viewCount'] as num?)?.toInt() ?? 0,
       dueDate: map['dueDate'] as String?,
       dueTime: map['dueTime'] as String?,
       dueAnyTime: map['dueAnyTime'] == true,

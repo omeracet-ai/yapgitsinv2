@@ -418,8 +418,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             children: [
               _infoChip(Icons.location_on_outlined, widget.location, Colors.red.shade300),
               _infoChip(Icons.access_time_rounded, postedStr, Colors.grey.shade400),
-              if (viewCount != null && viewCount > 0)
-                _infoChip(Icons.visibility_outlined, '$viewCount', Colors.blue.shade300),
+              // Phase 448 (hatalar.txt #11) — viewCount göz ikonu detay sayfasından kaldırıldı;
+              // Yapgitsin sekmesi opportunities kartında sağ-alt köşeye taşındı.
             ],
           ),
           if (dueDate != null) ...[

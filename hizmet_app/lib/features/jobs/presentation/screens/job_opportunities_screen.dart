@@ -1014,7 +1014,7 @@ class _OpportunityCard extends ConsumerWidget {
                 _Poster3DAvatar(imageUrl: posterImg, initials: initials),
                 // Phase 298c — offerCount + "Sizin" rozetleri avatarın
                 // altında, kart kart aynı sağ-hizalı pozisyon.
-                if (offerCount > 0 || isOwner) ...[
+                if (offerCount > 0 || job.viewCount > 0 || isOwner) ...[
                   const SizedBox(height: 6),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1032,7 +1032,30 @@ class _OpportunityCard extends ConsumerWidget {
                           ),
                         ),
                       ],
-                      if (offerCount > 0 && isOwner)
+                      // Phase 448 (hatalar.txt #11) — Görüntülenme sayısı (göz ikonu)
+                      // ilan detay'dan kart sağ-alt köşesine, teklif veren ikonu yanına taşındı.
+                      if (job.viewCount > 0) ...[
+                        if (offerCount > 0) const SizedBox(width: 8),
+                        Icon(Icons.visibility_outlined,
+                            size: 12, color: AppColors.textSecondary),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${job.viewCount}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        // Bilgi ikonu (i) — kullanıcı tıklayınca ne olduğunu görsün.
+                        Tooltip(
+                          message: 'İlan detay görüntülenme sayısı',
+                          child: Icon(Icons.info_outline,
+                              size: 11, color: AppColors.textSecondary.withValues(alpha: 0.7)),
+                        ),
+                      ],
+                      if ((offerCount > 0 || job.viewCount > 0) && isOwner)
                         const SizedBox(width: 6),
                       if (isOwner)
                         Container(
