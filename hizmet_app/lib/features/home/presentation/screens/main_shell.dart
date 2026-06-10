@@ -167,24 +167,30 @@ class _MainShellState extends ConsumerState<MainShell>
             selectedLabelStyle: const TextStyle(
                 fontSize: 11, fontWeight: FontWeight.bold),
             unselectedLabelStyle: const TextStyle(fontSize: 11),
-            items: const [
-              BottomNavigationBarItem(
+            // Phase 500 — Mesajlarım sekmesinin üzerinde unread bildirim
+            // badge'i. unreadCountBadgeProvider auth + 45s polling ile güncel.
+            items: [
+              const BottomNavigationBarItem(
                   icon: Icon(Icons.home_outlined),
                   activeIcon: Icon(Icons.home_rounded),
                   label: 'Anasayfa'),
-              BottomNavigationBarItem(
+              const BottomNavigationBarItem(
                   icon: Icon(Icons.search_outlined),
                   activeIcon: Icon(Icons.search_rounded),
                   label: 'Yapgitsin'),
-              BottomNavigationBarItem(
+              const BottomNavigationBarItem(
                   icon: Icon(Icons.work_outline_rounded),
                   activeIcon: Icon(Icons.work_rounded),
                   label: 'İşlerim'),
               BottomNavigationBarItem(
-                  icon: Icon(Icons.chat_bubble_outline_rounded),
-                  activeIcon: Icon(Icons.chat_bubble_rounded),
+                  icon: _MesajBadge(
+                      icon: Icons.chat_bubble_outline_rounded,
+                      count: ref.watch(unreadCountBadgeProvider)),
+                  activeIcon: _MesajBadge(
+                      icon: Icons.chat_bubble_rounded,
+                      count: ref.watch(unreadCountBadgeProvider)),
                   label: 'Mesajlarım'),
-              BottomNavigationBarItem(
+              const BottomNavigationBarItem(
                   icon: Icon(Icons.person_outline_rounded),
                   activeIcon: Icon(Icons.person_rounded),
                   label: 'Profil'),
@@ -193,6 +199,47 @@ class _MainShellState extends ConsumerState<MainShell>
         ),
       ),
       ),
+    );
+  }
+}
+
+/// Phase 500 — Mesajlarım bottom-nav badge.
+/// 0 ise sadece icon, >0 ise sağ-üstte kırmızı sayı baloncuğu.
+class _MesajBadge extends StatelessWidget {
+  final IconData icon;
+  final int count;
+  const _MesajBadge({required this.icon, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    if (count <= 0) return Icon(icon);
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(icon),
+        Positioned(
+          right: -8,
+          top: -4,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            decoration: BoxDecoration(
+              color: AppColors.error,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.surface, width: 1),
+            ),
+            constraints: const BoxConstraints(minWidth: 18, minHeight: 16),
+            child: Text(
+              count > 99 ? '99+' : '$count',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
