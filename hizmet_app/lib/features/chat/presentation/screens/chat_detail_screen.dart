@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/services/chat_toast_hook.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/notification_bell.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../data/chat_repository.dart';
 import '../../data/chat_service.dart';
@@ -379,6 +380,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           ],
         ),
         actions: [
+          // Phase 498 — chat detayında da tutarlı bildirim zili + badge.
+          const NotificationBell(),
           IconButton(
             icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
             onPressed: () {},
