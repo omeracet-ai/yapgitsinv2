@@ -150,14 +150,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
         return;
       }
-      // Phase 305 — Accepted-offer gate: sadece kabul edilmiş teklifi olan
-      // (müşteri ↔ usta) çiftleri WebSocket üzerinden mesaj gönderebilir.
-      const allowed = await this.chatService.canChat(data.from, data.to);
-      if (!allowed) {
+      // Phase 305 + 501 — Accepted-offer gate + owner-initiated rule.
+      // Usta ilk mesajı atamaz; ilan sahibi (customer) en az 1 mesaj
+      // gönderene kadar (Phase 401 hoşgeldin dahil) engellenir.
+      const gate = await this.chatService.canSend(data.from, data.to);
+      if (!gate.allowed) {
         _client.emit('error', {
-          type: 'no_accepted_offer',
+          type: gate.reason,
           message:
-            'Mesajlaşma sadece teklifi kabul edilmiş kullanıcılar arasında açılır.',
+            gate.reason === 'owner_must_initiate'
+              ? 'Mesajlaşmayı sadece ilan sahibi başlatabilir. Lütfen ilan sahibinin ilk mesajını bekleyin.'
+              : 'Mesajlaşma sadece teklifi kabul edilmiş kullanıcılar arasında açılır.',
         });
         return;
       }

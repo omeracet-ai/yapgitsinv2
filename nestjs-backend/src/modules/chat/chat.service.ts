@@ -108,6 +108,56 @@ export class ChatService {
   }
 
   /**
+   * Phase 501 — Sıkı kural: mesajlaşmayı SADECE ilan sahibi (customer)
+   * başlatabilir. Usta (worker) ilk mesaj atamaz; ilan sahibi en az 1 mesaj
+   * gönderene kadar (Phase 401 hoşgeldin auto-insert dahil) usta engellenir.
+   *
+   * Dönüşler:
+   *   { allowed: true }                                  → gönderebilir
+   *   { allowed: false, reason: 'no_accepted_offer' }    → çift için kabul yok
+   *   { allowed: false, reason: 'owner_must_initiate' } → usta önce müşteri
+   *                                                       başlatmalı
+   */
+  async canSend(
+    from: string,
+    to: string,
+  ): Promise<
+    | { allowed: true }
+    | { allowed: false; reason: 'no_accepted_offer' | 'owner_must_initiate' }
+  > {
+    if (!from || !to || from === to) {
+      return { allowed: false, reason: 'no_accepted_offer' };
+    }
+    // 1) Çift için herhangi bir accepted offer var mı + kim customer / worker?
+    const row = await this.offersRepo
+      .createQueryBuilder('o')
+      .innerJoin(Job, 'j', 'j.id = o.jobId')
+      .where('o.status = :st', { st: OfferStatus.ACCEPTED })
+      .andWhere(
+        '((o.userId = :a AND j.customerId = :b) OR (o.userId = :b AND j.customerId = :a))',
+        { a: from, b: to },
+      )
+      .select(['o.userId AS workerId', 'j.customerId AS customerId'])
+      .getRawOne<{ workerId: string; customerId: string }>();
+    if (!row) {
+      return { allowed: false, reason: 'no_accepted_offer' };
+    }
+    const { customerId, workerId } = row;
+    // 2) Gönderen customer ise her zaman serbest
+    if (from === customerId) return { allowed: true };
+    // 3) Gönderen worker → customer en az 1 mesaj göndermiş olmalı.
+    //    Phase 401 acceptance welcome bu şartı otomatik karşılar; ancak
+    //    welcome insert fail olsa bile gate burada doğru çalışmaya devam eder.
+    const ownerMessageCount = await this.messagesRepo.count({
+      where: { from: customerId, to: workerId },
+    });
+    if (ownerMessageCount === 0) {
+      return { allowed: false, reason: 'owner_must_initiate' };
+    }
+    return { allowed: true };
+  }
+
+  /**
    * Phase 153: translate a chat message to targetLang.
    * Cached per-message in `translatedText` JSON column. Only the
    * sender or recipient may request translation.
@@ -150,10 +200,13 @@ export class ChatService {
       throw new BadRequestException('message boş olamaz');
     }
 
-    // Phase 305 — Accepted-offer gating
-    if (!(await this.canChat(from, dto.to))) {
+    // Phase 305 + 501 — Accepted-offer gate + owner-initiated rule.
+    const gate = await this.canSend(from, dto.to);
+    if (!gate.allowed) {
       throw new ForbiddenException(
-        'Mesajlaşma sadece teklifi kabul edilmiş kullanıcılar arasında açılır.',
+        gate.reason === 'owner_must_initiate'
+          ? 'Mesajlaşmayı sadece ilan sahibi başlatabilir. Lütfen ilan sahibinin ilk mesajını bekleyin.'
+          : 'Mesajlaşma sadece teklifi kabul edilmiş kullanıcılar arasında açılır.',
       );
     }
 
