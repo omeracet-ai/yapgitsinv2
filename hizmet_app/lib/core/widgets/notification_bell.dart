@@ -16,9 +16,16 @@ class NotificationBell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isLoggedIn = ref.watch(authStateProvider) is AuthAuthenticated;
     final count = isLoggedIn ? ref.watch(unreadCountBadgeProvider) : 0;
+    // Phase 499 — explicit foreground inheritance. Bazı AppBar bağlamlarında
+    // IconTheme propagasyonu yetersiz kalıyor ve ikon görünmüyordu.
+    final iconColor = IconTheme.of(context).color ??
+        AppBarTheme.of(context).foregroundColor ??
+        Theme.of(context).appBarTheme.foregroundColor ??
+        AppColors.headerForeground;
 
     return IconButton(
       tooltip: 'Bildirimler',
+      color: iconColor,
       onPressed: () => Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => const NotificationScreen(),
@@ -27,7 +34,7 @@ class NotificationBell extends ConsumerWidget {
       icon: Stack(
         clipBehavior: Clip.none,
         children: [
-          const Icon(Icons.notifications_outlined),
+          Icon(Icons.notifications_outlined, color: iconColor),
           if (count > 0)
             Positioned(
               right: -6,
