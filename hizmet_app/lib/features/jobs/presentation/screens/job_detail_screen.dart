@@ -158,10 +158,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         : const AsyncValue<List<Map<String, dynamic>>>.data([]);
 
     // API'den tam detay çek (customer bilgisi dahil)
+    // Phase 494 — re-fetch sırasında AsyncLoading geçici olarak prev data'yı
+    // temizlerse customer kart "anlık görünüp siliniyor" bug'ı oluşuyordu.
+    // unwrapPrevious() ile loading boyunca son başarılı value korunur.
     final detailAsync = widget.id != null
         ? ref.watch(jobDetailProvider(widget.id!))
         : const AsyncValue<Map<String, dynamic>>.data({});
-    final detail = detailAsync.valueOrNull ?? {};
+    final detail = detailAsync.unwrapPrevious().valueOrNull ?? {};
 
     // İlan sahibi tespiti — navigasyondan gelen widget.customerId garantisiz
     // olabilir (her açılış yolu geçirmiyor), bu yüzden çekilen detay yetkili
