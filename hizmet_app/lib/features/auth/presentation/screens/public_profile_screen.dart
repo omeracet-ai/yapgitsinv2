@@ -187,16 +187,19 @@ class _ProfileView extends ConsumerWidget {
             pinned: true,
             backgroundColor: AppColors.headerBackground(context),
             actions: [
-              // Phase 475 — Presence signal kendi profilinde de görünür
-              // (kullanıcı test edebilsin); UserActionMenu sadece başkasının
-              // profilinde görünür (kendine şikayet/blok anlamsız).
-              _PresenceSignal(userId: userId, forceOnline: isSelf),
+              // Phase 492 — şimşek sağ kenara hizalı, 3-nokta menü hemen
+              // soluna. AppBar.actions sıralaması: ilk öğe sola, son öğe
+              // sağ kenara. Bu yüzden önce UserActionMenu, sonra _PresenceSignal.
               if (!isSelf)
                 UserActionMenu(
                   userId: userId,
                   userName: name,
                   iconColor: Colors.white,
                 ),
+              // Phase 475 — Presence signal kendi profilinde de görünür
+              // (kullanıcı test edebilsin); UserActionMenu sadece başkasının
+              // profilinde görünür (kendine şikayet/blok anlamsız).
+              _PresenceSignal(userId: userId, forceOnline: isSelf),
             ],
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.pin,
