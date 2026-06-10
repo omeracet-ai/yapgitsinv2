@@ -132,6 +132,22 @@ export class UpdateJobDto {
   @IsString()
   location?: string;
 
+  // Phase 496 — bunlar eksik olduğu için frontend "Kaydet" → 400 "property
+  // X should not exist" alıyordu (ValidationPipe forbidNonWhitelisted).
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  budgetMin?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  budgetMax?: number;
+
   @IsOptional()
   @IsEnum(JobStatus)
   status?: JobStatus;

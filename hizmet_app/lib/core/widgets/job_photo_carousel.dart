@@ -19,11 +19,13 @@ class JobPhotoCarousel extends StatefulWidget {
   final double cardSize;
   final double singleCardSize;
 
+  // Phase 496 — tek foto kartı slider ile aynı pixel ebatında (220×220).
+  // Önce 300×300'dü, ilan detayında devasa görünüyordu.
   const JobPhotoCarousel({
     super.key,
     required this.photos,
-    this.cardSize = 280,
-    this.singleCardSize = 300,
+    this.cardSize = 220,
+    this.singleCardSize = 220,
   });
 
   @override
@@ -49,8 +51,8 @@ class _JobPhotoCarouselState extends State<JobPhotoCarousel> {
 
   void _onScroll() {
     if (!_scrollCtrl.hasClients) return;
-    // 280 kart + 12 gap = 292px adım
-    const step = 292.0;
+    // 220 kart + 12 gap = 232px adım
+    const step = 232.0;
     final idx = (_scrollCtrl.offset / step).round().clamp(
           0,
           widget.photos.length - 1,

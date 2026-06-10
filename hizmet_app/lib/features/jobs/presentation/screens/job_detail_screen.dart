@@ -87,16 +87,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     }
   }
 
-  // Dark theme constants — Voldi-job-detail-redesign
-  // TODO(design): values are close to AppColors.{surface,border,textSecondary}
-  // but not exact; left as-is to preserve the redesign's intentional palette.
-  static const Color _bgColor = Colors.black;
-  static const Color _surfaceColor = Color(0xFF141414);
-  static const Color _surfaceColor2 = Color(0xFF1E1E1E);
-  static const Color _textPrimary = Colors.white;
-  static const Color _textSecondary = Color(0xFFBDBDBD);
-  static const Color _textHint = Color(0xFF8A8A8A);
-  static const Color _borderColor = Color(0xFF2A2A2A);
+  // Phase 496 — Tema-duyarlı renkler (eski static const dark palette → AppColors).
+  // Light tema artık gerçek light yüzeyler kullanıyor; redesign'ın dark
+  // hissi AppColors.surface getter'ı üzerinden korunur (dark'ta #161B22).
+  static Color get _bgColor => AppColors.background;
+  static Color get _surfaceColor => AppColors.surface;
+  static Color get _surfaceColor2 => AppColors.surfaceElevated;
+  static Color get _textPrimary => AppColors.textPrimary;
+  static Color get _textSecondary => AppColors.textSecondary;
+  static Color get _textHint => AppColors.textHint;
+  static Color get _borderColor => AppColors.border;
 
   // Phase 449 (hatalar.txt #14) — Light tema fix: brightness-aware helper.
   // Sadece Scaffold + AppBar arka planı için runtime-resolved değer.
@@ -234,7 +234,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         ],
       ),
       body: DefaultTextStyle.merge(
-        style: const TextStyle(color: _textPrimary),
+        style: TextStyle(color: _textPrimary),
         child: RefreshIndicator(
           color: AppColors.primary,
           displacement: 50,
@@ -531,13 +531,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
               ),
             ),
           Text(widget.title,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: _textPrimary)),
 
           const SizedBox(height: 8),
-          const Divider(height: 1, color: _borderColor),
+          Divider(height: 1, color: _borderColor),
           const SizedBox(height: 8),
 
           // Bilgi satırı: konum + zaman + (Phase 333) görüntülenme
@@ -586,7 +586,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Bütçe Aralığı',
+                    Text('Bütçe Aralığı',
                         style: TextStyle(fontSize: 10, color: _textSecondary)),
                     Text(budgetStr,
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
@@ -641,7 +641,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(isOffer ? 'Hizmeti Veren Usta' : 'İlanı Yayınlayan',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
                   color: _textSecondary, letterSpacing: 0.3)),
           const SizedBox(height: 10),
 
@@ -676,7 +676,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                         right: -2,
                         child: Container(
                           padding: const EdgeInsets.all(2),
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: _surfaceColor2,
                             shape: BoxShape.circle,
                           ),
@@ -705,7 +705,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                               ? '/usta/$customerId'
                               : '/musteri/$customerId'),
                       child: Text(name,
-                          style: const TextStyle(fontSize: 15,
+                          style: TextStyle(fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: _textPrimary,
                               decoration: TextDecoration.underline,
@@ -815,7 +815,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             Icon(icon, color: iconColor, size: 14),
             const SizedBox(height: 1),
             Text(label,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: _textPrimary)),
@@ -895,14 +895,14 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Açıklama',
+          Text('Açıklama',
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: _textPrimary)),
           const SizedBox(height: 4),
           Text(description.isNotEmpty ? description : 'Açıklama girilmemiş.',
-              style: const TextStyle(
+              style: TextStyle(
                   color: _textSecondary, height: 1.35, fontSize: 12.5)),
         ],
       ),
@@ -926,7 +926,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Row(
               children: [
-                const Text('Fotoğraflar',
+                Text('Fotoğraflar',
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -934,7 +934,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 if (isMulti) ...[
                   const SizedBox(width: 6),
                   Text('(${photos.length})',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11, color: _textSecondary)),
                 ],
               ],
@@ -955,7 +955,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 14),
             child: Text('Videolar',
                 style:
@@ -1009,7 +1009,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Teklifler (${offers.length})',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold, color: _textPrimary)),
                     if (offers.any((o) => o['status'] == 'accepted'))
                       Container(
@@ -1030,7 +1030,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 ),
                 const SizedBox(height: 8),
                 if (offers.isEmpty)
-                  const Text('Henüz teklif verilmemiş.',
+                  Text('Henüz teklif verilmemiş.',
                       style: TextStyle(color: _textHint))
                 else
                   ...offers.map((o) => _buildOfferCard(o, canMakeOffer, currentUserId)),
@@ -1260,7 +1260,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                     const Icon(Icons.star_rounded, color: Colors.amber, size: 13),
                     const SizedBox(width: 2),
                     Text('${avgRating.toStringAsFixed(1)} ($totalReviews yorum)',
-                        style: const TextStyle(fontSize: 11, color: _textSecondary)),
+                        style: TextStyle(fontSize: 11, color: _textSecondary)),
                     const SizedBox(width: 10),
                   ],
                   if (successRate != null) ...[
@@ -1280,14 +1280,14 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 if (workerBio.isNotEmpty && !maskForLogout) ...[
                   const SizedBox(height: 4),
                   Text(workerBio, maxLines: 2, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: _textSecondary)),
+                      style: TextStyle(fontSize: 11, color: _textSecondary)),
                 ],
                 if (offer['message'] != null &&
                     offer['message'].toString().isNotEmpty &&
                     !maskForLogout) ...[
                   const SizedBox(height: 4),
                   Text(offer['message'].toString(), maxLines: 2, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: _textHint)),
+                      style: TextStyle(fontSize: 12, color: _textHint)),
                 ],
                 // Phase 265d — logout lure: bio/message yerine üye olma çağrısı
                 if (maskForLogout) ...[
@@ -1322,7 +1322,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                           fontWeight: FontWeight.bold, fontSize: 16))
                 else
                   Row(children: [
-                    const Icon(Icons.lock_outline, size: 14, color: _textHint),
+                    Icon(Icons.lock_outline, size: 14, color: _textHint),
                     const SizedBox(width: 4),
                     Text('Teklif tutarı gizlidir',
                         style: TextStyle(fontSize: 12, color: Colors.grey.shade500,
@@ -1435,7 +1435,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                         if (counterMessage != null &&
                             counterMessage.isNotEmpty)
                           Text(counterMessage,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 12,
                                   color: _textSecondary)),
                       ],
@@ -1618,7 +1618,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       if (isOwner) {
         return Container(
           padding: const EdgeInsets.all(12),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: _surfaceColor,
             border: Border(top: BorderSide(color: _borderColor)),
           ),
@@ -1640,7 +1640,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       } else if (isWorker) {
         return Container(
           padding: const EdgeInsets.all(12),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: _surfaceColor,
             border: Border(top: BorderSide(color: _borderColor)),
           ),
@@ -2127,7 +2127,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             child: Text(label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12, color: _textSecondary)),
+                style: TextStyle(fontSize: 12, color: _textSecondary)),
           ),
         ],
       ),
