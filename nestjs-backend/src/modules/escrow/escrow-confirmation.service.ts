@@ -888,6 +888,18 @@ export class EscrowConfirmationService {
       throw new ConflictException('Customer already approved');
     }
 
+    // Phase 502 — Owner-initiated QR onay kuralı:
+    // İlk adımı ilan sahibi (customer) atar; hizmet veren (worker) ondan
+    // SONRA onaylayabilir ve adımı kapatır. Workflow:
+    //   1) Customer 'Onayla' → customerConfirmedAt set, awaitingQr false
+    //   2) Worker 'Onayla' → workerConfirmedAt set, bothApproved true,
+    //      awaitingQr true (worker QR tarayarak adımı bitirir)
+    if (side === 'worker' && !escrow.customerConfirmedAt) {
+      throw new ForbiddenException(
+        'QR onayı önce ilan sahibi tarafından başlatılmalıdır.',
+      );
+    }
+
     // v2: no photo/GPS gate at approval — approval is just the explicit "Onayla".
     // GPS proximity is enforced later when the worker scans the payer's QR.
     const now = new Date();
@@ -927,6 +939,13 @@ export class EscrowConfirmationService {
     }
     if (side === 'customer' && escrow.customerConfirmedAt) {
       throw new ConflictException('Customer already confirmed');
+    }
+
+    // Phase 502 — Owner-initiated kural (legacy confirm flow için de geçerli).
+    if (side === 'worker' && !escrow.customerConfirmedAt) {
+      throw new ForbiddenException(
+        'QR onayı önce ilan sahibi tarafından başlatılmalıdır.',
+      );
     }
 
     const photos = await this.photoRepo.find({ where: { escrowId } });
@@ -1052,6 +1071,13 @@ export class EscrowConfirmationService {
     }
     if (side === 'customer' && escrow.customerConfirmedAt) {
       throw new ConflictException('Customer already confirmed');
+    }
+
+    // Phase 502 — Owner-initiated kural plain-confirm akışında da geçerli.
+    if (side === 'worker' && !escrow.customerConfirmedAt) {
+      throw new ForbiddenException(
+        'QR onayı önce ilan sahibi tarafından başlatılmalıdır.',
+      );
     }
 
     const now = new Date();
