@@ -170,18 +170,7 @@ class _DualRoleView extends ConsumerWidget {
           ],
         ),
       ),
-      // Phase 460 (hatalar.txt #17) — Sabit İlan Verme FAB.
-      // Sağ alt köşede sürekli sabit; tıklayınca yeni ilan sihirbazına push.
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 6,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('İlan Ver',
-            style: TextStyle(fontWeight: FontWeight.w700)),
-        onPressed: () => context.push('/ilan-ver'),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      // Phase 497 — İşlerim FAB kaldırıldı (kullanıcı isteği).
     );
   }
 }
