@@ -11,6 +11,8 @@ import { User } from '../users/user.entity';
 import { Offer, OfferStatus } from '../jobs/offer.entity';
 import { Job } from '../jobs/job.entity';
 import { TranslateService, TranslateLang } from '../ai/translate.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/notification.entity';
 
 export interface ConversationItem {
   peerId: string;
@@ -55,7 +57,37 @@ export class ChatService {
     @InjectRepository(Job)
     private jobsRepo: Repository<Job>,
     private readonly translateService: TranslateService,
+    private readonly notificationsService: NotificationsService,
   ) {}
+
+  /**
+   * Phase 503 — Mesaj → bildirim fan-out helper. Hem HTTP sendMessage hem
+   * acceptance welcome insert tarafından paylaşılır. WebSocket gateway zaten
+   * Phase 490'da kendi notification.send'ini çağırıyor (orada da NEW_MESSAGE).
+   */
+  private async fanOutMessageNotification(params: {
+    fromUserId: string;
+    toUserId: string;
+    bodyPreview: string;
+  }): Promise<void> {
+    try {
+      const sender = await this.usersRepo.findOne({
+        where: { id: params.fromUserId },
+        select: ['id', 'fullName'],
+      });
+      await this.notificationsService.send({
+        userId: params.toUserId,
+        type: NotificationType.NEW_MESSAGE,
+        title: `Yeni mesaj: ${sender?.fullName ?? 'Kullanıcı'}`,
+        body: params.bodyPreview.substring(0, 100),
+        refId: params.fromUserId,
+        relatedType: 'user',
+        relatedId: params.fromUserId,
+      });
+    } catch {
+      // sessiz — mesaj save'i zaten başarılı, bildirim fan-out best-effort.
+    }
+  }
 
   /**
    * Phase 305 — Accepted-offer chat gate.
@@ -90,15 +122,22 @@ export class ChatService {
     jobId: string;
     jobTitle: string;
   }): Promise<void> {
+    const body =
+      `🎉 "${params.jobTitle}" ilanı için teklifiniz kabul edildi. ` +
+      `Mesajlaşmaya başlayabilirsiniz.`;
     const msg = this.messagesRepo.create({
       from: params.fromUserId,
       to: params.toUserId,
       jobId: params.jobId,
-      message:
-        `🎉 "${params.jobTitle}" ilanı için teklifiniz kabul edildi. ` +
-        `Mesajlaşmaya başlayabilirsiniz.`,
+      message: body,
     });
     await this.messagesRepo.save(msg);
+    // Phase 503 — hoşgeldin mesajı da bildirimler listesine düşsün.
+    void this.fanOutMessageNotification({
+      fromUserId: params.fromUserId,
+      toUserId: params.toUserId,
+      bodyPreview: body,
+    });
   }
 
   async canChat(userA: string, userB: string): Promise<boolean> {
@@ -218,6 +257,14 @@ export class ChatService {
       jobId: dto.jobId ?? null,
       bookingId: dto.bookingId ?? null,
       deliveryStatus: 'sent',
+    });
+
+    // Phase 503 — HTTP send için de NotificationType.NEW_MESSAGE fan-out.
+    // Mesaj genel bildirimler listesine düşer, bell badge artar, FCM/SMS gider.
+    void this.fanOutMessageNotification({
+      fromUserId: from,
+      toUserId: dto.to,
+      bodyPreview: dto.message.trim(),
     });
 
     return msg;
