@@ -10,12 +10,12 @@ import '../../../users/widgets/user_action_menu.dart';
 import '../../../chat/data/presence_provider.dart';
 import '../../../../core/widgets/info_hint.dart';
 import '../providers/auth_provider.dart';
-import '../../../reviews/widgets/review_reply_sheet.dart';
 import '../../widgets/portfolio_gallery.dart';
 import '../../widgets/intro_video_section.dart';
 // Phase 419 — portfolio_grid + verified_category_badges import'ları kaldırıldı.
+// Phase 491 — review_reply_sheet + review_summary_card import'ları kaldırıldı
+// (yorumlar Performans Paneli içinde gösteriliyor).
 import '../../widgets/availability_editor_sheet.dart';
-import '../../widgets/review_summary_card.dart';
 import 'package:go_router/go_router.dart';
 
 final publicProfileProvider =
@@ -490,32 +490,8 @@ class _ProfileView extends ConsumerWidget {
                   const SizedBox(height: 8),
                 ],
 
-                // ── AI Yorum Özeti ───────────────────────────────────────
-                if (reviews >= 3) ...[
-                  ReviewSummaryCard(
-                    userId: userId,
-                    reviewComments: reviewList
-                        .map((r) => (r['comment'] as String?)?.trim() ?? '')
-                        .where((c) => c.isNotEmpty)
-                        .toList(),
-                  ),
-                ],
-
-                // ── Yorumlar ─────────────────────────────────────────────
-                if (reviewList.isNotEmpty)
-                  _section(
-                    title: 'Yorumlar (${reviewList.length})',
-                    child: Column(
-                      children: reviewList
-                          .take(5)
-                          .map((r) => _ReviewTile(
-                                review: r,
-                                revieweeId: userId,
-                                currentUserId: currentUserId,
-                              ))
-                          .toList(),
-                    ),
-                  ),
+                // Phase 491 — AI Yorum Özeti + yorum listesi public profile'dan
+                // kaldırıldı. Yorumlar Performans Paneli içinde gösteriliyor.
 
                 // ── Phase 119: Sigortalı rozeti ─────────────────────────
                 if (data['insurance'] is Map) ...[
@@ -618,6 +594,9 @@ class _ProfileView extends ConsumerWidget {
   }
 }
 
+// Phase 491 — _ReviewTile public profile'dan kaldırıldı.
+// Performans Paneli içinde yorumlar tam görünüyor.
+/*
 class _ReviewTile extends ConsumerWidget {
   final Map<String, dynamic> review;
   final String revieweeId;
@@ -819,6 +798,7 @@ class _ReviewTile extends ConsumerWidget {
     }
   }
 }
+*/
 
 /// Phase 458 (hatalar.txt #15) — Verification Center.
 /// Airtasker-style horizontal carousel: ID + Telefon + Ödeme + Lisans rozetleri.
