@@ -7,6 +7,7 @@ import '../../../../core/theme/card_3d.dart';
 import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/list_skeleton.dart';
+import '../../../../core/widgets/notification_bell.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -145,13 +146,8 @@ class _AuthenticatedChatListState
             tooltip: l.chatRefresh,
             onPressed: () => ref.invalidate(conversationsProvider),
           ),
-          // Phase 367 — bildirimler kısayolu.
-          IconButton(
-            icon: Icon(Icons.notifications_none_rounded,
-                color: AppColors.headerForeground),
-            tooltip: 'Bildirimler',
-            onPressed: () => context.push('/bildirimler'),
-          ),
+          // Phase 367 — bildirimler kısayolu (Phase 490: tutarlı bell + badge).
+          const NotificationBell(),
         ],
       ),
       body: RefreshIndicator(

@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification, NotificationType } from './notification.entity';
 import { User } from '../users/user.entity';
 import { FcmService } from './fcm.service';
 import { EmailService } from '../email/email.service';
+import { SmsService } from '../sms/sms.service';
 
 export type NotificationCategory =
   | 'booking'
@@ -15,6 +16,8 @@ export type NotificationCategory =
 
 @Injectable()
 export class NotificationsService {
+  private readonly logger = new Logger(NotificationsService.name);
+
   constructor(
     @InjectRepository(Notification)
     private repo: Repository<Notification>,
@@ -22,7 +25,53 @@ export class NotificationsService {
     private usersRepo: Repository<User>,
     private readonly fcm: FcmService,
     private readonly email: EmailService,
+    @Optional() private readonly sms?: SmsService,
   ) {}
+
+  /**
+   * Phase 490 — Bildirim oluşunca otomatik SMS gönder.
+   * Sadece yüksek-değerli tipler (offer/booking/dispute/message) → SMS spam'ini önler.
+   * Netgsm/Twilio env'i yoksa sms.service zaten no-op döner; ek guard gerekmez.
+   */
+  private async sendSmsForNotification(
+    userId: string,
+    type: NotificationType,
+    title: string,
+    body: string,
+  ): Promise<void> {
+    if (!this.sms) return;
+    const smsTypes: NotificationType[] = [
+      NotificationType.BOOKING_REQUEST,
+      NotificationType.BOOKING_CONFIRMED,
+      NotificationType.BOOKING_CANCELLED,
+      NotificationType.NEW_OFFER,
+      NotificationType.OFFER_ACCEPTED,
+      NotificationType.COUNTER_OFFER,
+      NotificationType.JOB_PENDING_COMPLETION,
+      NotificationType.JOB_COMPLETED,
+      NotificationType.DISPUTE_OPENED,
+      NotificationType.NEW_MESSAGE,
+    ];
+    if (!smsTypes.includes(type)) return;
+    const user = await this.usersRepo.findOne({
+      where: { id: userId },
+      select: ['id', 'phoneNumber', 'notificationPreferences'],
+    });
+    if (!user || !user.phoneNumber) return;
+    const cat = NotificationsService.categoryFor(type);
+    if (
+      user.notificationPreferences &&
+      user.notificationPreferences[cat] === false
+    ) {
+      return;
+    }
+    const text = `Yapgitsin: ${title}\n${body.substring(0, 120)}`;
+    try {
+      await this.sms.sendSms(user.phoneNumber, text);
+    } catch (e) {
+      this.logger.warn(`SMS send failed: ${(e as Error).message}`);
+    }
+  }
 
   /** Phase 121 — fire-and-forget email for selected notification types */
   private async sendEmailForNotification(
@@ -98,6 +147,8 @@ export class NotificationsService {
       case NotificationType.NEW_REVIEW:
       case NotificationType.REVIEW_REMINDER:
         return 'review';
+      case NotificationType.NEW_MESSAGE:
+        return 'message';
       default:
         return 'system';
     }
@@ -153,6 +204,7 @@ export class NotificationsService {
       case NotificationType.BOOKING_CANCELLED:
       case NotificationType.BOOKING_COMPLETED:
       case NotificationType.JOB_COMPLETED:
+      case NotificationType.NEW_MESSAGE:
         return 'high';
       default:
         return 'normal';
@@ -206,6 +258,7 @@ export class NotificationsService {
         return 'job';
       case NotificationType.NEW_REVIEW:
       case NotificationType.REVIEW_REMINDER:
+      case NotificationType.NEW_MESSAGE:
         return 'user';
       default:
         return null; // SYSTEM ve diğerleri — no-op tap
@@ -245,6 +298,13 @@ export class NotificationsService {
     const saved = await this.repo.save(n);
     // Phase 121 — fire-and-forget transactional email (selected types)
     void this.sendEmailForNotification(
+      data.userId,
+      data.type,
+      data.title,
+      data.body,
+    );
+    // Phase 490 — fire-and-forget SMS (yüksek öncelikli tipler)
+    void this.sendSmsForNotification(
       data.userId,
       data.type,
       data.title,

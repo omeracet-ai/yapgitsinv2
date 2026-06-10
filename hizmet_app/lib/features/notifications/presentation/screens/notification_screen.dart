@@ -227,6 +227,7 @@ class _NotifCard extends StatelessWidget {
       'booking_cancelled' => (Icons.event_busy,            Colors.red,         Colors.red.shade50),
       // Phase 368 — yıldız ikonunu kaldır (kullanıcı rating görseli istemiyor).
       'new_review'        => (Icons.rate_review_rounded,   AppColors.primary,  AppColors.primaryLight),
+      'new_message'       => (Icons.chat_bubble_outline_rounded, AppColors.primary, AppColors.primaryLight),
       'system'            => (Icons.campaign,               AppColors.primary,  AppColors.primaryLight),
       _                   => (Icons.notifications_rounded, AppColors.primary,  AppColors.primaryLight),
     };

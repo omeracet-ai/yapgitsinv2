@@ -221,7 +221,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       attachmentDuration: saved.attachmentDuration,
     });
 
-    // Phase 164 — send push notification to recipient if not online
+    // Phase 490 — her mesaj için bildirim oluştur (online/offline ayrımı yok).
+    // Bell badge'in her durumda artması için gate kaldırıldı. FCM/SMS
+    // NotificationsService.send() içinde fan-out edilir.
     void (async () => {
       try {
         const recipient = await this.usersRepo.findOne({
@@ -229,23 +231,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           select: ['id', 'fullName'],
         });
         if (!recipient) return;
-        const isOnline = this.isUserOnline(data.to);
-        // Send notification only if recipient is offline
-        if (!isOnline) {
-          const senderName = await this.usersRepo.findOne({
-            where: { id: data.from },
-            select: ['id', 'fullName'],
-          });
-          await this.notificationsService.send({
-            userId: data.to,
-            type: NotificationType.SYSTEM,
-            title: `Yeni mesaj: ${senderName?.fullName ?? 'Kullanıcı'}`,
-            body: broadcastMessage.substring(0, 100),
-            refId: data.from,
-            relatedType: 'user',
-            relatedId: data.from,
-          });
-        }
+        const senderName = await this.usersRepo.findOne({
+          where: { id: data.from },
+          select: ['id', 'fullName'],
+        });
+        await this.notificationsService.send({
+          userId: data.to,
+          type: NotificationType.NEW_MESSAGE,
+          title: `Yeni mesaj: ${senderName?.fullName ?? 'Kullanıcı'}`,
+          body: broadcastMessage.substring(0, 100),
+          refId: data.from,
+          relatedType: 'user',
+          relatedId: data.from,
+        });
       } catch (err) {
         this.logger.warn(
           `Failed to send message notification: ${(err as Error).message}`,

@@ -8,6 +8,7 @@ import '../../../../core/services/intl_formatter.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/overflow_slide_row.dart';
 import '../../../../core/widgets/list_skeleton.dart';
+import '../../../../core/widgets/notification_bell.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/job_repository.dart';
 import '../../data/offer_repository.dart';
@@ -1695,11 +1696,9 @@ class _CustomerJobsView extends ConsumerWidget {
                     tooltip: 'Şablonlarım',
                     onPressed: () => context.push('/sablonlarim'),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.notifications_outlined),
-                    tooltip: 'Bildirimler',
-                    onPressed: () => context.push('/bildirim-ayarlari'),
-                  ),
+                  // Phase 490 — tutarlı bell + badge; "/bildirim-ayarlari"
+                  // shortcut'ı yanlıştı (settings'e gidiyordu, listeye değil).
+                  const NotificationBell(),
                 ],
                 bottom: const TabBar(
                   tabs: [

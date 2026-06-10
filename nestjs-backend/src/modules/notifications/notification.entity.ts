@@ -29,6 +29,7 @@ export enum NotificationType {
   REVIEW_REMINDER = 'review_reminder', // 7 gün geçti, değerlendirme hatırlatması
   SAVED_SEARCH_MATCH = 'saved_search_match', // Kayıtlı aramaya uyan yeni ilan
   PRIVATE_LISTING_INVITE = 'private_listing_invite', // Phase 265: sana özel açılan ilan davet
+  NEW_MESSAGE = 'new_message', // Yeni sohbet mesajı (Phase 490)
 }
 
 @Entity('notifications')

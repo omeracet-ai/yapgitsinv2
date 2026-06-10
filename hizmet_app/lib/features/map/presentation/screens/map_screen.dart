@@ -469,8 +469,9 @@ class _CategoryToolbar extends StatelessWidget {
         const SizedBox(width: 6),
         _CircleIconBtn(icon: Icons.tune_rounded, onTap: onOpenFilter),
         const SizedBox(width: 6),
+        // Phase 490 — tüm sekmelerde aynı bell ikonu (notifications_outlined).
         _CircleIconBtn(
-            icon: Icons.notifications_none_rounded,
+            icon: Icons.notifications_outlined,
             onTap: onOpenNotifications),
       ],
     );
