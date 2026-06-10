@@ -255,17 +255,19 @@ class _ServiceListingsScreenState
           padding:
               const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: active ? Colors.white : AppColors.surfaceElevated,
+            // Phase 493 — açık temada Colors.white chip page bg ile birleşip
+            // görünmez oluyordu. Aktif chip primary, pasif surfaceElevated.
+            color: active ? AppColors.primary : AppColors.surfaceElevated,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                color: active ? Colors.white : AppColors.border),
+                color: active ? AppColors.primary : AppColors.border),
           ),
           child: Text(
             label,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: active ? Colors.black : AppColors.textPrimary,
+              color: active ? Colors.white : AppColors.textPrimary,
             ),
           ),
         ),
@@ -286,8 +288,9 @@ class _ServiceListingsScreenState
               width: 48,
               height: 48,
               alignment: Alignment.center,
+              // Phase 493 — primary mavi bg üzerinde siyah ikon kontrast düşük.
               child: Icon(Icons.tune_rounded,
-                  color: hasActive ? Colors.black : AppColors.textPrimary,
+                  color: hasActive ? Colors.white : AppColors.textPrimary,
                   size: 22),
             ),
           ),
@@ -337,7 +340,7 @@ class _ServiceListingsScreenState
         label: const Text('Hizmet İlanı Ver'),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.black,
+          foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         ),
       ),
@@ -572,7 +575,7 @@ class _ServiceListingCard extends StatelessWidget {
                     label: const Text('Teklif Al'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.black,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 10),
                       shape: RoundedRectangleBorder(
