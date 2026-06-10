@@ -171,7 +171,7 @@ export class NotificationsService {
   /** Phase 253 — derive in-app sound tag for client playback */
   static soundTagFor(
     type: NotificationType,
-  ): 'offer' | 'accept' | 'release' | 'alert' {
+  ): 'offer' | 'accept' | 'release' | 'message' | 'alert' {
     switch (type) {
       case NotificationType.NEW_OFFER:
       case NotificationType.COUNTER_OFFER:
@@ -182,6 +182,9 @@ export class NotificationsService {
       case NotificationType.JOB_COMPLETED:
       case NotificationType.BOOKING_COMPLETED:
         return 'release';
+      // Phase 504 — mesajlara özel ses tag'i. Asset yoksa client alert'e fallback.
+      case NotificationType.NEW_MESSAGE:
+        return 'message';
       default:
         return 'alert';
     }

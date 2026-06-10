@@ -58,10 +58,14 @@ class FcmService {
         final body = n?.body ?? msg.data['body']?.toString() ?? '';
         final type = msg.data['type']?.toString();
         final soundTag = msg.data['soundTag']?.toString();
+        // Phase 504 — InAppNotificationService kendi ses çağrısını yapacak,
+        // burada çift ses olmasın diye playSound:false geçilir; backend
+        // soundTag varsa onu doğrudan oynatırız.
         InAppNotificationService.instance.show(
           title: title,
           message: body,
           type: type,
+          playSound: false,
         );
         // Phase 253 — play short in-app sound for category
         // ignore: unawaited_futures

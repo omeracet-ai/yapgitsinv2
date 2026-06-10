@@ -23,19 +23,32 @@ class SoundPlayer {
     'offer': 'assets/sounds/offer.mp3',
     'accept': 'assets/sounds/accept.mp3',
     'release': 'assets/sounds/release.mp3',
+    // Phase 504 — mesajlara özel ses; asset eklenene kadar alert.mp3'e
+    // fallback (aşağıdaki _assetFor['alert']! null-koalesce yakalar).
+    'message': 'assets/sounds/message.mp3',
     'alert': 'assets/sounds/alert.mp3',
   };
 
   Future<void> play(String? tag) async {
-    final asset = _assetFor[tag ?? 'alert'] ?? _assetFor['alert']!;
+    final primary = _assetFor[tag ?? 'alert'] ?? _assetFor['alert']!;
     try {
       _player ??= AudioPlayer();
-      await _player!.setAsset(asset);
+      await _player!.setAsset(primary);
       await _player!.seek(Duration.zero);
       // Fire-and-forget; do not await play() so banner UI is not blocked.
       // ignore: unawaited_futures
       _player!.play();
     } catch (err) {
+      // Phase 504 — message.mp3 yoksa alert.mp3'e tek seferlik fallback.
+      if (tag == 'message') {
+        try {
+          await _player!.setAsset(_assetFor['alert']!);
+          await _player!.seek(Duration.zero);
+          // ignore: unawaited_futures
+          _player!.play();
+          return;
+        } catch (_) {}
+      }
       if (kDebugMode) debugPrint('SoundPlayer.play($tag) skipped: $err');
     }
   }
