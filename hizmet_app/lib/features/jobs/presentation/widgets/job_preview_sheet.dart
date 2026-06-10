@@ -273,8 +273,10 @@ class _Body extends StatelessWidget {
                 const SizedBox(height: 14),
                 _BudgetRow(budget: j.budget),
                 const SizedBox(height: 14),
-                _PosterCard(poster: j.poster),
-                const SizedBox(height: 14),
+                // Phase 495 — Poster (ad soyad + profil görseli) preview
+                // sheet'ten kaldırıldı. Async fetch sırasında kart "anlık
+                // görünüp siliniyor" titremesi yapıyordu. Tam profil
+                // "Detayı Aç" CTA ile JobDetailScreen'de görülür.
                 if (preview.isNotEmpty)
                   Text(
                     preview,
