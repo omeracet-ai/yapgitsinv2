@@ -4,6 +4,7 @@ import {
   Logger,
   NotFoundException,
   OnModuleInit,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -107,16 +108,33 @@ export class AdminService implements OnModuleInit {
   ): Promise<{
     updated: number;
     notFound: string[];
+    skipped: string[];
     requestedSegment: 'verify' | 'unverify';
   }> {
     const { userIds, identityVerified } = dto;
     const found = await this.usersRepo.find({
       where: { id: In(userIds) },
-      select: ['id'],
+      select: ['id', 'emailVerified', 'isPhoneVerified'],
     });
     const foundSet = new Set(found.map((u) => u.id));
     const notFound = userIds.filter((id) => !foundSet.has(id));
-    const presentIds = userIds.filter((id) => foundSet.has(id));
+    let presentIds = userIds.filter((id) => foundSet.has(id));
+
+    // Phase 529 — Trust chain gating: identityVerified=true talebinde, email
+    // veya telefon doğrulanmamış kullanıcılar bulk işlemden atlanır ve
+    // skipped[] olarak rapor edilir.
+    const skipped: string[] = [];
+    if (identityVerified) {
+      const eligible = found.filter(
+        (u) => u.emailVerified || u.isPhoneVerified,
+      );
+      const eligibleSet = new Set(eligible.map((u) => u.id));
+      presentIds = presentIds.filter((id) => {
+        if (eligibleSet.has(id)) return true;
+        skipped.push(id);
+        return false;
+      });
+    }
 
     let updated = 0;
     if (presentIds.length > 0) {
@@ -145,6 +163,7 @@ export class AdminService implements OnModuleInit {
     return {
       updated,
       notFound,
+      skipped,
       requestedSegment: identityVerified ? 'verify' : 'unverify',
     };
   }
@@ -999,6 +1018,20 @@ export class AdminService implements OnModuleInit {
   }
 
   async verifyUser(id: string, identityVerified: boolean) {
+    // Phase 529 — Trust chain gating: identityVerified=true ancak email VEYA
+    // telefon doğrulanmışsa set edilebilir. Aksi halde 422 + Türkçe mesaj.
+    if (identityVerified) {
+      const user = await this.usersRepo.findOne({
+        where: { id },
+        select: ['id', 'emailVerified', 'isPhoneVerified'],
+      });
+      if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+      if (!user.emailVerified && !user.isPhoneVerified) {
+        throw new UnprocessableEntityException(
+          'Önce e-posta veya telefon doğrulanmalı',
+        );
+      }
+    }
     return this.usersRepo.update(id, { identityVerified });
   }
 

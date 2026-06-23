@@ -37,11 +37,38 @@ final unreadCountProvider = FutureProvider.autoDispose<int>((ref) async {
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-class NotificationScreen extends ConsumerWidget {
+class NotificationScreen extends ConsumerStatefulWidget {
   const NotificationScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NotificationScreen> createState() => _NotificationScreenState();
+}
+
+class _NotificationScreenState extends ConsumerState<NotificationScreen> {
+  // Phase 529 — Otomatik read-all: ekran render edildikten 2s sonra bir kez
+  // tetiklenir. Kullanıcı listede en az 2s kaldıysa "gördü" varsayılır;
+  // backend'e PATCH /notifications/read-all gönderilir ve bottom-nav badge
+  // sıfırlanır.
+  bool _autoReadAllScheduled = false;
+
+  void _scheduleAutoReadAll(int unread) {
+    if (_autoReadAllScheduled || unread <= 0) return;
+    _autoReadAllScheduled = true;
+    Future.delayed(const Duration(seconds: 2), () async {
+      if (!mounted) return;
+      try {
+        await ref.read(notificationRepositoryProvider).markAllRead();
+      } catch (_) {
+        return;
+      }
+      if (!mounted) return;
+      ref.invalidate(notificationsProvider);
+      ref.read(unreadCountBadgeProvider.notifier).reset();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final l = AppLocalizations.of(context);
 
@@ -72,6 +99,10 @@ class NotificationScreen extends ConsumerWidget {
           notifAsync.maybeWhen(
             data: (notifs) {
               final unread = notifs.where((n) => n['isRead'] == false).length;
+              // Phase 529 — Render sonrası 2s ertelenmiş otomatik read-all.
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _scheduleAutoReadAll(unread);
+              });
               if (unread == 0) return const SizedBox.shrink();
               return TextButton.icon(
                 onPressed: () async {
