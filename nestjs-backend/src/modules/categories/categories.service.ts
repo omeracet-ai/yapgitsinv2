@@ -285,6 +285,14 @@ export class CategoriesService implements OnModuleInit {
         if (existing.sortOrder == null || existing.sortOrder === 0) {
           patch.sortOrder = cat.sortOrder;
         }
+        // Phase 522b — kanonik liste daima aktif olmalı.
+        // 3 grup (Dijital/Etkinlik + 3 Yapı kategorisi) admin tarafından
+        // toplu `isActive=false` yapılmış → prod canlısında "Total: 26, Active: 15"
+        // olarak ortaya çıktı. Kanonik kategorilerin admin tarafından soft-delete
+        // edilmesini değil, hard-delete edilmesini bekliyoruz (sonra yine geri eklenebilir).
+        if (existing.isActive === false) {
+          patch.isActive = true;
+        }
         if (Object.keys(patch).length > 0) {
           await this.repo.update(existing.id, patch);
           backfilled++;
