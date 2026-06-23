@@ -1526,6 +1526,12 @@ class ProfileScreen extends ConsumerWidget {
               'Belgelerim (Usta Ünvanı)', () {
             context.push('/belgelerim');
           }),
+          // Phase 514 — Portfolyom her kullanıcıda görünür (potansiyel hizmet
+          // veren modeli). Worker gate'inden çıkarıldı; boşsa empty state
+          // PortfolioScreen tarafından gösteriliyor.
+          _menuItem(Icons.photo_library_outlined, 'Portfolyom', () {
+            context.push('/portfolyo');
+          }),
           ..._buildWorkerOnlyItems(context, ref),
           ..._buildCustomerOnlyItems(context, ref),
           _menuItem(Icons.card_giftcard_rounded, 'Sadakat - Arkadaş Davet', () {
@@ -1991,9 +1997,8 @@ class ProfileScreen extends ConsumerWidget {
       _menuItem(Icons.verified_outlined, 'Sertifikalarım', () {
         context.push('/sertifikalarim');
       }),
-      _menuItem(Icons.photo_library_outlined, 'Portfolyom', () {
-        context.push('/portfolyo');
-      }),
+      // Phase 514 — "Portfolyom" buradan kaldırıldı; ana profil menüsünde
+      // (worker gate dışı) her kullanıcıya gösteriliyor.
       _menuItem(Icons.note_alt_outlined, 'Teklif Şablonlarım', () {
         context.push('/teklif-sablonlarim');
       }),

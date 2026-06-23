@@ -144,19 +144,25 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
                       size: 64, color: AppColors.textHint),
                   const SizedBox(height: 16),
                   Text(
-                    'Portfolyo boş, iş örneklerini ekle',
+                    'Henüz portfolyon yok',
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Aşağıdaki + butonuna basarak fotoğraf ekleyebilirsiniz.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textHint,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      'Tamamladığın işlerin fotoğrafları burada görünür. '
+                      'Aşağıdaki + butonuna basarak iş örneği ekleyebilirsin.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textHint,
+                        height: 1.45,
+                      ),
                     ),
                   ),
                 ],
