@@ -84,6 +84,12 @@ class _ProfileView extends ConsumerWidget {
     final since           = data['createdAt']        as String?;
     final workerCats      = (data['workerCategories'] as List?)?.cast<String>() ?? [];
     final pastPhotos      = (data['pastPhotos']       as List?)?.cast<String>() ?? [];
+    // Phase 506 — Hizmet Alan (asCustomer) past completed jobs özet listesi.
+    // Backend `pastJobsAsCustomer` array döner; item: {id,title,category,completedAt,photoUrl}.
+    final pastJobsAsCustomer = ((data['pastJobsAsCustomer'] as List?) ?? const [])
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList();
     final portfolioPhotos = (data['portfolioPhotos']  as List?)?.cast<String>() ?? [];
     // Phase 419 — portfolioVideos kaldırıldı (video desteği bitti).
     final introVideoUrl   = data['introVideoUrl']     as String?;
@@ -490,6 +496,14 @@ class _ProfileView extends ConsumerWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                ],
+
+                // ── Phase 506 — Hizmet Aldıkları (asCustomer past jobs) ──
+                // Bu kullanıcının müşteri rolünde aldığı tamamlanmış hizmetler.
+                // Collapsible card — varsayılan kapalı, tap → ilan detayı.
+                if (pastJobsAsCustomer.isNotEmpty) ...[
+                  _CustomerPastJobsCard(jobs: pastJobsAsCustomer),
                   const SizedBox(height: 8),
                 ],
 
@@ -2248,4 +2262,240 @@ class _BadgeInfo {
     required this.description,
     required this.criteria,
   });
+}
+
+/// Phase 506 — "Hizmet Aldıkları" collapsible card.
+/// Bu kullanıcı müşteri rolünde tamamladığı hizmetlerin özet listesini gösterir.
+/// Tap → `/ilan/:id` (JobDetailScreen). Performance Panel paterniyle uyumlu.
+class _CustomerPastJobsCard extends StatefulWidget {
+  final List<Map<String, dynamic>> jobs;
+  const _CustomerPastJobsCard({required this.jobs});
+
+  @override
+  State<_CustomerPastJobsCard> createState() => _CustomerPastJobsCardState();
+}
+
+class _CustomerPastJobsCardState extends State<_CustomerPastJobsCard> {
+  bool _open = false; // Phase 506 — default kapalı (Performans Paneli paterni)
+
+  @override
+  Widget build(BuildContext context) {
+    final count = widget.jobs.length;
+    return Container(
+      color: AppColors.surface,
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () => setState(() => _open = !_open),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.work_history_outlined,
+                      size: 18, color: AppColors.primary),
+                  const SizedBox(width: 6),
+                  Text('Hizmet Aldıkları',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.2,
+                          color: AppColors.textPrimary)),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text('$count',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary)),
+                  ),
+                  const Spacer(),
+                  AnimatedRotation(
+                    duration: const Duration(milliseconds: 180),
+                    turns: _open ? 0.5 : 0.0,
+                    child: Icon(Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox(width: double.infinity),
+            secondChild: Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (int i = 0; i < widget.jobs.length; i++) ...[
+                    _CustomerPastJobTile(job: widget.jobs[i]),
+                    if (i < widget.jobs.length - 1)
+                      Divider(
+                        height: 16,
+                        thickness: 0.5,
+                        color: AppColors.border,
+                      ),
+                  ],
+                ],
+              ),
+            ),
+            crossFadeState:
+                _open ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
+            sizeCurve: Curves.easeInOut,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Phase 506 — Tek bir geçmiş ilan satırı (Airtasker pattern).
+/// Thumbnail (varsa) + başlık + kategori chip + relative tarih + chevron.
+class _CustomerPastJobTile extends StatelessWidget {
+  final Map<String, dynamic> job;
+  const _CustomerPastJobTile({required this.job});
+
+  @override
+  Widget build(BuildContext context) {
+    final id = job['id'] as String?;
+    final title = (job['title'] as String?)?.trim() ?? 'İlan';
+    final category = (job['category'] as String?)?.trim() ?? '';
+    final completedAt = job['completedAt'] as String?;
+    final photoUrl = job['photoUrl'] as String?;
+
+    return InkWell(
+      onTap: id == null ? null : () => context.push('/ilan/$id'),
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Thumbnail veya placeholder
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: 52,
+                height: 52,
+                child: photoUrl != null && photoUrl.isNotEmpty
+                    ? Image.network(
+                        photoUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            _placeholderThumb(context),
+                      )
+                    : _placeholderThumb(context),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if (category.isNotEmpty) ...[
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color:
+                                      AppColors.success.withValues(alpha: 0.25),
+                                  width: 0.5),
+                            ),
+                            child: Text(
+                              category,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.success,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      if (completedAt != null)
+                        Text(
+                          _relativeTime(completedAt),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.chevron_right_rounded,
+                color: AppColors.textSecondary, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _placeholderThumb(BuildContext context) {
+    return Container(
+      color: AppColors.primary.withValues(alpha: 0.08),
+      child: Icon(
+        Icons.work_outline_rounded,
+        color: AppColors.primary.withValues(alpha: 0.6),
+        size: 22,
+      ),
+    );
+  }
+
+  static String _relativeTime(String iso) {
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      final diff = DateTime.now().difference(dt);
+      if (diff.inDays >= 365) {
+        final y = (diff.inDays / 365).floor();
+        return '$y yıl önce';
+      }
+      if (diff.inDays >= 30) {
+        final m = (diff.inDays / 30).floor();
+        return '$m ay önce';
+      }
+      if (diff.inDays >= 7) {
+        final w = (diff.inDays / 7).floor();
+        return '$w hafta önce';
+      }
+      if (diff.inDays > 0) return '${diff.inDays} gün önce';
+      if (diff.inHours > 0) return '${diff.inHours} saat önce';
+      return 'Az önce';
+    } catch (_) {
+      return '';
+    }
+  }
 }
