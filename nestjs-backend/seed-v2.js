@@ -178,6 +178,12 @@ async function main() {
   await run(`UPDATE users SET averageRating=4.0, totalReviews=1, reputationScore=85  WHERE id=?`, [CAN]);
   console.log('  ⭐ Puanlar hesaplandi');
 
+  // ── Phase 515 audit fix: hizmet veren konum seed (harita nearby için) ───
+  // İstanbul içi farklı semtler — fresh dev DB'lerde nearby workers boş kalmasın
+  await run(`UPDATE users SET latitude=?, longitude=?, city=? WHERE id=?`, [41.0428, 29.0094, 'İstanbul', EMRE]);
+  await run(`UPDATE users SET latitude=?, longitude=?, city=? WHERE id=?`, [40.9923, 29.0276, 'İstanbul', SELIN]);
+  console.log('  📍 Hizmet veren konumlar set edildi (İstanbul: Beşiktaş, Kadıköy)');
+
   // ── SONUÇ RAPORU ─────────────────────────────────────────────────────────
   const users = await all(
     `SELECT fullName, email,

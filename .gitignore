@@ -74,3 +74,4 @@ web/.next/
 *.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
+*.err
