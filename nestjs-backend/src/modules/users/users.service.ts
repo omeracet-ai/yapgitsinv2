@@ -8,7 +8,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { Brackets, IsNull, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { UserId } from '../../common/branded.types';
@@ -646,7 +646,9 @@ export class UsersService {
     limit: number;
     pages: number;
   }> {
-    const radiusKm = Math.min(200, Math.max(1, opts.radiusKm ?? 20));
+    // Phase 509 — Cap 200 → 500 km. Frontend zaten 500 gönderiyordu, sessizce
+    // clamp ediliyordu; geniş ülke kapsamı için 500 makul üst sınır.
+    const radiusKm = Math.min(500, Math.max(1, opts.radiusKm ?? 20));
     const page = Math.max(1, opts.page ?? 1);
     const limit = Math.min(100, Math.max(1, opts.limit ?? 20));
     // Phase 243 — defensive coord guard
@@ -667,19 +669,33 @@ export class UsersService {
         return { data: [], total: 0, page, limit, pages: 0 };
       }
       const cells = geohashNeighbors(center);
+      // Phase 509 — Defansif genişletme: homeGeohash boş ama lat/lon dolu olan
+      // worker'ları da listele. Geohash backfill migration'ı çoğunu yakalıyor
+      // ama yeni eklenen veya lat/lon update edilip geohash güncellenmemiş
+      // satırlar için fallback path. WHERE klozu: (homeGeohash prefix match)
+      // OR (homeGeohash NULL ve lat/lon dolu — sonra JS tarafında filtrelenir).
       const qb = this.repo
         .createQueryBuilder('u')
         .where("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'")
         // Karar A: "yakındaki MÜSAİT usta" → "konumu olan TÜM usta". isAvailable
         // filtresi gizli tutuldu (B'yi geri açmak için aşağıdaki satırı aç):
         // .andWhere('u.isAvailable = :av', { av: true })
-        .andWhere('u.homeGeohash IS NOT NULL');
-      qb.andWhere(
-        '(' +
-          cells.map((_, i) => `u.homeGeohash LIKE :h${i}`).join(' OR ') +
-          ')',
-        Object.fromEntries(cells.map((c, i) => [`h${i}`, `${c}%`])),
-      );
+        .andWhere(
+          new Brackets((qbInner) => {
+            qbInner
+              .where(
+                '(' +
+                  cells
+                    .map((_, i) => `u.homeGeohash LIKE :h${i}`)
+                    .join(' OR ') +
+                  ')',
+                Object.fromEntries(cells.map((c, i) => [`h${i}`, `${c}%`])),
+              )
+              .orWhere(
+                '(u.homeGeohash IS NULL AND u.latitude IS NOT NULL AND u.longitude IS NOT NULL)',
+              );
+          }),
+        );
       if (opts.category) {
         qb.andWhere('u.workerCategories LIKE :category', {
           category: `%"${opts.category}"%`,
