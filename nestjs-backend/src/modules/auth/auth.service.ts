@@ -1100,17 +1100,27 @@ export class AuthService implements OnModuleInit {
     // EMAIL_DOMAIN_INVALID; the UI maps these to Turkish copy.
     await this.emailValidator.validate(userData.email);
 
+    // Phase 511 — duplicate → 409 Conflict (was 401). UI snackbar maps to TR copy.
     const existingByEmail = await this.usersService.findByEmail(userData.email);
-    if (existingByEmail)
-      throw new UnauthorizedException('Bu e-posta zaten kayıtlı');
+    if (existingByEmail) {
+      throw new HttpException(
+        'Bu e-posta veya telefon zaten kayıtlı.',
+        HttpStatus.CONFLICT,
+      );
+    }
 
-    // Phase 253-B (Voldi-phase253B) — phone now optional; only dedupe when present.
+    // Phase 511 — phone REQUIRED again per M2 product decision. DTO enforces
+    // presence + format; service still dedupes (UNIQUE index also guards DB).
     if (userData.phoneNumber) {
       const existingByPhone = await this.usersService.findByPhone(
         userData.phoneNumber,
       );
-      if (existingByPhone)
-        throw new UnauthorizedException('Bu telefon numarası zaten kayıtlı');
+      if (existingByPhone) {
+        throw new HttpException(
+          'Bu e-posta veya telefon zaten kayıtlı.',
+          HttpStatus.CONFLICT,
+        );
+      }
     }
 
     const passwordHash = await bcrypt.hash(

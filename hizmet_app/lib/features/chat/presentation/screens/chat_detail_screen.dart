@@ -73,12 +73,32 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     // suppresses banners for messages from them while this screen is open.
     ChatToastHook.activeChatPeerId = widget.peerId;
     final chatService = ref.read(chatServiceProvider);
-    chatService.connect();
+    // Phase 508 — pass the authenticated user id to the socket handshake so
+    // the backend can attach presence / auth. Idempotent: same id no-ops.
+    chatService.connect(userId: _meId);
     chatService.joinRoom(_roomId);
     chatService.onMessageReceived((data) {
       if (mounted) {
         final from = data['from'] as String?;
         final id = data['id'] as String?;
+        final myId = _meId;
+        // Phase 508 — gateway server.emit broadcasts to ALL clients including
+        // the sender. Patch the matching optimistic local row with the real
+        // message id instead of inserting a duplicate.
+        if (from == myId) {
+          setState(() {
+            for (var i = _messages.length - 1; i >= 0; i--) {
+              final m = _messages[i];
+              if (m['id'] == null &&
+                  m['from'] == 'me' &&
+                  m['message'] == data['message']) {
+                m['id'] = id;
+                break;
+              }
+            }
+          });
+          return;
+        }
         setState(() {
           _messages.add({
             'id': id,
@@ -130,6 +150,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     // Phase 78: hydrate presence map for this peer.
     Future.microtask(() {
       ref.read(presenceProvider.notifier).ensure(widget.peerId);
+    });
+    // Phase 508 — backend gate reddetiklerinde (owner_must_initiate,
+    // no_accepted_offer, blocked) kullanıcı sessiz kalmasın diye snackbar.
+    chatService.onServerError((type, message) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.warning,
+          content: Text(message),
+          duration: const Duration(seconds: 4),
+        ),
+      );
     });
     // Phase 77: server-side contact-block notice.
     chatService.onMessageFiltered((reason, detectedTypes) {
@@ -188,9 +220,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     if (text.trim().isEmpty && attachmentUrl == null) return;
 
     final chatService = ref.read(chatServiceProvider);
+    // Phase 508 — KRİTİK FIX: hardcoded 'me' yerine gerçek user id. Phase 456
+    // fix'i payload tarafına uygulanmamıştı: backend `canSend('me', peerId)`
+    // → no_accepted_offer → mesaj DB'ye yazılmıyor, broadcast yok. Worker'da
+    // "mesaj iletilmiyor" şikâyetinin kök nedeni buydu.
+    final myId = _meId;
     chatService.sendMessage(
       widget.peerId,
-      'me',
+      myId,
       text,
       attachmentUrl: attachmentUrl,
       attachmentType: attachmentType,
@@ -202,6 +239,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     setState(() {
       _messages.add({
         'id': null,
+        // Local optimistic insert still uses 'me' as a UI marker — the bubble
+        // alignment in _buildRenderItems compares to the literal 'me'. Peer
+        // messages arrive with the real uuid (see onMessageReceived above).
         'from': 'me',
         'message': text,
         'timestamp': DateTime.now(),

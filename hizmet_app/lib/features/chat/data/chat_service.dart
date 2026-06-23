@@ -9,15 +9,35 @@ final chatServiceProvider = Provider((ref) => ChatService());
 class ChatService {
   late IO.Socket socket;
 
-  void connect() {
-    socket = IO.io(ApiConstants.baseUrl, 
-      IO.OptionBuilder()
-        .setTransports(['websocket'])
-        .enableAutoConnect()
-        .build()
-    );
+  /// Phase 508 — connect now accepts the authenticated user id and sends it
+  /// via socket.io handshake.auth so the backend gateway can wire presence
+  /// (`extractUserId` reads `auth.userId`). Re-using the same socket instance
+  /// across re-entries prevents connection thrashing when the chat screen
+  /// re-mounts.
+  bool _connected = false;
+  String? _connectedUserId;
 
-    socket.onConnect((_) => debugPrint('Connected to socket.io'));
+  void connect({String? userId}) {
+    if (_connected && socket.connected && _connectedUserId == userId) {
+      return;
+    }
+    // If user id changed, drop the previous socket so handshake.auth refreshes.
+    if (_connected && _connectedUserId != userId) {
+      try { socket.dispose(); } catch (_) {}
+      _connected = false;
+    }
+    socket = IO.io(
+      ApiConstants.baseUrl,
+      IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .enableAutoConnect()
+          .setAuth(userId != null ? {'userId': userId} : {})
+          .build(),
+    );
+    _connected = true;
+    _connectedUserId = userId;
+
+    socket.onConnect((_) => debugPrint('Connected to socket.io as ${userId ?? 'anon'}'));
     socket.onDisconnect((_) => debugPrint('Disconnected from socket.io'));
   }
 
@@ -130,6 +150,23 @@ class ChatService {
       final lsStr = map['lastSeenAt'] as String?;
       final ls = lsStr != null ? DateTime.tryParse(lsStr) : null;
       callback(uid, online, ls);
+    });
+  }
+
+  /// Phase 508 — backend gateway `_client.emit('error', { type, message })`
+  /// gönderdiğinde (örn. `owner_must_initiate`, `no_accepted_offer`, `blocked`)
+  /// frontend kullanıcısına net snackbar göstermek için subscription.
+  void onServerError(Function(String type, String message) callback) {
+    socket.on('error', (data) {
+      try {
+        final map = Map<String, dynamic>.from(data as Map);
+        callback(
+          (map['type'] as String?) ?? 'unknown',
+          (map['message'] as String?) ?? 'Bir hata oluştu',
+        );
+      } catch (_) {
+        // ignore malformed payload
+      }
     });
   }
 

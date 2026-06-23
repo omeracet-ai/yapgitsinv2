@@ -20,15 +20,16 @@ import {
  * - phoneNumber: E.164-lite — opsiyonel '+', 10-15 digit (TR + uluslararası destek).
  */
 export class RegisterDto {
-  // Phase 253-B (Voldi-phase253B) — phone now OPTIONAL.
-  // Email is primary identifier; phone may be added via profile post-signup.
-  // Regex still validates format WHEN provided.
-  @IsOptional()
-  @Matches(/^\+?[0-9]{10,15}$/, {
-    message: 'phoneNumber 10-15 rakam, baş + opsiyonel olmalı',
+  // Phase 511 (Müdür/Voldi-fs) — phone REQUIRED again per product decision (M2).
+  // Email + phone are both contactable identifiers at signup; SMS verify still
+  // optional post-signup (Play Console best practice).
+  // Regex accepts TR + international: optional '+', 10-15 digit.
+  @IsString({ message: 'Telefon numarası zorunludur.' })
+  @Matches(/^\+?[0-9()\s-]{10,16}$/, {
+    message: 'Geçerli bir telefon numarası giriniz.',
   })
   @MaxLength(20)
-  phoneNumber?: string;
+  phoneNumber!: string;
 
   @IsString()
   @MinLength(6)
@@ -40,7 +41,7 @@ export class RegisterDto {
   // SMS verify becomes an optional post-signup add-on, not a signup gate.
   // Domain-level validation (MX + disposable block + whitelist) runs in
   // AuthService.register via EmailValidatorService.
-  @IsEmail({}, { message: 'Geçerli e-posta girin' })
+  @IsEmail({}, { message: 'E-posta adresi zorunludur.' })
   @MaxLength(254)
   email!: string;
 
