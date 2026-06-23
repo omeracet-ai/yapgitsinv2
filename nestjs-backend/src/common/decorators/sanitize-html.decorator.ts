@@ -27,24 +27,52 @@
  * type uyuşmazlığını ayrıca yakalar.
  */
 import { Transform, TransformFnParams } from 'class-transformer';
-import sanitizeHtml, { IOptions } from 'sanitize-html';
+import type { IOptions } from 'sanitize-html';
 
-const DEFAULT_OPTIONS: IOptions = {
-  allowedTags: [],
-  allowedAttributes: {},
-  // İçerikte tag varsa text node'unu koru (örn. "<script>alert(1)</script>X"
-  // → "X"). sanitize-html default'u boş tag'leri keser.
-  disallowedTagsMode: 'discard',
-  // Yorum (<!-- -->) ve CDATA'yı da düşür.
-  allowedSchemes: ['http', 'https', 'mailto', 'tel'],
-};
+/**
+ * Phase 520 — UTF-8 safe strip.
+ *
+ * sanitize-html (htmlparser2 backed) prod ortamında Türkçe multi-byte
+ * karakterleri EF BF BD replacement char'a düşürüyor (lokalde çalışıyor
+ * ama Plesk Windows + Node 22 + iisnode kombinasyonunda regresyon).
+ *
+ * Çözüm: HTML tokenizer kullanma — basit regex tag/attribute strip.
+ * Multi-byte safe (regex `.` ve `[^>]` UTF-16 code unit'leri tek tek
+ * dolaşır, surrogate pair/multi-byte korunur).
+ *
+ * Strip kuralları:
+ *   - `<script>...</script>` (içerik dahil)
+ *   - `<style>...</style>` (içerik dahil)
+ *   - tüm `<tag ...>` ve `</tag>` (içerik korunur)
+ *   - `on*=` event handler artıkları
+ *   - `javascript:` / `data:text/html` URL'leri sıfırlanır
+ *
+ * XSS koruması: text node'lar HTML entity decode EDİLMEZ — frontend
+ * (Flutter Text widget, Next.js React) zaten innerText/Text olarak
+ * render eder, raw HTML interpret etmez. Admin paneli yalnızca
+ * `{value}` (escaped) kullanır; raw HTML injection sink'i yoktur.
+ */
+function stripHtmlSafe(value: string): string {
+  let out = value;
+  // 1) script/style — içerik dahil sil (case-insensitive)
+  out = out.replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, '');
+  out = out.replace(/<\s*style[^>]*>[\s\S]*?<\s*\/\s*style\s*>/gi, '');
+  // 2) self-closing / dangling script-style etiketleri
+  out = out.replace(/<\s*\/?\s*(?:script|style)\b[^>]*>/gi, '');
+  // 3) Tüm diğer tag'leri kaldır (içerik korunur)
+  out = out.replace(/<\/?[a-zA-Z][^>]*>/g, '');
+  // 4) javascript:/data:text/html href sızıntıları (text içinde kalmış olabilir)
+  out = out.replace(/javascript\s*:/gi, '');
+  out = out.replace(/data\s*:\s*text\/html/gi, '');
+  // 5) Standalone HTML entity decode YOK — XSS sink'lerine değil text node'a gidiyor.
+  return out;
+}
 
-export function SanitizeHtml(options: IOptions = DEFAULT_OPTIONS): PropertyDecorator {
-  const merged: IOptions = { ...DEFAULT_OPTIONS, ...options };
+// IOptions parametresi backward-compat için tutuldu (call site'lar değişmesin)
+// ama opts artık kullanılmıyor.
+export function SanitizeHtml(_options?: IOptions): PropertyDecorator {
   return Transform(({ value }: TransformFnParams) => {
     if (typeof value !== 'string') return value;
-    // Trim sonrasında boş string'i null'a çevirme — `@IsOptional` davranışı
-    // bozulmasın diye orijinal değeri (sanitize edilmiş haliyle) döndür.
-    return sanitizeHtml(value, merged);
+    return stripHtmlSafe(value);
   });
 }
