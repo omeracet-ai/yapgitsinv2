@@ -98,24 +98,35 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
   static final RegExp _emailRe = RegExp(
     r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
   );
+  // Phase 511 — phone format: optional '+', digits/spaces/dashes/parens, 10-16 chars.
+  static final RegExp _phoneRe = RegExp(r'^\+?[0-9()\s-]{10,16}$');
 
   Future<void> _submitStep1() async {
     final name  = _nameCtrl.text.trim();
     final phone = _phoneCtrl.text.trim();
     final pass  = _passCtrl.text;
     final email = _emailCtrl.text.trim();
-    // Phase 253-B (Voldi-phase253B) — phone fully optional now. Only name+pass
-    // gate early-return; email is the primary identifier checked below.
+    // Phase 511 — name + password required as before.
     if (name.isEmpty || pass.isEmpty) {
       setState(() => _error = AppLocalizations.of(context).registerRequiredFields);
       return;
     }
+    // Phase 511 — E-posta ZORUNLU.
     if (email.isEmpty) {
-      setState(() => _error = 'E-posta gerekli');
+      setState(() => _error = 'E-posta adresi zorunludur.');
       return;
     }
     if (!_emailRe.hasMatch(email)) {
-      setState(() => _error = 'Geçerli e-posta girin');
+      setState(() => _error = 'Geçerli bir e-posta adresi giriniz.');
+      return;
+    }
+    // Phase 511 — Telefon ZORUNLU (geri eklendi, M2 ürün kararı).
+    if (phone.isEmpty) {
+      setState(() => _error = 'Telefon numarası zorunludur.');
+      return;
+    }
+    if (!_phoneRe.hasMatch(phone)) {
+      setState(() => _error = 'Geçerli bir telefon numarası giriniz.');
       return;
     }
     // Phase 256 — KVKK zorunlu onay gate. İşaretlenmemişse kayıt engellenir.
@@ -130,8 +141,8 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
     try {
       await ref.read(authStateProvider.notifier).register(
         fullName:    name,
-        // Phase 253-B — phone optional; omit empty string so backend stores NULL.
-        phoneNumber: phone.isEmpty ? null : phone,
+        // Phase 511 — phone REQUIRED again (validated above, non-empty here).
+        phoneNumber: phone,
         password:    pass,
         email:       email,
         birthDate:   _birthDate != null
@@ -153,11 +164,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
       // telefon doğrulamayı opsiyonel olarak sunuyoruz; iptal ederse step 2'ye
       // (kimlik upload) geçiyor — backend kayıt zaten başarılı oldu.
       if (!mounted) return;
-      // Phase 253-B — only offer SMS verify if user supplied a phone.
-      if (phone.isEmpty) {
-        setState(() { _step = 1; _loading = false; });
-        return;
-      }
+      // Phase 511 — phone always present; offer optional SMS verify.
       final verifiedPhone = await context.push<String?>(
         '/auth/sms-verify?phone=${Uri.encodeQueryComponent(phone)}',
       );
@@ -178,10 +185,19 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         msg = 'Bu e-posta sağlayıcısı doğrulanamadı. Gmail, iCloud, Outlook gibi yaygın bir adres kullanın.';
       } else if (raw.contains('EMAIL_DISPOSABLE')) {
         msg = 'Geçici e-posta servisleri kullanılamaz.';
+      } else if (raw.contains('zaten kayıtlı')) {
+        // Phase 511 — backend 409 Conflict (e-posta veya telefon duplicate).
+        msg = 'Bu e-posta veya telefon zaten kayıtlı.';
       } else {
         msg = raw.replaceFirst('Exception: ', '');
       }
       setState(() { _error = msg; _loading = false; });
+      // Phase 511 — duplicate için snackbar da göster (kalıcı hata kutusu yanında).
+      if (mounted && msg.contains('zaten kayıtlı')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.red.shade700),
+        );
+      }
     }
   }
 
@@ -243,14 +259,11 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
         _field(_nameCtrl, l.registerFullName, Icons.person_outline, TextInputType.name,
             TextCapitalization.words),
         const SizedBox(height: 14),
-        // Phase 253 — email REQUIRED (label drops "opsiyonel" l10n key in favor
-        // of explicit Turkish copy to avoid touching .arb in this scope).
+        // Phase 511 — email + phone REQUIRED. Yıldız (*) ile işaretli.
         _field(_emailCtrl, 'E-posta *', Icons.email_outlined,
             TextInputType.emailAddress, TextCapitalization.none),
         const SizedBox(height: 14),
-        // Phase 253-B — phone fully optional at DTO + DB level. Profile screen
-        // lets user add+verify later.
-        _field(_phoneCtrl, '${l.registerPhone} (opsiyonel)', Icons.phone_outlined,
+        _field(_phoneCtrl, '${l.registerPhone} *', Icons.phone_outlined,
             TextInputType.phone, TextCapitalization.none),
         const SizedBox(height: 14),
         TextField(
