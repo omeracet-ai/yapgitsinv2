@@ -588,7 +588,15 @@ export default function UsersPage() {
                         aria-label={`${u.fullName} seç`}
                       />
                     </td>
-                    <td className="px-4 py-3 font-medium">{u.fullName}</td>
+                    <td className="px-4 py-3 font-medium">
+                      <span>{u.fullName}</span>
+                      {u.isDemo && (
+                        <span
+                          className="ml-2 inline-block px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-700 align-middle"
+                          title="Demo hesabı — public listingde gizli"
+                        >DEMO</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-gray-600">{u.email ?? "—"}</td>
                     <td className="px-4 py-3 text-gray-600">{u.phoneNumber}</td>
                     <td className="px-4 py-3 text-center">

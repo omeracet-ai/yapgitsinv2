@@ -227,7 +227,9 @@ export class UsersService {
     try {
       const qb = this.repo
         .createQueryBuilder('u')
-        .where("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'");
+        .where("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'")
+        // Phase 528 — demo hesaplar public listingden gizli
+        .andWhere('(u.isDemo = false OR u.isDemo IS NULL)');
 
       // availableOnly default true to preserve existing behavior unless explicitly false
       if (opts.availableOnly !== false) {
@@ -677,6 +679,8 @@ export class UsersService {
       const qb = this.repo
         .createQueryBuilder('u')
         .where("u.workerCategories IS NOT NULL AND u.workerCategories != '[]'")
+        // Phase 528 — demo hesaplar nearby listingden gizli
+        .andWhere('(u.isDemo = false OR u.isDemo IS NULL)')
         // Karar A: "yakındaki MÜSAİT usta" → "konumu olan TÜM usta". isAvailable
         // filtresi gizli tutuldu (B'yi geri açmak için aşağıdaki satırı aç):
         // .andWhere('u.isAvailable = :av', { av: true })

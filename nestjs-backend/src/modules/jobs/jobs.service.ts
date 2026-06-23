@@ -457,6 +457,11 @@ export class JobsService {
         // set) public listingde GÖRÜNMEZ. Sadece müşteri kendi listesinde
         // (?customerId=me) ve targetWorker /jobs/my-offers'ta görür.
         query.andWhere('job.targetWorkerId IS NULL');
+        // Phase 528 — demo customer'ların açtığı ilanlar public listingden
+        // gizli. Subquery ile join'siz: küçük tablo (≤ birkaç demo user).
+        query.andWhere(
+          'job.customerId NOT IN (SELECT id FROM users WHERE isDemo = true)',
+        );
       }
       // Phase Two-Sided — request/offer ayrımı
       if (filters?.kind) {

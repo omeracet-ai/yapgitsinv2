@@ -379,6 +379,15 @@ export class User {
   @Column({ type: 'varchar', length: 100, nullable: true })
   defaultAccountHolderName: string | null;
 
+  // ── Phase 528 — Demo / showcase user flag ───────────────────────────────
+  // Demo hesaplar admin paneli + dahili test için yaratılır; gerçek müşteri
+  // marketplace'inde **görünmemesi gerekir**. Public worker listing, nearby
+  // workers, jobs/customerId query'leri `isDemo=false` ile filtrelenir.
+  // Mor "DEMO" rozeti admin panel users listesinde gösterilir.
+  // Backfill: AuthService.onModuleInit'te demo@yapgitsin.tr için true set edilir.
+  @Column({ type: 'boolean', default: false })
+  isDemo: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

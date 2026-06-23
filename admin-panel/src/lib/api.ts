@@ -1419,6 +1419,9 @@ export interface User {
   longitude?: number | null;
   city?: string | null;
   tokenBalance?: number;
+  // Phase 528 — Demo / showcase hesap işareti. true ise admin panelde mor
+  // "DEMO" rozeti gösterilir; backend listingleri bu hesabı zaten gizler.
+  isDemo?: boolean;
 }
 
 export interface BulkVerifyResult {

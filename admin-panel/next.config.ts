@@ -63,6 +63,16 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: ADMIN_SECURITY_HEADERS,
       },
+      // Phase 528 (M1 fix) — Root redirect (/) Next 16 standalone default'unda
+      // `Cache-Control: s-maxage=31536000` ile dönüyordu; landing değiştirmek
+      // için tüm CDN'i purge etmek gerekiyordu. 60s short cache: değişiklik
+      // ≤1dk içinde tüm edge'lere yayılır, ekstra origin yükü ihmal edilebilir.
+      {
+        source: "/",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, s-maxage=60, must-revalidate" },
+        ],
+      },
       // Hashed Next.js static assets — 1y immutable. Admin runs Next.js standalone
       // under iisnode (web.config rewrites everything to server.js), so IIS
       // <location> cache headers don't apply. Configure via next.config headers().
