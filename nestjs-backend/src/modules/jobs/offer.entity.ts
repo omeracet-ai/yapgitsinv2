@@ -84,6 +84,15 @@ export class Offer {
   @Column({ type: 'integer', default: 0 })
   negotiationRound: number;
 
+  /**
+   * Phase 507 (M4) — Bir teklife ilan sahibinin atabileceği karşı-teklif
+   * sayısı. Maks 1. counter() çağrısında increment edilir; >=1 ise yeni
+   * counter reddedilir. Worker counter atamadığı için bu sayaç sadece
+   * "owner → worker" yönünde anlamlıdır.
+   */
+  @Column({ type: 'integer', default: 0 })
+  counterCount: number;
+
   // ── Airtasker-style ek dosyalar (foto, belge URL'leri) ─────────────────
   // Usta teklifine portföy/iş kanıtı/numune eklemek için. JSON dizisi olarak
   // saklanır — uploads endpoint'i (uploads/job-photos) URL döndürür, frontend

@@ -9,18 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Offer, OfferStatus } from './offer.entity';
 import { Job, JobStatus } from './job.entity';
-import {
-  TokensService,
-  OFFER_TOKEN_COST,
-  OFFER_COUNTER_TOKEN_COST,
-} from '../tokens/tokens.service';
-import {
-  TokenTransaction,
-  TxType,
-  TxStatus,
-  PaymentMethod,
-} from '../tokens/token-transaction.entity';
-import { User } from '../users/user.entity';
+import { TokensService } from '../tokens/tokens.service';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
@@ -130,6 +119,36 @@ export class OffersService {
     });
   }
 
+  /**
+   * Phase 510 — Public preview: bir iş için teklif maliyetini önceden
+   * gösterir (auth gerektirmez — Flutter hint banner buradan çekiyor).
+   * Cost basis = job.budgetMax ?? budgetMin (ikisi de yoksa 0 → min'e
+   * clamp). Idempotent, side-effect yok.
+   */
+  async getOfferCostPreview(jobId: string): Promise<{
+    cost: number;
+    basis: number;
+    mode: 'flat' | 'percent';
+    pct?: number;
+    min: number;
+    max: number;
+    breakdown: string;
+  }> {
+    const job = await this.jobsRepository.findOne({ where: { id: jobId } });
+    if (!job) throw new NotFoundException('İlan bulunamadı');
+    const basis = job.budgetMax ?? job.budgetMin ?? 0;
+    const result = await this.tokensService.computeOfferCost(basis);
+    return {
+      cost: result.cost,
+      basis: result.basis,
+      mode: result.mode,
+      pct: result.pct,
+      min: result.min,
+      max: result.max,
+      breakdown: result.breakdown,
+    };
+  }
+
   async findByJob(jobId: string): Promise<Offer[]> {
     const offers = await this.offersRepository.find({
       where: { jobId },
@@ -195,6 +214,15 @@ export class OffersService {
     const job = await this.jobsRepository.findOne({
       where: { id: data.jobId },
     });
+
+    // Phase 507 (M5) — İlan sahibi kendi ilanına teklif veremez.
+    if (job && job.customerId === data.userId) {
+      throw new ForbiddenException('Kendi ilanınıza teklif veremezsiniz.');
+    }
+
+    // Phase 507 (M7) — Teklif minimum bütçenin %90'ı olmalı.
+    this._assertMinPriceFloor(job, data.price);
+
     if (
       job?.targetWorkerId &&
       job.targetWorkerId !== data.userId &&
@@ -257,7 +285,9 @@ export class OffersService {
       data.userId,
     );
     const costBasis = job?.budgetMax ?? job?.budgetMin ?? data.price;
-    const offerCost = await this.tokensService.computeOfferCost(costBasis);
+    // Phase 510 — computeOfferCost artık breakdown döner; cost ile spend ediyoruz.
+    const offerCostResult = await this.tokensService.computeOfferCost(costBasis);
+    const offerCost = offerCostResult.cost;
     if (!isSubscriber) {
       await this.tokensService.spend(
         data.userId,
@@ -308,6 +338,26 @@ export class OffersService {
     }
 
     return saved;
+  }
+
+  /**
+   * Phase 507 (M7) — Teklif/karşı-teklif fiyatı ilan bütçesinin %90 altına
+   * düşemez. budgetMin varsa onu, yoksa budgetMax'i baz alır. İkisi de yoksa
+   * (esnek ilan) kural uygulanmaz.
+   */
+  private _assertMinPriceFloor(
+    job: { budgetMin?: number | null; budgetMax?: number | null } | null,
+    price: number,
+  ): void {
+    if (!job) return;
+    const basis = job.budgetMin ?? job.budgetMax ?? null;
+    if (!basis || basis <= 0) return;
+    const floor = Math.floor(basis * 0.9);
+    if (price < floor) {
+      throw new BadRequestException(
+        `Teklif, bütçenin en az %90'ı olmalıdır (alt sınır: ${floor} TL).`,
+      );
+    }
   }
 
   /** lineItems doluysa sum(total) ile price farkı 1 TL'den fazla olmamalı. */
@@ -531,29 +581,28 @@ export class OffersService {
       where: { id: root.jobId },
     });
 
-    // Phase 262 — yeniden pazarlık kredisi: yalnızca TEKLİF VEREN taraf öder
-    // (ilan sahibi = job.customerId bedava). Aboneler muaf (create() ile aynı kural).
-    // İki marketplace yönünde de simetrik: teklif veren taraf kim ise o öder.
-    // Phase 287 — counter cost da admin config'in YARISI (eski 5/2=2.5 davranışı
-    // korunur; percent modunda da `computeOfferCost(price) / 2`, min 1).
+    // Phase 507 (M3) — Counter sadece ilan sahibi tarafından atılabilir.
+    // Teklif veren artık karşı teklif yapamaz, yalnızca kabul/iptal eder.
     const isListingOwner = !!job && byUserId === job.customerId;
-    let counterCost = 0;
     if (!isListingOwner) {
-      const isSubscriber =
-        await this.subscriptionsService.isActiveSubscriber(byUserId);
-      if (!isSubscriber) {
-        // Phase 401 — counter da ilan bütçesi üzerinden hesaplanır.
-        const counterBasis =
-          job?.budgetMax ?? job?.budgetMin ?? counterPrice;
-        const fullCost = await this.tokensService.computeOfferCost(counterBasis);
-        counterCost = Math.max(1, Math.ceil(fullCost / 2));
-        await this.tokensService.spend(
-          byUserId,
-          counterCost,
-          `İlan #${root.jobId.slice(0, 8)} için karşı teklif (${counterPrice} ₺ • ${counterCost} kredi)`,
-        );
-      }
+      throw new ForbiddenException(
+        'Karşı teklifi yalnızca ilan sahibi atabilir. Teklif veren yalnızca kabul veya iptal edebilir.',
+      );
     }
+
+    // Phase 507 (M4) — Aynı teklif zincirinde yalnızca 1 karşı teklif atılabilir.
+    // Sayaç kök offer'da tutulur; >=1 ise yeni counter reddedilir.
+    if ((root.counterCount ?? 0) >= 1) {
+      throw new BadRequestException(
+        'Bu teklife pazarlık hakkınızı kullandınız (en fazla 1 karşı teklif).',
+      );
+    }
+
+    // Phase 507 (M7) — Karşı teklif de bütçenin %90 alt sınırına uymalı.
+    this._assertMinPriceFloor(job, counterPrice);
+
+    // Phase 262 — counter cost: ilan sahibi bedava (kural değişmedi).
+    const counterCost = 0;
 
     // Son halkayı COUNTERED yap + counter alanlarını yaz (geriye dönük uyumluluk)
     leaf.status = OfferStatus.COUNTERED;
@@ -587,8 +636,10 @@ export class OffersService {
       root.counterPrice = counterPrice;
       root.counterPriceMinor = tlToMinor(counterPrice);
       root.counterMessage = counterMessage;
-      await this.offersRepository.save(root);
     }
+    // Phase 507 (M4) — counter sayacı kökte tutulur; sonraki counter denemesi reddedilecek.
+    root.counterCount = (root.counterCount ?? 0) + 1;
+    await this.offersRepository.save(root);
 
     // Notify the OTHER party — usta counter'lıyorsa müşteriye, müşteri counter'lıyorsa ustaya
     try {

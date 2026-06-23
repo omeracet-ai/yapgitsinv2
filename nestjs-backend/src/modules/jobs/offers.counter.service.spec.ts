@@ -2,7 +2,6 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { OffersService } from './offers.service';
 import { Offer, OfferStatus } from './offer.entity';
 import { Job } from './job.entity';
-import { OFFER_COUNTER_TOKEN_COST } from '../tokens/tokens.service';
 
 /**
  * Phase 262 — Counter (pazarlık) aksiyonları, her iki marketplace yönü için.
@@ -32,6 +31,7 @@ function makeOffer(p: Partial<Offer>): Offer {
     counterMessage: p.counterMessage ?? null,
     parentOfferId: p.parentOfferId ?? null,
     negotiationRound: p.negotiationRound ?? 0,
+    counterCount: p.counterCount ?? 0,
     lineItems: p.lineItems ?? null,
   } as Offer;
 }
@@ -151,51 +151,64 @@ function build(offers: Offer[], job: any): Harness {
 describe('OffersService — Phase 262 counter & acceptCounter', () => {
   const job = { id: 'job-1', customerId: CUSTOMER, title: 'Salon Badana', status: 'open', category: 'Boya' };
 
-  it('ilan sahibi counter yaparsa kredi KESİLMEZ', async () => {
+  it('Phase 507 (M3) — ilan sahibi counter atar, kredi KESİLMEZ + counterCount=1', async () => {
     const root = makeOffer({ id: 'o1', userId: WORKER, price: 1950 });
     const h = build([root], job);
 
-    await h.service.counter('o1', CUSTOMER, 1600, 'olur mu');
+    await h.service.counter('o1', CUSTOMER, 1800, 'olur mu');
 
     expect(h.spend).not.toHaveBeenCalled();
-    // leaf (o1) countered + counter alanları + yeni pending child
     expect(h.offers.find((o) => o.id === 'o1')!.status).toBe(OfferStatus.COUNTERED);
+    expect(h.offers.find((o) => o.id === 'o1')!.counterCount).toBe(1);
     const child = h.offers.find((o) => o.parentOfferId === 'o1');
     expect(child).toBeDefined();
     expect(child!.userId).toBe(CUSTOMER);
-    expect(child!.price).toBe(1600);
+    expect(child!.price).toBe(1800);
     expect(child!.status).toBe(OfferStatus.PENDING);
     expect(child!.negotiationRound).toBe(1);
   });
 
-  it('teklif veren taraf re-counter yaparsa YARIM kredi keser ve zincirin LEAF\'ine ekler', async () => {
-    const root = makeOffer({ id: 'o1', userId: WORKER, price: 1950, status: OfferStatus.COUNTERED, counterPrice: 1600 });
-    const c1 = makeOffer({ id: 'c1', userId: CUSTOMER, price: 1600, parentOfferId: 'o1', negotiationRound: 1 });
-    const h = build([root, c1], job);
+  it('Phase 507 (M3) — teklif veren counter atamaya çalışırsa Forbidden', async () => {
+    const root = makeOffer({ id: 'o1', userId: WORKER, price: 1950 });
+    const h = build([root], job);
 
-    await h.service.counter('o1', WORKER, 1800, 'son fiyat');
-
-    expect(h.spend).toHaveBeenCalledTimes(1);
-    expect(h.spend).toHaveBeenCalledWith(WORKER, OFFER_COUNTER_TOKEN_COST, expect.any(String));
-    // leaf = c1 → countered; yeni child c1'e bağlı round 2
-    expect(h.offers.find((o) => o.id === 'c1')!.status).toBe(OfferStatus.COUNTERED);
-    const round2 = h.offers.find((o) => o.parentOfferId === 'c1');
-    expect(round2).toBeDefined();
-    expect(round2!.userId).toBe(WORKER);
-    expect(round2!.negotiationRound).toBe(2);
-    // kök senkronlandı
-    expect(h.offers.find((o) => o.id === 'o1')!.counterPrice).toBe(1800);
+    await expect(
+      h.service.counter('o1', WORKER, 1800, 'son fiyat'),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(h.spend).not.toHaveBeenCalled();
   });
 
-  it('abone teklif veren re-counter\'da kredi ÖDEMEZ', async () => {
-    const root = makeOffer({ id: 'o1', userId: WORKER, price: 1950, status: OfferStatus.COUNTERED });
-    const c1 = makeOffer({ id: 'c1', userId: CUSTOMER, price: 1600, parentOfferId: 'o1', negotiationRound: 1 });
+  it('Phase 507 (M4) — owner ikinci kez counter atarsa BadRequest', async () => {
+    const root = makeOffer({
+      id: 'o1',
+      userId: WORKER,
+      price: 1950,
+      status: OfferStatus.COUNTERED,
+      counterCount: 1,
+    });
+    const c1 = makeOffer({
+      id: 'c1',
+      userId: CUSTOMER,
+      price: 1800,
+      parentOfferId: 'o1',
+      negotiationRound: 1,
+    });
     const h = build([root, c1], job);
-    h.isSubscriber.mockResolvedValue(true);
 
-    await h.service.counter('o1', WORKER, 1800, 'son');
+    await expect(
+      h.service.counter('o1', CUSTOMER, 1700, 'son'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
 
-    expect(h.spend).not.toHaveBeenCalled();
+  it('Phase 507 (M7) — bütçenin %90 altı counter BadRequest', async () => {
+    const jobWithBudget = { ...job, budgetMin: 2000, budgetMax: 3000 };
+    const root = makeOffer({ id: 'o1', userId: WORKER, price: 2500 });
+    const h = build([root], jobWithBudget);
+
+    // 2000 * 0.9 = 1800 floor; 1500 reddedilmeli
+    await expect(
+      h.service.counter('o1', CUSTOMER, 1500, 'çok düşük'),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('acceptCounter() leaf fiyatını KÖK offer\'a yazar, accept() booking/escrow tetikler', async () => {
@@ -236,14 +249,13 @@ describe('OffersService — Phase 262 counter & acceptCounter', () => {
     expect(h.bookingSave).toHaveBeenCalledTimes(1);
   });
 
-  it('acceptCounter() kendi teklifini kabul etmeyi reddeder', async () => {
-    // Usta son turu attı (leaf userId = WORKER); yine usta kabul etmeye çalışıyor.
-    const root = makeOffer({ id: 'o1', userId: WORKER, price: 1950, status: OfferStatus.COUNTERED });
-    const c1 = makeOffer({ id: 'c1', userId: CUSTOMER, price: 1600, status: OfferStatus.COUNTERED, parentOfferId: 'o1', negotiationRound: 1 });
-    const c2 = makeOffer({ id: 'c2', userId: WORKER, price: 1800, parentOfferId: 'c1', negotiationRound: 2 });
-    const h = build([root, c1, c2], job);
+  it('acceptCounter() kendi teklifini kabul etmeyi reddeder (customer kendi counter\'ını kabul edemez)', async () => {
+    // Customer counter attı (leaf userId = CUSTOMER); customer kendi counter'ını kabul etmeye çalışıyor.
+    const root = makeOffer({ id: 'o1', userId: WORKER, price: 1950, status: OfferStatus.COUNTERED, counterCount: 1 });
+    const c1 = makeOffer({ id: 'c1', userId: CUSTOMER, price: 1600, status: OfferStatus.PENDING, parentOfferId: 'o1', negotiationRound: 1 });
+    const h = build([root, c1], job);
 
-    await expect(h.service.acceptCounter('o1', WORKER)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(h.service.acceptCounter('o1', CUSTOMER)).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('acceptCounter() pazarlığa taraf olmayan üçüncü şahsı reddeder (Forbidden)', async () => {
