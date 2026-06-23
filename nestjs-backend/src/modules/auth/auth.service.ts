@@ -113,6 +113,9 @@ export class AuthService implements OnModuleInit {
           statusCode: HttpStatus.LOCKED,
           message:
             'Hesap geçici olarak kilitlendi. Lütfen daha sonra tekrar deneyin.',
+          error: 'Locked',
+          // Phase 530 — stable errorCode for i18n.
+          errorCode: 'AUTH_ACCOUNT_LOCKED',
           retryAfter,
         },
         HttpStatus.LOCKED,
@@ -751,6 +754,24 @@ export class AuthService implements OnModuleInit {
     // Phase 226 — Firebase Admin bridge (best-effort; disabled w/o creds)
     this.initFirebaseAdmin();
 
+    // Phase 528 — demo@yapgitsin.tr varsa isDemo=true backfill (one-shot).
+    // Migration'sız, idempotent: synchronize yeni kolonu ekler, biz değeri set
+    // ederiz. Hata olursa sessizce geç; admin seed kritik akışı bloklamasın.
+    try {
+      const demoEmails = ['demo@yapgitsin.tr', 'demo@yapgitsin.com'];
+      for (const e of demoEmails) {
+        const u = await this.usersService.findByEmail(e);
+        if (u && !u.isDemo) {
+          await this.usersService.update(u.id, { isDemo: true });
+          this.logger.log(`Phase 528 — backfilled isDemo=true for ${e}`);
+        }
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Phase 528 demo backfill skipped: ${(err as Error).message}`,
+      );
+    }
+
     const adminEmail = 'admin@yapgitsin.tr';
     const legacyEmail = 'admin@hizmet.app';
     const existing = await this.usersService.findByEmail(adminEmail);
@@ -982,13 +1003,30 @@ export class AuthService implements OnModuleInit {
     const email = username === 'admin' ? 'admin@yapgitsin.tr' : username;
     const user = await this.usersService.findByEmail(email);
     if (!user || user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException('Geçersiz admin bilgileri');
+      // Phase 530 — stable errorCode for i18n.
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.UNAUTHORIZED,
+          message: 'Geçersiz admin bilgileri',
+          error: 'Unauthorized',
+          errorCode: 'AUTH_INVALID_CREDENTIALS',
+        },
+        HttpStatus.UNAUTHORIZED,
+      );
     }
     // Phase 255b — admin için de account lock + atomik fail counter.
     await this.assertAccountNotLocked(user);
     if (!(await bcrypt.compare(password, user.passwordHash))) {
       await this.recordFailedLogin(user, sourceIp);
-      throw new UnauthorizedException('Geçersiz admin bilgileri');
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.UNAUTHORIZED,
+          message: 'Geçersiz admin bilgileri',
+          error: 'Unauthorized',
+          errorCode: 'AUTH_INVALID_CREDENTIALS',
+        },
+        HttpStatus.UNAUTHORIZED,
+      );
     }
     if (user.suspended) {
       throw new ForbiddenException('Hesap askıda');
@@ -1103,8 +1141,14 @@ export class AuthService implements OnModuleInit {
     // Phase 511 — duplicate → 409 Conflict (was 401). UI snackbar maps to TR copy.
     const existingByEmail = await this.usersService.findByEmail(userData.email);
     if (existingByEmail) {
+      // Phase 530 — stable errorCode for i18n.
       throw new HttpException(
-        'Bu e-posta veya telefon zaten kayıtlı.',
+        {
+          statusCode: HttpStatus.CONFLICT,
+          message: 'Bu e-posta veya telefon zaten kayıtlı.',
+          error: 'Conflict',
+          errorCode: 'AUTH_DUPLICATE_ACCOUNT',
+        },
         HttpStatus.CONFLICT,
       );
     }
@@ -1116,8 +1160,14 @@ export class AuthService implements OnModuleInit {
         userData.phoneNumber,
       );
       if (existingByPhone) {
+        // Phase 530 — stable errorCode for i18n.
         throw new HttpException(
-          'Bu e-posta veya telefon zaten kayıtlı.',
+          {
+            statusCode: HttpStatus.CONFLICT,
+            message: 'Bu e-posta veya telefon zaten kayıtlı.',
+            error: 'Conflict',
+            errorCode: 'AUTH_DUPLICATE_ACCOUNT',
+          },
           HttpStatus.CONFLICT,
         );
       }

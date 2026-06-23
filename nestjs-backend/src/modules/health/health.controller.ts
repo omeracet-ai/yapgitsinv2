@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Header, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
@@ -37,6 +37,11 @@ interface HealthzResponse {
 @Controller('healthz')
 export class HealthzController {
   @SkipThrottle({ short: true, medium: true, long: true, default: true })
+  // Phase 530 (Voldi-ops) — CDN/proxy NEVER cache liveness. If backend dies and
+  // Cloudflare returns a stale "ok", uptime monitors miss the outage.
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+  @Header('Pragma', 'no-cache')
+  @Header('Expires', '0')
   @Get()
   get(): HealthzResponse {
     return {
@@ -60,6 +65,11 @@ export class HealthController {
    * don't want it competing with real traffic on the global tiers.
    */
   @SkipThrottle({ short: true, medium: true, long: true, default: true })
+  // Phase 530 (Voldi-ops) — CDN/proxy NEVER cache /health. Without this CF can
+  // serve a stale 200 "ok" while origin is down → uptime monitor blind.
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+  @Header('Pragma', 'no-cache')
+  @Header('Expires', '0')
   @Get()
   get(): Promise<HealthResponse> {
     return this.health.getHealth();

@@ -5,8 +5,9 @@ import {
   Body,
   Header,
   HttpCode,
+  HttpException,
+  HttpStatus,
   Query,
-  UnauthorizedException,
   UseGuards,
   Req,
 } from '@nestjs/common';
@@ -60,7 +61,19 @@ export class AuthController {
       dto.password,
       ip,
     );
-    if (!user) throw new UnauthorizedException('E-posta veya şifre hatalı');
+    if (!user) {
+      // Phase 530 (Voldi-fs) — stable errorCode so clients can lokalize without
+      // parsing the Turkish message string. SentryFilter passes errorCode through.
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.UNAUTHORIZED,
+          message: 'E-posta veya şifre hatalı',
+          error: 'Unauthorized',
+          errorCode: 'AUTH_INVALID_CREDENTIALS',
+        },
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
     return this.authService.login(user);
   }
 

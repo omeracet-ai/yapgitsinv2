@@ -862,6 +862,16 @@ async function bootstrap() {
   // Cloudflare / reverse-proxy arkasında req.protocol = 'https' olsun.
   app.set('trust proxy', 1);
 
+  // Phase 530 (Voldi-ops) — DISABLE Express auto-ETag globally.
+  // Backend bir JSON API; ETag/304 mekanizması neredeyse hiç fayda sağlamıyor
+  // (her response dinamik, user-scoped). Asıl problem: /health ve /healthz
+  // üzerinde ETag dönünce Cloudflare/proxy cache layer'ları "fresh" varsayıp
+  // backend ölmüş olsa bile stale 200 OK + "status: ok" dönebiliyor →
+  // uptime monitor backend ölümünü kaçırır.
+  // @Header('Cache-Control', 'no-store') tek başına ETag generation'ı durdurmaz;
+  // bu yüzden Express seviyesinde kapat.
+  app.set('etag', false);
+
   // uploads/jobs klasörünü oluştur (yoksa).
   // APP_ROOT kullan — iisnode altında process.cwd() = C:\Windows\System32\inetsrv (yazma izni yok).
   // mkdir başarısız olsa bile app crash etmemeli: uploads özelliği devre dışı kalır, API ayakta kalır.
