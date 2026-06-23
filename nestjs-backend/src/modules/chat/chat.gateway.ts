@@ -21,15 +21,9 @@ import { NotificationType } from '../notifications/notification.entity';
 import { detectContact, maskContact } from '../../common/contact-filter';
 import { RealtimeService } from '../realtime/realtime.service';
 import { ChatService } from './chat.service';
-import sanitizeHtml from 'sanitize-html';
-
-/**
- * Phase 519 — Stored XSS sanitize on WebSocket chat messages.
- * WebSocket payload'ı ValidationPipe'tan geçmez; gateway içinde manuel strip.
- */
-function stripHtml(s: string): string {
-  return sanitizeHtml(s, { allowedTags: [], allowedAttributes: {} });
-}
+import { stripHtml } from '../../common/utils/strip-html';
+// Phase 519 — WebSocket payload'ı ValidationPipe'tan geçmez; gateway içinde
+// inbound message HTML strip edilir (stored XSS koruması).
 
 export const CONTACT_BLOCK_SETTING_KEY = 'contact_sharing_block_enabled';
 
