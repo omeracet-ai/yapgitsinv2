@@ -83,7 +83,9 @@ class JobRepository {
           ..remove('scheduleFlexibility')
           // Phase 266 — eski backend bilinmiyor olabilir
           ..remove('dueTime')
-          ..remove('dueAnyTime');
+          ..remove('dueAnyTime')
+          // Phase 505 — eski backend taslak alanını bilmiyor olabilir
+          ..remove('isDraft');
         try {
           return await post(clean);
         } on DioException catch (e2) {
@@ -103,16 +105,40 @@ class JobRepository {
     }
   }
 
-  /// Müşterinin kendi ilanları
-  Future<List<Map<String, dynamic>>> getMyJobs(String customerId) async {
+  /// Müşterinin kendi ilanları.
+  /// [isDraft] null → hem yayın hem taslak (eski davranış)
+  ///           true → sadece taslaklar
+  ///           false → sadece yayınlananlar
+  Future<List<Map<String, dynamic>>> getMyJobs(
+    String customerId, {
+    bool? isDraft,
+  }) async {
     try {
       final response = await _dio.get(
         '/jobs',
-        queryParameters: {'customerId': customerId},
+        queryParameters: {
+          'customerId': customerId,
+          if (isDraft != null) 'isDraft': isDraft.toString(),
+        },
       );
       return _extractJobList(response.data);
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'İlanlar yüklenemedi'));
+    }
+  }
+
+  /// Phase 505 — Müşterinin kendi taslakları (yayında değil).
+  Future<List<Map<String, dynamic>>> getMyDrafts(String customerId) {
+    return getMyJobs(customerId, isDraft: true);
+  }
+
+  /// Phase 505 — Taslak ilanı yayına alır (`isDraft=false`).
+  Future<Map<String, dynamic>> publishDraft(String jobId) async {
+    try {
+      final res = await _dio.patch('/jobs/$jobId', data: {'isDraft': false});
+      return res.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw Exception(_dioMsg(e, 'Taslak yayınlanamadı'));
     }
   }
 

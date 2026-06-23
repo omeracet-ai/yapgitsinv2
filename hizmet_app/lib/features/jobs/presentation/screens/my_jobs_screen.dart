@@ -30,7 +30,16 @@ import '../../../../core/widgets/info_hint.dart';
 final myJobsProvider =
     FutureProvider.family<List<Map<String, dynamic>>, String>(
         (ref, customerId) {
-  return ref.watch(jobRepositoryProvider).getMyJobs(customerId);
+  // Phase 505 — Default akış: yayınlanan ilanlar (taslaklar listede yok).
+  // Taslaklar için ayrı provider (`myDraftsProvider`).
+  return ref.watch(jobRepositoryProvider).getMyJobs(customerId, isDraft: false);
+});
+
+/// Phase 505 — Müşterinin kendi taslak ilanları.
+final myDraftsProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>(
+        (ref, customerId) {
+  return ref.watch(jobRepositoryProvider).getMyDrafts(customerId);
 });
 
 final myOffersProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
@@ -683,14 +692,8 @@ class _MergedJobsViewState extends ConsumerState<_MergedJobsView> {
     if (_selected.length == 1) {
       switch (_selected.first) {
         case _JobsFilter.drafts:
-          // Phase 464 (hatalar.txt #17) — Taslaklar.
-          // Backend `isDraft=true` filtresi → şu an liste API gönderilmiyor;
-          // gelene kadar boş gösterilir (empty state).
-          return _CustomerJobsByStatus(
-            statuses: const ['__drafts__'], // sentinel: API'de eşleşmez
-            emptyMsg: 'Henüz taslak yok. İlanı kaydet, yayınlamadan dur.',
-            searchQuery: q,
-          );
+          // Phase 505 — Gerçek taslak listesi (myDraftsProvider).
+          return _CustomerDraftsView(searchQuery: q);
         case _JobsFilter.active:
           return _CustomerJobsByStatus(
             statuses: const ['open', 'in_progress'],
@@ -1289,6 +1292,225 @@ class _CustomerJobsByStatus extends ConsumerWidget {
             .toList();
         return _JobList(jobs: filtered, emptyMsg: emptyMsg);
       },
+    );
+  }
+}
+
+// ─── Phase 505 — Taslak listesi ───────────────────────────────────────────────
+
+class _CustomerDraftsView extends ConsumerWidget {
+  final String searchQuery;
+  const _CustomerDraftsView({this.searchQuery = ''});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+    if (authState is! AuthAuthenticated) return const SizedBox.shrink();
+    final userId = authState.user['id'] as String;
+    final draftsAsync = ref.watch(myDraftsProvider(userId));
+    return draftsAsync.when(
+      loading: () => ListSkeleton(
+        itemCount: 3,
+        itemBuilder: (_) => const JobCardSkeleton(),
+      ),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text('Taslaklar yüklenemedi: $e',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.error)),
+        ),
+      ),
+      data: (drafts) {
+        final q = searchQuery.toLowerCase();
+        final filtered = q.isEmpty
+            ? drafts
+            : drafts
+                .where((j) =>
+                    (j['title']?.toString().toLowerCase().contains(q) ??
+                        false))
+                .toList();
+        if (filtered.isEmpty) {
+          return EmptyState(
+            icon: Icons.edit_note_rounded,
+            title: 'Henüz taslak yok',
+            message:
+                'İlan yazarken "Taslak Olarak Kaydet" diyebilirsin. Hazır olunca yayına alırsın.',
+            action: ElevatedButton.icon(
+              onPressed: () => context.push('/ilan-ac'),
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('Yeni İlan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          itemCount: filtered.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 6),
+          itemBuilder: (_, i) => _DraftJobCard(job: filtered[i]),
+        );
+      },
+    );
+  }
+}
+
+class _DraftJobCard extends ConsumerStatefulWidget {
+  final Map<String, dynamic> job;
+  const _DraftJobCard({required this.job});
+
+  @override
+  ConsumerState<_DraftJobCard> createState() => _DraftJobCardState();
+}
+
+class _DraftJobCardState extends ConsumerState<_DraftJobCard> {
+  bool _publishing = false;
+
+  Future<void> _publish() async {
+    final id = widget.job['id']?.toString();
+    if (id == null) return;
+    setState(() => _publishing = true);
+    try {
+      await ref.read(jobRepositoryProvider).publishDraft(id);
+      // Cache invalidate — drafts listesi ve myJobs listesi.
+      final auth = ref.read(authStateProvider);
+      if (auth is AuthAuthenticated) {
+        final uid = auth.user['id'] as String;
+        ref.invalidate(myDraftsProvider(uid));
+        ref.invalidate(myJobsProvider(uid));
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('İlan yayınlandı 🎉'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content:
+              Text('Yayınlanamadı: ${e.toString().replaceFirst('Exception: ', '')}'),
+          backgroundColor: AppColors.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _publishing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final j = widget.job;
+    final title = j['title']?.toString() ?? 'İsimsiz taslak';
+    final category = j['category']?.toString() ?? '';
+    final budget = (j['budgetMax'] as num?) ?? (j['budgetMin'] as num?);
+    final createdAt = j['createdAt']?.toString();
+    final created = createdAt != null ? DateTime.tryParse(createdAt) : null;
+    final timeLabel = created != null
+        ? IntlFormatter.relativeTime(context, created)
+        : '';
+
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: AppColors.border),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          // Edit mode: PostJobScreen henüz draft-id edit desteklemiyor.
+          // Şimdilik yayınlama akışına yönlendir; ileride /ilan-duzenle/:id.
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'Taslağı düzenleme yakında. Şimdilik "Yayınla" ile aktifleştirebilirsin.'),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.textSecondary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.edit_note_rounded,
+                        size: 12, color: AppColors.textSecondary),
+                    const SizedBox(width: 4),
+                    Text('TASLAK',
+                        style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary)),
+                  ]),
+                ),
+                const Spacer(),
+                if (timeLabel.isNotEmpty)
+                  Text(timeLabel,
+                      style: TextStyle(
+                          fontSize: 11, color: AppColors.textSecondary)),
+              ]),
+              const SizedBox(height: 8),
+              Text(title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w700)),
+              if (category.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(category,
+                    style: TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary)),
+              ],
+              if (budget != null) ...[
+                const SizedBox(height: 4),
+                Text('Bütçe: ${budget.toStringAsFixed(0)} ₺',
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary)),
+              ],
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _publishing ? null : _publish,
+                  icon: _publishing
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.publish_rounded, size: 16),
+                  label: Text(_publishing ? 'Yayınlanıyor…' : 'Yayınla'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

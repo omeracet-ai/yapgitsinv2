@@ -553,51 +553,132 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       ),
       child: SafeArea(
         top: false,
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (_currentStep > 0)
-              Expanded(
-                flex: 1,
-                child: OutlinedButton(
-                  onPressed: _uploading
-                      ? null
-                      : () => setState(() => _currentStep--),
+            Row(
+              children: [
+                if (_currentStep > 0)
+                  Expanded(
+                    flex: 1,
+                    child: OutlinedButton(
+                      onPressed: _uploading
+                          ? null
+                          : () => setState(() => _currentStep--),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Text(AppLocalizations.of(context).back),
+                    ),
+                  ),
+                if (_currentStep > 0) const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: _uploading ? null : _onStepContinue,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: _uploading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : Text(isLastStep
+                            ? AppLocalizations.of(context).postJobSubmit
+                            : AppLocalizations.of(context).next),
+                  ),
+                ),
+              ],
+            ),
+            // Phase 505 — "Taslak Olarak Kaydet": son adımda ikincil buton.
+            // İstediği zaman düzenleyip yayına alabilsin; min alan title
+            // dolu olmalı (taslak için diğer validasyonlar gevşek).
+            if (isLastStep) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _uploading ? null : _saveAsDraft,
+                  icon: const Icon(Icons.bookmark_border_rounded, size: 18),
+                  label: const Text('Taslak Olarak Kaydet'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
-                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    foregroundColor: AppColors.textSecondary,
+                    side: BorderSide(color: AppColors.border),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: Text(AppLocalizations.of(context).back),
                 ),
               ),
-            if (_currentStep > 0) const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
-              child: ElevatedButton(
-                onPressed: _uploading ? null : _onStepContinue,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 11),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-                child: _uploading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
-                    : Text(isLastStep ? AppLocalizations.of(context).postJobSubmit : AppLocalizations.of(context).next),
-              ),
-            ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  /// Phase 505 — Taslak akışı: yalnız başlık + açıklama + kategori
+  /// zorunlu. Konum/foto/tarih opsiyonel kalır (sonra editlenecek).
+  Future<void> _saveAsDraft() async {
+    if (_titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(AppLocalizations.of(context).postJobTitleRequired)),
+      );
+      return;
+    }
+    if (_descController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                AppLocalizations.of(context).postJobDescriptionRequired)),
+      );
+      return;
+    }
+    if (_selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text(AppLocalizations.of(context).postJobCategoryRequired)),
+      );
+      return;
+    }
+    setState(() => _uploading = true);
+    try {
+      if (_selectedPhotos.isNotEmpty) {
+        final photoUrls = await ref
+            .read(photoRepositoryProvider)
+            .uploadJobPhotos(_selectedPhotos);
+        _uploadedPhotoUrls = photoUrls;
+      }
+      if (_selectedVideos.isNotEmpty) {
+        final videoUrls = await ref
+            .read(photoRepositoryProvider)
+            .uploadJobVideos(_selectedVideos);
+        _uploadedVideoUrls = videoUrls;
+      }
+      _submitJob(asDraft: true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
   }
 
   Future<void> _onStepContinue() async {
@@ -1499,11 +1580,18 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     }
   }
 
-  void _submitJob() async {
+  /// Phase 505 — `asDraft=true` → ilan taslak olarak kaydedilir; public
+  /// listingde görünmez, sadece "Taslaklar" sekmesinde sahibine görünür.
+  void _submitJob({bool asDraft = false}) async {
+    // Phase 505 — Taslakta location/foto opsiyonel olduğu için backend
+    // @IsNotEmpty kuralı kırılmasın diye placeholder yolla.
+    final draftLocation = _locationController.text.trim().isEmpty
+        ? 'Belirtilmedi'
+        : _locationController.text;
     final jobData = {
       'title': _titleController.text,
       'description': _descController.text,
-      'location': _locationController.text,
+      'location': asDraft ? draftLocation : _locationController.text,
       'budgetMin': TurkishCurrencyInputFormatter.parseTry(_budgetController.text) ?? 0,
       'category': _selectedCategory,
       // Phase 152 — Konum zorunlu (step3'te garantilendi).
@@ -1537,6 +1625,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         'targetWorkerId': widget.targetWorkerId,
       // Phase 265 — saat dilimi esnekliği
       'scheduleFlexibility': _scheduleFlexibility,
+      // Phase 505 — Taslak bayrağı.
+      if (asDraft) 'isDraft': true,
     };
 
     try {
@@ -1590,6 +1680,19 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     }
 
     if (mounted) {
+      // Phase 505 — Taslak akışında SuccessScreen değil; doğrudan
+      // İşlerim sekmesine dön. Kullanıcı "Taslaklar" filtresinden
+      // yeni kayıt'ı görsün.
+      if (asDraft) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Taslak kaydedildi. "İşlerim → Taslaklar" altında.'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+        context.go('/');
+        return;
+      }
       // Phase 386 — kategoriyi geç ki başarılı ekrandaki "Hızlı Hizmet
       // Verenlere Ulaş" CTA'sı yalnızca bu kategoriye ait ustaları gösteren
       // bottom sheet açabilsin.
