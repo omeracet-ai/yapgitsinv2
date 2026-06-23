@@ -50,6 +50,34 @@ export class CategoriesController {
   }
 
   /**
+   * Phase 522b — Cache bypass diagnostic.
+   * `GET /categories/raw` doğrudan DB'den okur, cache'siz.
+   * Prod canlısında upsert'in çalışıp çalışmadığını anlamak için.
+   */
+  @SkipThrottle()
+  @Get('raw')
+  async findAllRaw() {
+    const all = await this.svc.findAllIncludingInactive();
+    const active = all.filter((c) => c.isActive);
+    const groups: Record<string, string[]> = {};
+    for (const c of active) {
+      const g = c.group || 'NULL';
+      (groups[g] ||= []).push(c.name);
+    }
+    return {
+      total: all.length,
+      active: active.length,
+      groups,
+      items: all.map((c) => ({
+        name: c.name,
+        group: c.group,
+        sortOrder: c.sortOrder,
+        isActive: c.isActive,
+      })),
+    };
+  }
+
+  /**
    * Phase 176 — Trie + Levenshtein fuzzy autocomplete.
    * Örn: /categories/search?q=boyaci → "Boya & Badana"
    * Phase 170 — sonuçlar q+limit bazında 1 dk cache'lenir (CacheInterceptor default key = url).
