@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './category.entity';
+import { Job } from '../jobs/job.entity';
+import { ServiceRequest } from '../service-requests/service-request.entity';
 
 /** Airtasker / HiPages ilham alınarak hazırlanan Türkçe kategori listesi */
 const SEED_CATEGORIES = [
@@ -196,18 +198,97 @@ const SEED_CATEGORIES = [
 
 @Injectable()
 export class CategoriesService implements OnModuleInit {
+  private readonly logger = new Logger(CategoriesService.name);
+
   constructor(
     @InjectRepository(Category)
     private repo: Repository<Category>,
+    @InjectRepository(Job)
+    private jobsRepo: Repository<Job>,
+    @InjectRepository(ServiceRequest)
+    private srRepo: Repository<ServiceRequest>,
   ) {}
 
+  /**
+   * Phase 522 — Idempotent canonical upsert.
+   *
+   * Önceki davranış: tablo boşsa seed et. Üretimde admin tarafından silinen
+   * kategoriler bir daha eklenmiyordu → CLAUDE.md'deki 29 kanonik liste 16'ya
+   * düşmüştü. Yeni davranış:
+   *   1. Her boot'ta CANONICAL_CATEGORIES üzerinden yürü.
+   *   2. Yoksa CREATE (isActive=true).
+   *   3. Varsa: group/icon/sortOrder eksik veya null ise backfill (override),
+   *      diğer kullanıcı düzenlemeleri (description, isActive=false vs.) korunur.
+   *   4. `Klima Servis` (NULL group, eski seed artığı) varsa Job + ServiceRequest
+   *      FK'leri `Klima & Isıtma`'ya migrate edilir, sonra silinir.
+   *
+   * Migration `1750000002000-Phase522CategoriesUpsert` boot öncesi DB seviyesinde
+   * aynı işi yapar (idempotent + yeni env'lerde de güvenli). Bu hook ek bir
+   * güvence katmanıdır.
+   */
   async onModuleInit() {
-    const count = await this.repo.count();
-    if (count === 0) {
-      await this.repo.save(
-        SEED_CATEGORIES.map((c) => this.repo.create({ ...c, isActive: true })),
+    await this.cleanupKlimaServis();
+    await this.upsertCanonical();
+  }
+
+  private async upsertCanonical(): Promise<void> {
+    let created = 0;
+    let backfilled = 0;
+    for (const cat of SEED_CATEGORIES) {
+      const existing = await this.repo.findOne({ where: { name: cat.name } });
+      if (!existing) {
+        await this.repo.save(this.repo.create({ ...cat, isActive: true }));
+        created++;
+        continue;
+      }
+      const patch: Partial<Category> = {};
+      if (!existing.group) patch.group = cat.group;
+      if (!existing.icon) patch.icon = cat.icon;
+      if (existing.sortOrder == null || existing.sortOrder === 0) {
+        patch.sortOrder = cat.sortOrder;
+      }
+      if (Object.keys(patch).length > 0) {
+        await this.repo.update(existing.id, patch);
+        backfilled++;
+      }
+    }
+    if (created || backfilled) {
+      this.logger.log(
+        `[phase-522] categories upsert: created=${created} backfilled=${backfilled}`,
       );
     }
+  }
+
+  private async cleanupKlimaServis(): Promise<void> {
+    const klimaServis = await this.repo.findOne({
+      where: { name: 'Klima Servis' },
+    });
+    if (!klimaServis) return;
+
+    const klimaIsitma = await this.repo.findOne({
+      where: { name: 'Klima & Isıtma' },
+    });
+    if (!klimaIsitma) {
+      // Hedef yoksa silme — önce upsert lazım. Bir sonraki boot'ta tekrar dene.
+      this.logger.warn(
+        '[phase-522] Klima Servis var ama Klima & Isıtma yok — cleanup atlandı.',
+      );
+      return;
+    }
+
+    const jobsMigrated = await this.jobsRepo.update(
+      { categoryId: klimaServis.id },
+      { categoryId: klimaIsitma.id, category: klimaIsitma.name },
+    );
+    const srMigrated = await this.srRepo.update(
+      { categoryId: klimaServis.id },
+      { categoryId: klimaIsitma.id, category: klimaIsitma.name },
+    );
+    await this.repo.delete(klimaServis.id);
+
+    this.logger.log(
+      `[phase-522] Klima Servis temizlendi → jobs=${jobsMigrated.affected ?? 0} sr=${srMigrated.affected ?? 0}`,
+    );
   }
 
   findAll(): Promise<Category[]> {

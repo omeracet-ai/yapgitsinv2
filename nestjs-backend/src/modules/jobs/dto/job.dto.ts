@@ -11,20 +11,27 @@ import {
   Max,
 } from 'class-validator';
 import { JobStatus, JobKind } from '../job.entity';
+import { SanitizeHtml } from '../../../common/decorators/sanitize-html.decorator';
 
 export class CreateJobDto {
+  @SanitizeHtml()
   @IsString()
   @IsNotEmpty()
   title: string;
 
+  @SanitizeHtml()
   @IsString()
   @IsNotEmpty()
   description: string;
 
+  // category server-side enum/whitelist'e karşı kontrol edilir ama yine de
+  // güvenli olsun.
+  @SanitizeHtml()
   @IsString()
   @IsNotEmpty()
   category: string;
 
+  @SanitizeHtml()
   @IsString()
   @IsNotEmpty()
   location: string;
@@ -121,20 +128,24 @@ export class CreateJobDto {
 
 export class UpdateJobDto {
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   title?: string;
 
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   description?: string;
 
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   location?: string;
 
   // Phase 496 — bunlar eksik olduğu için frontend "Kaydet" → 400 "property
   // X should not exist" alıyordu (ValidationPipe forbidNonWhitelisted).
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   category?: string;
 

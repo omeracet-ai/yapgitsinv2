@@ -219,6 +219,22 @@ export default function CommissionPage() {
           <b>min</b>/<b>max</b> sınırları arasına kırpılır.
         </p>
 
+        {/* Phase 521 — FLAT mode warning: bütçe-orantılı ekonomi devre dışı */}
+        {mode === "flat" && (
+          <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+            <div className="font-semibold mb-1">
+              ⚠ Şu an FLAT (sabit) mod aktif
+            </div>
+            <div className="leading-relaxed">
+              Bütçe-orantılı (%) ekonomisi devre dışı. Min/max sınırları yine
+              uygulanır ama tüm tekliflerde aynı sabit kredi düşülür. Önerilen
+              mod: <b>Bütçenin yüzdesi (percent)</b> — küçük bütçelerde min,
+              büyük bütçelerde max bound ile koruma sağlar. Phase 510 ile gelen
+              hint ve preview ekonomisi bu modda çalışır.
+            </div>
+          </div>
+        )}
+
         <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Mode */}
           <label className="block">

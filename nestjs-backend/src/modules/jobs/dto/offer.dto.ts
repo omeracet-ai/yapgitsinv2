@@ -9,8 +9,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { SanitizeHtml } from '../../../common/decorators/sanitize-html.decorator';
 
 export class OfferLineItemDto {
+  @SanitizeHtml()
   @IsString()
   @IsNotEmpty()
   label: string;
@@ -34,6 +36,7 @@ export class CreateOfferDto {
   price: number;
 
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   message?: string;
 
