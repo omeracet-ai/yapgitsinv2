@@ -441,15 +441,8 @@ class ProfileScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: Colors.white),
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const EditProfileScreen()),
-                    ).then((_) =>
-                        ref.invalidate(profileCompletionProvider)),
-                  ),
+                  // Phase 532 — Kalem ikonu kaldırıldı (user request);
+                  // profil düzenleme "Yönetim" sekmesi içinden yapılır.
                 ],
               ),
               // Phase 321 — İtibar/Ortalama/Değerlendirme strip header'dan
