@@ -32,6 +32,7 @@ import { AdminAuditService } from '../admin-audit/admin-audit.service';
 import { SystemSettingsService } from '../system-settings/system-settings.service';
 import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
 import { OFFER_TOKEN_COST, TokensService } from '../tokens/tokens.service';
+import { AppConfigService } from '../app-config/app-config.service';
 import { UpdateCommissionDto } from './dto/commission-settings.dto';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
 import { AdminListQueryDto } from './dto/admin-list-query.dto';
@@ -90,6 +91,9 @@ export class AdminController {
     private readonly dataPrivacy: DataPrivacyService,
     private readonly emailService: EmailService,
     private readonly tokensService: TokensService,
+    // Phase 510 — Token ekonomisi ayarları AppConfig (app_settings) üzerinde
+    // tutuluyor. Admin komisyon ekranı oradan okur/yazar.
+    private readonly appConfig: AppConfigService,
   ) {}
 
   // ── Phase 246 — SMTP diagnostic ───────────────────────────────────
@@ -231,33 +235,91 @@ export class AdminController {
   }
 
   // ── Phase 254b — Platform commission + token economy view ─────────────────
+  // Phase 510 — Token ekonomisi (mode/value/min/max) artık edit edilebilir;
+  // response bu alanları da içerir. Geriye dönük uyumluluk için OFFER_TOKEN_COST
+  // fallback'i `offerTokenCost` alanını her zaman number döndürür.
   @Get('settings/commission')
   async getCommissionSettings() {
     const commissionPctQr = await this.platformSettings.getNumber(
       'commission_pct_qr',
       1,
     );
+    const cfg = await this.appConfig.getOfferCostConfig();
     return {
       commissionPctQr,
-      offerTokenCost: OFFER_TOKEN_COST,
+      offerTokenCost: cfg.value,
+      offerTokenCostMode: cfg.mode,
+      offerTokenCostMin: cfg.min,
+      offerTokenCostMax: cfg.max,
+      // Phase 510 — Backward-compat (eski admin sayfası bu alanı bekliyordu).
+      offerTokenCostLegacy: OFFER_TOKEN_COST,
     };
   }
 
+  // Phase 510 — Audit: tek action altında commission + token economy alanları.
+  // Body'de hangi alanlar değiştiyse sadece onlar yazılır (idempotent upsert).
   @Audit('platform_settings.commission.update')
   @Patch('settings/commission')
   async updateCommissionSettings(
     @Body() body: UpdateCommissionDto,
     @Req() req: Request & { user: AuthUser },
   ) {
-    await this.platformSettings.setValue(
-      'commission_pct_qr',
-      String(body.commissionPctQr),
-      req.user.id,
-    );
-    return {
-      commissionPctQr: body.commissionPctQr,
-      offerTokenCost: OFFER_TOKEN_COST,
-    };
+    const adminId = req.user.id;
+    if (body.commissionPctQr !== undefined) {
+      await this.platformSettings.setValue(
+        'commission_pct_qr',
+        String(body.commissionPctQr),
+        adminId,
+      );
+    }
+    // Phase 510 — Token ekonomisi setting'leri AppConfig.upsertSetting ile yazılır
+    // (app_settings tablosu). Type/group field'ları getOfferCostConfig defaults
+    // ile aynı tutulur ki seed pattern bozulmasın.
+    if (body.offerTokenCostMode !== undefined) {
+      await this.appConfig.upsertSetting(
+        {
+          key: 'offerTokenCostMode',
+          value: body.offerTokenCostMode,
+          type: 'string',
+          group: 'tokens',
+        },
+        adminId,
+      );
+    }
+    if (body.offerTokenCost !== undefined) {
+      await this.appConfig.upsertSetting(
+        {
+          key: 'offerTokenCost',
+          value: String(body.offerTokenCost),
+          type: 'number',
+          group: 'tokens',
+        },
+        adminId,
+      );
+    }
+    if (body.offerTokenCostMin !== undefined) {
+      await this.appConfig.upsertSetting(
+        {
+          key: 'offerTokenCostMin',
+          value: String(body.offerTokenCostMin),
+          type: 'number',
+          group: 'tokens',
+        },
+        adminId,
+      );
+    }
+    if (body.offerTokenCostMax !== undefined) {
+      await this.appConfig.upsertSetting(
+        {
+          key: 'offerTokenCostMax',
+          value: String(body.offerTokenCostMax),
+          type: 'number',
+          group: 'tokens',
+        },
+        adminId,
+      );
+    }
+    return this.getCommissionSettings();
   }
 
   // ── System Settings ─────────────────────────────────────────────────────────

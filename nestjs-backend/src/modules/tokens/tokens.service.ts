@@ -47,18 +47,46 @@ export class TokensService {
   ) {}
 
   /**
-   * Phase 287 — admin'in belirlediği mod'a göre teklif maliyeti hesaplar.
-   * `flat`    → sabit kredi (offerTokenCost)
-   * `percent` → ceil(price * offerTokenCost / 100), min 1 token
-   * Negatif veya geçersiz fiyat verilirse fallback'e döner.
+   * Phase 287 / Phase 510 — admin'in belirlediği mod'a göre teklif maliyeti
+   * hesaplar. Geriye full breakdown döner (Flutter hint + admin preview için).
+   *
+   * `flat`    → cost = value (sabit kredi)
+   * `percent` → cost = ceil(basis * value / 100)
+   *
+   * Her iki modda da `cost` `[min..max]` aralığına clamp edilir.
+   * Negatif/sıfır/geçersiz basis percent modunda min'e düşürülür (default cost).
    */
-  async computeOfferCost(offerPrice: number): Promise<number> {
-    const { mode, value } = await this.appConfig.getOfferCostConfig();
+  async computeOfferCost(basis: number): Promise<{
+    cost: number;
+    mode: 'flat' | 'percent';
+    pct?: number;
+    min: number;
+    max: number;
+    breakdown: string;
+    basis: number;
+  }> {
+    const { mode, value, min, max } = await this.appConfig.getOfferCostConfig();
+    const safeBasis = Number.isFinite(basis) && basis > 0 ? basis : 0;
+    let raw: number;
     if (mode === 'percent') {
-      if (!Number.isFinite(offerPrice) || offerPrice <= 0) return value;
-      return Math.max(1, Math.ceil((offerPrice * value) / 100));
+      raw = safeBasis > 0 ? Math.ceil((safeBasis * value) / 100) : value;
+    } else {
+      raw = value;
     }
-    return value;
+    const cost = Math.max(min, Math.min(max, raw));
+    const breakdown =
+      mode === 'percent'
+        ? `Bütçe ${safeBasis} ₺ × %${value} = ${raw} kredi → ${cost} kredi (sınırlar arası)`
+        : `Sabit ${value} kredi → ${cost} kredi (sınırlar arası)`;
+    return {
+      cost,
+      mode,
+      pct: mode === 'percent' ? value : undefined,
+      min,
+      max,
+      breakdown,
+      basis: safeBasis,
+    };
   }
 
   /** GET /tokens/packages — Flutter UI bunu çeker, paketleri hardcode etmez. */

@@ -228,12 +228,20 @@ export class AppConfigService implements OnModuleInit {
       { key: 'supportEmail', value: 'destek@yapgitsin.tr', type: 'string', group: 'support' },
       { key: 'minOfferPrice', value: '50', type: 'number', group: 'offers' },
       { key: 'maxOfferPrice', value: '50000', type: 'number', group: 'offers' },
-      { key: 'offerTokenCost', value: '5', type: 'number', group: 'tokens' },
+      // Phase 510 — Default: percent %1 (kullanıcı spec'i + getOfferCostConfig
+      // default ile tutarlı). Idempotent INSERT — mevcut admin ayarı override
+      // edilmez. Yeni kurulumlarda `offerTokenCost='1'` (% değeri).
+      { key: 'offerTokenCost', value: '1', type: 'number', group: 'tokens' },
       // Phase 287 — Teklif maliyeti hesaplama modu. 'flat' → offerTokenCost
       // değeri SABİT kredi olarak düşülür (eski davranış). 'percent' →
       // offerTokenCost teklif fiyatının yüzdesi olarak yorumlanır (ör. 1 ⇒
-      // %1, ceil + min 1 token). Admin /admin/app-config/settings ile değiştirir.
-      { key: 'offerTokenCostMode', value: 'flat', type: 'string', group: 'tokens' },
+      // %1, ceil). Admin /admin/app-config/settings ile değiştirir.
+      // Phase 510 — Default 'percent' (eski 'flat' → 'percent' migrate).
+      { key: 'offerTokenCostMode', value: 'percent', type: 'string', group: 'tokens' },
+      // Phase 510 — Min/Max kredi sınırları. percent modunda küçük bütçelerde
+      // taban (min), büyük bütçelerde tavan (max). Flat modunda da uygulanır.
+      { key: 'offerTokenCostMin', value: '5', type: 'number', group: 'tokens' },
+      { key: 'offerTokenCostMax', value: '50', type: 'number', group: 'tokens' },
       { key: 'initialTokenBalance', value: '100', type: 'number', group: 'tokens' },
       { key: 'allowGuestBrowsing', value: 'true', type: 'boolean', group: 'access' },
       { key: 'maintenanceMode', value: 'false', type: 'boolean', group: 'system' },
@@ -629,19 +637,27 @@ export class AppConfigService implements OnModuleInit {
 
   /**
    * Phase 287 — Teklif maliyeti hesabı için config tek noktada okunur.
-   * mode='flat'   → cost = value (sabit kredi)
-   * mode='percent' → cost = ceil(price * value / 100), min 1
+   * Phase 510 — `min`/`max` sınırlarıyla genişletildi (yüzde modunda taban
+   * ve tavan koruması). `mode='flat'`'ta da min/max uygulanır.
+   *
+   * mode='flat'    → cost = value (sabit kredi), clamp [min..max]
+   * mode='percent' → cost = ceil(basis * value / 100), clamp [min..max]
    */
   async getOfferCostConfig(): Promise<{
     mode: 'flat' | 'percent';
     value: number;
+    min: number;
+    max: number;
   }> {
     // Phase 401 — Default: percent %1 (kullanıcı spec'i). Eski flat=5
     // fallback override edilirse de tutulur (mevcut admin ayarı korunur).
     const rawMode = await this.getSettingString('offerTokenCostMode', 'percent');
     const mode = rawMode === 'flat' ? 'flat' : 'percent';
     const value = await this.getSettingNumber('offerTokenCost', 1);
-    return { mode, value };
+    // Phase 510 — min/max sınırları. Default: min=5, max=50 (spec gereği).
+    const min = await this.getSettingNumber('offerTokenCostMin', 5);
+    const max = await this.getSettingNumber('offerTokenCostMax', 50);
+    return { mode, value, min, max };
   }
 
   // ── Settings ────────────────────────────────────────────────

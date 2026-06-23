@@ -200,6 +200,15 @@ export class JobsController {
     );
   }
 
+  /**
+   * Phase 510 — Public preview: bu ilan için teklif maliyetini hesaplar
+   * (auth YOK — Flutter hint banner'ı misafir görüntülemede de çalışır).
+   */
+  @Get(':id/offer-cost')
+  getOfferCostPreview(@Param('id') id: string) {
+    return this.offersService.getOfferCostPreview(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     // Phase 333 — view tracking için IP forward'la (proxy varsa x-forwarded-for).

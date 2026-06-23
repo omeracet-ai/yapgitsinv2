@@ -23,6 +23,9 @@ import { UserBlocksModule } from '../user-blocks/user-blocks.module';
 import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { TokensModule } from '../tokens/tokens.module';
+// Phase 510 — Token ekonomisi setting'lerini admin commission ekranından
+// edit edebilmek için AppConfigService inject ediyoruz.
+import { AppConfigModule } from '../app-config/app-config.module';
 
 @Module({
   imports: [
@@ -48,6 +51,7 @@ import { TokensModule } from '../tokens/tokens.module';
     UsersModule,
     NotificationsModule,
     TokensModule,
+    AppConfigModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],
