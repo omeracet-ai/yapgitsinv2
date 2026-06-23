@@ -227,36 +227,78 @@ export class CategoriesService implements OnModuleInit {
    * güvence katmanıdır.
    */
   async onModuleInit() {
-    await this.cleanupKlimaServis();
-    await this.upsertCanonical();
+    try {
+      await this.cleanupKlimaServis();
+    } catch (e) {
+      this.logger.error(
+        `[phase-522b] cleanupKlimaServis failed: ${(e as Error).message}`,
+      );
+    }
+    try {
+      await this.upsertCanonical();
+    } catch (e) {
+      this.logger.error(
+        `[phase-522b] upsertCanonical failed: ${(e as Error).message}`,
+      );
+    }
+    // Final tally — production canlı tanılama
+    const total = await this.repo.count();
+    const active = await this.repo.count({ where: { isActive: true } });
+    this.logger.log(
+      `[phase-522b] categories tally → total=${total} active=${active}`,
+    );
   }
 
+  /**
+   * Phase 522b — Per-row try/catch + individual error logging.
+   * Phase 522'de save() çalışmadı (prod hâlâ 15/29) — muhtemel sebep:
+   * tek bir kategoride simple-json default null çakışması veya unique violation.
+   * Per-row hata yutulursa diğer kategoriler yine create edilir.
+   */
   private async upsertCanonical(): Promise<void> {
     let created = 0;
     let backfilled = 0;
+    let failed = 0;
     for (const cat of SEED_CATEGORIES) {
-      const existing = await this.repo.findOne({ where: { name: cat.name } });
-      if (!existing) {
-        await this.repo.save(this.repo.create({ ...cat, isActive: true }));
-        created++;
-        continue;
-      }
-      const patch: Partial<Category> = {};
-      if (!existing.group) patch.group = cat.group;
-      if (!existing.icon) patch.icon = cat.icon;
-      if (existing.sortOrder == null || existing.sortOrder === 0) {
-        patch.sortOrder = cat.sortOrder;
-      }
-      if (Object.keys(patch).length > 0) {
-        await this.repo.update(existing.id, patch);
-        backfilled++;
+      try {
+        const existing = await this.repo.findOne({ where: { name: cat.name } });
+        if (!existing) {
+          // Repo.save yerine doğrudan create + save — açıkça hata göster.
+          const entity = this.repo.create({
+            name: cat.name,
+            icon: cat.icon,
+            description: cat.description,
+            group: cat.group,
+            sortOrder: cat.sortOrder,
+            isActive: true,
+            subServices: null,
+            avgPriceMin: null,
+            avgPriceMax: null,
+          });
+          await this.repo.save(entity);
+          created++;
+          continue;
+        }
+        const patch: Partial<Category> = {};
+        if (!existing.group) patch.group = cat.group;
+        if (!existing.icon) patch.icon = cat.icon;
+        if (existing.sortOrder == null || existing.sortOrder === 0) {
+          patch.sortOrder = cat.sortOrder;
+        }
+        if (Object.keys(patch).length > 0) {
+          await this.repo.update(existing.id, patch);
+          backfilled++;
+        }
+      } catch (e) {
+        failed++;
+        this.logger.error(
+          `[phase-522b] failed to upsert "${cat.name}": ${(e as Error).message}`,
+        );
       }
     }
-    if (created || backfilled) {
-      this.logger.log(
-        `[phase-522] categories upsert: created=${created} backfilled=${backfilled}`,
-      );
-    }
+    this.logger.log(
+      `[phase-522b] categories upsert: created=${created} backfilled=${backfilled} failed=${failed}`,
+    );
   }
 
   private async cleanupKlimaServis(): Promise<void> {
