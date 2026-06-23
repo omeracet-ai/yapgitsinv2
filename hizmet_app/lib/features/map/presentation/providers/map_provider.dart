@@ -163,6 +163,28 @@ class MapNotifier extends StateNotifier<MapState> {
         await _loadNearby(istanbul);
         return;
       }
+      // Phase 516 — Türkiye bbox kontrolü. Pixel/AVD emülatörü default GPS
+      // Mountain View (37.42, -122.08) döndürüyor; Türkiye dışı ilanlara 10000
+      // km uzak → backend nearby 0 sonuç, harita boş. Emülator/yurt dışı
+      // senaryosunda İstanbul fallback kullan ki dev deneyimi bozulmasın.
+      // Türkiye bbox (gevşek): lat 35.5–42.5, lng 25.5–45.0.
+      final outsideTurkey = pos.latitude < 35.5 ||
+          pos.latitude > 42.5 ||
+          pos.longitude < 25.5 ||
+          pos.longitude > 45.0;
+      if (outsideTurkey) {
+        const istanbul = LatLng(41.0082, 28.9784);
+        debugPrint(
+            'map_provider: GPS (${pos.latitude},${pos.longitude}) Türkiye dışı → İstanbul fallback');
+        state = state.copyWith(
+          userLocation: istanbul,
+          locationLoading: false,
+          error:
+              'Konum Türkiye dışında algılandı. İstanbul merkezi gösteriliyor.',
+        );
+        await _loadNearby(istanbul);
+        return;
+      }
       final loc = LatLng(pos.latitude, pos.longitude);
       state = state.copyWith(userLocation: loc, locationLoading: false);
       await _loadNearby(loc);
@@ -229,10 +251,23 @@ class MapNotifier extends StateNotifier<MapState> {
       state = state.copyWith(error: 'Veriler yüklenemedi. Tekrar deneyin.');
       return;
     }
+    debugPrint(
+        'map_provider._loadNearby: lat=${loc.latitude} lng=${loc.longitude} '
+        'r=$_radiusKm cat=$category → jobs=${jobs?.length ?? -1} '
+        'workers=${workers?.length ?? -1}');
+    // Phase 516 — Boş sonuç kullanıcıya görsel uyarı olarak yansısın. error
+    // alanı zaten _ErrorBanner ile gösteriliyor.
+    final newJobs = jobs ?? state.jobs;
+    final newWorkers = workers ?? state.workers;
+    final showEmptyHint =
+        (jobs != null && jobs.isEmpty) && (workers != null && workers.isEmpty);
     state = state.copyWith(
-      jobs: jobs ?? state.jobs,
-      workers: workers ?? state.workers,
-      clearError: true,
+      jobs: newJobs,
+      workers: newWorkers,
+      clearError: !showEmptyHint,
+      error: showEmptyHint
+          ? 'Bu konum çevresinde ilan bulunamadı. Yarıçapı genişletmeyi deneyin.'
+          : null,
     );
   }
 

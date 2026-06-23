@@ -93,8 +93,13 @@ class NearbyJob {
                 ?.map((e) => e.toString())
                 .toList() ??
             [],
-        locationApprox: j['locationApprox'] == true,
-        locationSource: j['locationSource'] as String?,
+        // Phase 516 — Backend response snake_case (`location_approx`,
+        // `location_source`) döndürüyor; camelCase fallback ile geriye dönük
+        // uyumluluk. Boolean coerce hem 1/0 hem true/false destekler.
+        locationApprox:
+            (j['location_approx'] ?? j['locationApprox']) == true ||
+                (j['location_approx'] ?? j['locationApprox']) == 1,
+        locationSource: (j['location_source'] ?? j['locationSource']) as String?,
         poster: j['poster'] is Map<String, dynamic>
             ? NearbyJobPoster.fromJson(j['poster'] as Map<String, dynamic>)
             : null,
@@ -163,7 +168,10 @@ class NearbyWorker {
       longitude: (j['longitude'] as num?)?.toDouble(),
       distanceKm: (j['distanceKm'] as num?)?.toDouble() ?? 0,
       identityVerified: j['identityVerified'] == true,
-      locationApprox: j['locationApprox'] == true,
+      // Phase 516 — snake_case fallback (jobs ile aynı patern).
+      locationApprox:
+          (j['location_approx'] ?? j['locationApprox']) == true ||
+              (j['location_approx'] ?? j['locationApprox']) == 1,
     );
   }
 }
@@ -190,6 +198,11 @@ class MapRepository {
       if (category != null) 'category': category,
     });
     final list = response.data as List<dynamic>;
+    // Phase 516 — Tanılama için response sayacı. "Haritada 1 ilan görünüyor"
+    // semptomunda backend ne döndürdüğünü görmek için.
+    // ignore: avoid_print
+    print(
+        '[map_repo] /jobs/nearby lat=$lat lng=$lng r=$radiusKm cat=$category → ${list.length} sonuç');
     return list
         .map((e) => NearbyJob.fromJson(e as Map<String, dynamic>))
         .toList();
