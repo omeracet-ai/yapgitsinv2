@@ -53,6 +53,11 @@ async function applyBootMigrations(): Promise<void> {
     for (const col of [
       { name: 'defaultIban', type: 'VARCHAR(34)' },
       { name: 'defaultAccountHolderName', type: 'VARCHAR(100)' },
+      // Phase 511 (register email/phone required) — entity fields added, prod migration eksikti
+      { name: 'isPhoneVerified', type: "BOOLEAN NOT NULL DEFAULT 0" },
+      { name: 'emailVerified', type: "BOOLEAN NOT NULL DEFAULT 0" },
+      // Phase 528 (demo user flag) — entity field added, prod migration eksikti
+      { name: 'isDemo', type: "BOOLEAN NOT NULL DEFAULT 0" },
     ]) {
       try {
         const exists = await get(
