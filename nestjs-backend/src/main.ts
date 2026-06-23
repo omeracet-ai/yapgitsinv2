@@ -635,13 +635,20 @@ async function bootstrap() {
 
   const isProd = process.env.NODE_ENV === 'production';
 
-  // Phase 131/170/258 — Helmet: HTTP güvenlik header'ları
+  // Phase 131/170/258/526 — Helmet: HTTP güvenlik header'ları
   // - HSTS: 1 yıl, alt domainler dahil, preload-ready (sadece TLS arkasında etkili)
-  // - CSP: Iyzipay frame'i, Plausible/GTM analytics, self img/script/style, websocket connect
+  // - CSP: Iyzipay frame'i (env-gate: prod yalnız api.iyzipay, dev sandbox+api),
+  //        Plausible/GTM analytics, self img/script/style, websocket connect
   // - referrerPolicy + frameguard (clickjacking) + nosniff (X-Content-Type-Options)
   // - X-DNS-Prefetch-Control: off (gizlilik — helmet default'u allow, off'a çekiyoruz)
+  // - Permissions-Policy: camera/mic/geolocation/payment minimal yetki
   // crossOriginResourcePolicy 'cross-origin': /uploads görselleri Flutter uygulamasından
   //   ve farklı origin'lerden yüklenebilsin (CORP başlığı görseli bloke etmesin).
+  //
+  // Phase 526 — `'unsafe-inline'` DROP (script-src). Backend bir JSON API, hiçbir
+  //   response inline <script> içermiyor. Swagger UI (/api/docs) zaten CSP'den
+  //   muaf (skipDocsCsp). Bu sayede Phase 519 XSS sanitize'ın bypass yolu kapanır.
+  //   Style-src 'unsafe-inline' korunur (Swagger CSS inline expects, ileride nonce'lanır).
   //
   // CSP Swagger notu: Swagger UI (/api/docs, dev-only) kendi bundle JS/CSS'ini ve
   //   inline style/script + blob worker kullanır. Bu yüzden:
@@ -649,14 +656,20 @@ async function bootstrap() {
   //   - Genel CSP yine de scriptSrc'a 'blob:' ve worker-src 'blob:' ekler ki
   //     Swagger dışı sayfalar da CSP altında çalışsın, JSON API zaten HTML render etmez.
   //   Bu, JSON API + statik /uploads görselleri kırmadan makul-permissive bir politikadır.
+
+  // Iyzipay frame allowlist — prod sadece live, dev sandbox + live.
+  const iyziFrameSrc = isProd
+    ? ['https://api.iyzipay.com']
+    : ['https://sandbox-api.iyzipay.com', 'https://api.iyzipay.com'];
+
   const cspMiddleware = helmet.contentSecurityPolicy({
     useDefaults: true,
     directives: {
       defaultSrc: ["'self'"],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+      // Phase 526 — drop 'unsafe-inline'. JSON API'da inline script yok.
       scriptSrc: [
         "'self'",
-        "'unsafe-inline'",
         'blob:',
         'https://www.googletagmanager.com',
         'https://plausible.io',
@@ -670,11 +683,7 @@ async function bootstrap() {
         'https://plausible.io',
       ],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      frameSrc: [
-        "'self'",
-        'https://sandbox-api.iyzipay.com',
-        'https://api.iyzipay.com',
-      ],
+      frameSrc: ["'self'", ...iyziFrameSrc],
       // upgrade-insecure-requests prod TLS uyumu
       upgradeInsecureRequests: isProd ? [] : null,
     },
@@ -704,7 +713,22 @@ async function bootstrap() {
     if (url.startsWith('/api/docs')) return next();
     return cspMiddleware(req, res, next);
   });
-  console.log('[boot] helmet ready');
+
+  // Phase 526 — Permissions-Policy: kameraya/mic'e/coğrafi konuma minimum yetki.
+  // - camera=(self): escrow confirmation photo akışı (mobil web fallback) için self
+  // - microphone=(): hiçbir feature mic istemiyor → boş allowlist
+  // - geolocation=(self): worker availability / nearby jobs harita feature'ı
+  // - payment=(self): Payment Request API (Iyzipay redirect olduğu için self yeterli)
+  // Helmet'in built-in permittedCrossDomainPolicies header'ı kapsamı dar, bu yüzden
+  // doğrudan setHeader. Tüm route'lara uygulanır, /api/docs dahil (güvenlik).
+  app.use((_req: any, res: any, next: any) => {
+    res.setHeader(
+      'Permissions-Policy',
+      'camera=(self), microphone=(), geolocation=(self), payment=(self)',
+    );
+    next();
+  });
+  console.log('[boot] helmet ready (CSP strict + Permissions-Policy)');
 
   // Global validation — tüm DTO dekoratörleri (class-validator) aktif hale gelir
   app.useGlobalPipes(
