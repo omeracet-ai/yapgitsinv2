@@ -153,7 +153,7 @@ class _WorkerOnboardingScreenState
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Tebrikler! Usta profilin hazır 🎉'),
+        content: Text('Tebrikler! Hizmet veren profilin hazır 🎉'),
         backgroundColor: AppColors.success,
       ));
       context.go('/');
@@ -178,7 +178,7 @@ class _WorkerOnboardingScreenState
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
-        title: Text('Usta Başlangıç (${_step + 1}/$_total)'),
+        title: Text('Hizmet Veren Başlangıç (${_step + 1}/$_total)'),
         actions: [
           TextButton(
             onPressed: _saving ? null : _skip,

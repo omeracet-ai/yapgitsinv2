@@ -114,7 +114,7 @@ class _WorkersNearbySheetState extends ConsumerState<WorkersNearbySheet> {
       debugPrint('workers_nearby_sheet bootstrap: $e\n$st');
       if (!mounted) return;
       setState(() {
-        _error = 'Ustalar yüklenemedi.';
+        _error = 'Hizmet verenler yüklenemedi.';
         _loading = false;
       });
     }
@@ -248,7 +248,7 @@ class _WorkersNearbySheetState extends ConsumerState<WorkersNearbySheet> {
                   children: [
                     Text(
                       selected != null
-                          ? (selected.name ?? 'Usta')
+                          ? (selected.name ?? 'Hizmet Veren')
                           : 'Hızlı Hizmet Verenler',
                       style: const TextStyle(
                           fontSize: 16,
@@ -280,7 +280,7 @@ class _WorkersNearbySheetState extends ConsumerState<WorkersNearbySheet> {
                           child: Text(
                             selected != null
                                 ? '${selected.distanceKm.toStringAsFixed(1)} km'
-                                : '${_workers.length} usta',
+                                : '${_workers.length} hizmet veren',
                             style: TextStyle(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w700,
@@ -412,7 +412,7 @@ class _WorkersNearbySheetState extends ConsumerState<WorkersNearbySheet> {
       icon = Icons.cloud_off_rounded;
       color = AppColors.error;
     } else {
-      label = '0 usta';
+      label = '0 hizmet veren';
       icon = Icons.search_off_rounded;
       color = AppColors.textHint;
     }
@@ -505,7 +505,7 @@ class _WorkersNearbySheetState extends ConsumerState<WorkersNearbySheet> {
                     children: [
                       Flexible(
                         child: Text(
-                          w.name ?? 'Usta',
+                          w.name ?? 'Hizmet Veren',
                           style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.1,

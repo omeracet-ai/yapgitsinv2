@@ -179,8 +179,8 @@ class _ProviderContent extends ConsumerWidget {
               isVerified ? Icons.verified : Icons.pending_outlined,
               isVerified ? Colors.blue : Colors.orange,
               tooltip: isVerified
-                  ? 'Bu ustanın kimliği yönetici tarafından doğrulanmıştır.'
-                  : 'Bu ustanın kimlik doğrulaması henüz tamamlanmamıştır.'),
+                  ? 'Bu hizmet verenin kimliği yönetici tarafından doğrulanmıştır.'
+                  : 'Bu hizmet verenin kimlik doğrulaması henüz tamamlanmamıştır.'),
         ],
       ),
     );

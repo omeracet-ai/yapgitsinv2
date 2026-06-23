@@ -148,7 +148,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
       titleSpacing: 16,
       flexibleSpace: ColoredBox(color: AppColors.background),
       title: const Text(
-        'Ustalar',
+        'Hizmet Verenler',
         style: TextStyle(
             color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
       ),
@@ -367,11 +367,11 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
       return EmptyState(
         icon: Icons.person_search_rounded,
         title: hasFilter
-            ? 'Bu kriterlere uygun usta bulunamadı'
-            : 'Henüz usta yok',
+            ? 'Bu kriterlere uygun hizmet veren bulunamadı'
+            : 'Henüz hizmet veren yok',
         message: hasFilter
             ? 'Filtreleri değiştirip tekrar dene.'
-            : 'Yakında bölgenize uygun ustalar burada listelenecek.',
+            : 'Yakında bölgenize uygun hizmet verenler burada listelenecek.',
         action: hasFilter
             ? OutlinedButton.icon(
                 onPressed: () {
@@ -460,7 +460,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${providers.length} usta bulundu',
+                Text('${providers.length} hizmet veren bulundu',
                     style: TextStyle(
                         fontSize: 13, color: AppColors.textSecondary)),
                 const SizedBox(height: 8),
@@ -504,7 +504,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                         Icon(Icons.workspace_premium_rounded,
                             color: Colors.white, size: 13),
                         SizedBox(width: 4),
-                        Text('Öne Çıkan Ustalar',
+                        Text('Öne Çıkan Hizmet Verenler',
                             style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -532,7 +532,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: Row(
                 children: [
-                  const Text('Tüm Ustalar',
+                  const Text('Tüm Hizmet Verenler',
                       style: TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 8),

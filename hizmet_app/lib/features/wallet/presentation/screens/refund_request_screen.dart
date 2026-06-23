@@ -257,7 +257,7 @@ class _RefundRequestScreenState extends ConsumerState<RefundRequestScreen> {
           _row('Tarih', dateStr),
           if (widget.workerName != null && widget.workerName!.isNotEmpty) ...[
             const SizedBox(height: 6),
-            _row('Usta', widget.workerName!),
+            _row('Hizmet Veren', widget.workerName!),
           ],
         ],
       ),

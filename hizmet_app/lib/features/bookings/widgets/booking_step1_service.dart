@@ -38,7 +38,7 @@ class BookingStep1Service extends StatelessWidget {
           const Text('Kategori', style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           if (categories.isEmpty)
-            const Text('Bu usta için kategori bulunamadı.',
+            const Text('Bu hizmet veren için kategori bulunamadı.',
                 style: TextStyle(color: AppColors.error))
           else
             OverflowSlideRow(

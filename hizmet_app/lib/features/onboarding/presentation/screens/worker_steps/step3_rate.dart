@@ -74,7 +74,7 @@ class WorkerOnboardingStep3Rate extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Piyasa ortalaması: 150–500 ₺/saat. Tecrübeli ustalar daha yüksek belirleyebilir.',
+                  'Piyasa ortalaması: 150–500 ₺/saat. Tecrübeli hizmet verenler daha yüksek belirleyebilir.',
                   style: TextStyle(fontSize: 12, color: AppColors.secondary),
                 ),
               ),

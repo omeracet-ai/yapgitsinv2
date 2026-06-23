@@ -32,7 +32,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           .createEscrow(widget.jobId, widget.amount);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ödeme alındı, usta onaylandı')),
+        const SnackBar(content: Text('Ödeme alındı, hizmet veren onaylandı')),
       );
       Navigator.of(context).pop(true);
     } catch (e) {
@@ -81,7 +81,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Ödemeniz güvende tutulur ve iş tamamlandığında ustaya aktarılır.',
+                    'Ödemeniz güvende tutulur ve iş tamamlandığında hizmet verene aktarılır.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,

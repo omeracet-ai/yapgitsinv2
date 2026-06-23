@@ -37,7 +37,7 @@ class _HelpScreenState extends State<HelpScreen> {
     ),
     (
       'Ödeme nasıl yapılır?',
-      'Ödeme ilan sahibi ile usta arasında doğrudan gerçekleşir. '
+      'Ödeme ilan sahibi ile hizmet veren arasında doğrudan gerçekleşir. '
       'Platform şu an için ödeme aracılık hizmeti sunmamaktadır. '
       'Güvenli ödeme için iş tamamlandıktan sonra ödeme yapmanızı öneririz.',
     ),

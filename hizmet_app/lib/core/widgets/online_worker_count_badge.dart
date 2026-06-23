@@ -15,12 +15,12 @@ class OnlineWorkerCountBadge extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(publicStatsProvider);
     return stats.when(
-      loading: () => const OnlineCountBadge(text: 'Ustalar yükleniyor…'),
+      loading: () => const OnlineCountBadge(text: 'Hizmet verenler yükleniyor…'),
       error: (_, __) => const SizedBox.shrink(),
       data: (s) {
         if (s.totalWorkers <= 0) return const SizedBox.shrink();
         final formatted = NumberFormat.decimalPattern('tr').format(s.totalWorkers);
-        return OnlineCountBadge(text: '$formatted kayıtlı usta');
+        return OnlineCountBadge(text: '$formatted kayıtlı hizmet veren');
       },
     );
   }

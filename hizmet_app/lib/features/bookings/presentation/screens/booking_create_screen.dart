@@ -287,7 +287,7 @@ Widget buildBookingCreateRoute(GoRouterState state) {
   final cats = (extra['workerCategories'] as List?)?.cast<String>() ?? const <String>[];
   return BookingCreateScreen(
     workerId: state.pathParameters['workerId']!,
-    workerName: extra['workerName'] as String? ?? 'Usta',
+    workerName: extra['workerName'] as String? ?? 'Hizmet Veren',
     workerCategories: cats,
   );
 }

@@ -585,7 +585,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final missingHere = fields.where(missing.contains).toList();
     return _sectionCard(
       icon: '🛡️',
-      title: 'Usta Bilgileri',
+      title: 'Hizmet Veren Bilgileri',
       isMissing: missingHere.isNotEmpty,
       missingFields: missingHere,
       busy: _busySection == 'worker',

@@ -333,7 +333,7 @@ class _ServiceListingsScreenState
     return EmptyState(
       icon: Icons.workspace_premium_outlined,
       title: 'Henüz hizmet ilanı yok',
-      message: 'Usta isen hemen ilk hizmet ilanını yayınla!',
+      message: 'Hizmet veriyorsan hemen ilk hizmet ilanını yayınla!',
       action: ElevatedButton.icon(
         onPressed: _openPost,
         icon: const Icon(Icons.add),
@@ -642,7 +642,7 @@ class _PosterStrip extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                poster.fullName.isEmpty ? 'Usta' : poster.fullName,
+                poster.fullName.isEmpty ? 'Hizmet Veren' : poster.fullName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

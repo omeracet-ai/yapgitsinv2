@@ -34,7 +34,7 @@ class WorkerOnboardingStep2Bio extends StatelessWidget {
             onChanged: (_) => onChanged(),
             decoration: InputDecoration(
               hintText:
-                  'Örn: 10 yıllık tesisat ustasıyım. Su tesisatı, kombi montajı ve banyo tadilatında uzmanım…',
+                  'Örn: 10 yıllık tesisat hizmeti veriyorum. Su tesisatı, kombi montajı ve banyo tadilatında uzmanım…',
               
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),

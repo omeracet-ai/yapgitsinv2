@@ -27,7 +27,7 @@ class RecentSearch {
     if (category != null && category!.isNotEmpty) parts.add(category!);
     if (city != null && city!.isNotEmpty) parts.add(city!);
     if (minRating != null) parts.add('⭐${minRating!.toStringAsFixed(1)}+');
-    if (parts.isEmpty) parts.add('Tüm Ustalar');
+    if (parts.isEmpty) parts.add('Tüm Hizmet Verenler');
     return parts.join(' · ');
   }
 

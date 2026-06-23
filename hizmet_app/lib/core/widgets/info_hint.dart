@@ -206,7 +206,7 @@ class HintCatalog {
     ),
     'job.location': Hint(
       'Konum',
-      'İşin yapılacağı konum. Yakındaki ustaların ilanını görmesi için '
+      'İşin yapılacağı konum. Yakındaki hizmet verenlerin ilanını görmesi için '
           'mümkün olduğunca doğru gir. Adres herkese görünmez, sadece '
           'kabul edilen teklif sahibi sokak detayını alır.',
     ),

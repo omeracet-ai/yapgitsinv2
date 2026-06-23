@@ -32,7 +32,7 @@ class WorkerMapMarker extends StatelessWidget {
     const textColor = Colors.white;
     final label = rating != null
         ? rating!.toStringAsFixed(1)
-        : (name != null && name!.isNotEmpty ? _firstName(name!) : 'Usta');
+        : (name != null && name!.isNotEmpty ? _firstName(name!) : 'Hizmet Veren');
 
     final pill = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
@@ -180,7 +180,7 @@ class WorkerMapMarker extends StatelessWidget {
 
   static String _firstName(String fullName) {
     final parts = fullName.trim().split(RegExp(r'\s+'));
-    return parts.isEmpty ? 'Usta' : parts.first;
+    return parts.isEmpty ? 'Hizmet Veren' : parts.first;
   }
 }
 

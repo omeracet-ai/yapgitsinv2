@@ -101,7 +101,7 @@ class _EscrowHoldButtonState extends ConsumerState<EscrowHoldButton> {
       ref.invalidate(escrowByBookingProvider(widget.bookingId));
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Ödeme alındı — iş tamamlandığında ustaya aktarılır'),
+            content: Text('Ödeme alındı — iş tamamlandığında hizmet verene aktarılır'),
             backgroundColor: AppColors.success),
       );
       widget.onHeld?.call();

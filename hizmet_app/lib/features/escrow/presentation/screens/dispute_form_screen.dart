@@ -78,7 +78,7 @@ class _DisputeFormScreenState extends ConsumerState<DisputeFormScreen> {
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 hintText:
-                    'Örn: Usta belirlenen saatte gelmedi, iletişim kuramadım...',
+                    'Örn: Hizmet veren belirlenen saatte gelmedi, iletişim kuramadım...',
               ),
             ),
             const SizedBox(height: 16),

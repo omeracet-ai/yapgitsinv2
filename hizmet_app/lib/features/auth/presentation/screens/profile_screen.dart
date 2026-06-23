@@ -1523,7 +1523,7 @@ class ProfileScreen extends ConsumerWidget {
             AvailabilityEditorSheet.show(context);
           }),
           _menuItem(Icons.workspace_premium_outlined,
-              'Belgelerim (Usta Ünvanı)', () {
+              'Belgelerim (Hizmet Veren Ünvanı)', () {
             context.push('/belgelerim');
           }),
           // Phase 514 — Portfolyom her kullanıcıda görünür (potansiyel hizmet

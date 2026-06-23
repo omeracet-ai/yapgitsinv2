@@ -17,7 +17,7 @@ class FavoritesScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Favori Ustalarım'),
+        title: const Text('Favori Hizmet Verenlerim'),
         backgroundColor: AppColors.headerBackground(context),
         foregroundColor: Colors.white,
       ),
@@ -57,9 +57,9 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return const EmptyState(
       icon: Icons.favorite_border_rounded,
-      title: 'Henüz favori usta yok',
+      title: 'Henüz favori hizmet veren yok',
       message:
-          'Beğendiğin ustaları kalp ikonuyla kaydet, sonra buradan kolayca ulaş.',
+          'Beğendiğin hizmet verenleri kalp ikonuyla kaydet, sonra buradan kolayca ulaş.',
     );
   }
 }

@@ -29,7 +29,7 @@ class CategorySubscriptionsScreen extends ConsumerWidget {
               child: Padding(
                 padding: EdgeInsets.all(32),
                 child: Text(
-                  'Henüz abonelik yok.\n\nUsta arama ekranından "🔔 Bu Aramaya Abone Ol" ile yeni iş bildirimleri alabilirsin.',
+                  'Henüz abonelik yok.\n\nHizmet veren arama ekranından "🔔 Bu Aramaya Abone Ol" ile yeni iş bildirimleri alabilirsin.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 15, color: AppColors.secondary),
                 ),

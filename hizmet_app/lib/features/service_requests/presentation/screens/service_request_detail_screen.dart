@@ -424,7 +424,7 @@ class _ServiceRequestDetailScreenState
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'İlanını açık-teklif sistemine çevir; ustalar fiyat verir.',
+                        'İlanını açık-teklif sistemine çevir; hizmet verenler fiyat verir.',
                         style: TextStyle(
                             color: AppColors.textHint, fontSize: 12),
                       ),

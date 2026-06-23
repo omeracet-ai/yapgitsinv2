@@ -58,7 +58,7 @@ final _fallback = [
     gradientEnd: AppColors.surface,
   ),
   _Slide(
-    title: 'Usta bul,\nteklif al,\nrahat et.',
+    title: 'Hizmet veren bul,\nteklif al,\nrahat et.',
     body: 'İşini yayınla, dakikalar içinde en uygun teklifleri değerlendirmeye başla.',
     icon: Icons.search,
     gradientStart: AppColors.background,

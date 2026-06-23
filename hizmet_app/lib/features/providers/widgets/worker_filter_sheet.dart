@@ -217,10 +217,10 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
                     _buildSwitch(
                       title: _locating
                           ? 'Konum alınıyor…'
-                          : 'Yakınımdaki ustalar',
+                          : 'Yakınımdaki hizmet verenler',
                       subtitle: _nearMe && _userLat != null
                           ? 'Konum: ${_userLat!.toStringAsFixed(3)}, ${_userLng!.toStringAsFixed(3)}'
-                          : 'GPS izni ile yakındaki ustaları göster',
+                          : 'GPS izni ile yakındaki hizmet verenleri göster',
                       icon: Icons.my_location_rounded,
                       iconColor: AppColors.primary,
                       value: _nearMe,
@@ -266,7 +266,7 @@ class _WorkerFilterSheetState extends State<WorkerFilterSheet> {
                     const SizedBox(height: 12),
                     _buildSwitch(
                       title: 'Sadece doğrulanmış',
-                      subtitle: 'Mavi tikli ustalar',
+                      subtitle: 'Mavi tikli hizmet verenler',
                       icon: Icons.verified_rounded,
                       iconColor: Colors.blue,
                       value: _verifiedOnly,

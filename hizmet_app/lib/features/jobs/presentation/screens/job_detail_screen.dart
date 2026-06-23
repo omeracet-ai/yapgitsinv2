@@ -644,7 +644,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(isOffer ? 'Hizmeti Veren Usta' : 'İlanı Yayınlayan',
+          Text(isOffer ? 'Hizmeti Veren' : 'İlanı Yayınlayan',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
                   color: _textSecondary, letterSpacing: 0.3)),
           const SizedBox(height: 10),

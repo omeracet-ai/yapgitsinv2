@@ -73,7 +73,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             left: 24,
             right: 24,
             child: Text(
-              'Ustanın telefonundaki QR kodu kareye getirin.',
+              'Hizmet verenin telefonundaki QR kodu kareye getirin.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white, fontSize: 14),
             ),

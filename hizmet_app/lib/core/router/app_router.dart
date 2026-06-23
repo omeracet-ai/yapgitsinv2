@@ -590,7 +590,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // 'Yeni İlan Ver' secondary kaldırıldı.
           return SuccessScreen(
             title: 'İlanınız Yayında!',
-            message: 'İlanınız başarıyla yayınlandı. Şimdi ustalardan teklif bekleyebilirsiniz.',
+            message: 'İlanınız başarıyla yayınlandı. Şimdi hizmet verenlerden teklif bekleyebilirsiniz.',
             btnText: 'Hizmet İlanları',
             targetRoute: '/',
             targetTab: 1, // Yapgitsin sekmesi (ilanlar)

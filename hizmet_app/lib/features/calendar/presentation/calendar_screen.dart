@@ -47,7 +47,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
           controller: _tab,
           tabs: const [
             Tab(text: 'Müşteri'),
-            Tab(text: 'Usta'),
+            Tab(text: 'Hizmet Veren'),
           ],
         ),
         actions: [
@@ -377,7 +377,7 @@ Widget _bookingCard(Booking b, {VoidCallback? onCancel}) {
 
 const _kReasonLabels = <String, String>{
   'customer_change': 'Planım değişti',
-  'worker_unavailable': 'Usta müsait değil',
+  'worker_unavailable': 'Hizmet veren müsait değil',
   'weather': 'Hava koşulları',
   'emergency': 'Acil durum',
   'other': 'Diğer',

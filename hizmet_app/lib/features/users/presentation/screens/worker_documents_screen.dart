@@ -79,7 +79,7 @@ class _WorkerDocumentsScreenState extends ConsumerState<WorkerDocumentsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('"$selectedCategory" için belge yüklendi — Usta ünvanı aktif.'),
+          content: Text('"$selectedCategory" için belge yüklendi — Hizmet Veren ünvanı aktif.'),
           backgroundColor: AppColors.success,
         ),
       );
@@ -102,7 +102,7 @@ class _WorkerDocumentsScreenState extends ConsumerState<WorkerDocumentsScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Belgeyi sil'),
         content: Text(
-            '"$category" kategorisindeki belgeyi silmek istediğinden emin misin? Bu kategorideki son belge ise Usta ünvanın kalkacak.'),
+            '"$category" kategorisindeki belgeyi silmek istediğinden emin misin? Bu kategorideki son belge ise Hizmet Veren ünvanın kalkacak.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -259,7 +259,7 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Belge yüklemek opsiyoneldir. Yeterlilik belgeni yüklediğinde '
-            'o kategoride "Usta" ünvanı + doğrulama kartı kazanırsın.',
+            'o kategoride "Hizmet Veren" ünvanı + doğrulama kartı kazanırsın.',
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontSize: 13, color: AppColors.textSecondary, height: 1.5),

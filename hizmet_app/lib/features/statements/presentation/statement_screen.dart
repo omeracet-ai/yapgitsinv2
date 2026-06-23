@@ -138,7 +138,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: _summaryCard(
-                title: 'Usta',
+                title: 'Hizmet Veren',
                 color: AppColors.success,
                 lines: [
                   '${asTasker['count'] ?? 0} iş',
@@ -238,7 +238,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                isCustomer ? 'Müşteri' : 'Usta',
+                isCustomer ? 'Müşteri' : 'Hizmet Veren',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,

@@ -88,7 +88,7 @@ class ConfirmationProgress extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          _row('Usta', workerLabel, highlight: mySide == 'worker'),
+          _row('Hizmet Veren', workerLabel, highlight: mySide == 'worker'),
           const SizedBox(height: 4),
           _row('Müşteri', customerLabel, highlight: mySide == 'customer'),
         ],

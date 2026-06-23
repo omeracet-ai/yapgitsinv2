@@ -109,7 +109,7 @@ class _DisputeCard extends ConsumerWidget {
             const SizedBox(height: 4),
             Text('Müşteri: ${escrow.customerId}',
                 style: const TextStyle(fontSize: 12)),
-            Text('Usta: ${escrow.workerId}',
+            Text('Hizmet Veren: ${escrow.workerId}',
                 style: const TextStyle(fontSize: 12)),
             const SizedBox(height: 8),
             const Text('Sebep:',
@@ -160,7 +160,7 @@ class _DisputeCard extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         RadioListTile<String>(
-                          title: Text('Ustaya öde (release)'),
+                          title: Text('Hizmet verene öde (release)'),
                           value: 'release',
                         ),
                         RadioListTile<String>(
@@ -177,7 +177,7 @@ class _DisputeCard extends ConsumerWidget {
                   if (action == 'split') ...[
                     const SizedBox(height: 8),
                     Text(
-                        'Ustaya: %${(splitRatio * 100).toStringAsFixed(0)} — '
+                        'Hizmet verene: %${(splitRatio * 100).toStringAsFixed(0)} — '
                         'Müşteriye: %${((1 - splitRatio) * 100).toStringAsFixed(0)}'),
                     Slider(
                       value: splitRatio,

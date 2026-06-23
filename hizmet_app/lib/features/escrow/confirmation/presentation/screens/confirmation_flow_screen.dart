@@ -490,7 +490,7 @@ class _ConfirmationFlowScreenState
           ),
           const SizedBox(height: 8),
           Text(
-            'Onay süreci tamamlandı. Ödeme ustanın hesabına aktarıldı.',
+            'Onay süreci tamamlandı. Ödeme hizmet verenin hesabına aktarıldı.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),

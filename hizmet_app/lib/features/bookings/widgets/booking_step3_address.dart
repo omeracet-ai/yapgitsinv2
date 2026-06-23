@@ -140,7 +140,7 @@ class _SummaryCard extends StatelessWidget {
           const Text('Özet',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.secondary)),
           const SizedBox(height: 10),
-          _row('Usta', workerName),
+          _row('Hizmet Veren', workerName),
           _row('Kategori',
               [category, subCategory].where((s) => s != null && s.isNotEmpty).join(' • ')),
           _row('Tarih', date == null ? '—' : df.format(date!)),

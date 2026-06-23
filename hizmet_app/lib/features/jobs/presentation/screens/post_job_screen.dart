@@ -1329,7 +1329,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         return '✓ $d • $t';
       case 'flexible':
       default:
-        return '✓ Esnek — usta seninle anlaşacak.';
+        return '✓ Esnek — hizmet veren seninle anlaşacak.';
     }
   }
 
@@ -1371,7 +1371,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                 color: AppColors.textPrimary)),
         const SizedBox(height: 4),
         Text(
-          'Ustanın seninle saatte uyuşma esnekliği. Esnek → ustaya zaman kalır; '
+          'Hizmet verenin seninle saatte uyuşma esnekliği. Esnek → hizmet verene zaman kalır; '
           'belirli → seçtiğin tarih/saat; acil → aynı gün.',
           style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
         ),
@@ -1445,7 +1445,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         ),
         const SizedBox(height: 3),
         Text(
-          'Doğru ustaya hızlı ulaşmak için konum zorunlu — harita pin\'i veya "Konumumu Kullan".',
+          'Doğru hizmet verene hızlı ulaşmak için konum zorunlu — harita pin\'i veya "Konumumu Kullan".',
           style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 8),
