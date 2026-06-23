@@ -1062,9 +1062,10 @@ export class UsersController {
         order: { createdAt: 'DESC' },
         take: 10,
       }),
-      // Müşteri olarak tamamlanmış ilanlar
+      // Müşteri olarak tamamlanmış ilanlar (Phase 506: pastJobsAsCustomer
+      // response'a eklendi; isDraft=false filtre + son 20).
       this.jobsRepo.find({
-        where: { customerId: id, status: JobStatus.COMPLETED },
+        where: { customerId: id, status: JobStatus.COMPLETED, isDraft: false },
         order: { updatedAt: 'DESC' },
         take: 20,
       }),
@@ -1091,6 +1092,20 @@ export class UsersController {
         pastPhotos.push(...job.photos.slice(0, 4 - pastPhotos.length));
       }
     }
+
+    // Phase 506 — Hizmet Alan (asCustomer) past jobs özet listesi.
+    // PublicProfileScreen'de ayrı section olarak gösterilir; tap → /ilan/:id.
+    // customerJobs zaten yukarıda eager çekiliyor — ek sorgu yok.
+    const pastJobsAsCustomer = customerJobs.map((j) => ({
+      id: j.id,
+      title: j.title,
+      category: j.category,
+      completedAt: j.updatedAt
+        ? new Date(j.updatedAt).toISOString()
+        : null,
+      photoUrl:
+        Array.isArray(j.photos) && j.photos.length > 0 ? j.photos[0] : null,
+    }));
 
     // ── Gerçek zamanlı avg (DB'dekini de güncelle) ────────────────────────
     const avgRating = reviews.length
@@ -1158,6 +1173,8 @@ export class UsersController {
         },
       })),
       pastPhotos,
+      // Phase 506 — Hizmet Alan tarafı geçmiş ilanlar (max 20, completed only)
+      pastJobsAsCustomer,
       portfolioPhotos: Array.isArray(user.portfolioPhotos)
         ? user.portfolioPhotos
         : [],
