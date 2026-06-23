@@ -500,16 +500,32 @@ export const api = {
   blogUpdate: (id: string, data: Partial<BlogPost>) => request<BlogPost>(`/admin/blog/${id}`,  { method: 'PATCH',  body: JSON.stringify(data) }),
   blogDelete: (id: string)                       => request<void>(`/admin/blog/${id}`,         { method: 'DELETE' }),
 
-  // Phase 254b — Platform commission + token economy view
+  // Phase 254b / Phase 510 — Platform commission + token economy view/edit
   getCommissionSettings: () =>
-    request<{ commissionPctQr: number; offerTokenCost: number }>(
-      '/admin/settings/commission',
-    ),
-  updateCommissionSettings: (commissionPctQr: number) =>
-    request<{ commissionPctQr: number; offerTokenCost: number }>(
-      '/admin/settings/commission',
-      { method: 'PATCH', body: JSON.stringify({ commissionPctQr }) },
-    ),
+    request<{
+      commissionPctQr: number;
+      offerTokenCost: number;
+      offerTokenCostMode: 'flat' | 'percent';
+      offerTokenCostMin: number;
+      offerTokenCostMax: number;
+    }>('/admin/settings/commission'),
+  updateCommissionSettings: (payload: {
+    commissionPctQr?: number;
+    offerTokenCostMode?: 'flat' | 'percent';
+    offerTokenCost?: number;
+    offerTokenCostMin?: number;
+    offerTokenCostMax?: number;
+  }) =>
+    request<{
+      commissionPctQr: number;
+      offerTokenCost: number;
+      offerTokenCostMode: 'flat' | 'percent';
+      offerTokenCostMin: number;
+      offerTokenCostMax: number;
+    }>('/admin/settings/commission', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
 
   // System settings (Phase 77)
   listSettings: () => request<SystemSetting[]>('/admin/settings'),
