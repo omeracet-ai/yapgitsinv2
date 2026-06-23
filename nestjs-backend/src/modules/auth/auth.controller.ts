@@ -11,7 +11,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { FirebaseLoginDto } from './dto/firebase-login.dto';
@@ -30,6 +30,7 @@ import {
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
 import { LoginThrottleGuard } from '../../common/guards/login-throttle.guard';
+import { RegisterThrottleGuard } from '../../common/guards/register-throttle.guard';
 import type { Request } from 'express';
 
 /** Phase 255b — extract first XFF / remote address for account-lock attribution. */
@@ -114,8 +115,15 @@ export class AuthController {
     );
   }
 
-  /** Yeni kullanıcı / işçi kaydı — Phase 170: 3 req/saat per IP (spam koruma) */
-  @Throttle({ 'auth-register': { limit: 3, ttl: 3_600_000 } })
+  /**
+   * Yeni kullanıcı / işçi kaydı.
+   * Phase 523 — `RegisterThrottleGuard` kullanılıyor: 3 BAŞARILI kayıt / saat
+   * per IP. 400 validation hataları sayılmaz (E2E agent IP'sini kilitlemiyor).
+   * Standart `Retry-After` header döner. Global `auth-register` slot'u skip
+   * edilir; gerçek limiti guard koyar.
+   */
+  @SkipThrottle({ 'auth-register': true })
+  @UseGuards(RegisterThrottleGuard)
   @Post('register')
   register(@Body() dto: RegisterDto, @Req() req: Request) {
     // Phase 256 (Voldi-fs) — pass IP + User-Agent for the KVKK consent audit
