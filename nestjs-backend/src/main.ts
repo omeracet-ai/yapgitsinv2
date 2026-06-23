@@ -454,6 +454,34 @@ async function applyBootMigrations(): Promise<void> {
       );
     }
 
+    // Phase 507a — offers.counterCount (default 0). Entity'e eklendi (Faz 507a),
+    // prod synchronize=false olduğundan eksik kolon → TypeORM `SELECT * FROM
+    // offers` SQLITE_ERROR no such column → /jobs/:id/offers 500 dönüyordu.
+    // Belt-and-suspenders: TypeORM migration var (Phase507AddOfferCounterCount),
+    // burada da idempotent ALTER (migration zinciri kopsa bile boot-migration
+    // tutar).
+    try {
+      const exists = await get(
+        `SELECT 1 AS found FROM pragma_table_info('offers') WHERE name = 'counterCount'`,
+      );
+      if (!exists) {
+        try {
+          await run(
+            'ALTER TABLE offers ADD COLUMN counterCount INTEGER NOT NULL DEFAULT 0',
+          );
+          logger.log('added offers.counterCount');
+        } catch (e) {
+          logger.warn(
+            `add offers.counterCount skipped: ${e instanceof Error ? e.message : String(e)}`,
+          );
+        }
+      }
+    } catch (e) {
+      logger.warn(
+        `detect offers.counterCount failed: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+
     logger.log('all up-to-date');
   } finally {
     await new Promise<void>((resolve) => db.close(() => resolve()));
