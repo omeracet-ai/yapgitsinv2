@@ -562,17 +562,67 @@ async function bootstrap() {
       },
     }),
   );
-  // Post-bodyParser middleware: req.body Buffer ise UTF-8 olarak parse et.
+  // Phase 520 — ROOT CAUSE: Plesk Windows IIS+iisnode hostu Türkçe Windows-1254
+  // code page kullanıyor. iisnode pipe'a yazılan HTTP request body bytes UTF-8'den
+  // Windows-1254'e TRANSCODE EDİLİYOR (system default ANSI). Diagnostic: İstanbul
+  // request bytes c4 b0 → DD (single byte Win1254 for İ). Bu yüzden body-parser
+  // utf-8 olarak okuyunca DD invalid utf-8 → FFFD replacement.
+  //
+  // Çözüm: raw buffer'ı Windows-1254 olarak decode et, sonra JSON.parse.
+  // iconv-lite Windows-1254 desteği var.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const iconv = require('iconv-lite');
   app.use((req: any, _res: any, next: any) => {
     try {
-      if (Buffer.isBuffer(req.body) && req.body.length > 0) {
-        const str = req.body.toString('utf-8');
-        req.body = JSON.parse(str);
+      // body-parser tarafından parse edilen object'i kullanma — raw buffer'dan
+      // Win1254 decode ile yeniden parse et.
+      if (Buffer.isBuffer(req.rawBuffer) && req.rawBuffer.length > 0) {
+        const ctype = (req.headers['content-type'] || '').toLowerCase();
+        if (ctype.includes('application/json')) {
+          // Heuristic: önce UTF-8 dene; valid değilse Win1254 (Plesk transcode).
+          let str: string;
+          try {
+            str = req.rawBuffer.toString('utf-8');
+            // Eğer FFFD replacement char varsa UTF-8 decode başarısız → Win1254 dene
+            if (str.includes('�')) {
+              str = iconv.decode(req.rawBuffer, 'win1254');
+            }
+          } catch {
+            str = iconv.decode(req.rawBuffer, 'win1254');
+          }
+          req.body = JSON.parse(str);
+        }
       }
     } catch (e) {
       return next(e);
     }
     next();
+  });
+  // Phase 520 — UTF-8 diagnostic endpoint (TEMP: remove after fix verified).
+  // POST /__utf8echo with JSON body → returns { rawHex, bodyStr, bodyHex }
+  // so we can see exactly where multi-byte chars are corrupted.
+  app.use('/__utf8echo', (req: any, res: any) => {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'POST only' });
+    }
+    const raw = req.rawBuffer;
+    const rawHex = Buffer.isBuffer(raw) ? raw.toString('hex') : 'NO_RAW';
+    const rawAsUtf8 = Buffer.isBuffer(raw)
+      ? raw.toString('utf-8')
+      : 'NO_RAW';
+    const bodyKeys = req.body && typeof req.body === 'object' ? Object.keys(req.body) : [];
+    const bodyStr = JSON.stringify(req.body || {});
+    const bodyHex = Buffer.from(bodyStr, 'utf-8').toString('hex');
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    res.json({
+      rawHex,
+      rawAsUtf8,
+      rawIsBuffer: Buffer.isBuffer(raw),
+      bodyKeys,
+      bodyStr,
+      bodyHex,
+      bodyType: typeof req.body,
+    });
   });
   app.use(
     bodyParser.urlencoded({
