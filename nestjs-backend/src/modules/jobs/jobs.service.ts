@@ -401,6 +401,14 @@ export class JobsService {
     lat?: number;
     lng?: number;
     radiusKm?: number;
+    /** Phase 505 — Taslak filtresi.
+     *   • undefined → public davranış (sahibi customerId vermediyse
+     *                  taslaklar liste DIŞINDA; verdiyse hem taslak hem
+     *                  yayın görür — eski davranış korunsun)
+     *   • true → sadece taslaklar
+     *   • false → sadece yayınlananlar
+     */
+    isDraft?: boolean;
   }) {
     const limit = filters?.limit ?? 20;
     const page = filters?.page ?? 1;
@@ -416,6 +424,20 @@ export class JobsService {
       // çekiyorsa flagged dahil görür → kendi ilanını yönetebilsin.
       if (!filters?.customerId) {
         query.andWhere('(job.flagged = false OR job.flagged IS NULL)');
+      }
+
+      // Phase 505 — Taslak (isDraft) filtresi.
+      //   • explicit true  → sadece taslaklar
+      //   • explicit false → sadece yayınlananlar
+      //   • undefined + customerId YOK → public davranış: taslakları gizle
+      //   • undefined + customerId VAR → eski davranış korunur (sahibi
+      //                                  hem taslak hem yayın görür)
+      if (filters?.isDraft === true) {
+        query.andWhere('job.isDraft = :draft', { draft: true });
+      } else if (filters?.isDraft === false) {
+        query.andWhere('(job.isDraft = false OR job.isDraft IS NULL)');
+      } else if (!filters?.customerId) {
+        query.andWhere('(job.isDraft = false OR job.isDraft IS NULL)');
       }
 
       if (filters?.category) {
@@ -758,6 +780,9 @@ export class JobsService {
       // Phase 463 — multi-date normalize
       dueDate: mirroredDueDate,
       dueDates: normalizedDueDates,
+      // Phase 505 — Taslak ilan default false; explicit true ise sahibi
+      // dışında kimseye görünmez (findAll filtresi).
+      isDraft: createJobDto.isDraft === true,
       status: JobStatus.OPEN,
       // Phase 174b — minor sync: TL float → integer kuruş
       budgetMinMinor: tlToMinor(createJobDto.budgetMin),
@@ -1217,6 +1242,7 @@ export class JobsService {
         WHERE j.latitude IS NOT NULL
           AND j.longitude IS NOT NULL
           AND j.status = 'open'
+          AND (j."isDraft" = 0 OR j."isDraft" IS NULL)
           AND ${haversine} <= ?
       `;
 

@@ -184,4 +184,11 @@ export class UpdateJobDto {
   @IsArray()
   @IsString({ each: true })
   videos?: string[];
+
+  /** Phase 505 — Taslaktan canlıya geçiş için PATCH endpoint'inde de
+   * `isDraft` gönderilmeli; whitelist'te yoksa ValidationPipe 400 verir
+   * (Phase 496 dersi). */
+  @IsOptional()
+  @IsBoolean()
+  isDraft?: boolean;
 }

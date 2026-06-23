@@ -75,6 +75,11 @@ export class JobsController {
     @Query('lat') lat?: string,
     @Query('lng') lng?: string,
     @Query('radiusKm') radiusKm?: string,
+    // Phase 505 — Taslak (isDraft) filtresi:
+    //   • undefined / '' → public davranış: taslaklar liste DIŞINDA tutulur
+    //   • 'true' → sadece taslaklar (sadece sahibi için anlamlı)
+    //   • 'false' → sadece yayınlananlar (explicit)
+    @Query('isDraft') isDraft?: string,
   ) {
     return this.jobsService.findAll({
       category,
@@ -87,6 +92,10 @@ export class JobsController {
       lat: lat ? Number(lat) : undefined,
       lng: lng ? Number(lng) : undefined,
       radiusKm: radiusKm ? Number(radiusKm) : undefined,
+      isDraft:
+        isDraft === undefined || isDraft === ''
+          ? undefined
+          : isDraft === 'true',
     });
   }
 
