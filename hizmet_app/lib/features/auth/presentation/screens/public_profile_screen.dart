@@ -972,7 +972,7 @@ class PerformancePanel extends StatefulWidget {
 
 class _PerformancePanelState extends State<PerformancePanel>
     with SingleTickerProviderStateMixin {
-  bool _open = false; // Phase 473 — default kapalı
+  bool _open = true; // Phase 513 — default açık (initiallyExpanded=true)
 
   @override
   Widget build(BuildContext context) {
