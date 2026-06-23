@@ -1081,6 +1081,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     final counterPrice = (offer['counterPrice'] as num?)?.toDouble()
         ?? toTl(counterMinor);
     final counterMessage = offer['counterMessage'] as String?;
+    // Phase 507 (M4) — owner'ın bu teklife pazarlık atma hakkı 1x.
+    final counterCount = (offer['counterCount'] as num?)?.toInt() ?? 0;
+    final canCounter = counterCount < 1;
     // Phase 294 — Turkish thousand-dot, decimal-comma formatting.
     String fmtTl(double? v) => v == null ? '—' : IntlFormatter.tl(v);
 
@@ -1471,13 +1474,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Pazarlık
+                  // Pazarlık — Phase 507 (M4) 1x sınır
                   Expanded(
                     child: _ActionButton(
                       label: 'Pazarlık',
                       icon: Icons.handshake_outlined,
                       color: Colors.blue,
                       loading: _actionLoading,
+                      disabled: !canCounter,
+                      disabledTooltip:
+                          'Bu teklife pazarlık hakkınızı kullandınız.',
                       onTap: () =>
                           _showCounterDialog(offerId, price?.toString() ?? ''),
                     ),
@@ -1502,8 +1508,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
               ),
             ),
 
-          // Phase 262 — Teklif veren taraf: kendisine gelen karşı teklife yanıt.
-          // Role-agnostik: request'te usta, offer-ilanında müşteri burayı görür.
+          // Phase 507 (M3) — Teklif veren artık karşı teklif atamaz; yalnızca
+          // gelen counter'ı Kabul Et veya İptal Et seçeneklerini görür.
           if (isOfferOwner && status == 'countered' && widget.id != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -1512,7 +1518,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   // Karşı teklifi kabul et
                   Expanded(
                     child: _ActionButton(
-                      label: 'Kabul Et',
+                      label: 'Karşı Teklifi Kabul Et',
                       icon: Icons.check_circle_outline,
                       color: Colors.green,
                       loading: _actionLoading,
@@ -1526,31 +1532,18 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Yeniden pazarlık (yarım kredi)
+                  // İptal Et
                   Expanded(
                     child: _ActionButton(
-                      label: 'Tekrar Teklif',
-                      icon: Icons.handshake_outlined,
-                      color: Colors.blue,
-                      loading: _actionLoading,
-                      onTap: () => _showCounterDialog(
-                          offerId,
-                          (counterPrice ?? price)?.toString() ?? ''),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Geri çek
-                  Expanded(
-                    child: _ActionButton(
-                      label: 'Geri Çek',
-                      icon: Icons.undo,
+                      label: 'İptal Et',
+                      icon: Icons.cancel_outlined,
                       color: Colors.red,
                       loading: _actionLoading,
                       onTap: () => _doAction(() async {
                         await ref
                             .read(offerRepositoryProvider)
                             .withdrawOffer(widget.id!, offerId);
-                        _showSnack('Teklif geri çekildi.');
+                        _showSnack('Teklif iptal edildi.');
                         ref.read(jobsProvider.notifier).fetchJobs();
                       }),
                     ),
@@ -1744,6 +1737,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     final scheduleHint = flex == 'urgent'
         ? 'Acil iş — uygun olduğunuz tarih/saati önerin'
         : (flex == 'flexible' ? 'Esnek — istediğiniz tarih/saati önerin' : null);
+    // Phase 507 (M7) — bütçe alt sınırı (%90 floor) — UI hint + client validation.
+    final budgetMinD = (detail?['budgetMin'] as num?)?.toDouble();
+    final budgetMaxD = (detail?['budgetMax'] as num?)?.toDouble();
+    final budgetBasis = budgetMinD ?? budgetMaxD;
+    final priceFloor = (budgetBasis != null && budgetBasis > 0)
+        ? (budgetBasis * 0.9).floorToDouble()
+        : null;
     String? proposedDate;
     String? proposedTime;
     showModalBottomSheet(
@@ -1762,6 +1762,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         onLineItemsChanged: (items) => lineItemsRef[0] = items,
         showSchedulePicker: showSchedulePicker,
         scheduleHint: scheduleHint,
+        priceFloor: priceFloor,
         onScheduleChanged: (s) {
           proposedDate = s.date;
           proposedTime = s.time;
@@ -1770,6 +1771,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           if (widget.id == null || priceCtrl.text.isEmpty) return;
           final price =
               TurkishCurrencyInputFormatter.parseTry(priceCtrl.text) ?? 0;
+          // Phase 507 (M7) — client-side floor check (server zaten reddeder, UX için early)
+          if (priceFloor != null && price < priceFloor) {
+            throw Exception(
+                'Teklif, bütçenin en az %90\'ı olmalıdır (alt sınır: ${IntlFormatter.tl(priceFloor)}).');
+          }
           final items = lineItemsRef[0]
               .where((m) =>
                   (m['label'] ?? '').toString().trim().isNotEmpty &&
@@ -1812,6 +1818,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     final priceCtrl =
         TextEditingController(text: currentPrice.replaceAll(' ₺', '').replaceAll('₺', '').trim());
     final msgCtrl = TextEditingController();
+    // Phase 507 (M7) — counter de bütçe %90 alt sınırına tabi.
+    final detail = widget.id != null
+        ? ref.read(jobDetailProvider(widget.id!)).valueOrNull
+        : null;
+    final budgetMinD = (detail?['budgetMin'] as num?)?.toDouble();
+    final budgetMaxD = (detail?['budgetMax'] as num?)?.toDouble();
+    final budgetBasis = budgetMinD ?? budgetMaxD;
+    final priceFloor = (budgetBasis != null && budgetBasis > 0)
+        ? (budgetBasis * 0.9).floorToDouble()
+        : null;
     showModalBottomSheet(
       useSafeArea: true,
       context: context,
@@ -1825,10 +1841,15 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         msgCtrl: msgCtrl,
         submitLabel: 'Pazarlık Gönder',
         msgLabel: 'Kısa notunuz',
+        priceFloor: priceFloor,
         onSubmit: () async {
           if (widget.id == null || priceCtrl.text.isEmpty) return;
           final counter =
               TurkishCurrencyInputFormatter.parseTry(priceCtrl.text) ?? 0;
+          if (priceFloor != null && counter < priceFloor) {
+            throw Exception(
+                'Karşı teklif, bütçenin en az %90\'ı olmalıdır (alt sınır: ${IntlFormatter.tl(priceFloor)}).');
+          }
           await ref.read(offerRepositoryProvider).counterOffer(
                 widget.id!,
                 offerId,
@@ -2142,6 +2163,9 @@ class _ActionButton extends StatelessWidget {
   final Color color;
   final bool loading;
   final VoidCallback onTap;
+  // Phase 507 (M4) — disabled state (örn. pazarlık hakkı kullanıldı)
+  final bool disabled;
+  final String? disabledTooltip;
 
   const _ActionButton({
     required this.label,
@@ -2149,33 +2173,46 @@ class _ActionButton extends StatelessWidget {
     required this.color,
     required this.loading,
     required this.onTap,
+    this.disabled = false,
+    this.disabledTooltip,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: loading ? null : onTap,
+    final isInactive = loading || disabled;
+    final effectiveColor = disabled ? Colors.grey : color;
+    final btn = GestureDetector(
+      onTap: isInactive
+          ? (disabled && disabledTooltip != null
+              ? () => ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(disabledTooltip!)),
+                  )
+              : null)
+          : onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
+          color: effectiveColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.4)),
+          border: Border.all(color: effectiveColor.withValues(alpha: 0.4)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 18),
+            Icon(icon, color: effectiveColor, size: 18),
             const SizedBox(height: 2),
             Text(label,
                 style: TextStyle(
-                    color: color,
+                    color: effectiveColor,
                     fontSize: 11,
                     fontWeight: FontWeight.w600)),
           ],
         ),
       ),
     );
+    return disabled && disabledTooltip != null
+        ? Tooltip(message: disabledTooltip!, child: btn)
+        : btn;
   }
 }
 
@@ -2191,6 +2228,9 @@ class _BidSheet extends StatefulWidget {
   final bool showSchedulePicker;
   final String? scheduleHint; // "Acil" veya "Esnek" — UI ipucu
   final ValueChanged<({String? date, String? time})>? onScheduleChanged;
+  // Phase 507 (M7) — Teklif minimum bütçenin %90'ı olmalı. priceFloor
+  // verildiyse helperText + tooltip + client-side validation aktive olur.
+  final double? priceFloor;
 
   const _BidSheet({
     required this.title,
@@ -2205,6 +2245,7 @@ class _BidSheet extends StatefulWidget {
     this.showSchedulePicker = false,
     this.scheduleHint,
     this.onScheduleChanged,
+    this.priceFloor,
   });
 
   @override
@@ -2284,9 +2325,21 @@ class _BidSheetState extends State<_BidSheet> {
                 const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [TurkishCurrencyInputFormatter()],
             decoration: InputDecoration(
-                labelText: widget.priceLabel,
-                prefixIcon: const Icon(Icons.attach_money),
-                filled: true),
+              labelText: widget.priceLabel,
+              prefixIcon: const Icon(Icons.attach_money),
+              filled: true,
+              // Phase 507 (M7) — alt sınır hint + "i" tooltip
+              suffixIcon: widget.priceFloor != null
+                  ? Tooltip(
+                      message:
+                          'Teklifiniz bütçenin en az %90\'ı olmalı (alt sınır: ${IntlFormatter.tl(widget.priceFloor!)})',
+                      child: const Icon(Icons.info_outline, size: 18),
+                    )
+                  : null,
+              helperText: widget.priceFloor != null
+                  ? 'Alt sınır: ${IntlFormatter.tl(widget.priceFloor!)} (bütçenin %90\'ı)'
+                  : null,
+            ),
           ),
           const SizedBox(height: 14),
           Align(
