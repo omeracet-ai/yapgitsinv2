@@ -598,32 +598,8 @@ async function bootstrap() {
     }
     next();
   });
-  // Phase 520 — UTF-8 diagnostic endpoint (TEMP: remove after fix verified).
-  // POST /__utf8echo with JSON body → returns { rawHex, bodyStr, bodyHex }
-  // so we can see exactly where multi-byte chars are corrupted.
-  app.use('/__utf8echo', (req: any, res: any) => {
-    if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'POST only' });
-    }
-    const raw = req.rawBuffer;
-    const rawHex = Buffer.isBuffer(raw) ? raw.toString('hex') : 'NO_RAW';
-    const rawAsUtf8 = Buffer.isBuffer(raw)
-      ? raw.toString('utf-8')
-      : 'NO_RAW';
-    const bodyKeys = req.body && typeof req.body === 'object' ? Object.keys(req.body) : [];
-    const bodyStr = JSON.stringify(req.body || {});
-    const bodyHex = Buffer.from(bodyStr, 'utf-8').toString('hex');
-    res.set('Content-Type', 'application/json; charset=utf-8');
-    res.json({
-      rawHex,
-      rawAsUtf8,
-      rawIsBuffer: Buffer.isBuffer(raw),
-      bodyKeys,
-      bodyStr,
-      bodyHex,
-      bodyType: typeof req.body,
-    });
-  });
+  // Phase 520 — UTF-8 diagnostic endpoint kaldırıldı (root cause Plesk Win1254
+  // transcode bulundu, fix doğrulandı — bkz aşağıdaki Win1254 fallback middleware).
   app.use(
     bodyParser.urlencoded({
       limit: '5mb',
