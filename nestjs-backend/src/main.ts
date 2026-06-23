@@ -547,14 +547,33 @@ async function bootstrap() {
   });
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const bodyParser = require('body-parser');
+  // CRITICAL: read body as RAW Buffer (verify hook captures it), then we manually
+  // decode UTF-8 ourselves. body-parser v2 + iconv-lite + iisnode kombinasyonunda
+  // multi-byte char EF BF BD'ye düşüyor; Node.js native Buffer.toString('utf-8')
+  // güvenilir.
   app.use(
     bodyParser.json({
       limit: '5mb',
       type: 'application/json',
-      // Critical — when Content-Type has no charset, parse as UTF-8 (not raw Buffer).
-      defaultCharset: 'utf-8',
+      // verify çalışınca read.js encoding'i null'a düşürür → body Buffer kalır.
+      // Sonra biz aşağıdaki middleware'de Buffer'ı utf-8 string'e çeviririz.
+      verify: (req: any, _res: any, buf: Buffer) => {
+        req.rawBuffer = buf;
+      },
     }),
   );
+  // Post-bodyParser middleware: req.body Buffer ise UTF-8 olarak parse et.
+  app.use((req: any, _res: any, next: any) => {
+    try {
+      if (Buffer.isBuffer(req.body) && req.body.length > 0) {
+        const str = req.body.toString('utf-8');
+        req.body = JSON.parse(str);
+      }
+    } catch (e) {
+      return next(e);
+    }
+    next();
+  });
   app.use(
     bodyParser.urlencoded({
       limit: '5mb',
