@@ -165,6 +165,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         ? ref.watch(jobDetailProvider(widget.id!))
         : const AsyncValue<Map<String, dynamic>>.data({});
     final detail = detailAsync.unwrapPrevious().valueOrNull ?? {};
+    // Phase 510 — Cost preview'i prime et; _showBidDialog cache'den okuyacak.
+    if (widget.id != null) {
+      ref.watch(offerCostPreviewProvider(widget.id!));
+    }
 
     // İlan sahibi tespiti — navigasyondan gelen widget.customerId garantisiz
     // olabilir (her açılış yolu geçirmiyor), bu yüzden çekilen detay yetkili
@@ -1746,6 +1750,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         : null;
     String? proposedDate;
     String? proposedTime;
+    // Phase 510 — Teklif maliyeti hint banner için preview al.
+    // Cache varsa anında, yoksa async (provider build edilir).
+    final OfferCostPreview? costPreview = widget.id == null
+        ? null
+        : ref.read(offerCostPreviewProvider(widget.id!)).valueOrNull;
     showModalBottomSheet(
       useSafeArea: true,
       context: context,
@@ -1763,6 +1772,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         showSchedulePicker: showSchedulePicker,
         scheduleHint: scheduleHint,
         priceFloor: priceFloor,
+        costPreview: costPreview,
         onScheduleChanged: (s) {
           proposedDate = s.date;
           proposedTime = s.time;
@@ -1790,14 +1800,28 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   'Kalemler toplamı: ${IntlFormatter.tl(sum, decimalDigits: 2)} — fiyat: ${IntlFormatter.tl(price, decimalDigits: 2)}. Devam etmek için fiyatı eşitle.');
             }
           }
-          await ref.read(offerRepositoryProvider).createOffer(
-                widget.id!,
-                price,
-                msgCtrl.text,
-                lineItems: items.isEmpty ? null : items,
-                proposedDate: proposedDate,
-                proposedTime: proposedTime,
-              );
+          try {
+            await ref.read(offerRepositoryProvider).createOffer(
+                  widget.id!,
+                  price,
+                  msgCtrl.text,
+                  lineItems: items.isEmpty ? null : items,
+                  proposedDate: proposedDate,
+                  proposedTime: proposedTime,
+                );
+          } catch (e) {
+            // Phase 510 — Yetersiz kredi → kapatıp özel dialog göster.
+            final msg = e.toString();
+            final isLowCredit = msg.contains('Yetersiz') ||
+                msg.contains('yetersiz') ||
+                msg.contains('insufficient');
+            if (isLowCredit) {
+              if (ctx.mounted) Navigator.pop(ctx);
+              await _showInsufficientCreditDialog(costPreview?.cost);
+              return;
+            }
+            rethrow; // _BidSheet snackbar göstersin
+          }
           // Phase 282 — teklif sonrası tüm bağımlı cache'leri invalide et:
           // jobOffers (bu ilan), tokenBalance (5 kredi düştü), myOffers
           // (Tekliflerim sekmesi), jobsProvider (offerCount değişti).
@@ -1808,6 +1832,70 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           if (ctx.mounted) Navigator.pop(ctx);
           _showSnack('Teklifiniz gönderildi!');
         },
+      ),
+    );
+  }
+
+  /// Phase 510 — Yetersiz kredi → satın al CTA'lı dialog.
+  /// Mevcut bakiye tokenBalanceProvider'dan canlı okunur; gerekli kredi
+  /// `requiredCost` (cost preview'den) — null ise jenerik mesaj gösterilir.
+  Future<void> _showInsufficientCreditDialog(int? requiredCost) async {
+    final balanceAsync = ref.read(tokenBalanceProvider);
+    final balance = balanceAsync.valueOrNull?.toInt() ?? 0;
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.account_balance_wallet_outlined,
+                color: AppColors.error),
+            const SizedBox(width: 8),
+            const Text('Krediniz yetmiyor'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Bakiyeniz $balance kredi.',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              requiredCost != null
+                  ? 'Bu teklif için $requiredCost kredi gerekli.'
+                  : 'Bu teklif için yeterli krediniz yok.',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Kredi satın alarak teklif vermeye devam edebilirsiniz.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx),
+            child: const Text('Vazgeç'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(dctx);
+              context.go('/tokens');
+            },
+            icon: const Icon(Icons.add_circle_outline, size: 18),
+            label: const Text('Kredi Satın Al'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2231,6 +2319,8 @@ class _BidSheet extends StatefulWidget {
   // Phase 507 (M7) — Teklif minimum bütçenin %90'ı olmalı. priceFloor
   // verildiyse helperText + tooltip + client-side validation aktive olur.
   final double? priceFloor;
+  // Phase 510 — Teklif maliyeti önizleme banner'ı. null → gizli (pazarlık).
+  final OfferCostPreview? costPreview;
 
   const _BidSheet({
     required this.title,
@@ -2246,6 +2336,7 @@ class _BidSheet extends StatefulWidget {
     this.scheduleHint,
     this.onScheduleChanged,
     this.priceFloor,
+    this.costPreview,
   });
 
   @override
@@ -2318,7 +2409,14 @@ class _BidSheetState extends State<_BidSheet> {
           Text(widget.title,
               style: const TextStyle(
                   fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+          // Phase 510 — Teklif maliyeti hint banner'ı (yalnızca yeni teklif
+          // akışında; pazarlık ve karşı-teklif sheet'i null geçer).
+          if (widget.costPreview != null) ...[
+            _OfferCostHint(preview: widget.costPreview!),
+            const SizedBox(height: 16),
+          ] else
+            const SizedBox(height: 4),
           TextField(
             controller: widget.priceCtrl,
             keyboardType:
@@ -2889,5 +2987,100 @@ class _GuestJobDetailPrompt extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Phase 510 — Teklif maliyeti hint kartı. Bid sheet'in başında, kullanıcı
+/// fiyat yazmadan önce kaç kredi düşüleceğini açıkça gösterir. Tema-aware
+/// AppColors getter'larını kullanır (dark soft primary uyumlu).
+class _OfferCostHint extends StatelessWidget {
+  final OfferCostPreview preview;
+  const _OfferCostHint({required this.preview});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = AppColors.primary;
+    final isPercent = preview.mode == 'percent';
+    final subtitle = isPercent && preview.pct != null
+        ? 'İlan bütçesinin %${_fmtPct(preview.pct!)}\'i (sınırlar: ${preview.min}–${preview.max} kredi).'
+        : 'Sabit ${preview.min == preview.max ? preview.cost : '${preview.min}–${preview.max}'} kredi aralığında.';
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: primary.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.savings_outlined, size: 18, color: primary),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Bu teklifin maliyeti: ${preview.cost} kredi',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: primary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (preview.breakdown.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline,
+                    size: 14, color: primary.withValues(alpha: 0.85)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    preview.breakdown,
+                    style: TextStyle(
+                      fontSize: 11,
+                      height: 1.3,
+                      color: primary.withValues(alpha: 0.95),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _fmtPct(double p) {
+    // 1.0 → "1", 1.5 → "1.5"
+    if (p == p.roundToDouble()) return p.toStringAsFixed(0);
+    return p.toStringAsFixed(p < 10 ? 2 : 1);
   }
 }

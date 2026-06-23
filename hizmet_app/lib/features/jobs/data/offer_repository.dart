@@ -12,6 +12,46 @@ final jobOffersProvider =
   return ref.watch(offerRepositoryProvider).getOffersForJob(jobId);
 });
 
+/// Phase 510 — Bu ilanda teklif vermenin kaç krediye mal olacağını döner.
+/// Public endpoint (auth gerektirmez); hint banner için kullanılır.
+final offerCostPreviewProvider =
+    FutureProvider.family<OfferCostPreview?, String>((ref, jobId) async {
+  return ref.watch(offerRepositoryProvider).getOfferCost(jobId);
+});
+
+/// Phase 510 — Teklif maliyeti önizlemesi (Flutter hint card için).
+/// `pct` percent modunda doludur; flat modunda null.
+class OfferCostPreview {
+  final int cost;
+  final double basis;
+  final String mode; // 'flat' | 'percent'
+  final double? pct;
+  final int min;
+  final int max;
+  final String breakdown;
+
+  const OfferCostPreview({
+    required this.cost,
+    required this.basis,
+    required this.mode,
+    required this.pct,
+    required this.min,
+    required this.max,
+    required this.breakdown,
+  });
+
+  factory OfferCostPreview.fromJson(Map<String, dynamic> json) =>
+      OfferCostPreview(
+        cost: (json['cost'] as num?)?.toInt() ?? 0,
+        basis: (json['basis'] as num?)?.toDouble() ?? 0,
+        mode: (json['mode'] as String?) ?? 'percent',
+        pct: (json['pct'] as num?)?.toDouble(),
+        min: (json['min'] as num?)?.toInt() ?? 0,
+        max: (json['max'] as num?)?.toInt() ?? 0,
+        breakdown: (json['breakdown'] as String?) ?? '',
+      );
+}
+
 class OfferRepository {
   final Dio _dio;
 
@@ -146,7 +186,24 @@ class OfferRepository {
     return msg?.toString() ?? fallback;
   }
 
-  /// Ustanın verdiği teklifler — GET /offers/my
+  /// Phase 510 — Bu ilan için teklif maliyeti önizlemesi.
+  /// Public endpoint (auth gerektirmez); hint banner için 200ms civarı çağrılır.
+  /// Hata durumunda null döner (silent fail — hint görünmesin yeter).
+  Future<OfferCostPreview?> getOfferCost(String jobId) async {
+    try {
+      final res = await _dio.get('/jobs/$jobId/offer-cost');
+      final data = res.data;
+      if (data is Map) {
+        return OfferCostPreview.fromJson(Map<String, dynamic>.from(data));
+      }
+      return null;
+    } on DioException {
+      // 404 / 500 → hint gösterme; teklif submit yine de mümkün.
+      return null;
+    }
+  }
+
+  /// Teklif veren kullanıcının verdiği teklifler — GET /offers/my
   Future<List<Map<String, dynamic>>> getMyOffers() async {
     try {
       final res = await _dio.get('/offers/my');
