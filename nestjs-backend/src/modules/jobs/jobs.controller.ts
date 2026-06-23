@@ -9,12 +9,14 @@ import {
   Query,
   UseGuards,
   Request,
+  Response,
   ParseUUIDPipe,
   UploadedFiles,
   UseInterceptors,
   BadRequestException,
   Req,
 } from '@nestjs/common';
+import type { Response as ExpressResponse } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { AuthGuard } from '@nestjs/passport';
@@ -113,9 +115,21 @@ export class JobsController {
     );
   }
 
+  /**
+   * @deprecated Phase 527 — Use `/notifications` instead.
+   * Bu endpoint duplicate; gerçek notification sistemi `NotificationsController`.
+   * Geri uyumluluk için 200 dönmeye devam ediyor, ancak `Deprecation` ve
+   * `Sunset` header'ları setleniyor. Kaldırılma tarihi: 2026-09-01.
+   */
   @UseGuards(AuthGuard('jwt'))
   @Get('notifications')
-  async getNotifications(@Request() req: AuthenticatedRequest) {
+  async getNotifications(
+    @Request() req: AuthenticatedRequest,
+    @Response({ passthrough: true }) res: ExpressResponse,
+  ) {
+    res.setHeader('Deprecation', 'true');
+    res.setHeader('Sunset', 'Tue, 01 Sep 2026 00:00:00 GMT');
+    res.setHeader('Link', '</notifications>; rel="successor-version"');
     const userId: string = req.user.id;
     // Kullanıcının kendi verdiği tekliflerin durum değişimleri
     const { data: myOffers } = await this.offersService.findByUser(userId);
