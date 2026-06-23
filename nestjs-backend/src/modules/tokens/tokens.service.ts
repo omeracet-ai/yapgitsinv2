@@ -18,7 +18,7 @@ import {
   NotificationType,
 } from '../notifications/notification.entity';
 import { GiftTokensDto } from './dto/gift-tokens.dto';
-import { tlToMinor } from '../../common/money.util';
+import { tlToMinor, effectiveTokenBalance } from '../../common/money.util';
 import { IyzipayService } from '../escrow/iyzipay.service';
 import { TOKEN_PACKAGES, findPackage, TokenPackage } from './token-packages';
 import { AppConfigService } from '../app-config/app-config.service';
@@ -344,9 +344,18 @@ export class TokensService {
     });
   }
 
-  async getBalance(userId: string): Promise<{ balance: number }> {
+  async getBalance(
+    userId: string,
+  ): Promise<{ balance: number; balanceMinor: number }> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
-    return { balance: user?.tokenBalance ?? 0 };
+    // Phase 524 — legacy tokenBalance ile tokenBalanceMinor arasında drift
+    // varsa max'ı dön. Flutter `/tokens/balance` `balance` alanını okuyor.
+    const balance = effectiveTokenBalance(user ?? {});
+    const balanceMinor = Math.max(
+      Number(user?.tokenBalanceMinor ?? 0),
+      balance * 100,
+    );
+    return { balance, balanceMinor };
   }
 
   async getHistory(userId: string): Promise<TokenTransaction[]> {
@@ -445,6 +454,19 @@ export class TokensService {
     description: string,
   ): Promise<void> {
     if (amount <= 0) throw new BadRequestException('Geçersiz miktar');
+
+    // Phase 524 — self-heal drift: tokenBalanceMinor doluyken legacy
+    // tokenBalance 0'a düşmüş kullanıcılar için tek-seferlik senkron.
+    // SET tokenBalance = max(tokenBalance, floor(tokenBalanceMinor/100))
+    await this.userRepo
+      .createQueryBuilder()
+      .update(User)
+      .set({
+        tokenBalance: () =>
+          'CASE WHEN tokenBalanceMinor / 100 > tokenBalance THEN tokenBalanceMinor / 100 ELSE tokenBalance END',
+      })
+      .where('id = :id', { id: userId })
+      .execute();
 
     // Phase 242 (Voldi-fs) — atomic conditional decrement.
     // Eski pattern: findOne → balance check → decrement (check-then-decrement race

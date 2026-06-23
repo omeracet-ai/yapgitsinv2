@@ -50,6 +50,7 @@ import { Job, JobStatus } from '../jobs/job.entity';
 import { Review } from '../reviews/review.entity';
 import { Offer, OfferStatus } from '../jobs/offer.entity';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
+import { effectiveTokenBalance } from '../../common/money.util';
 
 @Controller('users')
 export class UsersController {
@@ -119,7 +120,22 @@ export class UsersController {
     } & typeof user;
     const profileCompletion = this.svc.computeProfileCompletion(user);
     const badges = await this.svc.computeBadges(user);
-    return { ...safe, profileCompletion, badges };
+    // Phase 524 — tokenBalance / tokenBalanceMinor drift fix. Legacy field
+    // bazen 0'a düşerken minor pozitif kalıyor → Flutter "yetersiz bakiye"
+    // hatası gösteriyor. Yanıtta her iki alanı eşitleyip max(floor(minor/100),
+    // legacy) döndür.
+    const tokenBalance = effectiveTokenBalance(user);
+    const tokenBalanceMinor = Math.max(
+      Number(user.tokenBalanceMinor ?? 0),
+      tokenBalance * 100,
+    );
+    return {
+      ...safe,
+      tokenBalance,
+      tokenBalanceMinor,
+      profileCompletion,
+      badges,
+    };
   }
 
   // ── Phase 111: Worker earnings dashboard ─────────────────────────
