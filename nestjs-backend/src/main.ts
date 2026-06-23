@@ -535,7 +535,34 @@ async function bootstrap() {
   // Self-healing schema migration MUST run before NestFactory.create() —
   // otherwise TypeORM crashes on missing columns/tables under `synchronize: false`.
   await applyBootMigrations();
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Phase 520 — UTF-8 encoding fix.
+  // body-parser v2 + Express 5 + iisnode quirk: clients/proxies that send
+  // `Content-Type: application/json` (no `; charset=utf-8`) cause body-parser
+  // to call raw-body with encoding=null → JSON.parse on a Buffer can mangle
+  // multi-byte chars (Turkish İ/Ş/Ğ become EF BF BD replacement chars).
+  // Fix: disable Nest's default body parser and re-mount express.json/urlencoded
+  // with explicit `defaultCharset: 'utf-8'` so charset assumption is locked.
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false,
+  });
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const bodyParser = require('body-parser');
+  app.use(
+    bodyParser.json({
+      limit: '5mb',
+      type: 'application/json',
+      // Critical — when Content-Type has no charset, parse as UTF-8 (not raw Buffer).
+      defaultCharset: 'utf-8',
+    }),
+  );
+  app.use(
+    bodyParser.urlencoded({
+      limit: '5mb',
+      extended: true,
+      defaultCharset: 'utf-8',
+    }),
+  );
+  console.log('[boot] body-parser mounted (utf-8 default)');
   console.log('[boot] Nest app created');
   app.useGlobalFilters(new SentryFilter());
 

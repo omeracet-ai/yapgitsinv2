@@ -15,6 +15,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { BookingsService } from './bookings.service';
 import { BookingStatus, CancellationReason } from './booking.entity';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
+import { CreateBookingDto } from './dto/create-booking.dto';
+import sanitizeHtml from 'sanitize-html';
+
+/** Phase 519 — tek satır HTML strip (PATCH /:id/status note alanı için). */
+function stripHtml(s?: string | null): string | undefined {
+  if (typeof s !== 'string') return undefined;
+  return sanitizeHtml(s, { allowedTags: [], allowedAttributes: {} });
+}
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('bookings')
@@ -25,19 +33,10 @@ export class BookingsController {
   @Post()
   create(
     @Request() req: AuthenticatedRequest,
-    @Body()
-    body: {
-      workerId: string;
-      category?: string;
-      subCategory?: string;
-      description?: string;
-      address?: string;
-      scheduledDate?: string;
-      scheduledTime?: string;
-      customerNote?: string;
-      agreedPrice?: number;
-    },
+    @Body() body: CreateBookingDto,
   ) {
+    // Phase 519 — DTO @SanitizeHtml() ile HTML strip uygulandı; service'e geçen
+    // değerler artık güvenli.
     return this.svc.create(req.user.id, {
       workerId: body.workerId ?? '',
       category: body.category ?? '',
@@ -114,6 +113,12 @@ export class BookingsController {
     @Request() req: AuthenticatedRequest,
     @Body() body: { status: BookingStatus; note?: string },
   ) {
-    return this.svc.updateStatus(id, req.user.id, body.status, body.note);
+    // Phase 519 — note free-text → HTML strip.
+    return this.svc.updateStatus(
+      id,
+      req.user.id,
+      body.status,
+      stripHtml(body.note),
+    );
   }
 }

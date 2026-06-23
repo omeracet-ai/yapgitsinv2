@@ -11,6 +11,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { QuestionsService } from './questions.service';
 import type { AuthenticatedRequest } from '../../common/types/auth.types';
+import { stripHtml, stripHtmlOptional } from '../../common/utils/strip-html';
 
 @Controller('jobs/:jobId/questions')
 export class QuestionsController {
@@ -29,11 +30,12 @@ export class QuestionsController {
     @Body('text') text: string,
     @Body('photoUrl') photoUrl?: string,
   ) {
+    // Phase 519 — free-text + photoUrl XSS strip.
     return this.questionsService.postQuestion(
       jobId,
       req.user.id,
-      text,
-      photoUrl,
+      stripHtml(text),
+      stripHtmlOptional(photoUrl),
     );
   }
 
@@ -44,6 +46,11 @@ export class QuestionsController {
     @Request() req: AuthenticatedRequest,
     @Body('text') text: string,
   ) {
-    return this.questionsService.postReply(questionId, req.user.id, text);
+    // Phase 519 — free-text XSS strip.
+    return this.questionsService.postReply(
+      questionId,
+      req.user.id,
+      stripHtml(text),
+    );
   }
 }

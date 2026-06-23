@@ -8,6 +8,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { SanitizeHtml } from '../../../common/decorators/sanitize-html.decorator';
 
 /**
  * Phase 244 (Voldi-fs) — POST /service-requests body validation.
@@ -22,16 +23,19 @@ import {
  */
 export class CreateServiceRequestDto {
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   @MaxLength(200)
   title?: string;
 
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   @MaxLength(5000)
   description?: string;
 
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   @MaxLength(100)
   category?: string;
@@ -41,11 +45,13 @@ export class CreateServiceRequestDto {
   categoryId?: string;
 
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   @MaxLength(200)
   location?: string;
 
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   @MaxLength(500)
   address?: string;

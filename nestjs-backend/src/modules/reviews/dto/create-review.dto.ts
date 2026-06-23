@@ -9,6 +9,7 @@ import {
   IsArray,
   ArrayMaxSize,
 } from 'class-validator';
+import { SanitizeHtml } from '../../../common/decorators/sanitize-html.decorator';
 
 /**
  * Phase 240B (Voldi-fs): CreateReviewDto — mass-assignment fix.
@@ -25,6 +26,7 @@ export class CreateReviewDto {
   @Max(5)
   rating!: number;
 
+  @SanitizeHtml()
   @IsString()
   @IsOptional()
   @MaxLength(2000)

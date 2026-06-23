@@ -21,6 +21,15 @@ import { NotificationType } from '../notifications/notification.entity';
 import { detectContact, maskContact } from '../../common/contact-filter';
 import { RealtimeService } from '../realtime/realtime.service';
 import { ChatService } from './chat.service';
+import sanitizeHtml from 'sanitize-html';
+
+/**
+ * Phase 519 — Stored XSS sanitize on WebSocket chat messages.
+ * WebSocket payload'ı ValidationPipe'tan geçmez; gateway içinde manuel strip.
+ */
+function stripHtml(s: string): string {
+  return sanitizeHtml(s, { allowedTags: [], allowedAttributes: {} });
+}
 
 export const CONTACT_BLOCK_SETTING_KEY = 'contact_sharing_block_enabled';
 
@@ -165,8 +174,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
     }
-    // Phase 77: contact-sharing block (admin toggle)
-    let workingMessage = data.message;
+    // Phase 519 — HTML/script strip on inbound message.
+    let workingMessage =
+      typeof data.message === 'string' ? stripHtml(data.message) : '';
     let contactFiltered = false;
     let detectedContactTypes: string[] = [];
     const blockEnabled = await this.systemSettings.get(

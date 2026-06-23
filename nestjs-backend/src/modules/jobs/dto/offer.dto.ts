@@ -68,6 +68,7 @@ export class CounterOfferDto {
   @Min(0)
   counterPrice: number;
 
+  @SanitizeHtml()
   @IsString()
   counterMessage: string;
 

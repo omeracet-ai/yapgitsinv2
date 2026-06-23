@@ -15,9 +15,11 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
+import { SanitizeHtml } from '../../../common/decorators/sanitize-html.decorator';
 
 export class UpdateMeDto {
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   @MinLength(1)
   @MaxLength(100)
@@ -42,16 +44,19 @@ export class UpdateMeDto {
   gender?: string;
 
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   @MaxLength(100)
   city?: string;
 
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   @MaxLength(100)
   district?: string;
 
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   @MaxLength(500)
   address?: string;
@@ -91,6 +96,7 @@ export class UpdateMeDto {
   workerSkills?: string[];
 
   @IsOptional()
+  @SanitizeHtml()
   @IsString()
   @MaxLength(2000)
   workerBio?: string;
