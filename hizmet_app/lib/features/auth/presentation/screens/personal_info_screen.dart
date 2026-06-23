@@ -36,6 +36,14 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
   String _gender = 'other';
   DateTime? _birthDate;
 
+  // ── Hizmet Veren Bilgileri (Phase 512) ─────────────────────────────────────
+  // workerCategories.isNotEmpty → kullanıcı hizmet veren
+  List<String> _workerCategories = const [];
+  final _hourlyMinCtrl = TextEditingController();
+  final _hourlyMaxCtrl = TextEditingController();
+  final _radiusCtrl = TextEditingController();
+  bool _isAvailable = false;
+
   // ── Belgeler ───────────────────────────────────────────────────────────────
   XFile? _newIdentityPhoto;
   XFile? _newDocumentPhoto;
@@ -68,6 +76,19 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     _currentIdentityUrl = u['identityPhotoUrl'] as String?;
     _currentDocumentUrl = u['documentPhotoUrl'] as String?;
     _identityVerified = u['identityVerified'] == true;
+
+    // Phase 512 — hizmet veren bilgileri
+    final wc = u['workerCategories'];
+    if (wc is List) {
+      _workerCategories = wc.map((e) => e.toString()).toList();
+    }
+    final hMin = u['hourlyRateMin'];
+    final hMax = u['hourlyRateMax'];
+    if (hMin is num) _hourlyMinCtrl.text = hMin.toString();
+    if (hMax is num) _hourlyMaxCtrl.text = hMax.toString();
+    final radius = u['serviceRadiusKm'];
+    if (radius is num) _radiusCtrl.text = radius.toString();
+    _isAvailable = u['isAvailable'] == true;
     final bdRaw = u['birthDate'];
     final bd = bdRaw is String ? bdRaw : bdRaw?.toString();
     debugPrint(
@@ -99,6 +120,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     _districtCtrl.dispose();
     _addressCtrl.dispose();
     _bioCtrl.dispose();
+    _hourlyMinCtrl.dispose();
+    _hourlyMaxCtrl.dispose();
+    _radiusCtrl.dispose();
     super.dispose();
   }
 
@@ -127,6 +151,15 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
         if (_bioCtrl.text.trim().isNotEmpty) 'workerBio': _bioCtrl.text.trim(),
         'gender': _gender,
         if (bdStr != null) 'birthDate': bdStr,
+        // Phase 512 — hizmet veren bilgileri (yalnız worker ise gönder)
+        if (_workerCategories.isNotEmpty) ...{
+          'hourlyRateMin':
+              double.tryParse(_hourlyMinCtrl.text.replaceAll(',', '.')),
+          'hourlyRateMax':
+              double.tryParse(_hourlyMaxCtrl.text.replaceAll(',', '.')),
+          'serviceRadiusKm': int.tryParse(_radiusCtrl.text),
+          'isAvailable': _isAvailable,
+        },
       });
       debugPrint(
           'personal_info._saveBasic sent bdStr=$bdStr, patchMe response birthDate=${updated['birthDate']} (runtimeType=${updated['birthDate']?.runtimeType})');
@@ -269,14 +302,11 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _section('İletişim Bilgileri'),
-          _field(_nameCtrl, 'Ad Soyad *', Icons.person_outline,
-              TextInputType.name),
+          _field(_nameCtrl, 'Ad Soyad *', TextInputType.name),
           const SizedBox(height: 12),
-          _field(_emailCtrl, 'E-posta', Icons.email_outlined,
-              TextInputType.emailAddress),
+          _field(_emailCtrl, 'E-posta', TextInputType.emailAddress),
           const SizedBox(height: 12),
-          _field(
-              _phoneCtrl, 'Telefon', Icons.phone_outlined, TextInputType.phone),
+          _field(_phoneCtrl, 'Telefon', TextInputType.phone),
 
           const SizedBox(height: 20),
           _section('Kişisel Bilgiler'),
@@ -297,7 +327,6 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
               }
             },
             child: _infoTile(
-              Icons.cake_outlined,
               _birthDate != null
                   ? '${_birthDate!.day}.${_birthDate!.month}.${_birthDate!.year}'
                   : 'Doğum Tarihi',
@@ -335,19 +364,16 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
 
           const SizedBox(height: 20),
           _section('Konum Bilgileri'),
-          _field(_cityCtrl, 'ޞehir', Icons.location_city_outlined,
-              TextInputType.text),
+          _field(_cityCtrl, 'Şehir', TextInputType.text),
           const SizedBox(height: 12),
-          _field(_districtCtrl, 'İlçe', Icons.map_outlined, TextInputType.text),
+          _field(_districtCtrl, 'İlçe', TextInputType.text),
           const SizedBox(height: 12),
           TextField(
             controller: _addressCtrl,
             maxLines: 3,
             decoration: InputDecoration(
               labelText: 'Açık Adres',
-              prefixIcon: const Icon(Icons.home_outlined),
               alignLabelWithHint: true,
-              
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey.shade200)),
@@ -357,26 +383,90 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
             ),
           ),
 
-          const SizedBox(height: 20),
-          _section('Usta Profili (opsiyonel)'),
-          TextField(
-            controller: _bioCtrl,
-            maxLines: 4,
-            maxLength: 300,
-            decoration: InputDecoration(
-              labelText: 'Kendinizi tanıtın (workerBio)',
-              hintText: 'Uzmanlık alanınız, deneyiminiz...',
-              prefixIcon: const Icon(Icons.work_outline),
-              alignLabelWithHint: true,
-              
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade200)),
-              enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade200)),
+          // ── Phase 512 — Hizmet Veren Bilgileri ─────────────────────────
+          if (_workerCategories.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            _section('Hizmet Veren Bilgileri'),
+
+            // Kategoriler (chip list — read-only; edit_profile_screen'de düzenlenir)
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: _workerCategories
+                  .map((c) => Chip(
+                        label: Text(c, style: const TextStyle(fontSize: 12)),
+                        backgroundColor: AppColors.primaryLight,
+                        side: BorderSide(
+                            color: AppColors.primary.withValues(alpha: 0.3)),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                      ))
+                  .toList(),
             ),
-          ),
+            const SizedBox(height: 12),
+
+            // workerBio
+            TextField(
+              controller: _bioCtrl,
+              maxLines: 4,
+              maxLength: 200,
+              decoration: InputDecoration(
+                labelText: 'Hizmet Açıklaması',
+                hintText: 'Uzmanlık alanınız, deneyiminiz...',
+                alignLabelWithHint: true,
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade200)),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade200)),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Saatlik ücret aralığı
+            Row(children: [
+              Expanded(
+                child: _field(_hourlyMinCtrl, 'Saatlik Min (TL)',
+                    TextInputType.number),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _field(_hourlyMaxCtrl, 'Saatlik Max (TL)',
+                    TextInputType.number),
+              ),
+            ]),
+            const SizedBox(height: 12),
+
+            // Hizmet yarıçapı
+            _field(_radiusCtrl, 'Hizmet Yarıçapı (km)', TextInputType.number),
+            const SizedBox(height: 12),
+
+            // Müsaitlik
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: _boxDeco(),
+              child: SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  'Hizmete Açığım',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary),
+                ),
+                subtitle: Text(
+                  _isAvailable
+                      ? 'Yeni iş talepleri alabilirsin'
+                      : 'Şu an pasif görüntüleniyorsun',
+                  style: TextStyle(
+                      fontSize: 12, color: AppColors.textSecondary),
+                ),
+                value: _isAvailable,
+                activeThumbColor: AppColors.primary,
+                onChanged: (v) => setState(() => _isAvailable = v),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 28),
           SizedBox(
@@ -757,15 +847,15 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
                 color: AppColors.primary)),
       );
 
-  Widget _field(TextEditingController ctrl, String label, IconData icon,
-      TextInputType kb) {
+  Widget _field(TextEditingController ctrl, String label, TextInputType kb) {
     return TextField(
       controller: ctrl,
       keyboardType: kb,
-      textCapitalization: TextCapitalization.words,
+      textCapitalization: kb == TextInputType.number
+          ? TextCapitalization.none
+          : TextCapitalization.words,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         filled: true,
         fillColor: AppColors.surface,
@@ -784,18 +874,13 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     );
   }
 
-  Widget _infoTile(IconData icon, String text, {bool hint = false}) =>
-      Container(
+  Widget _infoTile(String text, {bool hint = false}) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
         decoration: _boxDeco(),
-        child: Row(children: [
-          Icon(icon, color: hint ? AppColors.textHint : AppColors.textPrimary),
-          const SizedBox(width: 12),
-          Text(text,
-              style: TextStyle(
-                  fontSize: 16,
-                  color: hint ? AppColors.textHint : AppColors.textPrimary)),
-        ]),
+        child: Text(text,
+            style: TextStyle(
+                fontSize: 16,
+                color: hint ? AppColors.textHint : AppColors.textPrimary)),
       );
 
   BoxDecoration _boxDeco() => BoxDecoration(color: AppColors.surface,
