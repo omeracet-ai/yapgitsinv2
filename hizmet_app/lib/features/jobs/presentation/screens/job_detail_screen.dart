@@ -1679,6 +1679,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         scheduleHint: scheduleHint,
         priceFloor: priceFloor,
         costPreview: costPreview,
+        jobIdForCost: widget.id,
         onScheduleChanged: (s) {
           proposedDate = s.date;
           proposedTime = s.time;
@@ -2134,7 +2135,7 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-class _BidSheet extends StatefulWidget {
+class _BidSheet extends ConsumerStatefulWidget {
   final String title, priceLabel, submitLabel;
   final String msgLabel;
   final TextEditingController priceCtrl, msgCtrl;
@@ -2151,6 +2152,10 @@ class _BidSheet extends StatefulWidget {
   final double? priceFloor;
   // Phase 510 — Teklif maliyeti önizleme banner'ı. null → gizli (pazarlık).
   final OfferCostPreview? costPreview;
+  // Phase 535 — Preview popup → bid sheet açıldığında cost provider
+  // henüz yüklü olmayabilir; jobIdForCost set ise sheet provider'ı izler ve
+  // veri gelir gelmez banner görünür.
+  final String? jobIdForCost;
 
   const _BidSheet({
     required this.title,
@@ -2167,13 +2172,14 @@ class _BidSheet extends StatefulWidget {
     this.onScheduleChanged,
     this.priceFloor,
     this.costPreview,
+    this.jobIdForCost,
   });
 
   @override
-  State<_BidSheet> createState() => _BidSheetState();
+  ConsumerState<_BidSheet> createState() => _BidSheetState();
 }
 
-class _BidSheetState extends State<_BidSheet> {
+class _BidSheetState extends ConsumerState<_BidSheet> {
   bool _loading = false;
   DateTime? _proposedDate;
   TimeOfDay? _proposedTime;
@@ -2240,13 +2246,23 @@ class _BidSheetState extends State<_BidSheet> {
               style: const TextStyle(
                   fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          // Phase 510 — Teklif maliyeti hint banner'ı (yalnızca yeni teklif
-          // akışında; pazarlık ve karşı-teklif sheet'i null geçer).
-          if (widget.costPreview != null) ...[
-            _OfferCostHint(preview: widget.costPreview!),
-            const SizedBox(height: 16),
-          ] else
-            const SizedBox(height: 4),
+          // Phase 510 / 535 — Teklif maliyeti hint banner'ı. jobIdForCost
+          // set ise provider izlenir (preview popup'tan açılışta cache
+          // henüz dolu olmayabilir → veri gelir gelmez gözükür). Aksi halde
+          // costPreview varsa onu göster (pazarlık/karşı-teklifte null).
+          Builder(builder: (_) {
+            OfferCostPreview? preview = widget.costPreview;
+            if (widget.jobIdForCost != null) {
+              final async = ref.watch(
+                  offerCostPreviewProvider(widget.jobIdForCost!));
+              preview = async.valueOrNull ?? widget.costPreview;
+            }
+            if (preview == null) return const SizedBox(height: 4);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _OfferCostHint(preview: preview),
+            );
+          }),
           TextField(
             controller: widget.priceCtrl,
             keyboardType:
