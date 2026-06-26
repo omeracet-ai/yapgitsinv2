@@ -289,7 +289,9 @@ export class OffersService {
     const offerCostResult = await this.tokensService.computeOfferCost(costBasis);
     const offerCost = offerCostResult.cost;
     if (!isSubscriber) {
-      await this.tokensService.spend(
+      // Phase 534 — Kredi sınırlaması kaldırıldı: bakiye yetmese de teklif
+      // verilir, kredi negatife düşer. Net %5 bütçeden kesilir.
+      await this.tokensService.spendOverdraft(
         data.userId,
         offerCost,
         `İlan #${data.jobId.slice(0, 8)} için teklif (${data.price} ₺ • ${offerCost} kredi)`,

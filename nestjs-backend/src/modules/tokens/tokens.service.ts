@@ -65,26 +65,18 @@ export class TokensService {
     breakdown: string;
     basis: number;
   }> {
-    const { mode, value, min, max } = await this.appConfig.getOfferCostConfig();
+    // Phase 534 — Sabit %5 net: ilan bütçesinin %5'i kadar kredi kesilir.
+    // Min/max clamp ve admin config yok; breakdown UI'da gizli.
+    const PCT = 5;
     const safeBasis = Number.isFinite(basis) && basis > 0 ? basis : 0;
-    let raw: number;
-    if (mode === 'percent') {
-      raw = safeBasis > 0 ? Math.ceil((safeBasis * value) / 100) : value;
-    } else {
-      raw = value;
-    }
-    const cost = Math.max(min, Math.min(max, raw));
-    const breakdown =
-      mode === 'percent'
-        ? `Bütçe ${safeBasis} ₺ × %${value} = ${raw} kredi → ${cost} kredi (sınırlar arası)`
-        : `Sabit ${value} kredi → ${cost} kredi (sınırlar arası)`;
+    const cost = safeBasis > 0 ? Math.ceil((safeBasis * PCT) / 100) : 0;
     return {
       cost,
-      mode,
-      pct: mode === 'percent' ? value : undefined,
-      min,
-      max,
-      breakdown,
+      mode: 'percent',
+      pct: PCT,
+      min: 0,
+      max: cost,
+      breakdown: '',
       basis: safeBasis,
     };
   }
@@ -446,6 +438,39 @@ export class TokensService {
       );
       return { balance: fresh?.tokenBalance ?? 0, amount, tx };
     });
+  }
+
+  /**
+   * Phase 534 — Teklif maliyeti için bakiye kontrolsüz harcama.
+   * Yetersiz bakiyede de geçer; bakiye negatife düşebilir. Sadece teklif
+   * akışında kullan (offers.service). Diğer harcama yolları `spend()` ile
+   * kalmalı (gift/boost/abonelik).
+   */
+  async spendOverdraft(
+    userId: string,
+    amount: number,
+    description: string,
+  ): Promise<void> {
+    if (amount <= 0) return;
+    await this.userRepo
+      .createQueryBuilder()
+      .update(User)
+      .set({ tokenBalance: () => 'tokenBalance - :amount' })
+      .where('id = :id', { id: userId })
+      .setParameters({ amount })
+      .execute();
+    await this.txRepo.save(
+      this.txRepo.create({
+        userId,
+        type: TxType.SPEND,
+        amount,
+        amountMinor: tlToMinor(amount) ?? 0,
+        description,
+        status: TxStatus.COMPLETED,
+        paymentMethod: null,
+        paymentRef: null,
+      }),
+    );
   }
 
   async spend(

@@ -1706,28 +1706,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   'Kalemler toplamı: ${IntlFormatter.tl(sum, decimalDigits: 2)} — fiyat: ${IntlFormatter.tl(price, decimalDigits: 2)}. Devam etmek için fiyatı eşitle.');
             }
           }
-          try {
-            await ref.read(offerRepositoryProvider).createOffer(
-                  widget.id!,
-                  price,
-                  msgCtrl.text,
-                  lineItems: items.isEmpty ? null : items,
-                  proposedDate: proposedDate,
-                  proposedTime: proposedTime,
-                );
-          } catch (e) {
-            // Phase 510 — Yetersiz kredi → kapatıp özel dialog göster.
-            final msg = e.toString();
-            final isLowCredit = msg.contains('Yetersiz') ||
-                msg.contains('yetersiz') ||
-                msg.contains('insufficient');
-            if (isLowCredit) {
-              if (ctx.mounted) Navigator.pop(ctx);
-              await _showInsufficientCreditDialog(costPreview?.cost);
-              return;
-            }
-            rethrow; // _BidSheet snackbar göstersin
-          }
+          // Phase 534 — Kredi sınırlaması kaldırıldı; bakiye yetmese de
+          // teklif gönderilir, kredi negatife düşer.
+          await ref.read(offerRepositoryProvider).createOffer(
+                widget.id!,
+                price,
+                msgCtrl.text,
+                lineItems: items.isEmpty ? null : items,
+                proposedDate: proposedDate,
+                proposedTime: proposedTime,
+              );
           // Phase 282 — teklif sonrası tüm bağımlı cache'leri invalide et:
           // jobOffers (bu ilan), tokenBalance (5 kredi düştü), myOffers
           // (Tekliflerim sekmesi), jobsProvider (offerCount değişti).
@@ -1738,70 +1726,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           if (ctx.mounted) Navigator.pop(ctx);
           _showSnack('Teklifiniz gönderildi!');
         },
-      ),
-    );
-  }
-
-  /// Phase 510 — Yetersiz kredi → satın al CTA'lı dialog.
-  /// Mevcut bakiye tokenBalanceProvider'dan canlı okunur; gerekli kredi
-  /// `requiredCost` (cost preview'den) — null ise jenerik mesaj gösterilir.
-  Future<void> _showInsufficientCreditDialog(int? requiredCost) async {
-    final balanceAsync = ref.read(tokenBalanceProvider);
-    final balance = balanceAsync.valueOrNull?.toInt() ?? 0;
-    if (!mounted) return;
-    await showDialog<void>(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.account_balance_wallet_outlined,
-                color: AppColors.error),
-            const SizedBox(width: 8),
-            const Text('Krediniz yetmiyor'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Bakiyeniz $balance kredi.',
-              style: const TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              requiredCost != null
-                  ? 'Bu teklif için $requiredCost kredi gerekli.'
-                  : 'Bu teklif için yeterli krediniz yok.',
-              style: const TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Kredi satın alarak teklif vermeye devam edebilirsiniz.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dctx),
-            child: const Text('Vazgeç'),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(dctx);
-              context.go('/tokens');
-            },
-            icon: const Icon(Icons.add_circle_outline, size: 18),
-            label: const Text('Kredi Satın Al'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -2896,9 +2820,8 @@ class _GuestJobDetailPrompt extends StatelessWidget {
   }
 }
 
-/// Phase 510 — Teklif maliyeti hint kartı. Bid sheet'in başında, kullanıcı
-/// fiyat yazmadan önce kaç kredi düşüleceğini açıkça gösterir. Tema-aware
-/// AppColors getter'larını kullanır (dark soft primary uyumlu).
+/// Phase 510 / 534 — Teklif maliyeti hint kartı. Sadece "Bu teklifin
+/// maliyeti: X kredi" satırı gösterilir; formül/breakdown kullanıcıdan gizli.
 class _OfferCostHint extends StatelessWidget {
   final OfferCostPreview preview;
   const _OfferCostHint({required this.preview});
@@ -2906,10 +2829,6 @@ class _OfferCostHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = AppColors.primary;
-    final isPercent = preview.mode == 'percent';
-    final subtitle = isPercent && preview.pct != null
-        ? 'İlan bütçesinin %${_fmtPct(preview.pct!)}\'i (sınırlar: ${preview.min}–${preview.max} kredi).'
-        : 'Sabit ${preview.min == preview.max ? preview.cost : '${preview.min}–${preview.max}'} kredi aralığında.';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -2917,76 +2836,29 @@ class _OfferCostHint extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: primary.withValues(alpha: 0.22)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.savings_outlined, size: 18, color: primary),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Bu teklifin maliyeti: ${preview.cost} kredi',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: primary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (preview.breakdown.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.info_outline,
-                    size: 14, color: primary.withValues(alpha: 0.85)),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    preview.breakdown,
-                    style: TextStyle(
-                      fontSize: 11,
-                      height: 1.3,
-                      color: primary.withValues(alpha: 0.95),
-                    ),
-                  ),
-                ),
-              ],
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(10),
             ),
-          ],
+            child: Icon(Icons.savings_outlined, size: 18, color: primary),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Bu teklifin maliyeti: ${preview.cost} kredi',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: primary,
+              ),
+            ),
+          ),
         ],
       ),
     );
-  }
-
-  String _fmtPct(double p) {
-    // 1.0 → "1", 1.5 → "1.5"
-    if (p == p.roundToDouble()) return p.toStringAsFixed(0);
-    return p.toStringAsFixed(p < 10 ? 2 : 1);
   }
 }
