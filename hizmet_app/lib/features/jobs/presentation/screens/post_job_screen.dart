@@ -11,7 +11,7 @@ import '../../../../core/widgets/overflow_slide_row.dart';
 import '../providers/job_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/app_config/app_config_provider.dart';
-import 'my_jobs_screen.dart' show myJobsProvider;
+import 'my_jobs_screen.dart' show myJobsProvider, myDraftsProvider;
 import '../../../categories/data/category_repository.dart';
 import '../../../photos/data/photo_repository.dart';
 import '../../../photos/presentation/widgets/job_photo_picker.dart';
@@ -1637,7 +1637,11 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       final auth = ref.read(authStateProvider);
       if (auth is AuthAuthenticated) {
         final userId = auth.user['id'] as String?;
-        if (userId != null) ref.invalidate(myJobsProvider(userId));
+        if (userId != null) {
+          ref.invalidate(myJobsProvider(userId));
+          // Phase 535 — Taslak kaydedilince taslak listesi de yenilensin.
+          ref.invalidate(myDraftsProvider(userId));
+        }
       }
     } catch (e) {
       if (mounted) {

@@ -103,7 +103,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
 
 class _BookingsView extends ConsumerWidget {
   final _ViewMode mode;
-  final FutureProvider<List<Booking>> provider;
+  final AutoDisposeFutureProvider<List<Booking>> provider;
   final bool asWorker;
 
   const _BookingsView({

@@ -80,11 +80,11 @@ final subscriptionRepositoryProvider = Provider((ref) {
   return SubscriptionRepository(dio: ref.read(apiClientProvider).dio);
 });
 
-final subscriptionPlansProvider = FutureProvider<List<SubscriptionPlan>>((ref) async {
+final subscriptionPlansProvider = FutureProvider.autoDispose<List<SubscriptionPlan>>((ref) async {
   return ref.watch(subscriptionRepositoryProvider).getPlans();
 });
 
-final mySubscriptionProvider = FutureProvider<UserSubscription?>((ref) async {
+final mySubscriptionProvider = FutureProvider.autoDispose<UserSubscription?>((ref) async {
   return ref.watch(subscriptionRepositoryProvider).getMySubscription();
 });
 

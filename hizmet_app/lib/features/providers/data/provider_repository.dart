@@ -13,7 +13,7 @@ final workerFilterProvider =
 
 /// Tüm providerlar (arama destekli + filtre destekli)
 final allProvidersProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, search) async {
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, search) async {
   final filter = ref.watch(workerFilterProvider);
   return ref.watch(providerRepositoryProvider).getAllProviders(
         search: search.isEmpty ? null : search,
@@ -23,25 +23,25 @@ final allProvidersProvider =
 
 /// Provider detay verisi (provider + user birleşik)
 final providerDetailProvider =
-    FutureProvider.family<Map<String, dynamic>, String>((ref, providerId) async {
+    FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, providerId) async {
   return ref.watch(providerRepositoryProvider).getProvider(providerId);
 });
 
 /// Kullanıcının provider profili (userId ile)
 final myProviderProfileProvider =
-    FutureProvider.family<Map<String, dynamic>?, String>((ref, userId) async {
+    FutureProvider.autoDispose.family<Map<String, dynamic>?, String>((ref, userId) async {
   return ref.watch(providerRepositoryProvider).getProviderByUserId(userId);
 });
 
 /// Provider'a ait yorumlar (revieweeId = provider.userId)
 final providerReviewsProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, userId) async {
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, userId) async {
   return ref.watch(providerRepositoryProvider).getReviewsForUser(userId);
 });
 
 /// Provider'ın tamamladığı işler (fotoğraflı)
 final providerCompletedJobsProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, providerId) async {
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, providerId) async {
   return ref.watch(providerRepositoryProvider).getCompletedJobs(providerId);
 });
 

@@ -30,7 +30,7 @@ final loyaltyRepositoryProvider = Provider((ref) {
   return LoyaltyRepository(dio: ref.read(apiClientProvider).dio);
 });
 
-final loyaltyProvider = FutureProvider<LoyaltyInfo>((ref) async {
+final loyaltyProvider = FutureProvider.autoDispose<LoyaltyInfo>((ref) async {
   return ref.watch(loyaltyRepositoryProvider).getMy();
 });
 

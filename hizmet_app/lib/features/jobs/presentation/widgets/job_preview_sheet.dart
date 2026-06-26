@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/job_repository.dart';
 import '../providers/job_provider.dart';
 import '../screens/job_detail_screen.dart';
@@ -104,12 +105,22 @@ class JobPreviewSheet extends ConsumerWidget {
               ),
             ),
             if (job != null)
-              _StickyCta(
-                onOpenFull: () => _openFull(context, job),
-                // Phase 467 — Teklif Ver: detay sayfasına geç ve bid sheet'i
-                // otomatik aç (kullanıcı doğrudan teklif metnine ulaşsın).
-                onOffer: () => _openFull(context, job, openBid: true),
-              ),
+              Builder(builder: (_) {
+                // Phase 535 — Kendi ilanında "Teklif Ver" gizlenir.
+                final authState = ref.watch(authStateProvider);
+                final currentUserId = authState is AuthAuthenticated
+                    ? (authState.user['id'] as String?)
+                    : null;
+                final isOwner = currentUserId != null &&
+                    job.customerId != null &&
+                    job.customerId == currentUserId;
+                return _StickyCta(
+                  onOpenFull: () => _openFull(context, job),
+                  onOffer: isOwner
+                      ? null
+                      : () => _openFull(context, job, openBid: true),
+                );
+              }),
           ],
         ),
       ),
@@ -517,11 +528,13 @@ class _StatPill extends StatelessWidget {
 
 class _StickyCta extends StatelessWidget {
   final VoidCallback onOpenFull;
-  final VoidCallback onOffer;
+  // Phase 535 — null ise (ilan sahibiyim) "Teklif Ver" butonu gizlenir.
+  final VoidCallback? onOffer;
   const _StickyCta({required this.onOpenFull, required this.onOffer});
 
   @override
   Widget build(BuildContext context) {
+    final showOffer = onOffer != null;
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -538,7 +551,7 @@ class _StickyCta extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            flex: 3,
+            flex: showOffer ? 3 : 1,
             child: SizedBox(
               height: 52,
               child: ElevatedButton.icon(
@@ -558,25 +571,27 @@ class _StickyCta extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            flex: 2,
-            child: SizedBox(
-              height: 52,
-              child: OutlinedButton.icon(
-                onPressed: onOffer,
-                icon: const Icon(Icons.local_offer_outlined, size: 18),
-                label: const Text('Teklif Ver'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: BorderSide(color: AppColors.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+          if (showOffer) ...[
+            const SizedBox(width: 10),
+            Expanded(
+              flex: 2,
+              child: SizedBox(
+                height: 52,
+                child: OutlinedButton.icon(
+                  onPressed: onOffer,
+                  icon: const Icon(Icons.local_offer_outlined, size: 18),
+                  label: const Text('Teklif Ver'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: AppColors.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

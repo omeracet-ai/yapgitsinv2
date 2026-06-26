@@ -8,7 +8,7 @@ final recommendationRepositoryProvider = Provider((ref) {
 
 /// Recommended jobs for a worker
 final recommendedJobsProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>(
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
         (ref, workerId) async {
   return ref
       .watch(recommendationRepositoryProvider)
@@ -17,7 +17,7 @@ final recommendedJobsProvider =
 
 /// Recommended workers for a job
 final recommendedWorkersProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>(
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
         (ref, jobId) async {
   return ref
       .watch(recommendationRepositoryProvider)

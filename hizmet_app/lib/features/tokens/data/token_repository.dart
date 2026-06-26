@@ -9,14 +9,14 @@ final tokenRepositoryProvider = Provider((ref) {
   return TokenRepository(dio: ref.read(apiClientProvider).dio);
 });
 
-final tokenBalanceProvider = FutureProvider<int>((ref) async {
+final tokenBalanceProvider = FutureProvider.autoDispose<int>((ref) async {
   return ref.watch(tokenRepositoryProvider).getBalance();
 });
 
 /// Phase 260 — Sunucu jeton paket katalogu (tek kaynak). Fiyat/jeton miktarı
 /// client'ta hardcode EDİLMEZ; satın alma yalnızca iyzipay üzerinden.
 final tokenPackagesProvider =
-    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   return ref.watch(tokenRepositoryProvider).fetchPackages();
 });
 

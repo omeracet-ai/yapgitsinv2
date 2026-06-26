@@ -5,6 +5,7 @@ import '../../../../core/utils/turkish_text.dart';
 import '../../../../core/services/intl_formatter.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/service_request_repository.dart';
+import 'service_request_screen.dart' show serviceRequestsProvider;
 
 class ServiceRequestDetailScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> item;
@@ -109,6 +110,9 @@ class _ServiceRequestDetailScreenState
           : null;
 
       await repo.apply(id, message: message, price: price);
+
+      // Phase 535 — Başvuru sonrası SR listesi yenilensin (kart durumu).
+      ref.invalidate(serviceRequestsProvider);
 
       if (mounted) {
         setState(() {

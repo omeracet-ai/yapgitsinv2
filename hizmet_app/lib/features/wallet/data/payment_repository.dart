@@ -7,7 +7,7 @@ final paymentRepositoryProvider = Provider((ref) {
   return PaymentRepository(dio: ref.read(apiClientProvider).dio);
 });
 
-final earningsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final earningsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   return ref.watch(paymentRepositoryProvider).getEarnings();
 });
 

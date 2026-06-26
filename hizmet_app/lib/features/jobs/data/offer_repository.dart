@@ -8,14 +8,14 @@ final offerRepositoryProvider = Provider((ref) {
 });
 
 final jobOffersProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, jobId) async {
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, jobId) async {
   return ref.watch(offerRepositoryProvider).getOffersForJob(jobId);
 });
 
 /// Phase 510 — Bu ilanda teklif vermenin kaç krediye mal olacağını döner.
 /// Public endpoint (auth gerektirmez); hint banner için kullanılır.
 final offerCostPreviewProvider =
-    FutureProvider.family<OfferCostPreview?, String>((ref, jobId) async {
+    FutureProvider.autoDispose.family<OfferCostPreview?, String>((ref, jobId) async {
   return ref.watch(offerRepositoryProvider).getOfferCost(jobId);
 });
 

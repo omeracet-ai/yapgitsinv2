@@ -9,7 +9,7 @@ final jobRepositoryProvider = Provider((ref) {
 
 /// Tam detay: customer bilgisi dahil
 final jobDetailProvider =
-    FutureProvider.family<Map<String, dynamic>, String>((ref, id) async {
+    FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, id) async {
   return ref.watch(jobRepositoryProvider).getJobDetail(id);
 });
 

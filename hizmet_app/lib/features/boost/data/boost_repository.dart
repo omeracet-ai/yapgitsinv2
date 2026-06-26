@@ -7,12 +7,12 @@ final boostRepositoryProvider = Provider((ref) {
 });
 
 final boostPackagesProvider =
-    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   return ref.watch(boostRepositoryProvider).getPackages();
 });
 
 final myBoostsProvider =
-    FutureProvider<Map<String, List<Map<String, dynamic>>>>((ref) async {
+    FutureProvider.autoDispose<Map<String, List<Map<String, dynamic>>>>((ref) async {
   return ref.watch(boostRepositoryProvider).getMy();
 });
 

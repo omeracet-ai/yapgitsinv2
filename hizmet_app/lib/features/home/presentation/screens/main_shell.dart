@@ -32,6 +32,15 @@ import 'hizmet_al_screen.dart';
 // Phase 305 — Mesajlarım sekmesi (eski job_detail Sorular tab'ının yerine).
 import '../../../chat/presentation/screens/chat_list_screen.dart';
 import '../../../notifications/data/unread_count_provider.dart';
+// Phase 535 — App resume olunca veri yenileme için provider invalidation.
+import '../../../notifications/presentation/screens/notification_screen.dart'
+    show notificationsProvider;
+import '../../../chat/data/chat_repository.dart' show conversationsProvider;
+import '../../../service_requests/presentation/screens/service_request_screen.dart'
+    show serviceRequestsProvider;
+import '../../../jobs/presentation/widgets/pending_confirmations_card.dart'
+    show pendingConfirmationsProvider;
+import '../../../tokens/data/token_repository.dart' show tokenBalanceProvider;
 // Phase 334 — app-launch'ta bekleyen değerlendirme popup'ı.
 import '../../../reviews/presentation/widgets/pending_reviews_popup.dart';
 import '../../../../core/widgets/category_card.dart';
@@ -83,6 +92,16 @@ class _MainShellState extends ConsumerState<MainShell>
       final auth = ref.read(authStateProvider);
       if (auth is AuthAuthenticated) {
         ref.read(unreadCountBadgeProvider.notifier).refresh();
+        // Phase 535 — Foreground'a dönünce stale veri görünmesin: tüm major
+        // FutureProvider'ları invalidate, StateNotifier'ı yeniden fetch.
+        ref.invalidate(notificationsProvider);
+        ref.invalidate(conversationsProvider);
+        ref.invalidate(serviceRequestsProvider);
+        ref.invalidate(pendingConfirmationsProvider);
+        ref.invalidate(tokenBalanceProvider);
+        // jobsProvider StateNotifier — refetch.
+        // ignore: unawaited_futures
+        ref.read(jobsProvider.notifier).fetchJobs();
       }
     }
   }

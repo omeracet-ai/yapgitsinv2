@@ -37,7 +37,7 @@ final categorySubscriptionRepositoryProvider =
         ));
 
 final categorySubscriptionsProvider =
-    FutureProvider<List<CategorySubscription>>((ref) async {
+    FutureProvider.autoDispose<List<CategorySubscription>>((ref) async {
   return ref.watch(categorySubscriptionRepositoryProvider).getMine();
 });
 

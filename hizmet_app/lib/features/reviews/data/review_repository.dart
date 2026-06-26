@@ -7,7 +7,7 @@ final reviewRepositoryProvider = Provider((ref) {
 });
 
 final receivedReviewsProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, userId) {
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, userId) {
   return ref.watch(reviewRepositoryProvider).getReviewsForUser(userId);
 });
 

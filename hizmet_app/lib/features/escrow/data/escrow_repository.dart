@@ -66,7 +66,7 @@ final escrowRepositoryProvider = Provider((ref) {
 });
 
 final escrowByBookingProvider =
-    FutureProvider.family<Escrow?, String>((ref, bookingId) async {
+    FutureProvider.autoDispose.family<Escrow?, String>((ref, bookingId) async {
   return ref.watch(escrowRepositoryProvider).getByBooking(bookingId);
 });
 

@@ -7,11 +7,11 @@ final bookingRepositoryProvider = Provider((ref) {
   return BookingRepository(dio: ref.read(apiClientProvider).dio);
 });
 
-final myWorkerBookingsProvider = FutureProvider<List<Booking>>((ref) async {
+final myWorkerBookingsProvider = FutureProvider.autoDispose<List<Booking>>((ref) async {
   return ref.watch(bookingRepositoryProvider).getMyBookingsAsWorker();
 });
 
-final myCustomerBookingsProvider = FutureProvider<List<Booking>>((ref) async {
+final myCustomerBookingsProvider = FutureProvider.autoDispose<List<Booking>>((ref) async {
   return ref.watch(bookingRepositoryProvider).getMyBookingsAsCustomer();
 });
 

@@ -28,7 +28,7 @@ import '../../../../core/widgets/info_hint.dart';
 // ─── Providers ────────────────────────────────────────────────────────────────
 
 final myJobsProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>(
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
         (ref, customerId) {
   // Phase 505 — Default akış: yayınlanan ilanlar (taslaklar listede yok).
   // Taslaklar için ayrı provider (`myDraftsProvider`).
@@ -37,12 +37,12 @@ final myJobsProvider =
 
 /// Phase 505 — Müşterinin kendi taslak ilanları.
 final myDraftsProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>(
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
         (ref, customerId) {
   return ref.watch(jobRepositoryProvider).getMyDrafts(customerId);
 });
 
-final myOffersProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
+final myOffersProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
   return ref.watch(offerRepositoryProvider).getMyOffers();
 });
 
