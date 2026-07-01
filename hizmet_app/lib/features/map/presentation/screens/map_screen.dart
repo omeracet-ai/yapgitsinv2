@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -296,6 +297,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   _ErrorBanner(
                     message: state.error!,
                     onRetry: notifier.refresh,
+                    showOpenSettings: state.permissionPermanentlyDenied,
                   ),
 
                 // Phase 540c — "N ilan" badge artık _CategoryToolbar Row'unun
@@ -1613,8 +1615,14 @@ class _PosterMiniSection extends StatelessWidget {
 class _ErrorBanner extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
+  // Phase 540O — deniedForever senaryosunda ekstra "Ayarları Aç" CTA.
+  final bool showOpenSettings;
 
-  const _ErrorBanner({required this.message, required this.onRetry});
+  const _ErrorBanner({
+    required this.message,
+    required this.onRetry,
+    this.showOpenSettings = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1633,6 +1641,15 @@ class _ErrorBanner extends StatelessWidget {
             Expanded(
                 child: Text(message,
                     style: TextStyle(fontSize: 11, color: Colors.amber.shade900))),
+            if (showOpenSettings)
+              TextButton(
+                onPressed: () async {
+                  await Geolocator.openAppSettings();
+                },
+                child: Text('Ayarlar',
+                    style: TextStyle(
+                        fontSize: 11, color: Colors.amber.shade900)),
+              ),
             TextButton(
               onPressed: onRetry,
               child: Text('Yenile',

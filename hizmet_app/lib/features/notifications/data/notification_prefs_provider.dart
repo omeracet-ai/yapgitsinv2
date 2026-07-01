@@ -42,8 +42,10 @@ class NotificationPrefsNotifier extends StateNotifier<NotificationPrefsState> {
     try {
       final prefs =
           await _ref.read(notificationPrefsRepositoryProvider).fetch();
+      if (!mounted) return;
       state = NotificationPrefsState(prefs: prefs);
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(loading: false, error: e.toString());
     }
   }
@@ -64,8 +66,10 @@ class NotificationPrefsNotifier extends StateNotifier<NotificationPrefsState> {
     try {
       final saved =
           await _ref.read(notificationPrefsRepositoryProvider).update(prefs);
+      if (!mounted) return;
       state = NotificationPrefsState(prefs: saved);
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(saving: false, error: e.toString());
     }
   }

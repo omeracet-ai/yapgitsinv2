@@ -41,11 +41,18 @@ import '../../../../core/widgets/info_hint.dart';
 
 // ── Provider: kendi profil verisini çeker (stats + yorumlar + fotoğraflar) ──
 // Phase 241 — Ham `Dio` kaldırıldı; AuthInterceptor'lı [ApiClient] kullanılır.
+// Phase 540L — `ref.watch(authStateProvider)` yerine sadece user.id değişimini
+// dinle. updateUserData / rehydrate her tick'te yeni Auth state emit ediyordu
+// → provider full refetch. Selector ile bu bertaraf edildi.
+final _myProfileUserIdProvider = Provider.autoDispose<String?>((ref) {
+  final auth = ref.watch(authStateProvider);
+  return auth is AuthAuthenticated ? auth.user['id'] as String? : null;
+});
+
 final myPublicProfileProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final auth = ref.watch(authStateProvider);
-  if (auth is! AuthAuthenticated) return {};
-  final userId = auth.user['id'] as String;
+  final userId = ref.watch(_myProfileUserIdProvider);
+  if (userId == null) return {};
   final dio = ref.read(apiClientProvider).dio;
   final resp = await dio.get('/users/$userId/profile');
   return Map<String, dynamic>.from(resp.data as Map);

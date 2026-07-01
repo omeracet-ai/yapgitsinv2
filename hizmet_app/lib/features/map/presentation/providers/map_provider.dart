@@ -18,6 +18,9 @@ class MapState {
   final bool showList;
   final bool locationLoading;
   final String? error;
+  // Phase 540O — kalıcı reddedildi bayrağı: map_screen error banner'ında
+  // "Ayarları Aç" (Geolocator.openAppSettings) CTA gösterimi için.
+  final bool permissionPermanentlyDenied;
 
   const MapState({
     this.userLocation,
@@ -29,6 +32,7 @@ class MapState {
     this.showList = false,
     this.locationLoading = true,
     this.error,
+    this.permissionPermanentlyDenied = false,
   });
 
   MapState copyWith({
@@ -44,6 +48,7 @@ class MapState {
     bool? locationLoading,
     String? error,
     bool clearError = false,
+    bool? permissionPermanentlyDenied,
   }) =>
       MapState(
         userLocation: userLocation ?? this.userLocation,
@@ -58,6 +63,8 @@ class MapState {
         showList: showList ?? this.showList,
         locationLoading: locationLoading ?? this.locationLoading,
         error: clearError ? null : (error ?? this.error),
+        permissionPermanentlyDenied:
+            permissionPermanentlyDenied ?? this.permissionPermanentlyDenied,
       );
 }
 
@@ -135,10 +142,17 @@ class MapNotifier extends StateNotifier<MapState> {
     if (permission == LocationPermission.deniedForever ||
         permission == LocationPermission.denied) {
       const istanbul = LatLng(41.0082, 28.9784);
+      // Phase 540O — deniedForever: kullanıcıya sistem Ayarlar linki de sun
+      // (map_screen error banner "Ayarları Aç" butonu bu flag'i okuyor).
+      final permanentlyDenied =
+          permission == LocationPermission.deniedForever;
       state = state.copyWith(
         userLocation: istanbul,
         locationLoading: false,
-        error: 'Konum izni reddedildi. İstanbul merkezi gösteriliyor.',
+        error: permanentlyDenied
+            ? 'Konum izni kalıcı olarak reddedildi. Ayarlardan izin verin.'
+            : 'Konum izni reddedildi. İstanbul merkezi gösteriliyor.',
+        permissionPermanentlyDenied: permanentlyDenied,
       );
       await _loadNearby(istanbul);
       return;

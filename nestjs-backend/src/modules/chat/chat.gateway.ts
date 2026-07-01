@@ -52,11 +52,22 @@ interface GetHistoryPayload {
   bookingId?: string;
 }
 
+// Phase 540N — CORS wildcard `*` production'da kredentialsız broadcast dinleme
+// riski. Dev'de `*`, prod'da ALLOWED_ORIGINS env zorunlu (yoksa origin
+// callback ile aynı origin'e izin ver, cross-origin reddedilir).
 @WebSocketGateway({
   cors: {
-    origin: process.env.ALLOWED_ORIGINS
-      ? process.env.ALLOWED_ORIGINS.split(',')
-      : '*',
+    origin: (() => {
+      const allow = process.env.ALLOWED_ORIGINS;
+      if (allow && allow.trim()) return allow.split(',').map((s) => s.trim());
+      if (process.env.NODE_ENV === 'production') {
+        // Prod'da liste yoksa cross-origin ws bağlantısı reject; same-origin
+        // (Origin header eşleşmesi) socket.io tarafından handle edilir.
+        return false;
+      }
+      return true; // dev: aç
+    })(),
+    credentials: true,
   },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {

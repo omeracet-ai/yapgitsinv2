@@ -30,6 +30,10 @@ class ApiClient {
       ..connectTimeout = const Duration(seconds: 20)
       ..receiveTimeout = const Duration(seconds: 30)
       ..sendTimeout = const Duration(seconds: 30)
+      // Phase 540P — Content-Type baseline JSON; ancak _MultipartTimeoutInterceptor
+      // FormData request'lerinde bu header'ı silecek ki Dio kendi multipart
+      // boundary'sini üretebilsin (aksi halde bazı Dio 5.x kombinasyonlarında
+      // JSON content-type multipart boundary'yi overrode ediyor).
       ..contentType = Headers.jsonContentType
       ..responseType = ResponseType.json;
 
@@ -82,6 +86,11 @@ class _MultipartTimeoutInterceptor extends Interceptor {
     if (options.data is FormData) {
       options.sendTimeout ??= _multipartSendTimeout;
       options.receiveTimeout ??= _multipartReceiveTimeout;
+      // Phase 540P — global JSON Content-Type FormData boundary'ı ezmesin.
+      // Dio kendi multipart/form-data; boundary=... header'ını yazacak.
+      options.contentType = null;
+      options.headers.remove('Content-Type');
+      options.headers.remove('content-type');
     }
     handler.next(options);
   }
