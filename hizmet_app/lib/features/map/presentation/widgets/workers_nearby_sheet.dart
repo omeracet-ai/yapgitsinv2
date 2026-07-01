@@ -93,7 +93,17 @@ class _WorkersNearbySheetState extends ConsumerState<WorkersNearbySheet> {
       // 1) GPS — izin alınamazsa varsayılan merkeze düş.
       final pos = await _tryGetLocation();
       if (pos != null) {
-        _center = LatLng(pos.latitude, pos.longitude);
+        // Phase 179 + 516 — null-island ve Türkiye-dışı GPS'te fallback merkezi koru
+        // (Android emulator default: Mountain View 37.42,-122.08 → 0 sonuç).
+        final isNullIsland =
+            pos.latitude.abs() < 0.01 && pos.longitude.abs() < 0.01;
+        final outsideTurkey = pos.latitude < 35.5 ||
+            pos.latitude > 42.5 ||
+            pos.longitude < 25.5 ||
+            pos.longitude > 45.0;
+        if (!isNullIsland && !outsideTurkey) {
+          _center = LatLng(pos.latitude, pos.longitude);
+        }
       }
       // 2) Yakındaki ustaları kategoriye göre çek.
       final repo = ref.read(mapRepositoryProvider);

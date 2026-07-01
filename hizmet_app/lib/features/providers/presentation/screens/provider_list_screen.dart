@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -26,6 +27,7 @@ class ProviderListScreen extends ConsumerStatefulWidget {
 
 class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
   final _searchCtrl = TextEditingController();
+  Timer? _searchDebounce;
   String _search = '';
   String? _activeCategory;
   _SortMode _sort = _SortMode.smart;
@@ -80,6 +82,7 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -171,10 +174,16 @@ class _ProviderListScreenState extends ConsumerState<ProviderListScreen> {
                 ),
                 child: TextField(
                   controller: _searchCtrl,
-                  onChanged: (v) => setState(() {
-                    _search = v.trim();
-                    _activeCategory = null;
-                  }),
+                  onChanged: (v) {
+                    _searchDebounce?.cancel();
+                    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+                      if (!mounted) return;
+                      setState(() {
+                        _search = v.trim();
+                        _activeCategory = null;
+                      });
+                    });
+                  },
                   decoration: InputDecoration(
                     hintText: 'İsim veya hizmet ara...',
                     hintStyle:
