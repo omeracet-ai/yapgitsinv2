@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../theme/app_colors.dart';
 import '../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../../features/home/presentation/screens/main_shell.dart';
 import '../../../features/auth/presentation/screens/login_screen.dart';
@@ -198,6 +199,52 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
     refreshListenable: refresh,
+    // Phase 540f — malformed URL / bilinmeyen route → default kırmızı Flutter
+    // exception ekranı yerine küllenmiş marka ekranı + geri buton.
+    errorBuilder: (context, state) => Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.link_off_rounded, size: 56, color: AppColors.textSecondary),
+              const SizedBox(height: 12),
+              Text('Sayfa bulunamadı',
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary)),
+              const SizedBox(height: 6),
+              Text(state.uri.toString(),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () => context.go('/'),
+                icon: const Icon(Icons.home_rounded),
+                label: const Text('Anasayfaya dön'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
       final loc = state.matchedLocation;
@@ -482,6 +529,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/randevu-olustur/:workerId',
         builder: (context, state) => buildBookingCreateRoute(state),
+      ),
+      // Phase 540f — /randevu-olustur bare path (workerId'siz bookmark / eski
+      // bildirim) → önceden crash. Şimdi providers direktörüne yönlendirir.
+      GoRoute(
+        path: '/randevu-olustur',
+        redirect: (_, __) => '/',
       ),
       GoRoute(
         path: '/sikayetlerim',

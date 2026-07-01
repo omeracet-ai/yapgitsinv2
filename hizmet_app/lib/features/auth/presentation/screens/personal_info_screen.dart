@@ -67,7 +67,11 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen>
     final u = auth.user;
     _nameCtrl.text = u['fullName'] as String? ?? '';
     _emailCtrl.text = u['email'] as String? ?? '';
-    _phoneCtrl.text = u['phoneNumber'] as String? ?? '';
+    // Phase 540e — Backend loginWithFirebase, phoneNumber unique+NOT NULL
+    // olduğu için sosyal-only kullanıcılara `firebase:<uid>` placeholder yazar.
+    // Bu değeri UI'da GÖSTERME; kullanıcı gerçek telefon girsin.
+    final rawPhone = u['phoneNumber'] as String? ?? '';
+    _phoneCtrl.text = rawPhone.startsWith('firebase:') ? '' : rawPhone;
     _cityCtrl.text = u['city'] as String? ?? '';
     _districtCtrl.text = u['district'] as String? ?? '';
     _addressCtrl.text = u['address'] as String? ?? '';

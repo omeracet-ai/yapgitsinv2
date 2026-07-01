@@ -345,13 +345,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('typing')
   handleTyping(
     @MessageBody()
-    data: { roomId: string; userId: string; isTyping: boolean },
+    data: { roomId: string; userId?: string; isTyping: boolean },
     @ConnectedSocket() client: Socket,
   ) {
-    // Broadcast to others in the same room (sender excluded).
+    // Phase 540i — userId artık client payload'ından değil authenticated
+    // socket'ten alınır (typing indicator impersonation kapatıldı).
+    const userId = client.data.userId as string | undefined;
+    if (!userId || !data.roomId) return;
     client.to(data.roomId).emit('userTyping', {
-      userId: data.userId,
-      isTyping: data.isTyping,
+      userId,
+      isTyping: data.isTyping === true,
     });
   }
 
@@ -386,6 +389,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() roomId: string,
     @ConnectedSocket() client: Socket,
   ) {
+    if (typeof roomId !== 'string' || !roomId || roomId.length > 128) return;
+    // Phase 540i — cross-chat delivery leak fix: kullanıcı yeni bir DM
+    // odasına girmeden önce eski DM odasını bırak. `user:<uid>` ve default
+    // socket odaları korunur (socket.rooms içinde socket.id ve user room).
+    const preserved = new Set<string>([client.id]);
+    const uid = client.data.userId as string | undefined;
+    if (uid) preserved.add(`user:${uid}`);
+    for (const r of Array.from(client.rooms)) {
+      if (preserved.has(r) || r === roomId) continue;
+      if (r.startsWith('dm:') || r.startsWith('room:')) {
+        void client.leave(r);
+      }
+    }
     void client.join(roomId);
     this.logger.log(`Client ${client.id} joined room ${roomId}`);
   }

@@ -99,7 +99,11 @@ class JobRepository {
   Future<Map<String, dynamic>> getJobDetail(String id) async {
     try {
       final response = await _dio.get('/jobs/$id');
-      return response.data;
+      final data = response.data;
+      // Phase 540j — belirsiz response tipi (backend paginated envelope
+      // döndürmeye başlarsa) yerine null → boş obje fallback + type gate.
+      if (data is Map<String, dynamic>) return data;
+      throw Exception('İlan detayı beklenmeyen formatta döndü');
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'İlan detayı yüklenemedi'));
     }
@@ -145,7 +149,17 @@ class JobRepository {
   Future<List<Map<String, dynamic>>> getJobQuestions(String jobId) async {
     try {
       final response = await _dio.get('/jobs/$jobId/questions');
-      return List<Map<String, dynamic>>.from(response.data as List);
+      // Phase 540j — backend hem düz List hem {data: [...]} envelope
+      // dönebilir. İkisini de destekle; başka format → boş liste.
+      final raw = response.data;
+      final list = raw is List
+          ? raw
+          : (raw is Map && raw['data'] is List ? raw['data'] as List : null);
+      if (list == null) return const [];
+      return list
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .toList();
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Sorular yüklenemedi'));
     }
@@ -217,7 +231,12 @@ class JobRepository {
         '/uploads/completion-photos/$jobId',
         data: form,
       );
-      return List<String>.from((res.data['photos'] as List));
+      // Phase 540j — response.data null / photos alanı eksik olabilir.
+      final data = res.data;
+      if (data is Map && data['photos'] is List) {
+        return (data['photos'] as List).map((e) => e.toString()).toList();
+      }
+      return const [];
     } on DioException catch (e) {
       throw Exception(_dioMsg(e, 'Tamamlama fotoğrafları yüklenemedi'));
     }

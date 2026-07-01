@@ -37,6 +37,9 @@ class ApiClient {
     // send window: 30s is fine for JSON but chokes real-world video uploads on
     // 3G/4G. Callers may still override per-request.
     _dio.interceptors.add(_MultipartTimeoutInterceptor());
+    // Phase 540k — transient errors (5xx / connection reset) tek retry;
+    // 429 Retry-After respect edilir; başarısız olursa hata caller'a geçer.
+    _dio.interceptors.add(_TransientRetryInterceptor(_dio));
     _dio.interceptors.add(_AuthInterceptor(_readAccessToken));
     _dio.interceptors.add(RefreshTokenInterceptor(
       dio: _dio,
@@ -84,6 +87,60 @@ class _MultipartTimeoutInterceptor extends Interceptor {
   }
 }
 
+/// Phase 540k — Kısa süreli geçici hatalarda tek retry:
+/// - 502/503/504 + connection/network hatası → 400ms sonra tek deneme
+/// - 429 → Retry-After (saniye) header'ına uy, yoksa 1000ms bekle, tek deneme
+/// FormData body üzerinde retry devre dışı (stream tükenmiş).
+class _TransientRetryInterceptor extends Interceptor {
+  _TransientRetryInterceptor(this._dio);
+  final Dio _dio;
+
+  static const _retryFlag = '_yg_transient_retried';
+
+  @override
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    final opts = err.requestOptions;
+    if (opts.extra[_retryFlag] == true) {
+      handler.next(err);
+      return;
+    }
+    if (opts.data is FormData) {
+      handler.next(err);
+      return;
+    }
+    final status = err.response?.statusCode;
+    final isTransient = err.type == DioExceptionType.connectionError ||
+        err.type == DioExceptionType.connectionTimeout ||
+        err.type == DioExceptionType.sendTimeout ||
+        err.type == DioExceptionType.receiveTimeout ||
+        status == 502 ||
+        status == 503 ||
+        status == 504;
+    final isRateLimited = status == 429;
+    if (!isTransient && !isRateLimited) {
+      handler.next(err);
+      return;
+    }
+    int delayMs = 400;
+    if (isRateLimited) {
+      final ra = err.response?.headers.value('retry-after');
+      final asSec = int.tryParse(ra ?? '');
+      delayMs = asSec != null ? (asSec.clamp(1, 60) * 1000) : 1000;
+    }
+    await Future<void>.delayed(Duration(milliseconds: delayMs));
+    try {
+      opts.extra[_retryFlag] = true;
+      final retried = await _dio.fetch<dynamic>(opts);
+      handler.resolve(retried);
+    } on DioException catch (e) {
+      handler.next(e);
+    }
+  }
+}
+
 class _AuthInterceptor extends Interceptor {
   _AuthInterceptor(this._readToken);
 
@@ -94,13 +151,20 @@ class _AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // Don't clobber a caller-supplied Authorization header.
-    if (options.headers.containsKey('Authorization')) {
+    // Don't clobber a caller-supplied Authorization header, ancak boş string
+    // veya null → yoksay ve token attach et (bazı callsite'lar `''` göndererek
+    // yanlışlıkla auth'ı sıfırlıyordu).
+    final existing = options.headers['Authorization'];
+    final hasReal =
+        existing is String && existing.trim().isNotEmpty;
+    if (hasReal) {
       handler.next(options);
       return;
     }
+    // Boş string ise header'ı da temizle (proxy'ler '' göndermeyi reject edebilir).
+    options.headers.remove('Authorization');
     final token = await _readToken();
-    if (token != null) {
+    if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
     }
     handler.next(options);

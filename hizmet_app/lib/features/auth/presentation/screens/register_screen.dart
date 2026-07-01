@@ -111,6 +111,18 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
       setState(() => _error = AppLocalizations.of(context).registerRequiredFields);
       return;
     }
+    // Phase 540g — client-side password strength gate (backend zaten enforce
+    // ediyor, ama UI 1-char şifre kabul ediyordu → net kullanıcı geri bildirimi).
+    if (pass.length < 8) {
+      setState(() => _error = 'Şifre en az 8 karakter olmalıdır.');
+      return;
+    }
+    if (!RegExp(r'[A-Za-z]').hasMatch(pass) ||
+        !RegExp(r'[0-9]').hasMatch(pass)) {
+      setState(() =>
+          _error = 'Şifre en az bir harf ve bir rakam içermelidir.');
+      return;
+    }
     // Phase 511 — E-posta ZORUNLU.
     if (email.isEmpty) {
       setState(() => _error = 'E-posta adresi zorunludur.');

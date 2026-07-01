@@ -74,7 +74,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final u = auth.user;
     _nameCtrl.text = (u['fullName'] as String?) ?? '';
     _emailCtrl.text = (u['email'] as String?) ?? '';
-    _phoneCtrl.text = (u['phoneNumber'] as String?) ?? '';
+    // Phase 540e — social-login placeholder `firebase:<uid>` UI'da gizlensin.
+    final rawPhone = (u['phoneNumber'] as String?) ?? '';
+    _phoneCtrl.text = rawPhone.startsWith('firebase:') ? '' : rawPhone;
     _cityCtrl.text = (u['city'] as String?) ?? '';
     _districtCtrl.text = (u['district'] as String?) ?? '';
     _addressCtrl.text = (u['address'] as String?) ?? '';
@@ -185,9 +187,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     // Phase 250-C — Telefon değiştiyse save'den ÖNCE SMS OTP ile doğrula.
     final newPhone = _phoneCtrl.text.trim();
     final auth = ref.read(authStateProvider);
-    final currentPhone = (auth is AuthAuthenticated)
+    final rawCurrent = (auth is AuthAuthenticated)
         ? ((auth.user['phoneNumber'] as String?) ?? '')
         : '';
+    // Phase 540e — social placeholder'ı "değişti mi" karşılaştırmasında empty say.
+    final currentPhone =
+        rawCurrent.startsWith('firebase:') ? '' : rawCurrent;
     if (newPhone.isNotEmpty && newPhone != currentPhone) {
       final verifiedPhone = await context.push<String?>(
         '/auth/sms-verify?phone=${Uri.encodeQueryComponent(newPhone)}',

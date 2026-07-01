@@ -57,7 +57,11 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           'format': 'json',
           'accept-language': 'tr',
         },
-        options: Options(headers: {'User-Agent': 'Yapgitsin/1.0'}),
+        // Phase 540h — OSM Nominatim usage policy: kimlik + iletişim zorunlu.
+        options: Options(headers: {
+          'User-Agent': 'Yapgitsin/1.0 (destek@yapgitsin.tr)',
+          'Accept-Language': 'tr,en;q=0.8',
+        }),
       );
       final data = res.data as Map<String, dynamic>;
       setState(() => _address = data['display_name'] ?? '${point.latitude}, ${point.longitude}');
@@ -82,7 +86,11 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           'accept-language': 'tr',
           'countrycodes': 'tr',
         },
-        options: Options(headers: {'User-Agent': 'Yapgitsin/1.0'}),
+        // Phase 540h — OSM Nominatim usage policy: kimlik + iletişim zorunlu.
+        options: Options(headers: {
+          'User-Agent': 'Yapgitsin/1.0 (destek@yapgitsin.tr)',
+          'Accept-Language': 'tr,en;q=0.8',
+        }),
       );
       final list = (res.data as List).cast<Map<String, dynamic>>();
       setState(() => _suggestions = list);
@@ -156,7 +164,11 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       final res = await _dio.get(
         'https://nominatim.openstreetmap.org/search',
         queryParameters: {'q': q, 'format': 'json', 'limit': 1, 'accept-language': 'tr'},
-        options: Options(headers: {'User-Agent': 'Yapgitsin/1.0'}),
+        // Phase 540h — OSM Nominatim usage policy: kimlik + iletişim zorunlu.
+        options: Options(headers: {
+          'User-Agent': 'Yapgitsin/1.0 (destek@yapgitsin.tr)',
+          'Accept-Language': 'tr,en;q=0.8',
+        }),
       );
       final list = (res.data as List).cast<Map<String, dynamic>>();
       if (list.isNotEmpty) {
@@ -230,8 +242,11 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.hizmetapp.app',
+                // Phase 540h — subdomain rotation (a/b/c) + doğru packageName.
+                urlTemplate:
+                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                subdomains: const ['a', 'b', 'c'],
+                userAgentPackageName: 'com.yapgitsin.app.hizmet_app',
               ),
               MarkerLayer(
                 markers: [

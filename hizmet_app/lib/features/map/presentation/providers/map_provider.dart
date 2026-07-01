@@ -203,13 +203,24 @@ class MapNotifier extends StateNotifier<MapState> {
     }
   }
 
+  // Phase 540h — Son gönderilen konum. 30s tick'inde yeni koordinat < 50m ise
+  // PATCH atlanır: mobil datayı korur + backend'i gereksiz yaz'dan kurtarır.
+  LatLng? _lastPatchedLocation;
+  static const double _locationPatchMinMoveMeters = 50;
+
   void _startLocationTimer() {
     _locationTimer?.cancel();
     _locationTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
       final loc = state.userLocation;
       if (loc == null) return;
+      final prev = _lastPatchedLocation;
+      if (prev != null) {
+        final movedMeters = const Distance().as(LengthUnit.Meter, prev, loc);
+        if (movedMeters < _locationPatchMinMoveMeters) return;
+      }
       try {
         await _repo.updateLocation(lat: loc.latitude, lng: loc.longitude);
+        _lastPatchedLocation = loc;
       } catch (e, st) {
         debugPrint('map_provider._startLocationTimer.updateLocation: $e\n$st');
       }
