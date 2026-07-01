@@ -181,20 +181,50 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: state.showList
-          ? Column(
+          ? Stack(
               children: [
-                _FloatingHeader(
-                  state: state,
-                  notifier: notifier,
-                  onOpenCategorySheet: () => _showCategorySheet(state, notifier),
-                  onOpenFilter: _openFilterSheet,
-                  onOpenNotifications: () => context.push('/bildirimler'),
-                  onSearch: _focusSearch,
+                Column(
+                  children: [
+                    _FloatingHeader(
+                      state: state,
+                      notifier: notifier,
+                      onOpenCategorySheet: () =>
+                          _showCategorySheet(state, notifier),
+                      onOpenFilter: _openFilterSheet,
+                      onOpenNotifications: () => context.push('/bildirimler'),
+                      onSearch: _focusSearch,
+                    ),
+                    Expanded(
+                      child: _JobListView(
+                        jobs: state.jobs,
+                        onTap: (j) => notifier.selectJob(j.id),
+                      ),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: _JobListView(
-                    jobs: state.jobs,
-                    onTap: (j) => notifier.selectJob(j.id),
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 8,
+                  left: 12,
+                  child: Material(
+                    color: AppColors.surface,
+                    elevation: 3,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else {
+                          context.go('/');
+                        }
+                      },
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Icon(Icons.arrow_back_rounded,
+                            size: 22, color: AppColors.textPrimary),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -226,6 +256,35 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   onOpenFilter: _openFilterSheet,
                   onOpenNotifications: () => context.push('/bildirimler'),
                   onSearch: _focusSearch,
+                ),
+
+                // Phase 540 — Geri butonu. Harita full-screen scaffold
+                // içindeydi + AppBar yoktu → kullanıcı ekrandan çıkamıyordu
+                // (mahsur kalıyordu). Sol üstte SafeArea altında mini FAB.
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 8,
+                  left: 12,
+                  child: Material(
+                    color: AppColors.surface,
+                    elevation: 3,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else {
+                          context.go('/');
+                        }
+                      },
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Icon(Icons.arrow_back_rounded,
+                            size: 22, color: AppColors.textPrimary),
+                      ),
+                    ),
+                  ),
                 ),
 
                 // ── Loading indicator ──

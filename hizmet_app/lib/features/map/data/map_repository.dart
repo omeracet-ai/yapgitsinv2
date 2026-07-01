@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client_provider.dart';
@@ -89,10 +91,7 @@ class NearbyJob {
         longitude: _sanitizeLng((j['longitude'] as num?)?.toDouble()),
         budgetMin: (j['budgetMin'] as num?)?.toDouble(),
         budgetMax: (j['budgetMax'] as num?)?.toDouble(),
-        photos: (j['photos'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [],
+        photos: _decodeStringList(j['photos']),
         // Phase 516 — Backend response snake_case (`location_approx`,
         // `location_source`) döndürüyor; camelCase fallback ile geriye dönük
         // uyumluluk. Boolean coerce hem 1/0 hem true/false destekler.
@@ -174,6 +173,29 @@ class NearbyWorker {
               (j['location_approx'] ?? j['locationApprox']) == 1,
     );
   }
+}
+
+/// Phase 540 — Backend photos/videos are SQLite `simple-json` columns which
+/// come back either as a real List or as a JSON-encoded String (varies by
+/// driver + query serializer). Coerce both shapes into `List<String>`; malformed
+/// input → empty list rather than a runtime type cast crash (crash was
+/// blanking the entire /jobs/nearby map layer).
+List<String> _decodeStringList(dynamic raw) {
+  if (raw == null) return const [];
+  if (raw is List) {
+    return raw.map((e) => e.toString()).toList();
+  }
+  if (raw is String) {
+    if (raw.isEmpty) return const [];
+    try {
+      final parsed = jsonDecode(raw);
+      if (parsed is List) return parsed.map((e) => e.toString()).toList();
+    } catch (_) {
+      // Fall through — not JSON, treat as single-item list.
+    }
+    return [raw];
+  }
+  return const [];
 }
 
 /// Phase 537 — server-side coords sanity: null out anything outside WGS84
