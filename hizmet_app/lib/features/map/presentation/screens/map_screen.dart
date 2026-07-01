@@ -203,11 +203,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ],
                 ),
                 Positioned(
-                  top: MediaQuery.of(context).padding.top + 8,
+                  top: MediaQuery.of(context).padding.top + 12,
                   left: 12,
                   child: Material(
                     color: AppColors.surface,
-                    elevation: 3,
+                    elevation: 4,
                     shape: const CircleBorder(),
                     child: InkWell(
                       customBorder: const CircleBorder(),
@@ -262,11 +262,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 // içindeydi + AppBar yoktu → kullanıcı ekrandan çıkamıyordu
                 // (mahsur kalıyordu). Sol üstte SafeArea altında mini FAB.
                 Positioned(
-                  top: MediaQuery.of(context).padding.top + 8,
+                  top: MediaQuery.of(context).padding.top + 12,
                   left: 12,
                   child: Material(
                     color: AppColors.surface,
-                    elevation: 3,
+                    elevation: 4,
                     shape: const CircleBorder(),
                     child: InkWell(
                       customBorder: const CircleBorder(),
@@ -384,7 +384,8 @@ class _FloatingHeader extends StatelessWidget {
     final top = MediaQuery.of(context).padding.top;
     return Container(
       color: AppColors.surface,
-      padding: EdgeInsets.fromLTRB(12, top + 8, 12, 0),
+      // Phase 540 — sol 60px back butonu için ayrıldı.
+      padding: EdgeInsets.fromLTRB(60, top + 8, 12, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -429,8 +430,9 @@ class _FloatingOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
     return Positioned(
+      // Phase 540 — sol 60px back butonu için ayrıldı (search pill sağa kaydı).
       top: top + 12,
-      left: 12,
+      left: 60,
       right: 12,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
