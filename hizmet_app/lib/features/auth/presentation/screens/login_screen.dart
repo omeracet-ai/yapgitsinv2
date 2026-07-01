@@ -96,12 +96,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _loginWithGoogle() async {
-    await ref.read(authStateProvider.notifier).signInWithGoogle();
-    // Navigation handled by listenManual on AuthAuthenticated.
+    try {
+      await ref.read(authStateProvider.notifier).signInWithGoogle();
+      // Navigation handled by listenManual on AuthAuthenticated.
+    } catch (e) {
+      if (!mounted) return;
+      // Phase 539 — 12500 = SIGN_IN_FAILED (SHA-1/OAuth client not registered
+      // on Google Cloud Console). Kullanıcıya raw stack yerine anlaşılır mesaj.
+      final s = e.toString();
+      final msg = s.contains('12500')
+          ? 'Google girişi şu an kullanılamıyor. Lütfen email/şifre ile devam edin.'
+          : s.contains('sign_in_canceled') || s.contains('canceled')
+              ? 'Google girişi iptal edildi.'
+              : 'Google girişi başarısız oldu. Lütfen email/şifre ile devam edin.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.warning,
+          content: Text(msg,
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.w600)),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   Future<void> _loginWithApple() async {
-    await ref.read(authStateProvider.notifier).signInWithApple();
+    try {
+      await ref.read(authStateProvider.notifier).signInWithApple();
+    } catch (e) {
+      if (!mounted) return;
+      final s = e.toString();
+      final msg = s.contains('canceled') || s.contains('cancelled')
+          ? 'Apple girişi iptal edildi.'
+          : 'Apple girişi başarısız oldu. Lütfen email/şifre ile devam edin.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.warning,
+          content: Text(msg,
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.w600)),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   Future<void> _login() async {
@@ -295,7 +333,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ],
               ).motionAnim(context, (w) => w.animate().fade(delay: 650.ms)),
               const SizedBox(height: 16),
-              // Google
+              // Google — Phase 539: Google brand guideline uyarınca ZEMİN her
+              // zaman beyaz + yazı koyu gri. AppColors.surface dark-first tema
+              // → text/bg aynı renk çıkıyordu (görünmez buton). Sabit renk.
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -311,7 +351,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: AppColors.surface,
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF1F1F1F),
                     side: const BorderSide(color: Color(0xFFDADCE0)),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
