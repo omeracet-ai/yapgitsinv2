@@ -99,6 +99,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     const wasOffline = set.size === 0;
     set.add(client.id);
+    client.join(`user:${userId}`);
     if (wasOffline) {
       await this.usersRepo.update(userId, { isOnline: true });
       client.broadcast.emit('presence', { userId, isOnline: true });
@@ -213,20 +214,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const broadcastMessage = result.flagged
       ? this.filter.sanitize(workingMessage)
       : workingMessage;
-    this.server.emit('receiveMessage', {
-      ...data,
-      message: broadcastMessage,
-      jobId: saved.jobId,
-      bookingId: saved.bookingId,
-      id: saved.id,
-      flagged: saved.flagged,
-      createdAt: saved.createdAt,
-      attachmentUrl: saved.attachmentUrl,
-      attachmentType: saved.attachmentType,
-      attachmentName: saved.attachmentName,
-      attachmentSize: saved.attachmentSize,
-      attachmentDuration: saved.attachmentDuration,
-    });
+    this.server
+      .to(`user:${data.to}`)
+      .to(`user:${data.from}`)
+      .emit('receiveMessage', {
+        ...data,
+        message: broadcastMessage,
+        jobId: saved.jobId,
+        bookingId: saved.bookingId,
+        id: saved.id,
+        flagged: saved.flagged,
+        createdAt: saved.createdAt,
+        attachmentUrl: saved.attachmentUrl,
+        attachmentType: saved.attachmentType,
+        attachmentName: saved.attachmentName,
+        attachmentSize: saved.attachmentSize,
+        attachmentDuration: saved.attachmentDuration,
+      });
 
     // Phase 490 — her mesaj için bildirim oluştur (online/offline ayrımı yok).
     // Bell badge'in her durumda artması için gate kaldırıldı. FCM/SMS
@@ -278,12 +282,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { messageIds: string[]; roomId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    if (!data.messageIds || data.messageIds.length === 0) return;
+    if (
+      !Array.isArray(data.messageIds) ||
+      data.messageIds.length === 0 ||
+      data.messageIds.length > 200
+    )
+      return;
+    const userId = client.data.userId as string | undefined;
+    if (!userId) return;
     const readAt = new Date();
-    await this.messagesRepo.update(
-      { id: In(data.messageIds), readAt: IsNull() },
+    const result = await this.messagesRepo.update(
+      { id: In(data.messageIds), to: userId, readAt: IsNull() },
       { readAt },
     );
+    if (!result.affected) return;
     client.to(data.roomId).emit('messagesRead', {
       messageIds: data.messageIds,
       readAt: readAt.toISOString(),
@@ -304,6 +316,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: GetHistoryPayload,
     @ConnectedSocket() client: Socket,
   ) {
+    // Derive userId from the authenticated socket, never trust payload.
+    const authUserId = this.socketUser.get(client.id);
+    if (!authUserId || (data.userId && data.userId !== authUserId)) {
+      client.emit('error', { type: 'unauthorized', message: 'unauthorized' });
+      return;
+    }
+    data = { ...data, userId: authUserId };
     const qb = this.messagesRepo.createQueryBuilder('m');
 
     // Context filters take precedence; both can be combined with peer filter.

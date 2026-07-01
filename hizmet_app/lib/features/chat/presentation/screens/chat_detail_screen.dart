@@ -77,11 +77,56 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     // the backend can attach presence / auth. Idempotent: same id no-ops.
     chatService.connect(userId: _meId);
     chatService.joinRoom(_roomId);
+    // Bug8 — subscribe to server history BEFORE emitting request; seed prior
+    // messages so re-opening a chat doesn't show an empty conversation.
+    chatService.onChatHistory((rows) {
+      if (!mounted) return;
+      final myId = _meId;
+      final mapped = rows.whereType<Map>().map((raw) {
+        final m = Map<String, dynamic>.from(raw);
+        final fromId = m['from'] as String?;
+        final createdAt = m['createdAt'] as String?;
+        final readAtStr = m['readAt'] as String?;
+        return <String, dynamic>{
+          'id': m['id'] as String?,
+          'from': fromId == myId ? 'me' : fromId,
+          'message': m['message'],
+          'translatedText': m['translatedText'],
+          'timestamp': createdAt != null
+              ? DateTime.tryParse(createdAt) ?? DateTime.now()
+              : DateTime.now(),
+          'readAt': readAtStr != null ? DateTime.tryParse(readAtStr) : null,
+          'attachmentUrl': m['attachmentUrl'],
+          'attachmentType': m['attachmentType'],
+          'attachmentName': m['attachmentName'],
+          'attachmentSize': m['attachmentSize'],
+          'attachmentDuration': (m['attachmentDuration'] as num?)?.toInt(),
+        };
+      }).toList();
+      setState(() {
+        _messages
+          ..clear()
+          ..addAll(mapped);
+      });
+      _scrollToBottom();
+      final unreadIds = mapped
+          .where((m) => m['from'] != 'me' && m['readAt'] == null && m['id'] != null)
+          .map((m) => m['id'] as String)
+          .toList();
+      if (unreadIds.isNotEmpty) {
+        chatService.markRead(_roomId, unreadIds);
+      }
+    });
+    chatService.requestHistory(userId: _meId, peerId: widget.peerId);
     chatService.onMessageReceived((data) {
       if (mounted) {
         final from = data['from'] as String?;
         final id = data['id'] as String?;
         final myId = _meId;
+        // Bug8 — id-based dedupe against history + repeated live broadcasts.
+        if (id != null && _messages.any((m) => m['id'] == id)) {
+          return;
+        }
         // Phase 508 — gateway server.emit broadcasts to ALL clients including
         // the sender. Patch the matching optimistic local row with the real
         // message id instead of inserting a duplicate.

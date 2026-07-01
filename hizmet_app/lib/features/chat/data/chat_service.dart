@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // ignore: library_prefixes
@@ -21,8 +22,9 @@ class ChatService {
     if (_connected && socket.connected && _connectedUserId == userId) {
       return;
     }
-    // If user id changed, drop the previous socket so handshake.auth refreshes.
-    if (_connected && _connectedUserId != userId) {
+    // Always drop the previous socket before creating a new one — otherwise
+    // listeners bound to the orphaned instance go silent after reconnect.
+    if (_connected) {
       try { socket.dispose(); } catch (_) {}
       _connected = false;
     }
@@ -38,10 +40,13 @@ class ChatService {
     _connectedUserId = userId;
 
     socket.onConnect((_) => debugPrint('Connected to socket.io as ${userId ?? 'anon'}'));
-    socket.onDisconnect((_) => debugPrint('Disconnected from socket.io'));
+    socket.onDisconnect((_) {
+      _connected = false;
+      debugPrint('Disconnected from socket.io');
+    });
   }
 
-  void sendMessage(
+  Future<bool> sendMessage(
     String to,
     String from,
     String message, {
@@ -50,12 +55,16 @@ class ChatService {
     String? attachmentName,
     int? attachmentSize,
     int? attachmentDuration,
+    String? clientTempId,
   }) {
     final payload = <String, dynamic>{
       'to': to,
       'from': from,
       'message': message,
     };
+    if (clientTempId != null) {
+      payload['clientTempId'] = clientTempId;
+    }
     if (attachmentUrl != null) {
       payload['attachmentUrl'] = attachmentUrl;
       payload['attachmentType'] = attachmentType;
@@ -65,11 +74,33 @@ class ChatService {
         payload['attachmentDuration'] = attachmentDuration;
       }
     }
-    socket.emit('sendMessage', payload);
+    // Bug9 — fire with ack + 10s timeout so callers can mark the optimistic
+    // bubble as failed on disconnect / backend gate rejection instead of
+    // leaving it visible forever. Socket disconnected → immediate false.
+    if (!socket.connected) {
+      return Future.value(false);
+    }
+    final completer = Completer<bool>();
+    Timer? timer;
+    timer = Timer(const Duration(seconds: 10), () {
+      if (!completer.isCompleted) completer.complete(false);
+    });
+    try {
+      socket.emitWithAck('sendMessage', payload, ack: (dynamic _) {
+        timer?.cancel();
+        if (!completer.isCompleted) completer.complete(true);
+      });
+    } catch (_) {
+      timer.cancel();
+      if (!completer.isCompleted) completer.complete(false);
+    }
+    return completer.future;
   }
 
-  void onMessageReceived(Function(Map<String, dynamic>) callback) {
-    socket.on('receiveMessage', (data) => callback(Map<String, dynamic>.from(data)));
+  VoidCallback onMessageReceived(Function(Map<String, dynamic>) callback) {
+    void handler(dynamic data) => callback(Map<String, dynamic>.from(data));
+    socket.on('receiveMessage', handler);
+    return () => socket.off('receiveMessage', handler);
   }
 
   void joinRoom(String roomId) {
@@ -87,14 +118,16 @@ class ChatService {
 
   /// Phase 67: subscribe to peer typing events.
   /// Callback receives (userId, isTyping).
-  void onUserTyping(Function(String userId, bool isTyping) callback) {
-    socket.on('userTyping', (data) {
+  VoidCallback onUserTyping(Function(String userId, bool isTyping) callback) {
+    void handler(dynamic data) {
       final map = Map<String, dynamic>.from(data as Map);
       callback(
         (map['userId'] as String?) ?? '',
         (map['isTyping'] as bool?) ?? false,
       );
-    });
+    }
+    socket.on('userTyping', handler);
+    return () => socket.off('userTyping', handler);
   }
 
   /// Phase 68: emit read-receipt for a batch of message ids.
@@ -108,9 +141,9 @@ class ChatService {
 
   /// Phase 68: subscribe to peer read-receipt broadcasts.
   /// Callback receives (messageIds, readAt).
-  void onMessagesRead(
+  VoidCallback onMessagesRead(
       Function(List<String> messageIds, DateTime readAt) callback) {
-    socket.on('messagesRead', (data) {
+    void handler(dynamic data) {
       final map = Map<String, dynamic>.from(data as Map);
       final ids = (map['messageIds'] as List?)
               ?.map((e) => e.toString())
@@ -121,14 +154,16 @@ class ChatService {
           ? DateTime.tryParse(readAtStr) ?? DateTime.now()
           : DateTime.now();
       callback(ids, readAt);
-    });
+    }
+    socket.on('messagesRead', handler);
+    return () => socket.off('messagesRead', handler);
   }
 
   /// Phase 77: subscribe to server-side message-filter notices (e.g. contact-block).
   /// Callback receives (reason, detectedTypes).
-  void onMessageFiltered(
+  VoidCallback onMessageFiltered(
       Function(String reason, List<String> detectedTypes) callback) {
-    socket.on('messageFiltered', (data) {
+    void handler(dynamic data) {
       final map = Map<String, dynamic>.from(data as Map);
       final reason = (map['reason'] as String?) ?? 'unknown';
       final types = (map['detectedTypes'] as List?)
@@ -136,28 +171,32 @@ class ChatService {
               .toList() ??
           <String>[];
       callback(reason, types);
-    });
+    }
+    socket.on('messageFiltered', handler);
+    return () => socket.off('messageFiltered', handler);
   }
 
   /// Phase 78: subscribe to peer presence broadcasts.
   /// Callback receives (userId, isOnline, lastSeenAt?).
-  void onPresence(
+  VoidCallback onPresence(
       Function(String userId, bool isOnline, DateTime? lastSeenAt) callback) {
-    socket.on('presence', (data) {
+    void handler(dynamic data) {
       final map = Map<String, dynamic>.from(data as Map);
       final uid = (map['userId'] as String?) ?? '';
       final online = (map['isOnline'] as bool?) ?? false;
       final lsStr = map['lastSeenAt'] as String?;
       final ls = lsStr != null ? DateTime.tryParse(lsStr) : null;
       callback(uid, online, ls);
-    });
+    }
+    socket.on('presence', handler);
+    return () => socket.off('presence', handler);
   }
 
   /// Phase 508 — backend gateway `_client.emit('error', { type, message })`
   /// gönderdiğinde (örn. `owner_must_initiate`, `no_accepted_offer`, `blocked`)
   /// frontend kullanıcısına net snackbar göstermek için subscription.
-  void onServerError(Function(String type, String message) callback) {
-    socket.on('error', (data) {
+  VoidCallback onServerError(Function(String type, String message) callback) {
+    void handler(dynamic data) {
       try {
         final map = Map<String, dynamic>.from(data as Map);
         callback(
@@ -167,10 +206,33 @@ class ChatService {
       } catch (_) {
         // ignore malformed payload
       }
+    }
+    socket.on('error', handler);
+    return () => socket.off('error', handler);
+  }
+
+  /// Bug8 — subscribe to server-emitted `chatHistory` (list of ChatMessage rows).
+  VoidCallback onChatHistory(Function(List<dynamic> rows) callback) {
+    void handler(dynamic data) {
+      final list = (data is List) ? data : const <dynamic>[];
+      callback(list);
+    }
+    socket.on('chatHistory', handler);
+    return () => socket.off('chatHistory', handler);
+  }
+
+  /// Bug8 — request DM history between me and peer (backend replies `chatHistory`).
+  void requestHistory({required String userId, required String peerId, int limit = 100}) {
+    socket.emit('getHistory', {
+      'userId': userId,
+      'peerId': peerId,
+      'limit': limit,
     });
   }
 
   void disconnect() {
     socket.disconnect();
+    _connected = false;
+    _connectedUserId = null;
   }
 }

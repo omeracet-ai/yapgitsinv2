@@ -104,8 +104,10 @@ class _AuthenticatedChatListState
     super.initState();
     // Phase 78: ensure socket is up so presence broadcasts hydrate the map.
     final chatService = ref.read(chatServiceProvider);
+    final auth = ref.read(authStateProvider);
+    final meId = auth is AuthAuthenticated ? auth.user['id'] as String? : null;
     try {
-      chatService.connect();
+      chatService.connect(userId: meId);
     } catch (e, st) {
       debugPrint('chat_list_screen.initState.connect: $e\n$st');
     }

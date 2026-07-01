@@ -2507,7 +2507,7 @@ class _InlineOfferChatState extends ConsumerState<_InlineOfferChat> {
     try {
       final chatService = ref.read(chatServiceProvider);
       try {
-        chatService.connect();
+        chatService.connect(userId: widget.fromUserId);
       } catch (_) {
         // Zaten bağlı olabilir.
       }

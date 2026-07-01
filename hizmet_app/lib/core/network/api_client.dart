@@ -100,7 +100,7 @@ class RefreshTokenInterceptor extends Interceptor {
   final Dio _dio;
   final SecureTokenStore _tokenStore;
   final Future<void> Function(String) _writeAccessToken;
-  bool _isRefreshing = false;
+  Completer<String?>? _refreshCompleter;
 
   @override
   Future<void> onError(
@@ -130,12 +130,28 @@ class RefreshTokenInterceptor extends Interceptor {
       handler.next(err);
       return;
     }
-    if (_isRefreshing) {
-      // Another request is already refreshing — surface the 401; caller may retry.
-      handler.next(err);
+    // If another request is already refreshing, wait for it and retry with the
+    // resulting access token — avoids concurrent 401s racing /auth/refresh.
+    final inflight = _refreshCompleter;
+    if (inflight != null) {
+      final sharedAccess = await inflight.future;
+      if (sharedAccess == null || sharedAccess.isEmpty) {
+        handler.next(err);
+        return;
+      }
+      try {
+        final retryOptions = err.requestOptions
+          ..headers['Authorization'] = 'Bearer $sharedAccess';
+        final retried = await _dio.fetch<dynamic>(retryOptions);
+        handler.resolve(retried);
+      } on DioException catch (e) {
+        handler.next(e);
+      }
       return;
     }
-    _isRefreshing = true;
+    final completer = Completer<String?>();
+    _refreshCompleter = completer;
+    String? resolvedAccess;
     try {
       // Bare Dio so we don't recurse through our own interceptor stack on refresh.
       final bare = Dio(BaseOptions(
@@ -159,6 +175,7 @@ class RefreshTokenInterceptor extends Interceptor {
       if (newRefresh != null && newRefresh.isNotEmpty) {
         await _tokenStore.writeRefreshToken(newRefresh);
       }
+      resolvedAccess = newAccess;
       // Retry original request once with the new access token.
       final retryOptions = err.requestOptions
         ..headers['Authorization'] = 'Bearer $newAccess';
@@ -166,13 +183,15 @@ class RefreshTokenInterceptor extends Interceptor {
       handler.resolve(retried);
     } on DioException catch (e) {
       if (kDebugMode) debugPrint('[ApiClient] refresh failed: $e');
-      // Refresh itself 401 (or any error) → force logout, bubble original 401.
+      // Only force-logout on an actual 401 from /auth/refresh (rejected token).
+      // Transient network errors (timeout/offline) should NOT kill the session.
       if (e.response?.statusCode == 401) {
         await _forceLogout();
       }
       handler.next(err);
     } finally {
-      _isRefreshing = false;
+      _refreshCompleter = null;
+      if (!completer.isCompleted) completer.complete(resolvedAccess);
     }
   }
 

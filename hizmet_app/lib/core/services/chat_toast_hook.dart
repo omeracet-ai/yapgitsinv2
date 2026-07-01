@@ -29,7 +29,9 @@ class ChatToastHook {
     final chatService = ref.read(chatServiceProvider);
     // Make sure the socket is up before attaching the listener; the chat
     // screens also call connect() defensively.
-    chatService.connect();
+    final authState = ref.read(authStateProvider);
+    final meId = authState is AuthAuthenticated ? authState.user['id'] as String? : null;
+    chatService.connect(userId: meId);
     chatService.onMessageReceived(_handleMessage);
     _bound = true;
     debugPrint('[ChatToastHook] bound onMessageReceived listener');
