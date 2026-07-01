@@ -478,7 +478,10 @@ class _WorkersNearbySheetState extends ConsumerState<WorkersNearbySheet> {
         elevation: 1.6,
         onTap: () {
           Navigator.of(context).pop();
-          context.push('/usta/${w.id}');
+          // Phase 540d — "Hızlı Hizmet Verenlere Ulaş" flow'undan gelirken
+          // worker profilinde alt "Hizmet teklifi ver" CTA'sı görünsün.
+          // Diğer entry point'ler quickConnect flag'i geçmez → CTA gizli.
+          context.push('/usta/${w.id}', extra: {'quickConnect': true});
         },
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(

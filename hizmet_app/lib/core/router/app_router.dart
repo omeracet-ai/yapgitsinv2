@@ -413,16 +413,26 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/profil/:id',
-        builder: (context, state) =>
-            PublicProfileScreen(userId: state.pathParameters['id']!),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return PublicProfileScreen(
+            userId: state.pathParameters['id']!,
+            quickConnect: extra?['quickConnect'] == true,
+          );
+        },
       ),
       // Phase 453 (hatalar.txt #4) — Müşteri ve hizmet veren profil ekranları
       // konsolide edildi. Eski "/musteri/:id" route'u da artık PublicProfileScreen
       // (hizmet veren detayı) kullanır. CustomerPublicProfileScreen kasada.
       GoRoute(
         path: '/musteri/:id',
-        builder: (context, state) =>
-            PublicProfileScreen(userId: state.pathParameters['id']!),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return PublicProfileScreen(
+            userId: state.pathParameters['id']!,
+            quickConnect: extra?['quickConnect'] == true,
+          );
+        },
       ),
       GoRoute(
         path: '/sablonlarim',
@@ -491,8 +501,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Phase 215 — Deep link routes (yapgitsin://usta/:id, yapgitsin://ilan/:id, yapgitsin://chat/:roomId)
       GoRoute(
         path: '/usta/:id',
-        builder: (context, state) =>
-            PublicProfileScreen(userId: state.pathParameters['id']!),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return PublicProfileScreen(
+            userId: state.pathParameters['id']!,
+            quickConnect: extra?['quickConnect'] == true,
+          );
+        },
       ),
       GoRoute(
         path: '/ilan/:id',

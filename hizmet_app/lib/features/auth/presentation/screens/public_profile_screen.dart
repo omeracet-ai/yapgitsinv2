@@ -37,7 +37,18 @@ final publicAvailabilitySlotsProvider =
 
 class PublicProfileScreen extends ConsumerWidget {
   final String userId;
-  const PublicProfileScreen({super.key, required this.userId});
+
+  /// Phase 540d — Yalnızca "Hızlı Hizmet Verenlere Ulaş" akışından açılan
+  /// worker profillerinde alt "Hizmet teklifi ver" CTA görünür. Diğer
+  /// entry point'lerde (harita worker pin, direktori, teklif veren usta
+  /// linki, kendi profil ziyaretçileri) buton gizlenir.
+  final bool quickConnect;
+
+  const PublicProfileScreen({
+    super.key,
+    required this.userId,
+    this.quickConnect = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,7 +61,8 @@ class PublicProfileScreen extends ConsumerWidget {
         appBar: AppBar(title: const Text('Profil')),
         body: Center(child: Text(e.toString())),
       ),
-      data: (data) => _ProfileView(data: data, userId: userId),
+      data: (data) => _ProfileView(
+          data: data, userId: userId, quickConnect: quickConnect),
     );
   }
 }
@@ -58,7 +70,12 @@ class PublicProfileScreen extends ConsumerWidget {
 class _ProfileView extends ConsumerWidget {
   final Map<String, dynamic> data;
   final String userId;
-  const _ProfileView({required this.data, required this.userId});
+  final bool quickConnect;
+  const _ProfileView({
+    required this.data,
+    required this.userId,
+    required this.quickConnect,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -125,7 +142,7 @@ class _ProfileView extends ConsumerWidget {
       backgroundColor: AppColors.background,
       // Phase 472 — Sticky Action Bar: Mesaj butonu kaldırıldı,
       // tek "Hizmet teklifi ver" CTA full-width.
-      bottomNavigationBar: (isWorker && !isSelf)
+      bottomNavigationBar: (isWorker && !isSelf && quickConnect)
           ? SafeArea(
               top: false,
               minimum: const EdgeInsets.fromLTRB(12, 4, 12, 10),

@@ -451,11 +451,12 @@ class _CategoryToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final activeLabel =
         state.activeFilter == 'all' ? 'Tümü' : state.activeFilter;
-    // Phase 540c — Tek satır, sola hizalı: kategori pill + arama + filtre +
-    // bildirim + "N ilan" chip. Expanded kaldırıldı (kategori pill fit-content).
+    // Phase 540d — Tek satır, kenardan kenara yay: kategori pill + arama +
+    // filtre + bildirim + "N ilan" chip. spaceBetween ile sağ+sol boşluklar
+    // eşit dağılır → içerik tüm mevcut genişliği kaplar.
     return Row(
       mainAxisSize: MainAxisSize.max,
-      mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         GestureDetector(
           onTap: onOpenCategorySheet,
@@ -505,17 +506,13 @@ class _CategoryToolbar extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 6),
         _CircleIconBtn(icon: Icons.search_rounded, onTap: onSearch),
-        const SizedBox(width: 6),
         _CircleIconBtn(icon: Icons.tune_rounded, onTap: onOpenFilter),
-        const SizedBox(width: 6),
         // Phase 490 — tüm sekmelerde aynı bell ikonu (notifications_outlined).
         _CircleIconBtn(
             icon: Icons.notifications_outlined,
             onTap: onOpenNotifications),
-        if (state.jobs.isNotEmpty) ...[
-          const SizedBox(width: 6),
+        if (state.jobs.isNotEmpty)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
@@ -538,7 +535,6 @@ class _CategoryToolbar extends StatelessWidget {
               ),
             ),
           ),
-        ],
       ],
     );
   }
