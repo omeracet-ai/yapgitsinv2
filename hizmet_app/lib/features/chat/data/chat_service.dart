@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // ignore: library_prefixes
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../../core/constants/api_constants.dart';
+import '../../../core/services/secure_token_store.dart';
 
 final chatServiceProvider = Provider((ref) => ChatService());
 
@@ -18,22 +19,30 @@ class ChatService {
   bool _connected = false;
   String? _connectedUserId;
 
+  /// Phase 537 — CRITICAL — send signed JWT via handshake.auth.token so the
+  /// gateway can verify identity (extractUserId → verifyJwtWithRotation).
+  /// Token pulled from [SecureTokenStore.cachedAccessToken] synchronously; api
+  /// client primes this cache at boot / on every request. Legacy `userId` still
+  /// passed for the rollout window (backend accepts both until CHAT_STRICT_AUTH
+  /// = 1 flips in prod).
   void connect({String? userId}) {
     if (_connected && socket.connected && _connectedUserId == userId) {
       return;
     }
-    // Always drop the previous socket before creating a new one — otherwise
-    // listeners bound to the orphaned instance go silent after reconnect.
     if (_connected) {
       try { socket.dispose(); } catch (_) {}
       _connected = false;
     }
+    final token = SecureTokenStore.cachedAccessToken();
+    final auth = <String, dynamic>{};
+    if (token != null && token.isNotEmpty) auth['token'] = token;
+    if (userId != null) auth['userId'] = userId;
     socket = IO.io(
       ApiConstants.baseUrl,
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .enableAutoConnect()
-          .setAuth(userId != null ? {'userId': userId} : {})
+          .setAuth(auth)
           .build(),
     );
     _connected = true;
@@ -44,6 +53,22 @@ class ChatService {
       _connected = false;
       debugPrint('Disconnected from socket.io');
     });
+    // If the cache was cold (rare: chat opened before any API call warmed it),
+    // prime it now and refresh the socket auth so the next reconnect uses JWT.
+    if (token == null || token.isEmpty) {
+      SecureTokenStore().readToken().then((t) {
+        if (t != null && t.isNotEmpty && _connected) {
+          try {
+            (socket.io.options as Map<String, dynamic>)['auth'] = {
+              if (userId != null) 'userId': userId,
+              'token': t,
+            };
+            socket.disconnect();
+            socket.connect();
+          } catch (_) {}
+        }
+      });
+    }
   }
 
   Future<bool> sendMessage(

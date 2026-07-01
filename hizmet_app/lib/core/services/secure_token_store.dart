@@ -16,7 +16,14 @@ class SecureTokenStore {
 
   final FlutterSecureStorage _storage;
 
+  /// Phase 537 — in-memory access-token cache so socket handshake (which needs
+  /// the token synchronously) can pick it up without an extra async round-trip.
+  /// Populated by [readToken] / [writeToken] and cleared by [clear].
+  static String? _cachedAccessToken;
+  static String? cachedAccessToken() => _cachedAccessToken;
+
   Future<void> writeToken(String token) async {
+    _cachedAccessToken = token;
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_kWebAuthToken, token);
@@ -26,11 +33,16 @@ class SecureTokenStore {
   }
 
   Future<String?> readToken() async {
+    if (_cachedAccessToken != null) return _cachedAccessToken;
+    String? t;
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_kWebAuthToken);
+      t = prefs.getString(_kWebAuthToken);
+    } else {
+      t = await _storage.read(key: _kAuthToken);
     }
-    return _storage.read(key: _kAuthToken);
+    _cachedAccessToken = t;
+    return t;
   }
 
   Future<void> writeRefreshToken(String token) async {
@@ -51,6 +63,7 @@ class SecureTokenStore {
   }
 
   Future<void> clear() async {
+    _cachedAccessToken = null;
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_kWebAuthToken);

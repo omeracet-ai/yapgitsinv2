@@ -22,8 +22,11 @@ import { detectContact, maskContact } from '../../common/contact-filter';
 import { RealtimeService } from '../realtime/realtime.service';
 import { ChatService } from './chat.service';
 import { stripHtml } from '../../common/utils/strip-html';
+import { verifyJwtWithRotation } from '../auth/jwt-secrets';
 // Phase 519 — WebSocket payload'ı ValidationPipe'tan geçmez; gateway içinde
 // inbound message HTML strip edilir (stored XSS koruması).
+// Phase 537 — CRITICAL — handshake JWT verify; legacy userId-only auth'a düşüş
+// CHAT_STRICT_AUTH=1 ile kapatılır. Impersonation kapatıldı.
 
 export const CONTACT_BLOCK_SETTING_KEY = 'contact_sharing_block_enabled';
 
@@ -79,16 +82,92 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private chatService: ChatService,
   ) {}
 
+  /**
+   * Phase 537 — Presence privacy: only emit `presence` events to sockets whose
+   * user shares at least one chat_message with this user. Prevents whole
+   * userbase presence broadcast leak. Called on connect / disconnect.
+   */
+  private async emitPresenceToPeers(payload: {
+    userId: string;
+    isOnline: boolean;
+    lastSeenAt?: string;
+  }): Promise<void> {
+    try {
+      const rows: Array<{ peer: string }> = await this.messagesRepo
+        .createQueryBuilder('m')
+        .select(
+          `CASE WHEN m."from" = :uid THEN m."to" ELSE m."from" END`,
+          'peer',
+        )
+        .where('m."from" = :uid OR m."to" = :uid', { uid: payload.userId })
+        .distinct(true)
+        .getRawMany();
+      const peers = rows.map((r) => r.peer).filter(Boolean);
+      if (peers.length === 0) return;
+      let emit = this.server.to(`user:${payload.userId}`);
+      for (const p of peers) emit = emit.to(`user:${p}`);
+      emit.emit('presence', payload);
+    } catch (e) {
+      this.logger.warn(
+        `presence peer fanout failed for ${payload.userId}: ${(e as Error).message}`,
+      );
+    }
+  }
+
   private extractUserId(client: Socket): string | null {
-    const auth = client.handshake.auth as { userId?: string } | undefined;
-    const query = client.handshake.query as { userId?: string } | undefined;
-    return auth?.userId ?? query?.userId ?? null;
+    const auth = client.handshake.auth as
+      | { token?: string; userId?: string }
+      | undefined;
+    const query = client.handshake.query as
+      | { token?: string; userId?: string }
+      | undefined;
+    // Prefer signed JWT. Falls back to legacy `userId` only when
+    // CHAT_STRICT_AUTH !== '1' (compat window during rollout).
+    const rawToken =
+      (typeof auth?.token === 'string' && auth.token) ||
+      (typeof query?.token === 'string' && query.token) ||
+      null;
+    if (rawToken) {
+      try {
+        const payload = verifyJwtWithRotation<{ sub?: string; id?: string }>(
+          rawToken,
+        );
+        const sub = payload.sub || payload.id;
+        if (sub) return sub;
+      } catch (e) {
+        this.logger.warn(
+          `Socket JWT verify failed (${client.id}): ${(e as Error).message}`,
+        );
+        return null;
+      }
+    }
+    if (process.env.CHAT_STRICT_AUTH === '1') return null;
+    // Legacy — soft fallback so pre-Phase-537 clients keep working; will be
+    // removed once CHAT_STRICT_AUTH=1 flips in prod.
+    const legacy =
+      (typeof auth?.userId === 'string' && auth.userId) ||
+      (typeof query?.userId === 'string' && query.userId) ||
+      null;
+    if (legacy) {
+      this.logger.warn(
+        `Socket legacy userId auth (${client.id}, uid=${legacy}) — enable CHAT_STRICT_AUTH=1 after client rollout`,
+      );
+    }
+    return legacy;
   }
 
   async handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
     const userId = this.extractUserId(client);
-    if (!userId) return;
+    if (!userId) {
+      client.emit('error', {
+        type: 'unauthorized',
+        message: 'chat: token required',
+      });
+      client.disconnect(true);
+      return;
+    }
+    client.data.userId = userId;
     this.socketUser.set(client.id, userId);
     // Phase 268 — feed admin Realtime Analytics tracker.
     this.realtime.add(userId, client.id);
@@ -102,7 +181,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.join(`user:${userId}`);
     if (wasOffline) {
       await this.usersRepo.update(userId, { isOnline: true });
-      client.broadcast.emit('presence', { userId, isOnline: true });
+      await this.emitPresenceToPeers({ userId, isOnline: true });
     }
   }
 
@@ -120,7 +199,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.userSockets.delete(userId);
       const lastSeenAt = new Date();
       await this.usersRepo.update(userId, { isOnline: false, lastSeenAt });
-      this.server.emit('presence', {
+      await this.emitPresenceToPeers({
         userId,
         isOnline: false,
         lastSeenAt: lastSeenAt.toISOString(),

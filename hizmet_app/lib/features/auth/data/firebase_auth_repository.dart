@@ -277,10 +277,18 @@ class FirebaseAuthRepository {
     }
   }
 
-  /// Full sign-out: clears the backend JWT/refresh from SecureTokenStore AND
-  /// signs out Firebase + Google. Order matters — clear tokens first so a
-  /// concurrent API call can't sneak a stale Bearer header through.
+  /// Full sign-out: hit backend /auth/logout to bump tokenVersion (invalidates
+  /// ALL outstanding access + refresh tokens server-side — Phase P191/4), then
+  /// clear local SecureTokenStore, then Firebase + Google signOut.
+  /// Order: server revoke FIRST (needs valid Bearer), then local clear so a
+  /// concurrent API call can't sneak a stale Bearer through.
   Future<void> logout() async {
+    try {
+      await _api.dio.post('/auth/logout');
+    } catch (_) {
+      // Best-effort — even if network is offline / 401 we still MUST clear
+      // local state below so the user sees a signed-out shell.
+    }
     try {
       await SecureTokenStore().clear();
     } catch (_) {
