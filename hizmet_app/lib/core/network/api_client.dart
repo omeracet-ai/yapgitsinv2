@@ -33,6 +33,10 @@ class ApiClient {
       ..contentType = Headers.jsonContentType
       ..responseType = ResponseType.json;
 
+    // Phase 537 — multipart uploads (photos/videos/documents) get an extended
+    // send window: 30s is fine for JSON but chokes real-world video uploads on
+    // 3G/4G. Callers may still override per-request.
+    _dio.interceptors.add(_MultipartTimeoutInterceptor());
     _dio.interceptors.add(_AuthInterceptor(_readAccessToken));
     _dio.interceptors.add(RefreshTokenInterceptor(
       dio: _dio,
@@ -56,6 +60,27 @@ class ApiClient {
 
   Future<void> _writeAccessToken(String token) async {
     await _tokenStore.writeToken(token);
+  }
+}
+
+/// Phase 537 — Bumps send/receive timeouts for multipart uploads. 30s
+/// receiveTimeout on a slow uplink terminates video uploads mid-flight and
+/// leaves the file half-written on the server. Only applied when the body is
+/// FormData AND the caller has not overridden the timeouts explicitly.
+class _MultipartTimeoutInterceptor extends Interceptor {
+  static const _multipartSendTimeout = Duration(minutes: 5);
+  static const _multipartReceiveTimeout = Duration(minutes: 5);
+
+  @override
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) {
+    if (options.data is FormData) {
+      options.sendTimeout ??= _multipartSendTimeout;
+      options.receiveTimeout ??= _multipartReceiveTimeout;
+    }
+    handler.next(options);
   }
 }
 
@@ -130,6 +155,17 @@ class RefreshTokenInterceptor extends Interceptor {
       handler.next(err);
       return;
     }
+    // Phase 537 — FormData bodies stream their files ONCE; a naive retry after
+    // token refresh would send the header pair but a zero-byte body → 400 or
+    // silent truncation. Bail out early and let the caller re-upload.
+    if (err.requestOptions.data is FormData) {
+      if (kDebugMode) {
+        debugPrint('[ApiClient] 401 on multipart upload — not retriable, '
+            'caller must re-upload after re-auth');
+      }
+      handler.next(err);
+      return;
+    }
     // If another request is already refreshing, wait for it and retry with the
     // resulting access token — avoids concurrent 401s racing /auth/refresh.
     final inflight = _refreshCompleter;
@@ -163,6 +199,10 @@ class RefreshTokenInterceptor extends Interceptor {
       final res = await bare.post<Map<String, dynamic>>(
         _refreshPath,
         data: {'refreshToken': refresh},
+        // Phase 537 — explicit no-Bearer: bare Dio has no interceptors so this
+        // is belt-and-suspenders against a future refactor that sets a global
+        // default Authorization header on the Dio instance.
+        options: Options(headers: {'Authorization': null}),
       );
       final newAccess = res.data?['accessToken'] as String?;
       final newRefresh = res.data?['refreshToken'] as String?;

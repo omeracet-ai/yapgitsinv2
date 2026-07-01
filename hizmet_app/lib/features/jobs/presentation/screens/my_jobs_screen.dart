@@ -1337,7 +1337,7 @@ class _CustomerDraftsView extends ConsumerWidget {
             message:
                 'İlan yazarken "Taslak Olarak Kaydet" diyebilirsin. Hazır olunca yayına alırsın.',
             action: ElevatedButton.icon(
-              onPressed: () => context.push('/ilan-ac'),
+              onPressed: () => context.push('/ilan-ver'),
               icon: const Icon(Icons.add_rounded, size: 18),
               label: const Text('Yeni İlan'),
               style: ElevatedButton.styleFrom(

@@ -62,9 +62,12 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _waitAuthResolved({required Duration timeout}) async {
     final sw = Stopwatch()..start();
+    // Phase 537 — capture container once BEFORE the async gap so we don't
+    // touch `context` after the widget might have been unmounted.
+    final container = ProviderScope.containerOf(context, listen: false);
     while (sw.elapsed < timeout) {
-      final s = ProviderScope.containerOf(context, listen: false)
-          .read(authStateProvider);
+      if (!mounted) return;
+      final s = container.read(authStateProvider);
       if (s is! AuthInitial && s is! AuthLoading) return;
       await Future.delayed(const Duration(milliseconds: 50));
     }

@@ -119,6 +119,7 @@ class MapNotifier extends StateNotifier<MapState> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
+      if (!mounted) return;
     } catch (e, st) {
       debugPrint('map_provider permission check failed: $e\n$st');
       const istanbul = LatLng(41.0082, 28.9784);
@@ -150,6 +151,7 @@ class MapNotifier extends StateNotifier<MapState> {
           timeLimit: Duration(seconds: 10),
         ),
       );
+      if (!mounted) return;
       // Phase 179 — Null island guard. Web playground / emulator bazen
       // (0,0) döndürüyor; bu Atlantik ortası → 0 sonuç. İstanbul'a düş.
       final isNullIsland = pos.latitude.abs() < 0.01 && pos.longitude.abs() < 0.01;
@@ -245,6 +247,7 @@ class MapNotifier extends StateNotifier<MapState> {
       return null;
     });
     final results = await Future.wait([jobsFuture, workersFuture]);
+    if (!mounted) return;
     final jobs = results[0] as List<NearbyJob>?;
     final workers = results[1] as List<NearbyWorker>?;
     if (jobs == null && workers == null) {

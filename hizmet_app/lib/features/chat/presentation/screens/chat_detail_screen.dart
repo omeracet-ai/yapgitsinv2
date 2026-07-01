@@ -47,6 +47,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   Timer? _peerTypingClearTimer;
   bool _isLocallyTyping = false;
   bool _isUploading = false;
+  // Phase 537 — collect socket-listener disposers so dispose() can clean them
+  // up. Without this every ChatDetailScreen re-entry leaked a listener on the
+  // shared ChatService singleton (HIGH 18).
+  final List<VoidCallback> _socketDisposers = [];
 
   /// Phase 456 (hatalar.txt #2) — KRİTİK BUG FIX:
   /// Eski `_meId = 'me'` hardcoded'di → tüm kullanıcılar aynı odaya
@@ -79,7 +83,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     chatService.joinRoom(_roomId);
     // Bug8 — subscribe to server history BEFORE emitting request; seed prior
     // messages so re-opening a chat doesn't show an empty conversation.
-    chatService.onChatHistory((rows) {
+    _socketDisposers.add(chatService.onChatHistory((rows) {
       if (!mounted) return;
       final myId = _meId;
       final mapped = rows.whereType<Map>().map((raw) {
@@ -116,9 +120,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       if (unreadIds.isNotEmpty) {
         chatService.markRead(_roomId, unreadIds);
       }
-    });
+    }));
     chatService.requestHistory(userId: _meId, peerId: widget.peerId);
-    chatService.onMessageReceived((data) {
+    _socketDisposers.add(chatService.onMessageReceived((data) {
       if (mounted) {
         final from = data['from'] as String?;
         final id = data['id'] as String?;
@@ -165,9 +169,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           chatService.markRead(_roomId, [id]);
         }
       }
-    });
+    }));
     // Phase 68: peer-side read receipts.
-    chatService.onMessagesRead((messageIds, readAt) {
+    _socketDisposers.add(chatService.onMessagesRead((messageIds, readAt) {
       if (!mounted) return;
       setState(() {
         for (final m in _messages) {
@@ -176,9 +180,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           }
         }
       });
-    });
+    }));
     // Phase 67: peer typing listener.
-    chatService.onUserTyping((userId, isTyping) {
+    _socketDisposers.add(chatService.onUserTyping((userId, isTyping) {
       if (!mounted) return;
       if (userId == _meId) return; // ignore own echoes
       ref.read(chatTypingProvider.notifier).state = isTyping;
@@ -191,14 +195,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           }
         });
       }
-    });
+    }));
     // Phase 78: hydrate presence map for this peer.
     Future.microtask(() {
       ref.read(presenceProvider.notifier).ensure(widget.peerId);
     });
     // Phase 508 — backend gate reddetiklerinde (owner_must_initiate,
     // no_accepted_offer, blocked) kullanıcı sessiz kalmasın diye snackbar.
-    chatService.onServerError((type, message) {
+    _socketDisposers.add(chatService.onServerError((type, message) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -207,9 +211,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           duration: const Duration(seconds: 4),
         ),
       );
-    });
+    }));
     // Phase 77: server-side contact-block notice.
-    chatService.onMessageFiltered((reason, detectedTypes) {
+    _socketDisposers.add(chatService.onMessageFiltered((reason, detectedTypes) {
       if (!mounted) return;
       if (reason != 'contact_block') return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -222,7 +226,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           duration: const Duration(seconds: 4),
         ),
       );
-    });
+    }));
   }
 
   void _onTextChanged(String _) {
@@ -318,6 +322,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
     _typingStopTimer?.cancel();
     _peerTypingClearTimer?.cancel();
+    // Phase 537 — release socket listeners registered in initState so a fresh
+    // ChatDetailScreen doesn't stack duplicate handlers on the singleton
+    // ChatService (HIGH 18).
+    for (final d in _socketDisposers) {
+      try { d(); } catch (_) {}
+    }
+    _socketDisposers.clear();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();

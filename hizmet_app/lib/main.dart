@@ -14,6 +14,7 @@ import 'core/app_config/app_config_socket.dart';
 import 'core/router/app_router.dart';
 import 'core/services/in_app_notification_service.dart';
 import 'core/services/chat_toast_hook.dart';
+import 'core/services/fcm_service.dart';
 import 'core/services/locale_provider.dart';
 import 'core/services/secure_token_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,6 +33,12 @@ Future<void> _enforceVersionGate() async {
     // Yeni gate → secure token + SP auth alanlarını temizle.
     try {
       await SecureTokenStore().clear();
+    } catch (_) {}
+    // Phase 537 — Also drop the FCM token from the previous account so the
+    // freshly-upgraded shell doesn't inherit push subscriptions of whoever
+    // was signed in before. Best-effort; auth init retries FCM anyway.
+    try {
+      await FcmService.instance.unregister();
     } catch (_) {}
     await prefs.remove('jwt_token');
     await prefs.remove('auth_token');

@@ -85,8 +85,8 @@ class NearbyJob {
         category: j['category'] as String? ?? '',
         location: j['location'] as String? ?? '',
         distanceKm: (j['distanceKm'] as num).toDouble(),
-        latitude: (j['latitude'] as num?)?.toDouble(),
-        longitude: (j['longitude'] as num?)?.toDouble(),
+        latitude: _sanitizeLat((j['latitude'] as num?)?.toDouble()),
+        longitude: _sanitizeLng((j['longitude'] as num?)?.toDouble()),
         budgetMin: (j['budgetMin'] as num?)?.toDouble(),
         budgetMax: (j['budgetMax'] as num?)?.toDouble(),
         photos: (j['photos'] as List<dynamic>?)
@@ -164,8 +164,8 @@ class NearbyWorker {
       avatarUrl: j['profileImageUrl'] as String?,
       rating: (j['averageRating'] as num?)?.toDouble(),
       categories: catList,
-      latitude: (j['latitude'] as num?)?.toDouble(),
-      longitude: (j['longitude'] as num?)?.toDouble(),
+      latitude: _sanitizeLat((j['latitude'] as num?)?.toDouble()),
+      longitude: _sanitizeLng((j['longitude'] as num?)?.toDouble()),
       distanceKm: (j['distanceKm'] as num?)?.toDouble() ?? 0,
       identityVerified: j['identityVerified'] == true,
       // Phase 516 — snake_case fallback (jobs ile aynı patern).
@@ -174,6 +174,21 @@ class NearbyWorker {
               (j['location_approx'] ?? j['locationApprox']) == 1,
     );
   }
+}
+
+/// Phase 537 — server-side coords sanity: null out anything outside WGS84
+/// bounds, null-island noise, or NaN. Prevents map crashes + Mountain View
+/// emulator coords sneaking into markers.
+double? _sanitizeLat(double? v) {
+  if (v == null || v.isNaN || v.isInfinite) return null;
+  if (v < -90 || v > 90) return null;
+  return v;
+}
+
+double? _sanitizeLng(double? v) {
+  if (v == null || v.isNaN || v.isInfinite) return null;
+  if (v < -180 || v > 180) return null;
+  return v;
 }
 
 final mapRepositoryProvider = Provider<MapRepository>((ref) {

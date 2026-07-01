@@ -91,6 +91,7 @@ const _publicPrefixes = <String>[
 
 /// Auth zorunlu prefix'ler. Match olmayan + public olmayan path'ler de
 /// güvenlik gereği protected sayılır (deny-by-default).
+// ignore: unused_element
 const _protectedPrefixes = <String>[
   '/ilan-ver',
   '/jetonlar',
@@ -134,11 +135,14 @@ bool _isPublic(String loc) {
   return false;
 }
 
-bool _isProtected(String loc) {
-  for (final p in _protectedPrefixes) {
-    if (loc == p || loc.startsWith('$p/') || loc.startsWith('$p?')) return true;
-  }
-  return false;
+/// Phase 537 — deny-by-default gate: any route that isn't explicitly public
+/// (splash / auth flow / share deep-links) counts as protected. Prevents
+/// silently allowing new screens through the login wall just because someone
+/// forgot to add them to _protectedPrefixes.
+bool _requiresAuth(String loc) {
+  if (_isPublic(loc)) return false;
+  // Splash + logged-out shell already handled elsewhere.
+  return true;
 }
 
 /// Phase 276 — Route path → registry screen key mapping.
@@ -210,8 +214,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isAuthed = authState is AuthAuthenticated;
 
       // Auth bekleyen kullanıcı protected path'e gittiyse login'e yönlendir,
-      // dönüş hedefi query string'de saklanır.
-      if (!isAuthed && _isProtected(loc)) {
+      // dönüş hedefi query string'de saklanır. Phase 537 — deny-by-default:
+      // explicit-public olmayan her path artık login duvarının arkasında.
+      if (!isAuthed && _requiresAuth(loc)) {
         final returnTo = Uri.encodeComponent(loc);
         return '/giris-yap?returnTo=$returnTo';
       }
@@ -284,8 +289,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/giris-yap',
         builder: (context, state) {
+          // Phase 537 — router redirect passes returnTo as ?returnTo=…; extras
+          // are used by push({'returnTo': ...}). Read both, with query winning
+          // (redirect path is the authoritative one).
           final extra = state.extra as Map<String, dynamic>?;
-          final returnTo = extra?['returnTo'] as String?;
+          final query = state.uri.queryParameters['returnTo'];
+          final decoded = query != null ? Uri.decodeComponent(query) : null;
+          final returnTo = decoded ?? extra?['returnTo'] as String?;
           return LoginScreen(returnTo: returnTo);
         },
       ),

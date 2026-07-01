@@ -57,7 +57,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // Önceki state = 3 yanlıştı (Mesajlarım'a düşürüyordu). Phase 305
         // düzeni: 0 Yaptır · 1 Yapgitsin · 2 İşlerim · 3 Mesajlarım · 4 Profil.
         ref.read(selectedTabProvider.notifier).state = 0;
-        context.go(widget.returnTo ?? '/');
+        // Phase 537 — open-redirect guard: only accept local paths that stay
+        // inside the app. Reject anything with a scheme, host, or leading `//`.
+        String safeReturn = '/';
+        final r = widget.returnTo;
+        if (r != null && r.isNotEmpty && r.startsWith('/') && !r.startsWith('//') && !r.contains('://')) {
+          safeReturn = r;
+        }
+        context.go(safeReturn);
       } else if (next is AuthError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

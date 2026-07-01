@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'chat_repository.dart';
 import 'chat_service.dart';
@@ -7,8 +8,8 @@ import 'chat_service.dart';
 class PresenceNotifier extends StateNotifier<Map<String, PresenceState>> {
   PresenceNotifier(this._repo, ChatService chatService)
       : super(const <String, PresenceState>{}) {
-    chatService.onPresence((userId, isOnline, lastSeenAt) {
-      if (userId.isEmpty) return;
+    _presenceDispose = chatService.onPresence((userId, isOnline, lastSeenAt) {
+      if (!mounted || userId.isEmpty) return;
       state = {
         ...state,
         userId: PresenceState(
@@ -21,12 +22,19 @@ class PresenceNotifier extends StateNotifier<Map<String, PresenceState>> {
   }
 
   final ChatRepository _repo;
+  VoidCallback? _presenceDispose;
+
+  @override
+  void dispose() {
+    _presenceDispose?.call();
+    super.dispose();
+  }
 
   /// Hydrate one user from REST if not yet known.
   Future<void> ensure(String userId) async {
     if (state.containsKey(userId)) return;
     final p = await _repo.getPresence(userId);
-    if (p == null) return;
+    if (!mounted || p == null) return;
     state = {...state, userId: p};
   }
 

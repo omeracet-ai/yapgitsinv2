@@ -361,10 +361,12 @@ class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
           lng: _lng,
           // Phase 301 — Mesafe filtresi server-side Haversine ile uygulanır.
           radiusKm: _filter.maxRadiusKm);
+      if (!mounted) return;
       _allJobs = jobsData.map((m) => Job.fromMap(m)).toList();
       state = AsyncValue.data(_applyFilter(_allJobs));
     } catch (e, st) {
       debugPrint('jobsProvider.fetchJobs error: $e\n$st');
+      if (!mounted) return;
       state = AsyncValue.error(e, st);
     }
   }
@@ -440,10 +442,11 @@ class JobNotifier extends StateNotifier<AsyncValue<List<Job>>> {
   Future<Map<String, dynamic>> addJob(Map<String, dynamic> jobData) async {
     try {
       final created = await _repository.createJob(jobData);
-      await fetchJobs();
+      if (mounted) await fetchJobs();
       return created;
     } catch (e, st) {
       debugPrint('jobsProvider.addJob error: $e\n$st');
+      if (mounted) state = AsyncValue.error(e, st);
       rethrow;
     }
   }

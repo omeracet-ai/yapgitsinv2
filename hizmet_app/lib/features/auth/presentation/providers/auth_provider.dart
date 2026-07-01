@@ -42,6 +42,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     // Firebase Auth state stream — yalnızca sosyal sign-in (Google/Apple) için.
     _authSub = _repository.authStateChanges.listen((user) async {
+      if (!mounted) return;
       if (user == null) {
         // Phase 256 — Backend-only login (Phase 254 email) için Firebase user
         // null kalıyor; AuthAuthenticated'a DOKUNMA. Sadece pre-auth state'leri
@@ -53,6 +54,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // (birthDate vb. backend alanları silinmesin).
         if (state is AuthAuthenticated) return;
         final profile = await _repository.getUserProfile();
+        if (!mounted) return;
         state = AuthAuthenticated(profile ?? {
           'uid': user.uid,
           'email': user.email,
@@ -68,16 +70,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> _rehydrateFromBackend() async {
     try {
       final token = await SecureTokenStore().readToken();
+      if (!mounted) return;
       if (token == null || token.isEmpty) {
         if (state is AuthInitial) state = AuthUnauthenticated();
         return;
       }
       final me = await _profileRepo.getMe();
+      if (!mounted) return;
       state = AuthAuthenticated(me);
       unawaited(FcmService.instance.init());
     } catch (e, st) {
       debugPrint('AuthNotifier._rehydrateFromBackend failed: $e\n$st');
-      if (state is AuthInitial) state = AuthUnauthenticated();
+      if (mounted && state is AuthInitial) state = AuthUnauthenticated();
     }
   }
 
