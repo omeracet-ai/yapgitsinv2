@@ -298,32 +298,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     onRetry: notifier.refresh,
                   ),
 
-                // ── Job count badge (top-right, below chips) ──
-                if (!state.locationLoading && state.jobs.isNotEmpty)
-                  Positioned(
-                    top: MediaQuery.of(context).padding.top + 106,
-                    right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: const [
-                          BoxShadow(
-                              color: Color(0x18000000),
-                              blurRadius: 6,
-                              offset: Offset(0, 2))
-                        ],
-                      ),
-                      child: Text(
-                        '${state.jobs.length} ilan',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary),
-                      ),
-                    ),
-                  ),
+                // Phase 540c — "N ilan" badge artık _CategoryToolbar Row'unun
+                // sonunda; ayrı Positioned katmanı kaldırıldı.
 
                 // ── Locate me FAB ──
                 if (state.userLocation != null)
@@ -475,57 +451,61 @@ class _CategoryToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final activeLabel =
         state.activeFilter == 'all' ? 'Tümü' : state.activeFilter;
+    // Phase 540c — Tek satır, sola hizalı: kategori pill + arama + filtre +
+    // bildirim + "N ilan" chip. Expanded kaldırıldı (kategori pill fit-content).
     return Row(
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        // ── Kategori dropdown pill ──
-        Expanded(
-          child: GestureDetector(
-            onTap: onOpenCategorySheet,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x18000000),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    state.activeFilter == 'all'
-                        ? Icons.apps_rounded
-                        : _categoryIcon(state.activeFilter),
-                    size: 16,
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      activeLabel,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+        GestureDetector(
+          onTap: onOpenCategorySheet,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x18000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  state.activeFilter == 'all'
+                      ? Icons.apps_rounded
+                      : _categoryIcon(state.activeFilter),
+                  size: 16,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 6),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 96),
+                  child: Text(
+                    activeLabel,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
                     ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down_rounded,
-                      size: 18, color: AppColors.textSecondary),
-                ],
-              ),
+                ),
+                const SizedBox(width: 2),
+                Icon(Icons.keyboard_arrow_down_rounded,
+                    size: 18, color: AppColors.textSecondary),
+              ],
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         _CircleIconBtn(icon: Icons.search_rounded, onTap: onSearch),
         const SizedBox(width: 6),
         _CircleIconBtn(icon: Icons.tune_rounded, onTap: onOpenFilter),
@@ -534,6 +514,31 @@ class _CategoryToolbar extends StatelessWidget {
         _CircleIconBtn(
             icon: Icons.notifications_outlined,
             onTap: onOpenNotifications),
+        if (state.jobs.isNotEmpty) ...[
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x18000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              '${state.jobs.length} ilan',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
