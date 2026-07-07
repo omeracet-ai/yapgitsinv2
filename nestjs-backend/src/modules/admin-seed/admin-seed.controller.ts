@@ -96,6 +96,18 @@ export class AdminSeedController {
     return { ...result, durationMs: Date.now() - t0, warning: this.warning() };
   }
 
+  /**
+   * Sadece İLANLARI siler (jobs + service_requests + alt kayıtları).
+   * Kullanıcı/booking/review/token/chat KORUNUR. ALLOW_SEED-gated.
+   */
+  @Post('cleanup-listings')
+  async cleanupListings() {
+    this.assertEnabled();
+    const t0 = Date.now();
+    const result = await this.seed.cleanupListings();
+    return { ...result, durationMs: Date.now() - t0, warning: this.warning() };
+  }
+
   /** SMTP tanılama — 587/465/25 kombinasyonlarını dener, çalışanı + hataları döndürür. */
   @Post('email-diag')
   async emailDiag(@Query('to') to?: string) {

@@ -342,6 +342,90 @@ export class AdminSeedService {
   }
 
   /**
+   * Sadece İLAN grafiğini siler — kullanıcı/booking/review/token/chat KORUNUR.
+   * "Tüm hizmet ilanlarını sil" için: jobs (request+offer) + service_requests +
+   * bunların doğrudan alt kayıtları (offers/questions/replies/applications/saved).
+   * Users tablosuna HİÇ dokunmaz → emailVerified vb. şema-drift'inden bağımsız.
+   * Var olmayan tabloları atlar; FK kontrollerini geçici kapatır; tek transaction.
+   */
+  async cleanupListings(): Promise<{
+    driver: string;
+    wiped: Record<string, number>;
+    remainingJobs: number;
+    remainingServiceRequests: number;
+  }> {
+    const driver = this.dataSource.options.type as string;
+    const q = (id: string) => (driver === 'mysql' ? `\`${id}\`` : `"${id}"`);
+
+    // Silme sırası — çocuk → kök (FK kapalı olsa da güvenli sıra).
+    const LISTING_TABLES = [
+      'job_question_replies',
+      'job_questions',
+      'offers',
+      'saved_jobs',
+      'service_request_applications',
+      'service_requests',
+      'jobs',
+    ];
+
+    const qr = this.dataSource.createQueryRunner();
+    await qr.connect();
+    try {
+      const present: string[] = [];
+      for (const t of LISTING_TABLES) {
+        if (await qr.hasTable(t)) present.push(t);
+      }
+
+      const wiped: Record<string, number> = {};
+      for (const t of present) {
+        const r: Array<{ c: number }> = await qr.query(
+          `SELECT COUNT(*) AS c FROM ${q(t)}`,
+        );
+        wiped[t] = Number(r[0].c);
+      }
+
+      if (driver === 'mysql') await qr.query('SET FOREIGN_KEY_CHECKS = 0');
+      else if (driver === 'sqlite') await qr.query('PRAGMA foreign_keys = OFF');
+      else if (driver === 'postgres')
+        await qr.query("SET session_replication_role = 'replica'");
+
+      await qr.startTransaction();
+      try {
+        for (const t of present) {
+          await qr.query(`DELETE FROM ${q(t)}`);
+        }
+        await qr.commitTransaction();
+      } catch (e) {
+        await qr.rollbackTransaction();
+        throw e;
+      } finally {
+        if (driver === 'mysql') await qr.query('SET FOREIGN_KEY_CHECKS = 1');
+        else if (driver === 'sqlite')
+          await qr.query('PRAGMA foreign_keys = ON');
+        else if (driver === 'postgres')
+          await qr.query("SET session_replication_role = 'origin'");
+      }
+
+      const jc: Array<{ c: number }> = (await qr.hasTable('jobs'))
+        ? await qr.query(`SELECT COUNT(*) AS c FROM ${q('jobs')}`)
+        : [{ c: 0 }];
+      const sc: Array<{ c: number }> = (await qr.hasTable('service_requests'))
+        ? await qr.query(`SELECT COUNT(*) AS c FROM ${q('service_requests')}`)
+        : [{ c: 0 }];
+      const total = Object.values(wiped).reduce((a, b) => a + b, 0);
+      this.logger.warn(`[cleanup-listings] ${total} ilan satırı silindi.`);
+      return {
+        driver,
+        wiped,
+        remainingJobs: Number(jc[0].c),
+        remainingServiceRequests: Number(sc[0].c),
+      };
+    } finally {
+      await qr.release();
+    }
+  }
+
+  /**
    * Wipe order — leaves to roots, respecting FK chains.
    * Even if User cascades are configured, we delete explicitly for safety.
    */
