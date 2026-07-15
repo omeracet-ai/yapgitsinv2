@@ -75,3 +75,9 @@ web/.next/
 *.sqlite-wal
 *.sqlite-shm
 *.err
+
+# Phase 540 — Final release APK snapshot (yerel)
+yapgitsin.apk
+
+# Prod DB backups + local scratch (2026-07-07 admin-seed cleanup)
+storage/
